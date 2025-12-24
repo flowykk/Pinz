@@ -1,20 +1,19 @@
 import ProjectDescription
 
 let project = Project(
-    name: "Features",
+    name: "Networking",
     targets: [
         .target(
-            name: "Features",
+            name: "Networking",
             destinations: .iOS,
             product: .framework,
-            bundleId: "io.tuist.Features",
+            bundleId: "io.tuist.Networking",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
                 .project(target: "Base", path: "../Base"),
-                .project(target: "Networking", path: "../Networking"),
-                .project(target: "UIComponents", path: "../UIComponents")
+                .external(name: "Moya")
             ]
         )
     ]
