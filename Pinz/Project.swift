@@ -22,6 +22,7 @@ let project = Project(
             dependencies: [
                 .project(target: "Base", path: "Modules/Base"),
                 .project(target: "Features", path: "Modules/Features"),
+                .project(target: "Networking", path: "Modules/Networking"),
                 .project(target: "UIComponents", path: "Modules/UIComponents")
             ]
         ),

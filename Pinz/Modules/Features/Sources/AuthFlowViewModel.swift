@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import MapKit
 import Base
+import Networking
 
 @Observable
 public class AuthFlowViewModel {
