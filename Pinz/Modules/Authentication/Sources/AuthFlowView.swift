@@ -4,7 +4,7 @@ import UIComponents
 
 public struct AuthFlowView: View {
     @State private var viewModel = AuthFlowViewModel()
-    @FocusState private var isEmailFocused: Bool
+    @FocusState private var isFieldFocused: Bool
     
     public init() {}
     
@@ -20,7 +20,6 @@ public struct AuthFlowView: View {
                              PinzHeader(
                                  leftView: {
                                      PinzButton(type: .leftChevron, tint: .white) {
-                                         isEmailFocused = false
                                          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                              viewModel.dispatch(.back)
                                          }
@@ -36,9 +35,14 @@ public struct AuthFlowView: View {
                             case .welcome:
                                 welcomeOverlay
                                     .transition(.opacity)
-                            case .emailInput:
+                            case .email:
                                 emailInputOverlay
                                     .transition(.move(edge: .bottom))
+                            case .auth:
+                                authPasswordOverlay
+                                    .transition(.move(edge: .bottom))
+                            default:
+                                welcomeOverlay
                             }
                         }.if(viewModel.state != .welcome) { view in
                             view.background(
@@ -100,15 +104,39 @@ public struct AuthFlowView: View {
                 placeholder: "your@email.com",
                 text: $viewModel.email,
                 keyboardType: .emailAddress,
-                autocapitalization: .never
+                autocapitalization: .never,
+                action: .async {
+                    try await viewModel.asyncDispatch(.proceedFromEmail)
+                }
             )
             .padding(.horizontal, 6)
-            .focused($isEmailFocused)
+            .focused($isFieldFocused)
             .padding(.bottom, 8)
         }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isEmailFocused = true
+                isFieldFocused = true
+            }
+        }
+    }
+    
+    private var authPasswordOverlay: some View {
+        VStack {
+            PinzTextField(
+                label: "name:",
+                placeholder: "your name",
+                text: $viewModel.name,
+                keyboardType: .default,
+                autocapitalization: .never,
+                action: .plain { }
+            )
+            .padding(.horizontal, 6)
+            .focused($isFieldFocused)
+            .padding(.bottom, 8)
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isFieldFocused = true
             }
         }
     }
