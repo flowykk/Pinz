@@ -1,20 +1,26 @@
 import SwiftUI
 
 public struct PinzTextField: View {
+    public enum Action {
+        case plain(() -> Void)
+        case async(() async throws -> Void)
+    }
+
     let label: String?
     let placeholder: String
     @Binding var text: String
     var keyboardType: UIKeyboardType = .default
     var autocapitalization: TextInputAutocapitalization = .never
-    var action: (() -> Void)?
-    
+    @State var isLoading: Bool = false
+    var action: Action
+
     public init(
         label: String? = nil,
         placeholder: String,
         text: Binding<String>,
         keyboardType: UIKeyboardType = .default,
         autocapitalization: TextInputAutocapitalization = .never,
-        action: (() -> Void)? = nil
+        action: Action
     ) {
         self.label = label
         self.placeholder = placeholder
@@ -43,27 +49,35 @@ public struct PinzTextField: View {
                         .fill(Color.white.opacity(0.64))
                 )
 
-            if let action = action {
-                Button(action: action) {
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 20))
-                        .foregroundColor(.black)
-                        .frame(width: 64, height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(.white)
-                        )
+            Button {
+                switch action {
+                case .async(let action):
+                    isLoading = true
+                    Task {
+                        defer { isLoading = false }
+                        try await action()
+                    }
+                case .plain(let action):
+                    action()
                 }
-            } else {
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 20))
-                    .foregroundColor(.black)
-                    .frame(width: 64, height: 50)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(.white)
-                    )
+            } label: {
+                Group {
+                    if isLoading {
+                        ProgressView()
+                            .tint(.black)
+                    } else {
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 20))
+                            .foregroundColor(.black)
+                    }
+                }
+                .frame(width: 60, height: 50)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(.white)
+                )
             }
+            .disabled(isLoading)
         }
     }
 }
@@ -75,14 +89,15 @@ public struct PinzTextField: View {
             placeholder: "Enter your email",
             text: .constant("test@example.com"),
             keyboardType: .emailAddress,
-            action: {
+            action: .plain {
                 print("Action triggered!")
             }
         )
         
         PinzTextField(
             placeholder: "Without action",
-            text: .constant("")
+            text: .constant(""),
+            action: .plain { }
         )
     }
     .padding()

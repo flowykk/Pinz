@@ -1,5 +1,5 @@
 import SwiftUI
-import Features
+import Authentication
 
 public struct ContentView: View {
     public init() {}

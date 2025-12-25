@@ -21,7 +21,7 @@ let project = Project(
             resources: ["Pinz/Resources/**"],
             dependencies: [
                 .project(target: "Base", path: "Modules/Base"),
-                .project(target: "Features", path: "Modules/Features"),
+                .project(target: "Authentication", path: "Modules/Authentication"),
                 .project(target: "Networking", path: "Modules/Networking"),
                 .project(target: "UIComponents", path: "Modules/UIComponents")
             ]

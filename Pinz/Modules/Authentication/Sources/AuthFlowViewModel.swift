@@ -15,7 +15,20 @@ public class AuthFlowViewModel {
 
     public enum State: Equatable {
         case welcome
-        case emailInput
+        case email
+        case auth(AuthState)
+        case register(RegisterState)
+    }
+
+    public enum AuthState: Equatable {
+        case password
+    }
+
+    public enum RegisterState: Equatable {
+        case code
+        case password
+        case repeatPassword
+        case nickname
     }
 
     public enum Intent {
@@ -27,12 +40,17 @@ public class AuthFlowViewModel {
         case proceedFromWelcome
         case back
     }
-    
+
+    public enum AsyncIntent {
+        case proceedFromEmail
+    }
+
     public var state: State = .welcome
     public var longitude: Double = 0
     public var cameraDistance: Double = Constants.initialCameraDistance
     public var isZoomedIn: Bool = false
     public var email: String = ""
+    public var password: String = ""
     public var cameraPosition: MapCameraPosition = .camera(
         MapCamera(
             centerCoordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0),
@@ -44,7 +62,9 @@ public class AuthFlowViewModel {
     
     private var rotationTimer: Timer?
     private var zoomTimer: Timer?
-    
+
+    private let networkService = NetworkService()
+
     public init() {}
     
     public func dispatch(_ intent: Intent) {
@@ -68,7 +88,14 @@ public class AuthFlowViewModel {
             handleBack()
         }
     }
-    
+
+    public func asyncDispatch(_ intent: AsyncIntent) async throws {
+        switch intent {
+        case .proceedFromEmail:
+            try await handleProceedFromEmail()
+        }
+    }
+
     private func handleStartRotation() {
         rotationTimer?.invalidate()
         rotationTimer = Timer.scheduledTimer(
@@ -133,19 +160,43 @@ public class AuthFlowViewModel {
         isZoomedIn = true
         
         dispatch(.zoomCamera(to: Constants.zoomedCameraDistance, duration: 1.5) { [weak self] in
-            self?.state = .emailInput
+            self?.state = .email
         })
+    }
+    
+    private func handleProceedFromEmail() async throws {
+        try await networkService.register(email: email)
+        if Int.random(in: 1...2) % 2 == 0 {
+            state = .auth(.password)
+        } else {
+            state = .register(.code)
+        }
     }
     
     private func handleBack() {
         switch state {
-        case .welcome:
-            break
-            
-        case .emailInput:
+        case .email:
             isZoomedIn = false
             state = .welcome
             dispatch(.zoomCamera(to: Constants.initialCameraDistance, duration: 1.5, completion: nil))
+        case let .auth(authState):
+            switch authState {
+            case .password:
+                state = .email
+            }
+        case let .register(registerState):
+            switch registerState {
+            case .code:
+                state = .email
+            case .password:
+                state = .register(.code)
+            case .repeatPassword:
+                state = .register(.password)
+            case .nickname:
+                state = .register(.repeatPassword)
+            }
+        default:
+            break
         }
     }
     

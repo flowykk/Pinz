@@ -13,7 +13,7 @@ public protocol NetworkServiceProtocol {
 }
 
 public final class NetworkService: NetworkServiceProtocol {
-    private let provider = NetworkProvider<PinzAPI>(stub: true, stubDelay: 1)
+    private let provider = NetworkProvider<PinzAPI>(stub: true, stubDelay: 2)
 
     public init() {}
 
