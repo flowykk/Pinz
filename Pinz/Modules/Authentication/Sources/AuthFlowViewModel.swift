@@ -50,7 +50,7 @@ public class AuthFlowViewModel {
     public var cameraDistance: Double = Constants.initialCameraDistance
     public var isZoomedIn: Bool = false
     public var email: String = ""
-    public var name: String = ""
+    public var password: String = ""
     public var cameraPosition: MapCameraPosition = .camera(
         MapCamera(
             centerCoordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0),

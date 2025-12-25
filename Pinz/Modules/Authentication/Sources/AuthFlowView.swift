@@ -123,9 +123,9 @@ public struct AuthFlowView: View {
     private var authPasswordOverlay: some View {
         VStack {
             PinzTextField(
-                label: "name:",
-                placeholder: "your name",
-                text: $viewModel.name,
+                label: "password:",
+                placeholder: "shhhhhhhhh",
+                text: $viewModel.password,
                 keyboardType: .default,
                 autocapitalization: .never,
                 action: .plain { }
