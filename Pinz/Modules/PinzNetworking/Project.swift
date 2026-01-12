@@ -1,20 +1,20 @@
 import ProjectDescription
 
 let project = Project(
-    name: "Authentication",
+    name: "PinzNetworking",
     targets: [
         .target(
-            name: "Authentication",
+            name: "PinzNetworking",
             destinations: .iOS,
             product: .framework,
-            bundleId: "io.tuist.Authentication",
+            bundleId: "io.tuist.PinzNetworking",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
-                .project(target: "Base", path: "../Base"),
-                .project(target: "Networking", path: "../Networking"),
-                .project(target: "UIComponents", path: "../UIComponents")
+                .project(target: "PinzBase", path: "../PinzBase"),
+                .project(target: "PinzDomain", path: "../PinzDomain"),
+                .external(name: "Moya")
             ]
         )
     ]

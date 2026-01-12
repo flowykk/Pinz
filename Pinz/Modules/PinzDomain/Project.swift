@@ -1,20 +1,17 @@
 import ProjectDescription
 
 let project = Project(
-    name: "Networking",
+    name: "PinzDomain",
     targets: [
         .target(
-            name: "Networking",
+            name: "PinzDomain",
             destinations: .iOS,
             product: .framework,
-            bundleId: "io.tuist.Networking",
+            bundleId: "io.tuist.PinzDomain",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
-            dependencies: [
-                .project(target: "Base", path: "../Base"),
-                .external(name: "Moya")
-            ]
+            dependencies: []
         )
     ]
 )
