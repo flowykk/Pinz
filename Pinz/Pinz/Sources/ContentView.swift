@@ -1,5 +1,5 @@
 import SwiftUI
-import Authentication
+import PinzAuthentication
 
 public struct ContentView: View {
     public init() {}

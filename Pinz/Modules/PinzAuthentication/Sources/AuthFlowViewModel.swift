@@ -1,8 +1,8 @@
 import Foundation
 import SwiftUI
 import MapKit
-import Base
-import Networking
+import PinzBase
+import PinzNetworking
 
 @Observable
 public class AuthFlowViewModel {
@@ -42,15 +42,14 @@ public class AuthFlowViewModel {
     }
 
     public enum AsyncIntent {
-        case proceedFromEmail
+        case `continue`
     }
 
     public var state: State = .welcome
     public var longitude: Double = 0
     public var cameraDistance: Double = Constants.initialCameraDistance
     public var isZoomedIn: Bool = false
-    public var email: String = ""
-    public var password: String = ""
+    public var text: String = ""
     public var cameraPosition: MapCameraPosition = .camera(
         MapCamera(
             centerCoordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0),
@@ -70,33 +69,52 @@ public class AuthFlowViewModel {
     public func dispatch(_ intent: Intent) {
         switch intent {
         case .startRotation:
-            handleStartRotation()
+            startRotation()
         case .updateRotation:
-            handleUpdateRotation()
+            updateRotation()
         case .zoomCamera(let targetDistance, let duration, let completion):
-            handleZoomCamera(to: targetDistance, duration: duration, completion: completion)
+            zoomCamera(to: targetDistance, duration: duration, completion: completion)
         case .performZoomAnimation(let targetDistance, let startDistance, let startTime, let completion):
-            handleZoomAnimation(
+            performZoomAnimation(
                 targetDistance: targetDistance,
                 startDistance: startDistance,
                 startTime: startTime,
                 completion: completion
             )
         case .proceedFromWelcome:
-            handleProceedFromWelcome()
+            proceedFromWelcome()
         case .back:
-            handleBack()
+            back()
         }
     }
 
     public func asyncDispatch(_ intent: AsyncIntent) async throws {
         switch intent {
-        case .proceedFromEmail:
-            try await handleProceedFromEmail()
+        case .continue:
+            switch state {
+            case .email:
+                try await proceedFromEmail()
+            case .auth:
+                try await proceedFromAuthPassword()
+            case let .register(registerState):
+                switch registerState {
+                case .code:
+                    try await proceedFromRegisterCode()
+                case .password:
+                    try await proceedFromRegisterPassword()
+                case .repeatPassword:
+                    try await proceedFromRegisterRepeatPassword()
+                case .nickname:
+                    try await proceedFromRegisterNickname()
+                }
+            default:
+                break
+            }
         }
+        text = ""
     }
 
-    private func handleStartRotation() {
+    private func startRotation() {
         rotationTimer?.invalidate()
         rotationTimer = Timer.scheduledTimer(
             withTimeInterval: Constants.cameraRotationUpdateInterval,
@@ -106,7 +124,7 @@ public class AuthFlowViewModel {
         }
     }
     
-    private func handleUpdateRotation() {
+    private func updateRotation() {
         longitude += 0.01
         if longitude > 180 {
             longitude = -180
@@ -122,7 +140,7 @@ public class AuthFlowViewModel {
         )
     }
     
-    private func handleZoomCamera(to targetDistance: Double, duration: Double, completion: (() -> Void)?) {
+    private func zoomCamera(to targetDistance: Double, duration: Double, completion: (() -> Void)?) {
         let startDistance = cameraDistance
         let startTime = Date()
         
@@ -140,7 +158,7 @@ public class AuthFlowViewModel {
         }
     }
     
-    private func handleZoomAnimation(targetDistance: Double, startDistance: Double, startTime: Date, completion: (() -> Void)?) {
+    private func performZoomAnimation(targetDistance: Double, startDistance: Double, startTime: Date, completion: (() -> Void)?) {
         let duration: Double = 2.0
         let elapsed = Date().timeIntervalSince(startTime)
         let progress = min(elapsed / duration, 1.0)
@@ -156,7 +174,7 @@ public class AuthFlowViewModel {
         }
     }
     
-    private func handleProceedFromWelcome() {
+    private func proceedFromWelcome() {
         isZoomedIn = true
         
         dispatch(.zoomCamera(to: Constants.zoomedCameraDistance, duration: 1.5) { [weak self] in
@@ -164,32 +182,49 @@ public class AuthFlowViewModel {
         })
     }
     
-    private func handleProceedFromEmail() async throws {
-        try await networkService.register(email: email)
-        if Int.random(in: 1...2) % 2 == 0 {
+    private func proceedFromEmail() async throws {
+        let userExists = try await networkService.checkEmail(email: text)
+        if userExists.success {
             state = .auth(.password)
         } else {
             state = .register(.code)
         }
+        text = ""
     }
-    
-    private func handleBack() {
+
+    private func proceedFromAuthPassword() async throws {
+        print("Gone to Feed")
+    }
+
+    private func proceedFromRegisterCode() async throws {
+        let 
+        state = .register(.password)
+    }
+
+    private func proceedFromRegisterPassword() async throws {
+        state = .register(.repeatPassword)
+    }
+
+    private func proceedFromRegisterRepeatPassword() async throws {
+        state = .register(.nickname)
+    }
+
+    private func proceedFromRegisterNickname() async throws {
+        print("Gone to Feed")
+    }
+
+    private func back() {
         switch state {
         case .email:
             isZoomedIn = false
             state = .welcome
             dispatch(.zoomCamera(to: Constants.initialCameraDistance, duration: 1.5, completion: nil))
-        case let .auth(authState):
-            switch authState {
-            case .password:
-                state = .email
-            }
+        case .auth:
+            state = .email
         case let .register(registerState):
             switch registerState {
-            case .code:
+            case .code, .password:
                 state = .email
-            case .password:
-                state = .register(.code)
             case .repeatPassword:
                 state = .register(.password)
             case .nickname:

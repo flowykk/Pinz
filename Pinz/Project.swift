@@ -20,10 +20,11 @@ let project = Project(
             sources: ["Pinz/Sources/**"],
             resources: ["Pinz/Resources/**"],
             dependencies: [
-                .project(target: "Base", path: "Modules/Base"),
-                .project(target: "Authentication", path: "Modules/Authentication"),
-                .project(target: "Networking", path: "Modules/Networking"),
-                .project(target: "UIComponents", path: "Modules/UIComponents")
+                .project(target: "PinzBase", path: "Modules/PinzBase"),
+                .project(target: "PinzDomain", path: "Modules/PinzDomain"),
+                .project(target: "PinzAuthentication", path: "Modules/PinzAuthentication"),
+                .project(target: "PinzNetworking", path: "Modules/PinzNetworking"),
+                .project(target: "PinzUI", path: "Modules/PinzUI")
             ]
         ),
         .target(
