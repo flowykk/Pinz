@@ -1,10 +1,26 @@
 import SwiftUI
 import PinzUI
 
+public enum PrivacyStatus: String, CaseIterable, SegmentedItem {
+    case `private`
+    case `public`
+
+    public var id: String { rawValue }
+    public var title: String {
+        switch self {
+        case .private: "lock.open.fill"
+        case .public: "lock.fill"
+        }
+    }
+}
+
 public struct SettingsView: View {
 
     @State
     public var text: String = ""
+
+    @State
+    public var privacyStatus: PrivacyStatus = .private
 
     public init() {}
 
@@ -14,15 +30,22 @@ public struct SettingsView: View {
             settings: [
                 .default(.init(
                     title: "Сезон",
-                    value: "Лето",
+                    values: [.text("Лето")],
                     icon: "sun.max.fill",
                     style: .default,
                     action: .plain { print("smth") }
                 )),
                 .default(.init(
                     title: "Даты",
-                    value: "22.08.2025 - 31.08.2025",
+                    values: [.text("22.08.2025 - 31.08.2025")],
                     icon: "calendar",
+                    style: .default,
+                    action: .plain { print("smth") }
+                )),
+                .default(.init(
+                    title: "Тестирую",
+                    values: [.icon(privacyStatus.title, .red), .icon("star.fill", .green)],
+                    icon: "square.fill",
                     style: .default,
                     action: .plain { print("smth") }
                 )),
@@ -35,7 +58,6 @@ public struct SettingsView: View {
             ],
             subtitle: "Путешествие не будет отображаться в общей ленте"
         )
-        .view
         .padding(.horizontal, 12)
     }
 }
