@@ -15,25 +15,40 @@ public enum Setting {
             case destructive
         }
 
+        public enum Value: Identifiable {
+            case text(String)
+            case icon(String, Color)
+
+            public var id: String {
+                switch self {
+                case .text(let str): return "string_\(str)"
+                case .icon(let name): return "icon_\(name)"
+                }
+            }
+        }
+
         public let id: String
         public let title: String
-        public let value: String
+        public let values: [Value]
         public let icon: String
+        public let trailIcon: String?
         public let style: Style
         public let action: SettingAction
 
         public init(
             id: String = UUID().uuidString,
             title: String,
-            value: String,
+            values: [Value] = [],
             icon: String,
+            trailIcon: String? = nil,
             style: Style = .default,
             action: SettingAction
         ) {
             self.id = id
             self.title = title
-            self.value = value
+            self.values = values
             self.icon = icon
+            self.trailIcon = trailIcon
             self.style = style
             self.action = action
         }
@@ -42,19 +57,34 @@ public enum Setting {
             HStack(spacing: 8) {
                 Group {
                     Image(systemName: icon)
-                        .font(.system(size: 18, weight: .medium))
+                        .modifier(RoundFontModifier(size: 18, weight: .medium))
                     Text(title)
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .modifier(RoundFontModifier(size: 14, weight: .medium))
                 }
                 .foregroundStyle(PinzUIAsset.textPrimary.swiftUIColor)
 
                 Spacer()
 
                 Group {
-                    Text(value)
-                    Image(systemName: "chevron.right")
+                    ForEach(values) { value in
+                        HStack(spacing: 2) {
+                            switch value {
+                            case let .text(text):
+                                Text(text)
+                                    .modifier(RoundFontModifier(size: 12, weight: .medium))
+                            case let .icon(systemName, color):
+                                Image(systemName: systemName)
+                                    .foregroundStyle(color)
+                                    .modifier(RoundFontModifier(size: 14, weight: .medium))
+                            }
+                        }
+                    }
+
+                    if let trailIcon {
+                        Image(systemName: trailIcon)
+                            .modifier(RoundFontModifier(size: 12, weight: .medium))
+                    }
                 }
-                .font(.system(size: 12, weight: .medium, design: .rounded))
                 .foregroundStyle(PinzUIAsset.textSecondary.swiftUIColor)
             }
             .frame(height: 44)
