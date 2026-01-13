@@ -197,7 +197,6 @@ public class AuthFlowViewModel {
     }
 
     private func proceedFromRegisterCode() async throws {
-        let 
         state = .register(.password)
     }
 
