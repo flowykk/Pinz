@@ -14,15 +14,22 @@ public struct SettingsView: View {
             settings: [
                 .default(.init(
                     title: "Сезон",
-                    value: "Лето",
+                    values: [.text("Лето")],
                     icon: "sun.max.fill",
                     style: .default,
                     action: .plain { print("smth") }
                 )),
                 .default(.init(
                     title: "Даты",
-                    value: "22.08.2025 - 31.08.2025",
+                    values: [.text("22.08.2025 - 31.08.2025")],
                     icon: "calendar",
+                    style: .default,
+                    action: .plain { print("smth") }
+                )),
+                .default(.init(
+                    title: "Тестирую",
+                    values: [.icon("lock.open", .red), .icon("star.fill", .green)],
+                    icon: "square.fill",
                     style: .default,
                     action: .plain { print("smth") }
                 )),
@@ -35,7 +42,6 @@ public struct SettingsView: View {
             ],
             subtitle: "Путешествие не будет отображаться в общей ленте"
         )
-        .view
         .padding(.horizontal, 12)
     }
 }

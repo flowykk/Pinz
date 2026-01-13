@@ -1,18 +1,22 @@
 import SwiftUI
 
-public struct SettingsGroup {
+public struct SettingsGroup: View {
 
     public let title: String?
     public let settings: [Setting]
     public let subtitle: String?
 
-    public init(title: String?, settings: [Setting], subtitle: String?) {
+    public init(
+        title: String?,
+        settings: [Setting],
+        subtitle: String?
+    ) {
         self.title = title
         self.settings = settings
         self.subtitle = subtitle
     }
 
-    public var view: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let title {
                 Text(title)
