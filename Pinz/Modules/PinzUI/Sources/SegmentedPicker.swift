@@ -51,7 +51,7 @@ public struct SegmentedPicker<Item: SegmentedItem>: View {
         HStack(spacing: 0) {
             Spacer(minLength: 0)
             Text(item.title)
-                .modifier(RoundFontModifier(size: 14, weight: .medium))
+                .roundedFount(size: 14)
             Spacer(minLength: 0)
         }
         .padding(6)

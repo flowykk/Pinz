@@ -24,7 +24,8 @@ let project = Project(
                 .project(target: "PinzDomain", path: "Modules/PinzDomain"),
                 .project(target: "PinzAuthentication", path: "Modules/PinzAuthentication"),
                 .project(target: "PinzNetworking", path: "Modules/PinzNetworking"),
-                .project(target: "PinzUI", path: "Modules/PinzUI")
+                .project(target: "PinzUI", path: "Modules/PinzUI"),
+                .project(target: "PinzProfile", path: "Modules/PinzProfile")
             ]
         ),
         .target(
