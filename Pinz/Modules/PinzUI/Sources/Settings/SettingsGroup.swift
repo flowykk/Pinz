@@ -7,9 +7,9 @@ public struct SettingsGroup: View {
     public let subtitle: String?
 
     public init(
-        title: String?,
+        title: String? = nil,
         settings: [Setting],
-        subtitle: String?
+        subtitle: String? = nil
     ) {
         self.title = title
         self.settings = settings
@@ -29,10 +29,10 @@ public struct SettingsGroup: View {
                 ForEach(settings) { setting in
                     setting.view
                 }
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 14)
             }
             .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
-            .cornerRadius(22)
+            .cornerRadius(24)
 
             if let subtitle {
                 Text(subtitle)

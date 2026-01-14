@@ -3,6 +3,10 @@ import SwiftUI
 
 public enum Setting {
 
+    public protocol Icon {
+        var rawValue: String { get }
+    }
+
     public enum SettingAction {
         case plain(() -> Void)
         case async(() async throws -> Void)
@@ -17,30 +21,44 @@ public enum Setting {
 
         public enum Value: Identifiable {
             case text(String)
-            case icon(String, Color)
+            case icon(Icon, Color)
 
             public var id: String {
                 switch self {
-                case .text(let str): return "string_\(str)"
-                case .icon(let name): return "icon_\(name)"
+                case let .text(str): return "string_\(str)"
+                case let .icon(icon, _): return "icon_\(icon.rawValue)"
                 }
             }
         }
 
-        public let id: String
-        public let title: String
-        public let values: [Value]
-        public let icon: String
-        public let trailIcon: String?
-        public let style: Style
-        public let action: SettingAction
+        let id: String
+        let title: String
+        let values: [Value]
+        let icon: Icon
+        let trailIcon: Icon?
+        let style: Style
+        let action: SettingAction
+
+        var titleColor: Color {
+            switch style {
+            case .default: PinzUIAsset.textPrimary.swiftUIColor
+            case .destructive: PinzUIAsset.accentRed.swiftUIColor
+            }
+        }
+
+        var trailColor: Color {
+            switch style {
+            case .default: PinzUIAsset.textSecondary.swiftUIColor
+            case .destructive: PinzUIAsset.accentRed.swiftUIColor
+            }
+        }
 
         public init(
             id: String = UUID().uuidString,
             title: String,
             values: [Value] = [],
-            icon: String,
-            trailIcon: String? = nil,
+            icon: Icon,
+            trailIcon: Icon?,
             style: Style = .default,
             action: SettingAction
         ) {
@@ -56,12 +74,9 @@ public enum Setting {
         var view: some View {
             HStack(spacing: 8) {
                 Group {
-                    Image(systemName: icon)
-                        .modifier(RoundFontModifier(size: 18, weight: .medium))
+                    Image(systemName: icon.rawValue)
                     Text(title)
-                        .modifier(RoundFontModifier(size: 14, weight: .medium))
-                }
-                .foregroundStyle(PinzUIAsset.textPrimary.swiftUIColor)
+                }.roundedFount(size: 14, foregroundColor: titleColor)
 
                 Spacer()
 
@@ -71,23 +86,22 @@ public enum Setting {
                             switch value {
                             case let .text(text):
                                 Text(text)
-                                    .modifier(RoundFontModifier(size: 12, weight: .medium))
-                            case let .icon(systemName, color):
-                                Image(systemName: systemName)
+                                    .roundedFount(size: 12, weight: .bold, foregroundColor: trailColor)
+                            case let .icon(icon, color):
+                                Image(systemName: icon.rawValue)
                                     .foregroundStyle(color)
-                                    .modifier(RoundFontModifier(size: 14, weight: .medium))
+                                    .roundedFount(size: 14, foregroundColor: trailColor)
                             }
                         }
                     }
 
                     if let trailIcon {
-                        Image(systemName: trailIcon)
-                            .modifier(RoundFontModifier(size: 12, weight: .medium))
+                        Image(systemName: trailIcon.rawValue)
+                            .roundedFount(size: 10, weight: .bold, foregroundColor: trailColor)
                     }
                 }
-                .foregroundStyle(PinzUIAsset.textSecondary.swiftUIColor)
             }
-            .frame(height: 44)
+            .frame(height: 48)
         }
     }
 
@@ -98,11 +112,11 @@ public enum Setting {
             case multiline
         }
 
-        public let id: String
+        let id: String
         @Binding
-        public var text: String
-        public let placeholder: String
-        public let style: Style
+        var text: String
+        let placeholder: String
+        let style: Style
 
         public init(
             id: String = UUID().uuidString,
@@ -119,7 +133,7 @@ public enum Setting {
         var view: some View {
             textField
                 .font(.system(size: 14, weight: .medium, design: .rounded))
-                .frame(maxWidth: .infinity, minHeight: 44)
+                .frame(maxWidth: .infinity, minHeight: 48)
         }
 
         @ViewBuilder
