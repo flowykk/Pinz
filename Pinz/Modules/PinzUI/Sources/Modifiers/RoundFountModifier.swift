@@ -7,7 +7,7 @@ public struct RoundFontModifier: ViewModifier {
 
     public init(
         size: CGFloat,
-        weight: Font.Weight = .heavy,
+        weight: Font.Weight = .medium,
         foregroundColor: Color = PinzUIAsset.textPrimary.swiftUIColor
     ) {
         self.size = size
@@ -19,5 +19,15 @@ public struct RoundFontModifier: ViewModifier {
         content
             .font(.system(size: size, weight: weight, design: .rounded))
             .foregroundStyle(foregroundColor)
+    }
+}
+
+extension View {
+    public func roundedFount(
+        size: CGFloat,
+        weight: Font.Weight = .medium,
+        foregroundColor: Color = PinzUIAsset.textPrimary.swiftUIColor
+    ) -> some View {
+        self.modifier(RoundFontModifier(size: size, weight: weight, foregroundColor: foregroundColor))
     }
 }

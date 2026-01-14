@@ -16,13 +16,13 @@ public struct AuthFlowView: View {
             .overlay {
                 ZStack {
                     VStack {
-                         if viewModel.state != .welcome {
-                             PinzHeader(leftView: {
-                                 PinzButton(type: .leftChevron, tint: .white) {
-                                     viewModel.dispatch(.back)
-                                 }
-                             })
-                         }
+                        if viewModel.state != .welcome {
+                            PinzHeader(leftView: {
+                                PinzButton(type: .chevronLeft, tint: .white) {
+                                    viewModel.dispatch(.back)
+                                }
+                            })
+                        }
 
                         Spacer()
 
