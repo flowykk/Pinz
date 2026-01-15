@@ -19,12 +19,17 @@ public struct PinzHeader<LeftContent: View, CenterContent: View, RightContent: V
     }
 
     public var body: some View {
-        HStack {
-            leftView
-            Spacer()
-            centerView
-            Spacer()
-            rightView
+        ZStack {
+            HStack {
+                leftView
+                Spacer()
+                rightView
+            }
+            HStack {
+                Spacer()
+                centerView
+                Spacer()
+            }
         }
         .frame(height: 44)
         .padding(.horizontal, 8)

@@ -18,7 +18,7 @@ public struct AuthFlowView: View {
                     VStack {
                         if viewModel.state != .welcome {
                             PinzHeader(leftView: {
-                                PinzButton(type: .chevronLeft, tint: .white) {
+                                PinzButton(type: .icon(.chevronLeft), tint: .white) {
                                     viewModel.dispatch(.back)
                                 }
                             })

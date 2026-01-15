@@ -5,7 +5,7 @@ extension SettingsGroup: View {
         VStack(alignment: .leading, spacing: 0) {
             if let title {
                 Text(title)
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .roundedFount(size: 16, weight: .bold)
                     .padding(.bottom, 6)
                     .padding(.leading, 12)
             }

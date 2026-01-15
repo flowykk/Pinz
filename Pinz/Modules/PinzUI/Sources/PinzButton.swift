@@ -1,7 +1,13 @@
 import SwiftUI
 
 public struct PinzButton: View {
-    public enum ButtonType: String {
+
+    public enum ButtonType {
+        case icon(IconType)
+        case text(String)
+    }
+
+    public enum IconType: String {
         case chevronLeft = "chevron.left"
 
         case personAdd = "person.fill.badge.plus"
@@ -24,10 +30,20 @@ public struct PinzButton: View {
 
     public var body: some View {
         Button(action: action) {
-            Image(systemName: type.rawValue)
-                .font(.system(size: 20, weight: .bold))
-                .frame(width: 40, height: 40)
-                .tint(tint)
+            Group {
+                switch type {
+                case let .icon(icon):
+                    Image(systemName: icon.rawValue)
+                        .font(.system(size: 20, weight: .bold))
+                        .frame(width: 40, height: 40)
+                        .tint(tint)
+                case let .text(text):
+                    Text(text)
+                }
+            }
+            .roundedFount(size: 20, weight: .bold)
+            .frame(width: 40, height: 40)
+            .tint(tint)
         }
     }
 }
