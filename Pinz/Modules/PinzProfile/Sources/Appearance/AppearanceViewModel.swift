@@ -7,7 +7,7 @@ import PinzNavigation
 @Observable
 public class AppearanceViewModel {
 
-    public enum PinzMapStyle: SegmentedItem {
+    public enum PinzMapStyle: String, SegmentedItem {
         case scheme
         case hybrid
         case satelight
@@ -37,20 +37,36 @@ public class AppearanceViewModel {
 
     public enum Intent {
         case changeMapStyle(PinzMapStyle)
+        case loadMapStyle
+        case saveMapStyle
     }
 
     public var state = State()
     
     private let networkService = NetworkService()
+    private let userDefaults = UserDefaults.standard
+    private let mapStyleKey = "pinzMapStyle"
 
-    public init() {}
+    public init() {
+        dispatch(.loadMapStyle)
+    }
 
     public func dispatch(_ intent: Intent) {
         switch intent {
         case let .changeMapStyle(mapStyle):
             withAnimation(.easeInOut(duration: 0.3)) {
-                self.state.mapStyle = mapStyle
+                state.mapStyle = mapStyle
             }
+            dispatch(.saveMapStyle)
+            
+        case .loadMapStyle:
+            if let savedStyle = userDefaults.string(forKey: mapStyleKey),
+               let mapStyle = PinzMapStyle(rawValue: savedStyle) {
+                state.mapStyle = mapStyle
+            }
+            
+        case .saveMapStyle:
+            userDefaults.set(state.mapStyle.rawValue, forKey: mapStyleKey)
         }
     }
 }

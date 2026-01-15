@@ -110,7 +110,7 @@ public struct ProfileView: View {
                 },
                 centerView: {
                     Text("Редактирование профиля")
-                        .roundedFount(size: 18, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                 },
                 rightView: {
                     Button {

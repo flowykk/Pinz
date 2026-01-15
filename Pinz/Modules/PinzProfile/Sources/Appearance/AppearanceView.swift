@@ -6,6 +6,7 @@ struct AppearanceView: View {
     @Environment(\.dismiss) var dismiss
 
     @State private var viewModel = AppearanceViewModel()
+    @State private var selectedIconIndex: Int? = 0
     @State private var position: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 55.7558, longitude: 37.6173),
@@ -15,19 +16,13 @@ struct AppearanceView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            PinzHeader(
-                leftView: {
-                    PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                        dismiss()
-                    }
-                },
-                centerView: {
-//                    Text("Настройки оформления")
-//                        .roundedFount(size: 18, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+            PinzHeader(leftView: {
+                PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                    dismiss()
                 }
-            )
+            })
 
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(spacing: 12) {
                 appIconSettings
 
                 mapSettings
@@ -39,40 +34,35 @@ struct AppearanceView: View {
         }
     }
 
-    @ViewBuilder
     private var appIconSettings: some View {
-        Text("Иконка приложения")
-            .roundedFount(size: 18, weight: .medium)
-            .padding(.leading, 12)
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Иконка приложения")
+                .roundedFount(size: 18, weight: .medium)
+                .padding(.leading, 12)
 
-        ScrollView(.horizontal) {
-            Group {
-                Rectangle()
-                Rectangle()
-                Rectangle()
-                Rectangle()
-                Rectangle()
-                Rectangle()
-            }
-            .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
-            .frame(width: 120, height: 120)
+            AppIconsGridView()
         }
     }
 
-    @ViewBuilder
     private var mapSettings: some View {
-        Text("Вид карты")
-            .roundedFount(size: 18, weight: .medium)
-            .padding(.leading, 12)
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Вид карты")
+                .roundedFount(size: 18, weight: .medium)
+                .padding(.leading, 12)
 
-        SegmentedPicker(selection: $viewModel.state.mapStyle, items: [.satelight, .scheme, .hybrid])
-            .padding(.top, 6)
+            SegmentedPicker(
+                selection: Binding(
+                    get: { viewModel.state.mapStyle },
+                    set: { viewModel.dispatch(.changeMapStyle($0)) }
+                ),
+                items: [.satelight, .scheme, .hybrid]
+            )
 
-        Map(position: $position)
-            .mapStyle(viewModel.state.mapStyle.toMapKitMapStyle())
-            .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .padding(.top, 6)
+            Map(position: $position)
+                .mapStyle(viewModel.state.mapStyle.toMapKitMapStyle())
+                .aspectRatio(1, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
     }
 }
 
