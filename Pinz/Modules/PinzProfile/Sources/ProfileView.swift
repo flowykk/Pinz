@@ -27,10 +27,36 @@ public struct ProfileView: View {
     
     public var body: some View {
         VStack(spacing: 0) {
+            header
+
+            ScrollView {
+                avatar
+                    .padding(.top, 12)
+
+                VStack {
+                    switch viewModel.state {
+                    case .default:
+                        defaultSettings
+                    case .editing:
+                        editingSettings
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
+
+                Spacer()
+            }
+        }.transition(.opacity)
+    }
+
+    @ViewBuilder
+    private var header: some View {
+        switch viewModel.state {
+        case .default:
             PinzHeader(
                 leftView: {
                     PinzButton(type: .chevronLeft, tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                        
+
                     }
                 },
                 rightView: {
@@ -39,104 +65,159 @@ public struct ProfileView: View {
 
                         }
                         PinzButton(type: .pencil, tint: PinzUIAsset.textPrimary.swiftUIColor) {
-
+                            viewModel.dispatch(.changeState)
                         }
                     }
                 }
             )
-
-            ScrollView {
-                VStack {
-                    Image(uiImage: PinzUIAsset.avatar.image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 100, height: 100)
-                        .cornerRadius(50)
-                        .clipped()
-
-                    Text("\(viewModel.email) • \(viewModel.nickname)")
-                        .roundedFount(
-                            size: 14,
-                            foregroundColor: PinzUIAsset.textSecondary.swiftUIColor
-                        )
-                }.padding(.top, 8)
-
-                VStack {
-                    SettingsGroup(
-                        settings: [
-                            .default(.init(
-                                title: "Статистика",
-                                icon: ProfileIcon.chart,
-                                trailIcon: ProfileIcon.chevronRight,
-                                action: .plain { }
-                            )),
-                        ],
-                    )
-
-                    SettingsGroup(
-                        settings: [
-                            .default(.init(
-                                title: "Путешествия",
-                                icon: ProfileIcon.map,
-                                trailIcon: ProfileIcon.chevronRight,
-                                action: .plain { }
-                            )),
-                            .default(.init(
-                                title: "Желанные места",
-                                icon: ProfileIcon.heart,
-                                trailIcon: ProfileIcon.chevronRight,
-                                action: .plain { }
-                            )),
-                            .default(.init(
-                                title: "Сохранённые карты",
-                                icon: ProfileIcon.bookmark,
-                                trailIcon: ProfileIcon.chevronRight,
-                                action: .plain { }
-                            )),
-                        ],
-                    )
-
-                    SettingsGroup(
-                        settings: [
-                            .default(.init(
-                                title: "Уведомления",
-                                icon: ProfileIcon.bell,
-                                trailIcon: ProfileIcon.chevronRight,
-                                action: .plain { }
-                            )),
-                            .default(.init(
-                                title: "Оформление",
-                                icon: ProfileIcon.paintbrush,
-                                trailIcon: ProfileIcon.chevronRight,
-                                action: .plain { }
-                            )),
-                        ],
-                    )
-
-                    SettingsGroup(
-                        settings: [
-                            .default(.init(
-                                title: "Удалить аккаунт",
-                                icon: ProfileIcon.trash,
-                                trailIcon: ProfileIcon.chevronRight,
-                                style: .destructive,
-                                action: .plain { }
-                            )),
-                            .default(.init(
-                                title: "Выйти",
-                                icon: ProfileIcon.door,
-                                trailIcon: ProfileIcon.chevronRight,
-                                style: .destructive,
-                                action: .plain { }
-                            )),
-                        ],
-                    )
+        case .editing:
+            PinzHeader(
+                leftView: {
+                    Button {
+                        viewModel.dispatch(.changeState)
+                    } label: {
+                        Text("Отмена")
+                            .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                            .padding(.leading, 12)
+                    }
+                },
+                centerView: {
+                    Text("Редактирование профиля")
+                        .roundedFount(size: 18, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                },
+                rightView: {
+                    Button {
+                        viewModel.dispatch(.changeState)
+                    } label: {
+                        Text("Готово")
+                            .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                            .padding(.trailing, 12)
+                    }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-
-                Spacer()
-            }
+            )
         }
+    }
+
+    private var avatar: some View {
+        VStack {
+            Image(uiImage: PinzUIAsset.avatar.image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 120, height: 120)
+                .cornerRadius(60)
+                .clipped()
+
+            Group {
+                switch viewModel.state {
+                case .default:
+                    Text("\(viewModel.nickname) • \(viewModel.email)")
+                case .editing:
+                    Text("Изменить фотографию")
+                }
+            }
+            .roundedFount(
+                size: 16,
+                foregroundColor: PinzUIAsset.textSecondary.swiftUIColor
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var defaultSettings: some View {
+        SettingsGroup(
+            settings: [
+                .default(.init(
+                    title: "Статистика",
+                    icon: ProfileIcon.chart,
+                    trailIcon: ProfileIcon.chevronRight,
+                    action: .plain { }
+                )),
+            ],
+        )
+
+        SettingsGroup(
+            settings: [
+                .default(.init(
+                    title: "Путешествия",
+                    icon: ProfileIcon.map,
+                    trailIcon: ProfileIcon.chevronRight,
+                    action: .plain { }
+                )),
+                .default(.init(
+                    title: "Желанные места",
+                    icon: ProfileIcon.heart,
+                    trailIcon: ProfileIcon.chevronRight,
+                    action: .plain { }
+                )),
+                .default(.init(
+                    title: "Сохранённые карты",
+                    icon: ProfileIcon.bookmark,
+                    trailIcon: ProfileIcon.chevronRight,
+                    action: .plain { }
+                )),
+            ],
+        )
+
+        SettingsGroup(
+            settings: [
+                .default(.init(
+                    title: "Уведомления",
+                    icon: ProfileIcon.bell,
+                    trailIcon: ProfileIcon.chevronRight,
+                    action: .plain { }
+                )),
+                .default(.init(
+                    title: "Оформление",
+                    icon: ProfileIcon.paintbrush,
+                    trailIcon: ProfileIcon.chevronRight,
+                    action: .plain { }
+                )),
+            ],
+        )
+
+        SettingsGroup(
+            settings: [
+                .default(.init(
+                    title: "Удалить аккаунт",
+                    icon: ProfileIcon.trash,
+                    trailIcon: ProfileIcon.chevronRight,
+                    style: .destructive,
+                    action: .plain { }
+                )),
+                .default(.init(
+                    title: "Выйти",
+                    icon: ProfileIcon.door,
+                    trailIcon: ProfileIcon.chevronRight,
+                    style: .destructive,
+                    action: .plain { }
+                )),
+            ],
+        )
+    }
+
+    @ViewBuilder
+    private var editingSettings: some View {
+        SettingsGroup(
+            settings: [
+                .textField(.init(
+                    id: "nicknameTextField",
+                    text: $viewModel.nickname,
+                    placeholder: "Имя",
+                    style: .default
+                )),
+            ],
+            subtitle: "Имя пользователя должно состоять из "
+        )
+
+        SettingsGroup(
+            settings: [
+                .default(.init(
+                    title: "Сменить почту",
+                    values: [.text(viewModel.email)],
+                    trailIcon: ProfileIcon.chevronRight,
+                    action: .plain { }
+                )),
+            ],
+        )
     }
 }

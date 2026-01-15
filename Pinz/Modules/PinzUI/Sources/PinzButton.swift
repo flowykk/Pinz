@@ -3,7 +3,7 @@ import SwiftUI
 public struct PinzButton: View {
     public enum ButtonType: String {
         case chevronLeft = "chevron.left"
-        
+
         case personAdd = "person.fill.badge.plus"
         case pencil = "pencil"
     }

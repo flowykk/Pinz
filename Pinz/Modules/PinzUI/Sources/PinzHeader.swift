@@ -26,7 +26,7 @@ public struct PinzHeader<LeftContent: View, CenterContent: View, RightContent: V
             Spacer()
             rightView
         }
-        .padding(.bottom)
+        .frame(height: 44)
         .padding(.horizontal, 8)
         .background(.clear)
     }

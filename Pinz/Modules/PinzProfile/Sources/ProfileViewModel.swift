@@ -12,12 +12,12 @@ public class ProfileViewModel {
     public enum Intent {
         case back
         case addPerson
-        case changeState(State)
+        case changeState
     }
 
     public var state: State = .default
-    public var nickname: String
-    public var email: String
+    var nickname: String
+    var email: String
 
     private let networkService = NetworkService()
 
@@ -32,7 +32,16 @@ public class ProfileViewModel {
             print("back")
         case .addPerson:
             print("add person")
-        case let .changeState(state):
+        case .changeState:
+            switch state {
+            case .default: changeState(to: .editing)
+            case .editing: changeState(to: .default)
+            }
+        }
+    }
+
+    private func changeState(to state: State) {
+        withAnimation(.easeInOut(duration: 0.3)) {
             self.state = state
         }
     }
