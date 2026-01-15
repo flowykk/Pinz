@@ -4,8 +4,7 @@ extension SettingsGroup: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let title {
-                Text(title)
-                    .roundedFount(size: 16, weight: .bold)
+                SettingTitle(title)
                     .padding(.bottom, 6)
                     .padding(.leading, 12)
             }
