@@ -16,11 +16,11 @@ struct AppearanceView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            PinzHeader(leftView: {
+            PinzHeader {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                     dismiss()
                 }
-            })
+            }
 
             VStack(spacing: 12) {
                 appIconSettings

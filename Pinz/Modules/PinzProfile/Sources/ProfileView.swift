@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzNavigation
+import PinzDomain
 
 enum ProfileIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -20,9 +21,14 @@ enum ProfileIcon: String, Setting.Icon {
 public struct ProfileView: View {
 
     @State private var viewModel = ProfileViewModel(
-        nickname: "flowykk",
-        email: "cristgames123@gmail.com"
+        user: User(
+            nickname: "flowykk",
+            email: "cristgames123@gmail.com"
+        )
     )
+
+    @State private var imageEditingDialogShown = false
+    @State private var photoPickerShown = false
 
     public init() {}
     
@@ -53,6 +59,22 @@ public struct ProfileView: View {
             .navigationDestination(for: ProfileDestination.self) { destination in
                 destinationView(for: destination).navigationBarHidden(true)
             }
+            .confirmationDialog(
+                "Выберите действие",
+                isPresented: $imageEditingDialogShown,
+                titleVisibility: .visible
+            ) {
+                Button("Выбрать из галереи") {
+                    photoPickerShown = true
+                }
+                Button("Удалить фотографию", role: .destructive) {
+                }
+            }
+            .customImagePicker(show: $photoPickerShown, croppedImage: Binding {
+                return viewModel.userImage
+            } set: { newImage in
+                viewModel.dispatch(.setImage(newImage))
+            })
         }
     }
     
@@ -98,36 +120,32 @@ public struct ProfileView: View {
                 }
             )
         case .editing:
-            PinzHeader(
-                leftView: {
-                    Button {
-                        viewModel.dispatch(.changeState)
-                    } label: {
-                        Text("Отмена")
-                            .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                            .padding(.leading, 12)
-                    }
-                },
-                centerView: {
-                    Text("Редактирование профиля")
-                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                },
-                rightView: {
-                    Button {
-                        viewModel.dispatch(.changeState)
-                    } label: {
-                        Text("Готово")
-                            .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                            .padding(.trailing, 12)
-                    }
+            PinzHeader {
+                Button {
+                    viewModel.dispatch(.changeState)
+                } label: {
+                    Text("Отмена")
+                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .padding(.leading, 12)
                 }
-            )
+            } centerView: {
+                Text("Редактирование профиля")
+                    .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+            } rightView: {
+                Button {
+                    viewModel.dispatch(.changeState)
+                } label: {
+                    Text("Готово")
+                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .padding(.trailing, 12)
+                }
+            }
         }
     }
 
     private var avatar: some View {
         VStack {
-            Image(uiImage: PinzUIAsset.avatar.image)
+            Image(uiImage: viewModel.userImage)
                 .resizable()
                 .scaledToFill()
                 .frame(width: 120, height: 120)
@@ -137,9 +155,14 @@ public struct ProfileView: View {
             Group {
                 switch viewModel.state {
                 case .default:
-                    Text("\(viewModel.nickname) • \(viewModel.email)")
+                    Text("\(viewModel.user.nickname) • \(viewModel.user.email)")
                 case .editing:
-                    Text("Изменить фотографию")
+                    Button {
+                        imageEditingDialogShown = true
+                    } label: {
+                        Text("Изменить фотографию")
+                    }
+
                 }
             }
             .roundedFount(
@@ -228,7 +251,7 @@ public struct ProfileView: View {
             settings: [
                 .textField(.init(
                     id: "nicknameTextField",
-                    text: $viewModel.nickname,
+                    text: $viewModel.user.nickname,
                     placeholder: "Имя",
                     style: .default
                 )),
@@ -240,7 +263,7 @@ public struct ProfileView: View {
             settings: [
                 .default(.init(
                     title: "Сменить почту",
-                    values: [.text(viewModel.email)],
+                    values: [.text(viewModel.user.email)],
                     trailIcon: ProfileIcon.chevronRight,
                     action: .plain { }
                 )),

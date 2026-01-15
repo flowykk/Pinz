@@ -27,7 +27,13 @@ let project = Project(
                 .project(target: "PinzNetworking", path: "Modules/PinzNetworking"),
                 .project(target: "PinzUI", path: "Modules/PinzUI"),
                 .project(target: "PinzNavigation", path: "Modules/PinzNavigation")
-            ]
+            ],
+            settings: .settings(
+                base: [
+                    "ASSETCATALOG_COMPILER_APPICON_NAME": "RewindLight",
+                    "ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS": "YES",
+                ]
+            )
         ),
         .target(
             name: "PinzTests",

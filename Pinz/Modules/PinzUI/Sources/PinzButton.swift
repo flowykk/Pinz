@@ -34,15 +34,14 @@ public struct PinzButton: View {
                 switch type {
                 case let .icon(icon):
                     Image(systemName: icon.rawValue)
-                        .font(.system(size: 20, weight: .bold))
+                        .roundedFount(size: 20, weight: .bold)
                         .frame(width: 40, height: 40)
                         .tint(tint)
                 case let .text(text):
                     Text(text)
+                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                 }
             }
-            .roundedFount(size: 20, weight: .bold)
-            .frame(width: 40, height: 40)
             .tint(tint)
         }
     }
