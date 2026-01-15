@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzNetworking
+import PinzNavigation
 
 @Observable
 public class ProfileViewModel {
@@ -15,7 +16,8 @@ public class ProfileViewModel {
         case changeState
     }
 
-    public var state: State = .default
+    var state: State = .default
+    var navigator = Navigator<ProfileDestination>()
     var nickname: String
     var email: String
 
@@ -29,9 +31,9 @@ public class ProfileViewModel {
     public func dispatch(_ intent: Intent) {
         switch intent {
         case .back:
-            print("back")
+            navigator.back()
         case .addPerson:
-            print("add person")
+            navigator.navigate(to: .addPerson)
         case .changeState:
             switch state {
             case .default: changeState(to: .editing)

@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzUI
+import PinzNavigation
 
 enum ProfileIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -26,27 +27,54 @@ public struct ProfileView: View {
     public init() {}
     
     public var body: some View {
-        VStack(spacing: 0) {
-            header
+        NavigationStack(path: $viewModel.navigator.path) {
+            VStack(spacing: 0) {
+                header
 
-            ScrollView {
-                avatar
-                    .padding(.top, 12)
+                ScrollView {
+                    avatar
+                        .padding(.top, 12)
 
-                VStack {
-                    switch viewModel.state {
-                    case .default:
-                        defaultSettings
-                    case .editing:
-                        editingSettings
+                    VStack {
+                        switch viewModel.state {
+                        case .default:
+                            defaultSettings
+                        case .editing:
+                            editingSettings
+                        }
                     }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
 
-                Spacer()
+                    Spacer()
+                }
             }
-        }.transition(.opacity)
+            .transition(.opacity)
+            .navigationDestination(for: ProfileDestination.self) { destination in
+                destinationView(for: destination)
+            }
+            .navigationBarHidden(true)
+        }
+    }
+    
+    @ViewBuilder
+    private func destinationView(for destination: ProfileDestination) -> some View {
+        switch destination {
+        case .addPerson:
+            AddPersonView()
+        case .statistics:
+            Text("Statistics")
+        case .trips:
+            Text("Trips")
+        case .wishlist:
+            Text("Wishlist")
+        case .savedMaps:
+            Text("Saved Maps")
+        case .notifications:
+            Text("Notifications")
+        case .appearance:
+            Text("Appearance")
+        }
     }
 
     @ViewBuilder
@@ -62,7 +90,7 @@ public struct ProfileView: View {
                 rightView: {
                     HStack(spacing: 4) {
                         PinzButton(type: .personAdd, tint: PinzUIAsset.textPrimary.swiftUIColor) {
-
+                            viewModel.navigator.navigate(to: .addPerson)
                         }
                         PinzButton(type: .pencil, tint: PinzUIAsset.textPrimary.swiftUIColor) {
                             viewModel.dispatch(.changeState)
@@ -130,7 +158,7 @@ public struct ProfileView: View {
                     title: "Статистика",
                     icon: ProfileIcon.chart,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { }
+                    action: .plain { viewModel.navigator.navigate(to: .statistics) }
                 )),
             ],
         )
@@ -141,19 +169,19 @@ public struct ProfileView: View {
                     title: "Путешествия",
                     icon: ProfileIcon.map,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { }
+                    action: .plain { viewModel.navigator.navigate(to: .trips) }
                 )),
                 .default(.init(
                     title: "Желанные места",
                     icon: ProfileIcon.heart,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { }
+                    action: .plain { viewModel.navigator.navigate(to: .wishlist) }
                 )),
                 .default(.init(
                     title: "Сохранённые карты",
                     icon: ProfileIcon.bookmark,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { }
+                    action: .plain { viewModel.navigator.navigate(to: .savedMaps) }
                 )),
             ],
         )
@@ -164,13 +192,13 @@ public struct ProfileView: View {
                     title: "Уведомления",
                     icon: ProfileIcon.bell,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { }
+                    action: .plain { viewModel.navigator.navigate(to: .notifications) }
                 )),
                 .default(.init(
                     title: "Оформление",
                     icon: ProfileIcon.paintbrush,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { }
+                    action: .plain { viewModel.navigator.navigate(to: .appearance) }
                 )),
             ],
         )
@@ -206,8 +234,8 @@ public struct ProfileView: View {
                     style: .default
                 )),
             ],
-            subtitle: "Имя пользователя должно состоять из "
-        )
+            subtitle: "Имя пользователя должно состоять из букв, цифр, точки и подчеркивания"
+        ).padding(.bottom, 8)
 
         SettingsGroup(
             settings: [
