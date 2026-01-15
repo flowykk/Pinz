@@ -34,7 +34,7 @@ public enum Setting {
         let id: String
         let title: String
         let values: [Value]
-        let icon: Icon
+        let icon: Icon?
         let trailIcon: Icon?
         let style: Style
         let action: SettingAction
@@ -57,8 +57,8 @@ public enum Setting {
             id: String = UUID().uuidString,
             title: String,
             values: [Value] = [],
-            icon: Icon,
-            trailIcon: Icon?,
+            icon: Icon? = nil,
+            trailIcon: Icon? = nil,
             style: Style = .default,
             action: SettingAction
         ) {
@@ -72,11 +72,15 @@ public enum Setting {
         }
 
         var view: some View {
-            HStack(spacing: 8) {
-                Group {
+            HStack(spacing: 0) {
+                if let icon {
                     Image(systemName: icon.rawValue)
-                    Text(title)
-                }.roundedFount(size: 14, foregroundColor: titleColor)
+                        .roundedFount(size: 18, foregroundColor: titleColor)
+                        .frame(width: 16, height: 16)
+                        .padding(.trailing, 12)
+                }
+                Text(title)
+                    .roundedFount(size: 16, foregroundColor: titleColor)
 
                 Spacer()
 
@@ -86,22 +90,22 @@ public enum Setting {
                             switch value {
                             case let .text(text):
                                 Text(text)
-                                    .roundedFount(size: 12, weight: .bold, foregroundColor: trailColor)
+                                    .roundedFount(size: 12, foregroundColor: trailColor)
                             case let .icon(icon, color):
                                 Image(systemName: icon.rawValue)
                                     .foregroundStyle(color)
-                                    .roundedFount(size: 14, foregroundColor: trailColor)
+                                    .roundedFount(size: 12, foregroundColor: trailColor)
                             }
                         }
-                    }
+                    }.padding(.trailing, 6)
 
                     if let trailIcon {
                         Image(systemName: trailIcon.rawValue)
-                            .roundedFount(size: 10, weight: .bold, foregroundColor: trailColor)
+                            .roundedFount(size: 12, foregroundColor: trailColor)
                     }
                 }
             }
-            .frame(height: 48)
+            .frame(height: 52)
         }
     }
 
@@ -119,7 +123,7 @@ public enum Setting {
         let style: Style
 
         public init(
-            id: String = UUID().uuidString,
+            id: String,
             text: Binding<String>,
             placeholder: String,
             style: Style = .default
@@ -132,8 +136,8 @@ public enum Setting {
 
         var view: some View {
             textField
-                .font(.system(size: 14, weight: .medium, design: .rounded))
-                .frame(maxWidth: .infinity, minHeight: 48)
+                .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                .frame(maxWidth: .infinity, minHeight: 52)
         }
 
         @ViewBuilder

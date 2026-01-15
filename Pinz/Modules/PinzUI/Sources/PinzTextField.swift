@@ -48,7 +48,6 @@ public struct PinzTextField: View {
             switch style {
             case let .default(placeholder):
                 TextField(placeholder, text: $text)
-//                    .textFieldStyle(.plain)
                     .font(.system(size: fontSize, weight: .semibold, design: .monospaced))
                     .keyboardType(keyboardType)
                     .autocapitalization(.none)
