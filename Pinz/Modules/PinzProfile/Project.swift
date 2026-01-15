@@ -12,7 +12,9 @@ let project = Project(
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
-                .project(target: "PinzUI", path: "../PinzUI")
+                .project(target: "PinzUI", path: "../PinzUI"),
+                .project(target: "PinzNetworking", path: "../PinzNetworking"),
+                .project(target: "PinzNavigation", path: "../PinzNavigation")
             ]
         )
     ]

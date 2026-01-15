@@ -1,21 +1,6 @@
 import SwiftUI
 
-public struct SettingsGroup: View {
-
-    public let title: String?
-    public let settings: [Setting]
-    public let subtitle: String?
-
-    public init(
-        title: String? = nil,
-        settings: [Setting],
-        subtitle: String? = nil
-    ) {
-        self.title = title
-        self.settings = settings
-        self.subtitle = subtitle
-    }
-
+extension SettingsGroup: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let title {
@@ -38,7 +23,7 @@ public struct SettingsGroup: View {
                 Text(subtitle)
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundStyle(PinzUIAsset.textSecondary.swiftUIColor)
-                    .padding(.top, 2)
+                    .padding(.top, 4)
                     .padding(.leading, 12)
             }
         }

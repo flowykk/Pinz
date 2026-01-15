@@ -105,13 +105,13 @@ public struct PinzTextField: View {
 
     private func executeAction() {
         switch action {
-        case .async(let action):
+        case let .async(action):
             isLoading = true
             Task {
                 defer { isLoading = false }
                 try await action()
             }
-        case .plain(let action):
+        case let .plain(action):
             action()
         }
     }
