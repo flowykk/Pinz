@@ -42,7 +42,7 @@ public struct SegmentedPicker<Item: SegmentedItem>: View {
                 }
             }
         }
-        .padding(4)
+        .padding(3)
         .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
         .cornerRadius(12)
     }
@@ -51,11 +51,10 @@ public struct SegmentedPicker<Item: SegmentedItem>: View {
         HStack(spacing: 0) {
             Spacer(minLength: 0)
             Text(item.title)
-                .roundedFount(size: 14)
+                .roundedFount(size: 16)
             Spacer(minLength: 0)
         }
-        .padding(6)
+        .padding(.vertical, 8)
         .contentShape(Rectangle())
-        .cornerRadius(10)
     }
 }

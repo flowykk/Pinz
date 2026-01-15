@@ -51,9 +51,8 @@ public struct ProfileView: View {
             }
             .transition(.opacity)
             .navigationDestination(for: ProfileDestination.self) { destination in
-                destinationView(for: destination)
+                destinationView(for: destination).navigationBarHidden(true)
             }
-            .navigationBarHidden(true)
         }
     }
     
@@ -73,7 +72,7 @@ public struct ProfileView: View {
         case .notifications:
             Text("Notifications")
         case .appearance:
-            Text("Appearance")
+            AppearanceView()
         }
     }
 
@@ -83,16 +82,16 @@ public struct ProfileView: View {
         case .default:
             PinzHeader(
                 leftView: {
-                    PinzButton(type: .chevronLeft, tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                    PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
 
                     }
                 },
                 rightView: {
                     HStack(spacing: 4) {
-                        PinzButton(type: .personAdd, tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                        PinzButton(type: .icon(.personAdd), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                             viewModel.navigator.navigate(to: .addPerson)
                         }
-                        PinzButton(type: .pencil, tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                        PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                             viewModel.dispatch(.changeState)
                         }
                     }
