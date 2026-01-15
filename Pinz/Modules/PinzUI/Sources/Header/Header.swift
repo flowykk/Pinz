@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct PinzHeader<LeftContent: View, CenterContent: View, RightContent: View>: View {
+public struct Header<LeftContent: View, CenterContent: View, RightContent: View>: View {
     private let backgroundColor: Color
     private let leftView: LeftContent
     private let centerView: CenterContent

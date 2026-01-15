@@ -16,11 +16,13 @@ struct AppearanceView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            PinzHeader {
+            Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                     dismiss()
                 }
-            }
+            }, centerView: {
+                HeaderTitle("Оформление")
+            })
 
             VStack(spacing: 12) {
                 appIconSettings
@@ -36,8 +38,7 @@ struct AppearanceView: View {
 
     private var appIconSettings: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Иконка приложения")
-                .roundedFount(size: 18, weight: .medium)
+            SettingTitle("Иконка приложения")
                 .padding(.leading, 12)
 
             AppIconsGridView()
@@ -46,8 +47,8 @@ struct AppearanceView: View {
 
     private var mapSettings: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Вид карты")
-                .roundedFount(size: 18, weight: .medium)
+            SettingTitle("Вид карты")
+                .roundedFount(size: 16, weight: .medium)
                 .padding(.leading, 12)
 
             SegmentedPicker(

@@ -9,6 +9,7 @@ public struct PinzButton: View {
 
     public enum IconType: String {
         case chevronLeft = "chevron.left"
+        case xmark = "xmark"
 
         case personAdd = "person.fill.badge.plus"
         case pencil = "pencil"

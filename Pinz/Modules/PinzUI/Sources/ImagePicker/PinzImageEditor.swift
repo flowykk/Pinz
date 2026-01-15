@@ -49,7 +49,7 @@ public struct PinzImageEditor: View {
     }
 
     var header: some View {
-        PinzHeader {
+        Header {
             PinzButton(type: .text("Отмена")) { dismiss() }
         } rightView: {
             PinzButton(type: .text("Готово")) {

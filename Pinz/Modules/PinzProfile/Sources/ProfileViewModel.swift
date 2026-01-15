@@ -14,7 +14,6 @@ public class ProfileViewModel {
 
     public enum Intent {
         case back
-        case addPerson
         case changeState
 
         case setImage(UIImage?)
@@ -47,8 +46,6 @@ public class ProfileViewModel {
         switch intent {
         case .back:
             navigator.back()
-        case .addPerson:
-            navigator.navigate(to: .addPerson)
         case .changeState:
             switch state {
             case .default: changeState(to: .editing)

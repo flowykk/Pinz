@@ -29,6 +29,7 @@ public struct ProfileView: View {
 
     @State private var imageEditingDialogShown = false
     @State private var photoPickerShown = false
+    @State private var isAddPersonPresented = false
 
     public init() {}
     
@@ -75,24 +76,25 @@ public struct ProfileView: View {
             } set: { newImage in
                 viewModel.dispatch(.setImage(newImage))
             })
+            .fullScreenCover(isPresented: $isAddPersonPresented) {
+                AddPersonView()
+            }
         }
     }
     
     @ViewBuilder
     private func destinationView(for destination: ProfileDestination) -> some View {
         switch destination {
-        case .addPerson:
-            AddPersonView()
         case .statistics:
-            Text("Statistics")
+            StatisticsView()
         case .trips:
-            Text("Trips")
+            TripsView()
         case .wishlist:
-            Text("Wishlist")
+            PlacesWishlistView()
         case .savedMaps:
-            Text("Saved Maps")
+            SavedMapsView()
         case .notifications:
-            Text("Notifications")
+            NotificationsView()
         case .appearance:
             AppearanceView()
         }
@@ -102,7 +104,7 @@ public struct ProfileView: View {
     private var header: some View {
         switch viewModel.state {
         case .default:
-            PinzHeader(
+            Header(
                 leftView: {
                     PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
 
@@ -111,7 +113,7 @@ public struct ProfileView: View {
                 rightView: {
                     HStack(spacing: 4) {
                         PinzButton(type: .icon(.personAdd), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                            viewModel.navigator.navigate(to: .addPerson)
+                            isAddPersonPresented = true
                         }
                         PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                             viewModel.dispatch(.changeState)
@@ -120,7 +122,7 @@ public struct ProfileView: View {
                 }
             )
         case .editing:
-            PinzHeader {
+            Header {
                 Button {
                     viewModel.dispatch(.changeState)
                 } label: {
@@ -129,8 +131,7 @@ public struct ProfileView: View {
                         .padding(.leading, 12)
                 }
             } centerView: {
-                Text("Редактирование профиля")
-                    .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                HeaderTitle("Редактирование профиля")
             } rightView: {
                 Button {
                     viewModel.dispatch(.changeState)
