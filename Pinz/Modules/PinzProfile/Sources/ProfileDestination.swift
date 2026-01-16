@@ -7,4 +7,5 @@ public enum ProfileDestination: Hashable {
     case savedMaps
     case notifications
     case appearance
+    case emailChange
 }

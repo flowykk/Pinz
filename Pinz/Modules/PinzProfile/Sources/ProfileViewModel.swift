@@ -17,6 +17,7 @@ public class ProfileViewModel {
         case changeState
 
         case setImage(UIImage?)
+        case setEmail(String)
     }
 
     var state: State = .default
@@ -55,6 +56,8 @@ public class ProfileViewModel {
             if let newImage {
                 userImage = newImage
             }
+        case let .setEmail(newEmail):
+            user.email = newEmail
         }
     }
 

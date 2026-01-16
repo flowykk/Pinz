@@ -66,20 +66,22 @@ public enum Setting {
         }
 
         let id: String
-        @Binding
-        var text: String
+        @Binding var text: String
         let placeholder: String
+        var focused: FocusState<Bool>.Binding?
         let style: Style
 
         public init(
             id: String,
             text: Binding<String>,
             placeholder: String,
+            focused: FocusState<Bool>.Binding? = nil,
             style: Style = .default
         ) {
             self.id = id
             self._text = text
             self.placeholder = placeholder
+            self.focused = focused
             self.style = style
         }
     }
