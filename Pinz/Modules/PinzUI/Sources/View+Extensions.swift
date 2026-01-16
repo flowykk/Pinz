@@ -10,6 +10,15 @@ extension View {
         }
     }
 
+    @ViewBuilder
+    func ifLet<T, Content: View>(_ value: T?, apply: (Self, T) -> Content) -> some View {
+        if let unwrapped = value {
+            apply(self, unwrapped)
+        } else {
+            self
+        }
+    }
+
     public func frame(_ size: CGFloat) -> some View {
         self.frame(width: size, height: size)
     }

@@ -6,7 +6,24 @@ public struct CodeInputTextField: View {
         var background: UIColor
         var cornerRadius: CGFloat
         var fontSize: CGFloat
+        var width: CGFloat?
         var height: CGFloat
+
+        public init(
+            segmentsCount: Int,
+            background: UIColor,
+            cornerRadius: CGFloat,
+            fontSize: CGFloat,
+            width: CGFloat? = nil,
+            height: CGFloat
+        ) {
+            self.segmentsCount = segmentsCount
+            self.background = background
+            self.cornerRadius = cornerRadius
+            self.fontSize = fontSize
+            self.width = width
+            self.height = height
+        }
     }
 
     @Binding
@@ -42,7 +59,10 @@ public struct CodeInputTextField: View {
                     fontSize: style.fontSize,
                     tag: index
                 )
-                .frame(maxWidth: .infinity, maxHeight: style.height)
+                .frame(
+                    maxWidth: style.width == nil ? .infinity : style.width,
+                    maxHeight: style.height
+                )
             }
         }
         .onChange(of: code) { _, newValue in focusedField = newValue.count }

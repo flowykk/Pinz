@@ -38,23 +38,21 @@ public struct ProfileView: View {
             VStack(spacing: 0) {
                 header
 
-                ScrollView {
-                    avatar
-                        .padding(.top, 12)
+                avatar
+                    .padding(.top, 12)
 
-                    VStack {
-                        switch viewModel.state {
-                        case .default:
-                            defaultSettings
-                        case .editing:
-                            editingSettings
-                        }
+                VStack {
+                    switch viewModel.state {
+                    case .default:
+                        defaultSettings
+                    case .editing:
+                        editingSettings
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 12)
-
-                    Spacer()
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
+
+                Spacer()
             }
             .transition(.opacity)
             .navigationDestination(for: ProfileDestination.self) { destination in
@@ -97,6 +95,10 @@ public struct ProfileView: View {
             NotificationsView()
         case .appearance:
             AppearanceView()
+        case .emailChange:
+            EmailChangeView(email: viewModel.user.email) { newEmail in
+                viewModel.dispatch(.setEmail(newEmail))
+            }
         }
     }
 
@@ -266,7 +268,7 @@ public struct ProfileView: View {
                     title: "Сменить почту",
                     values: [.text(viewModel.user.email)],
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { }
+                    action: .plain { viewModel.navigator.navigate(to: .emailChange) }
                 )),
             ],
         )
