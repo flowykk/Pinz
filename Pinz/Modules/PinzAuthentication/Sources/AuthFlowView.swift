@@ -12,7 +12,7 @@ public struct AuthFlowView: View {
         Map(position: $viewModel.cameraPosition) { }
             .mapStyle(.imagery(elevation: .realistic))
             .mapControlVisibility(.hidden)
-            .edgesIgnoringSafeArea(.all)
+            .ignoresSafeArea()
             .overlay {
                 ZStack {
                     VStack {
