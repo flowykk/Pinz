@@ -21,11 +21,10 @@ public class ProfileViewModel {
     }
 
     var state: State = .default
-    var navigator = Navigator<ProfileDestination>()
 
     var user: User
     var userImage: UIImage = PinzUIAsset.avatar.image
-
+    var navigator = Navigator<ProfileDestination>()
     private let networkService = NetworkService()
 
     var imageBinding: Binding<UIImage?> {

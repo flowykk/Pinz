@@ -151,7 +151,7 @@ public struct ProfileView: View {
             Image(uiImage: viewModel.userImage)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 120, height: 120)
+                .frame(120)
                 .cornerRadius(60)
                 .clipped()
 

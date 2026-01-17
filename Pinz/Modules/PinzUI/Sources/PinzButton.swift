@@ -5,7 +5,7 @@ public struct PinzButton: View {
     public enum ButtonType {
         case icon(IconType)
         case text(String)
-        case slot(String)
+        case slot(String, Color)
     }
 
     public enum IconType: String {
@@ -46,15 +46,15 @@ public struct PinzButton: View {
                 case let .text(text):
                     Text(text)
                         .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                case let .slot(title):
+                case let .slot(title, color):
                     HStack {
                         Spacer()
                         Text(title)
-                            .roundedFount(size: 14, foregroundColor: PinzUIAsset.backgroundSecondary.swiftUIColor)
+                            .roundedFount(size: 16, foregroundColor: tint)
                             .frame(height: 52)
                         Spacer()
                     }
-                    .background(tint)
+                    .background(color)
                     .cornerRadius(26)
                 }
             }
