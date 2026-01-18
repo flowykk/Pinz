@@ -1,13 +1,13 @@
 import ProjectDescription
 
 let project = Project(
-    name: "PinzTrips",
+    name: "PinzPins",
     targets: [
         .target(
-            name: "PinzTrips",
+            name: "PinzPins",
             destinations: .iOS,
             product: .framework,
-            bundleId: "io.tuist.PinzTrips",
+            bundleId: "io.tuist.PinzPins",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
