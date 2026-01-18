@@ -69,3 +69,8 @@ Derived/
 ### Tuist managed dependencies ###
 Tuist/.build
 .DS_Store
+<<<<<<< HEAD
+=======
+Pinz/.DS_Store
+.DS_Store
+>>>>>>> f2b162b98e85d8363060b7cbc2366f13e42f6f86
