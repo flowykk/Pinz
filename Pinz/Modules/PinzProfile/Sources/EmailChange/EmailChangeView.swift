@@ -1,7 +1,7 @@
 import SwiftUI
 import PinzUI
 
-struct EmailChangeView: View {
+public struct EmailChangeView: View {
     @Environment(\.dismiss) var dismiss
 
     @State private var viewModel: EmailChangeViewModel
@@ -16,11 +16,11 @@ struct EmailChangeView: View {
         height: 64
     )
 
-    init(email: String, onChangeSuccess: @escaping (String) -> Void) {
+    public init(email: String, onChangeSuccess: @escaping (String) -> Void) {
         viewModel = EmailChangeViewModel(email: email, successAction: onChangeSuccess)
     }
 
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 0) {
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
@@ -62,9 +62,6 @@ struct EmailChangeView: View {
             Spacer()
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear {
-            viewModel.setDismiss(dismiss)
-        }
     }
 
     private var firstCodeInputView: some View {

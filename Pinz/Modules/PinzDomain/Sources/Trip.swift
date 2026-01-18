@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct Trip {
+public struct Trip: Hashable {
     public var name: String
     public var image: UIImage?
     public var pins: [Pin]

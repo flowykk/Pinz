@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct User: Codable, Hashable {
+public struct User: Hashable {
     public var nickname: String
     public var email: String
 

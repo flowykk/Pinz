@@ -15,7 +15,6 @@ class EmailChangeViewModel {
     }
 
     var successAction: (String) -> Void
-    var dismiss: DismissAction? = nil
     var state: State = .firstCode
 
     var code: [String] = Array(repeating: "", count: 4)
@@ -42,13 +41,8 @@ class EmailChangeViewModel {
                 changeState(to: .secondCode)
             case .secondCode:
                 successAction(email)
-                dismiss?()
             }
         }
-    }
-
-    func setDismiss(_ dismiss: DismissAction) {
-        self.dismiss = dismiss
     }
 
     private func changeState(to state: State) {

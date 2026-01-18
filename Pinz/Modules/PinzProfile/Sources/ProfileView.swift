@@ -1,7 +1,7 @@
 import SwiftUI
 import PinzUI
-import PinzNavigation
 import PinzDomain
+import PinzBase
 
 enum ProfileIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -20,88 +20,72 @@ enum ProfileIcon: String, Setting.Icon {
 
 public struct ProfileView: View {
 
-    @State private var viewModel = ProfileViewModel(
-        user: User(
-            nickname: "flowykk",
-            email: "cristgames123@gmail.com"
-        )
-    )
+    @State private var viewModel: ProfileViewModel
 
     @State private var imageEditingDialogShown = false
     @State private var photoPickerShown = false
     @State private var isAddPersonPresented = false
+    @Environment(\.appRouter) private var router
 
-    public init() {}
-    
+    public init() {
+        viewModel = ProfileViewModel(
+            user: User(
+                nickname: "flowykk",
+                email: "cristgames123@gmail.com"
+            )
+        )
+    }
+
     public var body: some View {
-        NavigationStack(path: $viewModel.navigator.path) {
-            VStack(spacing: 0) {
-                header
+        VStack(spacing: 0) {
+            header
 
-                avatar
-                    .padding(.top, 12)
+            avatar
+                .padding(.top, 12)
 
-                VStack {
-                    switch viewModel.state {
-                    case .default:
-                        defaultSettings
-                    case .editing:
-                        editingSettings
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-
-                Spacer()
-            }
-            .transition(.opacity)
-            .navigationDestination(for: ProfileDestination.self) { destination in
-                destinationView(for: destination).navigationBarHidden(true)
-            }
-            .confirmationDialog(
-                "Выберите действие",
-                isPresented: $imageEditingDialogShown,
-                titleVisibility: .visible
-            ) {
-                Button("Выбрать из галереи") {
-                    photoPickerShown = true
-                }
-                Button("Удалить фотографию", role: .destructive) {
+            VStack(spacing: 12) {
+                switch viewModel.state {
+                case .default:
+                    defaultSettings
+                case .editing:
+                    editingSettings
                 }
             }
-            .customImagePicker(show: $photoPickerShown, croppedImage: Binding {
-                return viewModel.userImage
-            } set: { newImage in
-                viewModel.dispatch(.setImage(newImage))
-            })
-            .fullScreenCover(isPresented: $isAddPersonPresented) {
-                AddPersonView()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+
+            Spacer()
+        }
+        .onAppear {
+            viewModel.setRouter(router)
+//            if let appRouter = router as? AppRouting {
+//                appRouter.onEmailUpdate = { [weak viewModel] newEmail in
+//                    viewModel?.updateEmail(newEmail)
+//                }
+//            }
+        }
+        .background(PinzUIAsset.background.swiftUIColor)
+        .transition(.opacity)
+        .confirmationDialog(
+            "Выберите действие",
+            isPresented: $imageEditingDialogShown,
+            titleVisibility: .visible
+        ) {
+            Button("Выбрать из галереи") {
+                photoPickerShown = true
             }
+            Button("Удалить фотографию", role: .destructive) { }
+        }
+        .customImagePicker(show: $photoPickerShown, croppedImage: Binding {
+            return viewModel.userImage
+        } set: { newImage in
+            viewModel.dispatch(.setImage(newImage))
+        })
+        .fullScreenCover(isPresented: $isAddPersonPresented) {
+            AddPersonView()
         }
     }
     
-    @ViewBuilder
-    private func destinationView(for destination: ProfileDestination) -> some View {
-        switch destination {
-        case .statistics:
-            StatisticsView()
-        case .trips:
-            TripsView()
-        case .wishlist:
-            PlacesWishlistView()
-        case .savedMaps:
-            SavedMapsView()
-        case .notifications:
-            NotificationsView()
-        case .appearance:
-            AppearanceView()
-        case .emailChange:
-            EmailChangeView(email: viewModel.user.email) { newEmail in
-                viewModel.dispatch(.setEmail(newEmail))
-            }
-        }
-    }
-
     @ViewBuilder
     private var header: some View {
         switch viewModel.state {
@@ -109,7 +93,7 @@ public struct ProfileView: View {
             Header(
                 leftView: {
                     PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-
+                        viewModel.dispatch(.navigateBack)
                     }
                 },
                 rightView: {
@@ -183,7 +167,7 @@ public struct ProfileView: View {
                     title: "Статистика",
                     icon: ProfileIcon.chart,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { viewModel.navigator.navigate(to: .statistics) }
+                    action: .plain { }
                 )),
             ],
         )
@@ -194,19 +178,19 @@ public struct ProfileView: View {
                     title: "Путешествия",
                     icon: ProfileIcon.map,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { viewModel.navigator.navigate(to: .trips) }
+                    action: .plain { }
                 )),
                 .default(.init(
                     title: "Желанные места",
                     icon: ProfileIcon.heart,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { viewModel.navigator.navigate(to: .wishlist) }
+                    action: .plain { }
                 )),
                 .default(.init(
                     title: "Сохранённые карты",
                     icon: ProfileIcon.bookmark,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { viewModel.navigator.navigate(to: .savedMaps) }
+                    action: .plain { }
                 )),
             ],
         )
@@ -217,13 +201,13 @@ public struct ProfileView: View {
                     title: "Уведомления",
                     icon: ProfileIcon.bell,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { viewModel.navigator.navigate(to: .notifications) }
+                    action: .plain { }
                 )),
                 .default(.init(
                     title: "Оформление",
                     icon: ProfileIcon.paintbrush,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { viewModel.navigator.navigate(to: .appearance) }
+                    action: .plain { }
                 )),
             ],
         )
@@ -268,7 +252,7 @@ public struct ProfileView: View {
                     title: "Сменить почту",
                     values: [.text(viewModel.user.email)],
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { viewModel.navigator.navigate(to: .emailChange) }
+                    action: .plain { viewModel.dispatch(.navigateToEmailChange) }
                 )),
             ],
         )

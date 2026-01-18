@@ -2,59 +2,66 @@ import SwiftUI
 import MapKit
 import PinzUI
 import PinzDomain
+import PinzBase
 
 public struct TripView: View {
 
-    public enum Constants {
-        public static let buttonsCornerRadius: CGFloat = 16
-        public static let buttonsSize: CGFloat = 50
+    enum Constants {
+        static let buttonsCornerRadius: CGFloat = 16
+        static let buttonsSize: CGFloat = 50
     }
 
     @State private var viewModel: TripViewModel
     @State private var isPinsPresented = false
     @State private var position: MapCameraPosition = .automatic
+    @Environment(\.appRouter) private var router
 
     public init(trip: Trip) {
         viewModel = TripViewModel(trip: trip)
     }
 
     public var body: some View {
-        NavigationStack(path: $viewModel.navigator.path) {
-            ZStack {
-                Map(position: $position)
-                    .mapControlVisibility(.hidden)
-                    .ignoresSafeArea()
+        ZStack {
+            Map(position: $position)
+                .mapControlVisibility(.hidden)
+                .ignoresSafeArea()
 
-                gradient.ignoresSafeArea()
+            gradient.ignoresSafeArea()
 
-                header.padding(.top, 8)
-            }
-            .navigationDestination(for: TripDestination.self) { destination in
-                destinationView(for: destination).navigationBarHidden(true)
-            }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $isPinsPresented) {
-                TripPinsView(pins: viewModel.trip.pins)
-                    .presentationCornerRadius(40)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.hidden)
-            }
+            header.padding(.top, 8)
+        }
+        .onAppear { viewModel.setRouter(router) }
+        .sheet(isPresented: $isPinsPresented) {
+            TripPinsView(pins: viewModel.trip.pins)
+                .presentationCornerRadius(40)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.hidden)
         }
     }
 
     private var header: some View {
         VStack {
-            HStack(spacing: 6) {
-                button(withIcon: "square.grid.2x2.fill") {
-                    viewModel.dispatch(.navigate(.feed))
+            HStack(alignment: .top, spacing: 6) {
+                VStack(alignment: .leading, spacing: 6) {
+                    tripHeader
+                    button(.icon("square.grid.2x2.fill")) {
+                        viewModel.dispatch(.navigateToFeed)
+                    }
                 }
-                tripHeader
-                button(withIcon: "person.2.fill") {
-                    viewModel.dispatch(.navigate(.members))
-                }
-                button(withIcon: "list.bullet") {
-                    if !viewModel.trip.pins.isEmpty {
-                        isPinsPresented = true
+
+                Spacer()
+
+                VStack(spacing: 6) {
+                    button(.image(PinzUIAsset.avatar.image)) {
+                        viewModel.dispatch(.navigateToProfile)
+                    }
+                    button(.icon("list.bullet")) {
+                        if !viewModel.trip.pins.isEmpty {
+                            isPinsPresented = true
+                        }
+                    }
+                    button(.icon("person.2.fill")) {
+                        viewModel.dispatch(.navigateToMembers)
                     }
                 }
             }.padding(.horizontal, 10)
@@ -64,32 +71,36 @@ public struct TripView: View {
     }
 
     private var tripHeader: some View {
-        RoundedRectangle(cornerRadius: Constants.buttonsCornerRadius)
-            .strokeBorder(PinzUIAsset.backgroundSecondary.swiftUIColor, lineWidth: 2)
-            .background(PinzUIAsset.background.swiftUIColor)
-            .cornerRadius(Constants.buttonsCornerRadius)
-            .frame(height: Constants.buttonsSize)
-            .overlay {
-                HStack {
-                    Image(uiImage: viewModel.trip.image ?? PinzUIAsset.avatar.image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(38)
-                        .cornerRadius(12)
-                        .clipped()
-                        .padding(.leading, 6)
+        HStack(spacing: 8) {
+            Image(uiImage: viewModel.trip.image ?? PinzUIAsset.avatar.image)
+                .resizable()
+                .scaledToFill()
+                .frame(38)
+                .cornerRadius(12)
+                .clipped()
 
-                    Text(viewModel.trip.name)
-                        .roundedFount(size: 16)
+            Text(viewModel.trip.name)
+                .roundedFount(size: 16)
+        }
+        .padding(.leading, 6)
+        .padding(.trailing, 10)
+        .frame(height: Constants.buttonsSize)
+        .background(
+            RoundedRectangle(cornerRadius: Constants.buttonsCornerRadius)
+                .strokeBorder(PinzUIAsset.backgroundSecondary.swiftUIColor, lineWidth: 2)
+                .background(PinzUIAsset.background.swiftUIColor)
+                .cornerRadius(Constants.buttonsCornerRadius)
+        )
+    }
 
-                    Spacer(minLength: 0)
-                }.frame(maxWidth: .infinity)
-            }
+    enum ButtonType {
+        case icon(String)
+        case image(UIImage)
     }
 
     @ViewBuilder
     private func button(
-        withIcon icon: String,
+        _ type: ButtonType,
         action: @escaping () -> Void
     ) -> some View {
         Button {
@@ -101,9 +112,21 @@ public struct TripView: View {
                 .cornerRadius(Constants.buttonsCornerRadius)
                 .frame(Constants.buttonsSize)
                 .overlay {
-                    Image(systemName: icon)
-                        .roundedFount(size: 20)
-                        .tint(PinzUIAsset.textPrimary.swiftUIColor)
+                    Group {
+                        switch type {
+                        case let .icon(icon):
+                            Image(systemName: icon)
+                        case let .image(uIImage):
+                            Image(uiImage: uIImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(38)
+                                .cornerRadius(12)
+                                .clipped()
+                        }
+                    }
+                    .roundedFount(size: 20)
+                    .tint(PinzUIAsset.textPrimary.swiftUIColor)
                 }
         }
     }
@@ -120,16 +143,6 @@ public struct TripView: View {
             ).frame(height: 170)
 
             Spacer()
-        }
-    }
-    
-    @ViewBuilder
-    private func destinationView(for destination: TripDestination) -> some View {
-        switch destination {
-        case .members:
-            TripMembersView()
-        case .feed:
-            Text("Feed")
         }
     }
 }

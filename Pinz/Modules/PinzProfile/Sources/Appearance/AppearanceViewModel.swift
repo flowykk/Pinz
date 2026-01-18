@@ -2,7 +2,6 @@ import SwiftUI
 import PinzUI
 import MapKit
 import PinzNetworking
-import PinzNavigation
 
 @Observable
 public class AppearanceViewModel {
