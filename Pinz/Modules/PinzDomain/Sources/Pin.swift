@@ -1,4 +1,4 @@
-public struct Pin: Identifiable {
+public struct Pin: Hashable, Identifiable {
     public var id: String { name }
     
     public var name: String

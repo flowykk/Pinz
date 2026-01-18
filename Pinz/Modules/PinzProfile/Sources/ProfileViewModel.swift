@@ -1,8 +1,8 @@
 import SwiftUI
 import PinzNetworking
-import PinzNavigation
 import PinzDomain
 import PinzUI
+import PinzBase
 
 @Observable
 public class ProfileViewModel {
@@ -13,19 +13,20 @@ public class ProfileViewModel {
     }
 
     public enum Intent {
-        case back
         case changeState
 
         case setImage(UIImage?)
-        case setEmail(String)
+        
+        case navigateToEmailChange
+        case navigateBack
     }
 
     var state: State = .default
 
     var user: User
     var userImage: UIImage = PinzUIAsset.avatar.image
-    var navigator = Navigator<ProfileDestination>()
     private let networkService = NetworkService()
+    private var router: AppRouting?
 
     var imageBinding: Binding<UIImage?> {
         Binding {
@@ -44,8 +45,6 @@ public class ProfileViewModel {
 
     public func dispatch(_ intent: Intent) {
         switch intent {
-        case .back:
-            navigator.back()
         case .changeState:
             switch state {
             case .default: changeState(to: .editing)
@@ -55,9 +54,19 @@ public class ProfileViewModel {
             if let newImage {
                 userImage = newImage
             }
-        case let .setEmail(newEmail):
-            user.email = newEmail
+        case .navigateToEmailChange:
+            let action = EmailChangeAction { [weak self] newEmail in
+                self?.user.email = newEmail
+                self?.router?.pop()
+            }
+            router?.navigateToEmailChange(email: user.email, action: action)
+        case .navigateBack:
+            router?.pop()
         }
+    }
+
+    public func setRouter(_ router: AppRouting?) {
+        self.router = router
     }
 
     private func changeState(to state: State) {
