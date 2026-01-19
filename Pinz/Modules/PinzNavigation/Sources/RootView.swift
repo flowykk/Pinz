@@ -26,10 +26,15 @@ public struct RootView<Content: View>: View {
     @ViewBuilder
     private func destinationView(for route: Route) -> some View {
         switch route {
+        case let .trip(tripRoute):
+            switch tripRoute {
+            case let .info(trip):
+                TripInfoView(trip: trip)
+            case let .profile(user):
+                ProfileView(user: user)
+            }
         case let .profile(profileRoute):
             switch profileRoute {
-            case .profile:
-                ProfileView()
             case let .emailChange(email, action):
                 EmailChangeView(email: email, onChangeSuccess: action.action)
             }

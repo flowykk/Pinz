@@ -22,13 +22,21 @@ public final class AppRouter: AppRouting {
     }
 }
 
+// MARK: - Trip Routing
+
+extension AppRouter {
+    public func navigateToTripInfo(trip: Trip) {
+        navigate(to: .trip(.info(trip: trip)))
+    }
+
+    public func navigateToProfile(user: User) {
+        navigate(to: .trip(.profile(user: user)))
+    }
+}
+
 // MARK: - Profile Routing
 
 extension AppRouter {
-    public func navigateToProfile() {
-        navigate(to: .profile(.profile))
-    }
-
     public func navigateToEmailChange(email: String, action: EmailChangeAction) {
         navigate(to: .profile(.emailChange(email: email, action: action)))
     }

@@ -46,6 +46,7 @@ public struct PinzButton: View {
                 case let .text(text):
                     Text(text)
                         .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .padding(.horizontal, 6)
                 case let .slot(title, color):
                     HStack {
                         Spacer()

@@ -23,6 +23,7 @@ public struct TripView: View {
     public var body: some View {
         ZStack {
             Map(position: $position)
+//                .mapStyle(.imagery(elevation: .realistic))
                 .mapControlVisibility(.hidden)
                 .ignoresSafeArea()
 
@@ -43,7 +44,12 @@ public struct TripView: View {
         VStack {
             HStack(alignment: .top, spacing: 6) {
                 VStack(alignment: .leading, spacing: 6) {
-                    tripHeader
+                    HStack(spacing: 6) {
+                        tripHeader
+                        button(.icon("chevron.down")) {
+
+                        }
+                    }
                     button(.icon("square.grid.2x2.fill")) {
                         viewModel.dispatch(.navigateToFeed)
                     }
@@ -53,7 +59,7 @@ public struct TripView: View {
 
                 VStack(spacing: 6) {
                     button(.image(PinzUIAsset.avatar.image)) {
-                        viewModel.dispatch(.navigateToProfile)
+                        viewModel.dispatch(.navigateToProfile(user: User(nickname: "flowykk", email: "cristgames123@gmail.com")))
                     }
                     button(.icon("list.bullet")) {
                         if !viewModel.trip.pins.isEmpty {
@@ -71,26 +77,30 @@ public struct TripView: View {
     }
 
     private var tripHeader: some View {
-        HStack(spacing: 8) {
-            Image(uiImage: viewModel.trip.image ?? PinzUIAsset.avatar.image)
-                .resizable()
-                .scaledToFill()
-                .frame(38)
-                .cornerRadius(12)
-                .clipped()
+        Button {
+            viewModel.dispatch(.navigateToTripInfo)
+        } label: {
+            HStack(spacing: 8) {
+                Image(uiImage: viewModel.trip.image ?? PinzUIAsset.avatar.image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(38)
+                    .cornerRadius(12)
+                    .clipped()
 
-            Text(viewModel.trip.name)
-                .roundedFount(size: 16)
+                Text(viewModel.trip.name)
+                    .roundedFount(size: 16)
+            }
+            .padding(.leading, 6)
+            .padding(.trailing, 10)
+            .frame(height: Constants.buttonsSize)
+            .background(
+                RoundedRectangle(cornerRadius: Constants.buttonsCornerRadius)
+                    .strokeBorder(PinzUIAsset.backgroundSecondary.swiftUIColor, lineWidth: 2)
+                    .background(PinzUIAsset.background.swiftUIColor)
+                    .cornerRadius(Constants.buttonsCornerRadius)
+            )
         }
-        .padding(.leading, 6)
-        .padding(.trailing, 10)
-        .frame(height: Constants.buttonsSize)
-        .background(
-            RoundedRectangle(cornerRadius: Constants.buttonsCornerRadius)
-                .strokeBorder(PinzUIAsset.backgroundSecondary.swiftUIColor, lineWidth: 2)
-                .background(PinzUIAsset.background.swiftUIColor)
-                .cornerRadius(Constants.buttonsCornerRadius)
-        )
     }
 
     enum ButtonType {

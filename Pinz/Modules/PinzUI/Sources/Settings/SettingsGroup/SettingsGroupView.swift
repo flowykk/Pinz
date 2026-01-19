@@ -19,9 +19,7 @@ extension SettingsGroup: View {
             .cornerRadius(26)
 
             if let subtitle {
-                Text(subtitle)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(PinzUIAsset.textSecondary.swiftUIColor)
+                SettingSubtitle(subtitle)
                     .padding(.top, 4)
                     .padding(.leading, 12)
             }

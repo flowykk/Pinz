@@ -15,19 +15,16 @@ extension Setting.DefaultSetting {
         }
     }
 
+    @ViewBuilder
     var view: some View {
-        Button {
-            switch action {
-            case let .async(action):
-                Task {
-                    try await action()
-                }
-            case let .plain(action):
-                action()
+        if let action {
+            Button {
+                handle(action)
+            } label: {
+                settingView
             }
-        } label: {
+        } else {
             settingView
-                .frame(height: 52)
         }
     }
 
@@ -52,16 +49,26 @@ extension Setting.DefaultSetting {
                             .roundedFount(size: 12, foregroundColor: trailColor)
                     case let .icon(icon, color):
                         Image(systemName: icon.rawValue)
-                            .foregroundStyle(color)
-                            .roundedFount(size: 12, foregroundColor: trailColor)
+                            .roundedFount(size: 16, foregroundColor: color)
                     }
                 }
-            }.padding(.trailing, 6)
+            }.padding(.trailing, trailIcon != nil ? 6 : 0)
 
             if let trailIcon {
                 Image(systemName: trailIcon.rawValue)
                     .roundedFount(size: 12, foregroundColor: trailColor)
             }
+        }.frame(height: 52)
+    }
+
+    private func handle(_ action: Setting.Action) {
+        switch action {
+        case let .async(action):
+            Task {
+                try await action()
+            }
+        case let .plain(action):
+            action()
         }
     }
 }

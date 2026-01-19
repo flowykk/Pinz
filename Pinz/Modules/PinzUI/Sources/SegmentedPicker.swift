@@ -1,7 +1,12 @@
 import SwiftUI
 
+public enum SegmentedItemContent {
+    case text(String)
+    case icon(String, Color)
+}
+
 public protocol SegmentedItem: Identifiable, Equatable {
-    var title: String { get }
+    var content: SegmentedItemContent { get }
 }
 
 @MainActor
@@ -50,8 +55,12 @@ public struct SegmentedPicker<Item: SegmentedItem>: View {
     private func makeItemView(_ item: Item) -> some View {
         HStack(spacing: 0) {
             Spacer(minLength: 0)
-            Text(item.title)
-                .roundedFount(size: 16)
+            switch item.content {
+            case let .text(text):
+                Text(text).roundedFount(size: 16)
+            case let .icon(icon, color):
+                Image(systemName: icon).roundedFount(size: 16, foregroundColor: color)
+            }
             Spacer(minLength: 0)
         }
         .padding(.vertical, 8)

@@ -1,11 +1,16 @@
 import Foundation
 import PinzDomain
 
+public enum TripRoute: Hashable {
+    case info(trip: Trip)
+    case profile(user: User)
+}
+
 public enum ProfileRoute: Hashable {
-    case profile
     case emailChange(email: String, action: EmailChangeAction)
 }
 
 public enum Route: Hashable {
+    case trip(TripRoute)
     case profile(ProfileRoute)
 }

@@ -1,6 +1,8 @@
+import Foundation
 import SwiftUI
 
-public struct User: Hashable {
+public struct User: Hashable, Identifiable {
+    public let id: UUID = UUID()
     public var nickname: String
     public var email: String
 

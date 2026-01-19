@@ -33,25 +33,25 @@ public enum Setting {
 
         let id: String
         let title: String
-        let values: [Value]
         let icon: Icon?
+        let values: [Value]
         let trailIcon: Icon?
         let style: Style
-        let action: Action
+        let action: Action?
 
         public init(
             id: String = UUID().uuidString,
             title: String,
-            values: [Value] = [],
             icon: Icon? = nil,
+            values: [Value] = [],
             trailIcon: Icon? = nil,
             style: Style = .default,
-            action: Action
+            action: Action? = nil
         ) {
             self.id = id
             self.title = title
-            self.values = values
             self.icon = icon
+            self.values = values
             self.trailIcon = trailIcon
             self.style = style
             self.action = action

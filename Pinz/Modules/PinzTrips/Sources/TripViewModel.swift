@@ -7,7 +7,8 @@ import PinzBase
 public class TripViewModel {
     
     public enum Intent {
-        case navigateToProfile
+        case navigateToTripInfo
+        case navigateToProfile(user: User)
         case navigateToFeed
         case navigateToMembers
     }
@@ -21,8 +22,10 @@ public class TripViewModel {
     
     public func dispatch(_ intent: Intent) {
         switch intent {
-        case .navigateToProfile:
-            router?.navigateToProfile()
+        case .navigateToTripInfo:
+            router?.navigateToTripInfo(trip: trip)
+        case let .navigateToProfile(user):
+            router?.navigateToProfile(user: user)
         case .navigateToFeed:
             router?.navigateToFeed()
         case .navigateToMembers:
