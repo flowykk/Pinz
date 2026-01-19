@@ -2,7 +2,9 @@ import SwiftUI
 import PinzDomain
 
 public protocol AppRouting {
-    func navigateToProfile()
+    func navigateToTripInfo(trip: Trip)
+    func navigateToProfile(user: User)
+    
     func navigateToEmailChange(email: String, action: EmailChangeAction)
 
     func navigateToFeed()

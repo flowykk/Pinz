@@ -5,7 +5,7 @@ import PinzBase
 import PinzNetworking
 
 @Observable
-public class AuthFlowViewModel {
+final class AuthFlowViewModel {
 
     private enum Constants {
         static let initialCameraDistance: Double = 40000000
@@ -13,25 +13,25 @@ public class AuthFlowViewModel {
         static let cameraRotationUpdateInterval: Double = 0.016
     }
 
-    public enum State: Equatable {
+    enum State: Equatable {
         case welcome
         case email
         case auth(AuthState)
         case register(RegisterState)
     }
 
-    public enum AuthState: Equatable {
+    enum AuthState: Equatable {
         case password
     }
 
-    public enum RegisterState: Equatable {
+    enum RegisterState: Equatable {
         case code
         case password
         case repeatPassword
         case nickname
     }
 
-    public enum Intent {
+    enum Intent {
         case startRotation
         case updateRotation
         case zoomCamera(to: Double, duration: Double, completion: (() -> Void)?)
@@ -41,16 +41,16 @@ public class AuthFlowViewModel {
         case back
     }
 
-    public enum AsyncIntent {
+    enum AsyncIntent {
         case `continue`
     }
 
-    public var state: State = .welcome
-    public var longitude: Double = 0
-    public var cameraDistance: Double = Constants.initialCameraDistance
-    public var isZoomedIn: Bool = false
-    public var text: String = ""
-    public var cameraPosition: MapCameraPosition = .camera(
+    var state: State = .welcome
+    var longitude: Double = 0
+    var cameraDistance: Double = Constants.initialCameraDistance
+    var isZoomedIn: Bool = false
+    var text: String = ""
+    var cameraPosition: MapCameraPosition = .camera(
         MapCamera(
             centerCoordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0),
             distance: Constants.initialCameraDistance,
@@ -64,9 +64,9 @@ public class AuthFlowViewModel {
 
     private let networkService = NetworkService()
 
-    public init() {}
+    init() {}
     
-    public func dispatch(_ intent: Intent) {
+    func dispatch(_ intent: Intent) {
         switch intent {
         case .startRotation:
             startRotation()
@@ -88,7 +88,7 @@ public class AuthFlowViewModel {
         }
     }
 
-    public func asyncDispatch(_ intent: AsyncIntent) async throws {
+    func asyncDispatch(_ intent: AsyncIntent) async throws {
         switch intent {
         case .continue:
             switch state {

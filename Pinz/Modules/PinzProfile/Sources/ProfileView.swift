@@ -27,13 +27,8 @@ public struct ProfileView: View {
     @State private var isAddPersonPresented = false
     @Environment(\.appRouter) private var router
 
-    public init() {
-        viewModel = ProfileViewModel(
-            user: User(
-                nickname: "flowykk",
-                email: "cristgames123@gmail.com"
-            )
-        )
+    public init(user: User) {
+        viewModel = ProfileViewModel(user: user)
     }
 
     public var body: some View {
@@ -56,14 +51,7 @@ public struct ProfileView: View {
 
             Spacer()
         }
-        .onAppear {
-            viewModel.setRouter(router)
-//            if let appRouter = router as? AppRouting {
-//                appRouter.onEmailUpdate = { [weak viewModel] newEmail in
-//                    viewModel?.updateEmail(newEmail)
-//                }
-//            }
-        }
+        .onAppear { viewModel.setRouter(router) }
         .background(PinzUIAsset.background.swiftUIColor)
         .transition(.opacity)
         .confirmationDialog(
@@ -93,7 +81,7 @@ public struct ProfileView: View {
             Header(
                 leftView: {
                     PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                        viewModel.dispatch(.navigateBack)
+                        viewModel.dispatch(.back)
                     }
                 },
                 rightView: {
@@ -109,22 +97,14 @@ public struct ProfileView: View {
             )
         case .editing:
             Header {
-                Button {
+                PinzButton(type: .text("Отмена")) {
                     viewModel.dispatch(.changeState)
-                } label: {
-                    Text("Отмена")
-                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                        .padding(.leading, 12)
                 }
             } centerView: {
                 HeaderTitle("Редактирование профиля")
             } rightView: {
-                Button {
+                PinzButton(type: .text("Готово")) {
                     viewModel.dispatch(.changeState)
-                } label: {
-                    Text("Готово")
-                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                        .padding(.trailing, 12)
                 }
             }
         }
@@ -149,13 +129,9 @@ public struct ProfileView: View {
                     } label: {
                         Text("Изменить фотографию")
                     }
-
                 }
             }
-            .roundedFount(
-                size: 16,
-                foregroundColor: PinzUIAsset.textSecondary.swiftUIColor
-            )
+            .roundedFount(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
         }
     }
 
@@ -163,7 +139,8 @@ public struct ProfileView: View {
     private var defaultSettings: some View {
         SettingsGroup(
             settings: [
-                .default(.init(
+                .default(Setting.DefaultSetting(
+                    id: "profileStats",
                     title: "Статистика",
                     icon: ProfileIcon.chart,
                     trailIcon: ProfileIcon.chevronRight,
@@ -174,19 +151,22 @@ public struct ProfileView: View {
 
         SettingsGroup(
             settings: [
-                .default(.init(
+                .default(Setting.DefaultSetting(
+                    id: "profileTrips",
                     title: "Путешествия",
                     icon: ProfileIcon.map,
                     trailIcon: ProfileIcon.chevronRight,
                     action: .plain { }
                 )),
-                .default(.init(
+                .default(Setting.DefaultSetting(
+                    id: "profileWishlist",
                     title: "Желанные места",
                     icon: ProfileIcon.heart,
                     trailIcon: ProfileIcon.chevronRight,
                     action: .plain { }
                 )),
-                .default(.init(
+                .default(Setting.DefaultSetting(
+                    id: "profileSavedMaps",
                     title: "Сохранённые карты",
                     icon: ProfileIcon.bookmark,
                     trailIcon: ProfileIcon.chevronRight,
@@ -197,13 +177,15 @@ public struct ProfileView: View {
 
         SettingsGroup(
             settings: [
-                .default(.init(
+                .default(Setting.DefaultSetting(
+                    id: "profileNotifications",
                     title: "Уведомления",
                     icon: ProfileIcon.bell,
                     trailIcon: ProfileIcon.chevronRight,
                     action: .plain { }
                 )),
-                .default(.init(
+                .default(Setting.DefaultSetting(
+                    id: "profileAppearance",
                     title: "Оформление",
                     icon: ProfileIcon.paintbrush,
                     trailIcon: ProfileIcon.chevronRight,
@@ -214,14 +196,16 @@ public struct ProfileView: View {
 
         SettingsGroup(
             settings: [
-                .default(.init(
+                .default(Setting.DefaultSetting(
+                    id: "profileDelete",
                     title: "Удалить аккаунт",
                     icon: ProfileIcon.trash,
                     trailIcon: ProfileIcon.chevronRight,
                     style: .destructive,
                     action: .plain { }
                 )),
-                .default(.init(
+                .default(Setting.DefaultSetting(
+                    id: "profileLeave",
                     title: "Выйти",
                     icon: ProfileIcon.door,
                     trailIcon: ProfileIcon.chevronRight,
@@ -236,7 +220,7 @@ public struct ProfileView: View {
     private var editingSettings: some View {
         SettingsGroup(
             settings: [
-                .textField(.init(
+                .textField(Setting.TextFieldSetting(
                     id: "nicknameTextField",
                     text: $viewModel.user.nickname,
                     placeholder: "Имя",
@@ -248,7 +232,8 @@ public struct ProfileView: View {
 
         SettingsGroup(
             settings: [
-                .default(.init(
+                .default(Setting.DefaultSetting(
+                    id: "profileEmailChanging",
                     title: "Сменить почту",
                     values: [.text(viewModel.user.email)],
                     trailIcon: ProfileIcon.chevronRight,

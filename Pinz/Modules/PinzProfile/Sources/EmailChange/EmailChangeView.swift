@@ -90,7 +90,7 @@ public struct EmailChangeView: View {
 
             SettingsGroup(
                 settings: [
-                    .textField(.init(
+                    .textField(Setting.TextFieldSetting(
                         id: "emailTextField",
                         text: $viewModel.email,
                         placeholder: "example@example.com",
