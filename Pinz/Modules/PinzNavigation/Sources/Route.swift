@@ -8,6 +8,7 @@ public enum TripRoute: Hashable {
 
 public enum ProfileRoute: Hashable {
     case emailChange(email: String, action: EmailChangeAction)
+    case appearance
 }
 
 public enum Route: Hashable {

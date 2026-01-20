@@ -37,6 +37,8 @@ public struct RootView<Content: View>: View {
             switch profileRoute {
             case let .emailChange(email, action):
                 EmailChangeView(email: email, onChangeSuccess: action.action)
+            case .appearance:
+                AppearanceView()
             }
         }
     }

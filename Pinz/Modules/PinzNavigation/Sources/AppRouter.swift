@@ -40,6 +40,10 @@ extension AppRouter {
     public func navigateToEmailChange(email: String, action: EmailChangeAction) {
         navigate(to: .profile(.emailChange(email: email, action: action)))
     }
+
+    public func navigateToAppearance() {
+        navigate(to: .profile(.appearance))
+    }
 }
 
 // MARK: - Feed Routing

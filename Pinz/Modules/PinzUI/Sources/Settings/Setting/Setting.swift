@@ -1,5 +1,7 @@
 import Foundation
 import SwiftUI
+import PinzDomain
+import PinzDomain
 
 public enum Setting {
 
@@ -86,8 +88,49 @@ public enum Setting {
         }
     }
 
+    public struct PickerSetting<Item: PickerItem> {
+
+        let id: String
+        let items: [Item]
+        let title: String
+        let value: Binding<Item>
+        let icon: Icon?
+        let action: Action?
+
+        public init(
+            id: String,
+            items: [Item],
+            title: String,
+            value: Binding<Item>,
+            icon: Icon? = nil,
+            action: Action? = nil
+        ) {
+            self.id = id
+            self.items = items
+            self.title = title
+            self.value = value
+            self.icon = icon
+            self.action = action
+        }
+    }
+
+    enum PickerIcon: String, Icon {
+        case chevrons = "chevron.up.chevron.down"
+    }
+
     case `default`(DefaultSetting)
     case textField(TextFieldSetting)
+
+    public static func picker<Item: PickerItem>(_ setting: PickerSetting<Item>) -> Self {
+        .default(DefaultSetting(
+            id: setting.id,
+            title: setting.title,
+            icon: setting.icon,
+            values: [],
+            trailIcon: PickerIcon.chevrons,
+            action: setting.action
+        ))
+    }
 }
 
 public extension Setting {

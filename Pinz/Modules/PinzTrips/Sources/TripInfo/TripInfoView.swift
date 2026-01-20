@@ -18,29 +18,15 @@ public struct TripInfoView: View {
 
     @State private var viewModel: TripInfoViewModel
     @State private var isDescriptionCollapsed = true
+    @State private var isSeasonPickerPresented = false
+    @State private var isCategoryPickerPresented = false
     @Environment(\.appRouter) private var router
-
-    var seasonSettingValue: String {
-        if let season = viewModel.trip.season {
-            return season
-        } else {
-            return "Не выбрано"
-        }
-    }
-
-    var categorySettingValue: String {
-        if let category = viewModel.trip.category {
-            return category
-        } else {
-            return "Не выбрано"
-        }
-    }
 
     var datesSettingValue: String {
         if let startDate = viewModel.trip.startDate, let endDate = viewModel.trip.endDate {
-            return "\(startDate) — \(endDate)"
+            "\(startDate) — \(endDate)"
         } else {
-            return "Не выбрано"
+            "Не выбрано"
         }
     }
 
@@ -56,19 +42,31 @@ public struct TripInfoView: View {
                 avatar.padding(.top, 12)
 
                 VStack(spacing: 18) {
-                    privacy
-                    description
-                    general
-                    publishing
+                    switch viewModel.state {
+                    case .default:
+                        defaultSettings
+                    case .editing:
+                        editingSettings
+                    }
                 }
                 .padding(.top, 8)
                 .padding(.horizontal, 12)
 
                 Spacer()
-            }
+            }.scrollIndicators(.hidden)
         }
         .onAppear { viewModel.setRouter(router) }
         .background(PinzUIAsset.background.swiftUIColor)
+        .itemsPickerSheet(
+            isPresented: $isSeasonPickerPresented,
+            items: TripSeason.allCases,
+            selection: $viewModel.trip.season
+        )
+        .itemsPickerSheet(
+            isPresented: $isCategoryPickerPresented,
+            items: TripCategory.allCases,
+            selection: $viewModel.trip.category
+        )
     }
 
     @ViewBuilder
@@ -91,8 +89,6 @@ public struct TripInfoView: View {
                 PinzButton(type: .text("Отмена")) {
                     viewModel.dispatch(.changeState)
                 }
-            } centerView: {
-                HeaderTitle(viewModel.trip.name)
             } rightView: {
                 PinzButton(type: .text("Готово")) {
                     viewModel.dispatch(.changeState)
@@ -121,6 +117,21 @@ public struct TripInfoView: View {
         }
     }
 
+    @ViewBuilder
+    private var defaultSettings: some View {
+        privacy
+        general
+        description
+        publishing
+    }
+
+    @ViewBuilder
+    private var editingSettings: some View {
+        nameEditing
+        general
+        descriptionEditing
+    }
+
     private var privacy: some View {
         PrivacySection(
             members: [
@@ -134,7 +145,7 @@ public struct TripInfoView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 0) {
                 SettingTitle("Описание")
-                if viewModel.trip.description != nil {
+                if viewModel.trip.description != "" {
                     Spacer()
                     Button {
                         withAnimation(.easeInOut(duration: 0.3)) {
@@ -153,9 +164,9 @@ public struct TripInfoView: View {
             .padding(.leading, 12)
             .padding(.trailing, 16)
 
-            if let description = viewModel.trip.description {
+            if !viewModel.trip.description.isEmpty {
                 VStack(spacing: 0) {
-                    Text(description)
+                    Text(viewModel.trip.description)
                         .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                         .lineLimit(isDescriptionCollapsed ? 5 : nil)
                         .frame(maxWidth: .infinity)
@@ -180,35 +191,57 @@ public struct TripInfoView: View {
         }
     }
 
+    @ViewBuilder
     private var general: some View {
+        let defaultSettings: [Setting] = [
+            .default(Setting.DefaultSetting(
+                id: "tripSeason",
+                title: "Сезон",
+                icon: TripInfoIcon.sun,
+                values: [.text(viewModel.trip.season.value)],
+                trailIcon: TripInfoIcon.chevronRight,
+                action: .plain { }
+            )),
+            .default(Setting.DefaultSetting(
+                id: "tripCategory",
+                title: "Категория",
+                icon: TripInfoIcon.info,
+                values: [.text(viewModel.trip.category.value)],
+                trailIcon: TripInfoIcon.chevronRight,
+                action: .plain {}
+            )),
+            .default(Setting.DefaultSetting(
+                id: "tripDates",
+                title: "Даты",
+                icon: TripInfoIcon.calendar,
+                values: [.text(datesSettingValue)],
+                trailIcon: TripInfoIcon.chevronRight,
+                action: .plain {}
+            )),
+        ]
+
+        let editingSettings: [Setting] = [
+            .picker(Setting.PickerSetting(
+                id: "tripSeasonPicker",
+                items: TripSeason.allCases,
+                title: viewModel.trip.season.value,
+                value: $viewModel.trip.season,
+                icon: TripInfoIcon.sun,
+                action: .plain { isSeasonPickerPresented = true }
+            )),
+            .picker(Setting.PickerSetting(
+                id: "tripCategoryPicker",
+                items: TripCategory.allCases,
+                title: viewModel.trip.category.value,
+                value: $viewModel.trip.category,
+                icon: TripInfoIcon.info,
+                action: .plain { isCategoryPickerPresented = true }
+            )),
+        ]
+
         SettingsGroup(
             title: "Общая информация",
-            settings: [
-                .default(Setting.DefaultSetting(
-                    id: "tripSeason",
-                    title: "Сезон",
-                    icon: TripInfoIcon.sun,
-                    values: [.text(seasonSettingValue)],
-                    trailIcon: TripInfoIcon.chevronRight,
-                    action: .plain {}
-                )),
-                .default(Setting.DefaultSetting(
-                    id: "tripDates",
-                    title: "Даты",
-                    icon: TripInfoIcon.calendar,
-                    values: [.text(datesSettingValue)],
-                    trailIcon: TripInfoIcon.chevronRight,
-                    action: .plain {}
-                )),
-                .default(Setting.DefaultSetting(
-                    id: "tripCategory",
-                    title: "Категория",
-                    icon: TripInfoIcon.info,
-                    values: [.text(categorySettingValue)],
-                    trailIcon: TripInfoIcon.chevronRight,
-                    action: .plain {}
-                )),
-            ]
+            settings: viewModel.state == .default ? defaultSettings : editingSettings
         )
     }
 
@@ -226,5 +259,36 @@ public struct TripInfoView: View {
             ],
             subtitle: "Когда нельзя публиковать, можно в сабтайтле это писать"
         )
+    }
+
+    private var nameEditing: some View {
+        SettingsGroup(
+            settings: [
+                .textField(Setting.TextFieldSetting(
+                    id: "nicknameTextField",
+                    text: $viewModel.trip.name,
+                    placeholder: "Имя",
+                    style: .default
+                )),
+            ],
+            subtitle: "Название путешествия должно состоять из букв, цифр, точки и подчеркивания"
+        )
+    }
+
+    private var descriptionEditing: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SettingTitle("Описание")
+                .padding(.bottom, 6)
+                .padding(.leading, 12)
+
+            SettingsGroup(settings: [
+                .textField(Setting.TextFieldSetting(
+                    id: "tripDescriptionEditingTextField",
+                    text: $viewModel.trip.description,
+                    placeholder: "Описание путешествия",
+                    style: .multiline
+                ))
+            ])
+        }
     }
 }

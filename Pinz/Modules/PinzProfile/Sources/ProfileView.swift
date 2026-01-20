@@ -189,7 +189,7 @@ public struct ProfileView: View {
                     title: "Оформление",
                     icon: ProfileIcon.paintbrush,
                     trailIcon: ProfileIcon.chevronRight,
-                    action: .plain { }
+                    action: .plain { viewModel.dispatch(.navigateToAppearance) }
                 )),
             ],
         )

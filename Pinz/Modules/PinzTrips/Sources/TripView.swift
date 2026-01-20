@@ -34,9 +34,8 @@ public struct TripView: View {
         .onAppear { viewModel.setRouter(router) }
         .sheet(isPresented: $isPinsPresented) {
             TripPinsView(pins: viewModel.trip.pins)
-                .presentationCornerRadius(40)
+                .pinzSheet()
                 .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.hidden)
         }
     }
 

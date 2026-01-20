@@ -18,6 +18,7 @@ public class ProfileViewModel {
         case setImage(UIImage?)
         
         case navigateToEmailChange
+        case navigateToAppearance
         case back
     }
 
@@ -60,6 +61,8 @@ public class ProfileViewModel {
                 self?.router?.pop()
             }
             router?.navigateToEmailChange(email: user.email, action: action)
+        case .navigateToAppearance:
+            router?.navigateToAppearance()
         case .back:
             router?.pop()
         }

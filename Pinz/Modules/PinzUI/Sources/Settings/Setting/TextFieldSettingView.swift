@@ -4,7 +4,6 @@ extension Setting.TextFieldSetting {
     public var view: some View {
         textField
             .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-            .frame(maxWidth: .infinity, minHeight: 52)
     }
 
     @ViewBuilder
@@ -12,12 +11,14 @@ extension Setting.TextFieldSetting {
         switch style {
         case .default:
             TextField(placeholder, text: $text, axis: .horizontal)
+                .frame(maxWidth: .infinity, minHeight: 52)
                 .ifLet(focused) { view, value in view.focused(value) }
         case .multiline:
             TextField(placeholder, text: $text, axis: .vertical)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
                 .ifLet(focused) { view, value in view.focused(value) }
-                .lineSpacing(6)
-                .lineLimit(...15)
+                .lineLimit(nil)
         }
     }
 }

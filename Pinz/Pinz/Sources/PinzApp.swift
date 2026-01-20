@@ -41,10 +41,10 @@ struct PinzApp: App {
                     image: PinzUIAsset.media3.image,
                     description: description,
                     pins: [pin, pin, pin, pin, pin],
-                    season: "Лето",
+                    season: .summer,
                     startDate: "03.01.2026",
                     endDate: "09.01.2026",
-                    category: "Отпуск"
+                    category: .vacation
                 ))
             }
         }

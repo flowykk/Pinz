@@ -33,7 +33,7 @@ extension Setting.DefaultSetting {
             if let icon {
                 Image(systemName: icon.rawValue)
                     .roundedFount(size: 18, foregroundColor: titleColor)
-                    .frame(width: 16, height: 16)
+                    .frame(16)
                     .padding(.trailing, 12)
             }
             Text(title)
