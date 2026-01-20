@@ -2,6 +2,7 @@ import SwiftUI
 import PinzNavigation
 import PinzTrips
 
+import PinzBase
 import PinzDomain
 import PinzUI
 
@@ -42,8 +43,8 @@ struct PinzApp: App {
                     description: description,
                     pins: [pin, pin, pin, pin, pin],
                     season: .summer,
-                    startDate: "03.01.2026",
-                    endDate: "09.01.2026",
+                    startDate: Date(fromDateString: "03.01.2026"),
+                    endDate: Date(fromDateString: "09.01.2026"),
                     category: .vacation
                 ))
             }

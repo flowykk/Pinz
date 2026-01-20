@@ -52,7 +52,7 @@ extension Setting.DefaultSetting {
                             .roundedFount(size: 16, foregroundColor: color)
                     }
                 }
-            }.padding(.trailing, trailIcon != nil ? 6 : 0)
+            }.padding(.trailing, trailIcon != nil ? 8 : 0)
 
             if let trailIcon {
                 Image(systemName: trailIcon.rawValue)

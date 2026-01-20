@@ -14,17 +14,41 @@ enum TripInfoIcon: String, Setting.Icon {
     case paperplane = "paperplane"
 }
 
+enum TripSeasonIcon: String, Setting.Icon {
+    case none = "questionmark.circle.fill"
+    case summer = "sun.max.fill"
+    case autumn = "cloud.fill"
+    case winter = "snowflake"
+    case spring = "leaf.fill"
+}
+
 public struct TripInfoView: View {
 
     @State private var viewModel: TripInfoViewModel
     @State private var isDescriptionCollapsed = true
+
     @State private var isSeasonPickerPresented = false
     @State private var isCategoryPickerPresented = false
+
+    @State private var isStartDatePickerPresented = false
+    @State private var isEndDatePickerPresented = false
+    @State private var datePickerHeight: CGFloat = 0
+
     @Environment(\.appRouter) private var router
+
+    var tripSeasonIcon: TripSeasonIcon {
+        switch viewModel.trip.season {
+        case .none: return .none
+        case .summer: return .summer
+        case .autumn: return .autumn
+        case .winter: return .winter
+        case .spring: return .spring
+        }
+    }
 
     var datesSettingValue: String {
         if let startDate = viewModel.trip.startDate, let endDate = viewModel.trip.endDate {
-            "\(startDate) — \(endDate)"
+            "\(startDate.formattedToDayMonthYear) — \(endDate.formattedToDayMonthYear)"
         } else {
             "Не выбрано"
         }
@@ -66,6 +90,16 @@ public struct TripInfoView: View {
             isPresented: $isCategoryPickerPresented,
             items: TripCategory.allCases,
             selection: $viewModel.trip.category
+        )
+        .datePickerSheet(
+            isPresented: $isStartDatePickerPresented,
+            date: $viewModel.trip.startDate,
+            pickerHeight: $datePickerHeight
+        )
+        .datePickerSheet(
+            isPresented: $isEndDatePickerPresented,
+            date: $viewModel.trip.endDate,
+            pickerHeight: $datePickerHeight
         )
     }
 
@@ -197,10 +231,10 @@ public struct TripInfoView: View {
             .default(Setting.DefaultSetting(
                 id: "tripSeason",
                 title: "Сезон",
-                icon: TripInfoIcon.sun,
+                icon: tripSeasonIcon,
                 values: [.text(viewModel.trip.season.value)],
                 trailIcon: TripInfoIcon.chevronRight,
-                action: .plain { }
+                action: .plain { viewModel.dispatch(.changeState) }
             )),
             .default(Setting.DefaultSetting(
                 id: "tripCategory",
@@ -208,7 +242,7 @@ public struct TripInfoView: View {
                 icon: TripInfoIcon.info,
                 values: [.text(viewModel.trip.category.value)],
                 trailIcon: TripInfoIcon.chevronRight,
-                action: .plain {}
+                action: .plain { viewModel.dispatch(.changeState) }
             )),
             .default(Setting.DefaultSetting(
                 id: "tripDates",
@@ -216,26 +250,36 @@ public struct TripInfoView: View {
                 icon: TripInfoIcon.calendar,
                 values: [.text(datesSettingValue)],
                 trailIcon: TripInfoIcon.chevronRight,
-                action: .plain {}
+                action: .plain { viewModel.dispatch(.changeState) }
             )),
         ]
 
         let editingSettings: [Setting] = [
             .picker(Setting.PickerSetting(
                 id: "tripSeasonPicker",
-                items: TripSeason.allCases,
                 title: viewModel.trip.season.value,
-                value: $viewModel.trip.season,
-                icon: TripInfoIcon.sun,
-                action: .plain { isSeasonPickerPresented = true }
+                icon: tripSeasonIcon,
+                isPickerPresented: $isSeasonPickerPresented
             )),
             .picker(Setting.PickerSetting(
                 id: "tripCategoryPicker",
-                items: TripCategory.allCases,
                 title: viewModel.trip.category.value,
-                value: $viewModel.trip.category,
                 icon: TripInfoIcon.info,
-                action: .plain { isCategoryPickerPresented = true }
+                isPickerPresented: $isCategoryPickerPresented
+            )),
+            .picker(Setting.PickerSetting(
+                id: "tripStartDatePicker",
+                title: "Дата начала",
+                icon: TripInfoIcon.calendar,
+                value: .text(viewModel.trip.startDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                isPickerPresented: $isStartDatePickerPresented
+            )),
+            .picker(Setting.PickerSetting(
+                id: "tripEndDatePicker",
+                title: "Дата конца",
+                icon: TripInfoIcon.calendar,
+                value: .text(viewModel.trip.endDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                isPickerPresented: $isEndDatePickerPresented
             )),
         ]
 

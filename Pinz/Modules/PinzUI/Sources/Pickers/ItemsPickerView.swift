@@ -2,7 +2,6 @@ import SwiftUI
 import PinzDomain
 
 public struct ItemsPickerView<Item: PickerItem>: View {
-
     var items: [Item]
     @Binding var selection: Item
     @Binding var isPresented: Bool
@@ -18,14 +17,16 @@ public struct ItemsPickerView<Item: PickerItem>: View {
     }
 
     public var body: some View {
-        VStack {
+        VStack(alignment: .center) {
             Spacer()
-            
+
             Picker("", selection: $selection) {
                 ForEach(items) { item in
                     Text(item.value)
                 }
-            }.pickerStyle(.wheel)
+            }
+            .pickerStyle(.wheel)
+            .labelsHidden()
 
             PinzButton(
                 type: .slot("Готово", PinzUIAsset.textPrimary.swiftUIColor),
@@ -41,9 +42,9 @@ extension View {
     public func itemsPickerSheet<Item: PickerItem>(
         isPresented: Binding<Bool>,
         items: [Item],
-        selection: Binding<Item>
+        selection: Binding<Item>,
+        pickerHeight: Binding<CGFloat>? = nil
     ) -> some View {
-
         self.sheet(isPresented: isPresented) {
             ItemsPickerView(
                 items: items,

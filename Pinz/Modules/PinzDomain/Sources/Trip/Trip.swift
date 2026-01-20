@@ -7,8 +7,8 @@ public struct Trip: Hashable {
     public var description: String
     public var pins: [Pin]
     public var season: TripSeason
-    public var startDate: String?
-    public var endDate: String?
+    public var startDate: Date?
+    public var endDate: Date?
     public var category: TripCategory
 
     public init(
@@ -17,8 +17,8 @@ public struct Trip: Hashable {
         description: String = "",
         pins: [Pin],
         season: TripSeason,
-        startDate: String? = nil,
-        endDate: String? = nil,
+        startDate: Date? = nil,
+        endDate: Date? = nil,
         category: TripCategory
     ) {
         self.name = name

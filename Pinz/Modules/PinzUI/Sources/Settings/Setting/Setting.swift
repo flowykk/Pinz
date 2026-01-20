@@ -1,7 +1,6 @@
 import Foundation
 import SwiftUI
 import PinzDomain
-import PinzDomain
 
 public enum Setting {
 
@@ -14,23 +13,23 @@ public enum Setting {
         case async(() async throws -> Void)
     }
 
+    public enum Value: Identifiable {
+        case text(String)
+        case icon(Icon, Color)
+
+        public var id: String {
+            switch self {
+            case let .text(str): return "string_\(str)"
+            case let .icon(icon, _): return "icon_\(icon.rawValue)"
+            }
+        }
+    }
+
     public struct DefaultSetting {
 
         public enum Style {
             case `default`
             case destructive
-        }
-
-        public enum Value: Identifiable {
-            case text(String)
-            case icon(Icon, Color)
-
-            public var id: String {
-                switch self {
-                case let .text(str): return "string_\(str)"
-                case let .icon(icon, _): return "icon_\(icon.rawValue)"
-                }
-            }
         }
 
         let id: String
@@ -88,29 +87,26 @@ public enum Setting {
         }
     }
 
-    public struct PickerSetting<Item: PickerItem> {
+    public struct PickerSetting {
 
         let id: String
-        let items: [Item]
         let title: String
-        let value: Binding<Item>
         let icon: Icon?
-        let action: Action?
+        let value: Value?
+        var isPickerPresented: Binding<Bool>
 
         public init(
             id: String,
-            items: [Item],
             title: String,
-            value: Binding<Item>,
             icon: Icon? = nil,
-            action: Action? = nil
+            value: Value? = nil,
+            isPickerPresented: Binding<Bool>
         ) {
             self.id = id
-            self.items = items
             self.title = title
-            self.value = value
             self.icon = icon
-            self.action = action
+            self.value = value
+            self.isPickerPresented = isPickerPresented
         }
     }
 
@@ -121,14 +117,14 @@ public enum Setting {
     case `default`(DefaultSetting)
     case textField(TextFieldSetting)
 
-    public static func picker<Item: PickerItem>(_ setting: PickerSetting<Item>) -> Self {
+    public static func picker(_ setting: PickerSetting) -> Self {
         .default(DefaultSetting(
             id: setting.id,
             title: setting.title,
             icon: setting.icon,
-            values: [],
+            values: setting.value.flatMap { [$0] } ?? [],
             trailIcon: PickerIcon.chevrons,
-            action: setting.action
+            action: .plain { setting.isPickerPresented.wrappedValue = true }
         ))
     }
 }
