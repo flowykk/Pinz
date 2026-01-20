@@ -6,6 +6,7 @@ public protocol AppRouting {
     func navigateToProfile(user: User)
     
     func navigateToEmailChange(email: String, action: EmailChangeAction)
+    func navigateToAppearance()
 
     func navigateToFeed()
     

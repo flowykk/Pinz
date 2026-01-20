@@ -2,7 +2,7 @@ import SwiftUI
 import PinzUI
 import MapKit
 
-struct AppearanceView: View {
+public struct AppearanceView: View {
     @Environment(\.dismiss) var dismiss
 
     @State private var viewModel = AppearanceViewModel()
@@ -13,8 +13,10 @@ struct AppearanceView: View {
             span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
         )
     )
-    
-    var body: some View {
+
+    public init() { }
+
+    public var body: some View {
         VStack(spacing: 0) {
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {

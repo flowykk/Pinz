@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import PinzDomain
 
 public enum Setting {
 
@@ -12,23 +13,23 @@ public enum Setting {
         case async(() async throws -> Void)
     }
 
+    public enum Value: Identifiable {
+        case text(String)
+        case icon(Icon, Color)
+
+        public var id: String {
+            switch self {
+            case let .text(str): return "string_\(str)"
+            case let .icon(icon, _): return "icon_\(icon.rawValue)"
+            }
+        }
+    }
+
     public struct DefaultSetting {
 
         public enum Style {
             case `default`
             case destructive
-        }
-
-        public enum Value: Identifiable {
-            case text(String)
-            case icon(Icon, Color)
-
-            public var id: String {
-                switch self {
-                case let .text(str): return "string_\(str)"
-                case let .icon(icon, _): return "icon_\(icon.rawValue)"
-                }
-            }
         }
 
         let id: String
@@ -86,8 +87,46 @@ public enum Setting {
         }
     }
 
+    public struct PickerSetting {
+
+        let id: String
+        let title: String
+        let icon: Icon?
+        let value: Value?
+        var isPickerPresented: Binding<Bool>
+
+        public init(
+            id: String,
+            title: String,
+            icon: Icon? = nil,
+            value: Value? = nil,
+            isPickerPresented: Binding<Bool>
+        ) {
+            self.id = id
+            self.title = title
+            self.icon = icon
+            self.value = value
+            self.isPickerPresented = isPickerPresented
+        }
+    }
+
+    enum PickerIcon: String, Icon {
+        case chevrons = "chevron.up.chevron.down"
+    }
+
     case `default`(DefaultSetting)
     case textField(TextFieldSetting)
+
+    public static func picker(_ setting: PickerSetting) -> Self {
+        .default(DefaultSetting(
+            id: setting.id,
+            title: setting.title,
+            icon: setting.icon,
+            values: setting.value.flatMap { [$0] } ?? [],
+            trailIcon: PickerIcon.chevrons,
+            action: .plain { setting.isPickerPresented.wrappedValue = true }
+        ))
+    }
 }
 
 public extension Setting {
