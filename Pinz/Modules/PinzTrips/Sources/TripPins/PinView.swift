@@ -55,16 +55,12 @@ struct PinView: View {
                 }
 
                 if pin.medias.count > 6 {
-                    Button {
-
-                    } label: {
-                        VStack {
-                            Text("+\(pin.medias.count - 6)")
-                                .roundedFount(size: 24, weight: .semibold, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
-                            Text("медиа")
-                                .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
-                        }.frame(76)
-                    }
+                    VStack {
+                        Text("+\(pin.medias.count - 6)")
+                            .roundedFount(size: 24, weight: .semibold, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                        Text("медиа")
+                            .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                    }.frame(76)
                 }
 //                RoundedRectangle(cornerRadius: 16)
 //                    .frame(96)
