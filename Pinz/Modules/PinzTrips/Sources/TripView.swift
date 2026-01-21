@@ -26,6 +26,7 @@ public struct TripView: View {
 //                .mapStyle(.imagery(elevation: .realistic))
                 .mapControlVisibility(.hidden)
                 .ignoresSafeArea()
+                .toolbar(.hidden)
 
             gradient.ignoresSafeArea()
 

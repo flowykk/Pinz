@@ -47,7 +47,7 @@ struct PinzApp: App {
                     endDate: Date(fromDateString: "09.01.2026"),
                     category: .vacation
                 ))
-            }
+            }.toolbar(.hidden)
         }
     }
 }
