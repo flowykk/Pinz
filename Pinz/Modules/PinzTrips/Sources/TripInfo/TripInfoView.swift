@@ -5,6 +5,8 @@ import PinzDomain
 enum TripInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
 
+    case pins = "pin.fill"
+
     case text = "text.alignleft"
 
     case sun = "sun.max.fill"
@@ -65,7 +67,7 @@ public struct TripInfoView: View {
             ScrollView {
                 avatar.padding(.top, 12)
 
-                VStack(spacing: 18) {
+                VStack(spacing: 16) {
                     switch viewModel.state {
                     case .default:
                         defaultSettings
@@ -153,9 +155,10 @@ public struct TripInfoView: View {
 
     @ViewBuilder
     private var defaultSettings: some View {
-        privacy
         general
+        pins
         description
+        privacy
         publishing
     }
 
@@ -225,6 +228,20 @@ public struct TripInfoView: View {
         }
     }
 
+    private var pins: some View {
+        SettingsGroup(
+            settings: [
+                .default(Setting.DefaultSetting(
+                    id: "tripPins",
+                    title: "Пины путешествия",
+                    icon: TripInfoIcon.pins,
+                    trailIcon: TripInfoIcon.chevronRight,
+                    action: .plain {  }
+                )),
+            ],
+        )
+    }
+
     @ViewBuilder
     private var general: some View {
         let defaultSettings: [Setting] = [
@@ -286,7 +303,7 @@ public struct TripInfoView: View {
         SettingsGroup(
             title: "Общая информация",
             settings: viewModel.state == .default ? defaultSettings : editingSettings
-        )
+        ).animation(.default, value: viewModel.trip)
     }
 
     private var publishing: some View {

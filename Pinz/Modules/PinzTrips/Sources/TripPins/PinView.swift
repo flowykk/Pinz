@@ -62,9 +62,6 @@ struct PinView: View {
                             .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                     }.frame(76)
                 }
-//                RoundedRectangle(cornerRadius: 16)
-//                    .frame(96)
-//                    .foregroundColor(.red)
             }.padding(.horizontal, 12)
         }.scrollIndicators(.hidden)
     }
