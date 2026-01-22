@@ -49,8 +49,7 @@ public struct EmailChangeView: View {
                         VStack {
                             Spacer()
                             PinzButton(
-                                type: .slot("Далее", PinzUIAsset.backgroundSecondary.swiftUIColor),
-                                tint: PinzUIAsset.textPrimary.swiftUIColor
+                                type: .slot(style: .primary, title: "Далее")
                             ) {
                                 viewModel.dispatch(.continue)
                             }

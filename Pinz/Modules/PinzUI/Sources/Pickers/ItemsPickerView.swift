@@ -29,7 +29,7 @@ public struct ItemsPickerView<Item: PickerItem>: View {
             .labelsHidden()
 
             PinzButton(
-                type: .slot("Готово", PinzUIAsset.textPrimary.swiftUIColor),
+                type: .slot(style: .primary, title: "Готово"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor
             ) {
                 isPresented = false

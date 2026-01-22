@@ -33,10 +33,7 @@ public struct DatePickerView: View {
             .labelsHidden()
             .measureHeight(for: pickerHeight)
 
-            PinzButton(
-                type: .slot("Готово", PinzUIAsset.textPrimary.swiftUIColor),
-                tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-            ) {
+            PinzButton(type: .slot(style: .primary, title: "Готово")) {
                 isPresented = false
             }.padding(.horizontal, 12)
         }
