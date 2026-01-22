@@ -82,12 +82,12 @@ struct TripPinsView: View {
     private var buttons: some View {
         HStack(spacing: 6) {
             PinzButton(
-                type: .slot("Добавить медиа", PinzUIAsset.textPrimary.swiftUIColor),
+                type: .slot(style: .secondary(needBorder: true), title: "Добавить медиа"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor
             ) {}
 
             PinzButton(
-                type: .slot("Добавить пин", PinzUIAsset.textPrimary.swiftUIColor),
+                type: .slot(style: .primary, title: "Добавить пин"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor
             ) {}
         }
