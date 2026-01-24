@@ -32,6 +32,8 @@ public struct RootView<Content: View>: View {
                 TripInfoView(trip: trip)
             case let .profile(user):
                 ProfileView(user: user)
+            case let .pinInfo(pin):
+                PinInfoView(pin: pin)
             }
         case let .profile(profileRoute):
             switch profileRoute {

@@ -2,19 +2,25 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 
-struct PinView: View {
+struct PinShortInfoView: View {
 
     let pin: Pin
+    let pinTapped: (Pin) -> Void
 
-    init(pin: Pin) {
+    init(pin: Pin, pinTapped: @escaping (Pin) -> Void) {
         self.pin = pin
+        self.pinTapped = pinTapped
     }
 
     var body: some View {
-        VStack(spacing: 6) {
-            header
-            medias
-            tags
+        Button {
+            pinTapped(pin)
+        } label: {
+            VStack(spacing: 6) {
+                header
+                medias
+                tags
+            }
         }
     }
 
@@ -28,7 +34,7 @@ struct PinView: View {
                         .roundedFount(size: 18)
                 }
 
-                Text(pin.category)
+                Text(pin.category.value)
                     .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
             }
 

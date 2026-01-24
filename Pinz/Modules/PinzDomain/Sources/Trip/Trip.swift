@@ -4,7 +4,7 @@ import SwiftUI
 public struct Trip: Hashable {
     public var name: String
     public var image: UIImage?
-    public var description: String
+    public var description: String?
     public var pins: [Pin]
     public var season: TripSeason
     public var startDate: Date?
@@ -14,7 +14,7 @@ public struct Trip: Hashable {
     public init(
         name: String,
         image: UIImage? = nil,
-        description: String = "",
+        description: String? = nil,
         pins: [Pin],
         season: TripSeason,
         startDate: Date? = nil,

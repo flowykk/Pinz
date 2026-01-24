@@ -31,4 +31,6 @@ public enum TripSeason: PickerItem {
         .winter,
         .spring,
     ]
+
+    public var isCustomizable: Bool { false }
 }

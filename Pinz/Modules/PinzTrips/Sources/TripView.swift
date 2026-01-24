@@ -34,9 +34,12 @@ public struct TripView: View {
         }
         .onAppear { viewModel.setRouter(router) }
         .sheet(isPresented: $isPinsPresented) {
-            TripPinsView(pins: viewModel.trip.pins)
-                .pinzSheet()
-                .presentationDetents([.medium, .large])
+            TripPinsListView(pins: viewModel.trip.pins) { pin in
+                isPinsPresented = false
+                viewModel.dispatch(.navigateToPinInfo(pin: pin))
+            }
+            .pinzSheet()
+            .presentationDetents([.medium, .large])
         }
     }
 

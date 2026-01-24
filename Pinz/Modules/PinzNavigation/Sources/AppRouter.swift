@@ -32,6 +32,10 @@ extension AppRouter {
     public func navigateToProfile(user: User) {
         navigate(to: .trip(.profile(user: user)))
     }
+
+    public func navigateToPinInfo(pin: Pin) {
+        navigate(to: .trip(.pinInfo(pin: pin)))
+    }
 }
 
 // MARK: - Profile Routing

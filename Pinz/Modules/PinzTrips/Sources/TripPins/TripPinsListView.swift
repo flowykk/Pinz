@@ -2,13 +2,15 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 
-struct TripPinsView: View {
+struct TripPinsListView: View {
     @Environment(\.dismiss) var dismiss
 
     let pins: [Pin]
+    let pinTapped: (Pin) -> Void
 
-    init(pins: [Pin]) {
+    init(pins: [Pin], pinTapped: @escaping (Pin) -> Void) {
         self.pins = pins
+        self.pinTapped = pinTapped
     }
 
     var body: some View {
@@ -25,7 +27,7 @@ struct TripPinsView: View {
         ScrollView {
             VStack(spacing: 8) {
                 ForEach(pins.indices, id: \.self) { index in
-                    PinView(pin: pins[index])
+                    PinShortInfoView(pin: pins[index], pinTapped: pinTapped)
                     if index != pins.count - 1 {
                         Divider().padding(.leading, 12)
                     }

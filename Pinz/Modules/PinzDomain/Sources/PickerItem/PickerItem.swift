@@ -8,4 +8,5 @@ public enum PickerItemContent {
 public protocol PickerItem: Identifiable, Hashable {
     var content: PickerItemContent { get }
     var value: String { get }
+    var isCustomizable: Bool { get }
 }

@@ -37,6 +37,9 @@ public struct PinzButton: View {
 
         case personAdd = "person.fill.badge.plus"
         case pencil = "pencil"
+
+        case warning = "exclamationmark.triangle.fill"
+        case checkmark = "checkmark.circle.fill"
     }
 
     private let type: ButtonType
@@ -59,9 +62,8 @@ public struct PinzButton: View {
                 switch type {
                 case let .icon(icon):
                     Image(systemName: icon.rawValue)
-                        .roundedFount(size: 20, weight: .bold)
+                        .roundedFount(size: 20, weight: .bold, foregroundColor: tint)
                         .frame(width: 40, height: 40)
-                        .tint(tint)
                 case let .text(text):
                     Text(text)
                         .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)

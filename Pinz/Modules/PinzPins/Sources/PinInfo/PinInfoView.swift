@@ -2,62 +2,37 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 
-enum TripInfoIcon: String, Setting.Icon {
+enum PinInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
 
-    case pins = "pin.fill"
+    case warning = "exclamationmark.triangle.fill"
+    case checkmark = "checkmark.circle.fill"
 
-    case text = "text.alignleft"
-
-    case sun = "sun.max.fill"
-    case calendar = "calendar"
     case info = "info.circle.fill"
-
-    case paperplane = "paperplane"
 }
 
-enum TripSeasonIcon: String, Setting.Icon {
-    case none = "questionmark.circle.fill"
-    case summer = "sun.max.fill"
-    case autumn = "cloud.fill"
-    case winter = "snowflake"
-    case spring = "leaf.fill"
-}
+public struct PinInfoView: View {
 
-public struct TripInfoView: View {
-
-    @State private var viewModel: TripInfoViewModel
+    @State private var viewModel: PinInfoViewModel
     @State private var isDescriptionCollapsed = true
 
-    @State private var isSeasonPickerPresented = false
     @State private var isCategoryPickerPresented = false
-
     @State private var isStartDatePickerPresented = false
     @State private var isEndDatePickerPresented = false
     @State private var datePickerHeight: CGFloat = 0
 
     @Environment(\.appRouter) private var router
 
-    var tripSeasonIcon: TripSeasonIcon {
-        switch viewModel.trip.season {
-        case .none: return .none
-        case .summer: return .summer
-        case .autumn: return .autumn
-        case .winter: return .winter
-        case .spring: return .spring
-        }
-    }
-
     var datesSettingValue: String {
-        if let startDate = viewModel.trip.startDate, let endDate = viewModel.trip.endDate {
+        if let startDate = viewModel.pin.startDate, let endDate = viewModel.pin.endDate {
             "\(startDate.formattedToDayMonthYear) — \(endDate.formattedToDayMonthYear)"
         } else {
             "Не выбрано"
         }
     }
 
-    public init(trip: Trip) {
-        viewModel = TripInfoViewModel(trip: trip)
+    public init(pin: Pin) {
+        viewModel = PinInfoViewModel(pin: pin)
     }
 
     public var body: some View {
@@ -65,14 +40,14 @@ public struct TripInfoView: View {
             header
 
             ScrollView {
-                avatar.padding(.top, 12)
-
                 VStack(spacing: 16) {
                     switch viewModel.state {
-                    case .default:
+                    case .info:
                         defaultSettings
                     case .editing:
                         editingSettings
+                    case .gallery:
+                        EmptyView()
                     }
                 }
                 .padding(.top, 8)
@@ -84,23 +59,22 @@ public struct TripInfoView: View {
         .onAppear { viewModel.setRouter(router) }
         .background(PinzUIAsset.background.swiftUIColor)
         .itemsPickerSheet(
-            isPresented: $isSeasonPickerPresented,
-            items: TripSeason.allCases,
-            selection: $viewModel.trip.season
-        )
-        .itemsPickerSheet(
             isPresented: $isCategoryPickerPresented,
-            items: TripCategory.allCases,
-            selection: $viewModel.trip.category
+            items: PinCategory.allCases,
+            selection: $viewModel.pin.category,
+            customizableItem: .custom(),
+            saveCustomizableItem: { value in
+                viewModel.pin.category = .custom(value)
+            }
         )
         .datePickerSheet(
             isPresented: $isStartDatePickerPresented,
-            date: $viewModel.trip.startDate,
+            date: $viewModel.pin.startDate,
             pickerHeight: $datePickerHeight
         )
         .datePickerSheet(
             isPresented: $isEndDatePickerPresented,
-            date: $viewModel.trip.endDate,
+            date: $viewModel.pin.endDate,
             pickerHeight: $datePickerHeight
         )
     }
@@ -108,49 +82,31 @@ public struct TripInfoView: View {
     @ViewBuilder
     private var header: some View {
         switch viewModel.state {
-        case .default:
+        case .info, .gallery:
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                     viewModel.dispatch(.back)
                 }
             }, centerView: {
-                HeaderTitle(
-                    viewModel.trip.name,
-                    subtitle: "\(viewModel.trip.category.value), \(viewModel.trip.season.value)"
-                )
+                HeaderTitle(viewModel.pin.name, subtitle: viewModel.pin.category.value)
             }, rightView: {
-                PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.changeState)
+                PinzButton(type: .icon(.warning), tint: PinzUIAsset.accentOrange.swiftUIColor) {
+
                 }
-            })
+                PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                    viewModel.dispatch(.changeState(.editing))
+                }
+            }, additionalView: {
+                SegmentedPicker(selection: $viewModel.state, items: [.info, .gallery])
+            }, height: nil)
         case .editing:
             Header {
                 PinzButton(type: .text("Отмена")) {
-                    viewModel.dispatch(.changeState)
+                    viewModel.dispatch(.changeState(.info))
                 }
             } rightView: {
                 PinzButton(type: .text("Готово")) {
-                    viewModel.dispatch(.changeState)
-                }
-            }
-        }
-    }
-
-    private var avatar: some View {
-        VStack {
-            Image(uiImage: viewModel.trip.image ?? PinzUIAsset.avatar.image)
-                .resizable()
-                .scaledToFill()
-                .frame(120)
-                .cornerRadius(60)
-                .clipped()
-
-            if viewModel.state == .editing {
-                Button {
-
-                } label: {
-                    Text("Изменить фотографию")
-                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                    viewModel.dispatch(.changeState(.info))
                 }
             }
         }
@@ -159,18 +115,64 @@ public struct TripInfoView: View {
     @ViewBuilder
     private var defaultSettings: some View {
         general
-        pins
-        description
-        privacy
-        publishing
     }
 
     @ViewBuilder
     private var editingSettings: some View {
-        nameEditing
         general
-        descriptionEditing
     }
+
+    @ViewBuilder
+    private var general: some View {
+        let defaultSettings: [Setting] = [
+            .default(Setting.DefaultSetting(
+                id: "pinCategory",
+                title: "Категория",
+                icon: PinInfoIcon.info,
+                values: [.text(viewModel.pin.category.value)],
+                trailIcon: PinInfoIcon.chevronRight,
+                action: .plain { viewModel.dispatch(.changeState(.editing)) }
+            )),
+            .default(Setting.DefaultSetting(
+                id: "pinDates",
+                title: "Даты",
+                icon: PinInfoIcon.info,
+                values: [.text(datesSettingValue)],
+                trailIcon: PinInfoIcon.chevronRight,
+                action: .plain { viewModel.dispatch(.changeState(.editing)) }
+            )),
+        ]
+
+        let editingSettings: [Setting] = [
+            .picker(Setting.PickerSetting(
+                id: "pinCategoryPicker",
+                title: viewModel.pin.category.value,
+                icon: PinInfoIcon.info,
+                isPickerPresented: $isCategoryPickerPresented
+            )),
+            .picker(Setting.PickerSetting(
+                id: "pinStartDatePicker",
+                title: "Дата начала",
+                icon: PinInfoIcon.info,
+                value: .text(viewModel.pin.startDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                isPickerPresented: $isStartDatePickerPresented
+            )),
+            .picker(Setting.PickerSetting(
+                id: "pinEndDatePicker",
+                title: "Дата конца",
+                icon: PinInfoIcon.info,
+                value: .text(viewModel.pin.endDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                isPickerPresented: $isEndDatePickerPresented
+            )),
+        ]
+
+        SettingsGroup(
+            title: "Общая информация",
+            settings: viewModel.isDefaultState ? defaultSettings : editingSettings
+        ).animation(.default, value: viewModel.pin)
+    }
+
+     /*
 
     private var privacy: some View {
         PrivacySection(
@@ -185,7 +187,7 @@ public struct TripInfoView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 0) {
                 SettingTitle("Описание")
-                if let _ = viewModel.trip.description {
+                if viewModel.trip.description != "" {
                     Spacer()
                     Button {
                         withAnimation(.easeInOut(duration: 0.3)) {
@@ -204,9 +206,9 @@ public struct TripInfoView: View {
             .padding(.leading, 12)
             .padding(.trailing, 16)
 
-            if let description = viewModel.trip.description {
+            if !viewModel.trip.description.isEmpty {
                 VStack(spacing: 0) {
-                    Text(description)
+                    Text(viewModel.trip.description)
                         .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                         .lineLimit(isDescriptionCollapsed ? 5 : nil)
                         .frame(maxWidth: .infinity)
@@ -223,7 +225,7 @@ public struct TripInfoView: View {
                         icon: TripInfoIcon.text,
                         trailIcon: TripInfoIcon.chevronRight,
                         action: .plain {
-                            viewModel.dispatch(.changeState)
+                            // switch to editing
                         }
                     ))
                 ])
@@ -348,15 +350,12 @@ public struct TripInfoView: View {
             SettingsGroup(settings: [
                 .textField(Setting.TextFieldSetting(
                     id: "tripDescriptionEditingTextField",
-                    text: Binding(get: {
-                        viewModel.trip.description ?? ""
-                    }, set: { value in
-                        viewModel.trip.description = value
-                    }),
+                    text: $viewModel.trip.description,
                     placeholder: "Описание путешествия",
                     style: .multiline
                 ))
             ])
         }
     }
+    */
 }
