@@ -20,12 +20,23 @@ enum ProfileIcon: String, Setting.Icon {
 
 public struct ProfileView: View {
 
-    @State private var viewModel: ProfileViewModel
+    @State var viewModel: ProfileViewModel
 
-    @State private var imageEditingDialogShown = false
-    @State private var photoPickerShown = false
-    @State private var isAddPersonPresented = false
+    @State var imageEditingDialogShown = false
+    @State var photoPickerShown = false
+    @State var isAddPersonPresented = false
     @Environment(\.appRouter) private var router
+
+    var accountDeleteSetting: Setting {
+        .default(Setting.DefaultSetting(
+            id: "profileDelete",
+            title: "Удалить аккаунт",
+            icon: ProfileIcon.trash,
+            trailIcon: ProfileIcon.chevronRight,
+            style: .destructive,
+            action: .plain { }
+        ))
+    }
 
     public init(user: User) {
         viewModel = ProfileViewModel(user: user)
@@ -196,14 +207,7 @@ public struct ProfileView: View {
 
         SettingsGroup(
             settings: [
-                .default(Setting.DefaultSetting(
-                    id: "profileDelete",
-                    title: "Удалить аккаунт",
-                    icon: ProfileIcon.trash,
-                    trailIcon: ProfileIcon.chevronRight,
-                    style: .destructive,
-                    action: .plain { }
-                )),
+                accountDeleteSetting,
                 .default(Setting.DefaultSetting(
                     id: "profileLeave",
                     title: "Выйти",
@@ -239,7 +243,15 @@ public struct ProfileView: View {
                     trailIcon: ProfileIcon.chevronRight,
                     action: .plain { viewModel.dispatch(.navigateToEmailChange) }
                 )),
+                .default(Setting.DefaultSetting(
+                    id: "profilePasswordChanging",
+                    title: "Сменить пароль",
+                    trailIcon: ProfileIcon.chevronRight,
+                    action: .plain { }
+                )),
             ],
         )
+
+        SettingsGroup(settings: [accountDeleteSetting])
     }
 }

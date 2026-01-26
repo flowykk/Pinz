@@ -2,19 +2,25 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 
-struct PinView: View {
+struct PinShortInfoView: View {
 
     let pin: Pin
+    let pinTapped: (Pin) -> Void
 
-    init(pin: Pin) {
+    init(pin: Pin, pinTapped: @escaping (Pin) -> Void) {
         self.pin = pin
+        self.pinTapped = pinTapped
     }
 
     var body: some View {
-        VStack(spacing: 6) {
-            header
-            medias
-            tags
+        Button {
+            pinTapped(pin)
+        } label: {
+            VStack(spacing: 0) {
+                header
+                medias.padding(.top, 6)
+                tags.padding(.top, 2)
+            }
         }
     }
 
@@ -28,7 +34,7 @@ struct PinView: View {
                         .roundedFount(size: 18)
                 }
 
-                Text(pin.category)
+                Text(pin.category.value)
                     .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
             }
 
@@ -77,8 +83,8 @@ struct PinView: View {
 
     @ViewBuilder
     var tags: some View {
-        if let tags = pin.tags {
-            TagsView(tags: tags, onTagAdd: {_ in }, onTagDelete: {_ in })
+        if !pin.tags.isEmpty {
+            TagsView(tags: pin.tags, onTagAdd: {_ in }, onTagDelete: {_ in })
                 .padding(.horizontal, 16)
         }
     }

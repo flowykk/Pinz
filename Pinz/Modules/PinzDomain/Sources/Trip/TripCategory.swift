@@ -34,4 +34,6 @@ public enum TripCategory: PickerItem {
         .education,
         .active,
     ]
+
+    public var isCustomizable: Bool { false }
 }

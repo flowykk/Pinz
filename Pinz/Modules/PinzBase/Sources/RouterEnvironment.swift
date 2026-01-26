@@ -4,7 +4,8 @@ import PinzDomain
 public protocol AppRouting {
     func navigateToTripInfo(trip: Trip)
     func navigateToProfile(user: User)
-    
+    func navigateToPinInfo(pin: Pin)
+
     func navigateToEmailChange(email: String, action: EmailChangeAction)
     func navigateToAppearance()
 

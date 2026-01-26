@@ -11,6 +11,7 @@ public class TripViewModel {
         case navigateToProfile(user: User)
         case navigateToFeed
         case navigateToMembers
+        case navigateToPinInfo(pin: Pin)
     }
     
     var trip: Trip
@@ -31,6 +32,8 @@ public class TripViewModel {
         case .navigateToMembers:
             // TODO: implement members navigation
             break
+        case let .navigateToPinInfo(pin):
+            router?.navigateToPinInfo(pin: pin)
         }
     }
     
