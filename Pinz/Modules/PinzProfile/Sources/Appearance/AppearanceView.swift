@@ -64,7 +64,7 @@ public struct AppearanceView: View {
             Map(position: $position)
                 .mapStyle(viewModel.state.mapStyle.toMapKitMapStyle())
                 .aspectRatio(1, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .clipShape(RoundedRectangle(cornerRadius: 26))
         }
     }
 }

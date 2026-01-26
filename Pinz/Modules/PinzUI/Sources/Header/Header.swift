@@ -44,6 +44,7 @@ public struct Header<
                 }
             }
             additionalView
+                .padding(.bottom, 8)
         }
         .ifLet(height) { view, value in
             view.frame(height: height)

@@ -38,8 +38,8 @@ public class PinInfoViewModel {
     private let networkService = NetworkService()
     private var router: AppRouting?
 
-    var isDefaultState: Bool {
-        state == .info || state == .gallery
+    var isEditing: Bool {
+        state == .editing
     }
 
     public init(pin: Pin) {

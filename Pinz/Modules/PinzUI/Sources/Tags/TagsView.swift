@@ -39,7 +39,7 @@ public struct TagsView: View {
         return ZStack(alignment: .topLeading) {
             ForEach(self.tags) { tag in
                 self.item(for: tag.tag)
-                    .padding([.bottom, .trailing], 4)
+                    .padding([.top, .trailing], 4)
                     .alignmentGuide(.leading) { dimension in
                         if abs(width - dimension.width) > geometry.size.width {
                             width = 0

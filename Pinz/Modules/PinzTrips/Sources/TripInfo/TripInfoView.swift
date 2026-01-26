@@ -14,6 +14,8 @@ enum TripInfoIcon: String, Setting.Icon {
     case info = "info.circle.fill"
 
     case paperplane = "paperplane"
+
+    case trash = "trash"
 }
 
 enum TripSeasonIcon: String, Setting.Icon {
@@ -68,11 +70,16 @@ public struct TripInfoView: View {
                 avatar.padding(.top, 12)
 
                 VStack(spacing: 16) {
-                    switch viewModel.state {
-                    case .default:
-                        defaultSettings
-                    case .editing:
-                        editingSettings
+                    if viewModel.state == .editing { nameEditing }
+                    general
+                    if viewModel.state == .default {
+                        pins
+                        description
+                        privacy
+                        publishing
+                    } else {
+                        descriptionEditing
+                        delete
                     }
                 }
                 .padding(.top, 8)
@@ -163,13 +170,6 @@ public struct TripInfoView: View {
         description
         privacy
         publishing
-    }
-
-    @ViewBuilder
-    private var editingSettings: some View {
-        nameEditing
-        general
-        descriptionEditing
     }
 
     private var privacy: some View {
@@ -331,8 +331,7 @@ public struct TripInfoView: View {
                 .textField(Setting.TextFieldSetting(
                     id: "nicknameTextField",
                     text: $viewModel.trip.name,
-                    placeholder: "Имя",
-                    style: .default
+                    placeholder: "Название путешествия"
                 )),
             ],
             subtitle: "Название путешествия должно состоять из букв, цифр, точки и подчеркивания"
@@ -358,5 +357,18 @@ public struct TripInfoView: View {
                 ))
             ])
         }
+    }
+
+    private var delete: some View {
+        SettingsGroup(settings: [
+            .default(Setting.DefaultSetting(
+                id: "tripDelete",
+                title: "Удалить путешествие",
+                icon: TripInfoIcon.trash,
+                trailIcon: TripInfoIcon.chevronRight,
+                style: .destructive,
+                action: .plain { }
+            ))
+        ])
     }
 }

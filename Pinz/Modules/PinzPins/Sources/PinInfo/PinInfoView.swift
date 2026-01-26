@@ -9,6 +9,9 @@ enum PinInfoIcon: String, Setting.Icon {
     case checkmark = "checkmark.circle.fill"
 
     case info = "info.circle.fill"
+    case calendar = "calendar"
+
+    case trash = "trash"
 }
 
 public struct PinInfoView: View {
@@ -40,21 +43,23 @@ public struct PinInfoView: View {
             header
 
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: 0) {
                     switch viewModel.state {
-                    case .info:
-                        defaultSettings
-                    case .editing:
-                        editingSettings
+                    case .info, .editing:
+                        settings
                     case .gallery:
                         EmptyView()
                     }
+                    map.if(viewModel.state != .info) { view in view.hidden() }
+                        .padding(.top, 12)
                 }
                 .padding(.top, 8)
                 .padding(.horizontal, 12)
 
                 Spacer()
-            }.scrollIndicators(.hidden)
+            }
+            .scrollIndicators(.hidden)
+            .scrollDisabled(viewModel.isEditing)
         }
         .onAppear { viewModel.setRouter(router) }
         .background(PinzUIAsset.background.swiftUIColor)
@@ -112,14 +117,17 @@ public struct PinInfoView: View {
         }
     }
 
-    @ViewBuilder
-    private var defaultSettings: some View {
-        general
-    }
-
-    @ViewBuilder
-    private var editingSettings: some View {
-        general
+    private var settings: some View {
+        VStack(spacing: 12) {
+            if viewModel.isEditing { nameEditing }
+            general
+            tags
+            if viewModel.isEditing {
+                delete
+            } else {
+                privacy
+            }
+        }
     }
 
     @ViewBuilder
@@ -136,7 +144,7 @@ public struct PinInfoView: View {
             .default(Setting.DefaultSetting(
                 id: "pinDates",
                 title: "Даты",
-                icon: PinInfoIcon.info,
+                icon: PinInfoIcon.calendar,
                 values: [.text(datesSettingValue)],
                 trailIcon: PinInfoIcon.chevronRight,
                 action: .plain { viewModel.dispatch(.changeState(.editing)) }
@@ -153,14 +161,14 @@ public struct PinInfoView: View {
             .picker(Setting.PickerSetting(
                 id: "pinStartDatePicker",
                 title: "Дата начала",
-                icon: PinInfoIcon.info,
+                icon: PinInfoIcon.calendar,
                 value: .text(viewModel.pin.startDate?.formattedToDayMonthYear ?? "Не выбрано"),
                 isPickerPresented: $isStartDatePickerPresented
             )),
             .picker(Setting.PickerSetting(
                 id: "pinEndDatePicker",
                 title: "Дата конца",
-                icon: PinInfoIcon.info,
+                icon: PinInfoIcon.calendar,
                 value: .text(viewModel.pin.endDate?.formattedToDayMonthYear ?? "Не выбрано"),
                 isPickerPresented: $isEndDatePickerPresented
             )),
@@ -168,11 +176,31 @@ public struct PinInfoView: View {
 
         SettingsGroup(
             title: "Общая информация",
-            settings: viewModel.isDefaultState ? defaultSettings : editingSettings
-        ).animation(.default, value: viewModel.pin)
+            settings: viewModel.isEditing ? editingSettings : defaultSettings
+        )//.animation(.default, value: viewModel.pin)
     }
 
-     /*
+    private var nameEditing: some View {
+        SettingsGroup(
+            settings: [
+                .textField(Setting.TextFieldSetting(
+                    id: "pinNameTextField",
+                    text: $viewModel.pin.name,
+                    placeholder: "Название пина"
+                )),
+            ],
+            subtitle: "Название пина должно состоять из букв, цифр, точки и подчеркивания"
+        )
+    }
+
+    private var tags: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SettingTitle("Теги")
+                .padding(.leading, 12)
+            TagsView(tags: viewModel.pin.tags, onTagAdd: {_ in }, onTagDelete: {_ in })
+                .padding(.top, 2)
+        }
+    }
 
     private var privacy: some View {
         PrivacySection(
@@ -182,6 +210,25 @@ public struct PinInfoView: View {
             ]
         )
     }
+
+    private var map: some View {
+        PinPlaceSectionView()
+    }
+
+    private var delete: some View {
+        SettingsGroup(settings: [
+            .default(Setting.DefaultSetting(
+                id: "pinDelete",
+                title: "Удалить пин",
+                icon: PinInfoIcon.trash,
+                trailIcon: PinInfoIcon.chevronRight,
+                style: .destructive,
+                action: .plain { }
+            ))
+        ])
+    }
+
+     /*
 
     private var description: some View {
         VStack(alignment: .leading, spacing: 0) {

@@ -26,12 +26,11 @@ public struct PrivacySection: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 6) {
             SettingTitle("Участники и приватность")
                 .padding(.leading, 12)
 
             SegmentedPicker(selection: $privacySelection, items: [.lockOpened, .lockClosed])
-                .padding(.vertical, 8)
 
             VStack(spacing: 0) {
                 SettingsGroup(settings: members.map { member in
@@ -54,7 +53,7 @@ public struct PrivacySection: View {
                     ? "Путешествие не будет отображаться в общей ленте"
                     : "Путешествие будет отображаться в общей ленте"
             )
-            .padding(.top, 4)
+            .padding(.top, -2)
             .padding(.leading, 12)
         }
     }

@@ -39,17 +39,17 @@ struct PinzApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(router: router) {
-                PinInfoView(pin: pin)
-//                TripView(trip: Trip(
-//                    name: "Нижний Новгород",
-//                    image: PinzUIAsset.media3.image,
-//                    description: description,
-//                    pins: [pin, pin, pin, pin, pin],
-//                    season: .summer,
-//                    startDate: Date(fromDateString: "03.01.2026"),
-//                    endDate: Date(fromDateString: "09.01.2026"),
-//                    category: .vacation
-//                ))
+//                PinInfoView(pin: pin)
+                TripView(trip: Trip(
+                    name: "Нижний Новгород",
+                    image: PinzUIAsset.media3.image,
+                    description: description,
+                    pins: [pin, pin, pin, pin, pin],
+                    season: .summer,
+                    startDate: Date(fromDateString: "03.01.2026"),
+                    endDate: Date(fromDateString: "09.01.2026"),
+                    category: .vacation
+                ))
             }.toolbar(.hidden)
         }
     }

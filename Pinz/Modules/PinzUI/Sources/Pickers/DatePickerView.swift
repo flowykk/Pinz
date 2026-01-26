@@ -35,7 +35,9 @@ public struct DatePickerView: View {
 
             PinzButton(type: .slot(style: .primary, title: "Готово")) {
                 isPresented = false
-            }.padding(.horizontal, 12)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
         }
     }
 }

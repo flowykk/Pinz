@@ -1,34 +1,9 @@
 import SwiftUI
 import PinzUI
-import MapKit
 import PinzNetworking
 
 @Observable
 final class AppearanceViewModel {
-
-    enum PinzMapStyle: String, SegmentedItem {
-        case scheme
-        case hybrid
-        case satelight
-
-        var id: Self { self }
-
-        var content: SegmentedItemContent {
-            switch self {
-            case .scheme: .text("Схема")
-            case .satelight: .text("Спутник")
-            case .hybrid: .text("Гибрид")
-            }
-        }
-
-        func toMapKitMapStyle() -> MapStyle {
-            switch self {
-            case .scheme: .standard
-            case .satelight: .imagery
-            case .hybrid: .hybrid
-            }
-        }
-    }
 
     struct State {
         var mapStyle: PinzMapStyle = .satelight

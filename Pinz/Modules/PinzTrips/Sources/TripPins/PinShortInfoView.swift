@@ -16,10 +16,10 @@ struct PinShortInfoView: View {
         Button {
             pinTapped(pin)
         } label: {
-            VStack(spacing: 6) {
+            VStack(spacing: 0) {
                 header
-                medias
-                tags
+                medias.padding(.top, 6)
+                tags.padding(.top, 2)
             }
         }
     }
@@ -83,8 +83,8 @@ struct PinShortInfoView: View {
 
     @ViewBuilder
     var tags: some View {
-        if let tags = pin.tags {
-            TagsView(tags: tags, onTagAdd: {_ in }, onTagDelete: {_ in })
+        if !pin.tags.isEmpty {
+            TagsView(tags: pin.tags, onTagAdd: {_ in }, onTagDelete: {_ in })
                 .padding(.horizontal, 16)
         }
     }

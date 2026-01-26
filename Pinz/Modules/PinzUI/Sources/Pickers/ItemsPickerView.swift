@@ -57,7 +57,9 @@ public struct ItemsPickerView<Item: PickerItem>: View {
                 if !textFieldText.isEmpty {
                     saveCustomizableItem?(textFieldText)
                 }
-            }.padding(.horizontal, 12)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
         }
         .onAppear {
             if selection.isCustomizable {

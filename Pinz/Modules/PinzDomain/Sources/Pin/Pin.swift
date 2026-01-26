@@ -10,7 +10,7 @@ public struct Pin: Hashable, Identifiable {
     public var privacy: Bool
     public var startDate: Date?
     public var endDate: Date?
-    public var tags: [MediaTag]?
+    public var tags: [MediaTag]
 
     public init(
         name: String,
@@ -20,7 +20,7 @@ public struct Pin: Hashable, Identifiable {
         privacy: Bool,
         startDate: Date? = nil,
         endDate: Date? = nil,
-        tags: [MediaTag]? = nil
+        tags: [MediaTag]
     ) {
         self.name = name
         self.description = description
