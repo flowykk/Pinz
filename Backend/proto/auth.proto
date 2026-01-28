@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "pinz/backend/auth-service/pkg/proto";
+
+service AuthService {
+  rpc SubmitEmail(SubmitEmailRequest) returns (SubmitEmailResponse) {}
+  rpc VerifyEmailCode(VerifyEmailCodeRequest) returns (VerifyEmailCodeResponse) {}
+  rpc SetPasswordAndUsername(SetPasswordAndUsernameRequest) returns (SetPasswordAndUsernameResponse) {}
+  rpc Login(LoginRequest) returns (LoginResponse) {}
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+}
+
+message User {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string avatar_url = 4;
+  int64 created_at_unix = 5;
+}
+
+message SubmitEmailRequest {
+  string email = 1;
+}
+
+message SubmitEmailResponse {
+  bool is_registered = 1;
+  string registration_key = 2;
+}
+
+message VerifyEmailCodeRequest {
+  string registration_id = 1;
+  string verification_code = 2;
+}
+
+message VerifyEmailCodeResponse {
+  bool success = 1;
+}
+
+message SetPasswordAndUsernameRequest {
+  string registration_id = 1;
+  string password = 2;
+  string username = 3;
+}
+
+message SetPasswordAndUsernameResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutResponse {
+  bool success = 1;
+}
