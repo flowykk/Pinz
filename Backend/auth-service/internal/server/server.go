@@ -1,0 +1,43 @@
+package server
+
+import (
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"google.golang.org/grpc"
+
+	pb "pinz/backend/auth-service/pkg/proto"
+)
+
+func RunGRPCServer(authService pb.AuthServiceServer) error {
+	port := os.Getenv("GRPC_PORT")
+	if port == "" {
+		port = ":50051"
+		log.Println("GRPC_PORT not set, using :50051")
+	}
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		return fmt.Errorf("listen: %w", err)
+	}
+
+	srv := grpc.NewServer()
+	pb.RegisterAuthServiceServer(srv, authService)
+	log.Printf("gRPC server listening on %s", port)
+
+	go func() {
+		if err := srv.Serve(lis); err != nil {
+			log.Fatalf("grpc serve: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down gRPC server...")
+	srv.GracefulStop()
+	return nil
+}
