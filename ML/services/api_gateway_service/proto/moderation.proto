@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package moderation;
+
+service ModerationService {
+  rpc Moderate(ModerateRequest) returns (ModerateResponse) {}
+}
+
+message ModerateRequest {
+  string text = 1;
+  string image_path = 2;
+}
+
+message ModerateResponse {
+  bool text_flag = 1;
+  bool image_flag = 2;
+}

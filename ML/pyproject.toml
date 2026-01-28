@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "pinz-ml"
+version = "0.1.0"
+description = "ML experiments and microservice scaffolds for Pinz"
+authors = ["Pinz Team <dev@pinz.example>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.1"
+pyarrow = "^13.0"
+matplotlib = "^3.8"
+Pillow = "^10.0"
+transformers = "^4.40"
+torch = "^2.2"
+torchvision = "^0.19"
+fastapi = "^0.100"
+uvicorn = {extras = ["standard"], version = "^0.22"}
+grpcio = "^1.58"
+grpcio-tools = "^1.58"
+requests = "^2.31"
+tqdm = "^4.66"
+seaborn = "^0.13"
+scikit-learn = "^1.5"
+
+[tool.poetry.group.dev.dependencies]
+jupyterlab = "^4.2"
+ipykernel = "^6.29"
+
+[build-system]
+requires = ["poetry-core>=1.4.0"]
+build-backend = "poetry.core.masonry.api"

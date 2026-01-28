@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  moderation:
+    build: ./services/moderation_service
+    ports:
+      - "8001:8001"
+  trip_classifier:
+    build: ./services/trip_classifier_service
+    ports:
+      - "8002:8002"
+  search:
+    build: ./services/search_service
+    ports:
+      - "8003:8003"
+  api_gateway:
+    build: ./services/api_gateway_service
+    ports:
+      - "8000:8000"
+    depends_on:
+      - moderation
+      - trip_classifier
+      - search
