@@ -2,7 +2,7 @@ ML Module for Pinz
 
 This folder contains experimental notebooks, model training code, and microservice scaffolds for content moderation and related ML functionality.
 
-Place dataset parquet files under `ML/data/` (e.g. `text_dataset.parquet`, `images_dataset.parquet`).
+In /notebooks folder located ipynb botebooks with eda and data experiments
 
 Quick start:
 
