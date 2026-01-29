@@ -30,7 +30,7 @@ public struct TripView: View {
 
             gradient.ignoresSafeArea()
 
-            header.padding(.top, 8)
+            header
         }
         .onAppear { viewModel.setRouter(router) }
         .sheet(isPresented: $isPinsPresented) {
