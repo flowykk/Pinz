@@ -10,11 +10,16 @@ public struct AppIconView: View {
     }
 
     public var body: some View {
-        icon.if(viewModel.selected) { view in
-            view.overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(PinzUIAsset.accentGreen.swiftUIColor, lineWidth: 3)
-            )
+        ZStack {
+            icon
+
+            if viewModel.selected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.white)
+                    .background(Circle().fill(Color(.systemGreen)).frame(width: 24, height: 24))
+                    .fontWeight(.bold)
+                    .offset(x: 23, y: -23)
+            }
         }
     }
 

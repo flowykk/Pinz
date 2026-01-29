@@ -61,10 +61,19 @@ public struct AppearanceView: View {
                 items: [.satelight, .scheme, .hybrid]
             )
 
-            Map(position: $position)
-                .mapStyle(viewModel.state.mapStyle.toMapKitMapStyle())
-                .aspectRatio(1, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 26))
+            Group {
+                switch viewModel.state.mapStyle {
+                case .scheme:
+                    Map(position: $position).mapStyle(.imagery)
+                case .hybrid:
+                    Map(position: $position).mapStyle(.standard)
+                case .satelight:
+                    Map(position: $position).mapStyle(.hybrid)
+                }
+            }
+            .aspectRatio(1, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: 26))
+            .disabled(true)
         }
     }
 }

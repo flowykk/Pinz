@@ -26,7 +26,9 @@ public final class AppIconViewModel: Identifiable {
     func dispatch(_ intent: Intent) {
         switch intent {
         case .change:
-            selected = name == userDefaults.string(forKey: Self.appIconKey)
+            withAnimation(.easeInOut(duration: 0.3)) {
+                selected = name == userDefaults.string(forKey: Self.appIconKey)
+            }
         }
     }
 }
