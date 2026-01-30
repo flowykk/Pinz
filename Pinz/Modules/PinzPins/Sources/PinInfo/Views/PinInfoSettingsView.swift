@@ -25,7 +25,7 @@ extension PinInfoView {
                 icon: PinInfoIcon.info,
                 values: [.text(viewModel.pin.category.value)],
                 trailIcon: PinInfoIcon.chevronRight,
-                action: .plain { viewModel.dispatch(.changeState(.editing)) }
+                action: .plain { viewModel.dispatch(.edit) }
             )),
             .default(Setting.DefaultSetting(
                 id: "pinDates",
@@ -33,7 +33,7 @@ extension PinInfoView {
                 icon: PinInfoIcon.calendar,
                 values: [.text(datesSettingValue)],
                 trailIcon: PinInfoIcon.chevronRight,
-                action: .plain { viewModel.dispatch(.changeState(.editing)) }
+                action: .plain { viewModel.dispatch(.edit) }
             )),
         ]
 

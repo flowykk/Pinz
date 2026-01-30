@@ -27,13 +27,15 @@ public class PinInfoViewModel {
     }
 
     public enum Intent {
-        case changeState(State)
+//        case changeState(State)
+        case edit
+        case endEdit
 
         case back
     }
 
     var state: State = .info
-    var previousState: State?
+    var previousState: State = .info
 
     var pin: Pin
     private let networkService = NetworkService()
@@ -49,8 +51,11 @@ public class PinInfoViewModel {
 
     public func dispatch(_ intent: Intent) {
         switch intent {
-        case let .changeState(futureState):
-            changeState(to: futureState)
+        case .edit:
+            previousState = state
+            changeState(to: .editing)
+        case .endEdit:
+            changeState(to: previousState)
         case .back:
             router?.pop()
         }

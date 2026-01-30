@@ -99,7 +99,7 @@ public struct PinInfoView: View {
 
                 }
                 PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.changeState(.editing))
+                    viewModel.dispatch(.edit)
                 }
             }, additionalView: {
                 SegmentedPicker(selection: $viewModel.state, items: [.info, .gallery])
@@ -107,11 +107,11 @@ public struct PinInfoView: View {
         case .editing:
             Header {
                 PinzButton(type: .text("Отмена")) {
-                    viewModel.dispatch(.changeState(.info))
+                    viewModel.dispatch(.endEdit)
                 }
             } rightView: {
                 PinzButton(type: .text("Готово")) {
-                    viewModel.dispatch(.changeState(.info))
+                    viewModel.dispatch(.endEdit)
                 }
             }
         }
