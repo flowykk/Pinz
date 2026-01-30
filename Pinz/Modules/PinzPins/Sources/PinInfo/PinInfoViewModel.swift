@@ -33,6 +33,7 @@ public class PinInfoViewModel {
     }
 
     var state: State = .info
+    var previousState: State?
 
     var pin: Pin
     private let networkService = NetworkService()
