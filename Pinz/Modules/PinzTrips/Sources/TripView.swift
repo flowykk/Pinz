@@ -103,7 +103,7 @@ public struct TripView: View {
                     .background(PinzUIAsset.background.swiftUIColor)
                     .cornerRadius(Constants.buttonsCornerRadius)
             )
-        }
+        }.buttonStyle(.plain)
     }
 
     enum ButtonType {
@@ -141,7 +141,7 @@ public struct TripView: View {
                     .roundedFount(size: 20)
                     .tint(PinzUIAsset.textPrimary.swiftUIColor)
                 }
-        }
+        }.buttonStyle(.plain)
     }
 
     private var gradient: some View {

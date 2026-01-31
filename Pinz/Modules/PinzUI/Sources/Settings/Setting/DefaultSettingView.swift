@@ -36,24 +36,9 @@ extension Setting.DefaultSetting {
             Spacer()
 
             trailingView
-//            ForEach(values) { value in
-//                HStack(spacing: 2) {
-//                    switch value {
-//                    case let .text(text):
-//                        Text(text)
-//                            .roundedFount(size: 12, foregroundColor: trailColor)
-//                    case let .icon(icon, color):
-//                        Image(systemName: icon.rawValue)
-//                            .roundedFount(size: 16, foregroundColor: color)
-//                    }
-//                }
-//            }.padding(.trailing, trailIcon != nil ? 8 : 0)
-//
-//            if let trailIcon {
-//                Image(systemName: trailIcon.rawValue)
-//                    .roundedFount(size: 12, foregroundColor: trailColor)
-//            }
-        }.frame(height: 52)
+        }
+        .frame(height: 52)
+        .contentShape(Rectangle())
     }
 
     private func handle(_ action: Setting.Action) {
@@ -100,15 +85,18 @@ extension Setting.DefaultSetting {
                     Text(text)
                         .roundedFount(size: 12, foregroundColor: trailColor)
                 case let .icon(icon, color):
-                    trailingIconView(for: icon)
+                    trailingIconView(for: icon, with: color)
                 }
             }
         }
     }
 
-    private func trailingIconView(for icon: Setting.Icon) -> some View {
+    private func trailingIconView(
+        for icon: Setting.Icon,
+        with color: Color? = nil
+    ) -> some View {
         Image(systemName: icon.rawValue)
-            .roundedFount(size: 12, foregroundColor: trailColor)
+            .roundedFount(size: 12, foregroundColor: color ?? trailColor)
     }
 }
 
@@ -119,18 +107,22 @@ extension Setting.DefaultSetting {
     private var leadingView: some View {
         switch leading {
         case let .iconTitle(icon, title):
-            iconView(for: icon)
-                .padding(.trailing, 12)
-            titleView(for: title)
+            HStack(spacing: 0) {
+                iconView(for: icon)
+                    .padding(.trailing, 12)
+                titleView(for: title)
+            }
 
         case let .title(title):
             titleView(for: title)
 
         case let .imageTitle(image, title):
-            imageView(for: image)
-                .padding(.leading, -6)
-                .padding(.trailing, 12)
-            titleView(for: title)
+            HStack(spacing: 0) {
+                imageView(for: image)
+                    .padding(.leading, -6)
+                    .padding(.trailing, 12)
+                titleView(for: title)
+            }
         }
     }
 
