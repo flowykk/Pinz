@@ -57,3 +57,10 @@ extension AppRouter {
         // TODO: implement feed route
     }
 }
+
+// MARK: - PinInfo Routing {
+extension AppRouter {
+    public func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction) {
+        navigate(to: .pinInfo(.placeChange(pin: pin, action: action)))
+    }
+}

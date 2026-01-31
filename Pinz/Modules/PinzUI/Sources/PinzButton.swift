@@ -86,6 +86,6 @@ public struct PinzButton: View {
                     }
                 }
             }
-        }
+        }.buttonStyle(.plain)
     }
 }

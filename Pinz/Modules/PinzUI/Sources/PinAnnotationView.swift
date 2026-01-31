@@ -42,7 +42,7 @@ public struct PinAnnotationView: View {
                             .roundedFount(size: 12, weight: .semibold, foregroundColor: .black)
                             .frame(minWidth: 24, minHeight: 24)
                             .background(Circle().fill(Color.white))
-                            .offset(x: 4, y: -4)
+                            .offset(x: 5, y: -5)
                     }
                 }
             } else {

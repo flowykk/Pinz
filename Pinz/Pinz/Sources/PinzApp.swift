@@ -39,7 +39,7 @@ struct PinzApp: App {
                 MediaTag(tag: "ГАЗ"),
                 MediaTag(tag: "Экскурсия"),
             ],
-            coordinates: CLLocationCoordinate2D(latitude: 55.7558, longitude: 37.6173)
+            coordinates: CLLocationCoordinate2D(latitude: 55.7558, longitude: 37.5997)
         ),
         Pin(
             name: "Красная площадь",
@@ -115,7 +115,10 @@ struct PinzApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(router: router) {
-//                PinInfoView(pin: pin)
+//                PinInfoView(pin: pins[0])
+
+//                PinPlaceChangeView(pin: pins[0], onSave: { _ in })
+
                 TripView(trip: Trip(
                     name: "Нижний Новгород",
                     image: PinzUIAsset.media3.image,

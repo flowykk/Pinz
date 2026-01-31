@@ -17,13 +17,13 @@ enum PinInfoIcon: String, Setting.Icon {
 public struct PinInfoView: View {
 
     @State var viewModel: PinInfoViewModel
-
+    
     @State var isDescriptionCollapsed = true
     @State var isCategoryPickerPresented = false
     @State var isStartDatePickerPresented = false
     @State var isEndDatePickerPresented = false
     @State private var datePickerHeight: CGFloat = 0
-
+    
     @State private var galleryColumns = 3
     @State private var magnificationScale: CGFloat = 1.0
 
@@ -131,12 +131,6 @@ public struct PinInfoView: View {
                             Button {
 
                             } label: {
-                                Label("Переместить", systemImage: "arrow.left.arrow.right")
-                            }
-
-                            Button {
-
-                            } label: {
                                 Label("Детали", systemImage: "eye.fill")
                             }
 
@@ -162,7 +156,7 @@ public struct PinInfoView: View {
             MagnificationGesture()
                 .onChanged { value in
                     magnificationScale = value
-
+                    
                     let targetColumns: Int
                     if value >= 2.0 {
                         targetColumns = 1
@@ -175,15 +169,15 @@ public struct PinInfoView: View {
                     } else {
                         targetColumns = 5
                     }
-
+                    
                     if targetColumns != galleryColumns {
-                        withAnimation(.easeOut(duration: 0.3)) {
+                        withAnimation(.easeOut(duration: 0.4)) {
                             galleryColumns = targetColumns
                         }
                     }
                 }
                 .onEnded { _ in
-                    withAnimation(.easeOut(duration: 0.3)) {
+                    withAnimation(.easeOut(duration: 0.4)) {
                         magnificationScale = 1.0
                     }
                 }

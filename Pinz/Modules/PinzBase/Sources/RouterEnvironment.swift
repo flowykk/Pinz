@@ -10,7 +10,9 @@ public protocol AppRouting {
     func navigateToAppearance()
 
     func navigateToFeed()
-    
+
+    func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction)
+
     func pop()
     func pop(by count: Int)
 }

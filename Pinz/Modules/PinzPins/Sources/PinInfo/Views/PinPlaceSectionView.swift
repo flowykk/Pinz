@@ -5,20 +5,23 @@ import PinzUI
 
 public struct PinPlaceSectionView: View {
 
-    let pin: Pin
+    @Binding var pin: Pin
     @State var mapStyle: PinzMapStyle = .scheme
     @State private var position: MapCameraPosition
 
-    public init(pin: Pin) {
-        self.pin = pin
+    private let defaultOffset: CLLocationDegrees = 0.00045
+    private let defaultZoom: CLLocationDegrees = 0.003
+
+    public init(pin: Binding<Pin>) {
+        self._pin = pin
         
         self._position = State(initialValue: .region(
             MKCoordinateRegion(
                 center: CLLocationCoordinate2D(
-                    latitude: pin.coordinates.latitude + 0.00045,
-                    longitude: pin.coordinates.longitude
+                    latitude: pin.wrappedValue.coordinates.latitude + defaultOffset,
+                    longitude: pin.wrappedValue.coordinates.longitude
                 ),
-                span: MKCoordinateSpan(latitudeDelta: 0.003, longitudeDelta: 0.003)
+                span: MKCoordinateSpan(latitudeDelta: defaultZoom, longitudeDelta: defaultZoom)
             )
         ))
     }
@@ -32,6 +35,17 @@ public struct PinPlaceSectionView: View {
                 Annotation(pin.name, coordinate: pin.coordinates, anchor: .bottom) {
                     PinAnnotationView(pin: pin)
                 }
+            }
+            .onChange(of: pin.coordinates) { oldValue, newValue in
+                position = .region(
+                    MKCoordinateRegion(
+                        center: CLLocationCoordinate2D(
+                            latitude: newValue.latitude + defaultOffset,
+                            longitude: newValue.longitude
+                        ),
+                        span: MKCoordinateSpan(latitudeDelta: defaultZoom, longitudeDelta: defaultZoom)
+                    )
+                )
             }
             .mapStyle(.hybrid)
             .clipShape(RoundedRectangle(cornerRadius: 26))

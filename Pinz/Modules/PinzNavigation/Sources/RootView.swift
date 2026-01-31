@@ -42,6 +42,11 @@ public struct RootView<Content: View>: View {
             case .appearance:
                 AppearanceView()
             }
+        case let .pinInfo(pinInfoRoute):
+            switch pinInfoRoute {
+            case let .placeChange(pin, action):
+                PinPlaceChangeView(pin: pin, onSave: action.action)
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ public struct MeasureHeightModifier: ViewModifier {
 }
 
 extension View {
-    func measureHeight(for height: Binding<CGFloat>) -> some View {
+    public func measureHeight(for height: Binding<CGFloat>) -> some View {
         self.modifier(MeasureHeightModifier(height: height))
     }
 }

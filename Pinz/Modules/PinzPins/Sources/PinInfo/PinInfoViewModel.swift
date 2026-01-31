@@ -27,11 +27,11 @@ public class PinInfoViewModel {
     }
 
     public enum Intent {
-//        case changeState(State)
         case edit
         case endEdit
 
         case back
+        case changePlace
     }
 
     var state: State = .info
@@ -58,6 +58,11 @@ public class PinInfoViewModel {
             changeState(to: previousState)
         case .back:
             router?.pop()
+        case .changePlace:
+            let action = PlaceSaveAction { [weak self] coordinate in
+                self?.pin.coordinates = coordinate
+            }
+            router?.navigateToPinPlaceChange(pin: pin, action: action)
         }
     }
 
