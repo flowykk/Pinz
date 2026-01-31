@@ -18,11 +18,30 @@ public struct TripView: View {
 
     public init(trip: Trip) {
         viewModel = TripViewModel(trip: trip)
+        
+        // Центрируем карту на первом пине, если есть
+        if let firstPin = trip.pins.first {
+            _position = State(initialValue: .region(
+                MKCoordinateRegion(
+                    center: firstPin.coordinates,
+                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                )
+            ))
+        }
     }
 
     public var body: some View {
         ZStack {
-            Map(position: $position)
+            Map(position: $position) {
+                ForEach(viewModel.trip.pins) { pin in
+                    Annotation(pin.name, coordinate: pin.coordinates) {
+                        PinAnnotationView(pin: pin)
+                            .onTapGesture {
+                                viewModel.dispatch(.navigateToPinInfo(pin: pin))
+                            }
+                    }
+                }
+            }
 //                .mapStyle(.imagery(elevation: .realistic))
                 .mapControlVisibility(.hidden)
                 .ignoresSafeArea()
