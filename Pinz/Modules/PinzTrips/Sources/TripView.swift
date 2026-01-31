@@ -26,7 +26,7 @@ public struct TripView: View {
                     Annotation(pin.name, coordinate: pin.coordinates, anchor: .bottom) {
                         PinAnnotationView(pin: pin)
                             .onTapGesture {
-                                viewModel.dispatch(.navigateToPinInfo(pin: pin))
+                                viewModel.dispatch(.selectPin(pin: pin))
                             }
                     }
                 }
@@ -48,6 +48,22 @@ public struct TripView: View {
             }
             .pinzSheet()
             .presentationDetents([.medium, .large])
+        }
+        .sheet(item: $viewModel.selectedPin) { pin in
+            VStack(spacing: 16) {
+                Spacer()
+
+                PinShortInfoView(pin: pin, hideTags: true, pinTapped: { pin in
+                    viewModel.dispatch(.unselectPin)
+                })
+
+                PinzButton(type: .slot(style: .primary, title: "Посмотреть детали")) {
+                    viewModel.dispatch(.unselectPin)
+                }
+                .padding(.horizontal, 12)
+            }
+            .pinzSheet()
+            .presentationDetents([.height(220)])
         }
     }
 

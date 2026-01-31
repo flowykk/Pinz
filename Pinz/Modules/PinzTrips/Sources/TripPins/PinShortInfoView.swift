@@ -5,10 +5,16 @@ import PinzDomain
 struct PinShortInfoView: View {
 
     let pin: Pin
+    let hideTags: Bool
     let pinTapped: (Pin) -> Void
 
-    init(pin: Pin, pinTapped: @escaping (Pin) -> Void) {
+    init(
+        pin: Pin,
+        hideTags: Bool = false,
+        pinTapped: @escaping (Pin) -> Void
+    ) {
         self.pin = pin
+        self.hideTags = hideTags
         self.pinTapped = pinTapped
     }
 
@@ -19,7 +25,9 @@ struct PinShortInfoView: View {
             VStack(spacing: 0) {
                 header
                 medias.padding(.top, 6)
-                tags.padding(.top, 2)
+                if !hideTags {
+                    tags.padding(.top, 2)
+                }
             }
         }.buttonStyle(.plain)
     }
@@ -41,10 +49,11 @@ struct PinShortInfoView: View {
             Spacer()
 
             VStack {
+                Spacer(minLength: 0)
                 HStack {
                     StatisticView(text: String(pin.medias.count), icon: "photo.stack.fill")
                 }
-                Spacer()
+                Spacer(minLength: 0)
             }
         }.padding(.horizontal, 16)
     }
