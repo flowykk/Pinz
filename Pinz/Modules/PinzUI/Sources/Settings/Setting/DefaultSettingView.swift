@@ -132,6 +132,8 @@ extension Setting.DefaultSetting {
 
     private func imageView(for image: UIImage) -> some View {
         Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
             .frame(36)
             .cornerRadius(18)
     }
