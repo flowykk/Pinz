@@ -17,12 +17,15 @@ enum PinInfoIcon: String, Setting.Icon {
 public struct PinInfoView: View {
 
     @State var viewModel: PinInfoViewModel
-    
+
     @State var isDescriptionCollapsed = true
     @State var isCategoryPickerPresented = false
     @State var isStartDatePickerPresented = false
     @State var isEndDatePickerPresented = false
     @State private var datePickerHeight: CGFloat = 0
+
+    @State private var galleryColumns = 3
+    @State private var magnificationScale: CGFloat = 1.0
 
     @Environment(\.appRouter) private var router
 
@@ -117,7 +120,7 @@ public struct PinInfoView: View {
 
     var gallery: some View {
         ScrollView {
-            PinzGrid($viewModel.pin.medias, columns: 3, spacing: 4) { media, index in
+            PinzGrid($viewModel.pin.medias, columns: galleryColumns, spacing: 4) { media, index in
                 switch media.content {
                 case let .image(image):
                     Image(uiImage: image)
@@ -155,5 +158,35 @@ public struct PinInfoView: View {
             }
         }
         .scrollIndicators(.hidden)
+        .simultaneousGesture(
+            MagnificationGesture()
+                .onChanged { value in
+                    magnificationScale = value
+
+                    let targetColumns: Int
+                    if value >= 2.0 {
+                        targetColumns = 1
+                    } else if value >= 1.6 {
+                        targetColumns = 2
+                    } else if value >= 1.2 {
+                        targetColumns = 3
+                    } else if value >= 0.9 {
+                        targetColumns = 4
+                    } else {
+                        targetColumns = 5
+                    }
+
+                    if targetColumns != galleryColumns {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            galleryColumns = targetColumns
+                        }
+                    }
+                }
+                .onEnded { _ in
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        magnificationScale = 1.0
+                    }
+                }
+        )
     }
 }
