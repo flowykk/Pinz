@@ -61,8 +61,7 @@ extension Setting.DefaultSetting {
         if let trailing {
             switch trailing {
             case let .icon(icon, color):
-                Image(systemName: icon.rawValue)
-                    .roundedFount(size: 16, foregroundColor: color ?? PinzUIAsset.textSecondary.swiftUIColor)
+                trailingIconView(for: icon, with: color)
 
             case let .values(values):
                 valueView(for: values)
@@ -137,9 +136,12 @@ extension Setting.DefaultSetting {
             .cornerRadius(18)
     }
 
-    private func iconView(for icon: Setting.Icon) -> some View {
+    private func iconView(
+        for icon: Setting.Icon,
+        with color: Color? = nil
+    ) -> some View {
         Image(systemName: icon.rawValue)
-            .roundedFount(size: 18, foregroundColor: titleColor)
+            .roundedFount(size: 18, foregroundColor: color ?? titleColor)
             .frame(16)
     }
 }
