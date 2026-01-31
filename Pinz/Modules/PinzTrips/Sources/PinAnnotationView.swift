@@ -17,17 +17,27 @@ struct PinAnnotationView: View {
     var body: some View {
         VStack(spacing: 0) {
             if let image = currentImage {
-                ZStack {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 56, height: 56)
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
-                        .id(currentMediaIndex)
+                ZStack(alignment: .topTrailing) {
+                    ZStack {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 56, height: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                            .id(currentMediaIndex)
+                        
+                        RoundedRectangle(cornerRadius: 18)
+                            .strokeBorder(Color.white, lineWidth: 4)
+                            .frame(width: 56, height: 56)
+                    }
                     
-                    RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(Color.white, lineWidth: 4)
-                        .frame(width: 56, height: 56)
+                    if pin.medias.count > 1 {
+                        Text("\(pin.medias.count)")
+                            .roundedFount(size: 12, weight: .semibold, foregroundColor: .black)
+                            .frame(minWidth: 24, minHeight: 24)
+                            .background(Circle().fill(Color.white))
+                            .offset(x: 4, y: -4)
+                    }
                 }
             } else {
                 EmptyView()
@@ -38,6 +48,7 @@ struct PinAnnotationView: View {
                 .frame(width: 24, height: 8)
                 .offset(y: -1)
         }
+        .compositingGroup()
         .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
         .onAppear {
             startImageRotation()
