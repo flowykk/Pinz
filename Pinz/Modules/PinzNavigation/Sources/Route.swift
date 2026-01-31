@@ -12,7 +12,12 @@ public enum ProfileRoute: Hashable {
     case appearance
 }
 
+public enum PinInfoRoute: Hashable {
+    case placeChange(pin: Pin, action: PlaceSaveAction)
+}
+
 public enum Route: Hashable {
     case trip(TripRoute)
     case profile(ProfileRoute)
+    case pinInfo(PinInfoRoute)
 }

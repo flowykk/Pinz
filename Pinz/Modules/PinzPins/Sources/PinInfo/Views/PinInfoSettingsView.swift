@@ -104,7 +104,11 @@ extension PinInfoView {
     }
 
     var map: some View {
-        PinPlaceSectionView(pin: viewModel.pin)
+        Button {
+            viewModel.dispatch(.changePlace)
+        } label: {
+            PinPlaceSectionView(pin: $viewModel.pin)
+        }
     }
 
     private var delete: some View {
