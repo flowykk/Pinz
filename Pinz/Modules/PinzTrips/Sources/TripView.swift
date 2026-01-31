@@ -34,7 +34,7 @@ public struct TripView: View {
         ZStack {
             Map(position: $position) {
                 ForEach(viewModel.trip.pins) { pin in
-                    Annotation(pin.name, coordinate: pin.coordinates) {
+                    Annotation(pin.name, coordinate: pin.coordinates, anchor: .bottom) {
                         PinAnnotationView(pin: pin)
                             .onTapGesture {
                                 viewModel.dispatch(.navigateToPinInfo(pin: pin))
