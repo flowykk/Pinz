@@ -15,10 +15,41 @@ public class TripViewModel {
     }
     
     var trip: Trip
+    var position: MapCameraPosition
     private var router: AppRouting?
 
     public init(trip: Trip) {
         self.trip = trip
+        self.position = Self.calculateInitialPosition(for: trip)
+    }
+    
+    private static func calculateInitialPosition(for trip: Trip) -> MapCameraPosition {
+        guard !trip.pins.isEmpty else {
+            return .automatic
+        }
+        
+        let coordinates = trip.pins.map { $0.coordinates }
+        
+        let minLat = coordinates.map { $0.latitude }.min() ?? 0
+        let maxLat = coordinates.map { $0.latitude }.max() ?? 0
+        let minLon = coordinates.map { $0.longitude }.min() ?? 0
+        let maxLon = coordinates.map { $0.longitude }.max() ?? 0
+        
+        let centerLat = (minLat + maxLat) / 2
+        let centerLon = (minLon + maxLon) / 2
+        
+        let spanLat = (maxLat - minLat) * 1.5 // добавляем отступ
+        let spanLon = (maxLon - minLon) * 1.5
+        
+        return .region(
+            MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
+                span: MKCoordinateSpan(
+                    latitudeDelta: max(spanLat, 0.01),
+                    longitudeDelta: max(spanLon, 0.01)
+                )
+            )
+        )
     }
     
     public func dispatch(_ intent: Intent) {

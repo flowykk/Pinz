@@ -13,7 +13,6 @@ public struct TripView: View {
 
     @State private var viewModel: TripViewModel
     @State private var isPinsPresented = false
-    @State private var position: MapCameraPosition = .automatic
     @Environment(\.appRouter) private var router
 
     public init(trip: Trip) {
@@ -22,7 +21,16 @@ public struct TripView: View {
 
     public var body: some View {
         ZStack {
-            Map(position: $position)
+            Map(position: $viewModel.position) {
+                ForEach(viewModel.trip.pins) { pin in
+                    Annotation(pin.name, coordinate: pin.coordinates, anchor: .bottom) {
+                        PinAnnotationView(pin: pin)
+                            .onTapGesture {
+                                viewModel.dispatch(.navigateToPinInfo(pin: pin))
+                            }
+                    }
+                }
+            }
 //                .mapStyle(.imagery(elevation: .realistic))
                 .mapControlVisibility(.hidden)
                 .ignoresSafeArea()

@@ -42,24 +42,22 @@ public struct PinInfoView: View {
         VStack(spacing: 0) {
             header
 
-            ScrollView {
-                VStack(spacing: 0) {
-                    switch viewModel.state {
-                    case .info, .editing:
+            if viewModel.state == .info || viewModel.state == .editing {
+                ScrollView {
+                    VStack(spacing: 0) {
                         settings
                             .padding(.horizontal, 12)
-                    case .gallery:
-                        gallery
-                            .padding(.horizontal, 4)
+                        map.if(viewModel.state != .info) { view in view.hidden() }
+                            .padding(.top, 12)
+                            .padding(.horizontal, 12)
                     }
-                    map.if(viewModel.state != .info) { view in view.hidden() }
-                        .padding(.top, 12)
                 }
-
-                Spacer()
+                .scrollIndicators(.hidden)
+                .scrollDisabled(viewModel.isEditing)
+            } else {
+                gallery
+                    .padding(.horizontal, 4)
             }
-            .scrollIndicators(.hidden)
-            .scrollDisabled(viewModel.isEditing)
         }
         .onAppear { viewModel.setRouter(router) }
         .background(PinzUIAsset.background.swiftUIColor)
@@ -118,7 +116,7 @@ public struct PinInfoView: View {
     }
 
     var gallery: some View {
-        return ScrollView {
+        ScrollView {
             PinzGrid($viewModel.pin.medias, columns: 3, spacing: 4) { media, index in
                 switch media.content {
                 case let .image(image):

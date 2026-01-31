@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 
 public struct Pin: Hashable, Identifiable {
     public var id: String { name }
@@ -11,6 +12,7 @@ public struct Pin: Hashable, Identifiable {
     public var startDate: Date?
     public var endDate: Date?
     public var tags: [MediaTag]
+    public var coordinates: CLLocationCoordinate2D
 
     public init(
         name: String,
@@ -20,7 +22,8 @@ public struct Pin: Hashable, Identifiable {
         privacy: Bool,
         startDate: Date? = nil,
         endDate: Date? = nil,
-        tags: [MediaTag]
+        tags: [MediaTag],
+        coordinates: CLLocationCoordinate2D
     ) {
         self.name = name
         self.description = description
@@ -30,5 +33,17 @@ public struct Pin: Hashable, Identifiable {
         self.startDate = startDate
         self.endDate = endDate
         self.tags = tags
+        self.coordinates = coordinates
+    }
+}
+
+extension CLLocationCoordinate2D: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(latitude)
+        hasher.combine(longitude)
+    }
+    
+    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
+        lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
     }
 }
