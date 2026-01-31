@@ -47,6 +47,7 @@ struct PinzApp: App {
             category: .entertainment,
             medias: [
                 LoadedMedia(content: .image(PinzUIAsset.media2.image)),
+                LoadedMedia(content: .image(PinzUIAsset.media9.image)),
                 LoadedMedia(content: .image(PinzUIAsset.media3.image)),
             ],
             privacy: true,
@@ -59,7 +60,6 @@ struct PinzApp: App {
             category: .nature,
             medias: [
                 LoadedMedia(content: .image(PinzUIAsset.media4.image)),
-                LoadedMedia(content: .image(PinzUIAsset.media5.image)),
             ],
             privacy: true,
             tags: [MediaTag(tag: "Парк")],
@@ -84,6 +84,9 @@ struct PinzApp: App {
             medias: [
                 LoadedMedia(content: .image(PinzUIAsset.media8.image)),
                 LoadedMedia(content: .image(PinzUIAsset.media9.image)),
+                LoadedMedia(content: .image(PinzUIAsset.media5.image)),
+                LoadedMedia(content: .image(PinzUIAsset.media6.image)),
+                LoadedMedia(content: .image(PinzUIAsset.media11.image)),
             ],
             privacy: true,
             tags: [MediaTag(tag: "Природа")],

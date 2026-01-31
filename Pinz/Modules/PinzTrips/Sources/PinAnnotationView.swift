@@ -49,7 +49,7 @@ struct PinAnnotationView: View {
                 .offset(y: -1)
         }
         .compositingGroup()
-        .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+        .shadow(color: .black.opacity(0.5), radius: 6, x: 0, y: 2)
         .onAppear {
             startImageRotation()
         }

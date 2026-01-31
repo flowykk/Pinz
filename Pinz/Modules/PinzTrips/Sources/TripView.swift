@@ -13,26 +13,15 @@ public struct TripView: View {
 
     @State private var viewModel: TripViewModel
     @State private var isPinsPresented = false
-    @State private var position: MapCameraPosition = .automatic
     @Environment(\.appRouter) private var router
 
     public init(trip: Trip) {
         viewModel = TripViewModel(trip: trip)
-        
-        // Центрируем карту на первом пине, если есть
-        if let firstPin = trip.pins.first {
-            _position = State(initialValue: .region(
-                MKCoordinateRegion(
-                    center: firstPin.coordinates,
-                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                )
-            ))
-        }
     }
 
     public var body: some View {
         ZStack {
-            Map(position: $position) {
+            Map(position: $viewModel.position) {
                 ForEach(viewModel.trip.pins) { pin in
                     Annotation(pin.name, coordinate: pin.coordinates, anchor: .bottom) {
                         PinAnnotationView(pin: pin)
