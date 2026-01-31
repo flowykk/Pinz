@@ -30,34 +30,29 @@ extension Setting.DefaultSetting {
 
     private var settingView: some View {
         HStack(spacing: 0) {
-            if let icon {
-                Image(systemName: icon.rawValue)
-                    .roundedFount(size: 18, foregroundColor: titleColor)
-                    .frame(16)
-                    .padding(.trailing, 12)
-            }
-            Text(title)
-                .roundedFount(size: 16, foregroundColor: titleColor)
+
+            leadingView
 
             Spacer()
 
-            ForEach(values) { value in
-                HStack(spacing: 2) {
-                    switch value {
-                    case let .text(text):
-                        Text(text)
-                            .roundedFount(size: 12, foregroundColor: trailColor)
-                    case let .icon(icon, color):
-                        Image(systemName: icon.rawValue)
-                            .roundedFount(size: 16, foregroundColor: color)
-                    }
-                }
-            }.padding(.trailing, trailIcon != nil ? 8 : 0)
-
-            if let trailIcon {
-                Image(systemName: trailIcon.rawValue)
-                    .roundedFount(size: 12, foregroundColor: trailColor)
-            }
+            trailingView
+//            ForEach(values) { value in
+//                HStack(spacing: 2) {
+//                    switch value {
+//                    case let .text(text):
+//                        Text(text)
+//                            .roundedFount(size: 12, foregroundColor: trailColor)
+//                    case let .icon(icon, color):
+//                        Image(systemName: icon.rawValue)
+//                            .roundedFount(size: 16, foregroundColor: color)
+//                    }
+//                }
+//            }.padding(.trailing, trailIcon != nil ? 8 : 0)
+//
+//            if let trailIcon {
+//                Image(systemName: trailIcon.rawValue)
+//                    .roundedFount(size: 12, foregroundColor: trailColor)
+//            }
         }.frame(height: 52)
     }
 
@@ -70,5 +65,89 @@ extension Setting.DefaultSetting {
         case let .plain(action):
             action()
         }
+    }
+}
+
+// MARK: SettingTrailingView
+
+extension Setting.DefaultSetting {
+    @ViewBuilder
+    private var trailingView: some View {
+        if let trailing {
+            switch trailing {
+            case let .icon(icon, color):
+                Image(systemName: icon.rawValue)
+                    .roundedFount(size: 16, foregroundColor: color ?? PinzUIAsset.textSecondary.swiftUIColor)
+
+            case let .values(values):
+                valueView(for: values)
+
+            case let .valuesIcon(values, icon):
+                valueView(for: values)
+                    .padding(.trailing, 8)
+                trailingIconView(for: icon)
+            }
+        } else {
+            EmptyView()
+        }
+    }
+
+    private func valueView(for values: [Setting.Value]) -> some View {
+        ForEach(values) { value in
+            HStack(spacing: 2) {
+                switch value {
+                case let .text(text):
+                    Text(text)
+                        .roundedFount(size: 12, foregroundColor: trailColor)
+                case let .icon(icon, color):
+                    trailingIconView(for: icon)
+                }
+            }
+        }
+    }
+
+    private func trailingIconView(for icon: Setting.Icon) -> some View {
+        Image(systemName: icon.rawValue)
+            .roundedFount(size: 12, foregroundColor: trailColor)
+    }
+}
+
+// MARK: SettingLeadingView
+
+extension Setting.DefaultSetting {
+    @ViewBuilder
+    private var leadingView: some View {
+        switch leading {
+        case let .iconTitle(icon, title):
+            iconView(for: icon)
+                .padding(.trailing, 12)
+            titleView(for: title)
+
+        case let .title(title):
+            titleView(for: title)
+
+        case let .imageTitle(image, title):
+            imageView(for: image)
+                .padding(.leading, -6)
+                .padding(.trailing, 12)
+            titleView(for: title)
+        }
+    }
+
+    private func titleView(for title: String) -> some View {
+        Text(title)
+            .roundedFount(size: 16, foregroundColor: titleColor)
+    }
+
+    private func imageView(for image: UIImage) -> some View {
+        Image(uiImage: image)
+            .frame(36)
+            .cornerRadius(18)
+    }
+
+    private func iconView(for icon: Setting.Icon) -> some View {
+        Image(systemName: icon.rawValue)
+            .roundedFount(size: 18, foregroundColor: titleColor)
+            .frame(16)
     }
 }

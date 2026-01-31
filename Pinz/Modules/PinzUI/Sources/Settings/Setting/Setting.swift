@@ -25,6 +25,18 @@ public enum Setting {
         }
     }
 
+    public enum Leading {
+        case iconTitle(Icon, String)
+        case title(String)
+        case imageTitle(UIImage, String)
+    }
+
+    public enum Trailing {
+        case values([Value])
+        case icon(Icon, Color? = nil)
+        case valuesIcon([Value], Icon)
+    }
+
     public struct DefaultSetting {
 
         public enum Style {
@@ -33,27 +45,21 @@ public enum Setting {
         }
 
         let id: String
-        let title: String
-        let icon: Icon?
-        let values: [Value]
-        let trailIcon: Icon?
+        let leading: Leading
+        let trailing: Trailing?
         let style: Style
         let action: Action?
 
         public init(
             id: String = UUID().uuidString,
-            title: String,
-            icon: Icon? = nil,
-            values: [Value] = [],
-            trailIcon: Icon? = nil,
+            leading: Leading,
+            trailing: Trailing? = nil,
             style: Style = .default,
             action: Action? = nil
         ) {
             self.id = id
-            self.title = title
-            self.icon = icon
-            self.values = values
-            self.trailIcon = trailIcon
+            self.leading = leading
+            self.trailing = trailing
             self.style = style
             self.action = action
         }
@@ -90,21 +96,18 @@ public enum Setting {
     public struct PickerSetting {
 
         let id: String
-        let title: String
-        let icon: Icon?
+        let leading: Leading
         let value: Value?
         var isPickerPresented: Binding<Bool>
 
         public init(
             id: String,
-            title: String,
-            icon: Icon? = nil,
+            leading: Leading,
             value: Value? = nil,
             isPickerPresented: Binding<Bool>
         ) {
             self.id = id
-            self.title = title
-            self.icon = icon
+            self.leading = leading
             self.value = value
             self.isPickerPresented = isPickerPresented
         }
@@ -120,10 +123,8 @@ public enum Setting {
     public static func picker(_ setting: PickerSetting) -> Self {
         .default(DefaultSetting(
             id: setting.id,
-            title: setting.title,
-            icon: setting.icon,
-            values: setting.value.flatMap { [$0] } ?? [],
-            trailIcon: PickerIcon.chevrons,
+            leading: setting.leading,
+            trailing: .valuesIcon(setting.value.flatMap { [$0] } ?? [], PickerIcon.chevrons),
             action: .plain { setting.isPickerPresented.wrappedValue = true }
         ))
     }

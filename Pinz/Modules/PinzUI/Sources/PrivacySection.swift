@@ -36,12 +36,12 @@ public struct PrivacySection: View {
                 SettingsGroup(settings: members.map { member in
                     .default(Setting.DefaultSetting(
                         id: "privacy\(member.username)",
-                        title: member.username,
-                        values: [
+                        leading: .imageTitle(member.avatar, member.username),
+                        trailing: .values([
                             member.isPrivate
                                 ? .icon(PrivacyIcon.lockClosed, PinzUIAsset.accentRed.swiftUIColor)
                                 : .icon(PrivacyIcon.lockOpened, PinzUIAsset.accentGreen.swiftUIColor)
-                        ]
+                        ])
                     ))
                 })
             }

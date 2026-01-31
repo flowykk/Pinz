@@ -174,10 +174,7 @@ public struct TripInfoView: View {
 
     private var privacy: some View {
         PrivacySection(
-            members: [
-                TripMember(isPrivate: true, username: "flowykk"),
-                TripMember(isPrivate: false, username: "kostik"),
-            ]
+            members: viewModel.trip.members
         )
     }
 
@@ -219,9 +216,8 @@ public struct TripInfoView: View {
                 SettingsGroup(settings: [
                     .default(Setting.DefaultSetting(
                         id: "tripDescription",
-                        title: "Добавить описание",
-                        icon: TripInfoIcon.text,
-                        trailIcon: TripInfoIcon.chevronRight,
+                        leading: .iconTitle(TripInfoIcon.text, "Добавить описание"),
+                        trailing: .icon(TripInfoIcon.chevronRight),
                         action: .plain {
                             viewModel.dispatch(.changeState)
                         }
@@ -236,10 +232,9 @@ public struct TripInfoView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "tripPins",
-                    title: "Пины путешествия",
-                    icon: TripInfoIcon.pins,
-                    trailIcon: TripInfoIcon.chevronRight,
-                    action: .plain {  }
+                    leading: .iconTitle(TripInfoIcon.pins, "Пины путешествия"),
+                    trailing: .icon(TripInfoIcon.chevronRight),
+                    action: .plain { }
                 )),
             ],
         )
@@ -250,26 +245,20 @@ public struct TripInfoView: View {
         let defaultSettings: [Setting] = [
             .default(Setting.DefaultSetting(
                 id: "tripSeason",
-                title: "Сезон",
-                icon: tripSeasonIcon,
-                values: [.text(viewModel.trip.season.value)],
-                trailIcon: TripInfoIcon.chevronRight,
+                leading: .iconTitle(tripSeasonIcon, "Сезон"),
+                trailing: .valuesIcon([.text(viewModel.trip.season.value)], TripInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.changeState) }
             )),
             .default(Setting.DefaultSetting(
                 id: "tripCategory",
-                title: "Категория",
-                icon: TripInfoIcon.info,
-                values: [.text(viewModel.trip.category.value)],
-                trailIcon: TripInfoIcon.chevronRight,
+                leading: .iconTitle(TripInfoIcon.info, "Категория"),
+                trailing: .valuesIcon([.text(viewModel.trip.category.value)], TripInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.changeState) }
             )),
             .default(Setting.DefaultSetting(
                 id: "tripDates",
-                title: "Даты",
-                icon: TripInfoIcon.calendar,
-                values: [.text(datesSettingValue)],
-                trailIcon: TripInfoIcon.chevronRight,
+                leading: .iconTitle(TripInfoIcon.calendar, "Даты"),
+                trailing: .valuesIcon([.text(datesSettingValue)], TripInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.changeState) }
             )),
         ]
@@ -277,27 +266,23 @@ public struct TripInfoView: View {
         let editingSettings: [Setting] = [
             .picker(Setting.PickerSetting(
                 id: "tripSeasonPicker",
-                title: viewModel.trip.season.value,
-                icon: tripSeasonIcon,
+                leading: .iconTitle(tripSeasonIcon, viewModel.trip.season.value),
                 isPickerPresented: $isSeasonPickerPresented
             )),
             .picker(Setting.PickerSetting(
                 id: "tripCategoryPicker",
-                title: viewModel.trip.category.value,
-                icon: TripInfoIcon.info,
+                leading: .iconTitle(TripInfoIcon.info, viewModel.trip.category.value),
                 isPickerPresented: $isCategoryPickerPresented
             )),
             .picker(Setting.PickerSetting(
                 id: "tripStartDatePicker",
-                title: "Дата начала",
-                icon: TripInfoIcon.calendar,
+                leading: .iconTitle(TripInfoIcon.calendar, "Дата начала"),
                 value: .text(viewModel.trip.startDate?.formattedToDayMonthYear ?? "Не выбрано"),
                 isPickerPresented: $isStartDatePickerPresented
             )),
             .picker(Setting.PickerSetting(
                 id: "tripEndDatePicker",
-                title: "Дата конца",
-                icon: TripInfoIcon.calendar,
+                leading: .iconTitle(TripInfoIcon.calendar, "Дата конца"),
                 value: .text(viewModel.trip.endDate?.formattedToDayMonthYear ?? "Не выбрано"),
                 isPickerPresented: $isEndDatePickerPresented
             )),
@@ -315,9 +300,8 @@ public struct TripInfoView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "tripPublishing",
-                    title: "Опубликовать путешествие",
-                    icon: TripInfoIcon.paperplane,
-                    trailIcon: TripInfoIcon.chevronRight,
+                    leading: .iconTitle(TripInfoIcon.paperplane, "Опубликовать путешествие"),
+                    trailing: .icon(TripInfoIcon.chevronRight),
                     action: .plain {}
                 )),
             ],
@@ -363,9 +347,8 @@ public struct TripInfoView: View {
         SettingsGroup(settings: [
             .default(Setting.DefaultSetting(
                 id: "tripDelete",
-                title: "Удалить путешествие",
-                icon: TripInfoIcon.trash,
-                trailIcon: TripInfoIcon.chevronRight,
+                leading: .iconTitle(TripInfoIcon.trash, "Удалить путешествие"),
+                trailing: .icon(TripInfoIcon.chevronRight),
                 style: .destructive,
                 action: .plain { }
             ))
