@@ -10,6 +10,7 @@ public struct Trip: Hashable {
     public var startDate: Date?
     public var endDate: Date?
     public var category: TripCategory
+    public var members: [TripMember]
 
     public init(
         name: String,
@@ -19,7 +20,8 @@ public struct Trip: Hashable {
         season: TripSeason,
         startDate: Date? = nil,
         endDate: Date? = nil,
-        category: TripCategory
+        category: TripCategory,
+        members: [TripMember] = []
     ) {
         self.name = name
         self.image = image
@@ -29,5 +31,6 @@ public struct Trip: Hashable {
         self.startDate = startDate
         self.endDate = endDate
         self.category = category
+        self.members = members
     }
 }

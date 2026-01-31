@@ -39,6 +39,24 @@ struct PinzApp: App {
         ]
     )
 
+    let tripMembers: [TripMember] = [
+        TripMember(
+            isPrivate: true,
+            username: "danuwka",
+            avatar: PinzUIAsset.media3.image
+        ),
+        TripMember(
+            isPrivate: false,
+            username: "kostik",
+            avatar: PinzUIAsset.media10.image
+        ),
+        TripMember(
+            isPrivate: false,
+            username: "dimka",
+            avatar: PinzUIAsset.media5.image
+        ),
+    ]
+
     var body: some Scene {
         WindowGroup {
             RootView(router: router) {
@@ -51,7 +69,8 @@ struct PinzApp: App {
                     season: .summer,
                     startDate: Date(fromDateString: "03.01.2026"),
                     endDate: Date(fromDateString: "09.01.2026"),
-                    category: .vacation
+                    category: .vacation,
+                    members: tripMembers
                 ))
             }.toolbar(.hidden)
         }

@@ -21,7 +21,7 @@ struct PinShortInfoView: View {
                 medias.padding(.top, 6)
                 tags.padding(.top, 2)
             }
-        }
+        }.buttonStyle(.plain)
     }
 
     var header: some View {

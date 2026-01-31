@@ -21,18 +21,14 @@ extension PinInfoView {
         let defaultSettings: [Setting] = [
             .default(Setting.DefaultSetting(
                 id: "pinCategory",
-                title: "Категория",
-                icon: PinInfoIcon.info,
-                values: [.text(viewModel.pin.category.value)],
-                trailIcon: PinInfoIcon.chevronRight,
+                leading: .iconTitle(PinInfoIcon.info, "Категория"),
+                trailing: .valuesIcon([.text(viewModel.pin.category.value)], PinInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.edit) }
             )),
             .default(Setting.DefaultSetting(
                 id: "pinDates",
-                title: "Даты",
-                icon: PinInfoIcon.calendar,
-                values: [.text(datesSettingValue)],
-                trailIcon: PinInfoIcon.chevronRight,
+                leading: .iconTitle(PinInfoIcon.calendar, "Даты"),
+                trailing: .valuesIcon([.text(datesSettingValue)], PinInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.edit) }
             )),
         ]
@@ -40,21 +36,18 @@ extension PinInfoView {
         let editingSettings: [Setting] = [
             .picker(Setting.PickerSetting(
                 id: "pinCategoryPicker",
-                title: viewModel.pin.category.value,
-                icon: PinInfoIcon.info,
+                leading: .iconTitle(PinInfoIcon.info, viewModel.pin.category.value),
                 isPickerPresented: $isCategoryPickerPresented
             )),
             .picker(Setting.PickerSetting(
                 id: "pinStartDatePicker",
-                title: "Дата начала",
-                icon: PinInfoIcon.calendar,
+                leading: .iconTitle(PinInfoIcon.calendar, "Дата начала"),
                 value: .text(viewModel.pin.startDate?.formattedToDayMonthYear ?? "Не выбрано"),
                 isPickerPresented: $isStartDatePickerPresented
             )),
             .picker(Setting.PickerSetting(
                 id: "pinEndDatePicker",
-                title: "Дата конца",
-                icon: PinInfoIcon.calendar,
+                leading: .iconTitle(PinInfoIcon.calendar, "Дата конца"),
                 value: .text(viewModel.pin.endDate?.formattedToDayMonthYear ?? "Не выбрано"),
                 isPickerPresented: $isEndDatePickerPresented
             )),
@@ -63,7 +56,7 @@ extension PinInfoView {
         SettingsGroup(
             title: "Общая информация",
             settings: viewModel.isEditing ? editingSettings : defaultSettings
-        )//.animation(.default, value: viewModel.pin)
+        )
     }
 
     private var nameEditing: some View {
@@ -91,8 +84,21 @@ extension PinInfoView {
     private var privacy: some View {
         PrivacySection(
             members: [
-                TripMember(isPrivate: true, username: "flowykk"),
-                TripMember(isPrivate: false, username: "kostik"),
+                TripMember(
+                    isPrivate: true,
+                    username: "danuwka",
+                    avatar: PinzUIAsset.media3.image
+                ),
+                TripMember(
+                    isPrivate: false,
+                    username: "kostik",
+                    avatar: PinzUIAsset.media10.image
+                ),
+                TripMember(
+                    isPrivate: false,
+                    username: "dimka",
+                    avatar: PinzUIAsset.media5.image
+                ),
             ]
         )
     }
@@ -105,9 +111,8 @@ extension PinInfoView {
         SettingsGroup(settings: [
             .default(Setting.DefaultSetting(
                 id: "pinDelete",
-                title: "Удалить пин",
-                icon: PinInfoIcon.trash,
-                trailIcon: PinInfoIcon.chevronRight,
+                leading: .iconTitle(PinInfoIcon.trash, "Удалить пин"),
+                trailing: .icon(PinInfoIcon.chevronRight),
                 style: .destructive,
                 action: .plain { }
             ))

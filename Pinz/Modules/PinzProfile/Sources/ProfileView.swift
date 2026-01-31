@@ -30,9 +30,8 @@ public struct ProfileView: View {
     var accountDeleteSetting: Setting {
         .default(Setting.DefaultSetting(
             id: "profileDelete",
-            title: "Удалить аккаунт",
-            icon: ProfileIcon.trash,
-            trailIcon: ProfileIcon.chevronRight,
+            leading: .iconTitle(ProfileIcon.trash, "Удалить аккаунт"),
+            trailing: .icon(ProfileIcon.chevronRight),
             style: .destructive,
             action: .plain { }
         ))
@@ -152,9 +151,8 @@ public struct ProfileView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "profileStats",
-                    title: "Статистика",
-                    icon: ProfileIcon.chart,
-                    trailIcon: ProfileIcon.chevronRight,
+                    leading: .iconTitle(ProfileIcon.chart, "Статистика"),
+                    trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { }
                 )),
             ],
@@ -164,23 +162,20 @@ public struct ProfileView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "profileTrips",
-                    title: "Путешествия",
-                    icon: ProfileIcon.map,
-                    trailIcon: ProfileIcon.chevronRight,
+                    leading: .iconTitle(ProfileIcon.map, "Путешествия"),
+                    trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profileWishlist",
-                    title: "Желанные места",
-                    icon: ProfileIcon.heart,
-                    trailIcon: ProfileIcon.chevronRight,
+                    leading: .iconTitle(ProfileIcon.heart, "Желанные места"),
+                    trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profileSavedMaps",
-                    title: "Сохранённые карты",
-                    icon: ProfileIcon.bookmark,
-                    trailIcon: ProfileIcon.chevronRight,
+                    leading: .iconTitle(ProfileIcon.bookmark, "Сохранённые карты"),
+                    trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { }
                 )),
             ],
@@ -190,16 +185,14 @@ public struct ProfileView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "profileNotifications",
-                    title: "Уведомления",
-                    icon: ProfileIcon.bell,
-                    trailIcon: ProfileIcon.chevronRight,
+                    leading: .iconTitle(ProfileIcon.bell, "Уведомления"),
+                    trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profileAppearance",
-                    title: "Оформление",
-                    icon: ProfileIcon.paintbrush,
-                    trailIcon: ProfileIcon.chevronRight,
+                    leading: .iconTitle(ProfileIcon.paintbrush, "Оформление"),
+                    trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigateToAppearance) }
                 )),
             ],
@@ -210,9 +203,8 @@ public struct ProfileView: View {
                 accountDeleteSetting,
                 .default(Setting.DefaultSetting(
                     id: "profileLeave",
-                    title: "Выйти",
-                    icon: ProfileIcon.door,
-                    trailIcon: ProfileIcon.chevronRight,
+                    leading: .iconTitle(ProfileIcon.door, "Выйти"),
+                    trailing: .icon(ProfileIcon.chevronRight),
                     style: .destructive,
                     action: .plain { }
                 )),
@@ -238,15 +230,14 @@ public struct ProfileView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "profileEmailChanging",
-                    title: "Сменить почту",
-                    values: [.text(viewModel.user.email)],
-                    trailIcon: ProfileIcon.chevronRight,
+                    leading: .title("Сменить почту"),
+                    trailing: .valuesIcon([.text(viewModel.user.email)], ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigateToEmailChange) }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profilePasswordChanging",
-                    title: "Сменить пароль",
-                    trailIcon: ProfileIcon.chevronRight,
+                    leading: .title("Сменить пароль"),
+                    trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { }
                 )),
             ],
