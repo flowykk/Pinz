@@ -12,10 +12,13 @@ public class TripViewModel {
         case navigateToFeed
         case navigateToMembers
         case navigateToPinInfo(pin: Pin)
+        case selectPin(pin: Pin?)
+        case unselectPin
     }
     
     var trip: Trip
     var position: MapCameraPosition
+    var selectedPin: Pin?
     private var router: AppRouting?
 
     public init(trip: Trip) {
@@ -65,6 +68,13 @@ public class TripViewModel {
             break
         case let .navigateToPinInfo(pin):
             router?.navigateToPinInfo(pin: pin)
+        case let .selectPin(pin):
+            selectedPin = pin
+        case let .unselectPin:
+            if let selectedPin {
+                dispatch(.navigateToPinInfo(pin: selectedPin))
+            }
+            selectedPin = nil
         }
     }
     
