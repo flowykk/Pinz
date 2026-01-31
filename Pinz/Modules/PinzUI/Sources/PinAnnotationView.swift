@@ -1,20 +1,24 @@
 import SwiftUI
 import PinzDomain
-import PinzUI
 
-struct PinAnnotationView: View {
+public struct PinAnnotationView: View {
     let pin: Pin
-    
+
     @State private var currentMediaIndex = 0
     @State private var randomInterval: Double = 0
-    
+
     var currentImage: UIImage? {
         guard !pin.medias.isEmpty else { return nil }
         guard case .image(let image) = pin.medias[currentMediaIndex].content else { return nil }
         return image
     }
-    
-    var body: some View {
+
+    public init(pin: Pin) {
+        self.pin = pin
+        self.currentMediaIndex = currentMediaIndex
+    }
+
+    public var body: some View {
         VStack(spacing: 0) {
             if let image = currentImage {
                 ZStack(alignment: .topTrailing) {
@@ -25,12 +29,12 @@ struct PinAnnotationView: View {
                             .frame(width: 56, height: 56)
                             .clipShape(RoundedRectangle(cornerRadius: 18))
                             .id(currentMediaIndex)
-                        
+
                         RoundedRectangle(cornerRadius: 18)
                             .strokeBorder(Color.white, lineWidth: 4)
                             .frame(width: 56, height: 56)
                     }
-                    
+
                     if pin.medias.count > 1 {
                         Text("\(pin.medias.count)")
                             .roundedFount(size: 12, weight: .semibold, foregroundColor: .black)
@@ -42,7 +46,7 @@ struct PinAnnotationView: View {
             } else {
                 EmptyView()
             }
-            
+
             Triangle()
                 .fill(Color.white)
                 .frame(width: 24, height: 8)
@@ -54,15 +58,15 @@ struct PinAnnotationView: View {
             startImageRotation()
         }
     }
-    
+
     private func startImageRotation() {
         randomInterval = Double.random(in: 7.0...10.0)
         guard pin.medias.count > 1 else { return }
-        
+
         Task {
             while true {
                 try? await Task.sleep(nanoseconds: UInt64(randomInterval * 1_000_000_000))
-                
+
                 await MainActor.run {
                     withAnimation(.easeInOut(duration: 1.3)) {
                         currentMediaIndex = (currentMediaIndex + 1) % pin.medias.count

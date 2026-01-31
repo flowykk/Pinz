@@ -104,7 +104,7 @@ extension PinInfoView {
     }
 
     var map: some View {
-        PinPlaceSectionView()
+        PinPlaceSectionView(pin: viewModel.pin)
     }
 
     private var delete: some View {
