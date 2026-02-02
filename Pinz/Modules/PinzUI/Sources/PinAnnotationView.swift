@@ -17,7 +17,6 @@ public struct PinAnnotationView: View {
 
     public init(pin: Pin) {
         self.pin = pin
-        self.currentMediaIndex = currentMediaIndex
     }
 
     public var body: some View {
@@ -62,7 +61,6 @@ public struct PinAnnotationView: View {
     }
 
     private func startImageRotation() {
-        randomInterval = Double.random(in: 7.0...10.0)
         guard pin.medias.count > 1 else { return }
         
         if currentMediaIndex >= pin.medias.count {
@@ -70,21 +68,34 @@ public struct PinAnnotationView: View {
         }
 
         Task {
+            randomInterval = generateRandomInterval()
+            
             while true {
                 try? await Task.sleep(nanoseconds: UInt64(randomInterval * 1_000_000_000))
 
                 await MainActor.run {
-                    guard !pin.medias.isEmpty else { return }
-                    withAnimation(.easeInOut(duration: 1.3)) {
-                        currentMediaIndex = (currentMediaIndex + 1) % pin.medias.count
+                    guard pin.medias.count > 1 else { return }
+                    
+                    var newIndex = Int.random(in: 0..<pin.medias.count)
+                    while newIndex == currentMediaIndex && pin.medias.count > 1 {
+                        newIndex = Int.random(in: 0..<pin.medias.count)
                     }
+                    
+                    withAnimation(.easeInOut(duration: 1.3)) {
+                        currentMediaIndex = newIndex
+                    }
+                    
+                    randomInterval = generateRandomInterval()
                 }
             }
         }
     }
+
+    private func generateRandomInterval() -> Double {
+        Double.random(in: 7.0...10.0)
+    }
 }
 
-// Вспомогательная фигура для треугольника-указателя
 struct Triangle: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
