@@ -70,7 +70,7 @@ public class TripViewModel {
             router?.navigateToPinInfo(pin: pin)
         case let .selectPin(pin):
             selectedPin = pin
-        case let .unselectPin:
+        case .unselectPin:
             if let selectedPin {
                 dispatch(.navigateToPinInfo(pin: selectedPin))
             }
