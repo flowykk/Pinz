@@ -30,6 +30,9 @@ public class PinInfoViewModel {
         case edit
         case endEdit
 
+        case addTag(MediaTag)
+        case deleteTag(MediaTag)
+
         case back
         case changePlace
     }
@@ -56,6 +59,10 @@ public class PinInfoViewModel {
             changeState(to: .editing)
         case .endEdit:
             changeState(to: previousState)
+        case let .addTag(tag):
+            pin.tags.append(tag)
+        case let .deleteTag(tag):
+            pin.tags.removeAll { $0.tag == tag.tag }
         case .back:
             router?.pop()
         case .changePlace:

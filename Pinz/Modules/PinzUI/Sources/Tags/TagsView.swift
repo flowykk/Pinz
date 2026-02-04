@@ -2,21 +2,32 @@ import SwiftUI
 import PinzDomain
 
 public struct TagsView: View {
+
+    public enum Style {
+        case `default`
+        case editing
+    }
+
     var tags: [MediaTag]
     @State private var totalHeight: CGFloat
-    var onTagAdd: ((MediaTag) -> Void)?
-    var onTagDelete: ((MediaTag) -> Void)?
+    let onTagAdd: ((MediaTag) -> Void)?
+    let onTagDelete: ((MediaTag) -> Void)?
+    let style: Style
+
+    @State private var isAddTagPresented: Bool = false
 
     public init(
         tags: [MediaTag],
         totalHeight: Double = CGFloat.zero,
         onTagAdd: ((MediaTag) -> Void)?,
-        onTagDelete: ((MediaTag) -> Void)?
+        onTagDelete: ((MediaTag) -> Void)?,
+        style: Style,
     ) {
         self.tags = tags
         self.totalHeight = totalHeight
         self.onTagAdd = onTagAdd
         self.onTagDelete = onTagDelete
+        self.style = style
     }
 
     public var body: some View {
@@ -64,52 +75,67 @@ public struct TagsView: View {
                     }
             }
 
-//            Image(systemName: "plus")
-//                .font(.system(size: 18, weight: .black))
-//                .frame(width: 38, height: 38)
-//                .foregroundColor(PinzUIAsset.textPrimary.swiftUIColor)
-//                .clipShape(Circle())
-//                .padding([.vertical, .trailing], 4)
-//                .alignmentGuide(.leading) { dimension in
-//                    if abs(lastWidth - dimension.width) > geometry.size.width {
-//                        lastWidth = 0
-//                        lastHeight -= dimension.height
-//                    }
-//                    return lastWidth
-//                }
-//                .alignmentGuide(.top) { _ in return lastHeight }
-//                .disabledWithOpacity(tags.count >= maxTags)
+            if style == .editing {
+                Button {
+                    isAddTagPresented = true
+                } label: {
+                    Image(systemName: "plus")
+                        .frame(32)
+                        .roundedFount(size: 14, weight: .bold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
+                        .clipShape(Circle())
+                        .padding([.vertical, .trailing], 4)
+                        .alignmentGuide(.leading) { dimension in
+                            if abs(lastWidth - dimension.width) > geometry.size.width {
+                                lastWidth = 0
+                                lastHeight -= dimension.height
+                            }
+                            return lastWidth
+                        }
+                        .alignmentGuide(.top) { _ in return lastHeight }
+//                        .disabledWithOpacity(tags.count >= maxTags)
+                }.buttonStyle(.plain)
+            }
         }
         .onGeometryChange(for: CGSize.self) { proxy in
             return proxy.size
         } action: { newSize in
-//            withAnimation {
+            withAnimation {
                 totalHeight = newSize.height
-//            }
+            }
+        }
+        .sheet(isPresented: $isAddTagPresented) {
+            AddTagView(onTagAdd: onTagAdd)
+                .pinzSheet()
+                .presentationDetents([.height(120)])
+                .background(PinzUIAsset.background.swiftUIColor)
         }
     }
     // swiftlint:enable function_body_length
 
     private func item(for text: String) -> some View {
-        HStack {
+        HStack(spacing: 0) {
             Text(text)
-                .foregroundColor(PinzUIAsset.textPrimary.swiftUIColor)
                 .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                .padding(.horizontal, 8)
+                .padding(.leading, 8)
+                .padding(.trailing, style == .editing ? 4 : 8)
 
-//            Image(systemName: "minus")
-//                .font(.system(size: 16, weight: .black))
-//                .frame(width: 30, height: 30)
-//                .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
-//                .foregroundColor(PinzUIAsset.backgroundSecondary.swiftUIColor)
-//                .clipShape(Circle())
-//                .onTapGesture {
-//                    withAnimation {
-//                        onTagDelete?(MediaTag(tag: text))
-//                    }
-//                }
+            if style == .editing {
+                Button {
+                    withAnimation {
+                        onTagDelete?(MediaTag(tag: text))
+                    }
+                } label: {
+                    Image(systemName: "minus")
+                        .frame(24)
+                        .roundedFount(size: 12, weight: .bold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .background(PinzUIAsset.background.swiftUIColor)
+                        .clipShape(Circle())
+                }
+            }
         }
-        .padding(8)
+        .padding(4)
+        .frame(height: 32)
         .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
         .cornerRadius(20)
     }
