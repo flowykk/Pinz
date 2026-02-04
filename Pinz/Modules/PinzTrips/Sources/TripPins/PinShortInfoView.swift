@@ -93,7 +93,7 @@ struct PinShortInfoView: View {
     @ViewBuilder
     var tags: some View {
         if !pin.tags.isEmpty {
-            TagsView(tags: pin.tags, onTagAdd: {_ in }, onTagDelete: {_ in })
+            TagsView(tags: pin.tags, onTagAdd: {_ in }, onTagDelete: {_ in }, style: .default)
                 .padding(.horizontal, 16)
         }
     }

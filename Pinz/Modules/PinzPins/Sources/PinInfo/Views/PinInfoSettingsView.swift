@@ -76,8 +76,16 @@ extension PinInfoView {
         VStack(alignment: .leading, spacing: 0) {
             SettingTitle("Теги")
                 .padding(.leading, 12)
-            TagsView(tags: viewModel.pin.tags, onTagAdd: {_ in }, onTagDelete: {_ in })
-                .padding(.top, 2)
+            TagsView(
+                tags: viewModel.pin.tags,
+                onTagAdd: { tag in
+                    viewModel.dispatch(.addTag(tag))
+                },
+                onTagDelete: { tag in
+                    viewModel.dispatch(.deleteTag(tag))
+                },
+                style: viewModel.isEditing ? .editing : .default
+            ).padding(.top, 2)
         }
     }
 
