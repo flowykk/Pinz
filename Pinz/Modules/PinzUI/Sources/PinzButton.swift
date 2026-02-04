@@ -45,15 +45,18 @@ public struct PinzButton: View {
     private let type: ButtonType
     private let tint: Color
     private let action: () -> Void
+    private let disabled: Bool?
 
     public init(
         type: ButtonType,
         tint: Color = .black,
-        action: @escaping () -> Void = {}
+        disabled: Bool? = false,
+        action: @escaping () -> Void = {},
     ) {
         self.type = type
         self.tint = tint
         self.action = action
+        self.disabled = disabled
     }
 
     public var body: some View {
@@ -86,6 +89,12 @@ public struct PinzButton: View {
                     }
                 }
             }
-        }.buttonStyle(.plain)
+        }
+        .buttonStyle(.plain)
+        .ifLet(disabled, apply: { view, disabled in
+            view
+                .disabledWithOpacity(disabled)
+                .animation(.easeInOut(duration: 0.2))
+        })
     }
 }

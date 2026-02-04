@@ -1,5 +1,5 @@
 public enum TripCategory: PickerItem {
-    case none
+    case custom(String? = nil)
     case vacation
     case holidays
     case business
@@ -9,25 +9,22 @@ public enum TripCategory: PickerItem {
     public var id: Self { self }
 
     public var content: PickerItemContent {
-        switch self {
-        case .none: .text("Не выбрано")
-        case .vacation: .text("Отпуск")
-        case .holidays: .text("Выходные")
-        case .business: .text("Командировка")
-        case .education: .text("Образование")
-        case .active:  .text("Активный отдых")
-        }
+        .text(self.value)
     }
 
     public var value: String {
-        switch content {
-        case let .text(text): text
-        case let .icon(icon, _): icon
+        switch self {
+        case let .custom(text): text ?? "Другое"
+        case .vacation: "Отпуск"
+        case .holidays: "Выходные"
+        case .business: "Командировка"
+        case .education: "Образование"
+        case .active: "Активный отдых"
         }
     }
 
     public static let allCases: [TripCategory] = [
-        .none,
+        .custom("Другое"),
         .vacation,
         .holidays,
         .business,
@@ -35,5 +32,10 @@ public enum TripCategory: PickerItem {
         .active,
     ]
 
-    public var isCustomizable: Bool { false }
+    public var isCustomizable: Bool {
+        switch self {
+        case .custom: return true
+        default: return false
+        }
+    }
 }

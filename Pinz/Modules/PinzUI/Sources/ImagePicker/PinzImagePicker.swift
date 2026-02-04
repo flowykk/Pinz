@@ -1,6 +1,5 @@
 import SwiftUI
 import PhotosUI
-import PinzBase
 
 struct PinzImagePicker<Content: View>: View {
     var content: Content
@@ -36,7 +35,6 @@ struct PinzImagePicker<Content: View>: View {
             .onChange(of: pickerItem) { _, newValue in
                 guard let newValue else { return }
                 Task {
-                    print(await MetaDataExtractor.shared.extractCoordinates(from: newValue) ?? "")
                     if let imageData = try? await newValue.loadTransferable(type: Data.self),
                        let image = UIImage(data: imageData) {
                         await MainActor.run {
