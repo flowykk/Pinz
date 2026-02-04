@@ -5,6 +5,7 @@ struct PinzSheetModifier: ViewModifier {
         content
             .presentationCornerRadius(40)
             .presentationDragIndicator(.hidden)
+            .presentationBackground(PinzUIAsset.background.swiftUIColor)
     }
 }
 

@@ -19,7 +19,6 @@ enum TripInfoIcon: String, Setting.Icon {
 }
 
 enum TripSeasonIcon: String, Setting.Icon {
-    case none = "questionmark.circle.fill"
     case summer = "sun.max.fill"
     case autumn = "cloud.fill"
     case winter = "snowflake"
@@ -42,7 +41,6 @@ public struct TripInfoView: View {
 
     var tripSeasonIcon: TripSeasonIcon {
         switch viewModel.trip.season {
-        case .none: return .none
         case .summer: return .summer
         case .autumn: return .autumn
         case .winter: return .winter
@@ -93,12 +91,16 @@ public struct TripInfoView: View {
         .itemsPickerSheet(
             isPresented: $isSeasonPickerPresented,
             items: TripSeason.allCases,
-            selection: $viewModel.trip.season
+            selection: $viewModel.trip.season,
         )
         .itemsPickerSheet(
             isPresented: $isCategoryPickerPresented,
             items: TripCategory.allCases,
-            selection: $viewModel.trip.category
+            selection: $viewModel.trip.category,
+            customizableItem: .custom(),
+            saveCustomizableItem: { value in
+                viewModel.trip.category = .custom(value)
+            },
         )
         .datePickerSheet(
             isPresented: $isStartDatePickerPresented,

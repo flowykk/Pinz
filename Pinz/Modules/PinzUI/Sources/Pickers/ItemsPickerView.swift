@@ -51,7 +51,8 @@ public struct ItemsPickerView<Item: PickerItem>: View {
 
             PinzButton(
                 type: .slot(style: .primary, title: "Готово"),
-                tint: PinzUIAsset.backgroundSecondary.swiftUIColor
+                tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                disabled: textFieldVisible && textFieldText.isEmpty,
             ) {
                 isPresented = false
                 if !textFieldText.isEmpty {

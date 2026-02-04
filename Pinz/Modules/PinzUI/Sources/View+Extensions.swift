@@ -19,6 +19,10 @@ extension View {
         }
     }
 
+    public func disabledWithOpacity(_ trueFlag: Bool) -> some View {
+        self.disabled(trueFlag).opacity(trueFlag ? 0.7 : 1)
+    }
+
     public func frame(_ size: CGFloat) -> some View {
         self.frame(width: size, height: size)
     }
