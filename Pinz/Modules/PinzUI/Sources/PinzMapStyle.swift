@@ -20,9 +20,9 @@ public enum PinzMapStyle: String, SegmentedItem {
 
     public func toMapKitMapStyle() -> MapStyle {
         switch self {
-        case .scheme: .standard(elevation: .realistic)
-        case .satelight: .imagery(elevation: .realistic)
-        case .hybrid: .hybrid(elevation: .realistic)
+        case .scheme: .standard
+        case .satelight: .imagery
+        case .hybrid: .hybrid
         }
     }
     
