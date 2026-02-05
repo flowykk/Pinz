@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzNetworking
+import PinzBase
 
 @Observable
 final class AppearanceViewModel {
@@ -9,7 +10,12 @@ final class AppearanceViewModel {
         var mapStyle: PinzMapStyle = .satelight
     }
 
+    enum Route {
+        case back
+    }
+
     enum Intent {
+        case navigate(Route)
         case changeMapStyle(PinzMapStyle)
         case loadMapStyle
         case saveMapStyle
@@ -19,6 +25,7 @@ final class AppearanceViewModel {
     
     private let networkService = NetworkService()
     private let userDefaults = UserDefaults.standard
+    private var router: AppRouting?
 
     init() {
         dispatch(.loadMapStyle)
@@ -26,6 +33,11 @@ final class AppearanceViewModel {
 
     func dispatch(_ intent: Intent) {
         switch intent {
+        case let .navigate(route):
+            switch route {
+            case .back:
+                router?.pop()
+            }
         case let .changeMapStyle(mapStyle):
             withAnimation(.easeInOut(duration: 0.3)) {
                 state.mapStyle = mapStyle
@@ -41,5 +53,9 @@ final class AppearanceViewModel {
         case .saveMapStyle:
             userDefaults.set(state.mapStyle.rawValue, forKey: PinzMapStyle.mapStyleKey)
         }
+    }
+
+    public func setRouter(_ router: AppRouting?) {
+        self.router = router
     }
 }

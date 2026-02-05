@@ -1,14 +1,21 @@
 import SwiftUI
 import PinzUI
 
-struct SavedMapsView: View {
-    @Environment(\.dismiss) var dismiss
+public struct SavedMapsView: View {
 
-    var body: some View {
+    @State private var viewModel: SavedMapsViewModel
+
+    @Environment(\.appRouter) private var router
+
+    public init() {
+        viewModel = SavedMapsViewModel()
+    }
+
+    public var body: some View {
         VStack(spacing: 0) {
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    dismiss()
+                    viewModel.dispatch(.navigate(.back))
                 }
             }, centerView: {
                 HeaderTitle("Сохранённые карты")
@@ -17,5 +24,6 @@ struct SavedMapsView: View {
             Spacer()
         }
         .background(PinzUIAsset.background.swiftUIColor)
+        .onAppear { viewModel.setRouter(router) }
     }
 }

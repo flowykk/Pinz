@@ -1,14 +1,21 @@
 import SwiftUI
 import PinzUI
 
-struct StatisticsView: View {
-    @Environment(\.dismiss) var dismiss
+public struct StatisticsView: View {
 
-    var body: some View {
+    @State private var viewModel: StatisticsViewModel
+
+    @Environment(\.appRouter) private var router
+
+    public init() {
+        viewModel = StatisticsViewModel()
+    }
+
+    public var body: some View {
         VStack(spacing: 0) {
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    dismiss()
+                    viewModel.dispatch(.navigate(.back))
                 }
             }, centerView: {
                 HeaderTitle("Статистика")
@@ -17,5 +24,6 @@ struct StatisticsView: View {
             Spacer()
         }
         .background(PinzUIAsset.background.swiftUIColor)
+        .onAppear { viewModel.setRouter(router) }
     }
 }

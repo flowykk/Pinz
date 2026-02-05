@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzNetworking
+import PinzBase
 
 @Observable
 class EmailChangeViewModel {
@@ -10,7 +11,12 @@ class EmailChangeViewModel {
         case secondCode
     }
 
+    public enum Route {
+        case back
+    }
+
     public enum Intent {
+        case navigate(Route)
         case `continue`
     }
 
@@ -21,6 +27,7 @@ class EmailChangeViewModel {
     var email: String
 
     private let networkService = NetworkService()
+    private var router: AppRouting?
 
     public init(
         email: String,
@@ -32,6 +39,11 @@ class EmailChangeViewModel {
 
     public func dispatch(_ intent: Intent) {
         switch intent {
+        case let .navigate(route):
+            switch route {
+            case .back:
+                router?.pop()
+            }
         case .continue:
             switch state {
             case .firstCode:
@@ -43,6 +55,10 @@ class EmailChangeViewModel {
                 successAction(email)
             }
         }
+    }
+
+    public func setRouter(_ router: AppRouting?) {
+        self.router = router
     }
 
     private func changeState(to state: State) {

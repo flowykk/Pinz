@@ -12,14 +12,25 @@ public class ProfileViewModel {
         case editing
     }
 
+    public enum Route {
+        case emailChange
+
+        case statistics
+
+        case trips
+        case wishlist
+        case saved
+
+        case notifications
+        case appearance
+
+        case back
+    }
+
     public enum Intent {
         case changeState
-
         case setImage(UIImage?)
-        
-        case navigateToEmailChange
-        case navigateToAppearance
-        case back
+        case navigate(Route)
     }
 
     var state: State = .default
@@ -55,16 +66,29 @@ public class ProfileViewModel {
             if let newImage {
                 userImage = newImage
             }
-        case .navigateToEmailChange:
-            let action = EmailChangeAction { [weak self] newEmail in
-                self?.user.email = newEmail
-                self?.router?.pop()
+        case let .navigate(route):
+            switch route {
+            case .emailChange:
+                let action = EmailChangeAction { [weak self] newEmail in
+                    self?.user.email = newEmail
+                    self?.router?.pop()
+                }
+                router?.navigateToEmailChange(email: user.email, action: action)
+            case .statistics:
+                router?.navigateToStatistics()
+            case .trips:
+                router?.navigateToTrips()
+            case .wishlist:
+                router?.navigateToPlacesWishlist()
+            case .saved:
+                router?.navigateToSavedMaps()
+            case .notifications:
+                router?.navigateToNotifications()
+            case .appearance:
+                router?.navigateToAppearance()
+            case .back:
+                router?.pop()
             }
-            router?.navigateToEmailChange(email: user.email, action: action)
-        case .navigateToAppearance:
-            router?.navigateToAppearance()
-        case .back:
-            router?.pop()
         }
     }
 

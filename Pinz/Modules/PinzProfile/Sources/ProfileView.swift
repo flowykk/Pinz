@@ -91,7 +91,7 @@ public struct ProfileView: View {
             Header(
                 leftView: {
                     PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                        viewModel.dispatch(.back)
+                        viewModel.dispatch(.navigate(.back))
                     }
                 },
                 rightView: {
@@ -153,7 +153,7 @@ public struct ProfileView: View {
                     id: "profileStats",
                     leading: .iconTitle(ProfileIcon.chart, "Статистика"),
                     trailing: .icon(ProfileIcon.chevronRight),
-                    action: .plain { }
+                    action: .plain { viewModel.dispatch(.navigate(.statistics)) }
                 )),
             ],
         )
@@ -164,19 +164,19 @@ public struct ProfileView: View {
                     id: "profileTrips",
                     leading: .iconTitle(ProfileIcon.map, "Путешествия"),
                     trailing: .icon(ProfileIcon.chevronRight),
-                    action: .plain { }
+                    action: .plain { viewModel.dispatch(.navigate(.trips)) }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profileWishlist",
                     leading: .iconTitle(ProfileIcon.heart, "Желанные места"),
                     trailing: .icon(ProfileIcon.chevronRight),
-                    action: .plain { }
+                    action: .plain { viewModel.dispatch(.navigate(.wishlist)) }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profileSavedMaps",
                     leading: .iconTitle(ProfileIcon.bookmark, "Сохранённые карты"),
                     trailing: .icon(ProfileIcon.chevronRight),
-                    action: .plain { }
+                    action: .plain { viewModel.dispatch(.navigate(.saved)) }
                 )),
             ],
         )
@@ -187,13 +187,13 @@ public struct ProfileView: View {
                     id: "profileNotifications",
                     leading: .iconTitle(ProfileIcon.bell, "Уведомления"),
                     trailing: .icon(ProfileIcon.chevronRight),
-                    action: .plain { }
+                    action: .plain { viewModel.dispatch(.navigate(.notifications)) }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profileAppearance",
                     leading: .iconTitle(ProfileIcon.paintbrush, "Оформление"),
                     trailing: .icon(ProfileIcon.chevronRight),
-                    action: .plain { viewModel.dispatch(.navigateToAppearance) }
+                    action: .plain { viewModel.dispatch(.navigate(.appearance)) }
                 )),
             ],
         )
@@ -232,7 +232,7 @@ public struct ProfileView: View {
                     id: "profileEmailChanging",
                     leading: .title("Сменить почту"),
                     trailing: .valuesIcon([.text(viewModel.user.email)], ProfileIcon.chevronRight),
-                    action: .plain { viewModel.dispatch(.navigateToEmailChange) }
+                    action: .plain { viewModel.dispatch(.navigate(.emailChange)) }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profilePasswordChanging",

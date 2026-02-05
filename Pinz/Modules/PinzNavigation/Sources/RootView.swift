@@ -34,11 +34,23 @@ public struct RootView<Content: View>: View {
                 ProfileView(user: user)
             case let .pinInfo(pin):
                 PinInfoView(pin: pin)
+            case .members:
+                TripMembersView()
             }
         case let .profile(profileRoute):
             switch profileRoute {
             case let .emailChange(email, action):
                 EmailChangeView(email: email, onChangeSuccess: action.action)
+            case .statistics:
+                StatisticsView()
+            case .trips:
+                TripsListView()
+            case .wishlist:
+                PlacesWishlistView()
+            case .saved:
+                SavedMapsView()
+            case .notifications:
+                NotificationsView()
             case .appearance:
                 AppearanceView()
             }

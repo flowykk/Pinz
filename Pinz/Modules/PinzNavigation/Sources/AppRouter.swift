@@ -36,6 +36,10 @@ extension AppRouter {
     public func navigateToPinInfo(pin: Pin) {
         navigate(to: .trip(.pinInfo(pin: pin)))
     }
+
+    public func navigateToTripMembers() {
+        navigate(to: .trip(.members))
+    }
 }
 
 // MARK: - Profile Routing
@@ -43,6 +47,26 @@ extension AppRouter {
 extension AppRouter {
     public func navigateToEmailChange(email: String, action: EmailChangeAction) {
         navigate(to: .profile(.emailChange(email: email, action: action)))
+    }
+
+    public func navigateToStatistics() {
+        navigate(to: .profile(.statistics))
+    }
+
+    public func navigateToTrips() {
+        navigate(to: .profile(.trips))
+    }
+
+    public func navigateToPlacesWishlist() {
+        navigate(to: .profile(.wishlist))
+    }
+
+    public func navigateToSavedMaps() {
+        navigate(to: .profile(.saved))
+    }
+
+    public func navigateToNotifications() {
+        navigate(to: .profile(.notifications))
     }
 
     public func navigateToAppearance() {

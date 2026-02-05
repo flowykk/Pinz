@@ -1,14 +1,21 @@
 import SwiftUI
 import PinzUI
 
-struct NotificationsView: View {
-    @Environment(\.dismiss) var dismiss
+public struct NotificationsView: View {
 
-    var body: some View {
+    @State private var viewModel: NotificationsViewModel
+
+    @Environment(\.appRouter) private var router
+
+    public init() {
+        viewModel = NotificationsViewModel()
+    }
+
+    public var body: some View {
         VStack(spacing: 0) {
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    dismiss()
+                    viewModel.dispatch(.navigate(.back))
                 }
             }, centerView: {
                 HeaderTitle("Уведомления")
@@ -17,5 +24,6 @@ struct NotificationsView: View {
             Spacer()
         }
         .background(PinzUIAsset.background.swiftUIColor)
+        .onAppear { viewModel.setRouter(router) }
     }
 }

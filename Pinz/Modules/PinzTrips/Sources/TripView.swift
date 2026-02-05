@@ -45,7 +45,7 @@ public struct TripView: View {
         .sheet(isPresented: $isPinsPresented) {
             TripPinsListView(pins: viewModel.trip.pins) { pin in
                 isPinsPresented = false
-                viewModel.dispatch(.navigateToPinInfo(pin: pin))
+                viewModel.dispatch(.navigate(.pinInfo(pin)))
             }
             .pinzSheet()
             .presentationDetents([.medium, .large])
@@ -79,7 +79,7 @@ public struct TripView: View {
                         }
                     }
                     button(.icon("square.grid.2x2.fill")) {
-                        viewModel.dispatch(.navigateToFeed)
+                        viewModel.dispatch(.navigate(.feed))
                     }
                 }
 
@@ -87,7 +87,7 @@ public struct TripView: View {
 
                 VStack(spacing: 6) {
                     button(.image(PinzUIAsset.avatar.image)) {
-                        viewModel.dispatch(.navigateToProfile(user: User(nickname: "flowykk", email: "cristgames123@gmail.com")))
+                        viewModel.dispatch(.navigate(.profile(User(nickname: "flowykk", email: "cristgames123@gmail.com"))))
                     }
                     button(.icon("list.bullet")) {
                         if !viewModel.trip.pins.isEmpty {
@@ -95,7 +95,7 @@ public struct TripView: View {
                         }
                     }
                     button(.icon("person.2.fill")) {
-                        viewModel.dispatch(.navigateToMembers)
+                        viewModel.dispatch(.navigate(.members))
                     }
                 }
             }.padding(.horizontal, 10)
@@ -106,7 +106,7 @@ public struct TripView: View {
 
     private var tripHeader: some View {
         Button {
-            viewModel.dispatch(.navigateToTripInfo)
+            viewModel.dispatch(.navigate(.tripInfo))
         } label: {
             HStack(spacing: 8) {
                 Image(uiImage: viewModel.trip.image ?? PinzUIAsset.avatar.image)
