@@ -5,8 +5,14 @@ public protocol AppRouting {
     func navigateToTripInfo(trip: Trip)
     func navigateToProfile(user: User)
     func navigateToPinInfo(pin: Pin)
+    func navigateToTripMembers()
 
     func navigateToEmailChange(email: String, action: EmailChangeAction)
+    func navigateToStatistics()
+    func navigateToTrips()
+    func navigateToPlacesWishlist()
+    func navigateToSavedMaps()
+    func navigateToNotifications()
     func navigateToAppearance()
 
     func navigateToFeed()

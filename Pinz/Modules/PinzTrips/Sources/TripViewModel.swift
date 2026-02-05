@@ -5,13 +5,17 @@ import PinzBase
 
 @Observable
 public class TripViewModel {
-    
+
+    public enum Route {
+        case tripInfo
+        case profile(User)
+        case feed
+        case members
+        case pinInfo(Pin)
+    }
+
     public enum Intent {
-        case navigateToTripInfo
-        case navigateToProfile(user: User)
-        case navigateToFeed
-        case navigateToMembers
-        case navigateToPinInfo(pin: Pin)
+        case navigate(Route)
         case selectPin(pin: Pin?)
         case unselectPin
     }
@@ -57,22 +61,24 @@ public class TripViewModel {
     
     public func dispatch(_ intent: Intent) {
         switch intent {
-        case .navigateToTripInfo:
-            router?.navigateToTripInfo(trip: trip)
-        case let .navigateToProfile(user):
-            router?.navigateToProfile(user: user)
-        case .navigateToFeed:
-            router?.navigateToFeed()
-        case .navigateToMembers:
-            // TODO: implement members navigation
-            break
-        case let .navigateToPinInfo(pin):
-            router?.navigateToPinInfo(pin: pin)
+        case let .navigate(route):
+            switch route {
+            case .tripInfo:
+                router?.navigateToTripInfo(trip: trip)
+            case .profile(let user):
+                router?.navigateToProfile(user: user)
+            case .feed:
+                router?.navigateToFeed()
+            case .pinInfo(let pin):
+                router?.navigateToPinInfo(pin: pin)
+            case .members:
+                router?.navigateToTripMembers()
+            }
         case let .selectPin(pin):
             selectedPin = pin
         case .unselectPin:
             if let selectedPin {
-                dispatch(.navigateToPinInfo(pin: selectedPin))
+                dispatch(.navigate(.pinInfo(selectedPin)))
             }
             selectedPin = nil
         }

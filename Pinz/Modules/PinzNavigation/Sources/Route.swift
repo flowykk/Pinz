@@ -5,10 +5,19 @@ public enum TripRoute: Hashable {
     case info(trip: Trip)
     case profile(user: User)
     case pinInfo(pin: Pin)
+    case members
 }
 
 public enum ProfileRoute: Hashable {
     case emailChange(email: String, action: EmailChangeAction)
+
+    case statistics
+
+    case trips
+    case wishlist
+    case saved
+
+    case notifications
     case appearance
 }
 

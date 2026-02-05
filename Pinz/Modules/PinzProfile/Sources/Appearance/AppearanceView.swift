@@ -3,9 +3,8 @@ import PinzUI
 import MapKit
 
 public struct AppearanceView: View {
-    @Environment(\.dismiss) var dismiss
 
-    @State private var viewModel = AppearanceViewModel()
+    @State private var viewModel: AppearanceViewModel
     @State private var selectedIconIndex: Int? = 0
     @State private var position: MapCameraPosition = .region(
         MKCoordinateRegion(
@@ -14,13 +13,17 @@ public struct AppearanceView: View {
         )
     )
 
-    public init() { }
+    @Environment(\.appRouter) private var router
+
+    public init() {
+        viewModel = AppearanceViewModel()
+    }
 
     public var body: some View {
         VStack(spacing: 0) {
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    dismiss()
+                    viewModel.dispatch(.navigate(.back))
                 }
             }, centerView: {
                 HeaderTitle("Оформление")
@@ -35,7 +38,7 @@ public struct AppearanceView: View {
             }
             .padding(.top, 8)
             .padding(.horizontal, 12)
-        }
+        }.onAppear { viewModel.setRouter(router) }
     }
 
     private var appIconSettings: some View {

@@ -2,10 +2,11 @@ import SwiftUI
 import PinzUI
 
 public struct EmailChangeView: View {
-    @Environment(\.dismiss) var dismiss
 
     @State private var viewModel: EmailChangeViewModel
     @FocusState private var emailFocused: Bool
+
+    @Environment(\.appRouter) private var router
 
     var codeTextFieldStyle = CodeInputTextField.Style(
         segmentsCount: 4,
@@ -24,7 +25,7 @@ public struct EmailChangeView: View {
         VStack(spacing: 0) {
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    dismiss()
+                    viewModel.dispatch(.navigate(.back))
                 }
             }, centerView: {
                 HeaderTitle("Смена почты")
@@ -61,6 +62,9 @@ public struct EmailChangeView: View {
             Spacer()
         }
         .background(PinzUIAsset.background.swiftUIColor)
+        .onAppear {
+            viewModel.setRouter(router)
+        }
     }
 
     private var firstCodeInputView: some View {
