@@ -32,10 +32,10 @@ public struct TripView: View {
                     }
                 }
             }
-                .savedMapStyle(mapStyleRawValue)
-                .mapControlVisibility(.hidden)
-                .ignoresSafeArea()
-                .toolbar(.hidden)
+            .savedMapStyle(mapStyleRawValue)
+            .mapControlVisibility(.hidden)
+            .ignoresSafeArea()
+            .toolbar(.hidden)
 
             gradient.ignoresSafeArea()
 
