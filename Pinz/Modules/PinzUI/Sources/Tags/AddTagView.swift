@@ -25,7 +25,9 @@ struct AddTagView: View {
             )
 
             PinzButton(type: .slot(style: .primary, title: "Готово")) {
-                onTagAdd?(MediaTag(tag: tag))
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    onTagAdd?(MediaTag(tag: tag))
+                }
                 dismiss()
             }
 

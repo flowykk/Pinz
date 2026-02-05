@@ -12,12 +12,10 @@ public final class AppIconsViewModel: Identifiable {
     public init() {
         appIcons = [
             AppIconViewModel(appIcon: AppIconViewModel.defaultAppIcon),
-            AppIconViewModel(appIcon: "RewindPink"),
-            AppIconViewModel(appIcon: "RewindGradient"),
-            AppIconViewModel(appIcon: "RewindForest"),
-            AppIconViewModel(appIcon: "RewindLazer"),
-            AppIconViewModel(appIcon: "RewindSakura"),
-            AppIconViewModel(appIcon: "RewindSea"),
+            AppIconViewModel(appIcon: "PinzLight"),
+            AppIconViewModel(appIcon: "PinzMountainsWhite"),
+            AppIconViewModel(appIcon: "PinzMountainsBlue"),
+            AppIconViewModel(appIcon: "PinzTransport"),
         ]
     }
 

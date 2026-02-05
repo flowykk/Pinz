@@ -33,7 +33,7 @@ let project = Project(
             ],
             settings: .settings(
                 base: [
-                    "ASSETCATALOG_COMPILER_APPICON_NAME": "RewindLight",
+                    "ASSETCATALOG_COMPILER_APPICON_NAME": "PinzLightP",
                     "ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS": "YES",
                 ]
             )
