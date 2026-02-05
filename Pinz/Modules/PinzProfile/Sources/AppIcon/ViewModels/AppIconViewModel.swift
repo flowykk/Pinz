@@ -13,14 +13,18 @@ public final class AppIconViewModel: Identifiable {
     var selected: Bool
 
     public static let appIconKey = "pinzAppIcon"
-    public static let defaultAppIcon = "RewindLight"
+    public static let defaultAppIcon = "PinzLightP"
 
     private let userDefaults = UserDefaults.standard
 
     public init(appIcon: String, task: String? = nil) {
         self.name = appIcon
         self.task = task
-        self.selected = appIcon == userDefaults.string(forKey: Self.appIconKey) ? true : false
+        if let savedIcon = userDefaults.string(forKey: Self.appIconKey) {
+            selected = appIcon == savedIcon ? true : false
+        } else {
+            selected = appIcon == Self.defaultAppIcon ? true : false
+        }
     }
 
     func dispatch(_ intent: Intent) {

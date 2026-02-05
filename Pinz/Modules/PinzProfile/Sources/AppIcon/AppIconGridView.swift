@@ -15,9 +15,8 @@ public struct AppIconsGridView: View {
                         .onTapGesture {
                             viewModel.dispatch(.change(icon: icon))
                         }
-                }
-                .padding(.horizontal, 10)
-            }
+                }.padding(.horizontal, 5)
+            }.padding(.horizontal, 5)
         }
         .scrollIndicators(.hidden)
         .padding(.vertical, 10)

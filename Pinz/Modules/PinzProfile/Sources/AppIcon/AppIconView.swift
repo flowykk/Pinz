@@ -16,9 +16,13 @@ public struct AppIconView: View {
             if viewModel.selected {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.white)
-                    .background(Circle().fill(Color(.systemGreen)).frame(width: 24, height: 24))
+                    .background(
+                        Circle()
+                            .fill(PinzUIAsset.textPrimary.swiftUIColor)
+                            .frame(width: 24, height: 24)
+                    )
                     .fontWeight(.bold)
-                    .offset(x: 23, y: -23)
+                    .offset(x: 22, y: -22)
             }
         }
     }
