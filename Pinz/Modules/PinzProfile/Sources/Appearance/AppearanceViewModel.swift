@@ -19,7 +19,6 @@ final class AppearanceViewModel {
     
     private let networkService = NetworkService()
     private let userDefaults = UserDefaults.standard
-    private let mapStyleKey = "pinzMapStyle"
 
     init() {
         dispatch(.loadMapStyle)
@@ -34,13 +33,13 @@ final class AppearanceViewModel {
             dispatch(.saveMapStyle)
             
         case .loadMapStyle:
-            if let savedStyle = userDefaults.string(forKey: mapStyleKey),
+            if let savedStyle = userDefaults.string(forKey: PinzMapStyle.mapStyleKey),
                let mapStyle = PinzMapStyle(rawValue: savedStyle) {
                 state.mapStyle = mapStyle
             }
             
         case .saveMapStyle:
-            userDefaults.set(state.mapStyle.rawValue, forKey: mapStyleKey)
+            userDefaults.set(state.mapStyle.rawValue, forKey: PinzMapStyle.mapStyleKey)
         }
     }
 }

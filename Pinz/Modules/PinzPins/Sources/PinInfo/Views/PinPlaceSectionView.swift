@@ -6,8 +6,8 @@ import PinzUI
 public struct PinPlaceSectionView: View {
 
     @Binding var pin: Pin
-    @State var mapStyle: PinzMapStyle = .scheme
     @State private var position: MapCameraPosition
+    @AppStorage("pinzMapStyle") private var mapStyleRawValue: String = PinzMapStyle.satelight.rawValue
 
     private let defaultOffset: CLLocationDegrees = 0.00045
     private let defaultZoom: CLLocationDegrees = 0.003
@@ -47,7 +47,8 @@ public struct PinPlaceSectionView: View {
                     )
                 )
             }
-            .mapStyle(.hybrid)
+            .savedMapStyle(mapStyleRawValue)
+            .mapControlVisibility(.hidden)
             .clipShape(RoundedRectangle(cornerRadius: 26))
             .frame(height: 200)
             .allowsHitTesting(false)

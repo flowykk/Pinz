@@ -64,10 +64,10 @@ public struct AppearanceView: View {
             Group {
                 switch viewModel.state.mapStyle {
                 case .scheme:
-                    Map(position: $position).mapStyle(.imagery)
-                case .hybrid:
                     Map(position: $position).mapStyle(.standard)
                 case .satelight:
+                    Map(position: $position).mapStyle(.imagery)
+                case .hybrid:
                     Map(position: $position).mapStyle(.hybrid)
                 }
             }

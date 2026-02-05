@@ -14,6 +14,7 @@ public struct TripView: View {
     @State private var viewModel: TripViewModel
     @State private var isPinsPresented = false
     @Environment(\.appRouter) private var router
+    @AppStorage("pinzMapStyle") private var mapStyleRawValue: String = PinzMapStyle.satelight.rawValue
 
     public init(trip: Trip) {
         viewModel = TripViewModel(trip: trip)
@@ -31,7 +32,7 @@ public struct TripView: View {
                     }
                 }
             }
-//                .mapStyle(.imagery(elevation: .realistic))
+                .savedMapStyle(mapStyleRawValue)
                 .mapControlVisibility(.hidden)
                 .ignoresSafeArea()
                 .toolbar(.hidden)
