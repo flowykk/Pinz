@@ -84,7 +84,7 @@ public struct PinzButton: View {
                     .if(style == .secondary(needBorder: true)) { view in
                         return view.overlay(
                             RoundedRectangle(cornerRadius: 26)
-                                .stroke(PinzUIAsset.textTertiary.swiftUIColor.opacity(0.6), lineWidth: 3)
+                                .stroke(PinzUIAsset.textPrimary.swiftUIColor, lineWidth: 1)
                         )
                     }
                 }
@@ -94,7 +94,7 @@ public struct PinzButton: View {
         .ifLet(disabled, apply: { view, disabled in
             view
                 .disabledWithOpacity(disabled)
-                .animation(.easeInOut(duration: 0.2))
+                .animation(.easeInOut(duration: 0.2), value: disabled)
         })
     }
 }

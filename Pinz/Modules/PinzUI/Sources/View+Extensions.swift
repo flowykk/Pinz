@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 
 extension View {
     @ViewBuilder
@@ -25,5 +26,10 @@ extension View {
 
     public func frame(_ size: CGFloat) -> some View {
         self.frame(width: size, height: size)
+    }
+    
+    public func savedMapStyle(_ rawValue: String) -> some View {
+        let mapStyle = (PinzMapStyle(rawValue: rawValue) ?? .satelight).toMapKitMapStyle()
+        return self.mapStyle(mapStyle)
     }
 }
