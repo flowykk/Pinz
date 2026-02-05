@@ -12,7 +12,7 @@ final class TripInfoViewModel {
     
     enum Intent {
         case changeState
-        
+        case setImage(UIImage?)
         case back
     }
 
@@ -31,6 +31,10 @@ final class TripInfoViewModel {
             switch state {
             case .default: changeState(to: .editing)
             case .editing: changeState(to: .default)
+            }
+        case let .setImage(newImage):
+            if let newImage {
+                trip.image = newImage
             }
         case .back:
             router?.pop()

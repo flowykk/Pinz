@@ -37,6 +37,9 @@ public struct TripInfoView: View {
     @State private var isEndDatePickerPresented = false
     @State private var datePickerHeight: CGFloat = 0
 
+    @State private var imageEditingDialogShown = false
+    @State private var photoPickerShown = false
+
     @Environment(\.appRouter) private var router
 
     var tripSeasonIcon: TripSeasonIcon {
@@ -112,6 +115,21 @@ public struct TripInfoView: View {
             date: $viewModel.trip.endDate,
             pickerHeight: $datePickerHeight
         )
+        .confirmationDialog(
+            "Выберите действие",
+            isPresented: $imageEditingDialogShown,
+            titleVisibility: .visible
+        ) {
+            Button("Выбрать из галереи") {
+                photoPickerShown = true
+            }
+            Button("Удалить фотографию", role: .destructive) { }
+        }
+        .customImagePicker(show: $photoPickerShown, croppedImage: Binding {
+            return viewModel.trip.image
+        } set: { newImage in
+            viewModel.dispatch(.setImage(newImage))
+        })
     }
 
     @ViewBuilder
@@ -156,7 +174,7 @@ public struct TripInfoView: View {
 
             if viewModel.state == .editing {
                 Button {
-
+                    imageEditingDialogShown = true
                 } label: {
                     Text("Изменить фотографию")
                         .roundedFount(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
