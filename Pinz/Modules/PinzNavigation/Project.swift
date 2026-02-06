@@ -17,7 +17,8 @@ let project = Project(
                 .project(target: "PinzProfile", path: "../PinzProfile"),
                 .project(target: "PinzTrips", path: "../PinzTrips"),
                 .project(target: "PinzPins", path: "../PinzPins"),
-                .project(target: "PinzFeed", path: "../PinzFeed")
+                .project(target: "PinzFeed", path: "../PinzFeed"),
+                .project(target: "PinzMedias", path: "../PinzMedias")
             ]
         )
     ]

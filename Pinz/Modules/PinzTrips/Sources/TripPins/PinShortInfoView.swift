@@ -8,6 +8,8 @@ struct PinShortInfoView: View {
     let hideTags: Bool
     let pinTapped: (Pin) -> Void
 
+    @Environment(\.dismiss) private var dismiss
+
     init(
         pin: Pin,
         hideTags: Bool = false,
@@ -69,7 +71,8 @@ struct PinShortInfoView: View {
                     MediaThumbnailView(
                         image: mediaUIImage(media),
                         contentMode: .fit,
-                        cornerRadius: 12
+                        cornerRadius: 12,
+                        actionBeforeMediaInfo: { dismiss() }
                     ).frame(height: 96)
                 }
 

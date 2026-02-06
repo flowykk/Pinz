@@ -29,7 +29,8 @@ let project = Project(
                 .project(target: "PinzNavigation", path: "Modules/PinzNavigation"),
                 .project(target: "PinzTrips", path: "Modules/PinzTrips"),
                 .project(target: "PinzPins", path: "Modules/PinzPins"),
-                .project(target: "PinzFeed", path: "Modules/PinzFeed")
+                .project(target: "PinzFeed", path: "Modules/PinzFeed"),
+                .project(target: "PinzMedias", path: "Modules/PinzMedias")
             ],
             settings: .settings(
                 base: [

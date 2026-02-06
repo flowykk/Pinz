@@ -42,6 +42,14 @@ extension AppRouter {
     }
 }
 
+// MARK: Trip Info Routing
+
+extension AppRouter {
+    public func navigateToMediaInfo(media: LoadedMedia) {
+        navigate(to: .media(.info(media: media)))
+    }
+}
+
 // MARK: - Profile Routing
 
 extension AppRouter {
@@ -82,7 +90,7 @@ extension AppRouter {
     }
 }
 
-// MARK: - PinInfo Routing {
+// MARK: - PinInfo Routing
 extension AppRouter {
     public func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction) {
         navigate(to: .pinInfo(.placeChange(pin: pin, action: action)))
