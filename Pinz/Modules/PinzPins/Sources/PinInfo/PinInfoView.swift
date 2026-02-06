@@ -123,10 +123,7 @@ public struct PinInfoView: View {
             PinzGrid($viewModel.pin.medias, columns: galleryColumns, spacing: 4) { media, index in
                 switch media.content {
                 case let .image(image):
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .cornerRadius(12)
+                    mediaThumbnail(for: image)
                         .contextMenu {
                             Button {
 
@@ -141,10 +138,7 @@ public struct PinInfoView: View {
                                 Label("Удалить", systemImage: "trash")
                             }
                         } preview: {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFit()
-                                .cornerRadius(12)
+                            mediaThumbnail(for: image)
                         }
                 case .video:
                     EmptyView()
@@ -181,6 +175,14 @@ public struct PinInfoView: View {
                         magnificationScale = 1.0
                     }
                 }
+        )
+    }
+
+    private func mediaThumbnail(for image: UIImage) -> some View {
+        MediaThumbnailView(
+            image: image,
+            contentMode: .fit,
+            cornerRadius: 12
         )
     }
 }

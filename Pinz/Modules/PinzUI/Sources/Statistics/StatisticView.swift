@@ -3,12 +3,12 @@ import SwiftUI
 public struct StatisticView: View {
     private let icon: String
     private let text: String?
-    private let iconColor: PinzUIColors?
+    private let iconColor: PinzUIColors
 
     public init (
         icon: String,
         text: String? = nil,
-        iconColor: PinzUIColors? = nil
+        iconColor: PinzUIColors = PinzUIAsset.textSecondary
     ) {
         self.icon = icon
         self.text = text
@@ -22,7 +22,7 @@ public struct StatisticView: View {
                 if let text {
                     Text(text)
                 }
-            }.roundedFount(size: 14, foregroundColor: iconColor?.swiftUIColor ?? PinzUIAsset.textSecondary.swiftUIColor)
+            }.roundedFount(size: 14, foregroundColor: iconColor.swiftUIColor)
         }
     }
 }
