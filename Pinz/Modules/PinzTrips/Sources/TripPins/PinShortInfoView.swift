@@ -50,8 +50,12 @@ struct PinShortInfoView: View {
 
             VStack {
                 Spacer(minLength: 0)
-                HStack {
-                    StatisticView(text: String(pin.medias.count), icon: "photo.stack.fill")
+                HStack(spacing: 10) {
+                    StatisticView(icon: "photo.stack.fill", text: String(pin.medias.count))
+                    StatisticView(
+                        icon: pin.privacy == true ? "lock.fill" : "lock.open.fill",
+                        iconColor: pin.privacy == true ? PinzUIAsset.accentRed : PinzUIAsset.accentGreen,
+                    )
                 }
                 Spacer(minLength: 0)
             }
