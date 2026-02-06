@@ -84,12 +84,11 @@ public struct PinPlaceChangeView: View {
         LinearGradient(
             gradient: Gradient(colors: [
                 Color.clear,
-                Color.black.opacity(0.6),
-                Color.black.opacity(0.9),
+                Color.black.opacity(0.8),
             ]),
             startPoint: .bottom,
             endPoint: .top
-        ).frame(height: 230)
+        ).frame(height: 200)
     }
 
     private var bottomGradient: some View {
