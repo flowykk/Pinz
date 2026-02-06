@@ -66,11 +66,11 @@ struct PinShortInfoView: View {
         ScrollView(.horizontal) {
             HStack(spacing: 4) {
                 ForEach(pin.medias.prefix(6)) { media in
-                    mediaView(media)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(96)
-                        .cornerRadius(16)
+                    MediaThumbnailView(
+                        image: mediaUIImage(media),
+                        contentMode: .fit,
+                        cornerRadius: 12
+                    ).frame(height: 96)
                 }
 
                 if pin.medias.count > 6 {
@@ -85,12 +85,12 @@ struct PinShortInfoView: View {
         }.scrollIndicators(.hidden)
     }
 
-    func mediaView(_ media: LoadedMedia) -> Image {
+    func mediaUIImage(_ media: LoadedMedia) -> UIImage {
         switch media.content {
         case let .image(uIImage):
-            Image(uiImage: uIImage)
+            uIImage
         case let .video(url, firstFrame):
-            Image(uiImage: firstFrame)
+            firstFrame
         }
     }
 
