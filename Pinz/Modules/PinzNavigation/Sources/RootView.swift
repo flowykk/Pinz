@@ -3,6 +3,7 @@ import PinzProfile
 import PinzTrips
 import PinzPins
 import PinzFeed
+import PinzMedias
 
 public struct RootView<Content: View>: View {
     @Bindable var router: AppRouter
@@ -58,6 +59,11 @@ public struct RootView<Content: View>: View {
             switch pinInfoRoute {
             case let .placeChange(pin, action):
                 PinPlaceChangeView(pin: pin, onSave: action.action)
+            }
+        case let .media(mediaRoute):
+            switch mediaRoute {
+            case let .info(media):
+                MediaInfoView(media: media)
             }
         }
     }

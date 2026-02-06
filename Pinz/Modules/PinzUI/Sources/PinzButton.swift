@@ -40,6 +40,9 @@ public struct PinzButton: View {
 
         case warning = "exclamationmark.triangle.fill"
         case checkmark = "checkmark.circle.fill"
+
+        case download = "square.and.arrow.down.fill"
+        case crop = "crop"
     }
 
     private let type: ButtonType
@@ -65,7 +68,7 @@ public struct PinzButton: View {
                 switch type {
                 case let .icon(icon):
                     Image(systemName: icon.rawValue)
-                        .roundedFount(size: 20, weight: .bold, foregroundColor: tint)
+                        .roundedFount(size: 20, weight: .semibold, foregroundColor: tint)
                         .frame(width: 40, height: 40)
                 case let .text(text):
                     Text(text)

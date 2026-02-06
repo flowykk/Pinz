@@ -49,7 +49,6 @@ public struct PinPlaceChangeView: View {
                     }
                 }
                 .padding(.horizontal, 12)
-                .padding(.bottom, 8)
                 .background {
                     bottomGradient
                 }

@@ -113,7 +113,7 @@ extension PinInfoView {
 
     var map: some View {
         Button {
-            viewModel.dispatch(.changePlace)
+            viewModel.dispatch(.navigate(.changePlace))
         } label: {
             PinPlaceSectionView(pin: $viewModel.pin)
         }

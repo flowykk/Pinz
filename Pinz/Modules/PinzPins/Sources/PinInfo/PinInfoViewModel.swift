@@ -26,6 +26,12 @@ public class PinInfoViewModel {
         }
     }
 
+    public enum Route {
+        case mediaInfo(LoadedMedia)
+        case changePlace
+        case back
+    }
+
     public enum Intent {
         case edit
         case endEdit
@@ -33,8 +39,7 @@ public class PinInfoViewModel {
         case addTag(MediaTag)
         case deleteTag(MediaTag)
 
-        case back
-        case changePlace
+        case navigate(Route)
     }
 
     var state: State = .info
@@ -63,13 +68,18 @@ public class PinInfoViewModel {
             pin.tags.append(tag)
         case let .deleteTag(tag):
             pin.tags.removeAll { $0.tag == tag.tag }
-        case .back:
-            router?.pop()
-        case .changePlace:
-            let action = PlaceSaveAction { [weak self] coordinate in
-                self?.pin.coordinates = coordinate
+        case let .navigate(route):
+            switch route {
+            case let .mediaInfo(media):
+                router?.navigateToMediaInfo(media: media)
+            case .changePlace:
+                let action = PlaceSaveAction { [weak self] coordinate in
+                    self?.pin.coordinates = coordinate
+                }
+                router?.navigateToPinPlaceChange(pin: pin, action: action)
+            case .back:
+                router?.pop()
             }
-            router?.navigateToPinPlaceChange(pin: pin, action: action)
         }
     }
 

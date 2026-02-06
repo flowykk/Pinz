@@ -25,8 +25,13 @@ public enum PinInfoRoute: Hashable {
     case placeChange(pin: Pin, action: PlaceSaveAction)
 }
 
+public enum MediaRoute: Hashable {
+    case info(media: LoadedMedia)
+}
+
 public enum Route: Hashable {
     case trip(TripRoute)
     case profile(ProfileRoute)
     case pinInfo(PinInfoRoute)
+    case media(MediaRoute)
 }

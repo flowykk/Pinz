@@ -91,7 +91,7 @@ public struct PinInfoView: View {
         case .info, .gallery:
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.back)
+                    viewModel.dispatch(.navigate(.back))
                 }
             }, centerView: {
                 HeaderTitle(viewModel.pin.name, subtitle: viewModel.pin.category.value)
@@ -123,23 +123,11 @@ public struct PinInfoView: View {
             PinzGrid($viewModel.pin.medias, columns: galleryColumns, spacing: 4) { media, index in
                 switch media.content {
                 case let .image(image):
-                    mediaThumbnail(for: image)
-                        .contextMenu {
-                            Button {
-
-                            } label: {
-                                Label("Детали", systemImage: "eye.fill")
-                            }
-
-                            Divider()
-                            Button(role: .destructive) {
-
-                            } label: {
-                                Label("Удалить", systemImage: "trash")
-                            }
-                        } preview: {
-                            mediaThumbnail(for: image)
-                        }
+                    MediaThumbnailView(
+                        image: image,
+                        contentMode: .fit,
+                        cornerRadius: 12
+                    )
                 case .video:
                     EmptyView()
                 }
@@ -175,14 +163,6 @@ public struct PinInfoView: View {
                         magnificationScale = 1.0
                     }
                 }
-        )
-    }
-
-    private func mediaThumbnail(for image: UIImage) -> some View {
-        MediaThumbnailView(
-            image: image,
-            contentMode: .fit,
-            cornerRadius: 12
         )
     }
 }
