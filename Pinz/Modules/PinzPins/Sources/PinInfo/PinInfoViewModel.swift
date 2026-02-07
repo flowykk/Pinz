@@ -27,7 +27,7 @@ public class PinInfoViewModel {
     }
 
     public enum Route {
-        case mediaInfo(LoadedMedia)
+        case mediaInfo(MediaItem)
         case changePlace
         case back
     }

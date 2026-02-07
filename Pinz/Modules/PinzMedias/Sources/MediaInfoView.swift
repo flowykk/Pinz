@@ -10,11 +10,11 @@ enum MediaInfoIcon: String, Setting.Icon {
 
 public struct MediaInfoView: View {
     
-    private let media: LoadedMedia
+    private let media: MediaItem
     
     @Environment(\.appRouter) private var router
     
-    public init(media: LoadedMedia) {
+    public init(media: MediaItem) {
         self.media = media
     }
     
@@ -24,17 +24,11 @@ public struct MediaInfoView: View {
             
             ScrollView {
                 VStack(spacing: 12) {
-                    switch media.content {
-                    case let .image(image):
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .cornerRadius(16)
-                    case let .video(_, firstFrame):
-                        Image(uiImage: firstFrame)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .cornerRadius(16)
+                    switch media.type {
+                    case .image:
+                        LoadableImageThumbnail(url: media.mediaURL) { state in mediaView(for: state) }
+                    case .video:
+                        LoadableVideoThumbnail(url: media.mediaURL) { state in mediaView(for: state) }
                     }
 
                     privacy
@@ -47,6 +41,35 @@ public struct MediaInfoView: View {
             .padding(.horizontal, 12)
         }
         .background(PinzUIAsset.background.swiftUIColor)
+    }
+
+    @ViewBuilder
+    private func mediaView(for state: LoadableMediaState) -> some View {
+        switch state {
+        case .empty:
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .aspectRatio(1, contentMode: .fit)
+                .overlay {
+                    ProgressView()
+                        .tint(.white)
+                }
+                .cornerRadius(16)
+        case .ready(let image):
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .cornerRadius(16)
+        case .failure:
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .aspectRatio(1, contentMode: .fit)
+                .overlay {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.white)
+                }
+                .cornerRadius(16)
+        }
     }
     
     private var header: some View {
@@ -65,25 +88,7 @@ public struct MediaInfoView: View {
     }
 
     private var privacy: some View {
-        PrivacySection(
-            members: [
-                TripMember(
-                    isPrivate: true,
-                    username: "danuwka",
-                    avatar: PinzUIAsset.media3.image
-                ),
-                TripMember(
-                    isPrivate: false,
-                    username: "kostik",
-                    avatar: PinzUIAsset.media10.image
-                ),
-                TripMember(
-                    isPrivate: false,
-                    username: "dimka",
-                    avatar: PinzUIAsset.media5.image
-                ),
-            ]
-        )
+        PrivacySection(members: TripMember.stubs())
     }
 
     private var delete: some View {

@@ -121,16 +121,11 @@ public struct PinInfoView: View {
     var gallery: some View {
         ScrollView {
             PinzGrid($viewModel.pin.medias, columns: galleryColumns, spacing: 4) { media, index in
-                switch media.content {
-                case let .image(image):
-                    MediaThumbnailView(
-                        image: image,
-                        contentMode: .fit,
-                        cornerRadius: 12
-                    )
-                case .video:
-                    EmptyView()
-                }
+                MediaThumbnailView(
+                    mediaItem: media,
+                    contentMode: .fit,
+                    cornerRadius: 12
+                )
             }
         }
         .scrollIndicators(.hidden)

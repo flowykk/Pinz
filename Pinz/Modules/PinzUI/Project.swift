@@ -14,6 +14,7 @@ let project = Project(
             resources: ["Resources/**"],
             dependencies: [
                 .project(target: "PinzDomain", path: "../PinzDomain"),
+                .project(target: "PinzBase", path: "../PinzBase"),
             ]
         )
     ]

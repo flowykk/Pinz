@@ -13,3 +13,26 @@ public struct TripMember: Hashable, Identifiable {
         self.avatar = avatar
     }
 }
+
+extension TripMember {
+    public static func stubs() -> [TripMember] {
+        [
+            TripMember(
+                isPrivate: true,
+                username: "danuwka",
+                avatar: PinzDomainAsset.defaultPlaceholder.image
+            ),
+            TripMember(
+                isPrivate: false,
+                username: "kostik",
+                avatar: PinzDomainAsset.groupPlaceholder.image
+            ),
+            TripMember(
+                isPrivate: false,
+                username: "dimka",
+                avatar: PinzDomainAsset.userPlacholder.image
+            )
+        ]
+    }
+}
+
