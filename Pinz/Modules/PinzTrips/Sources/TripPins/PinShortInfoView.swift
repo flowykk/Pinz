@@ -69,7 +69,7 @@ struct PinShortInfoView: View {
             HStack(spacing: 4) {
                 ForEach(pin.medias.prefix(6)) { media in
                     MediaThumbnailView(
-                        image: mediaUIImage(media),
+                        mediaItem: media,
                         contentMode: .fit,
                         cornerRadius: 12,
                         actionBeforeMediaInfo: { dismiss() }
@@ -86,15 +86,6 @@ struct PinShortInfoView: View {
                 }
             }.padding(.horizontal, 12)
         }.scrollIndicators(.hidden)
-    }
-
-    func mediaUIImage(_ media: LoadedMedia) -> UIImage {
-        switch media.content {
-        case let .image(uIImage):
-            uIImage
-        case let .video(url, firstFrame):
-            firstFrame
-        }
     }
 
     @ViewBuilder

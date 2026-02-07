@@ -4,76 +4,88 @@ import PinzDomain
 
 public struct MediaThumbnailView: View {
 
-    private let image: UIImage
+    private let mediaItem: MediaItem
     private let contentMode: ContentMode
     private let cornerRadius: CGFloat
     private let actionBeforeMediaInfo: (() -> Void)?
 
     @Environment(\.appRouter) private var router
-    @Environment(\.dismiss) private var dismiss
 
     public init(
-        image: UIImage,
+        mediaItem: MediaItem,
         contentMode: ContentMode,
         cornerRadius: CGFloat,
         actionBeforeMediaInfo: (() -> Void)? = nil
     ) {
-        self.image = image
+        self.mediaItem = mediaItem
         self.contentMode = contentMode
         self.cornerRadius = cornerRadius
         self.actionBeforeMediaInfo = actionBeforeMediaInfo
     }
 
     public var body: some View {
-        imageView
-            .contextMenu {
-                Button {
-                    actionBeforeMediaInfo?()
-                    router?.navigateToMediaInfo(media: LoadedMedia(content: .image(PinzUIAsset.media1.image)))
-                } label: {
-                    Label("Детали", systemImage: "eye.fill")
-                }
+        Group {
+            switch mediaItem.type {
+            case .image:
+                LoadableImageThumbnail(url: mediaItem.mediaURL, content: contentBuilder)
+            case .video:
+                LoadableVideoThumbnail(url: mediaItem.mediaURL, content: contentBuilder)
+            }
+        }.overlay {
+            MediaBadgesView(media: mediaItem).padding(4)
+        }
+    }
 
-                Divider()
-                Button(role: .destructive) {
-
-                } label: {
-                    Label("Удалить", systemImage: "trash")
-                }
-            } preview: {
+    @ViewBuilder
+    private func contentBuilder(_ state: LoadableMediaState) -> some View {
+        Group {
+            switch state {
+            case .empty:
+                loaderView
+            case let .ready(image):
+                let imageView = Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: contentMode)
                 imageView
+                    .contextMenu {
+                        Button {
+                            actionBeforeMediaInfo?()
+                            router?.navigateToMediaInfo(media: mediaItem)
+                        } label: {
+                            Label("Детали", systemImage: "eye.fill")
+                        }
+
+                        Divider()
+                        Button(role: .destructive) {
+
+                        } label: {
+                            Label("Удалить", systemImage: "trash")
+                        }
+                    } preview: { imageView }
+            case .failure:
+                failureView
+            }
+        }
+        .cornerRadius(cornerRadius)
+    }
+
+    private var loaderView: some View {
+        Rectangle()
+            .fill(Color.gray.opacity(0.3))
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                ProgressView()
+                    .tint(.white)
             }
     }
 
-    private var imageView: some View {
-        Image(uiImage: image)
-            .resizable()
-            .aspectRatio(contentMode: contentMode)
-            .cornerRadius(cornerRadius)
+    private var failureView: some View {
+        Rectangle()
+            .fill(Color.red.opacity(0.3))
+            .aspectRatio(1, contentMode: .fit)
             .overlay {
-                VStack {
-                    HStack {
-                        let isPrivate = Bool.random()
-                        badgeItem(
-                            icon: isPrivate ? "lock.fill" : "lock.open.fill",
-                        )
-                        Spacer()
-                    }
-                    Spacer()
-                }.padding(4)
-            }
-    }
-
-    private func badgeItem(
-        icon: String,
-        color: PinzUIColors = PinzUIAsset.textPrimary,
-    ) -> some View {
-        RoundedRectangle(cornerRadius: 8)
-            .fill(.ultraThinMaterial)
-            .frame(24)
-            .overlay {
-                Image(systemName: icon)
-                    .roundedFount(size: 12, foregroundColor: color.swiftUIColor)
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.white)
             }
     }
 }

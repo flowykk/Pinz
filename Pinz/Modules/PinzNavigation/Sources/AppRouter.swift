@@ -42,10 +42,10 @@ extension AppRouter {
     }
 }
 
-// MARK: Trip Info Routing
+// MARK: Media Routing
 
 extension AppRouter {
-    public func navigateToMediaInfo(media: LoadedMedia) {
+    public func navigateToMediaInfo(media: MediaItem) {
         navigate(to: .media(.info(media: media)))
     }
 }

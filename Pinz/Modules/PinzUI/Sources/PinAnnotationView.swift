@@ -1,18 +1,20 @@
 import SwiftUI
 import PinzDomain
+import PinzBase
 
 public struct PinAnnotationView: View {
     let pin: Pin
 
     @State private var currentMediaIndex = 0
     @State private var randomInterval: Double = 0
+    @State private var loadedImages: [Int: UIImage] = [:]
+    @State private var isLoadingImage = false
 
     var currentImage: UIImage? {
         guard !pin.medias.isEmpty,
               currentMediaIndex >= 0,
               currentMediaIndex < pin.medias.count else { return nil }
-        guard case .image(let image) = pin.medias[currentMediaIndex].content else { return nil }
-        return image
+        return loadedImages[currentMediaIndex]
     }
 
     public init(pin: Pin) {
@@ -45,7 +47,20 @@ public struct PinAnnotationView: View {
                     }
                 }
             } else {
-                EmptyView()
+                ZStack {
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(62)
+                    
+                    if isLoadingImage {
+                        ProgressView()
+                            .tint(.white)
+                    }
+                    
+                    RoundedRectangle(cornerRadius: 18)
+                        .strokeBorder(Color.white, lineWidth: 4)
+                        .frame(62)
+                }
             }
 
             Triangle()
@@ -55,8 +70,42 @@ public struct PinAnnotationView: View {
         }
         .compositingGroup()
         .shadow(color: .black.opacity(0.5), radius: 6, x: 0, y: 2)
-        .onAppear {
+        .task {
+            await preloadAllImages()
             startImageRotation()
+        }
+    }
+
+    private func preloadAllImages() async {
+        guard !pin.medias.isEmpty else { return }
+        
+        isLoadingImage = true
+        
+        // Загружаем все изображения параллельно в фоне
+        await withTaskGroup(of: (Int, UIImage?).self) { group in
+            for (index, media) in pin.medias.enumerated() {
+                guard let url = media.mediaURL else { continue }
+                
+                group.addTask {
+                    let image = await ImageProvider.loadOrGetImage(for: url.absoluteString, .media)
+                    return (index, image)
+                }
+            }
+            
+            for await (index, image) in group {
+                await MainActor.run {
+                    if let image = image {
+                        loadedImages[index] = image
+                        // Устанавливаем currentMediaIndex на первое загруженное изображение
+                        if loadedImages.count == 1 {
+                            currentMediaIndex = index
+                        }
+                    }
+                    if index == currentMediaIndex {
+                        isLoadingImage = false
+                    }
+                }
+            }
         }
     }
 
@@ -76,13 +125,20 @@ public struct PinAnnotationView: View {
                 await MainActor.run {
                     guard pin.medias.count > 1 else { return }
                     
-                    var newIndex = Int.random(in: 0..<pin.medias.count)
-                    while newIndex == currentMediaIndex && pin.medias.count > 1 {
-                        newIndex = Int.random(in: 0..<pin.medias.count)
-                    }
+                    // Получаем индексы успешно загруженных изображений
+                    let loadedIndices = loadedImages.keys.sorted()
+                    guard !loadedIndices.isEmpty else { return }
                     
-                    withAnimation(.easeInOut(duration: 1.3)) {
-                        currentMediaIndex = newIndex
+                    // Если загружено больше одного изображения, выбираем случайное
+                    if loadedIndices.count > 1 {
+                        var newIndex = loadedIndices.randomElement() ?? currentMediaIndex
+                        while newIndex == currentMediaIndex && loadedIndices.count > 1 {
+                            newIndex = loadedIndices.randomElement() ?? currentMediaIndex
+                        }
+                        
+                        withAnimation(.easeInOut(duration: 1.3)) {
+                            currentMediaIndex = newIndex
+                        }
                     }
                     
                     randomInterval = generateRandomInterval()

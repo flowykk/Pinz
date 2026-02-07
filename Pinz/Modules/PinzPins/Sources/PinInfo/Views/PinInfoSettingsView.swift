@@ -90,25 +90,7 @@ extension PinInfoView {
     }
 
     private var privacy: some View {
-        PrivacySection(
-            members: [
-                TripMember(
-                    isPrivate: true,
-                    username: "danuwka",
-                    avatar: PinzUIAsset.media3.image
-                ),
-                TripMember(
-                    isPrivate: false,
-                    username: "kostik",
-                    avatar: PinzUIAsset.media10.image
-                ),
-                TripMember(
-                    isPrivate: false,
-                    username: "dimka",
-                    avatar: PinzUIAsset.media5.image
-                ),
-            ]
-        )
+        PrivacySection(members: TripMember.stubs())
     }
 
     var map: some View {

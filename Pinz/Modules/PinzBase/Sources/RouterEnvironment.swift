@@ -7,7 +7,7 @@ public protocol AppRouting {
     func navigateToPinInfo(pin: Pin)
     func navigateToTripMembers()
 
-    func navigateToMediaInfo(media: LoadedMedia)
+    func navigateToMediaInfo(media: MediaItem)
 
     func navigateToEmailChange(email: String, action: EmailChangeAction)
     func navigateToStatistics()
