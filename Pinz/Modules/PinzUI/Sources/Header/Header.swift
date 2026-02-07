@@ -14,7 +14,7 @@ public struct Header<
     private let height: CGFloat?
 
     public init(
-        backgroundColor: Color = PinzUIAsset.background.swiftUIColor,
+        backgroundColor: Color = .clear,
         @ViewBuilder leftView: () -> LeftContent = { EmptyView() },
         @ViewBuilder centerView: () -> CenterContent = { EmptyView() },
         @ViewBuilder rightView: () -> RightContent = { EmptyView() },

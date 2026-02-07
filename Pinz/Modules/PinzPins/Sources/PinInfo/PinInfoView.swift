@@ -42,9 +42,14 @@ public struct PinInfoView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
+        CollapsibleHeader(needsBlur: viewModel.state == .gallery ? true : false) {
             header
-
+        } stickyHeader: {
+            if !viewModel.isEditing {
+                SegmentedPicker(selection: $viewModel.state, items: [.info, .gallery])
+                    .padding(.horizontal, 12)
+            }
+        } content: {
             if viewModel.state == .info || viewModel.state == .editing {
                 ScrollView {
                     VStack(spacing: 0) {
@@ -102,9 +107,7 @@ public struct PinInfoView: View {
                 PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                     viewModel.dispatch(.edit)
                 }
-            }, additionalView: {
-                SegmentedPicker(selection: $viewModel.state, items: [.info, .gallery])
-            }, height: nil)
+            })
         case .editing:
             Header {
                 PinzButton(type: .text("Отмена")) {
@@ -124,8 +127,10 @@ public struct PinInfoView: View {
                 MediaThumbnailView(
                     mediaItem: media,
                     contentMode: .fit,
-                    cornerRadius: 12
-                )
+                    cornerRadius: 14
+                ).onTapGesture {
+                    viewModel.dispatch(.navigate(.mediaInfo(media)))
+                }
             }
         }
         .scrollIndicators(.hidden)

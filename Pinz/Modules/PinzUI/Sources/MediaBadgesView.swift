@@ -30,7 +30,7 @@ public struct MediaBadgesView: View {
 
     @ViewBuilder
     private func badgeItem(icon: Icon) -> some View {
-        RoundedRectangle(cornerRadius: 8)
+        RoundedRectangle(cornerRadius: 10)
             .fill(.ultraThinMaterial)
             .frame(24)
             .overlay {

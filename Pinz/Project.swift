@@ -8,7 +8,7 @@ let project = Project(
             destinations: .iOS,
             product: .app,
             bundleId: "io.tuist.Pinz",
-            deploymentTargets: .iOS("17.0"),
+            deploymentTargets: .iOS("18.0"),
             infoPlist: .extendingDefault(
                 with: [
                     "UILaunchScreen": [
@@ -44,7 +44,7 @@ let project = Project(
             destinations: .iOS,
             product: .unitTests,
             bundleId: "io.tuist.PinzTests",
-            deploymentTargets: .iOS("17.0"),
+            deploymentTargets: .iOS("18.0"),
             infoPlist: .default,
             sources: ["Pinz/Tests/**"],
             resources: [],
