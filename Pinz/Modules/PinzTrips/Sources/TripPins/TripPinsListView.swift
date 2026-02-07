@@ -33,7 +33,9 @@ struct TripPinsListView: View {
                     }
                 }
             }.padding(.top, 60).padding(.bottom, 90)
-        }.scrollIndicators(.hidden)
+        }
+        .scrollIndicators(.hidden)
+        .animationsDisabled()
     }
 
     @ViewBuilder

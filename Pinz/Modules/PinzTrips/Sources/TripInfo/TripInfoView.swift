@@ -64,30 +64,28 @@ public struct TripInfoView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
+        CollapsibleHeader(needsBlur: true) {
             header
+        } content: {
+            avatar.padding(.top, 4)
 
-            ScrollView {
-                avatar.padding(.top, 12)
-
-                VStack(spacing: 16) {
-                    if viewModel.state == .editing { nameEditing }
-                    general
-                    if viewModel.state == .default {
-                        pins
-                        description
-                        privacy
-                        publishing
-                    } else {
-                        descriptionEditing
-                        delete
-                    }
+            VStack(spacing: 16) {
+                if viewModel.state == .editing { nameEditing }
+                general
+                if viewModel.state == .default {
+                    pins
+                    description
+                    privacy
+                    publishing
+                } else {
+                    descriptionEditing
+                    delete
                 }
-                .padding(.top, 8)
-                .padding(.horizontal, 12)
+            }
+            .padding(.top, 8)
+            .padding(.horizontal, 12)
 
-                Spacer()
-            }.scrollIndicators(.hidden)
+            Spacer()
         }
         .onAppear { viewModel.setRouter(router) }
         .background(PinzUIAsset.background.swiftUIColor)

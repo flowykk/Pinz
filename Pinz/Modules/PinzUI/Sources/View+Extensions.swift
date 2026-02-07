@@ -32,4 +32,10 @@ extension View {
         let mapStyle = (PinzMapStyle(rawValue: rawValue) ?? .satelight).toMapKitMapStyle()
         return self.mapStyle(mapStyle)
     }
+
+    public func animationsDisabled() -> some View {
+        self.transaction { transaction in
+            transaction.animation = nil
+        }
+    }
 }

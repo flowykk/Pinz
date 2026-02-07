@@ -51,7 +51,7 @@ public struct TripView: View {
             .presentationDetents([.medium, .large])
         }
         .sheet(item: $viewModel.selectedPin) { pin in
-            VStack(spacing: 16) {
+            VStack(spacing: 8) {
                 Spacer()
 
                 PinShortInfoView(pin: pin, hideTags: true, pinTapped: { pin in

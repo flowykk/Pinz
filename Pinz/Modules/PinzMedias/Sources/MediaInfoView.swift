@@ -19,9 +19,9 @@ public struct MediaInfoView: View {
     }
     
     public var body: some View {
-        VStack(spacing: 0) {
+        CollapsibleHeader(needsBlur: true) {
             header
-            
+        } content: {
             ScrollView {
                 VStack(spacing: 12) {
                     switch media.type {
@@ -37,10 +37,8 @@ public struct MediaInfoView: View {
                 }
             }
             .scrollIndicators(.hidden)
-            .padding(.top, 8)
             .padding(.horizontal, 12)
-        }
-        .background(PinzUIAsset.background.swiftUIColor)
+        }.animationsDisabled()
     }
 
     @ViewBuilder
@@ -59,7 +57,7 @@ public struct MediaInfoView: View {
             Image(uiImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .cornerRadius(16)
+                .cornerRadius(36)
         case .failure:
             Rectangle()
                 .fill(Color.gray.opacity(0.3))

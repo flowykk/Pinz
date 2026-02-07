@@ -31,7 +31,9 @@ struct PinShortInfoView: View {
                     tags.padding(.top, 2)
                 }
             }
-        }.buttonStyle(.plain)
+        }
+        .buttonStyle(.plain)
+        .animationsDisabled()
     }
 
     var header: some View {
@@ -71,7 +73,7 @@ struct PinShortInfoView: View {
                     MediaThumbnailView(
                         mediaItem: media,
                         contentMode: .fit,
-                        cornerRadius: 12,
+                        cornerRadius: 14,
                         actionBeforeMediaInfo: { dismiss() }
                     ).frame(height: 96)
                 }
