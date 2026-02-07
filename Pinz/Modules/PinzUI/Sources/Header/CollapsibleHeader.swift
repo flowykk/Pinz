@@ -5,11 +5,11 @@ public struct CollapsibleHeader<
     StickyHeader: View,
     Content: View
 >: View {
-    var spacing: CGFloat = 8
+    let spacing: CGFloat
+    let needsBlur: Bool
     @ViewBuilder var header: Header
     @ViewBuilder var stickyHeader: StickyHeader
     @ViewBuilder var content: Content
-    let needsBlur: Bool
 
     @State private var currentDragOffset: CGFloat = 0
     @State private var previousDragOffset: CGFloat = 0
@@ -18,11 +18,13 @@ public struct CollapsibleHeader<
     @State private var scrollOffset: CGFloat = 0
 
     public init(
+        spacing: CGFloat = 8,
         needsBlur: Bool = false,
         @ViewBuilder header: () -> Header = { EmptyView() },
         @ViewBuilder stickyHeader: () -> StickyHeader = { EmptyView() },
         @ViewBuilder content: () -> Content = { EmptyView() },
     ) {
+        self.spacing = spacing
         self.needsBlur = needsBlur
         self.header = header()
         self.stickyHeader = stickyHeader()
