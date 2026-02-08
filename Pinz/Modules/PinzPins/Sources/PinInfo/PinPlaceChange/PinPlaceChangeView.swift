@@ -21,7 +21,7 @@ public struct PinPlaceChangeView: View {
                 .mapControlVisibility(.hidden)
                 .ignoresSafeArea()
                 .onMapCameraChange { context in
-                    viewModel.updateCoordinate(context.region.center)
+                    viewModel.dispatch(.update(context))
                 }
 
             header
