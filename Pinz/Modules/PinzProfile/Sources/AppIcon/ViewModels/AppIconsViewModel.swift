@@ -15,6 +15,7 @@ public final class AppIconsViewModel: Identifiable {
             AppIconViewModel(appIcon: "PinzLight"),
             AppIconViewModel(appIcon: "PinzMountainsWhite"),
             AppIconViewModel(appIcon: "PinzMountainsBlue"),
+            AppIconViewModel(appIcon: "PinzPin"),
             AppIconViewModel(appIcon: "PinzTransport"),
         ]
     }
