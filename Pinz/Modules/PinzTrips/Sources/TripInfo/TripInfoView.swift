@@ -71,12 +71,12 @@ public struct TripInfoView: View {
 
             VStack(spacing: 16) {
                 if viewModel.state == .editing { nameEditing }
+                if viewModel.state == .default { publishing }
                 general
                 if viewModel.state == .default {
                     pins
                     description
                     privacy
-                    publishing
                 } else {
                     descriptionEditing
                     delete
@@ -136,7 +136,7 @@ public struct TripInfoView: View {
         case .default:
             Header(leftView: {
                 PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.back)
+                    viewModel.dispatch(.navigate(.back))
                 }
             }, centerView: {
                 HeaderTitle(
@@ -318,7 +318,7 @@ public struct TripInfoView: View {
                     id: "tripPublishing",
                     leading: .iconTitle(TripInfoIcon.paperplane, "Опубликовать путешествие"),
                     trailing: .icon(TripInfoIcon.chevronRight),
-                    action: .plain {}
+                    action: .plain { viewModel.dispatch(.navigate(.selectablePins)) }
                 )),
             ],
             subtitle: "Когда нельзя публиковать, можно в сабтайтле это писать"

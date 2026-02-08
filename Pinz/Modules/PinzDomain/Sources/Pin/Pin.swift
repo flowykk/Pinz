@@ -8,7 +8,7 @@ public struct Pin: Hashable, Identifiable {
     public var description: String
     public var category: PinCategory
     public var medias: [MediaItem]
-    public var privacy: Bool
+    public var isPrivate: Bool
     public var startDate: Date?
     public var endDate: Date?
     public var tags: [MediaTag]
@@ -19,7 +19,7 @@ public struct Pin: Hashable, Identifiable {
         description: String,
         category: PinCategory,
         medias: [MediaItem],
-        privacy: Bool,
+        isPrivate: Bool,
         startDate: Date? = nil,
         endDate: Date? = nil,
         tags: [MediaTag],
@@ -29,7 +29,7 @@ public struct Pin: Hashable, Identifiable {
         self.description = description
         self.category = category
         self.medias = medias
-        self.privacy = privacy
+        self.isPrivate = isPrivate
         self.startDate = startDate
         self.endDate = endDate
         self.tags = tags
@@ -80,7 +80,7 @@ extension Pin {
                     "https://i.pinimg.com/1200x/a2/aa/69/a2aa69b55a2d0119bf477c1984bb5c77.jpg",
                     "https://avatars.mds.yandex.net/i?id=d19b5e25223f5583c129bc11983be385_l-13234616-images-thumbs&n=13",
                 ]),
-                privacy: true,
+                isPrivate: Bool.random(),
                 tags: [
                     MediaTag(tag: "Религия"),
                     MediaTag(tag: "Достопримечательность"),
@@ -96,11 +96,7 @@ extension Pin {
                 name: "Красная площадь",
                 description: "Главная площадь России",
                 category: .entertainment,
-                medias: [MediaItem(
-                    isPrivate: Bool.random(),
-                    type: .video,
-                    mediaURL: URL(string: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4"),
-                )] + urlStringsToMediaItems(for: [
+                medias: urlStringsToMediaItems(for: [
                     "https://i.pinimg.com/736x/38/31/13/383113a2561e6a4c92973a30027bb70c.jpg",
                     "https://i.pinimg.com/736x/12/5b/a4/125ba4fee18a2921a42ab76ac02bf578.jpg",
                     "https://i.pinimg.com/1200x/39/4a/f3/394af3064a6edc4abca76d0820fcd725.jpg",
@@ -116,7 +112,7 @@ extension Pin {
                     "https://i.pinimg.com/736x/06/dc/fa/06dcfa6e1a3aaf1539724b3d48f21280.jpg",
                     "https://i.pinimg.com/736x/2f/0b/16/2f0b16ad2c349d732a53b97ae30932f2.jpg",
                 ]),
-                privacy: true,
+                isPrivate: Bool.random(),
                 tags: [
                     MediaTag(tag: "Достопримечательность")
                 ],
@@ -129,11 +125,7 @@ extension Pin {
                 name: "Парк Горького",
                 description: "Центральный парк культуры и отдыха",
                 category: .nature,
-                medias: [MediaItem(
-                    isPrivate: Bool.random(),
-                    type: .video,
-                    mediaURL: URL(string: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4"),
-                )] + urlStringsToMediaItems(for: [
+                medias: urlStringsToMediaItems(for: [
                     "https://i.pinimg.com/1200x/cd/47/23/cd4723e7bac0a34506e84b9c378d9eaf.jpg",
                     "https://i.pinimg.com/1200x/a9/e8/67/a9e867ac241af016ee06bea2cd5b5abb.jpg",
                     "https://i.pinimg.com/1200x/66/a0/94/66a094638921cfd9e7a3ce009bc43409.jpg",
@@ -147,7 +139,7 @@ extension Pin {
                     "https://i.pinimg.com/736x/ce/ed/3a/ceed3ae1cc1c839743f3b2cb4a4a2c23.jpg",
                     "https://i.pinimg.com/1200x/e2/b4/26/e2b426206dbb0b1cc832c80e2d9259ee.jpg",
                 ]),
-                privacy: true,
+                isPrivate: Bool.random(),
                 tags: [
                     MediaTag(tag: "Парк")
                 ],
@@ -172,7 +164,7 @@ extension Pin {
                     "https://i.pinimg.com/736x/0c/a7/d3/0ca7d3ff242a9a7cad6176659da03017.jpg",
                     "https://i.pinimg.com/736x/b5/9f/58/b59f58fce89f9abe810b24cd7d9c8820.jpg",
                 ]),
-                privacy: true,
+                isPrivate: Bool.random(),
                 tags: [
                     MediaTag(tag: "Архитектура")
                 ],
@@ -185,11 +177,7 @@ extension Pin {
                 name: "Воробьевы горы",
                 description: "Смотровая площадка с видом на Москву",
                 category: .nature,
-                medias: [MediaItem(
-                    isPrivate: Bool.random(),
-                    type: .video,
-                    mediaURL: URL(string: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4"),
-                )] + urlStringsToMediaItems(for: [
+                medias: urlStringsToMediaItems(for: [
                          "https://i.pinimg.com/736x/77/65/ac/7765ac5175540792659b036142c9a49d.jp",
                          "https://i.pinimg.com/736x/09/ed/11/09ed11941e1ed576ced2d9614ac72486.jpg",
                          "https://i.pinimg.com/736x/4a/6d/5d/4a6d5d7b63c7ea87f284a170cb72800d.jpg",
@@ -205,7 +193,7 @@ extension Pin {
                          "https://ucare.timepad.ru/8d3e632c-9906-4ea5-962f-67682b51f89c/-/preview/",
                          "https://www.mos.ru/upload/newsfeed/newsfeed/tramplinGL(9).jp",
                 ]),
-                privacy: true,
+                isPrivate: Bool.random(),
                 tags: [
                     MediaTag(tag: "Природа")
                 ],

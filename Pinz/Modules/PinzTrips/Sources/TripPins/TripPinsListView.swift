@@ -27,7 +27,11 @@ struct TripPinsListView: View {
         ScrollView {
             VStack(spacing: 8) {
                 ForEach(pins.indices, id: \.self) { index in
-                    PinShortInfoView(pin: pins[index], pinTapped: pinTapped)
+                    DefaultPinShortInfoView(
+                        pin: pins[index],
+                        dismissBeforeMediaInfo: true,
+                        pinTapped: pinTapped,
+                    )
                     if index != pins.count - 1 {
                         Divider().padding(.leading, 12)
                     }
@@ -62,38 +66,18 @@ struct TripPinsListView: View {
     }
 
     private var gradientWithButtons: some View {
-        ZStack {
-            VStack {
-                Spacer()
+        BottomGradientWithButtons {
+            HStack(spacing: 6) {
+                PinzButton(
+                    type: .slot(style: .secondary(needBorder: true), title: "Добавить медиа"),
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor
+                ) {}
 
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        PinzUIAsset.background.swiftUIColor,
-                        Color.clear,
-                    ]),
-                    startPoint: .bottom,
-                    endPoint: .top
-                ).frame(height: 130)
-            }.ignoresSafeArea()
-
-            VStack {
-                Spacer()
-                buttons
-            }.padding(12)
-        }
-    }
-
-    private var buttons: some View {
-        HStack(spacing: 6) {
-            PinzButton(
-                type: .slot(style: .secondary(needBorder: true), title: "Добавить медиа"),
-                tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-            ) {}
-
-            PinzButton(
-                type: .slot(style: .primary, title: "Добавить пин"),
-                tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-            ) {}
+                PinzButton(
+                    type: .slot(style: .primary, title: "Добавить пин"),
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor
+                ) {}
+            }
         }
     }
 }

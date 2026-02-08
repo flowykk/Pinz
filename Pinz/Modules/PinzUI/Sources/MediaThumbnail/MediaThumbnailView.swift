@@ -7,20 +7,24 @@ public struct MediaThumbnailView: View {
     private let mediaItem: MediaItem
     private let contentMode: ContentMode
     private let cornerRadius: CGFloat
-    private let actionBeforeMediaInfo: (() -> Void)?
+    private let hideBadges: Bool
+    private let dismissBeforeMediaInfo: Bool
 
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.appRouter) private var router
 
     public init(
         mediaItem: MediaItem,
         contentMode: ContentMode,
         cornerRadius: CGFloat,
-        actionBeforeMediaInfo: (() -> Void)? = nil
+        hideBadges: Bool = false,
+        dismissBeforeMediaInfo: Bool = false,
     ) {
         self.mediaItem = mediaItem
         self.contentMode = contentMode
         self.cornerRadius = cornerRadius
-        self.actionBeforeMediaInfo = actionBeforeMediaInfo
+        self.hideBadges = hideBadges
+        self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
     }
 
     public var body: some View {
@@ -31,8 +35,8 @@ public struct MediaThumbnailView: View {
             case .video:
                 LoadableVideoThumbnail(url: mediaItem.mediaURL, content: contentBuilder)
             }
-        }.overlay {
-            MediaBadgesView(media: mediaItem).padding(4)
+        }.if(!hideBadges) { view in
+            view.overlay { PrivateVideoMediaBadgesView(media: mediaItem).padding(4) }
         }
     }
 
@@ -49,7 +53,7 @@ public struct MediaThumbnailView: View {
                 imageView
                     .contextMenu {
                         Button {
-                            actionBeforeMediaInfo?()
+                            if dismissBeforeMediaInfo { dismiss() }
                             router?.navigateToMediaInfo(media: mediaItem)
                         } label: {
                             Label("Детали", systemImage: "eye.fill")

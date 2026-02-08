@@ -22,6 +22,7 @@ struct PinzApp: App {
 //                PinPlaceChangeView(pin: Pin.stubs()[0], onSave: { _ in })
 
                 TripView(
+//                TripInfoView(
                     trip: Trip(
                         name: "Нижний Новгород",
                         image: PinzUIAsset.media3.image,

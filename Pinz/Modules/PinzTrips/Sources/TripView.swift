@@ -13,7 +13,9 @@ public struct TripView: View {
 
     @State private var viewModel: TripViewModel
     @State private var isPinsPresented = false
+
     @Environment(\.appRouter) private var router
+    @Environment(\.dismiss) private var dismiss
     @AppStorage("pinzMapStyle") private var mapStyleRawValue: String = PinzMapStyle.satelight.rawValue
 
     public init(trip: Trip) {
@@ -54,7 +56,7 @@ public struct TripView: View {
             VStack(spacing: 8) {
                 Spacer()
 
-                PinShortInfoView(pin: pin, hideTags: true, pinTapped: { pin in
+                DefaultPinShortInfoView(pin: pin, hideTags: true, dismissBeforeMediaInfo: true, pinTapped: { pin in
                     viewModel.dispatch(.unselectPin)
                 })
 
