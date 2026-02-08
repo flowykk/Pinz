@@ -26,6 +26,7 @@ public struct PinInfoView: View {
     
     @State private var galleryColumns = 3
     @State private var magnificationScale: CGFloat = 1.0
+    @State private var isStoriesPresented = false
 
     let gallerySpacing: CGFloat = 4
 
@@ -90,6 +91,9 @@ public struct PinInfoView: View {
             date: $viewModel.pin.endDate,
             pickerHeight: $datePickerHeight
         )
+        .fullScreenCover(isPresented: $isStoriesPresented) {
+            PinStoryView(pins: [viewModel.pin])
+        }
     }
 
     @ViewBuilder
@@ -103,9 +107,12 @@ public struct PinInfoView: View {
             }, centerView: {
                 HeaderTitle(viewModel.pin.name, subtitle: viewModel.pin.category.value)
             }, rightView: {
-                PinzButton(type: .icon(.warning), tint: PinzUIAsset.accentOrange.swiftUIColor) {
-
+                PinzButton(type: .icon(.stories), tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                    isStoriesPresented = true
                 }
+//                PinzButton(type: .icon(.warning), tint: PinzUIAsset.accentOrange.swiftUIColor) {
+//
+//                }
                 PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                     viewModel.dispatch(.edit)
                 }

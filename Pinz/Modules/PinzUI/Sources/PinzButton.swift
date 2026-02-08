@@ -38,6 +38,7 @@ public struct PinzButton: View {
         case personAdd = "person.fill.badge.plus"
         case pencil = "pencil"
 
+        case stories = "rectangle.portrait.on.rectangle.portrait.angled"
         case warning = "exclamationmark.triangle.fill"
         case checkmark = "checkmark.circle.fill"
 
