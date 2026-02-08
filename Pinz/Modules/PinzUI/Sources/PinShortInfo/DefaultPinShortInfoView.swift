@@ -5,6 +5,7 @@ public struct DefaultPinShortInfoView: View {
 
     private let pin: Pin
     private let hideTags: Bool
+    private let hideMediaBadges: Bool
     private let dismissBeforeMediaInfo: Bool
     private let pinTapped: (Pin) -> Void
 
@@ -13,11 +14,13 @@ public struct DefaultPinShortInfoView: View {
     public init(
         pin: Pin,
         hideTags: Bool = false,
+        hideMediaBadges: Bool = false,
         dismissBeforeMediaInfo: Bool = false,
         pinTapped: @escaping (Pin) -> Void,
     ) {
         self.pin = pin
         self.hideTags = hideTags
+        self.hideMediaBadges = hideMediaBadges
         self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
         self.pinTapped = pinTapped
     }
@@ -43,7 +46,8 @@ public struct DefaultPinShortInfoView: View {
     var medias: some View {
         MediasPinShortInfo(
             pin: pin,
-            maxMedias: 6,
+            maxMedias: 15,
+            hideMediaBadges: hideMediaBadges,
             dismissBeforeMediaInfo: dismissBeforeMediaInfo
         )
     }

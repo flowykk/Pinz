@@ -7,6 +7,7 @@ import PinzDomain
 final class SelectablePinsListViewModel {
 
     enum Route {
+        case postPreview
         case pinInfo(Pin)
         case back
     }
@@ -38,6 +39,11 @@ final class SelectablePinsListViewModel {
         switch intent {
         case let .navigate(route):
             switch route {
+            case .postPreview:
+                router?.navigateToPostPreview(
+                    trip: trip,
+                    selectedPins: pins.filter { selectedPins.contains($0.id) }
+                )
             case let .pinInfo(pin):
                 router?.navigateToPinInfo(pin: pin)
             case .back:

@@ -69,7 +69,7 @@ public struct SelectablePinsListView: View {
                     type: .slot(style: .primary, title: "Готово"),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor
                 ) {
-
+                    viewModel.dispatch(.navigate(.postPreview))
                 }.disabledWithOpacity(viewModel.selectedPins.isEmpty)
             }
         }

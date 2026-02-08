@@ -49,8 +49,8 @@ extension AppRouter {
         navigate(to: .tripInfo(.selectablePinsList(trip: trip)))
     }
 
-    public func navigateToPostPreview() {
-        navigate(to: .tripInfo(.postPreview))
+    public func navigateToPostPreview(trip: Trip, selectedPins: [Pin]) {
+        navigate(to: .tripInfo(.postPreview(trip: trip, selectedPins: selectedPins)))
     }
 }
 

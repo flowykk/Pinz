@@ -8,7 +8,7 @@ public protocol AppRouting {
     func navigateToTripMembers()
 
     func navigateToSelectablePinsList(trip: Trip)
-    func navigateToPostPreview()
+    func navigateToPostPreview(trip: Trip, selectedPins: [Pin])
 
     func navigateToMediaInfo(media: MediaItem)
 

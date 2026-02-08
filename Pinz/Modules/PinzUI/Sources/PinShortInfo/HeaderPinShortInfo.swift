@@ -50,7 +50,7 @@ struct HeaderPinShortInfo: View {
                 HStack(spacing: 4) {
                     Image(systemName: "location.fill")
                     Text(pin.name)
-                }.roundedFount(size: selectable ? 16 : 18)
+                }.roundedFount(size: 16)
 
                 Text(pin.category.value)
                     .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)

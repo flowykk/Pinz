@@ -10,7 +10,7 @@ public enum TripRoute: Hashable {
 
 public enum TripInfoRoute: Hashable {
     case selectablePinsList(trip: Trip)
-    case postPreview
+    case postPreview(trip: Trip, selectedPins: [Pin])
 }
 
 public enum ProfileRoute: Hashable {

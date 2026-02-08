@@ -41,7 +41,7 @@ public struct SelectablePinShortInfoView: View {
             if !hideTags {
                 TagsPinShortInfo(pin: pin).padding(.top, 2)
             }
-        }.opacity(pin.isPrivate ? 0.7 : 1)
+        }.opacity(pin.isPrivate || pin.medias.allSatisfy { $0.isPrivate } ? 0.5 : 1)
     }
 
     var header: some View {

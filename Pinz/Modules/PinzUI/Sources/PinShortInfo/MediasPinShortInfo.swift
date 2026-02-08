@@ -12,17 +12,20 @@ public struct MediasPinShortInfo: View {
     let pin: Pin
     let maxMedias: Int
     let selectable: Bool
+    let hideMediaBadges: Bool
     let dismissBeforeMediaInfo: Bool
 
     public init(
         pin: Pin,
         maxMedias: Int = 6,
         selectable: Bool = false,
+        hideMediaBadges: Bool = false,
         dismissBeforeMediaInfo: Bool = false
     ) {
         self.pin = pin
         self.maxMedias = maxMedias
         self.selectable = selectable
+        self.hideMediaBadges = hideMediaBadges
         self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
     }
     
@@ -36,13 +39,13 @@ public struct MediasPinShortInfo: View {
                         mediaItem: media,
                         contentMode: .fit,
                         cornerRadius: 14,
-                        hideBadges: selectable,
+                        hideBadges: selectable || hideMediaBadges,
                         dismissBeforeMediaInfo: dismissBeforeMediaInfo
                     )
                     .frame(height: 96)
                     .opacity(selectable && media.isPrivate ? 0.5 : 1)
                     .overlay {
-                        if selectable {
+                        if !hideMediaBadges && selectable {
                             PrivateVideoMediaBadgesView(media: media).padding(4)
                         }
                     }
