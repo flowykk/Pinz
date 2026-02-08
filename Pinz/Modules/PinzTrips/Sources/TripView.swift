@@ -1,5 +1,4 @@
 import SwiftUI
-import MapKit
 import PinzUI
 import PinzDomain
 import PinzBase
@@ -13,8 +12,9 @@ public struct TripView: View {
 
     @State private var viewModel: TripViewModel
     @State private var isPinsPresented = false
+
     @Environment(\.appRouter) private var router
-    @AppStorage("pinzMapStyle") private var mapStyleRawValue: String = PinzMapStyle.satelight.rawValue
+    @Environment(\.dismiss) private var dismiss
 
     public init(trip: Trip) {
         viewModel = TripViewModel(trip: trip)
@@ -22,20 +22,13 @@ public struct TripView: View {
 
     public var body: some View {
         ZStack {
-            Map(position: $viewModel.position) {
-                ForEach(viewModel.trip.pins) { pin in
-                    Annotation(pin.name, coordinate: pin.coordinates, anchor: .bottom) {
-                        PinAnnotationView(pin: pin)
-                            .onTapGesture {
-                                viewModel.dispatch(.selectPin(pin: pin))
-                            }
-                    }
+            TripMapView(
+                position: $viewModel.position,
+                pins: viewModel.trip.pins,
+                onPinTap: { pin in
+                    viewModel.dispatch(.selectPin(pin: pin))
                 }
-            }
-            .savedMapStyle(mapStyleRawValue)
-            .mapControlVisibility(.hidden)
-            .ignoresSafeArea()
-            .toolbar(.hidden)
+            )
 
             gradient.ignoresSafeArea()
 
@@ -54,7 +47,7 @@ public struct TripView: View {
             VStack(spacing: 8) {
                 Spacer()
 
-                PinShortInfoView(pin: pin, hideTags: true, pinTapped: { pin in
+                DefaultPinShortInfoView(pin: pin, hideTags: true, dismissBeforeMediaInfo: true, pinTapped: { pin in
                     viewModel.dispatch(.unselectPin)
                 })
 
@@ -178,7 +171,7 @@ public struct TripView: View {
                 ]),
                 startPoint: .bottom,
                 endPoint: .top
-            ).frame(height: 170)
+            ).frame(height: 230)
 
             Spacer()
         }

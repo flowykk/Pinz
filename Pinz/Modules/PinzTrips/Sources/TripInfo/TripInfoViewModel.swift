@@ -9,11 +9,16 @@ final class TripInfoViewModel {
         case `default`
         case editing
     }
-    
+
+    enum Route {
+        case selectablePins
+        case back
+    }
+
     enum Intent {
         case changeState
         case setImage(UIImage?)
-        case back
+        case navigate(Route)
     }
 
     var state: State = .default
@@ -36,8 +41,13 @@ final class TripInfoViewModel {
             if let newImage {
                 trip.image = newImage
             }
-        case .back:
-            router?.pop()
+        case let .navigate(route):
+            switch route {
+            case .selectablePins:
+                router?.navigateToSelectablePinsList(trip: trip)
+            case .back:
+                router?.pop()
+            }
         }
     }
 

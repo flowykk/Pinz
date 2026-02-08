@@ -27,6 +27,8 @@ public struct PinInfoView: View {
     @State private var galleryColumns = 3
     @State private var magnificationScale: CGFloat = 1.0
 
+    let gallerySpacing: CGFloat = 4
+
     @Environment(\.appRouter) private var router
 
     var datesSettingValue: String {
@@ -64,7 +66,7 @@ public struct PinInfoView: View {
                 .scrollDisabled(viewModel.isEditing)
             } else {
                 gallery
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, gallerySpacing)
             }
         }
         .onAppear { viewModel.setRouter(router) }
@@ -123,7 +125,7 @@ public struct PinInfoView: View {
 
     var gallery: some View {
         ScrollView {
-            PinzGrid($viewModel.pin.medias, columns: galleryColumns, spacing: 4) { media, index in
+            PinzGrid($viewModel.pin.medias, columns: galleryColumns, spacing: gallerySpacing) { media, index in
                 MediaThumbnailView(
                     mediaItem: media,
                     contentMode: .fit,

@@ -38,6 +38,13 @@ public struct RootView<Content: View>: View {
             case .members:
                 TripMembersView()
             }
+        case let .tripInfo(tripInfoRoute):
+            switch tripInfoRoute {
+            case let .selectablePinsList(trip):
+                SelectablePinsListView(trip: trip)
+            case let .postPreview(trip, selectedPins):
+                PostPreviewView(trip: trip, selectedPins: selectedPins)
+            }
         case let .profile(profileRoute):
             switch profileRoute {
             case let .emailChange(email, action):

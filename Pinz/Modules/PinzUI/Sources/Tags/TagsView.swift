@@ -15,6 +15,7 @@ public struct TagsView: View {
     let style: Style
 
     @State private var isAddTagPresented: Bool = false
+    @State private var height: CGFloat = 0
 
     public init(
         tags: [MediaTag],

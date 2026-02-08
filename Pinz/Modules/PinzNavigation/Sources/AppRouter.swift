@@ -42,6 +42,18 @@ extension AppRouter {
     }
 }
 
+// MARK: - TripInfo Routing
+
+extension AppRouter {
+    public func navigateToSelectablePinsList(trip: Trip) {
+        navigate(to: .tripInfo(.selectablePinsList(trip: trip)))
+    }
+
+    public func navigateToPostPreview(trip: Trip, selectedPins: [Pin]) {
+        navigate(to: .tripInfo(.postPreview(trip: trip, selectedPins: selectedPins)))
+    }
+}
+
 // MARK: Media Routing
 
 extension AppRouter {

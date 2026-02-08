@@ -8,6 +8,11 @@ public enum TripRoute: Hashable {
     case members
 }
 
+public enum TripInfoRoute: Hashable {
+    case selectablePinsList(trip: Trip)
+    case postPreview(trip: Trip, selectedPins: [Pin])
+}
+
 public enum ProfileRoute: Hashable {
     case emailChange(email: String, action: EmailChangeAction)
 
@@ -31,6 +36,7 @@ public enum MediaRoute: Hashable {
 
 public enum Route: Hashable {
     case trip(TripRoute)
+    case tripInfo(TripInfoRoute)
     case profile(ProfileRoute)
     case pinInfo(PinInfoRoute)
     case media(MediaRoute)
