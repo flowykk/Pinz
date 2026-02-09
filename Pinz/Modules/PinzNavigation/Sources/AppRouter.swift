@@ -45,6 +45,10 @@ extension AppRouter {
 // MARK: - TripInfo Routing
 
 extension AppRouter {
+    public func navigateToPinsList(trip: Trip) {
+        navigate(to: .tripInfo(.pinsList(trip: trip)))
+    }
+
     public func navigateToSelectablePinsList(trip: Trip) {
         navigate(to: .tripInfo(.selectablePinsList(trip: trip)))
     }

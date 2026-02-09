@@ -250,7 +250,7 @@ public struct TripInfoView: View {
                     id: "tripPins",
                     leading: .iconTitle(TripInfoIcon.pins, "Пины путешествия"),
                     trailing: .icon(TripInfoIcon.chevronRight),
-                    action: .plain { }
+                    action: .plain { viewModel.dispatch(.navigate(.pinsList)) }
                 )),
             ],
         )
@@ -318,7 +318,7 @@ public struct TripInfoView: View {
                     id: "tripPublishing",
                     leading: .iconTitle(TripInfoIcon.paperplane, "Опубликовать путешествие"),
                     trailing: .icon(TripInfoIcon.chevronRight),
-                    action: .plain { viewModel.dispatch(.navigate(.selectablePins)) }
+                    action: .plain { viewModel.dispatch(.navigate(.selectPins)) }
                 )),
             ],
             subtitle: "Когда нельзя публиковать, можно в сабтайтле это писать"

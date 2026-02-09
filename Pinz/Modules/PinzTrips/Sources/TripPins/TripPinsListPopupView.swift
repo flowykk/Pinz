@@ -2,7 +2,7 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 
-struct TripPinsListView: View {
+struct TripPinsListPopupView: View {
     @Environment(\.dismiss) var dismiss
 
     let pins: [Pin]
@@ -25,18 +25,11 @@ struct TripPinsListView: View {
 
     private var pinsView: some View {
         ScrollView {
-            VStack(spacing: 8) {
-                ForEach(pins.indices, id: \.self) { index in
-                    DefaultPinShortInfoView(
-                        pin: pins[index],
-                        dismissBeforeMediaInfo: true,
-                        pinTapped: pinTapped,
-                    )
-                    if index != pins.count - 1 {
-                        Divider().padding(.leading, 12)
-                    }
-                }
-            }.padding(.top, 60).padding(.bottom, 90)
+            DefaultPinsListView(
+                pins: pins,
+                dismissBeforeMediaInfo: true,
+                pinTapped: pinTapped,
+            ).padding(.top, 60).padding(.bottom, 90)
         }
         .scrollIndicators(.hidden)
         .animationsDisabled()

@@ -40,6 +40,8 @@ public struct RootView<Content: View>: View {
             }
         case let .tripInfo(tripInfoRoute):
             switch tripInfoRoute {
+            case let .pinsList(trip):
+                TripPinsListView(trip: trip)
             case let .selectablePinsList(trip):
                 SelectablePinsListView(trip: trip)
             case let .postPreview(trip, selectedPins):

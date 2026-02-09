@@ -28,26 +28,11 @@ public struct PostPreviewView: View {
                 })
             } content: {
                 VStack(spacing: 16) {
-                    TripMapView(position: $viewModel.position, pins: viewModel.selectedPins)
+                    tripMap
                         .padding(.horizontal, 12)
-                        .aspectRatio(1, contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 26))
-                        .disabled(true)
 
-                    VStack {
-                        ForEach(viewModel.selectedPins.indices, id: \.self) { index in
-                            DefaultPinShortInfoView(
-                                pin: viewModel.selectedPins[index],
-                                hideMediaBadges: true,
-                                pinTapped: { pin in
-                                    viewModel.dispatch(.navigate(.pinInfo(pin)))
-                                },
-                            )
-                            if index != viewModel.selectedPins.count - 1 {
-                                Divider().padding(.leading, 12)
-                            }
-                        }
-                    }
+                    pinsList
+                        .padding(.bottom, 90)
                 }
             }
 
@@ -61,5 +46,22 @@ public struct PostPreviewView: View {
             }
         }
         .onAppear { viewModel.setRouter(router) }
+    }
+
+    public var tripMap: some View {
+        TripMapView(position: $viewModel.position, pins: viewModel.selectedPins)
+            .aspectRatio(1, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: 26))
+            .disabled(true)
+    }
+
+    public var pinsList: some View {
+        DefaultPinsListView(
+            pins: viewModel.selectedPins,
+            hideMediaBadges: true,
+            pinTapped: { pin in
+                viewModel.dispatch(.navigate(.pinInfo(pin)))
+            },
+        )
     }
 }
