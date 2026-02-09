@@ -7,6 +7,7 @@ public protocol AppRouting {
     func navigateToPinInfo(pin: Pin)
     func navigateToTripMembers()
 
+    func navigateToPinsList(trip: Trip)
     func navigateToSelectablePinsList(trip: Trip)
     func navigateToPostPreview(trip: Trip, selectedPins: [Pin])
 

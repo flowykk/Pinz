@@ -11,7 +11,8 @@ final class TripInfoViewModel {
     }
 
     enum Route {
-        case selectablePins
+        case pinsList
+        case selectPins
         case back
     }
 
@@ -43,7 +44,9 @@ final class TripInfoViewModel {
             }
         case let .navigate(route):
             switch route {
-            case .selectablePins:
+            case .pinsList:
+                router?.navigateToPinsList(trip: trip)
+            case .selectPins:
                 router?.navigateToSelectablePinsList(trip: trip)
             case .back:
                 router?.pop()

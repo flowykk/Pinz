@@ -36,7 +36,7 @@ public struct TripView: View {
         }
         .onAppear { viewModel.setRouter(router) }
         .sheet(isPresented: $isPinsPresented) {
-            TripPinsListView(pins: viewModel.trip.pins) { pin in
+            TripPinsListPopupView(pins: viewModel.trip.pins) { pin in
                 isPinsPresented = false
                 viewModel.dispatch(.navigate(.pinInfo(pin)))
             }

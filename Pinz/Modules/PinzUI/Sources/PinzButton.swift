@@ -84,6 +84,7 @@ public struct PinzButton: View {
                         Spacer()
                     }
                     .background(style.backgroundColor)
+                    .background(.ultraThinMaterial)
                     .cornerRadius(26)
                     .if(style == .secondary(needBorder: true)) { view in
                         return view.overlay(

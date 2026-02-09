@@ -5,7 +5,7 @@ public struct TagsView: View {
 
     public enum Style {
         case `default`
-        case editing
+        case editable
     }
 
     var tags: [MediaTag]
@@ -76,7 +76,7 @@ public struct TagsView: View {
                     }
             }
 
-            if style == .editing {
+            if style == .editable {
                 Button {
                     isAddTagPresented = true
                 } label: {
@@ -119,9 +119,9 @@ public struct TagsView: View {
             Text(text)
                 .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                 .padding(.leading, 8)
-                .padding(.trailing, style == .editing ? 4 : 8)
+                .padding(.trailing, style == .editable ? 4 : 8)
 
-            if style == .editing {
+            if style == .editable {
                 Button {
                     withAnimation {
                         onTagDelete?(MediaTag(tag: text))

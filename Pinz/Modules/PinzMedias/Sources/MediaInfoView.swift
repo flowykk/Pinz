@@ -73,7 +73,7 @@ public struct MediaInfoView: View {
     private var header: some View {
         Header(leftView: {
             PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                router?.pop()
+                router?.pop(by: 1)
             }
         }, rightView: {
             PinzButton(type: .icon(.crop), tint: PinzUIAsset.textPrimary.swiftUIColor) {
