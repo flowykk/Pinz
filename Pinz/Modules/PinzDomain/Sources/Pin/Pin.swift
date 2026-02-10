@@ -5,7 +5,7 @@ public struct Pin: Hashable, Identifiable {
     public var id: String { name }
     
     public var name: String
-    public var description: String
+    public var description: String?
     public var category: PinCategory
     public var medias: [MediaItem]
     public var isPrivate: Bool
@@ -16,7 +16,7 @@ public struct Pin: Hashable, Identifiable {
 
     public init(
         name: String,
-        description: String,
+        description: String? = nil,
         category: PinCategory,
         medias: [MediaItem],
         isPrivate: Bool,

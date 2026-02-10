@@ -28,7 +28,6 @@ enum TripSeasonIcon: String, Setting.Icon {
 public struct TripInfoView: View {
 
     @State private var viewModel: TripInfoViewModel
-    @State private var isDescriptionCollapsed = true
 
     @State private var isSeasonPickerPresented = false
     @State private var isCategoryPickerPresented = false
@@ -195,52 +194,12 @@ public struct TripInfoView: View {
     }
 
     private var description: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 0) {
-                SettingTitle("Описание")
-                if let _ = viewModel.trip.description {
-                    Spacer()
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            isDescriptionCollapsed.toggle()
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(isDescriptionCollapsed ? "Раскрыть" : "Скрыть")
-                            Image(systemName: "chevron.down")
-                                .rotationEffect(.degrees(isDescriptionCollapsed ? 0 : 180))
-                        }.roundedFount(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
-                    }
-                }
+        DescriptionView(
+            description: viewModel.trip.description,
+            onAddAction: {
+                viewModel.dispatch(.changeState)
             }
-            .padding(.bottom, 6)
-            .padding(.leading, 12)
-            .padding(.trailing, 16)
-
-            if let description = viewModel.trip.description {
-                VStack(spacing: 0) {
-                    Text(description)
-                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                        .lineLimit(isDescriptionCollapsed ? 5 : nil)
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                }
-                .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
-                .cornerRadius(26)
-            } else {
-                SettingsGroup(settings: [
-                    .default(Setting.DefaultSetting(
-                        id: "tripDescription",
-                        leading: .iconTitle(TripInfoIcon.text, "Добавить описание"),
-                        trailing: .icon(TripInfoIcon.chevronRight),
-                        action: .plain {
-                            viewModel.dispatch(.changeState)
-                        }
-                    ))
-                ])
-            }
-        }
+        )
     }
 
     private var pins: some View {
@@ -339,24 +298,13 @@ public struct TripInfoView: View {
     }
 
     private var descriptionEditing: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SettingTitle("Описание")
-                .padding(.bottom, 6)
-                .padding(.leading, 12)
-
-            SettingsGroup(settings: [
-                .textField(Setting.TextFieldSetting(
-                    id: "tripDescriptionEditingTextField",
-                    text: Binding(get: {
-                        viewModel.trip.description ?? ""
-                    }, set: { value in
-                        viewModel.trip.description = value
-                    }),
-                    placeholder: "Описание путешествия",
-                    style: .multiline
-                ))
-            ])
-        }
+        DescriptionEditingView(
+            text: Binding(get: {
+                viewModel.trip.description ?? ""
+            }, set: { value in
+                viewModel.trip.description = value
+            })
+        )
     }
 
     private var delete: some View {

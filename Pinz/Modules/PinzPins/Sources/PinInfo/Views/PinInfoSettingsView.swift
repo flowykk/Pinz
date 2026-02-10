@@ -9,8 +9,10 @@ extension PinInfoView {
             general
             tags
             if viewModel.isEditing {
+                descriptionEditing
                 delete
             } else {
+                description
                 privacy
             }
         }
@@ -87,6 +89,25 @@ extension PinInfoView {
                 style: viewModel.isEditing ? .editable : .default
             ).padding(.top, 2)
         }
+    }
+
+    private var description: some View {
+        DescriptionView(
+            description: viewModel.pin.description,
+            onAddAction: {
+                viewModel.dispatch(.edit)
+            }
+        )
+    }
+
+    private var descriptionEditing: some View {
+        DescriptionEditingView(
+            text: Binding(get: {
+                viewModel.pin.description ?? ""
+            }, set: { value in
+                viewModel.pin.description = value
+            })
+        )
     }
 
     private var privacy: some View {
