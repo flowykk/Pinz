@@ -28,8 +28,10 @@ public struct PostPreviewView: View {
                 })
             } content: {
                 VStack(spacing: 16) {
-                    tripMap
-                        .padding(.horizontal, 12)
+                    Group {
+                        tripMap
+                        desription
+                    }.padding(.horizontal, 12)
 
                     pinsList
                         .padding(.bottom, 90)
@@ -53,6 +55,10 @@ public struct PostPreviewView: View {
             .aspectRatio(1, contentMode: .fit)
             .clipShape(RoundedRectangle(cornerRadius: 26))
             .disabled(true)
+    }
+
+    public var desription: some View {
+        DescriptionView(description: viewModel.trip.description)
     }
 
     public var pinsList: some View {

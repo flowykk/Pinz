@@ -14,11 +14,11 @@ public extension Array where Element == Pin {
         let minLon = coordinates.map { $0.longitude }.min() ?? 0
         let maxLon = coordinates.map { $0.longitude }.max() ?? 0
         
-        let centerLat = (minLat + maxLat) / 2
-        let centerLon = (minLon + maxLon) / 2
-        
         let spanLat = (maxLat - minLat) * 1.5
         let spanLon = (maxLon - minLon) * 1.5
+
+        let centerLat = (minLat + maxLat) / 2 + (spanLat * 0.1)
+        let centerLon = (minLon + maxLon) / 2
         
         return .region(
             MKCoordinateRegion(
