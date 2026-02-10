@@ -16,7 +16,7 @@ final class PostPreviewViewModel {
         case navigate(Route)
     }
 
-    private let trip: Trip
+    let trip: Trip
     let selectedPins: [Pin]
     var position: MapCameraPosition
 

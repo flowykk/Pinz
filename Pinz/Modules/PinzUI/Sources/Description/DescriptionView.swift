@@ -10,20 +10,20 @@ public struct DescriptionView: View {
     private let title: String
     private let description: String?
     private let collapseButtonText: (collapsed: String, expanded: String)
-    private let onAddAction: () -> Void
-    
+    private let onTapAction: (() -> Void)?
+
     @State private var isCollapsed: Bool = true
     
     public init(
         title: String = "Описание",
         description: String?,
         collapseButtonText: (collapsed: String, expanded: String) = ("Раскрыть", "Скрыть"),
-        onAddAction: @escaping () -> Void
+        onAddAction: (() -> Void)? = nil
     ) {
         self.title = title
         self.description = description
         self.collapseButtonText = collapseButtonText
-        self.onAddAction = onAddAction
+        self.onTapAction = onAddAction
     }
     
     public var body: some View {
@@ -68,7 +68,9 @@ public struct DescriptionView: View {
                         id: "tripDescription",
                         leading: .iconTitle(DescriptionIcon.text, "Добавить описание"),
                         trailing: .icon(DescriptionIcon.chevronRight),
-                        action: .plain { onAddAction() }
+                        action: onTapAction.flatMap {
+                            action in .plain { action() }
+                        } ?? nil
                     ))
                ])
             }
