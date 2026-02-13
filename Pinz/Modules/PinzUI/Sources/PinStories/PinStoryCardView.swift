@@ -39,7 +39,9 @@ struct PinStoryCardView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
-                .overlay(alignment: .top) { gradientOverlay(bottom: false) }
+                .overlay(alignment: .top) {
+                    GradientView(style: .top, color: .black, opacity: 0.5, height: 130, needsBlur: false)
+                }
                 .overlay { tappableAreas }
                 .overlay(alignment: .topTrailing) { interface }
                 .overlay(alignment: .top) { progressiveCapsules }
@@ -73,7 +75,9 @@ struct PinStoryCardView: View {
                         .overlay(.ultraThinMaterial)
                         .overlay(.black.opacity(0.4))
                 }
-                .overlay(alignment: .bottom) { gradientOverlay(bottom: true) }
+                .overlay(alignment: .bottom) {
+                    GradientView(style: .bottom, color: .black, opacity: 0.5, height: 130, needsBlur: false)
+                }
                 .ignoresSafeArea(edges: .bottom)
             }
         }
@@ -231,16 +235,5 @@ struct PinStoryCardView: View {
                 }
             }
         }
-    }
-
-    @ViewBuilder
-    private func gradientOverlay(bottom: Bool) -> some View {
-        LinearGradient(
-            gradient: Gradient(
-                colors: bottom ? [Color.black.opacity(0.5), Color.clear] : [Color.clear, Color.black.opacity(0.5)]
-            ),
-            startPoint: .bottom,
-            endPoint: .top
-        ).frame(height: 130)
     }
 }

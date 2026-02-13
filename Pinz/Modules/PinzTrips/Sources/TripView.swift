@@ -190,15 +190,7 @@ public struct TripView: View {
 
     private var gradient: some View {
         VStack {
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.clear,
-                    Color.black.opacity(0.8),
-                ]),
-                startPoint: .bottom,
-                endPoint: .top
-            ).frame(height: 230)
-
+            GradientView(style: .top, color: .black, opacity: 0.8, height: 230)
             Spacer()
         }
     }
