@@ -11,7 +11,9 @@ public struct TripView: View {
     }
 
     @State private var viewModel: TripViewModel
-    @State private var isPinsPresented = false
+    @State private var isPinsListPresented = false
+    @State private var isTripsListPresented = false
+    @State private var isTripsListButtonRotated = false
 
     @Environment(\.appRouter) private var router
     @Environment(\.dismiss) private var dismiss
@@ -35,13 +37,23 @@ public struct TripView: View {
             header
         }
         .onAppear { viewModel.setRouter(router) }
-        .sheet(isPresented: $isPinsPresented) {
+        .onChange(of: isTripsListPresented, { _, newValue in
+            withAnimation {
+                isTripsListButtonRotated = newValue
+            }
+        })
+        .sheet(isPresented: $isPinsListPresented) {
             TripPinsListPopupView(pins: viewModel.trip.pins) { pin in
-                isPinsPresented = false
+                isPinsListPresented = false
                 viewModel.dispatch(.navigate(.pinInfo(pin)))
             }
             .pinzSheet()
             .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $isTripsListPresented) {
+            TripsListPopupView(trips: [viewModel.trip, viewModel.trip])
+                .pinzSheet()
+                .presentationDetents([.medium, .large])
         }
         .sheet(item: $viewModel.selectedPin) { pin in
             VStack(spacing: 8) {
@@ -67,12 +79,18 @@ public struct TripView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
                         tripHeader
-                        button(.icon("chevron.down")) {
-
+                        button(.icon("chevron.up"), isRotated: isTripsListButtonRotated) {
+                            isTripsListPresented = true
                         }
                     }
                     button(.icon("square.grid.2x2.fill")) {
                         viewModel.dispatch(.navigate(.feed))
+                    }
+                    button(
+                        .icon("point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath.fill"),
+                        invertColors: true,
+                    ) {
+                        // TODO: route animation
                     }
                 }
 
@@ -84,7 +102,7 @@ public struct TripView: View {
                     }
                     button(.icon("list.bullet")) {
                         if !viewModel.trip.pins.isEmpty {
-                            isPinsPresented = true
+                            isPinsListPresented = true
                         }
                     }
                     button(.icon("person.2.fill")) {
@@ -132,14 +150,19 @@ public struct TripView: View {
     @ViewBuilder
     private func button(
         _ type: ButtonType,
-        action: @escaping () -> Void
+        invertColors: Bool = false,
+        isRotated: Bool? = nil,
+        action: @escaping () -> Void,
     ) -> some View {
+        let foregroundColor = invertColors ? PinzUIAsset.backgroundSecondary.swiftUIColor : PinzUIAsset.textPrimary.swiftUIColor
+        let backgroundColor = invertColors ? PinzUIAsset.textPrimary.swiftUIColor : PinzUIAsset.background.swiftUIColor
+        let strokeColor = invertColors ? PinzUIAsset.textSecondary.swiftUIColor : PinzUIAsset.backgroundSecondary.swiftUIColor
         Button {
             action()
         } label: {
             RoundedRectangle(cornerRadius: Constants.buttonsCornerRadius)
-                .strokeBorder(PinzUIAsset.backgroundSecondary.swiftUIColor, lineWidth: 2)
-                .background(PinzUIAsset.background.swiftUIColor)
+                .strokeBorder(strokeColor, lineWidth: 2)
+                .background(backgroundColor)
                 .cornerRadius(Constants.buttonsCornerRadius)
                 .frame(Constants.buttonsSize)
                 .overlay {
@@ -147,6 +170,7 @@ public struct TripView: View {
                         switch type {
                         case let .icon(icon):
                             Image(systemName: icon)
+                                .foregroundColor(foregroundColor)
                         case let .image(uIImage):
                             Image(uiImage: uIImage)
                                 .resizable()
@@ -157,7 +181,9 @@ public struct TripView: View {
                         }
                     }
                     .roundedFount(size: 20)
-                    .tint(PinzUIAsset.textPrimary.swiftUIColor)
+                    .ifLet(isRotated) { view, isRotated in
+                        view.rotationEffect(.degrees(isRotated ? 0 : 180))
+                    }
                 }
         }.buttonStyle(.plain)
     }
