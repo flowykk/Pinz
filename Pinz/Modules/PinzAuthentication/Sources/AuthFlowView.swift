@@ -51,7 +51,9 @@ public struct AuthFlowView: View {
                             view
                                 .padding(.horizontal, 6)
                                 .padding(.bottom, 8)
-                                .background(backgroundTextFieldGradient)
+                                .background {
+                                    GradientView(style: .bottom, color: .black, opacity: 0.8, height: 264)
+                                }
                         }
                     }
                 }
@@ -60,17 +62,6 @@ public struct AuthFlowView: View {
             .onAppear {
                 viewModel.dispatch(.startRotation)
             }
-    }
-
-    private var backgroundTextFieldGradient: some View {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color.black.opacity(0.8),
-                Color.clear
-            ]),
-            startPoint: .bottom,
-            endPoint: .top
-        ).frame(height: 264)
     }
 }
 

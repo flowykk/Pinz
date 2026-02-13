@@ -14,15 +14,7 @@ public struct BottomGradientWithButtons<Buttons: View>: View {
         ZStack {
             VStack {
                 Spacer()
-
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        PinzUIAsset.background.swiftUIColor,
-                        Color.clear,
-                    ]),
-                    startPoint: .bottom,
-                    endPoint: .top
-                ).frame(height: 130)
+                GradientView(style: .bottom, color: PinzUIAsset.background.swiftUIColor, opacity: 1.0, height: 130)
             }.ignoresSafeArea()
 
             VStack {

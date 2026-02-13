@@ -31,15 +31,7 @@ struct TripsListPopupView: View {
     @ViewBuilder
     private var header: some View {
         VStack {
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.clear,
-                    PinzUIAsset.background.swiftUIColor.opacity(0.8),
-                    PinzUIAsset.background.swiftUIColor,
-                ]),
-                startPoint: .bottom,
-                endPoint: .top
-            ).frame(height: 70)
+            GradientView(style: .top, color: PinzUIAsset.background.swiftUIColor, opacity: 1.0, height: 70)
             Spacer()
         }
 
