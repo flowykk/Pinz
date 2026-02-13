@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzNetworking
 import PinzBase
+import PinzDomain
 
 @Observable
 final class TripsListViewModel {
@@ -13,8 +14,15 @@ final class TripsListViewModel {
         case navigate(Route)
     }
 
+    let trips: [Trip]
+
     private let networkService = NetworkService()
     private var router: AppRouting?
+
+    init(trips: [Trip], router: AppRouting? = nil) {
+        self.trips = trips
+        self.router = router
+    }
 
     func dispatch(_ intent: Intent) {
         switch intent {

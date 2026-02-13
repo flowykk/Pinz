@@ -4,6 +4,7 @@ import PinzTrips
 import PinzPins
 import PinzFeed
 import PinzMedias
+import PinzDomain
 
 public struct RootView<Content: View>: View {
     @Bindable var router: AppRouter
@@ -54,7 +55,7 @@ public struct RootView<Content: View>: View {
             case .statistics:
                 StatisticsView()
             case .trips:
-                TripsListView()
+                TripsListView(trips: [Trip.stub(), Trip.stub()])
             case .wishlist:
                 PlacesWishlistView()
             case .saved:

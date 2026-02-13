@@ -12,7 +12,7 @@ extension View {
     }
 
     @ViewBuilder
-    func ifLet<T, Content: View>(_ value: T?, apply: (Self, T) -> Content) -> some View {
+    public func ifLet<T, Content: View>(_ value: T?, apply: (Self, T) -> Content) -> some View {
         if let unwrapped = value {
             apply(self, unwrapped)
         } else {
