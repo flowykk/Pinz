@@ -24,9 +24,12 @@ struct PinStoryCardView: View {
             GeometryReader { proxy in
                 ZStack(alignment: .center) {
                     if let image {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
+                        storyBackground(for: image)
+                            .overlay {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                            }
                     } else {
                         Rectangle()
                             .fill(Color.gray.opacity(0.3))
@@ -38,18 +41,12 @@ struct PinStoryCardView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
                 .overlay(alignment: .top) {
                     GradientView(style: .top, color: .black, opacity: 0.5, height: 130, needsBlur: false)
                 }
                 .overlay { tappableAreas }
                 .overlay(alignment: .topTrailing) { interface }
                 .overlay(alignment: .top) { progressiveCapsules }
-                .rotation3DEffect(
-                    getAngle(proxy: proxy),
-                    axis: (x: 0, y: 1, z: 0),
-                    anchor: proxy.frame(in: .global).minX > 0 ? .leading : .trailing
-                )
                 .onAppear {
                     timerProgress = 0
                     Task {
@@ -60,24 +57,18 @@ struct PinStoryCardView: View {
                     guard currentStory == pin.id,
                           isFirstMediaCached,
                           !isPaused else { return }
-
+                    
                     if timerProgress < CGFloat(pin.medias.count) {
                         timerProgress += 0.01
                     } else {
                         updateStory()
                     }
                 }
-            }.ifLet(image) { view, image in
-                view.background {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .overlay(.ultraThinMaterial)
-                        .overlay(.black.opacity(0.4))
-                }
-                .overlay(alignment: .bottom) {
-                    GradientView(style: .bottom, color: .black, opacity: 0.5, height: 130, needsBlur: false)
-                }
+                .rotation3DEffect(
+                    getAngle(proxy: proxy),
+                    axis: (x: 0, y: 1, z: 0),
+                    anchor: proxy.frame(in: .global).minX > 0 ? .leading : .trailing
+                )
                 .ignoresSafeArea(edges: .bottom)
             }
         }
@@ -89,7 +80,7 @@ struct PinStoryCardView: View {
                 .fill(.black.opacity(0.01))
                 .onTapGesture {
                     if (timerProgress - 1) < 0 {
-                        updateStory(forward: true)
+                        updateStory(forward: false)
                     } else {
                         timerProgress = CGFloat(Int(timerProgress - 1))
                     }
@@ -104,13 +95,26 @@ struct PinStoryCardView: View {
                         timerProgress = CGFloat(Int(timerProgress + 1))
                     }
                 }
-        }.onLongPressGesture(minimumDuration: 0.3) {
+        }.onLongPressGesture(minimumDuration: 0.1) {
             isPaused = true
         } onPressingChanged: { pressing in
             if !pressing {
                 isPaused = false
             }
         }
+    }
+
+    private func storyBackground(for image: UIImage) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(width: UIScreen.main.bounds.width)
+            .clipped()
+            .overlay(.ultraThinMaterial)
+            .overlay(.black.opacity(0.4))
+            .overlay(alignment: .bottom) {
+                GradientView(style: .bottom, color: .black, opacity: 0.5, height: 130, needsBlur: false)
+            }
     }
 
     private var interface: some View {
