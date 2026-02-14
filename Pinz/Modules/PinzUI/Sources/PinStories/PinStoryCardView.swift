@@ -4,16 +4,24 @@ import PinzDomain
 
 struct PinStoryCardView: View {
 
-    var pin: Pin
-    let pins: [Pin]
-    @Binding var currentStory: String
-    @State var timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
-    @State var timerProgress: CGFloat = 0
-    @State var cachedImages: [Int: UIImage] = [:]
-    @State var isFirstMediaCached = false
-    @State var isPaused = false
+    private var pin: Pin
+    private let pins: [Pin]
+    @Binding private var currentStory: String
+    @State private var timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    @State private var timerProgress: CGFloat = 0
+    @State private var cachedImages: [Int: UIImage] = [:]
+    @State private var isFirstMediaCached = false
+    @State private var isPaused = false
+    @State private var detailsDialogShown = false
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appRouter) private var router
+
+    init(pin: Pin, pins: [Pin], currentStory: Binding<String>) {
+        self.pin = pin
+        self.pins = pins
+        self._currentStory = currentStory
+    }
 
     var body: some View {
         let index = min(Int(timerProgress), pin.medias.count - 1)
@@ -29,6 +37,7 @@ struct PinStoryCardView: View {
                                 Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
+                                    .cornerRadius(8)
                             }
                     } else {
                         Rectangle()
@@ -70,6 +79,16 @@ struct PinStoryCardView: View {
                     anchor: proxy.frame(in: .global).minX > 0 ? .leading : .trailing
                 )
                 .ignoresSafeArea(edges: .bottom)
+                .confirmationDialog(
+                    "Выберите действие",
+                    isPresented: $detailsDialogShown,
+                    titleVisibility: .visible
+                ) {
+                    if pins.count > 1 {
+                        Button("Детали пина") { navigateToPinInfo(pin: pin) }
+                    }
+                    Button("Детали медиа") { navigateToMediaInfo(media: pin.medias[index]) }
+                }
             }
         }
     }
@@ -118,25 +137,23 @@ struct PinStoryCardView: View {
     }
 
     private var interface: some View {
-        HStack(spacing: 13) {
-            Text(pin.name)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
+        HStack(spacing: 0) {
+            Button {
+                if pins.count > 1 {
+                    navigateToPinInfo(pin: pin)
+                }
+            } label: {
+                Text(pin.name)
+                    .roundedFount(size: 17, weight: .semibold, foregroundColor: .white)
+            }
 
             Spacer()
 
-            Button {
-                dismiss()
-            } label: {
-                Rectangle().fill(.clear).frame(32)
-                    .overlay(alignment: .trailing) {
-                        Image(systemName: "xmark")
-                            .roundedFount(size: 20, foregroundColor: .white)
-                    }
-            }
+            PinzButton(type: .icon(.ellipsis), tint: .white) { detailsDialogShown = true }
+            PinzButton(type: .icon(.xmark), tint: .white) { dismiss() }
+                .padding(.trailing, -10)
         }
         .padding()
-        .padding(.top, 4)
     }
 
     private var progressiveCapsules: some View {
@@ -239,5 +256,15 @@ struct PinStoryCardView: View {
                 }
             }
         }
+    }
+
+    private func navigateToPinInfo(pin: Pin) {
+        dismiss()
+        router?.navigateToPinInfo(pin: pin)
+    }
+
+    private func navigateToMediaInfo(media: MediaItem) {
+        dismiss()
+        router?.navigateToMediaInfo(media: media)
     }
 }
