@@ -34,6 +34,7 @@ public struct PinzButton: View {
     public enum IconType: String {
         case chevronLeft = "chevron.left"
         case xmark = "xmark"
+        case ellipsis = "ellipsis"
 
         case personAdd = "person.fill.badge.plus"
         case pencil = "pencil"
@@ -71,6 +72,7 @@ public struct PinzButton: View {
                     Image(systemName: icon.rawValue)
                         .roundedFount(size: 20, weight: .semibold, foregroundColor: tint)
                         .frame(width: 40, height: 40)
+                        .contentShape(Rectangle())
                 case let .text(text):
                     Text(text)
                         .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
