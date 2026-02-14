@@ -50,7 +50,8 @@ public struct PinPlaceChangeView: View {
                 }
                 .padding(.horizontal, 12)
                 .background {
-                    GradientView(style: .bottom, color: PinzUIAsset.background.swiftUIColor, opacity: 0.5, height: 120)
+                    GradientView(style: .bottom, color: PinzUIAsset.background.swiftUIColor, opacity: 0.3, height: 100)
+                        .padding(.bottom, -30)
                 }
                 .animation(.easeOut(duration: 0.3), value: viewModel.hasChanges)
             }
@@ -73,7 +74,8 @@ public struct PinPlaceChangeView: View {
                         .roundedFount(size: 14, foregroundColor: PinzUIAsset.background.swiftUIColor)
                 }
             ).background {
-                GradientView(style: .top, color: .black, opacity: 0.8, height: 200)
+                GradientView(style: .top, color: .black, height: 200)
+                    .padding(.top, -50)
             }
             Spacer()
         }

@@ -39,6 +39,8 @@ public struct TripInfoView: View {
     @State private var imageEditingDialogShown = false
     @State private var photoPickerShown = false
 
+    @State private var isStoriesPresented = false
+
     @Environment(\.appRouter) private var router
 
     var tripSeasonIcon: TripSeasonIcon {
@@ -112,6 +114,9 @@ public struct TripInfoView: View {
             date: $viewModel.trip.endDate,
             pickerHeight: $datePickerHeight
         )
+        .fullScreenCover(isPresented: $isStoriesPresented) {
+            PinStoryView(pins: viewModel.trip.pins)
+        }
         .confirmationDialog(
             "Выберите действие",
             isPresented: $imageEditingDialogShown,
@@ -143,6 +148,9 @@ public struct TripInfoView: View {
                     subtitle: "\(viewModel.trip.category.value), \(viewModel.trip.season.value)"
                 )
             }, rightView: {
+                PinzButton(type: .icon(.stories), tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                    isStoriesPresented = true
+                }
                 PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                     viewModel.dispatch(.changeState)
                 }

@@ -190,8 +190,10 @@ public struct TripView: View {
 
     private var gradient: some View {
         VStack {
-            GradientView(style: .top, color: .black, opacity: 0.8, height: 230)
+            GradientView(style: .top, color: .black, height: 150)
             Spacer()
+            GradientView(style: .bottom, color: .clear, height: 150)
+                .padding(.bottom, -100)
         }
     }
 }

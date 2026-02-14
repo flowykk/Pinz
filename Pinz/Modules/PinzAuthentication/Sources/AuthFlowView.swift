@@ -52,7 +52,7 @@ public struct AuthFlowView: View {
                                 .padding(.horizontal, 6)
                                 .padding(.bottom, 8)
                                 .background {
-                                    GradientView(style: .bottom, color: .black, opacity: 0.8, height: 264)
+                                    GradientView(style: .bottom, color: .black, height: 264)
                                 }
                         }
                     }
