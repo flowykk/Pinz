@@ -18,6 +18,8 @@ public class TripViewModel {
         case navigate(Route)
         case selectPin(pin: Pin?)
         case unselectPin
+        case selectTrip(Trip)
+        case checkAndUpdateTrip([Trip])
     }
     
     var trip: Trip
@@ -52,6 +54,18 @@ public class TripViewModel {
                 dispatch(.navigate(.pinInfo(selectedPin)))
             }
             selectedPin = nil
+        case let .selectTrip(trip):
+            self.trip = trip
+            position = trip.pins.calculateInitialMapPosition()
+            selectedPin = nil
+            SelectedTripStorage.shared.selectTrip(id: trip.id)
+        case let .checkAndUpdateTrip(trips):
+            guard let selectedTripID = SelectedTripStorage.shared.selectedTripID,
+                  selectedTripID != trip.id,
+                  let newTrip = trips.first(where: { $0.id == selectedTripID }) else {
+                return
+            }
+            dispatch(.selectTrip(newTrip))
         }
     }
     

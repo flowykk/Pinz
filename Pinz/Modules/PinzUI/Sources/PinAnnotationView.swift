@@ -23,43 +23,45 @@ public struct PinAnnotationView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            if let image = currentImage {
-                ZStack(alignment: .topTrailing) {
+            Group {
+                if let image = currentImage {
+                    ZStack(alignment: .topTrailing) {
+                        ZStack {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(62)
+                                .clipShape(RoundedRectangle(cornerRadius: 22))
+                                .id(currentMediaIndex)
+
+                            RoundedRectangle(cornerRadius: 18)
+                                .strokeBorder(Color.white, lineWidth: 4)
+                                .frame(62)
+                        }
+                    }
+                } else {
                     ZStack {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
+                        RoundedRectangle(cornerRadius: 22)
+                            .fill(Color.gray.opacity(0.3))
                             .frame(62)
-                            .clipShape(RoundedRectangle(cornerRadius: 22))
-                            .id(currentMediaIndex)
+
+                        if isLoadingImage {
+                            ProgressView()
+                                .tint(.white)
+                        }
 
                         RoundedRectangle(cornerRadius: 18)
                             .strokeBorder(Color.white, lineWidth: 4)
                             .frame(62)
                     }
-
-                    if pin.medias.count > 1 {
-                        Text("\(pin.medias.count)")
-                            .roundedFount(size: 12, weight: .semibold, foregroundColor: .black)
-                            .frame(minWidth: 24, minHeight: 24)
-                            .background(Circle().fill(Color.white))
-                            .offset(x: 5, y: -5)
-                    }
                 }
-            } else {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 22)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(62)
-                    
-                    if isLoadingImage {
-                        ProgressView()
-                            .tint(.white)
-                    }
-                    
-                    RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(Color.white, lineWidth: 4)
-                        .frame(62)
+            }.overlay {
+                if pin.medias.count > 1 {
+                    Text("\(pin.medias.count)")
+                        .roundedFount(size: 12, weight: .semibold, foregroundColor: .black)
+                        .frame(minWidth: 24, minHeight: 24)
+                        .background(Circle().fill(Color.white))
+                        .offset(x: 25, y: -25)
                 }
             }
 

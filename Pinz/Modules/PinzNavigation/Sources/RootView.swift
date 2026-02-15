@@ -55,7 +55,7 @@ public struct RootView<Content: View>: View {
             case .statistics:
                 StatisticsView()
             case .trips:
-                TripsListView(trips: [Trip.stub(), Trip.stub()])
+                TripsListView(trips: Trip.stubs())
             case .wishlist:
                 PlacesWishlistView()
             case .saved:

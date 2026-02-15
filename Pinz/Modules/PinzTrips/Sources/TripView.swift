@@ -14,11 +14,17 @@ public struct TripView: View {
     @State private var isPinsListPresented = false
     @State private var isTripsListPresented = false
     @State private var isTripsListButtonRotated = false
+    
+    private let availableTrips: [Trip]
 
     @Environment(\.appRouter) private var router
     @Environment(\.dismiss) private var dismiss
 
-    public init(trip: Trip) {
+    public init(trips: [Trip]) {
+        self.availableTrips = trips
+        
+        let selectedTripID = SelectedTripStorage.shared.selectedTripID
+        let trip = trips.first { $0.id == selectedTripID } ?? trips.first ?? Trip.stub()
         viewModel = TripViewModel(trip: trip)
     }
 
@@ -36,7 +42,10 @@ public struct TripView: View {
 
             header
         }
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear { 
+            viewModel.setRouter(router)
+            viewModel.dispatch(.checkAndUpdateTrip(availableTrips))
+        }
         .onChange(of: isTripsListPresented, { _, newValue in
             withAnimation {
                 isTripsListButtonRotated = newValue
@@ -51,9 +60,15 @@ public struct TripView: View {
             .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $isTripsListPresented) {
-            TripsListPopupView(trips: [viewModel.trip, viewModel.trip])
-                .pinzSheet()
-                .presentationDetents([.medium, .large])
+            let otherTrips = availableTrips.filter { $0.id != viewModel.trip.id }
+            TripsListPopupView(trips: otherTrips) { selectedTrip in
+                isTripsListPresented = false
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    viewModel.dispatch(.selectTrip(selectedTrip))
+                }
+            }
+            .pinzSheet()
+            .presentationDetents([.medium, .large])
         }
         .sheet(item: $viewModel.selectedPin) { pin in
             VStack(spacing: 8) {
@@ -192,8 +207,8 @@ public struct TripView: View {
         VStack {
             GradientView(style: .top, color: .black, height: 150)
             Spacer()
-            GradientView(style: .bottom, color: .clear, height: 150)
-                .padding(.bottom, -100)
+            GradientView(style: .bottom, color: .black, height: 200)
+                .padding(.bottom, -130)
         }
     }
 }

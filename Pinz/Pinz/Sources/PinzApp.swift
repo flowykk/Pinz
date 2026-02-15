@@ -21,9 +21,7 @@ struct PinzApp: App {
 
 //                PinStoryView(pins: Pin.stubs())
 //                TripInfoView(
-                TripView(
-                    trip: Trip.stub()
-                )
+                TripView(trips: Trip.stubs())
             }.toolbar(.hidden)
         }
     }

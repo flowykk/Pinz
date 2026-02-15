@@ -22,8 +22,12 @@ public struct TripsListView: View {
                 HeaderTitle("Путешествия")
             })
         } content: {
-            DefaultTripsListView(trips: viewModel.trips)
-                .padding(.bottom, 90)
+            DefaultTripsListView(trips: viewModel.trips) { trip in
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    viewModel.dispatch(.selectTrip(trip))
+                }
+            }
+            .padding(.bottom, 90)
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
