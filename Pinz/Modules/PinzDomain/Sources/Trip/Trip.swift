@@ -1,7 +1,8 @@
 import Foundation
 import SwiftUI
 
-public struct Trip: Hashable {
+public struct Trip: Hashable, Identifiable {
+    public let id: String
     public var name: String
     public var image: UIImage?
     public var description: String?
@@ -13,6 +14,7 @@ public struct Trip: Hashable {
     public var members: [TripMember]
 
     public init(
+        id: String = UUID().uuidString,
         name: String,
         image: UIImage? = nil,
         description: String? = nil,
@@ -23,6 +25,7 @@ public struct Trip: Hashable {
         category: TripCategory,
         members: [TripMember] = []
     ) {
+        self.id = id
         self.name = name
         self.image = image
         self.description = description
@@ -39,8 +42,8 @@ extension Trip {
     public static func stub() -> Trip {
         let description = "В Сочи мы выбрались прошлым летом. Решили туда съездить, так как никогда раньше в этом городе- курорте не были, а это все же довольно популярное место. Многие в восторге от Сочи, город дорогой, популярный и престижный. Часто туда переезжают жить, ну или планируют это сделать в ближайшее время. Словом, город так и манит всех в свои теплые объятия, прямо как Москва. Ну вот и мы собрались на летний отдых туда, чтобы посмотреть, правда ли там так здорово. Для поездки выбрали месяц август. Да, это самый пик тур сезона, но вот так получилось. В Сочи ехали из Нижнего на поезде. На самом деле удобно, что без пересадок и до самого вокзала. Правда ехать пару суток, но я люблю поезда, поэтому даже в плацкарте на этот раз добрались без особых проблем. В поезде был вагон ресторан, и мы несколько раз заказывали еду из него."
 
-
         return Trip(
+            id: "trip-default-nn",
             name: "Нижний Новгород",
             image: PinzDomainAsset.defaultPlaceholder.image,
             description: description,
@@ -51,6 +54,23 @@ extension Trip {
             category: .vacation,
             members: TripMember.stubs()
         )
+    }
+    
+    public static func stubs() -> [Trip] {
+        let sochi = Trip(
+            id: "trip-sochi",
+            name: "Сочи",
+            image: PinzDomainAsset.groupPlaceholder.image,
+            description: "Летний отдых на море с посещением всех главных достопримечательностей города",
+            pins: Array(Pin.stubs().prefix(3)),
+            season: .summer,
+            startDate: Date(fromDateString: "15.06.2026"),
+            endDate: Date(fromDateString: "25.06.2026"),
+            category: .vacation,
+            members: Array(TripMember.stubs().prefix(2))
+        )
+        
+        return [stub(), sochi]
     }
 }
 

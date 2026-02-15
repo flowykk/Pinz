@@ -12,15 +12,18 @@ final class TripsListViewModel {
 
     enum Intent {
         case navigate(Route)
+        case selectTrip(Trip)
     }
 
-    let trips: [Trip]
+    var trips: [Trip]
 
     private let networkService = NetworkService()
     private var router: AppRouting?
 
     init(trips: [Trip], router: AppRouting? = nil) {
-        self.trips = trips
+        // Фильтруем уже выбранное путешествие
+        let selectedTripID = SelectedTripStorage.shared.selectedTripID
+        self.trips = trips.filter { $0.id != selectedTripID }
         self.router = router
     }
 
@@ -31,6 +34,9 @@ final class TripsListViewModel {
             case .back:
                 router?.pop()
             }
+        case let .selectTrip(trip):
+            SelectedTripStorage.shared.selectTrip(id: trip.id)
+            router?.pop(by: 2)
         }
     }
 

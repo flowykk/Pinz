@@ -5,22 +5,25 @@ import PinzDomain
 struct TripsListPopupView: View {
 
     private let trips: [Trip]
+    private let onTripTapped: (Trip) -> Void
     private let onDismiss: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
     public init(
         trips: [Trip],
+        onTripTapped: @escaping (Trip) -> Void,
         onDismiss: (() -> Void)? = nil
     ) {
         self.trips = trips
+        self.onTripTapped = onTripTapped
         self.onDismiss = onDismiss
     }
 
     var body: some View {
         ZStack {
             ScrollView {
-                DefaultTripsListView(trips: trips)
+                DefaultTripsListView(trips: trips, onTripTapped: onTripTapped)
                     .padding(.top, 60).padding(.bottom, 90)
             }
 
