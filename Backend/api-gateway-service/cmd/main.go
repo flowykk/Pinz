@@ -1,7 +1,7 @@
 // @title Pinz API Gateway
 // @version 1.0
 // @description API Gateway for Pinz mobile client
-// @host localhost:8080
+// @host pinz.example.com
 // @BasePath /
 package main
 
