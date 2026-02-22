@@ -81,7 +81,7 @@ definitions:
       success:
         type: boolean
     type: object
-host: localhost:8080
+host: pinz.example.com
 info:
   contact: {}
   description: API Gateway for Pinz mobile client

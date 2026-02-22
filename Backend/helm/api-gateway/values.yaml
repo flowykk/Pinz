@@ -1,0 +1,14 @@
+replicaCount: 1
+
+image:
+  repository: pinz-api-gateway
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: http
+  port: 8080
+
+env:
+  apiGatewayPort: "8080"
+  authServiceGrpcAddress: "auth-service:50051"

@@ -1,0 +1,22 @@
+replicaCount: 1
+
+image:
+  repository: pinz-auth-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: grpc
+  port: 50051
+
+env:
+  dbHost: host.docker.internal
+  dbPort: "5432"
+  dbUser: pinz_user
+  dbName: pinz_db
+  redisAddr: host.docker.internal:6379
+  grpcPort: ":50051"
+
+secret:
+  dbPassword: "pinz_password"
+  jwtSecretKey: "change-me-in-production"

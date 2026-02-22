@@ -30,12 +30,10 @@ services:
     container_name: pinz-api-gateway-service
     environment:
       API_GATEWAY_PORT: "8080"
-      # Имя хоста — имя сервиса в Compose (auth-service), не container_name (pinz-auth-service)
       AUTH_SERVICE_GRPC_ADDRESS: auth-service:50051
     ports:
       - "8080:8080"
     depends_on:
-      auth-service:
         condition: service_started
 
   auth-service:

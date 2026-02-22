@@ -1,0 +1,83 @@
+# Pinz Backend
+
+Микросервисный бэкенд приложения Pinz (итерация 1: фундамент и авторизация).
+
+## Запуск
+
+```bash
+docker-compose up -d
+```
+
+**Адреса после запуска:**
+
+| Ресурс | URL / Команда |
+|--------|---------------|
+| API Gateway | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger/index.html |
+| Auth gRPC | localhost:50051 |
+| Логи | `docker-compose logs -f api-gateway-service` / `docker-compose logs -f auth-service` |
+
+## Эндпоинты (REST)
+
+- `POST /api/v1/auth/email` — первый шаг: пользователь вводит почту. Тело: `{"email":"user@example.com"}`. Ответ: `{"is_registered": true|false, "registration_key": "..."}`. При `is_registered: true` клиент показывает экран ввода пароля (далее login); при `false` — экран ввода кода с почты (`registration_key` передаётся в verify-email и finish-register).
+- `POST /api/v1/auth/verify-email` — проверка кода (при регистрации).
+- `POST /api/v1/auth/finish-register` — установка пароля и username (при регистрации).
+- `POST /api/v1/auth/login` — вход по email и паролю.
+- `POST /api/v1/auth/refresh` — обновление access-токена.
+- `POST /api/v1/auth/logout` — выход.
+
+## Стек
+
+- Go 1.23, chi, gRPC, Protobuf, PostgreSQL, Redis, Squirrel, JWT, swaggo.
+
+## Регенерация proto и swagger
+
+```bash
+# Proto — единая точка из корня Backend (Backend/proto/*.proto)
+cd Backend && make proto
+
+# Swagger — только для API Gateway
+cd api-gateway-service && make swagger
+```
+
+## Локальный деплой (Minikube + Istio)
+
+Требуется: Minikube, Helm, Helmfile, istioctl, Docker.
+
+```bash
+# 1. Инфраструктура (PostgreSQL, Redis)
+make infra-up
+
+# 2. Minikube + Istio (выполнить один раз)
+minikube start --cpus 4 --memory 4096 --driver=docker
+minikube addons enable metrics-server
+istioctl install --set profile=demo -y
+kubectl label namespace default istio-injection=enabled
+
+# 3. Istio-ресурсы (mTLS, Gateway, VirtualService)
+make k8s-istio
+
+# 4. Сборка образов и деплой приложения
+make k8s-build
+make k8s-deploy
+
+# 5. Доступ (в отдельном терминале)
+sudo minikube tunnel
+
+# 6. Проброс хоста в /etc/hosts (один раз)
+sudo sed -i '' '/pinz.example.com/d' /etc/hosts
+echo "127.0.0.1 pinz.example.com" | sudo tee -a /etc/hosts
+```
+
+**Адреса (Minikube + Istio):**
+
+| Ресурс | URL / Команда |
+|--------|---------------|
+| API Gateway | http://pinz.example.com |
+| Swagger UI | http://pinz.example.com/swagger/index.html |
+| Логи | `kubectl logs -f deployment/api-gateway` / `kubectl logs -f deployment/auth-service` |
+| Трейсинг (Jaeger) | `istioctl dashboard jaeger` или `kubectl port-forward svc/tracing 16686:80 -n istio-system` → http://localhost:16686 |
+| Мониторинг (Kiali) | `istioctl dashboard kiali` или `kubectl port-forward svc/kiali 20001:20001 -n istio-system` → http://localhost:20001 |
+| Prometheus | `kubectl port-forward svc/prometheus 9090:9090 -n istio-system` → http://localhost:9090 |
+
+Observability addons (Prometheus, Kiali, Jaeger) устанавливаются отдельно: см. `deploy.md`, раздел 9.
