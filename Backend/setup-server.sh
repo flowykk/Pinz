@@ -100,7 +100,7 @@ install_helm() {
 # Install Helmfile
 install_helmfile() {
     log_info "Installing Helmfile..."
-    wget -O helmfile.tar.gz https://github.com/helmfile/helmfile/releases/latest/download/helmfile_0.169.0_linux_amd64.tar.gz
+    wget -O helmfile.tar.gz https://github.com/helmfile/helmfile/releases/latest/download/helmfile_1.3.1_linux_amd64.tar.gz
     tar -xzf helmfile.tar.gz
     sudo mv helmfile /usr/local/bin/
     rm helmfile.tar.gz
