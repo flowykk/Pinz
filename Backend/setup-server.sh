@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-REPO_URL="${REPO_URL:-https://github.com/your-org/your-repo.git}"
+REPO_URL="${REPO_URL:-https://github.com/flowykk/Pinz.git}"
 PROJECT_DIR="/opt/pinz"
 BACKEND_DIR="${PROJECT_DIR}/Backend"
 ENV_FILE="${BACKEND_DIR}/.env"
@@ -39,6 +39,11 @@ log_error() {
 check_root() {
     if [[ $EUID -eq 0 ]]; then
         log_error "This script should NOT be run as root"
+        log_error "Create a regular user first:"
+        log_error "  useradd -m -s /bin/bash deploy"
+        log_error "  passwd deploy"
+        log_error "  usermod -aG sudo deploy"
+        log_error "Then switch to user: su - deploy"
         exit 1
     fi
 }
@@ -70,13 +75,17 @@ install_k3s() {
     log_info "Installing k3s..."
     curl -sfL https://get.k3s.io | sh -
 
-    # Configure kubectl
+    # Configure kubectl access for current user
+    sudo chmod 644 /etc/rancher/k3s/k3s.yaml 2>/dev/null || true
     export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
     echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> ~/.bashrc
 
     # Wait for k3s to be ready
     sleep 10
     kubectl cluster-info
+
+    # Ensure user can access Docker
+    sudo usermod -aG docker $USER
     log_success "k3s installed"
 }
 
