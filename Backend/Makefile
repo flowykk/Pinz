@@ -34,10 +34,10 @@ lint-auth:
 # Local k8s deployment (Minikube + Istio)
 .PHONY: infra-up infra-down k8s-build k8s-deploy k8s-istio all-up
 infra-up:
-	docker-compose -f docker-compose.infra.yml up -d
+	docker compose -f docker-compose.infra.yml up -d
 
 infra-down:
-	docker-compose -f docker-compose.infra.yml down
+	docker compose -f docker-compose.infra.yml down
 
 k8s-build:
 	eval $$(minikube docker-env) && \

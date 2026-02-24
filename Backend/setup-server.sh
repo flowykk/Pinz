@@ -159,20 +159,17 @@ create_directories() {
 # Clone repository
 clone_repository() {
     log_info "Cloning repository..."
-    if [[ -d "$BACKEND_DIR" ]]; then
+    if [[ -d "$PROJECT_DIR/.git" ]]; then
         log_warning "Repository already exists, updating..."
-        cd $BACKEND_DIR
-        git pull
+        cd $PROJECT_DIR
+        git checkout develop
+        git pull origin develop
     else
         cd $PROJECT_DIR
-        git clone $REPO_URL Backend
-        cd Backend
+        git clone $REPO_URL .
+        git checkout develop
+        git pull origin develop
     fi
-
-    # Switch to develop branch
-    log_info "Switching to develop branch..."
-    git checkout develop
-    git pull origin develop
 
     # Ensure scripts are executable (if they exist)
     [[ -f "deploy.sh" ]] && chmod +x deploy.sh
@@ -230,6 +227,20 @@ setup_infrastructure() {
         set -a
         source "$ENV_FILE"
         set +a
+    fi
+
+    # Check if Makefile exists and has infra-up target
+    if [[ ! -f "Makefile" ]]; then
+        log_error "Makefile not found in $BACKEND_DIR"
+        log_error "Please ensure you're using the correct branch with deployment files"
+        exit 1
+    fi
+
+    if ! grep -q "^infra-up:" Makefile; then
+        log_error "infra-up target not found in Makefile"
+        log_error "Available targets:"
+        make -n 2>/dev/null | head -10 || echo "No make targets available"
+        exit 1
     fi
 
     # Start infrastructure
