@@ -11,10 +11,6 @@ linters:
     - staticcheck
     - unused
 
-linters-settings:
-  govet:
-    check-shadowing: true
-
 issues:
   exclude-rules:
     - path: _test\.go

@@ -6,9 +6,9 @@
 
 ```bash
 # Полная автоматизированная настройка сервера
-wget https://raw.githubusercontent.com/your-org/your-repo/main/setup-server.sh
+wget https://raw.githubusercontent.com/flowykk/Pinz/main/Backend/setup-server.sh
 chmod +x setup-server.sh
-./setup-server.sh --repo-url https://github.com/your-org/your-repo.git
+./setup-server.sh --repo-url https://github.com/flowykk/Pinz.git
 ```
 
 Скрипт автоматически:

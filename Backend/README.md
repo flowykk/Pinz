@@ -40,6 +40,19 @@ cd Backend && make proto
 cd api-gateway-service && make swagger
 ```
 
+## Локальный линтинг
+
+```bash
+# Проверить все сервисы
+make lint
+
+# Проверить только API Gateway
+make lint-api
+
+# Проверить только Auth Service
+make lint-auth
+```
+
 ## Локальный деплой (Minikube + Istio)
 
 Требуется: Minikube, Helm, Helmfile, istioctl, Docker.
@@ -90,9 +103,9 @@ Observability addons (Prometheus, Kiali, Jaeger) устанавливаются 
 
 ```bash
 # На чистом сервере Ubuntu 22.04
-wget https://raw.githubusercontent.com/your-org/your-repo/main/setup-server.sh
+wget https://raw.githubusercontent.com/flowykk/Pinz/main/Backend/setup-server.sh
 chmod +x setup-server.sh
-./setup-server.sh --repo-url https://github.com/your-org/your-repo.git
+./setup-server.sh --repo-url https://github.com/flowykk/Pinz.git
 ```
 
 Этот скрипт установит:
