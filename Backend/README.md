@@ -81,3 +81,76 @@ echo "127.0.0.1 pinz.example.com" | sudo tee -a /etc/hosts
 | Prometheus | `kubectl port-forward svc/prometheus 9090:9090 -n istio-system` → http://localhost:9090 |
 
 Observability addons (Prometheus, Kiali, Jaeger) устанавливаются отдельно: см. `deploy.md`, раздел 9.
+
+## Production развертывание (VPS)
+
+### Полная настройка сервера
+
+Используйте скрипт `setup-server.sh` для полной автоматизированной настройки:
+
+```bash
+# На чистом сервере Ubuntu 22.04
+wget https://raw.githubusercontent.com/your-org/your-repo/main/setup-server.sh
+chmod +x setup-server.sh
+./setup-server.sh --repo-url https://github.com/your-org/your-repo.git
+```
+
+Этот скрипт установит:
+- Docker, k3s, Helm, Helmfile, Istio
+- Склонирует репозиторий
+- Настроит инфраструктуру (PostgreSQL, Redis)
+- Создаст переменные окружения
+- Подготовит CI/CD доступ
+
+### После настройки
+
+```bash
+cd /opt/pinz/Backend
+
+# Ручной деплой
+./deploy.sh
+
+# Проверка статуса
+kubectl get pods
+curl http://<server-ip>:8080/health
+```
+
+### Make команды (теперь работают)
+
+```bash
+# Управление инфраструктурой
+make infra-up      # Запуск PostgreSQL + Redis
+make infra-down    # Остановка инфраструктуры
+
+# Kubernetes операции
+make k8s-build     # Сборка Docker образов
+make k8s-deploy    # Деплой в Kubernetes
+make k8s-istio     # Установка Istio ресурсов
+
+# Кодогенерация
+make proto         # Генерация protobuf
+make swagger       # Генерация swagger
+```
+
+### CI/CD
+
+Проект поддерживает автоматическое развертывание через GitHub Actions:
+
+- **CI**: Сборка, тесты, линтинг на каждом PR/push
+- **CD**: Автоматический деплой на `main` ветку
+
+Для настройки CD добавьте в GitHub Secrets:
+- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`
+- `POSTGRES_PASSWORD`, `JWT_SECRET_KEY`
+
+### Ручной деплой с локальной машины
+
+```bash
+# Настройка SSH доступа к серверу
+ssh-copy-id user@your-server
+
+# Деплой с локальной машины
+IMAGE_TAG=v1.2.3 ./deploy.sh
+```
+
+Подробная документация: `DEPLOYMENT.md`, `ci-cd.md`, `deploy.md`.
