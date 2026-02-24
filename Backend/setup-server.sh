@@ -159,15 +159,14 @@ create_directories() {
 # Clone repository
 clone_repository() {
     log_info "Cloning repository..."
-    if [[ -d "$BACKEND_DIR" ]]; then
+    if [[ -d "$PROJECT_DIR/.git" ]]; then
         log_warning "Repository already exists, updating..."
-        cd $BACKEND_DIR
+        cd $PROJECT_DIR
         git checkout develop
         git pull origin develop
     else
         cd $PROJECT_DIR
-        git clone $REPO_URL Backend
-        cd $BACKEND_DIR
+        git clone $REPO_URL .
         git checkout develop
         git pull origin develop
     fi
