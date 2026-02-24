@@ -169,9 +169,15 @@ clone_repository() {
         cd Backend
     fi
 
-    # Ensure scripts are executable
-    chmod +x deploy.sh
-    log_success "Repository cloned"
+    # Switch to develop branch
+    log_info "Switching to develop branch..."
+    git checkout develop
+    git pull origin develop
+
+    # Ensure scripts are executable (if they exist)
+    [[ -f "deploy.sh" ]] && chmod +x deploy.sh
+    [[ -f "setup-server.sh" ]] && chmod +x setup-server.sh
+    log_success "Repository cloned and switched to develop branch"
 }
 
 # Create environment file
@@ -269,8 +275,12 @@ test_deployment() {
         set +a
     fi
 
-    # Test deploy script
-    ./deploy.sh --help
+    # Test deploy script (if exists)
+    if [[ -f "deploy.sh" ]]; then
+        ./deploy.sh --help
+    else
+        log_warning "deploy.sh not found - skipping deployment test"
+    fi
 
     # Check kubectl access
     kubectl get nodes
