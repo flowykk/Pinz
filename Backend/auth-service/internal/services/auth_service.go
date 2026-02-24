@@ -106,10 +106,11 @@ func (s *AuthService) SetPasswordAndUsername(ctx context.Context, req *pb.SetPas
 	if rid == "" || password == "" || username == "" {
 		return nil, status.Error(codes.InvalidArgument, "registration_id, password and username are required")
 	}
-	if err := s.validator.Var(password, "required,min=6"); err != nil {
+	var err error
+	if err = s.validator.Var(password, "required,min=6"); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "password must be at least 6 characters")
 	}
-	if err := s.validator.Var(username, "required,min=4,max=20"); err != nil {
+	if err = s.validator.Var(username, "required,min=4,max=20"); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "username must be 4–20 characters")
 	}
 
@@ -179,7 +180,7 @@ func (s *AuthService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 		log.Printf("Login: get user: %v", err)
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)); err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 

@@ -15,6 +15,22 @@ proto:
 swagger:
 	$(MAKE) -C api-gateway-service swagger
 
+# Local linting
+.PHONY: lint lint-api lint-auth install-lint
+lint: check-lint lint-api lint-auth
+
+check-lint:
+	@if ! command -v golangci-lint >/dev/null 2>&1; then \
+		echo "golangci-lint not found. Installing..."; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v2.10.1; \
+	fi
+
+lint-api:
+	cd api-gateway-service && golangci-lint run ./...
+
+lint-auth:
+	cd auth-service && golangci-lint run ./...
+
 # Local k8s deployment (Minikube + Istio)
 .PHONY: infra-up infra-down k8s-build k8s-deploy k8s-istio all-up
 infra-up:

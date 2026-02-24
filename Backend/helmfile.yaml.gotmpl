@@ -1,0 +1,35 @@
+repositories: []
+
+releases:
+  - name: auth-service
+    namespace: default
+    chart: ./helm/auth-service
+    values:
+      - image:
+          repository: "{{ .Values.dockerRegistry }}/{{ .Values.dockerRepo }}/pinz-auth-service"
+          tag: "{{ .Values.imageTag }}"
+          pullPolicy: Always
+      - env:
+          dbHost: db
+          dbPort: "5432"
+          dbUser: pinz_user
+          dbName: pinz_db
+          redisAddr: redis:6379
+          grpcPort: ":50051"
+      - secret:
+          dbPassword: "{{ .Values.postgresPassword }}"
+          jwtSecretKey: "{{ .Values.jwtSecretKey }}"
+
+  - name: api-gateway
+    namespace: default
+    chart: ./helm/api-gateway
+    needs:
+      - default/auth-service
+    values:
+      - image:
+          repository: "{{ .Values.dockerRegistry }}/{{ .Values.dockerRepo }}/pinz-api-gateway"
+          tag: "{{ .Values.imageTag }}"
+          pullPolicy: Always
+      - env:
+          apiGatewayPort: "8080"
+          authServiceGrpcAddress: auth-service.default.svc.cluster.local:50051
