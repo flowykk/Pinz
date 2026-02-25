@@ -38,6 +38,8 @@ public struct RootView<Content: View>: View {
                 PinInfoView(pin: pin)
             case .members:
                 TripMembersView()
+            case .feed:
+                FeedView()
             }
         case let .tripInfo(tripInfoRoute):
             switch tripInfoRoute {
