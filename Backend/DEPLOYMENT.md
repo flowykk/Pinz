@@ -29,7 +29,7 @@ make infra-up      # Запуск инфраструктуры
 make k8s-deploy    # Деплой приложения
 
 # Или универсальный деплой
-./deploy.sh --environment prod
+./deploy.sh
 ```
 
 ## Универсальный скрипт deploy.sh
@@ -63,8 +63,8 @@ IMAGE_TAG=v1.2.3 ./deploy.sh
 
 Проект использует автоматическое развертывание:
 
-- **main ветка** → production окружение
-- **develop ветка** → staging окружение
+- **main ветка** → развертывание на сервер
+- **develop ветка** → развертывание на сервер
 
 ### Необходимые GitHub Secrets
 
@@ -77,6 +77,31 @@ IMAGE_TAG=v1.2.3 ./deploy.sh
 | `VPS_SSH_KEY` | Приватный SSH ключ | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
 | `POSTGRES_PASSWORD` | Пароль PostgreSQL | `my_secure_db_password` |
 | `JWT_SECRET_KEY` | JWT секретный ключ | `my_jwt_secret_key` |
+
+### Аутентификация в Docker Registry
+
+Для ручного деплоя необходимо настроить доступ к GitHub Container Registry:
+
+```bash
+# Вариант 1: Переменные окружения
+export GITHUB_TOKEN="your_github_token"
+export GITHUB_ACTOR="your_github_username"
+
+# Вариант 2: Ручная аутентификация
+docker login ghcr.io
+# Username: your_github_username
+# Password: your_github_token
+
+# Вариант 3: Добавить в .env на сервере
+echo "GITHUB_TOKEN=your_token" >> /opt/pinz/.env
+echo "GITHUB_ACTOR=your_username" >> /opt/pinz/.env
+```
+
+**Как получить GitHub токен:**
+1. GitHub → Settings → Developer settings → Personal access tokens
+2. Generate new token (classic)
+3. Scope: `read:packages`
+4. Используйте токен как пароль
 
 ### Генерация SSH ключа
 

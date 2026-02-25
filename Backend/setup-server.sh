@@ -204,7 +204,7 @@ GRPC_PORT=:50051
 
 # Docker Registry (for production deployment)
 DOCKER_REGISTRY=ghcr.io
-DOCKER_REPO=${GITHUB_REPOSITORY:-your-org/your-repo}
+DOCKER_REPO=flowykk/pinz
 
 # Environment
 ENVIRONMENT=prod

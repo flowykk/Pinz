@@ -12,7 +12,7 @@ ENV_FILE="${PROJECT_DIR}/.env"
 
 # Default values
 DOCKER_REGISTRY="${DOCKER_REGISTRY:-ghcr.io}"
-DOCKER_REPO="${DOCKER_REPO:-${GITHUB_REPOSITORY:-your-org/pinz}}"
+DOCKER_REPO="${DOCKER_REPO:-flowykk/pinz}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 
 # Colors for output
@@ -100,7 +100,20 @@ setup_docker_auth() {
         log_info "Setting up Docker authentication for CI"
         echo "${GITHUB_TOKEN:-}" | docker login "$DOCKER_REGISTRY" -u "${GITHUB_ACTOR:-}" --password-stdin
     else
-        log_info "Using existing Docker authentication"
+        log_info "Setting up Docker authentication for server"
+        # Try to login with GitHub token if available
+        if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+            echo "$GITHUB_TOKEN" | docker login "$DOCKER_REGISTRY" -u "${GITHUB_ACTOR:-$USER}" --password-stdin
+        else
+            log_warning "GITHUB_TOKEN not set. Please login to Docker registry manually:"
+            log_warning "docker login $DOCKER_REGISTRY"
+            log_warning "Or set GITHUB_TOKEN environment variable"
+            # Try to login anyway, maybe user already logged in
+            if ! docker pull "${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-api-gateway:${IMAGE_TAG}" &>/dev/null; then
+                log_error "Cannot access Docker registry. Please authenticate first."
+                exit 1
+            fi
+        fi
     fi
 }
 
@@ -241,9 +254,6 @@ main() {
 
     # Pull images
     pull_images
-
-    # Select configuration
-    select_helmfile
 
     # Deploy application
     deploy_app
