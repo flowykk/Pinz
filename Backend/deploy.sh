@@ -12,7 +12,7 @@ ENV_FILE="${PROJECT_DIR}/.env"
 
 # Default values
 DOCKER_REGISTRY="${DOCKER_REGISTRY:-ghcr.io}"
-DOCKER_REPO="${DOCKER_REPO:-flowykk}"
+DOCKER_REPO="${DOCKER_REPO:-dmitry-pr}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 
 # Colors for output
