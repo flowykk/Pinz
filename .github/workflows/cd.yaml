@@ -9,11 +9,11 @@ on:
       - 'helm/**'
       - 'k8s-istio/**'
       - 'helmfile.yaml.gotmpl'
+  workflow_dispatch:
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
     outputs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
     steps:
