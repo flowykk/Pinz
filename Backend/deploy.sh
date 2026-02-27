@@ -150,15 +150,15 @@ deploy_app() {
 
     # Set deployment parameters for Helmfile
     export IMAGE_TAG="$IMAGE_TAG"
-    export dockerRegistry="$DOCKER_REGISTRY"
-    export dockerRepo="$DOCKER_REPO"
-    export imageTag="$IMAGE_TAG"
-    export postgresPassword="${POSTGRES_PASSWORD:-pinz_password}"
-    export jwtSecretKey="${JWT_SECRET_KEY:-change-me-in-production}"
 
-    # Deploy using Helmfile
+    # Deploy using Helmfile with --set flags
     cd "$PROJECT_DIR"
-    helmfile -f "$HELMFILE_CONFIG" apply
+    helmfile -f "$HELMFILE_CONFIG" apply \
+        --set dockerRegistry="$DOCKER_REGISTRY" \
+        --set dockerRepo="$DOCKER_REPO" \
+        --set imageTag="$IMAGE_TAG" \
+        --set postgresPassword="${POSTGRES_PASSWORD:-pinz_password}" \
+        --set jwtSecretKey="${JWT_SECRET_KEY:-change-me-in-production}"
 
     log_success "Application deployed successfully"
 }

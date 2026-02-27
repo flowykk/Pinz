@@ -6,8 +6,8 @@ releases:
     chart: ./helm/auth-service
     values:
       - image:
-          repository: "{{ env "dockerRegistry" }}/{{ env "dockerRepo" }}/pinz-auth-service"
-          tag: "{{ env "imageTag" }}"
+          repository: "{{ .Values.dockerRegistry }}/{{ .Values.dockerRepo }}/pinz-auth-service"
+          tag: "{{ .Values.imageTag }}"
           pullPolicy: Always
       - env:
           dbHost: db
@@ -17,8 +17,8 @@ releases:
           redisAddr: redis:6379
           grpcPort: ":50051"
       - secret:
-          dbPassword: "{{ env "postgresPassword" }}"
-          jwtSecretKey: "{{ env "jwtSecretKey" }}"
+          dbPassword: "{{ .Values.postgresPassword }}"
+          jwtSecretKey: "{{ .Values.jwtSecretKey }}"
 
   - name: api-gateway
     namespace: default
@@ -27,8 +27,8 @@ releases:
       - default/auth-service
     values:
       - image:
-          repository: "{{ env "dockerRegistry" }}/{{ env "dockerRepo" }}/pinz-api-gateway"
-          tag: "{{ env "imageTag" }}"
+          repository: "{{ .Values.dockerRegistry }}/{{ .Values.dockerRepo }}/pinz-api-gateway"
+          tag: "{{ .Values.imageTag }}"
           pullPolicy: Always
       - env:
           apiGatewayPort: "8080"
