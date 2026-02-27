@@ -100,7 +100,7 @@ echo "GITHUB_ACTOR=your_username" >> /opt/pinz/.env
 **Как получить GitHub токен:**
 1. GitHub → Settings → Developer settings → Personal access tokens
 2. Generate new token (classic)
-3. Scope: `read:packages`
+3. **Scopes:** ✅ `read:packages` (для чтения) или ✅ `write:packages` (для записи)
 4. Используйте токен как пароль
 
 ### Генерация SSH ключа
