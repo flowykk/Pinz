@@ -22,14 +22,29 @@ public class TripViewModel {
         case checkAndUpdateTrip([Trip])
     }
     
-    var trip: Trip
-    var position: MapCameraPosition
+    var trip: Trip?
+    var _position: MapCameraPosition?
     var selectedPin: Pin?
     private var router: AppRouting?
 
-    public init(trip: Trip) {
+    var position: MapCameraPosition {
+        get {
+            _position ?? .camera(MapCamera(
+                centerCoordinate: CLLocationCoordinate2D(
+                    latitude: 55.7558,
+                    longitude: 37.6173
+                ),
+                distance: 50000
+            ))
+        }
+        set { _position = newValue }
+    }
+
+    public init(trip: Trip?) {
         self.trip = trip
-        self.position = trip.pins.calculateInitialMapPosition()
+        if let trip {
+            self._position = trip.pins.calculateInitialMapPosition()
+        }
     }
     
     public func dispatch(_ intent: Intent) {
@@ -37,7 +52,9 @@ public class TripViewModel {
         case let .navigate(route):
             switch route {
             case .tripInfo:
-                router?.navigateToTripInfo(trip: trip)
+                if let trip {
+                    router?.navigateToTripInfo(trip: trip)
+                }
             case .profile(let user):
                 router?.navigateToProfile(user: user)
             case .feed:
@@ -61,7 +78,7 @@ public class TripViewModel {
             SelectedTripStorage.shared.selectTrip(id: trip.id)
         case let .checkAndUpdateTrip(trips):
             guard let selectedTripID = SelectedTripStorage.shared.selectedTripID,
-                  selectedTripID != trip.id,
+                  selectedTripID != trip?.id,
                   let newTrip = trips.first(where: { $0.id == selectedTripID }) else {
                 return
             }
