@@ -6,6 +6,7 @@ public enum TripRoute: Hashable {
     case profile(user: User)
     case pinInfo(pin: Pin)
     case members
+    case feed
 }
 
 public enum TripInfoRoute: Hashable {
