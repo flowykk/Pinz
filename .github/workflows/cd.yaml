@@ -79,14 +79,18 @@ jobs:
           # Copy updated files to server
           echo "Copying updated files to server..."
           scp -o StrictHostKeyChecking=no -i /tmp/ssh_key -r Backend/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/pinz/Backend/
+          scp -o StrictHostKeyChecking=no -i /tmp/ssh_key -r k8s-istio/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/pinz/k8s-istio/ 2>/dev/null || echo "k8s-istio directory not found or empty"
 
           ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /opt/pinz/Backend &&
             export IMAGE_TAG=${{ needs.build-and-push.outputs.image-tag }} &&
             export DOCKER_REGISTRY=${{ secrets.DOCKER_REGISTRY }} &&
             export DOCKER_REPO=${{ secrets.DOCKER_REPO }} &&
+            export GITHUB_TOKEN='${{ secrets.GITHUB_TOKEN }}' &&
+            export GITHUB_ACTOR='${{ github.actor }}' &&
             export POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' &&
             export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}' &&
+            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml &&
             echo 'Deploying with tag ${{ needs.build-and-push.outputs.image-tag }}' &&
             ./deploy.sh
           "

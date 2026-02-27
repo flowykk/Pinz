@@ -104,8 +104,19 @@ validate_env() {
     fi
 
     # Check Kubernetes connection
+    log_info "Checking Kubernetes cluster connection..."
     if ! kubectl cluster-info &> /dev/null; then
         log_error "Cannot connect to Kubernetes cluster"
+        log_error "KUBECONFIG: ${KUBECONFIG:-not set}"
+        log_error "kubectl version: $(kubectl version --client --short 2>/dev/null || echo 'kubectl not found')"
+        log_error "Please ensure k3s is installed and running, and KUBECONFIG is set correctly"
+        exit 1
+    fi
+
+    # Verify cluster is accessible
+    if ! kubectl get nodes &> /dev/null; then
+        log_error "Cannot access Kubernetes nodes"
+        log_error "Cluster may not be ready or accessible"
         exit 1
     fi
 

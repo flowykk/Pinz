@@ -97,6 +97,27 @@ install_helm() {
     log_success "Helm installed"
 }
 
+# Install Helm plugins
+install_helm_plugins() {
+    log_info "Installing Helm plugins..."
+
+    # Install helm-diff plugin
+    log_info "Installing helm-diff plugin..."
+    helm plugin install https://github.com/databus23/helm-diff --version v3.14.0
+    if [[ $? -ne 0 ]]; then
+        log_error "Failed to install helm-diff plugin"
+        exit 1
+    fi
+
+    # Verify helm-diff is working
+    if ! helm diff version &> /dev/null; then
+        log_error "helm-diff plugin is installed but not working"
+        exit 1
+    fi
+
+    log_success "Helm plugins installed"
+}
+
 # Install Helmfile
 install_helmfile() {
     log_info "Installing Helmfile..."
@@ -398,6 +419,7 @@ main() {
     install_docker
     install_k3s
     install_helm
+    install_helm_plugins
     install_helmfile
     install_istio
     install_tools
