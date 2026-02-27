@@ -79,6 +79,7 @@ load_env() {
     fi
 
     # Set defaults for required variables
+    SERVER_IP="${SERVER_IP:-host.docker.internal}"
     POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-pinz_password}"
     JWT_SECRET_KEY="${JWT_SECRET_KEY:-change-me-in-production}"
 }
@@ -181,6 +182,7 @@ deploy_app() {
     export DOCKER_REGISTRY="$DOCKER_REGISTRY"
     export DOCKER_REPO="$DOCKER_REPO"
     export IMAGE_TAG="$IMAGE_TAG"
+    export SERVER_IP="${SERVER_IP:-host.docker.internal}"
     export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-pinz_password}"
     export JWT_SECRET_KEY="${JWT_SECRET_KEY:-change-me-in-production}"
 
@@ -326,6 +328,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Environment variables:"
             echo "  IMAGE_TAG                Same as --image-tag"
+            echo "  SERVER_IP                Server IP address for database access"
             echo "  POSTGRES_PASSWORD        Database password"
             echo "  JWT_SECRET_KEY           JWT secret key"
             echo ""
