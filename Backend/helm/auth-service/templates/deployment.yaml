@@ -14,8 +14,6 @@ spec:
       labels:
         app: auth-service
     spec:
-      imagePullSecrets:
-        - name: docker-registry-secret
       containers:
         - name: auth-service
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
