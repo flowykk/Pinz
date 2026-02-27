@@ -1,10 +1,29 @@
 import SwiftUI
+import PinzUI
 
 public struct FeedView: View {
-    
-    public init() {}
-    
+
+    @State private var viewModel: FeedViewModel
+
+    @Environment(\.appRouter) private var router
+
+    public init() {
+        viewModel = FeedViewModel()
+    }
+
     public var body: some View {
-        Text("Feed")
+        VStack(spacing: 0) {
+            Header(leftView: {
+                PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                    viewModel.dispatch(.navigate(.back))
+                }
+            }, centerView: {
+                HeaderTitle("Лента")
+            })
+
+            Spacer()
+        }
+        .background(PinzUIAsset.background.swiftUIColor)
+        .onAppear { viewModel.setRouter(router) }
     }
 }
