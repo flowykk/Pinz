@@ -102,7 +102,7 @@ extension AppRouter {
 
 extension AppRouter {
     public func navigateToFeed() {
-        // TODO: implement feed route
+        navigate(to: .trip(.feed))
     }
 }
 
