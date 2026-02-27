@@ -10,11 +10,11 @@ releases:
           tag: "{{ env "IMAGE_TAG" | default "latest" }}"
           pullPolicy: Always
       - env:
-          dbHost: db
+          dbHost: "{{ env "SERVER_IP" | default "db" }}"
           dbPort: "5432"
           dbUser: pinz_user
           dbName: pinz_db
-          redisAddr: redis:6379
+          redisAddr: "{{ env "SERVER_IP" | default "redis" }}:6379"
           grpcPort: ":50051"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"

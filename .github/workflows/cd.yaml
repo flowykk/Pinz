@@ -88,6 +88,7 @@ jobs:
             export DOCKER_REPO=${{ secrets.DOCKER_REPO }} &&
             export GITHUB_TOKEN='${{ secrets.GITHUB_TOKEN }}' &&
             export GITHUB_ACTOR='${{ github.actor }}' &&
+            export SERVER_IP='${{ secrets.SERVER_IP }}' &&
             export POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' &&
             export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}' &&
             export KUBECONFIG=/etc/rancher/k3s/k3s.yaml &&
