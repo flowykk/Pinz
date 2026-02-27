@@ -22,23 +22,27 @@ public struct TripView: View {
 
     public init(trips: [Trip]) {
         self.availableTrips = trips
-        
+
         let selectedTripID = SelectedTripStorage.shared.selectedTripID
-        let trip = trips.first { $0.id == selectedTripID } ?? trips.first ?? Trip.stub()
+        let trip = trips.first { $0.id == selectedTripID }
         viewModel = TripViewModel(trip: trip)
     }
 
     public var body: some View {
         ZStack {
-            TripMapView(
-                position: $viewModel.position,
-                pins: viewModel.trip.pins,
-                onPinTap: { pin in
-                    viewModel.dispatch(.selectPin(pin: pin))
-                }
-            )
+            if let selectedTrip = viewModel.trip {
+                TripMapView(
+                    position: $viewModel.position,
+                    pins: selectedTrip.pins,
+                    onPinTap: { pin in
+                        viewModel.dispatch(.selectPin(pin: pin))
+                    }
+                )
 
-            gradient.ignoresSafeArea()
+                gradient.ignoresSafeArea()
+            } else {
+                UnselectedTripView()
+            }
 
             header
         }
@@ -51,16 +55,23 @@ public struct TripView: View {
                 isTripsListButtonRotated = newValue
             }
         })
-        .sheet(isPresented: $isPinsListPresented) {
-            TripPinsListPopupView(pins: viewModel.trip.pins) { pin in
-                isPinsListPresented = false
-                viewModel.dispatch(.navigate(.pinInfo(pin)))
+        .ifLet(viewModel.trip) { view, selectedTrip in
+            view.sheet(isPresented: $isPinsListPresented) {
+                TripPinsListPopupView(pins: selectedTrip.pins) { pin in
+                    isPinsListPresented = false
+                    viewModel.dispatch(.navigate(.pinInfo(pin)))
+                }
+                .pinzSheet()
+                .presentationDetents([.medium, .large])
             }
-            .pinzSheet()
-            .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $isTripsListPresented) {
-            let otherTrips = availableTrips.filter { $0.id != viewModel.trip.id }
+            let otherTrips = availableTrips.filter { trip in
+                if let selectedTrip = viewModel.trip {
+                    return trip.id != selectedTrip.id
+                }
+                return true
+            }
             TripsListPopupView(trips: otherTrips) { selectedTrip in
                 isTripsListPresented = false
                 withAnimation(.easeInOut(duration: 0.3)) {
@@ -93,7 +104,9 @@ public struct TripView: View {
             HStack(alignment: .top, spacing: 6) {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
-                        tripHeader
+                        if let selectedTrip = viewModel.trip {
+                            tripHeader(for: selectedTrip)
+                        }
                         button(.icon("chevron.up"), isRotated: isTripsListButtonRotated) {
                             isTripsListPresented = true
                         }
@@ -101,11 +114,13 @@ public struct TripView: View {
                     button(.icon("square.grid.2x2.fill")) {
                         viewModel.dispatch(.navigate(.feed))
                     }
-                    button(
-                        .icon("point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath.fill"),
-                        invertColors: true,
-                    ) {
-                        // TODO: route animation
+                    if let _ = viewModel.trip {
+                        button(
+                            .icon("point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath.fill"),
+                            invertColors: true,
+                        ) {
+                            // TODO: route animation
+                        }
                     }
                 }
 
@@ -115,13 +130,15 @@ public struct TripView: View {
                     button(.image(PinzUIAsset.avatar.image)) {
                         viewModel.dispatch(.navigate(.profile(User(nickname: "flowykk", email: "cristgames123@gmail.com"))))
                     }
-                    button(.icon("list.bullet")) {
-                        if !viewModel.trip.pins.isEmpty {
-                            isPinsListPresented = true
+                    if let selectedTrip = viewModel.trip {
+                        button(.icon("list.bullet")) {
+                            if !selectedTrip.pins.isEmpty {
+                                isPinsListPresented = true
+                            }
                         }
-                    }
-                    button(.icon("person.2.fill")) {
-                        viewModel.dispatch(.navigate(.members))
+                        button(.icon("person.2.fill")) {
+                            viewModel.dispatch(.navigate(.members))
+                        }
                     }
                 }
             }.padding(.horizontal, 10)
@@ -130,19 +147,19 @@ public struct TripView: View {
         }
     }
 
-    private var tripHeader: some View {
+    private func tripHeader(for trip: Trip) -> some View {
         Button {
             viewModel.dispatch(.navigate(.tripInfo))
         } label: {
             HStack(spacing: 8) {
-                Image(uiImage: viewModel.trip.image ?? PinzUIAsset.avatar.image)
+                Image(uiImage: trip.image ?? PinzUIAsset.avatar.image)
                     .resizable()
                     .scaledToFill()
                     .frame(38)
                     .cornerRadius(12)
                     .clipped()
 
-                Text(viewModel.trip.name)
+                Text(trip.name)
                     .roundedFount(size: 16)
             }
             .padding(.leading, 6)
