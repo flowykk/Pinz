@@ -20,3 +20,9 @@ env:
 secret:
   dbPassword: "pinz_password"
   jwtSecretKey: "change-me-in-production"
+
+dockerConfig:
+  auths:
+    ghcr.io:
+      username: "{{ .Values.github.actor }}"
+      password: "{{ .Values.github.token }}"

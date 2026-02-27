@@ -12,3 +12,9 @@ service:
 env:
   apiGatewayPort: "8080"
   authServiceGrpcAddress: "auth-service:50051"
+
+dockerConfig:
+  auths:
+    ghcr.io:
+      username: "{{ .Values.github.actor }}"
+      password: "{{ .Values.github.token }}"
