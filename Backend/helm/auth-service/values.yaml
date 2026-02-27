@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: pinz-auth-service
+  repository: ghcr.io/dmitry-pr/pinz-auth-service
   tag: latest
   pullPolicy: IfNotPresent
 

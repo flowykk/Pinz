@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: pinz-api-gateway
+  repository: ghcr.io/dmitry-pr/pinz-api-gateway
   tag: latest
   pullPolicy: IfNotPresent
 

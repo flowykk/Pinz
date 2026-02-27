@@ -6,7 +6,7 @@ releases:
     chart: ./helm/auth-service
     values:
       - image:
-          repository: pinz-auth-service
+          repository: ghcr.io/dmitry-pr/pinz-auth-service
           tag: latest
           pullPolicy: IfNotPresent
       - env:
@@ -27,7 +27,7 @@ releases:
       - default/auth-service
     values:
       - image:
-          repository: pinz-api-gateway
+          repository: ghcr.io/dmitry-pr/pinz-api-gateway
           tag: latest
           pullPolicy: IfNotPresent
       - env:
