@@ -19,9 +19,6 @@ releases:
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
           jwtSecretKey: "{{ env "JWT_SECRET_KEY" | default "change-me-in-production" }}"
-      - github:
-          actor: "{{ env "GITHUB_ACTOR" | default "dmitry-pr" }}"
-          token: "{{ env "GITHUB_TOKEN" | default "" }}"
 
   - name: api-gateway
     namespace: default
@@ -36,6 +33,3 @@ releases:
       - env:
           apiGatewayPort: "8080"
           authServiceGrpcAddress: auth-service.default.svc.cluster.local:50051
-      - github:
-          actor: "{{ env "GITHUB_ACTOR" | default "dmitry-pr" }}"
-          token: "{{ env "GITHUB_TOKEN" | default "" }}"
