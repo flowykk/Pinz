@@ -6,8 +6,8 @@ releases:
     chart: ./helm/auth-service
     values:
       - image:
-          repository: "{{ .Values.dockerRegistry }}/{{ .Values.dockerRepo }}/pinz-auth-service"
-          tag: "{{ .Values.imageTag }}"
+          repository: "{{ env \"DOCKER_REGISTRY\" | default \"ghcr.io\" }}/{{ env \"DOCKER_REPO\" | default \"dmitry-pr\" }}/pinz-auth-service"
+          tag: "{{ env \"IMAGE_TAG\" | default \"latest\" }}"
           pullPolicy: Always
       - env:
           dbHost: db
@@ -17,8 +17,8 @@ releases:
           redisAddr: redis:6379
           grpcPort: ":50051"
       - secret:
-          dbPassword: "{{ .Values.postgresPassword }}"
-          jwtSecretKey: "{{ .Values.jwtSecretKey }}"
+          dbPassword: "{{ env \"POSTGRES_PASSWORD\" | default \"pinz_password\" }}"
+          jwtSecretKey: "{{ env \"JWT_SECRET_KEY\" | default \"change-me-in-production\" }}"
 
   - name: api-gateway
     namespace: default
@@ -27,8 +27,8 @@ releases:
       - default/auth-service
     values:
       - image:
-          repository: "{{ .Values.dockerRegistry }}/{{ .Values.dockerRepo }}/pinz-api-gateway"
-          tag: "{{ .Values.imageTag }}"
+          repository: "{{ env \"DOCKER_REGISTRY\" | default \"ghcr.io\" }}/{{ env \"DOCKER_REPO\" | default \"dmitry-pr\" }}/pinz-api-gateway"
+          tag: "{{ env \"IMAGE_TAG\" | default \"latest\" }}"
           pullPolicy: Always
       - env:
           apiGatewayPort: "8080"
