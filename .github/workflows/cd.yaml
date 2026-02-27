@@ -74,14 +74,14 @@ jobs:
 
           # Test SSH connection first
           echo "Testing SSH connection..."
-          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i /tmp/ssh_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH connection successful'"
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -i /tmp/ssh_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH connection successful'"
 
           # Copy updated files to server
           echo "Copying updated files to server..."
-          scp -o StrictHostKeyChecking=no -i /tmp/ssh_key -r Backend/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/pinz/Backend/
-          scp -o StrictHostKeyChecking=no -i /tmp/ssh_key -r k8s-istio/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/pinz/k8s-istio/ 2>/dev/null || echo "k8s-istio directory not found or empty"
+          scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -i /tmp/ssh_key -r Backend/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/pinz/Backend/
+          scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -i /tmp/ssh_key -r k8s-istio/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/pinz/k8s-istio/ 2>/dev/null || echo "k8s-istio directory not found or empty"
 
-          ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -i /tmp/ssh_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /opt/pinz/Backend &&
             export IMAGE_TAG=${{ needs.build-and-push.outputs.image-tag }} &&
             export DOCKER_REGISTRY=${{ secrets.DOCKER_REGISTRY }} &&
