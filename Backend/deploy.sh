@@ -12,7 +12,7 @@ ENV_FILE="${PROJECT_DIR}/.env"
 
 # Default values
 DOCKER_REGISTRY="${DOCKER_REGISTRY:-ghcr.io}"
-DOCKER_REPO="${DOCKER_REPO:-flowykk/pinz}"
+DOCKER_REPO="${DOCKER_REPO:-flowykk}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 
 # Colors for output
@@ -123,6 +123,8 @@ pull_images() {
     local auth_service_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-auth-service:${IMAGE_TAG}"
 
     log_info "Pulling Docker images..."
+    log_info "API Gateway: $api_gateway_image"
+    log_info "Auth Service: $auth_service_image"
 
     docker pull "$api_gateway_image"
     docker pull "$auth_service_image"
@@ -146,8 +148,13 @@ select_helmfile() {
 deploy_app() {
     log_info "Starting deployment..."
 
-    # Set deployment parameters
+    # Set deployment parameters for Helmfile
     export IMAGE_TAG="$IMAGE_TAG"
+    export dockerRegistry="$DOCKER_REGISTRY"
+    export dockerRepo="$DOCKER_REPO"
+    export imageTag="$IMAGE_TAG"
+    export postgresPassword="${POSTGRES_PASSWORD:-pinz_password}"
+    export jwtSecretKey="${JWT_SECRET_KEY:-change-me-in-production}"
 
     # Deploy using Helmfile
     cd "$PROJECT_DIR"
