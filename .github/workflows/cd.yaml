@@ -76,6 +76,10 @@ jobs:
           echo "Testing SSH connection..."
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i /tmp/ssh_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH connection successful'"
 
+          # Copy updated files to server
+          echo "Copying updated files to server..."
+          scp -o StrictHostKeyChecking=no -i /tmp/ssh_key -r Backend/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/pinz/Backend/
+
           ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /opt/pinz/Backend &&
             export IMAGE_TAG=${{ needs.build-and-push.outputs.image-tag }} &&

@@ -49,6 +49,24 @@ is_server() {
     [[ -f "/opt/pinz/Backend/deploy.sh" ]] || [[ "$PWD" == "/opt/pinz/Backend" ]]
 }
 
+# Update repository
+update_repo() {
+    if is_server && [[ -d ".git" ]]; then
+        log_info "Updating repository on server..."
+
+        # Get current branch
+        local current_branch=$(git branch --show-current)
+
+        # Pull latest changes
+        git pull origin "$current_branch"
+
+        # Reset any local changes (optional, be careful with this)
+        # git reset --hard origin/"$current_branch"
+
+        log_success "Repository updated successfully"
+    fi
+}
+
 # Load environment variables
 load_env() {
     if [[ -f "$ENV_FILE" ]]; then
@@ -247,6 +265,9 @@ main() {
     log_info "Image Tag: $IMAGE_TAG"
     log_info "Running in CI: $(is_ci && echo 'Yes' || echo 'No')"
     log_info "Running on server: $(is_server && echo 'Yes' || echo 'No')"
+
+    # Update repository if on server
+    update_repo
 
     # Load environment
     load_env
