@@ -15,6 +15,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	"pinz/backend/api-gateway-service/internal/di"
+	"pinz/backend/api-gateway-service/internal/handlers"
 
 	_ "pinz/backend/api-gateway-service/docs"
 )
@@ -29,6 +30,9 @@ func NewServer(deps *di.Dependencies) *Server {
 	r.Use(chiMW.Logger)
 	r.Use(chiMW.Recoverer)
 	r.Use(chiMW.Timeout(10 * time.Second))
+
+	// Health check endpoint
+	r.Get("/health", handlers.HealthCheck)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/email", deps.AuthHandler.SubmitEmail)

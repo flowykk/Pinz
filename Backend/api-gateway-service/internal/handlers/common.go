@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -67,4 +68,12 @@ func handleServiceError(w http.ResponseWriter, err error, action string) {
 	default:
 		respondError(w, http.StatusInternalServerError, "internal server error")
 	}
+}
+
+func HealthCheck(w http.ResponseWriter, r *http.Request) {
+	respondJSON(w, http.StatusOK, map[string]string{
+		"status":    "healthy",
+		"service":   "api-gateway",
+		"timestamp": fmt.Sprintf("%d", time.Now().Unix()),
+	})
 }
