@@ -165,6 +165,7 @@ pull_images() {
 # Select Helmfile configuration
 select_helmfile() {
     HELMFILE_CONFIG="${PROJECT_DIR}/helmfile.yaml.gotmpl"
+    ISTIO_CONFIG_DIR="${PROJECT_DIR}/k8s-istio"
 
     if [[ ! -f "$HELMFILE_CONFIG" ]]; then
         log_error "Helmfile config not found: $HELMFILE_CONFIG"
@@ -190,6 +191,25 @@ deploy_app() {
     helmfile -f "$HELMFILE_CONFIG" apply
 
     log_success "Application deployed successfully"
+}
+
+# Apply Istio ingress resources
+apply_istio_routing() {
+    if [[ ! -d "$ISTIO_CONFIG_DIR" ]]; then
+        log_warning "Istio config directory not found: $ISTIO_CONFIG_DIR"
+        log_warning "Skipping Istio Gateway/VirtualService apply"
+        return 0
+    fi
+
+    if ! kubectl get ns istio-system &>/dev/null; then
+        log_warning "Istio namespace (istio-system) not found"
+        log_warning "Skipping Istio Gateway/VirtualService apply"
+        return 0
+    fi
+
+    log_info "Applying Istio ingress resources from: $ISTIO_CONFIG_DIR"
+    kubectl apply -f "$ISTIO_CONFIG_DIR"
+    log_success "Istio ingress resources applied"
 }
 
 # Wait for deployment to be ready
@@ -294,8 +314,14 @@ main() {
     # Pull images
     pull_images
 
+    # Select deployment configs
+    select_helmfile
+
     # Deploy application
     deploy_app
+
+    # Apply Istio ingress routing resources (if present)
+    apply_istio_routing
 
     # Wait for readiness
     wait_for_deployment
