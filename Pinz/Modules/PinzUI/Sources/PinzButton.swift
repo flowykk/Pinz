@@ -35,6 +35,7 @@ public struct PinzButton: View {
         case chevronLeft = "chevron.left"
         case xmark = "xmark"
         case ellipsis = "ellipsis"
+        case plus = "plus"
 
         case personAdd = "person.fill.badge.plus"
         case pencil = "pencil"

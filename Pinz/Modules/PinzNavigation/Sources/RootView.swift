@@ -36,6 +36,8 @@ public struct RootView<Content: View>: View {
                 ProfileView(user: user)
             case let .pinInfo(pin):
                 PinInfoView(pin: pin)
+            case .pinCreation:
+                PinCreationView()
             case .members:
                 TripMembersView()
             case .feed:

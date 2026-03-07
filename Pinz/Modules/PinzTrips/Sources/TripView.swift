@@ -64,6 +64,9 @@ public struct TripView: View {
                 TripPinsListPopupView(pins: selectedTrip.pins) { pin in
                     isPinsListPresented = false
                     viewModel.dispatch(.navigate(.pinInfo(pin)))
+                } createPinTapped: {
+                    isPinsListPresented = false
+                    viewModel.dispatch(.navigate(.pinCreation))
                 }
                 .pinzSheet()
                 .presentationDetents([.medium, .large])

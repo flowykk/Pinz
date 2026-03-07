@@ -5,7 +5,9 @@ public protocol AppRouting {
     func navigateToTripInfo(trip: Trip)
     func navigateToProfile(user: User)
     func navigateToPinInfo(pin: Pin)
+    func navigateToPinCreation()
     func navigateToTripMembers()
+    func navigateToFeed()
 
     func navigateToPinsList(trip: Trip)
     func navigateToSelectablePinsList(trip: Trip)
@@ -20,8 +22,6 @@ public protocol AppRouting {
     func navigateToSavedMaps()
     func navigateToNotifications()
     func navigateToAppearance()
-
-    func navigateToFeed()
 
     func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction)
 
