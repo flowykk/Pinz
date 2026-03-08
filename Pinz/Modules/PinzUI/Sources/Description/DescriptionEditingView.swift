@@ -9,7 +9,7 @@ public struct DescriptionEditingView: View {
     public init(
         title: String = "Описание",
         text: Binding<String>,
-        placeholder: String = "Описание путешествия"
+        placeholder: String
     ) {
         self.title = title
         self._text = text

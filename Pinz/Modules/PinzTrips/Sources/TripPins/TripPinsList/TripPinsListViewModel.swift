@@ -8,6 +8,7 @@ final class TripPinsListViewModel {
 
     enum Route {
         case pinInfo(Pin)
+        case pinCreation
         case back
     }
 
@@ -30,6 +31,8 @@ final class TripPinsListViewModel {
             switch route {
             case let .pinInfo(pin):
                 router?.navigateToPinInfo(pin: pin)
+            case .pinCreation:
+                router?.navigateToPinCreation()
             case .back:
                 router?.pop()
             }

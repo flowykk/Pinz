@@ -12,6 +12,7 @@ final class TripViewModel {
         case feed
         case members
         case pinInfo(Pin)
+        case pinCreation
     }
 
     enum State {
@@ -84,6 +85,8 @@ final class TripViewModel {
                 router?.navigateToFeed()
             case .pinInfo(let pin):
                 router?.navigateToPinInfo(pin: pin)
+            case .pinCreation:
+                router?.navigateToPinCreation()
             case .members:
                 router?.navigateToTripMembers()
             }
