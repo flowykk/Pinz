@@ -72,6 +72,10 @@ extension AppRouter {
     public func navigateToMediaInfo(media: MediaItem) {
         navigate(to: .media(.info(media: media)))
     }
+
+    public func navigateToLocalMediaInfo(media: LoadedMedia) {
+        navigate(to: .media(.localInfo(media: media)))
+    }
 }
 
 // MARK: - Profile Routing

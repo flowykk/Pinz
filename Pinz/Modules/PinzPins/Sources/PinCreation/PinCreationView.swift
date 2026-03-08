@@ -127,6 +127,9 @@ public struct PinCreationView: View {
                         contentMode: .fit,
                         cornerRadius: 14
                     )
+                    .onTapGesture {
+                        viewModel.dispatch(.navigate(.mediaInfo(media)))
+                    }
                 }
             }
         }

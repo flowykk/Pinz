@@ -78,6 +78,8 @@ public struct RootView<Content: View>: View {
             switch mediaRoute {
             case let .info(media):
                 MediaInfoView(media: media)
+            case let .localInfo(media):
+                MediaInfoView(localMedia: media)
             }
         }
     }
