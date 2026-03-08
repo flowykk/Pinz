@@ -5,31 +5,42 @@ public struct LoadedMediaThumbnailView: View {
     let media: LoadedMedia
     let contentMode: ContentMode
     let cornerRadius: CGFloat
+    let onMediaDelete: () -> Void
 
     public init(
         media: LoadedMedia,
         contentMode: ContentMode = .fill,
-        cornerRadius: CGFloat = 0
+        cornerRadius: CGFloat = 0,
+        onMediaDelete: @escaping () -> Void
     ) {
         self.media = media
         self.contentMode = contentMode
         self.cornerRadius = cornerRadius
+        self.onMediaDelete = onMediaDelete
     }
 
     public var body: some View {
-        switch media.content {
-        case .loading:
-            loaderView
-        case .image(let img):
-            readyView(image: img)
-        case .video(_, let frame):
-            readyView(image: frame)
-                .overlay {
-                    MediaBadgesView(leadingTopBadge: {
-                        BadgeView(icon: .video)
-                    })
-                    .padding(4)
+        Group {
+            switch media.content {
+            case .loading:
+                loaderView
+            case .image(let img):
+                readyView(image: img)
+            case .video(_, let frame):
+                readyView(image: frame)
+            }
+        }.overlay {
+            MediaBadgesView {
+                if case .video = media.content {
+                    BadgeView(icon: .video)
                 }
+            } trailingTopBadge: {
+                Button {
+                    onMediaDelete()
+                } label: {
+                    BadgeView(icon: .trash, color: PinzUIAsset.accentRed.swiftUIColor)
+                }
+            }.padding(4)
         }
     }
 

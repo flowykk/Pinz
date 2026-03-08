@@ -6,12 +6,19 @@ public final class VideoPlayerController {
     public private(set) var isPlaying: Bool = false
     public private(set) var naturalSize: CGSize?
     public private(set) var isMuted: Bool = false
+    public private(set) var hasAudio: Bool = false
 
     public init(url: URL) {
         self.player = AVPlayer(url: url)
         Task {
-            if let thumbnail = await ImageProvider.loadOrGetVideoThumbnail(for: url.absoluteString) {
-                self.naturalSize = thumbnail.size
+            async let thumbnail = ImageProvider.loadOrGetVideoThumbnail(for: url.absoluteString)
+            async let tracks = AVURLAsset(url: url).load(.tracks)
+
+            if let image = await thumbnail {
+                self.naturalSize = image.size
+            }
+            if let loaded = try? await tracks {
+                self.hasAudio = loaded.contains(where: { $0.mediaType == .audio })
             }
         }
         NotificationCenter.default.addObserver(

@@ -120,7 +120,7 @@ public struct MediaInfoView: View {
                                 Image(systemName: controller.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                                     .roundedFount(size: 16, foregroundColor: .white)
                                     .padding(10)
-                            }
+                            }.disabledWithOpacity(!controller.hasAudio)
                         }
                         Spacer()
                     }

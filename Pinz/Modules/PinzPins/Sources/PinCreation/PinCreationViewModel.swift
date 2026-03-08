@@ -35,6 +35,7 @@ final class PinCreationViewModel {
         case addTag(MediaTag)
         case deleteTag(MediaTag)
         case addMedias([PhotosPickerItem])
+        case deleteMedia(UUID)
 
         case navigate(Route)
     }
@@ -90,6 +91,8 @@ final class PinCreationViewModel {
                     }
                 }
             }
+        case let .deleteMedia(mediaId):
+            medias.removeAll { $0.id == mediaId }
         }
     }
 
