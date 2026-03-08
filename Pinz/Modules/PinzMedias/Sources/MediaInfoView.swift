@@ -2,6 +2,7 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 import PinzBase
+import AVFoundation
 
 enum MediaInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -9,11 +10,12 @@ enum MediaInfoIcon: String, Setting.Icon {
 }
 
 public struct MediaInfoView: View {
-    
+
     private let media: MediaItem
-    
+
     @Environment(\.appRouter) private var router
-    
+    @State private var playerController: VideoPlayerController?
+
     public init(media: MediaItem) {
         self.media = media
     }
@@ -28,7 +30,7 @@ public struct MediaInfoView: View {
                     case .image:
                         LoadableImageThumbnail(url: media.mediaURL) { state in mediaView(for: state) }
                     case .video:
-                        LoadableVideoThumbnail(url: media.mediaURL) { state in mediaView(for: state) }
+                        videoPlayerSection
                     }
 
                     privacy
@@ -38,7 +40,39 @@ public struct MediaInfoView: View {
             }
             .scrollIndicators(.hidden)
             .padding(.horizontal, 12)
-        }.animationsDisabled()
+        }
+        .onAppear {
+            if media.type == .video, let url = media.mediaURL {
+                playerController = VideoPlayerController(url: url)
+            }
+        }
+        .onDisappear {
+            playerController?.stop()
+            playerController = nil
+        }
+    }
+
+    @ViewBuilder
+    private var videoPlayerSection: some View {
+        if let controller = playerController {
+            let ratio = controller.naturalSize.map { $0.width / $0.height } ?? 1.0
+            VideoPlayerView(player: controller.player)
+                .aspectRatio(ratio, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 36))
+                .overlay {
+                    if !controller.isPlaying {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 52))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .shadow(radius: 8)
+                    }
+                }
+                .onTapGesture {
+                    withAnimation {
+                        controller.togglePlayback()
+                    }
+                }
+        }
     }
 
     @ViewBuilder
