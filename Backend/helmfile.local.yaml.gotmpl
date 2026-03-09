@@ -6,9 +6,9 @@ releases:
     chart: ./helm/auth-service
     values:
       - image:
-          repository: ghcr.io/dmitry-pr/pinz-auth-service
+          repository: backend-auth-service
           tag: latest
-          pullPolicy: IfNotPresent
+          pullPolicy: Never
       - env:
           dbHost: host.docker.internal
           dbPort: "5432"
@@ -27,9 +27,9 @@ releases:
       - default/auth-service
     values:
       - image:
-          repository: ghcr.io/dmitry-pr/pinz-api-gateway
+          repository: backend-api-gateway-service
           tag: latest
-          pullPolicy: IfNotPresent
+          pullPolicy: Never
       - env:
           apiGatewayPort: "8080"
           authServiceGrpcAddress: auth-service.default.svc.cluster.local:50051
