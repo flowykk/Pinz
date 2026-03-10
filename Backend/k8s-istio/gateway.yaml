@@ -12,20 +12,13 @@ spec:
         name: http
         protocol: HTTP
       hosts:
-        - "*"
-    # HTTPS — активируется когда появится TLS-сертификат.
-    # Создай Secret "pinz-tls" в namespace istio-system:
-    #   kubectl create secret tls pinz-tls \
-    #     --cert=/path/to/fullchain.pem \
-    #     --key=/path/to/privkey.pem \
-    #     -n istio-system
-    # Затем раскомментируй этот блок и примени: kubectl apply -f k8s-istio/
-    # - port:
-    #     number: 443
-    #     name: https
-    #     protocol: HTTPS
-    #   tls:
-    #     mode: SIMPLE
-    #     credentialName: pinz-tls
-    #   hosts:
-    #     - "*"
+        - "pinz.website"
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: pinz-tls
+      hosts:
+        - "pinz.website"

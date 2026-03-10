@@ -169,20 +169,35 @@ configure_firewall() {
 }
 
 # Forward ports 80/443 to Istio IngressGateway NodePorts.
-# k3s does not have a cloud LoadBalancer, so NodePorts are used (30569 for http,
-# 31443 for https). iptables PREROUTING rules make traffic arrive on standard
-# ports without MetalLB or an external load-balancer.
+# k3s does not have a cloud LoadBalancer by default, so we resolve real NodePort
+# values from istio-ingressgateway and map standard ports via iptables.
 setup_port_forwarding() {
-    log_info "Setting up port forwarding 80→30569, 443→31443..."
+    local http_nodeport
+    local https_nodeport
+    http_nodeport=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+    https_nodeport=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.port==443)].nodePort}')
 
-    # HTTP: 80 → Istio NodePort 30569
-    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 30569 &>/dev/null; then
-        sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 30569
+    if [[ -z "$http_nodeport" ]] || [[ -z "$https_nodeport" ]]; then
+        log_warning "Cannot resolve Istio ingress NodePorts, skipping iptables forwarding"
+        return 0
     fi
 
-    # HTTPS: 443 → Istio NodePort 31443
-    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31443 &>/dev/null; then
-        sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31443
+    log_info "Setting up port forwarding 80→${http_nodeport}, 443→${https_nodeport}..."
+
+    # PREROUTING handles external traffic to VPS.
+    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport"
+    fi
+    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport"
+    fi
+
+    # OUTPUT handles local checks like curl http://localhost/health.
+    if ! sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport"
+    fi
+    if ! sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 443 -j REDIRECT --to-port "$https_nodeport"
     fi
 
     # Persist rules across reboots
@@ -193,7 +208,7 @@ setup_port_forwarding() {
         sudo netfilter-persistent save
     fi
 
-    log_success "Port forwarding configured: :80 → NodePort 30569, :443 → NodePort 31443"
+    log_success "Port forwarding configured: :80 → NodePort ${http_nodeport}, :443 → NodePort ${https_nodeport}"
 }
 
 # Create project directories
@@ -222,6 +237,7 @@ clone_repository() {
     # Ensure scripts are executable (if they exist)
     [[ -f "deploy.sh" ]] && chmod +x deploy.sh
     [[ -f "setup-server.sh" ]] && chmod +x setup-server.sh
+    [[ -f "setup-certbot.sh" ]] && chmod +x setup-certbot.sh
     log_success "Repository cloned and switched to develop branch"
 }
 
@@ -240,6 +256,7 @@ create_env_file() {
 
 # Server Configuration
 SERVER_IP=${server_ip}
+DOMAIN=${DOMAIN:-pinz.website}
 
 # Database
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pinz_secure_password_$(openssl rand -hex 16)}
@@ -465,6 +482,7 @@ main() {
     create_env_file
     setup_infrastructure
     setup_istio
+    setup_port_forwarding
     test_deployment
     create_deploy_user
     setup_ssh_for_cd

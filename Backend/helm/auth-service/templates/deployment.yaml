@@ -14,6 +14,7 @@ spec:
       labels:
         app: auth-service
     spec:
+      serviceAccountName: auth-service-sa
       containers:
         - name: auth-service
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

@@ -210,6 +210,52 @@ apply_istio_routing() {
     log_info "Applying Istio ingress resources from: $ISTIO_CONFIG_DIR"
     kubectl apply -f "$ISTIO_CONFIG_DIR"
     log_success "Istio ingress resources applied"
+
+    if ! kubectl get secret pinz-tls -n istio-system &>/dev/null; then
+        log_warning "TLS secret istio-system/pinz-tls not found. HTTPS on port 443 will not work until secret is created."
+        log_warning "Run setup-certbot.sh or create secret manually."
+    fi
+}
+
+# Ensure standard ports are forwarded to Istio ingress NodePorts.
+setup_port_forwarding() {
+    if ! is_server; then
+        return 0
+    fi
+
+    if ! command -v sudo &>/dev/null; then
+        log_warning "sudo not found, skipping iptables setup"
+        return 0
+    fi
+
+    local http_nodeport
+    local https_nodeport
+    http_nodeport=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+    https_nodeport=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.port==443)].nodePort}')
+
+    if [[ -z "$http_nodeport" ]] || [[ -z "$https_nodeport" ]]; then
+        log_warning "Cannot resolve Istio ingress NodePorts, skipping iptables setup"
+        return 0
+    fi
+
+    log_info "Ensuring port forwarding 80→${http_nodeport}, 443→${https_nodeport}"
+
+    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport"
+    fi
+    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport"
+    fi
+    if ! sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport"
+    fi
+    if ! sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 443 -j REDIRECT --to-port "$https_nodeport"
+    fi
+
+    if command -v netfilter-persistent &>/dev/null; then
+        sudo netfilter-persistent save
+    fi
 }
 
 # Wait for deployment to be ready
@@ -233,10 +279,9 @@ health_check() {
 
     local api_url=""
     if is_server; then
-        # Port 80 is forwarded to Istio NodePort via iptables (see setup-server.sh).
-        # SERVER_IP is the VPS public IP or falls back to the node's internal IP.
-        local node_ip="${SERVER_IP:-$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')}"
-        api_url="http://$node_ip"
+        # Prefer domain name; fall back to SERVER_IP then node internal IP.
+        local host="${DOMAIN:-${SERVER_IP:-$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')}}"
+        api_url="http://$host"
         log_info "Using server access: $api_url (port 80 → Istio NodePort via iptables)"
     else
         api_url="http://localhost:8080"
@@ -323,6 +368,9 @@ main() {
     # Apply Istio ingress routing resources (if present)
     apply_istio_routing
 
+    # Sync port forwarding rules for standard external ports
+    setup_port_forwarding
+
     # Wait for readiness
     wait_for_deployment
 
@@ -336,13 +384,13 @@ main() {
 
     # Show access information
     if is_server; then
-        local node_ip="${SERVER_IP:-$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')}"
+        local host="${DOMAIN:-${SERVER_IP:-$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')}}"
         log_info ""
         log_info "External Access Information:"
-        log_info "  Access URL:  http://$node_ip"
-        log_info "  Health check: curl http://$node_ip/health"
-        log_info "  Swagger UI:  http://$node_ip/swagger/index.html"
-        log_info "  (port 80 -> NodePort 30569 via iptables)"
+        log_info "  HTTP:   http://$host/health"
+        log_info "  HTTPS:  https://$host/health"
+        log_info "  Swagger: https://$host/swagger/index.html"
+        log_info "  (port 80/443 → Istio NodePort via iptables)"
     else
         log_info "Application is available at: http://localhost:8080"
     fi
