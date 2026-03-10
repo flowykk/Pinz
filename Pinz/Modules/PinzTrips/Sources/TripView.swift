@@ -45,6 +45,10 @@ public struct TripView: View {
             }
 
             header
+
+            if viewModel.state == .route {
+                footer
+            }
         }
         .onAppear { 
             viewModel.setRouter(router)
@@ -60,6 +64,9 @@ public struct TripView: View {
                 TripPinsListPopupView(pins: selectedTrip.pins) { pin in
                     isPinsListPresented = false
                     viewModel.dispatch(.navigate(.pinInfo(pin)))
+                } createPinTapped: {
+                    isPinsListPresented = false
+                    viewModel.dispatch(.navigate(.pinCreation))
                 }
                 .pinzSheet()
                 .presentationDetents([.medium, .large])
@@ -116,10 +123,14 @@ public struct TripView: View {
                     }
                     if let _ = viewModel.trip {
                         button(
-                            .icon("point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath.fill"),
-                            invertColors: true,
+                            .icon(
+                                viewModel.state == .default
+                                ? "point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath.fill"
+                                : "xmark"
+                            ),
+                            invertColors: true
                         ) {
-                            // TODO: route animation
+                            viewModel.dispatch(.toggleRouteState)
                         }
                     }
                 }
@@ -220,12 +231,49 @@ public struct TripView: View {
         }.buttonStyle(.plain)
     }
 
+    @ViewBuilder
+    private var footer: some View {
+        let pins = viewModel.sortedPins
+        VStack {
+            Spacer()
+            HStack {
+                button(.icon("chevron.left")) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        viewModel.dispatch(.previousPin)
+                    }
+                }.disabledWithOpacity(viewModel.routePinIndex <= 0)
+
+                Spacer()
+
+                VStack(spacing: 2) {
+                    Text(pins.isEmpty ? "" : pins[viewModel.routePinIndex].name)
+                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.background.swiftUIColor)
+                        .lineLimit(1)
+                    Text("\(viewModel.routePinIndex + 1) / \(pins.count)")
+                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.background.swiftUIColor)
+                }
+
+                Spacer()
+
+                button(.icon("chevron.right")) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        viewModel.dispatch(.nextPin)
+                    }
+                }.disabledWithOpacity(viewModel.routePinIndex >= pins.count - 1)
+            }
+            .padding(.horizontal, 10)
+        }.padding(.bottom, 36)
+    }
+
     private var gradient: some View {
         VStack {
             GradientView(style: .top, color: .black, height: 150)
             Spacer()
-            GradientView(style: .bottom, color: .black, height: 200)
-                .padding(.bottom, -130)
+            GradientView(
+                style: .bottom,
+                color: .black,
+                height: viewModel.state == .default ? 200 : 300
+            ).padding(.bottom, -130)
         }
     }
 }

@@ -9,7 +9,7 @@ public struct TripMapView: View {
     
     let pins: [Pin]
     let onPinTap: ((Pin) -> Void)?
-    
+
     public init(
         position: Binding<MapCameraPosition>,
         pins: [Pin],
@@ -19,7 +19,7 @@ public struct TripMapView: View {
         self.pins = pins
         self.onPinTap = onPinTap
     }
-    
+
     public var body: some View {
         Map(position: $position) {
             ForEach(pins) { pin in

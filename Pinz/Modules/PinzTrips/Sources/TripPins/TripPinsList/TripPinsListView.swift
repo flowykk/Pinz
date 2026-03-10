@@ -52,7 +52,9 @@ public struct TripPinsListView: View {
                 PinzButton(
                     type: .slot(style: .primary, title: "Добавить пин"),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-                ) {}
+                ) {
+                    viewModel.dispatch(.navigate(.pinCreation))
+                }
             }
         }
     }

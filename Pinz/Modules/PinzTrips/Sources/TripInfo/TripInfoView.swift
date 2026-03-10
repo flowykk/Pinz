@@ -311,7 +311,8 @@ public struct TripInfoView: View {
                 viewModel.trip.description ?? ""
             }, set: { value in
                 viewModel.trip.description = value
-            })
+            }),
+            placeholder: "Описание путешествия"
         )
     }
 

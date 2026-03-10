@@ -55,7 +55,7 @@ public struct ItemsPickerView<Item: PickerItem>: View {
                 disabled: textFieldVisible && textFieldText.isEmpty,
             ) {
                 isPresented = false
-                if !textFieldText.isEmpty {
+                if selection.isCustomizable && !textFieldText.isEmpty {
                     saveCustomizableItem?(textFieldText)
                 }
             }

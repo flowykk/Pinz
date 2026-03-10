@@ -476,6 +476,7 @@ main() {
     install_istio
     install_tools
     configure_firewall
+    setup_port_forwarding
     create_directories
     clone_repository
     create_env_file

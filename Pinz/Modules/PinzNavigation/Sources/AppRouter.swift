@@ -37,8 +37,16 @@ extension AppRouter {
         navigate(to: .trip(.pinInfo(pin: pin)))
     }
 
+    public func navigateToPinCreation() {
+        navigate(to: .trip(.pinCreation))
+    }
+
     public func navigateToTripMembers() {
         navigate(to: .trip(.members))
+    }
+
+    public func navigateToFeed() {
+        navigate(to: .trip(.feed))
     }
 }
 
@@ -63,6 +71,10 @@ extension AppRouter {
 extension AppRouter {
     public func navigateToMediaInfo(media: MediaItem) {
         navigate(to: .media(.info(media: media)))
+    }
+
+    public func navigateToLocalMediaInfo(media: LoadedMedia) {
+        navigate(to: .media(.localInfo(media: media)))
     }
 }
 
@@ -101,9 +113,7 @@ extension AppRouter {
 // MARK: - Feed Routing
 
 extension AppRouter {
-    public func navigateToFeed() {
-        navigate(to: .trip(.feed))
-    }
+
 }
 
 // MARK: - PinInfo Routing
