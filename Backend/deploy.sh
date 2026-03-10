@@ -231,17 +231,17 @@ wait_for_deployment() {
 health_check() {
     log_info "Performing health checks..."
 
-    # Get service URL
     local api_url=""
     if is_server; then
-        # On server, check internal service
-        api_url="http://api-gateway.default.svc.cluster.local:8080"
+        # Port 80 is forwarded to Istio NodePort via iptables (see setup-server.sh).
+        # SERVER_IP is the VPS public IP or falls back to the node's internal IP.
+        local node_ip="${SERVER_IP:-$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')}"
+        api_url="http://$node_ip"
+        log_info "Using server access: $api_url (port 80 → Istio NodePort via iptables)"
     else
-        # Locally, try to get from minikube or ingress
         api_url="http://localhost:8080"
     fi
 
-    # Wait for service to respond
     local max_attempts=30
     local attempt=1
 
@@ -333,7 +333,19 @@ main() {
     show_status
 
     log_success "🎉 Deployment completed successfully!"
-    log_info "Application is available at: http://<your-server-ip>:8080"
+
+    # Show access information
+    if is_server; then
+        local node_ip="${SERVER_IP:-$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')}"
+        log_info ""
+        log_info "External Access Information:"
+        log_info "  Access URL:  http://$node_ip"
+        log_info "  Health check: curl http://$node_ip/health"
+        log_info "  Swagger UI:  http://$node_ip/swagger/index.html"
+        log_info "  (port 80 -> NodePort 30569 via iptables)"
+    else
+        log_info "Application is available at: http://localhost:8080"
+    fi
 }
 
 # Parse command line arguments
