@@ -382,12 +382,16 @@ health_check() {
         api_url="http://localhost:8080"
     fi
 
+    # Always send Host: pinz.website so Istio VirtualService matches regardless
+    # of whether the URL is a domain name, IP, or NodePort.
+    local host_header="${DOMAIN:-pinz.website}"
+
     local max_attempts=30
     local attempt=1
 
     while [[ $attempt -le $max_attempts ]]; do
-        if curl -f -s "$api_url/health" &> /dev/null; then
-            log_success "Health check passed: $api_url/health"
+        if curl -f -s -H "Host: ${host_header}" "$api_url/health" &> /dev/null; then
+            log_success "Health check passed: $api_url/health (Host: ${host_header})"
             return 0
         fi
 
@@ -397,6 +401,7 @@ health_check() {
     done
 
     log_error "Health check failed after $max_attempts attempts"
+    log_error "Tip: check that Gateway/VirtualService are applied: kubectl get gateways.networking.istio.io,virtualservice -n default"
     return 1
 }
 
