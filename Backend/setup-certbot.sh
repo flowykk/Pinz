@@ -129,9 +129,7 @@ main() {
   deploy_acme_handler
   write_renewal_hooks
 
-  if [[ "$SKIP_ISSUE" != "true" ]]; then
     issue_certificate
-  fi
 
   sync_tls_secret
 
