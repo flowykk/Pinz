@@ -95,13 +95,13 @@ write_renewal_hooks() {
 #!/bin/bash
 set -euo pipefail
 line=""
-while line=$(iptables -t nat -L PREROUTING --line-numbers -n \
+while line=$(sudo iptables -t nat -L PREROUTING --line-numbers -n \
     | awk '/REDIRECT/ && /dpt:80/ {print $1; exit}') && [[ -n "$line" ]]; do
-  iptables -t nat -D PREROUTING "$line"
+  sudo iptables -t nat -D PREROUTING "$line"
 done
-while line=$(iptables -t nat -L OUTPUT --line-numbers -n \
+while line=$(sudo iptables -t nat -L OUTPUT --line-numbers -n \
     | awk '/REDIRECT/ && /dpt:80/ {print $1; exit}') && [[ -n "$line" ]]; do
-  iptables -t nat -D OUTPUT "$line"
+  sudo iptables -t nat -D OUTPUT "$line"
 done
 echo "[pre-hook] Port-80 redirects removed"
 EOF
@@ -116,11 +116,11 @@ if [[ -z "\${HTTP_NODEPORT:-}" ]]; then
   echo "[post-hook][ERROR] Cannot find Istio HTTP NodePort; redirect NOT restored"
   exit 1
 fi
-iptables -t nat -C PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "\$HTTP_NODEPORT" 2>/dev/null || \
-  iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "\$HTTP_NODEPORT"
-iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "\$HTTP_NODEPORT" 2>/dev/null || \
-  iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "\$HTTP_NODEPORT"
-command -v netfilter-persistent >/dev/null 2>&1 && netfilter-persistent save || true
+sudo iptables -t nat -C PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "\$HTTP_NODEPORT" 2>/dev/null || \
+  sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "\$HTTP_NODEPORT"
+sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "\$HTTP_NODEPORT" 2>/dev/null || \
+  sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "\$HTTP_NODEPORT"
+command -v netfilter-persistent >/dev/null 2>&1 && sudo netfilter-persistent save || true
 echo "[post-hook] Restored port 80 → \$HTTP_NODEPORT"
 EOF
 
