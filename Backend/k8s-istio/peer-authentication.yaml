@@ -11,7 +11,7 @@ apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
   name: acme-challenge
-  namespace: default
+  namespace: istio-system
 spec:
   selector:
     matchLabels:
