@@ -257,6 +257,8 @@ create_env_file() {
 # Server Configuration
 SERVER_IP=${server_ip}
 DOMAIN=${DOMAIN:-pinz.website}
+# k3s pulls images via containerd directly; docker pull is not needed on this server.
+SKIP_PULL=true
 
 # Database
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pinz_secure_password_$(openssl rand -hex 16)}
