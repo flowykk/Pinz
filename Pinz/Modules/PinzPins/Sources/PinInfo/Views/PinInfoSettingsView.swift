@@ -106,7 +106,8 @@ extension PinInfoView {
                 viewModel.pin.description ?? ""
             }, set: { value in
                 viewModel.pin.description = value
-            })
+            }),
+            placeholder: "Описание путешествия"
         )
     }
 

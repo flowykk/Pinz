@@ -6,6 +6,7 @@ public struct BadgeView: View {
         case lock = "lock.fill"
         case lockOpen = "lock.open.fill"
         case video = "video.fill"
+        case trash = "trash.fill"
     }
 
     private let icon: Icon

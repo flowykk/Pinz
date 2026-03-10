@@ -7,10 +7,16 @@ struct TripPinsListPopupView: View {
 
     let pins: [Pin]
     let pinTapped: (Pin) -> Void
+    let createPinTapped: () -> Void
 
-    init(pins: [Pin], pinTapped: @escaping (Pin) -> Void) {
+    init(
+        pins: [Pin],
+        pinTapped: @escaping (Pin) -> Void,
+        createPinTapped: @escaping () -> Void
+    ) {
         self.pins = pins
         self.pinTapped = pinTapped
+        self.createPinTapped = createPinTapped
     }
 
     var body: some View {
@@ -61,7 +67,9 @@ struct TripPinsListPopupView: View {
                 PinzButton(
                     type: .slot(style: .primary, title: "Добавить пин"),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-                ) {}
+                ) {
+                    createPinTapped()
+                }
             }
         }
     }

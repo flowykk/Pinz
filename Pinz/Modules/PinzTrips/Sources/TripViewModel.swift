@@ -4,7 +4,7 @@ import PinzDomain
 import PinzBase
 
 @Observable
-public class TripViewModel {
+final class TripViewModel {
 
     public enum Route {
         case tripInfo
@@ -12,20 +12,44 @@ public class TripViewModel {
         case feed
         case members
         case pinInfo(Pin)
+        case pinCreation
     }
 
-    public enum Intent {
+    enum State {
+        case `default`
+        case route
+
+        mutating func toggle() {
+            switch self {
+            case .default: self = .route
+            case .route: self = .default
+            }
+        }
+    }
+
+    enum Intent {
         case navigate(Route)
         case selectPin(pin: Pin?)
         case unselectPin
         case selectTrip(Trip)
         case checkAndUpdateTrip([Trip])
+
+        case toggleRouteState
+        case nextPin
+        case previousPin
     }
-    
+
+    var state: State = .default
+    var routePinIndex: Int = 0
+
     var trip: Trip?
     var _position: MapCameraPosition?
     var selectedPin: Pin?
     private var router: AppRouting?
+
+    var sortedPins: [Pin] {
+        (trip?.pins ?? []).sorted { ($0.startDate ?? .distantPast) < ($1.startDate ?? .distantPast) }
+    }
 
     var position: MapCameraPosition {
         get {
@@ -61,6 +85,8 @@ public class TripViewModel {
                 router?.navigateToFeed()
             case .pinInfo(let pin):
                 router?.navigateToPinInfo(pin: pin)
+            case .pinCreation:
+                router?.navigateToPinCreation()
             case .members:
                 router?.navigateToTripMembers()
             }
@@ -75,6 +101,8 @@ public class TripViewModel {
             self.trip = trip
             position = trip.pins.calculateInitialMapPosition()
             selectedPin = nil
+            state = .default
+            routePinIndex = 0
             SelectedTripStorage.shared.selectTrip(id: trip.id)
         case let .checkAndUpdateTrip(trips):
             guard let selectedTripID = SelectedTripStorage.shared.selectedTripID,
@@ -83,10 +111,38 @@ public class TripViewModel {
                 return
             }
             dispatch(.selectTrip(newTrip))
+
+        case .toggleRouteState:
+            withAnimation(.easeInOut(duration: 0.3)) {
+                state.toggle()
+            }
+            routePinIndex = 0
+            if state == .route {
+                navigateToRoutePin(at: 0)
+            }
+        case .nextPin:
+            guard routePinIndex < sortedPins.count - 1 else { return }
+            routePinIndex += 1
+            navigateToRoutePin(at: routePinIndex)
+        case .previousPin:
+            guard routePinIndex > 0 else { return }
+            routePinIndex -= 1
+            navigateToRoutePin(at: routePinIndex)
         }
     }
     
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+    }
+
+    private func navigateToRoutePin(at index: Int) {
+        let pins = sortedPins
+        guard !pins.isEmpty, index < pins.count else { return }
+        withAnimation(.easeInOut(duration: 1)) {
+            position = .camera(MapCamera(
+                centerCoordinate: pins[index].coordinates,
+                distance: 5000
+            ))
+        }
     }
 }

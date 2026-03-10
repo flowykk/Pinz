@@ -36,6 +36,8 @@ public struct RootView<Content: View>: View {
                 ProfileView(user: user)
             case let .pinInfo(pin):
                 PinInfoView(pin: pin)
+            case .pinCreation:
+                PinCreationView()
             case .members:
                 TripMembersView()
             case .feed:
@@ -76,6 +78,8 @@ public struct RootView<Content: View>: View {
             switch mediaRoute {
             case let .info(media):
                 MediaInfoView(media: media)
+            case let .localInfo(media):
+                MediaInfoView(localMedia: media)
             }
         }
     }
