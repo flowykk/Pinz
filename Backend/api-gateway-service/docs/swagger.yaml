@@ -1,29 +1,47 @@
 basePath: /
 definitions:
-  pinz_backend_api-gateway-service_internal_requests.LoginRequest:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    type: object
   pinz_backend_api-gateway-service_internal_requests.LogoutRequest:
     properties:
       refresh_token:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_requests.RefreshTokenRequest:
+  pinz_backend_api-gateway-service_internal_requests.PasskeyLoginBeginRequest:
     properties:
-      refresh_token:
+      email:
+        example: user@example.com
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_requests.SetPasswordAndUsernameRequest:
+  pinz_backend_api-gateway-service_internal_requests.PasskeyLoginFinishRequest:
     properties:
-      password:
+      credential_json:
+        description: CredentialJSON is the PublicKeyCredential (assertion) object
+          serialised to JSON by the client.
+        format: base64
         type: string
+      email:
+        example: user@example.com
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterBeginRequest:
+    properties:
       registration_id:
         type: string
       username:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterFinishRequest:
+    properties:
+      credential_json:
+        description: CredentialJSON is the PublicKeyCredential (attestation) object
+          serialised to JSON by the client.
+        format: base64
+        type: string
+      registration_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.RefreshTokenRequest:
+    properties:
+      refresh_token:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_requests.SubmitEmailRequest:
@@ -44,35 +62,47 @@ definitions:
       error:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_responses.LoginResponse:
+  pinz_backend_api-gateway-service_internal_responses.LogoutResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PasskeyLoginBeginResponse:
+    properties:
+      options_json:
+        format: base64
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PasskeyLoginFinishResponse:
     properties:
       access_token:
         type: string
       refresh_token:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_responses.LogoutResponse:
+  pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterBeginResponse:
     properties:
-      success:
-        type: boolean
+      options_json:
+        format: base64
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterFinishResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.RefreshTokenResponse:
     properties:
       access_token:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_responses.SetPasswordAndUsernameResponse:
-    properties:
-      access_token:
-        type: string
-      refresh_token:
-        type: string
-    type: object
   pinz_backend_api-gateway-service_internal_responses.SubmitEmailResponse:
     properties:
       is_registered:
         type: boolean
-      registration_key:
+      registration_id:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
     type: object
@@ -93,8 +123,8 @@ paths:
       consumes:
       - application/json
       description: 'User sends email. Response indicates if user is registered (next
-        step: password) or not (next step: code from email). registration_key is set
-        only when is_registered is false.'
+        step: passkey login) or not (next step: email verification). registration_id
+        is set only when is_registered is false.'
       parameters:
       - description: Email
         in: body
@@ -118,76 +148,6 @@ paths:
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
       summary: Submit email (login or registration flow)
-      tags:
-      - auth
-  /api/v1/auth/finish-register:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Registration ID, password, username
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.SetPasswordAndUsernameRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SetPasswordAndUsernameResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      summary: Set password and username (finish registration)
-      tags:
-      - auth
-  /api/v1/auth/login:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Email and password
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.LoginResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      summary: Login
       tags:
       - auth
   /api/v1/auth/logout:
@@ -216,7 +176,153 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Logout
+      tags:
+      - auth
+  /api/v1/auth/passkey/login/begin:
+    post:
+      consumes:
+      - application/json
+      description: Returns PublicKeyCredentialRequestOptions (options_json) to pass
+        to navigator.credentials.get(). Call after /auth/email confirms is_registered=true.
+      parameters:
+      - description: User email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyLoginBeginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyLoginBeginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Begin passkey login (step 1 of 2)
+      tags:
+      - auth
+  /api/v1/auth/passkey/login/finish:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the assertion from the authenticator. Returns access and
+        refresh tokens.
+      parameters:
+      - description: User email and assertion credential JSON
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyLoginFinishRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyLoginFinishResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Finish passkey login (step 2 of 2)
+      tags:
+      - auth
+  /api/v1/auth/passkey/register/begin:
+    post:
+      consumes:
+      - application/json
+      description: Returns PublicKeyCredentialCreationOptions (options_json) to pass
+        to navigator.credentials.create(). Call after email verification.
+      parameters:
+      - description: Registration ID and username
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterBeginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterBeginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Begin passkey registration (step 1 of 2)
+      tags:
+      - auth
+  /api/v1/auth/passkey/register/finish:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the attestation from the authenticator and creates the
+        user account. Returns access and refresh tokens.
+      parameters:
+      - description: Registration ID and attestation credential JSON
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterFinishRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterFinishResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Finish passkey registration (step 2 of 2)
       tags:
       - auth
   /api/v1/auth/refresh:
@@ -285,4 +391,10 @@ paths:
       summary: Verify email code
       tags:
       - auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and the JWT access token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

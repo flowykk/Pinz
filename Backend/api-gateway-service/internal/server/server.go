@@ -37,8 +37,10 @@ func NewServer(deps *di.Dependencies) *Server {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/email", deps.AuthHandler.SubmitEmail)
 		r.Post("/auth/verify-email", deps.AuthHandler.VerifyEmailCode)
-		r.Post("/auth/finish-register", deps.AuthHandler.SetPasswordAndUsername)
-		r.Post("/auth/login", deps.AuthHandler.Login)
+		r.Post("/auth/passkey/register/begin", deps.AuthHandler.PasskeyRegisterBegin)
+		r.Post("/auth/passkey/register/finish", deps.AuthHandler.PasskeyRegisterFinish)
+		r.Post("/auth/passkey/login/begin", deps.AuthHandler.PasskeyLoginBegin)
+		r.Post("/auth/passkey/login/finish", deps.AuthHandler.PasskeyLoginFinish)
 		r.Post("/auth/refresh", deps.AuthHandler.RefreshToken)
 		r.Post("/auth/logout", deps.AuthHandler.Logout)
 	})

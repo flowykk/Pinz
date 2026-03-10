@@ -41,12 +41,20 @@ func (c *Client) VerifyEmailCode(ctx context.Context, req *pb.VerifyEmailCodeReq
 	return c.client.VerifyEmailCode(ctx, req)
 }
 
-func (c *Client) SetPasswordAndUsername(ctx context.Context, req *pb.SetPasswordAndUsernameRequest) (*pb.SetPasswordAndUsernameResponse, error) {
-	return c.client.SetPasswordAndUsername(ctx, req)
+func (c *Client) PasskeyRegisterBegin(ctx context.Context, req *pb.PasskeyRegisterBeginRequest) (*pb.PasskeyRegisterBeginResponse, error) {
+	return c.client.PasskeyRegisterBegin(ctx, req)
 }
 
-func (c *Client) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	return c.client.Login(ctx, req)
+func (c *Client) PasskeyRegisterFinish(ctx context.Context, req *pb.PasskeyRegisterFinishRequest) (*pb.PasskeyRegisterFinishResponse, error) {
+	return c.client.PasskeyRegisterFinish(ctx, req)
+}
+
+func (c *Client) PasskeyLoginBegin(ctx context.Context, req *pb.PasskeyLoginBeginRequest) (*pb.PasskeyLoginBeginResponse, error) {
+	return c.client.PasskeyLoginBegin(ctx, req)
+}
+
+func (c *Client) PasskeyLoginFinish(ctx context.Context, req *pb.PasskeyLoginFinishRequest) (*pb.PasskeyLoginFinishResponse, error) {
+	return c.client.PasskeyLoginFinish(ctx, req)
 }
 
 func (c *Client) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequest) (*pb.RefreshTokenResponse, error) {

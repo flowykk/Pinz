@@ -11,7 +11,7 @@
     "paths": {
         "/api/v1/auth/email": {
             "post": {
-                "description": "User sends email. Response indicates if user is registered (next step: password) or not (next step: code from email). registration_key is set only when is_registered is false.",
+                "description": "User sends email. Response indicates if user is registered (next step: passkey login) or not (next step: email verification). registration_id is set only when is_registered is false.",
                 "consumes": [
                     "application/json"
                 ],
@@ -55,116 +55,13 @@
                 }
             }
         },
-        "/api/v1/auth/finish-register": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Set password and username (finish registration)",
-                "parameters": [
-                    {
-                        "description": "Registration ID, password, username",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.SetPasswordAndUsernameRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.SetPasswordAndUsernameResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/auth/login": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Login",
-                "parameters": [
-                    {
-                        "description": "Email and password",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.LoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.LoginResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/auth/logout": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -195,6 +92,220 @@
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/passkey/login/begin": {
+            "post": {
+                "description": "Returns PublicKeyCredentialRequestOptions (options_json) to pass to navigator.credentials.get(). Call after /auth/email confirms is_registered=true.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Begin passkey login (step 1 of 2)",
+                "parameters": [
+                    {
+                        "description": "User email",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyLoginBeginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyLoginBeginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/passkey/login/finish": {
+            "post": {
+                "description": "Verifies the assertion from the authenticator. Returns access and refresh tokens.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Finish passkey login (step 2 of 2)",
+                "parameters": [
+                    {
+                        "description": "User email and assertion credential JSON",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyLoginFinishRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyLoginFinishResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/passkey/register/begin": {
+            "post": {
+                "description": "Returns PublicKeyCredentialCreationOptions (options_json) to pass to navigator.credentials.create(). Call after email verification.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Begin passkey registration (step 1 of 2)",
+                "parameters": [
+                    {
+                        "description": "Registration ID and username",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterBeginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterBeginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/passkey/register/finish": {
+            "post": {
+                "description": "Verifies the attestation from the authenticator and creates the user account. Returns access and refresh tokens.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Finish passkey registration (step 2 of 2)",
+                "parameters": [
+                    {
+                        "description": "Registration ID and attestation credential JSON",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterFinishRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterFinishResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -312,17 +423,6 @@
         }
     },
     "definitions": {
-        "pinz_backend_api-gateway-service_internal_requests.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
         "pinz_backend_api-gateway-service_internal_requests.LogoutRequest": {
             "type": "object",
             "properties": {
@@ -331,24 +431,57 @@
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_requests.RefreshTokenRequest": {
+        "pinz_backend_api-gateway-service_internal_requests.PasskeyLoginBeginRequest": {
             "type": "object",
             "properties": {
-                "refresh_token": {
-                    "type": "string"
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_requests.SetPasswordAndUsernameRequest": {
+        "pinz_backend_api-gateway-service_internal_requests.PasskeyLoginFinishRequest": {
             "type": "object",
             "properties": {
-                "password": {
-                    "type": "string"
+                "credential_json": {
+                    "description": "CredentialJSON is the PublicKeyCredential (assertion) object serialised to JSON by the client.",
+                    "type": "string",
+                    "format": "base64"
                 },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterBeginRequest": {
+            "type": "object",
+            "properties": {
                 "registration_id": {
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterFinishRequest": {
+            "type": "object",
+            "properties": {
+                "credential_json": {
+                    "description": "CredentialJSON is the PublicKeyCredential (attestation) object serialised to JSON by the client.",
+                    "type": "string",
+                    "format": "base64"
+                },
+                "registration_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.RefreshTokenRequest": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
                     "type": "string"
                 }
             }
@@ -381,7 +514,24 @@
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.LoginResponse": {
+        "pinz_backend_api-gateway-service_internal_responses.LogoutResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.PasskeyLoginBeginResponse": {
+            "type": "object",
+            "properties": {
+                "options_json": {
+                    "type": "string",
+                    "format": "base64"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.PasskeyLoginFinishResponse": {
             "type": "object",
             "properties": {
                 "access_token": {
@@ -392,11 +542,23 @@
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.LogoutResponse": {
+        "pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterBeginResponse": {
             "type": "object",
             "properties": {
-                "success": {
-                    "type": "boolean"
+                "options_json": {
+                    "type": "string",
+                    "format": "base64"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterFinishResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
                 }
             }
         },
@@ -408,24 +570,13 @@
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.SetPasswordAndUsernameResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
         "pinz_backend_api-gateway-service_internal_responses.SubmitEmailResponse": {
             "type": "object",
             "properties": {
                 "is_registered": {
                     "type": "boolean"
                 },
-                "registration_key": {
+                "registration_id": {
                     "type": "string",
                     "example": "550e8400-e29b-41d4-a716-446655440000"
                 }
@@ -438,6 +589,14 @@
                     "type": "boolean"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and the JWT access token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

@@ -7,8 +7,10 @@ option go_package = "pinz/backend/auth-service/pkg/proto";
 service AuthService {
   rpc SubmitEmail(SubmitEmailRequest) returns (SubmitEmailResponse) {}
   rpc VerifyEmailCode(VerifyEmailCodeRequest) returns (VerifyEmailCodeResponse) {}
-  rpc SetPasswordAndUsername(SetPasswordAndUsernameRequest) returns (SetPasswordAndUsernameResponse) {}
-  rpc Login(LoginRequest) returns (LoginResponse) {}
+  rpc PasskeyRegisterBegin(PasskeyRegisterBeginRequest) returns (PasskeyRegisterBeginResponse) {}
+  rpc PasskeyRegisterFinish(PasskeyRegisterFinishRequest) returns (PasskeyRegisterFinishResponse) {}
+  rpc PasskeyLoginBegin(PasskeyLoginBeginRequest) returns (PasskeyLoginBeginResponse) {}
+  rpc PasskeyLoginFinish(PasskeyLoginFinishRequest) returns (PasskeyLoginFinishResponse) {}
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
 }
@@ -39,23 +41,39 @@ message VerifyEmailCodeResponse {
   bool success = 1;
 }
 
-message SetPasswordAndUsernameRequest {
+message PasskeyRegisterBeginRequest {
   string registration_id = 1;
-  string password = 2;
-  string username = 3;
+  string username = 2;
 }
 
-message SetPasswordAndUsernameResponse {
+message PasskeyRegisterBeginResponse {
+  bytes options_json = 1;
+}
+
+message PasskeyRegisterFinishRequest {
+  string registration_id = 1;
+  bytes credential_json = 2;
+}
+
+message PasskeyRegisterFinishResponse {
   string access_token = 1;
   string refresh_token = 2;
 }
 
-message LoginRequest {
+message PasskeyLoginBeginRequest {
   string email = 1;
-  string password = 2;
 }
 
-message LoginResponse {
+message PasskeyLoginBeginResponse {
+  bytes options_json = 1;
+}
+
+message PasskeyLoginFinishRequest {
+  string email = 1;
+  bytes credential_json = 2;
+}
+
+message PasskeyLoginFinishResponse {
   string access_token = 1;
   string refresh_token = 2;
 }
