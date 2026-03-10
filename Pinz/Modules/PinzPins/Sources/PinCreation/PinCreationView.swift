@@ -125,8 +125,16 @@ public struct PinCreationView: View {
                     LoadedMediaThumbnailView(
                         media: media,
                         contentMode: .fit,
-                        cornerRadius: 14
+                        cornerRadius: 14,
+                        onMediaDelete: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                viewModel.dispatch(.deleteMedia(media.id))
+                            }
+                        }
                     )
+                    .onTapGesture {
+                        viewModel.dispatch(.navigate(.mediaInfo(media)))
+                    }
                 }
             }
         }
@@ -207,7 +215,7 @@ public struct PinCreationView: View {
                 disabled: false
             ) {
 //                viewModel.dispatch(.navigate(.pinCreation))
-            }
+            }.disabledWithOpacity(viewModel.name.isEmpty)
         }
     }
 }
