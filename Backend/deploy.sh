@@ -82,6 +82,8 @@ load_env() {
     SERVER_IP="${SERVER_IP:-host.docker.internal}"
     POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-pinz_password}"
     JWT_SECRET_KEY="${JWT_SECRET_KEY:-change-me-in-production}"
+    # On k3s servers docker pull is not required; containerd pulls images directly.
+    SKIP_PULL="${SKIP_PULL:-false}"
 }
 
 # Validate environment
@@ -124,42 +126,64 @@ validate_env() {
     log_success "Environment validation passed"
 }
 
-# Setup Docker registry authentication
+# Check registry reachability (quick TCP probe, no auth required).
+registry_reachable() {
+    timeout 5 bash -c ">/dev/tcp/ghcr.io/443" 2>/dev/null
+}
+
+# Setup Docker registry authentication.
+# On a k3s server this is best-effort: k3s uses containerd and pulls images
+# directly when pods start, so docker login / docker pull are not required.
+# In CI (GitHub Actions) login is mandatory because the build step pushes.
 setup_docker_auth() {
     if is_ci; then
         log_info "Setting up Docker authentication for CI"
         echo "${GITHUB_TOKEN:-}" | docker login "$DOCKER_REGISTRY" -u "${GITHUB_ACTOR:-}" --password-stdin
+        return
+    fi
+
+    if [[ "${SKIP_PULL:-false}" == "true" ]]; then
+        log_info "SKIP_PULL=true — skipping Docker auth"
+        return
+    fi
+
+    if ! registry_reachable; then
+        log_warning "Cannot reach $DOCKER_REGISTRY (network timeout)."
+        log_warning "k3s will pull images directly via containerd when pods start."
+        log_warning "Set SKIP_PULL=true to suppress this check in future runs."
+        return
+    fi
+
+    log_info "Setting up Docker authentication for server"
+    if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+        echo "$GITHUB_TOKEN" | docker login "$DOCKER_REGISTRY" -u "${GITHUB_ACTOR:-$USER}" --password-stdin
     else
-        log_info "Setting up Docker authentication for server"
-        # Try to login with GitHub token if available
-        if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-            echo "$GITHUB_TOKEN" | docker login "$DOCKER_REGISTRY" -u "${GITHUB_ACTOR:-$USER}" --password-stdin
-        else
-            log_warning "GITHUB_TOKEN not set. Please login to Docker registry manually:"
-            log_warning "docker login $DOCKER_REGISTRY"
-            log_warning "Or set GITHUB_TOKEN environment variable"
-            # Try to login anyway, maybe user already logged in
-            if ! docker pull "${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-api-gateway:${IMAGE_TAG}" &>/dev/null; then
-                log_error "Cannot access Docker registry. Please authenticate first."
-                exit 1
-            fi
-        fi
+        log_warning "GITHUB_TOKEN not set — skipping docker login (registry is public)"
     fi
 }
 
-# Pull Docker images
+# Pre-pull Docker images into the Docker daemon cache.
+# On k3s this is optional: containerd handles pulls independently.
+# Skipped automatically when registry is unreachable or SKIP_PULL=true.
 pull_images() {
+    if [[ "${SKIP_PULL:-false}" == "true" ]]; then
+        log_info "SKIP_PULL=true — skipping image pull"
+        return
+    fi
+
+    if ! registry_reachable; then
+        log_warning "Registry unreachable — skipping docker pull (k3s will pull on pod start)"
+        return
+    fi
+
     local api_gateway_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-api-gateway:${IMAGE_TAG}"
     local auth_service_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-auth-service:${IMAGE_TAG}"
 
     log_info "Pulling Docker images..."
-    log_info "API Gateway: $api_gateway_image"
-    log_info "Auth Service: $auth_service_image"
+    docker pull "$api_gateway_image" || log_warning "Pull failed for $api_gateway_image (non-fatal on k3s)"
+    docker pull "$auth_service_image" || log_warning "Pull failed for $auth_service_image (non-fatal on k3s)"
 
-    docker pull "$api_gateway_image"
-    docker pull "$auth_service_image"
-
-    log_success "Images pulled successfully"
+    log_success "Images pull step complete"
 }
 
 # Select Helmfile configuration
@@ -488,6 +512,7 @@ while [[ $# -gt 0 ]]; do
             echo "  SERVER_IP                Server IP address for database access"
             echo "  POSTGRES_PASSWORD        Database password"
             echo "  JWT_SECRET_KEY           JWT secret key"
+            echo "  SKIP_PULL=true           Skip docker auth/pull (k3s pulls via containerd)"
             echo ""
             echo "Examples:"
             echo "  $0                                    # Deploy with latest tag"
