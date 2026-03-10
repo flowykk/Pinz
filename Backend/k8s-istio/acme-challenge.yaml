@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acme-challenge
+  namespace: default
+  labels:
+    app: acme-challenge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: acme-challenge
+  template:
+    metadata:
+      labels:
+        app: acme-challenge
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: webroot
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: webroot
+          hostPath:
+            path: /var/www/acme-challenge
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acme-challenge
+  namespace: default
+spec:
+  selector:
+    app: acme-challenge
+  ports:
+    - port: 80
+      targetPort: 80
