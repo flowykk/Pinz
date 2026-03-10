@@ -38,5 +38,6 @@ spec:
   selector:
     app: acme-challenge
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 80
