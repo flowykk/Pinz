@@ -76,6 +76,9 @@ write_renewal_hooks() {
   sudo tee /etc/letsencrypt/renewal-hooks/deploy/pinz-sync-istio-secret.sh >/dev/null <<EOF
 #!/bin/bash
 set -euo pipefail
+if [[ -f /etc/rancher/k3s/k3s.yaml ]]; then
+  export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+fi
 CERT_DIR="/etc/letsencrypt/live/${DOMAIN}"
 if [[ ! -f "\$CERT_DIR/fullchain.pem" ]] || [[ ! -f "\$CERT_DIR/privkey.pem" ]]; then
   echo "[deploy-hook] Cert files not found at \$CERT_DIR; skipping"
@@ -112,12 +115,25 @@ issue_certificate() {
 # ---------------------------------------------------------------------------
 sync_tls_secret() {
   local cert_dir="/etc/letsencrypt/live/${DOMAIN}"
-  [[ -f "${cert_dir}/fullchain.pem" ]] \
-    || { echo "[ERROR] Certificate not found at ${cert_dir}"; exit 1; }
+  local tmp_dir
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' RETURN
+
+  if ! sudo test -f "${cert_dir}/fullchain.pem" || ! sudo test -f "${cert_dir}/privkey.pem"; then
+    echo "[ERROR] Certificate not found at ${cert_dir}"
+    exit 1
+  fi
+
+  # letsencrypt live/* is usually root-only; stage readable copies for kubectl.
+  sudo cp "${cert_dir}/fullchain.pem" "${tmp_dir}/fullchain.pem"
+  sudo cp "${cert_dir}/privkey.pem" "${tmp_dir}/privkey.pem"
+  sudo chown "$(id -u):$(id -g)" "${tmp_dir}/fullchain.pem" "${tmp_dir}/privkey.pem"
+  chmod 600 "${tmp_dir}/fullchain.pem" "${tmp_dir}/privkey.pem"
+
   echo "[INFO] Syncing TLS secret ${TLS_SECRET_NAME} → namespace ${ISTIO_NAMESPACE}..."
   kubectl create secret tls "${TLS_SECRET_NAME}" \
-    --cert="${cert_dir}/fullchain.pem" \
-    --key="${cert_dir}/privkey.pem" \
+    --cert="${tmp_dir}/fullchain.pem" \
+    --key="${tmp_dir}/privkey.pem" \
     -n "${ISTIO_NAMESPACE}" \
     --dry-run=client -o yaml | kubectl apply -f -
 }
@@ -129,7 +145,9 @@ main() {
   deploy_acme_handler
   write_renewal_hooks
 
+  if [[ "$SKIP_ISSUE" != "true" ]]; then
     issue_certificate
+  fi
 
   sync_tls_secret
 
