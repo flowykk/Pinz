@@ -258,19 +258,90 @@ setup_port_forwarding() {
     fi
 }
 
+# Verify that ServiceAccounts referenced by deployments exist.
+# If a SA is missing the pod controller silently fails with FailedCreate,
+# the deployment stays Available (old pod alive) but the rollout never progresses.
+verify_service_accounts() {
+    local -A sa_map=(
+        [api-gateway]=api-gateway-sa
+        [auth-service]=auth-service-sa
+    )
+    local missing=0
+
+    for deploy in "${!sa_map[@]}"; do
+        local sa="${sa_map[$deploy]}"
+        if ! kubectl get serviceaccount "$sa" &>/dev/null; then
+            log_error "ServiceAccount '$sa' (required by deployment/$deploy) not found."
+            log_error "Creating it now..."
+            kubectl create serviceaccount "$sa"
+            missing=1
+        fi
+    done
+
+    if [[ "$missing" -eq 1 ]]; then
+        log_warning "One or more ServiceAccounts were missing and have been created."
+        log_warning "This usually means helmfile applied the Deployment before the SA template."
+        log_warning "Re-running helmfile to reconcile..."
+        cd "$PROJECT_DIR"
+        helmfile -f "$HELMFILE_CONFIG" apply
+    fi
+}
+
+# Wait until a Deployment object exists in the cluster (it may take a few seconds
+# after helmfile apply for the API server to register the resource).
+wait_for_deployment_object() {
+    local deploy="$1"
+    local max_wait=60
+    local elapsed=0
+
+    log_info "Waiting for Deployment object '$deploy' to appear..."
+    until kubectl get deployment "$deploy" &>/dev/null; do
+        if [[ $elapsed -ge $max_wait ]]; then
+            log_error "Deployment object '$deploy' did not appear within ${max_wait}s."
+            log_error "helmfile apply may have failed. Check helmfile output above."
+            return 1
+        fi
+        sleep 3
+        (( elapsed += 3 ))
+    done
+    log_info "Deployment object '$deploy' found after ${elapsed}s."
+}
+
 # Wait for deployment to be ready
 wait_for_deployment() {
     log_info "Waiting for deployment to be ready..."
 
-    # Wait for pods to be ready
-    kubectl wait --for=condition=available --timeout=300s deployment/api-gateway
-    kubectl wait --for=condition=available --timeout=300s deployment/auth-service
+    verify_service_accounts
 
-    # Wait for rollout to complete
-    kubectl rollout status deployment/api-gateway --timeout=300s
-    kubectl rollout status deployment/auth-service --timeout=300s
+    local deployments=("api-gateway" "auth-service")
 
-    log_success "Deployment is ready"
+    for deploy in "${deployments[@]}"; do
+        # Ensure the Deployment object itself exists before calling rollout status.
+        wait_for_deployment_object "$deploy" || return 1
+
+        log_info "Checking rollout status for: $deploy"
+
+        if ! kubectl rollout status "deployment/${deploy}" --timeout=600s; then
+            log_error "Rollout timed out for: $deploy"
+            log_error "--- Pod list ---"
+            kubectl get pods -l "app=${deploy}" -o wide
+            log_error "--- Events ---"
+            kubectl describe deployment "${deploy}" | tail -30
+            local pending_pod
+            pending_pod=$(kubectl get pods -l "app=${deploy}" \
+                --field-selector='status.phase!=Running' \
+                -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+            if [[ -n "$pending_pod" ]]; then
+                log_error "--- Pending pod logs: $pending_pod ---"
+                kubectl describe pod "$pending_pod"
+            fi
+            return 1
+        fi
+
+        log_success "Rollout complete: $deploy"
+    done
+
+    log_success "All deployments are ready"
 }
 
 # Health check
