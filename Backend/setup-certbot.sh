@@ -71,6 +71,10 @@ deploy_acme_handler() {
 write_renewal_hooks() {
   echo "[INFO] Installing certbot renewal hooks..."
   sudo mkdir -p /etc/letsencrypt/renewal-hooks/{pre,post,deploy}
+  # Remove legacy hooks from old standalone+iptables flow.
+  sudo rm -f \
+    /etc/letsencrypt/renewal-hooks/pre/pinz-remove-redirect.sh \
+    /etc/letsencrypt/renewal-hooks/post/pinz-restore-redirect.sh
 
   # deploy-hook: sync renewed certificate into the Istio TLS secret
   sudo tee /etc/letsencrypt/renewal-hooks/deploy/pinz-sync-istio-secret.sh >/dev/null <<EOF
@@ -117,7 +121,8 @@ sync_tls_secret() {
   local cert_dir="/etc/letsencrypt/live/${DOMAIN}"
   local tmp_dir
   tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "$tmp_dir"' RETURN
+  # Expand path now so trap does not depend on local variable scope.
+  trap 'rm -rf "'"${tmp_dir}"'"' RETURN
 
   if ! sudo test -f "${cert_dir}/fullchain.pem" || ! sudo test -f "${cert_dir}/privkey.pem"; then
     echo "[ERROR] Certificate not found at ${cert_dir}"
