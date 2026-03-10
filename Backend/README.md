@@ -159,6 +159,31 @@ kubectl get pods
 curl http://<server-ip>:8080/health
 ```
 
+### SSL/TLS сертификаты
+
+Для HTTPS доступа настройте Let's Encrypt сертификаты:
+
+```bash
+cd /opt/pinz/Backend
+
+# Установите сертификат для домена
+DOMAIN=your-domain.com EMAIL=admin@your-domain.com ./setup-certbot.sh
+
+# Проверьте что TLS secret создан
+kubectl get secret pinz-tls -n istio-system
+
+# Теперь доступен HTTPS: https://your-domain.com
+```
+
+Скрипт автоматически:
+- Выпустит сертификат через Let's Encrypt
+- Создаст Istio TLS secret
+- Настроит автоматическое обновление
+
+**Требования:**
+- Зарегистрированный домен указывающий на сервер
+- Доступ к email для ACME challenge
+
 ### Make команды (теперь работают)
 
 ```bash
