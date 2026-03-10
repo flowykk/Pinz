@@ -464,11 +464,34 @@ print_instructions() {
     echo ""
 }
 
+# Guard: abort if the server is already set up unless --force is passed.
+# Re-running setup reinstalls k3s and Istio which breaks running deployments.
+check_already_setup() {
+    local already=0
+
+    command -v kubectl &>/dev/null && kubectl get nodes &>/dev/null && already=1
+
+    if [[ "$already" -eq 1 ]] && [[ "${FORCE_SETUP:-false}" != "true" ]]; then
+        log_error "Server appears to already be set up (kubectl cluster is accessible)."
+        log_error ""
+        log_error "Re-running setup-server.sh will reinstall k3s and Istio, breaking"
+        log_error "any running deployments."
+        log_error ""
+        log_error "If you only want to deploy the application, use:"
+        log_error "  cd /opt/pinz/Backend && ./deploy.sh"
+        log_error ""
+        log_error "To force a full re-setup anyway (DANGEROUS):"
+        log_error "  FORCE_SETUP=true ./setup-server.sh"
+        exit 1
+    fi
+}
+
 # Main setup function
 main() {
     log_info "🚀 Starting complete Pinz Backend server setup..."
 
     check_root
+    check_already_setup
     update_system
     install_docker
     install_k3s
