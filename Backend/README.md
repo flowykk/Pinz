@@ -4,18 +4,49 @@
 
 ## Запуск
 
+### Локальная разработка
 ```bash
 docker-compose up -d
 ```
 
+### Production развертывание
+
+**Требования:**
+- Kubernetes кластер (k3s/minikube/kubeadm)
+- Istio service mesh
+- Helm, Helmfile, kubectl
+- Docker registry доступ
+
+**Развертывание:**
+```bash
+# На сервере в директории Backend
+./deploy.sh
+
+# Или с конкретным тегом
+./deploy.sh --image-tag v1.0.0
+```
+
+**Окружение:**
+```bash
+# Переменные окружения (или .env файл)
+export IMAGE_TAG=v1.0.0
+export SERVER_IP=your-server-ip
+export POSTGRES_PASSWORD=your-db-password
+export JWT_SECRET_KEY=your-jwt-secret
+```
+
 **Адреса после запуска:**
 
-| Ресурс | URL / Команда |
-|--------|---------------|
-| API Gateway | http://localhost:8080 |
-| Swagger UI | http://localhost:8080/swagger/index.html |
-| Auth gRPC | localhost:50051 |
-| Логи | `docker-compose logs -f api-gateway-service` / `docker-compose logs -f auth-service` |
+| Окружение | Ресурс | URL / Команда |
+|-----------|--------|---------------|
+| **Локально** | API Gateway | http://localhost:8080 |
+| | Swagger UI | http://localhost:8080/swagger/index.html |
+| | Auth gRPC | localhost:50051 |
+| | Логи | `docker-compose logs -f api-gateway-service` |
+| **Production** | API Gateway | `http://<server-ip>:<port>` (автоматически определяется) |
+| | Health check | `curl http://<server-ip>:<port>/health` |
+| | Swagger UI | `http://<server-ip>:<port>/swagger/index.html` |
+| | **Порт** | 30569 (NodePort) или 80 (LoadBalancer) |
 
 ## Эндпоинты (REST)
 

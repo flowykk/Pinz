@@ -163,10 +163,37 @@ configure_firewall() {
     sudo ufw allow 22/tcp    # SSH
     sudo ufw allow 80/tcp    # HTTP
     sudo ufw allow 443/tcp   # HTTPS
-    sudo ufw allow 8080/tcp  # API Gateway
     sudo ufw allow 6443/tcp  # k3s API
     sudo ufw --force enable
     log_success "Firewall configured"
+}
+
+# Forward ports 80/443 to Istio IngressGateway NodePorts.
+# k3s does not have a cloud LoadBalancer, so NodePorts are used (30569 for http,
+# 31443 for https). iptables PREROUTING rules make traffic arrive on standard
+# ports without MetalLB or an external load-balancer.
+setup_port_forwarding() {
+    log_info "Setting up port forwarding 80→30569, 443→31443..."
+
+    # HTTP: 80 → Istio NodePort 30569
+    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 30569 &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 30569
+    fi
+
+    # HTTPS: 443 → Istio NodePort 31443
+    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31443 &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31443
+    fi
+
+    # Persist rules across reboots
+    if command -v netfilter-persistent &>/dev/null; then
+        sudo netfilter-persistent save
+    else
+        sudo apt-get install -y iptables-persistent
+        sudo netfilter-persistent save
+    fi
+
+    log_success "Port forwarding configured: :80 → NodePort 30569, :443 → NodePort 31443"
 }
 
 # Create project directories
@@ -432,6 +459,7 @@ main() {
     install_istio
     install_tools
     configure_firewall
+    setup_port_forwarding
     create_directories
     clone_repository
     create_env_file

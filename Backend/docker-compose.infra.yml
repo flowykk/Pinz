@@ -6,7 +6,7 @@ services:
     container_name: pinz-db
     environment:
       POSTGRES_USER: pinz_user
-      POSTGRES_PASSWORD: pinz_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pinz_password}
       POSTGRES_DB: pinz_db
     ports:
       - "5432:5432"
@@ -15,6 +15,7 @@ services:
       interval: 5s
       timeout: 10s
       retries: 5
+      start_period: 10s
     volumes:
       - db_data:/var/lib/postgresql/data
 
