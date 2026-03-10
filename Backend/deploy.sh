@@ -217,6 +217,21 @@ deploy_app() {
     log_success "Application deployed successfully"
 }
 
+# Apply external services for infrastructure access
+apply_external_services() {
+    local external_services_file="${PROJECT_DIR}/k8s-external-services.yaml"
+
+    if [[ ! -f "$external_services_file" ]]; then
+        log_warning "External services file not found: $external_services_file"
+        log_warning "Skipping external services apply"
+        return 0
+    fi
+
+    log_info "Applying external services from: $external_services_file"
+    kubectl apply -f "$external_services_file"
+    log_success "External services applied"
+}
+
 # Apply Istio ingress resources
 apply_istio_routing() {
     if [[ ! -d "$ISTIO_CONFIG_DIR" ]]; then
@@ -464,6 +479,9 @@ main() {
 
     # Deploy application
     deploy_app
+
+    # Apply external services for infrastructure access
+    apply_external_services
 
     # Apply Istio ingress routing resources (if present)
     apply_istio_routing
