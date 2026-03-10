@@ -58,7 +58,7 @@ deploy_acme_handler() {
   kubectl apply -f "${K8S_MANIFESTS_DIR}/virtual-service.yaml"
 
   echo "[INFO] Waiting for acme-challenge pod to be ready..."
-  kubectl rollout status deployment/acme-challenge --timeout=60s
+  kubectl rollout status deployment/acme-challenge -n "${ISTIO_NAMESPACE}" --timeout=60s
 
   echo "[INFO] Creating webroot directory: $ACME_WEBROOT"
   sudo mkdir -p "${ACME_WEBROOT}/.well-known/acme-challenge"

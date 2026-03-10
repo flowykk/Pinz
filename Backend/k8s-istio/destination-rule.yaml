@@ -15,7 +15,7 @@ metadata:
   name: acme-challenge
   namespace: istio-system
 spec:
-  host: acme-challenge.default.svc.cluster.local
+  host: acme-challenge.istio-system.svc.cluster.local
   trafficPolicy:
     tls:
       mode: DISABLE
