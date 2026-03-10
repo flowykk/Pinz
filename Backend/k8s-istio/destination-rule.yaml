@@ -8,3 +8,14 @@ spec:
   trafficPolicy:
     tls:
       mode: DISABLE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: acme-challenge
+  namespace: istio-system
+spec:
+  host: acme-challenge.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
