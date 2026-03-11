@@ -11,6 +11,7 @@
 # Optional env vars:
 #   TLS_SECRET_NAME=pinz-tls        (default: pinz-tls)
 #   ISTIO_NAMESPACE=istio-system    (default: istio-system)
+#   ACME_NAMESPACE=default          (default: default)
 #   ACME_WEBROOT=/var/www/acme-challenge  (default: /var/www/acme-challenge)
 #   K8S_MANIFESTS_DIR=./k8s-istio   (default: ./k8s-istio)
 #   SKIP_ISSUE=true                 only (re)install hooks and sync existing cert
@@ -34,7 +35,7 @@ DRY_RUN="${DRY_RUN:-false}"
 # ---------------------------------------------------------------------------
 if [[ -z "$DOMAIN" ]] || [[ -z "$EMAIL" ]]; then
   echo "Usage: DOMAIN=api.example.com EMAIL=admin@example.com ./setup-certbot.sh"
-  echo "Optional: TLS_SECRET_NAME=pinz-tls  ISTIO_NAMESPACE=istio-system  SKIP_ISSUE=true  DRY_RUN=true"
+  echo "Optional: TLS_SECRET_NAME=pinz-tls  ISTIO_NAMESPACE=istio-system  ACME_NAMESPACE=default  SKIP_ISSUE=true  DRY_RUN=true"
   exit 1
 fi
 
@@ -50,6 +51,8 @@ fi
 
 kubectl get ns "$ISTIO_NAMESPACE" >/dev/null 2>&1 \
   || { echo "[ERROR] Kubernetes namespace not found: $ISTIO_NAMESPACE"; exit 1; }
+kubectl get ns "$ACME_NAMESPACE" >/dev/null 2>&1 \
+  || { echo "[ERROR] Kubernetes namespace not found: $ACME_NAMESPACE"; exit 1; }
 
 # ---------------------------------------------------------------------------
 # Istio ingress resources
@@ -133,9 +136,58 @@ EOF
 # ---------------------------------------------------------------------------
 # Deploy acme-challenge nginx pod + required Istio policies
 # ---------------------------------------------------------------------------
+apply_acme_workload() {
+  echo "[INFO] Applying acme-challenge workload in namespace ${ACME_NAMESPACE}..."
+  kubectl apply -n "${ACME_NAMESPACE}" -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acme-challenge
+  labels:
+    app: acme-challenge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: acme-challenge
+  template:
+    metadata:
+      labels:
+        app: acme-challenge
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: webroot
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: webroot
+          hostPath:
+            path: ${ACME_WEBROOT}
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acme-challenge
+spec:
+  selector:
+    app: acme-challenge
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+EOF
+}
+
 deploy_acme_handler() {
   echo "[INFO] Deploying acme-challenge handler..."
-  kubectl apply -f "${K8S_MANIFESTS_DIR}/acme-challenge.yaml"
+  apply_acme_workload
   kubectl apply -f "${K8S_MANIFESTS_DIR}/destination-rule.yaml"
   kubectl apply -f "${K8S_MANIFESTS_DIR}/peer-authentication.yaml"
   apply_istio_ingress_resources
