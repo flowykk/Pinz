@@ -154,8 +154,6 @@ spec:
     metadata:
       labels:
         app: acme-challenge
-      annotations:
-        sidecar.istio.io/inject: "false"
     spec:
       containers:
         - name: nginx
