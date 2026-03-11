@@ -27,13 +27,15 @@ jobs:
 
       - name: Install protoc
         run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
+          PROTOC_VERSION=29.3
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip" -o protoc.zip
+          sudo unzip -q protoc.zip -d /usr/local
+          rm protoc.zip
 
       - name: Install protoc plugins
         run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.6
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 
       - name: Generate proto files
         run: make proto
