@@ -15,7 +15,7 @@ spec:
             prefix: /.well-known/acme-challenge/
       route:
         - destination:
-            host: acme-challenge.default.svc.cluster.local
+            host: acme-challenge.istio-system.svc.cluster.local
             port:
               number: 80
     - match:
