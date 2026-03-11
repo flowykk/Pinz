@@ -6,3 +6,15 @@ metadata:
 spec:
   mtls:
     mode: PERMISSIVE
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: acme-challenge
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: acme-challenge
+  mtls:
+    mode: DISABLE
