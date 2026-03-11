@@ -18,8 +18,20 @@ env:
   grpcPort: ":50051"
 
 secret:
-  dbPassword: "pinz_password"
-  jwtSecretKey: "change-me-in-production"
+  dbPassword: "REPLACE_IN_PRODUCTION"
+  jwtSecretKey: "REPLACE_IN_PRODUCTION"
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "128Mi"
+
+pdb:
+  enabled: false
+  minAvailable: 1
 
 dockerConfig:
   auths:

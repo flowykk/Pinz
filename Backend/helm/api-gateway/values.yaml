@@ -13,6 +13,18 @@ env:
   apiGatewayPort: "8080"
   authServiceGrpcAddress: "auth-service:50051"
 
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "128Mi"
+
+pdb:
+  enabled: false
+  minAvailable: 1
+
 dockerConfig:
   auths:
     ghcr.io:

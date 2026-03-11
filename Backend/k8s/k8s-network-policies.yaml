@@ -1,0 +1,69 @@
+# NetworkPolicy manifests for the default namespace.
+#
+# Strategy: default-deny ingress with explicit allow paths.
+# Egress is NOT restricted at this phase to avoid breaking Istio sidecar xDS
+# connectivity (Istiod on port 15012) and other internal cluster traffic.
+# A default-deny-egress pass can be added in a future phase once all required
+# egress paths are fully audited.
+#
+# NOTE: Verify your CNI (kube-router / flannel on k3s) enforces NetworkPolicy
+#       before applying this file to the cluster.
+#       Test with: kubectl apply --dry-run=server -f k8s-network-policies.yaml
+# NOTE: Apply in a maintenance window and verify with the Phase 8 checklist.
+---
+# Block all unrequested ingress to every pod in the default namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Allow the Istio ingress gateway (running in istio-system) to reach api-gateway.
+# Together with the Istio AuthorizationPolicy principal check this provides
+# dual-layer (L4 + L7) access control for external traffic.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-gateway-to-api-gateway
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# Allow api-gateway pods to call auth-service on its gRPC port.
+# Source is matched at the pod level; Istio AuthorizationPolicy adds
+# SPIFFE principal verification on top of this.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-to-auth-service
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: auth-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 50051
