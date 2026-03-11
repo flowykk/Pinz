@@ -9,6 +9,8 @@ import (
 	"syscall"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 
 	pb "pinz/backend/auth-service/pkg/proto"
 )
@@ -26,6 +28,11 @@ func RunGRPCServer(authService pb.AuthServiceServer) error {
 
 	srv := grpc.NewServer()
 	pb.RegisterAuthServiceServer(srv, authService)
+
+	healthSrv := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(srv, healthSrv)
+	healthSrv.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+
 	log.Printf("gRPC server listening on %s", port)
 
 	go func() {
@@ -38,6 +45,9 @@ func RunGRPCServer(authService pb.AuthServiceServer) error {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 	log.Println("Shutting down gRPC server...")
+	// Announce NOT_SERVING before draining so Kubernetes stops routing traffic
+	// to this pod before connections are forcibly closed.
+	healthSrv.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	srv.GracefulStop()
 	return nil
 }

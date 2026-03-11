@@ -79,15 +79,15 @@ spec:
               cpu: {{ .Values.resources.limits.cpu | quote }}
               memory: {{ .Values.resources.limits.memory | quote }}
           readinessProbe:
-            tcpSocket:
-              port: grpc
+            grpc:
+              port: {{ .Values.service.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
           livenessProbe:
-            tcpSocket:
-              port: grpc
+            grpc:
+              port: {{ .Values.service.port }}
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 3
