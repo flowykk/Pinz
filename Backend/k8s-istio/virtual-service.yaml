@@ -10,7 +10,8 @@ spec:
     - pinz-gateway
   http:
     - match:
-        - uri:
+        - port: 80
+          uri:
             prefix: /.well-known/acme-challenge/
       route:
         - destination:
@@ -18,7 +19,15 @@ spec:
             port:
               number: 80
     - match:
-        - uri:
+        - port: 80
+          uri:
+            prefix: /
+      redirect:
+        scheme: https
+        redirectCode: 301
+    - match:
+        - port: 443
+          uri:
             prefix: /health
       route:
         - destination:
@@ -26,7 +35,8 @@ spec:
             port:
               number: 8080
     - match:
-        - uri:
+        - port: 443
+          uri:
             prefix: /
       route:
         - destination:

@@ -23,6 +23,7 @@ DOMAIN="${DOMAIN:-}"
 EMAIL="${EMAIL:-}"
 TLS_SECRET_NAME="${TLS_SECRET_NAME:-pinz-tls}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
+ACME_NAMESPACE="${ACME_NAMESPACE:-default}"
 ACME_WEBROOT="${ACME_WEBROOT:-/var/www/acme-challenge}"
 K8S_MANIFESTS_DIR="${K8S_MANIFESTS_DIR:-${SCRIPT_DIR}/k8s-istio}"
 SKIP_ISSUE="${SKIP_ISSUE:-false}"
@@ -93,15 +94,24 @@ spec:
     - pinz-gateway
   http:
     - match:
-        - uri:
+        - port: 80
+          uri:
             prefix: /.well-known/acme-challenge/
       route:
         - destination:
-            host: acme-challenge.${ISTIO_NAMESPACE}.svc.cluster.local
+            host: acme-challenge.${ACME_NAMESPACE}.svc.cluster.local
             port:
               number: 80
     - match:
-        - uri:
+        - port: 80
+          uri:
+            prefix: /
+      redirect:
+        scheme: https
+        redirectCode: 301
+    - match:
+        - port: 443
+          uri:
             prefix: /health
       route:
         - destination:
@@ -109,7 +119,8 @@ spec:
             port:
               number: 8080
     - match:
-        - uri:
+        - port: 443
+          uri:
             prefix: /
       route:
         - destination:
@@ -130,7 +141,7 @@ deploy_acme_handler() {
   apply_istio_ingress_resources
 
   echo "[INFO] Waiting for acme-challenge pod to be ready..."
-  kubectl rollout status deployment/acme-challenge -n "${ISTIO_NAMESPACE}" --timeout=60s
+  kubectl rollout status deployment/acme-challenge -n "${ACME_NAMESPACE}" --timeout=60s
 
   echo "[INFO] Creating webroot directory: $ACME_WEBROOT"
   sudo mkdir -p "${ACME_WEBROOT}/.well-known/acme-challenge"
