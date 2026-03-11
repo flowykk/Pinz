@@ -65,8 +65,8 @@ load_env() {
     SERVER_IP="${SERVER_IP:-host.docker.internal}"
     TLS_SECRET_NAME="${TLS_SECRET_NAME:-pinz-tls}"
     ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
-    POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-pinz_password}"
-    JWT_SECRET_KEY="${JWT_SECRET_KEY:-change-me-in-production}"
+    POSTGRES_PASSWORD="${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env or environment}"
+    JWT_SECRET_KEY="${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set in .env or environment}"
     # On k3s servers docker pull is not required; containerd pulls images directly.
     SKIP_PULL="${SKIP_PULL:-false}"
 }
@@ -197,8 +197,8 @@ deploy_app() {
     export DOCKER_REPO="$DOCKER_REPO"
     export IMAGE_TAG="$IMAGE_TAG"
     export SERVER_IP="${SERVER_IP:-host.docker.internal}"
-    export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-pinz_password}"
-    export JWT_SECRET_KEY="${JWT_SECRET_KEY:-change-me-in-production}"
+    export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
+    export JWT_SECRET_KEY="${JWT_SECRET_KEY}"
 
     cd "$PROJECT_DIR"
     helmfile -f "$HELMFILE_CONFIG" apply
@@ -208,7 +208,7 @@ deploy_app() {
 
 # Apply external services for infrastructure access
 apply_external_services() {
-    local external_services_file="${PROJECT_DIR}/k8s-external-services.yaml"
+    local external_services_file="${PROJECT_DIR}/k8s/k8s-external-services.yaml"
 
     if [[ ! -f "$external_services_file" ]]; then
         log_warning "External services file not found: $external_services_file"
@@ -224,6 +224,21 @@ apply_external_services() {
     log_info "Applying external services from: $external_services_file (SERVER_IP=${SERVER_IP})"
     SERVER_IP="$SERVER_IP" envsubst '${SERVER_IP}' < "$external_services_file" | kubectl apply -f -
     log_success "External services applied"
+}
+
+# Apply Kubernetes NetworkPolicy manifests (ingress segmentation layer).
+apply_network_policies() {
+    local network_policy_file="${PROJECT_DIR}/k8s/k8s-network-policies.yaml"
+
+    if [[ ! -f "$network_policy_file" ]]; then
+        log_warning "NetworkPolicy file not found: $network_policy_file"
+        log_warning "Skipping NetworkPolicy apply"
+        return 0
+    fi
+
+    log_info "Applying NetworkPolicy resources from: $network_policy_file"
+    kubectl apply -f "$network_policy_file"
+    log_success "NetworkPolicy resources applied"
 }
 
 # Apply Istio resources from static manifests.
@@ -452,6 +467,9 @@ main() {
 
     # Apply Istio ingress routing resources (if present)
     apply_istio_routing
+
+    # Apply Kubernetes NetworkPolicy ingress segmentation
+    apply_network_policies
 
     # Sync port forwarding rules for standard external ports
     setup_port_forwarding
