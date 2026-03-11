@@ -77,3 +77,28 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 		"timestamp": fmt.Sprintf("%d", time.Now().Unix()),
 	})
 }
+
+// AppleAppSiteAssociation serves the AASA file required by Apple CDN on app install.
+// Must be reachable at /.well-known/apple-app-site-association with no redirects.
+func AppleAppSiteAssociation(w http.ResponseWriter, r *http.Request) {
+	const aasa = `{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "ABNY5S6RA5.io.tuist.Pinz",
+        "paths": [
+          "/join/*",
+          "/reset-password*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["ABNY5S6RA5.io.tuist.Pinz"]
+  }
+}`
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(aasa))
+}
