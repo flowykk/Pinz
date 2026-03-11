@@ -256,7 +256,7 @@ apply_istio_routing() {
 
     if ! kubectl get secret "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" &>/dev/null; then
         log_warning "TLS secret ${ISTIO_NAMESPACE}/${TLS_SECRET_NAME} not found. HTTPS on port 443 will not work until secret is created."
-        log_warning "Run setup-certbot.sh or create secret manually."
+        log_warning "Run setup-cert-manager.sh (or legacy setup-certbot.sh) or create secret manually."
     fi
 }
 
