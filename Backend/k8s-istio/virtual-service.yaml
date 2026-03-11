@@ -12,15 +12,6 @@ spec:
     - match:
         - port: 80
           uri:
-            prefix: /.well-known/acme-challenge/
-      route:
-        - destination:
-            host: acme-challenge.istio-system.svc.cluster.local
-            port:
-              number: 80
-    - match:
-        - port: 80
-          uri:
             prefix: /
       redirect:
         scheme: https
