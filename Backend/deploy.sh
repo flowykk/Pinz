@@ -216,8 +216,13 @@ apply_external_services() {
         return 0
     fi
 
-    log_info "Applying external services from: $external_services_file"
-    kubectl apply -f "$external_services_file"
+    if [[ -z "${SERVER_IP:-}" ]]; then
+        log_error "SERVER_IP is not set — cannot apply external services (DB_HOST/REDIS_ADDR would be unresolvable)"
+        exit 1
+    fi
+
+    log_info "Applying external services from: $external_services_file (SERVER_IP=${SERVER_IP})"
+    SERVER_IP="$SERVER_IP" envsubst '${SERVER_IP}' < "$external_services_file" | kubectl apply -f -
     log_success "External services applied"
 }
 

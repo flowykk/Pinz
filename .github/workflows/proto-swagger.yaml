@@ -16,7 +16,6 @@ on:
 jobs:
   proto-check:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'proto/') || contains(github.event.head_commit.modified, 'Backend/proto/')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,7 +51,6 @@ jobs:
 
   swagger-check:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'api-gateway-service/') || contains(github.event.head_commit.modified, 'Backend/api-gateway-service/')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
