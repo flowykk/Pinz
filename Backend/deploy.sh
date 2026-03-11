@@ -83,7 +83,6 @@ load_env() {
     SERVER_IP="${SERVER_IP:-host.docker.internal}"
     TLS_SECRET_NAME="${TLS_SECRET_NAME:-pinz-tls}"
     ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
-    ACME_NAMESPACE="${ACME_NAMESPACE:-default}"
     POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-pinz_password}"
     JWT_SECRET_KEY="${JWT_SECRET_KEY:-change-me-in-production}"
     # On k3s servers docker pull is not required; containerd pulls images directly.
@@ -301,15 +300,6 @@ spec:
   gateways:
     - pinz-gateway
   http:
-    - match:
-        - port: 80
-          uri:
-            prefix: /.well-known/acme-challenge/
-      route:
-        - destination:
-            host: acme-challenge.${ACME_NAMESPACE}.svc.cluster.local
-            port:
-              number: 80
     - match:
         - port: 80
           uri:
