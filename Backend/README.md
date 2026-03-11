@@ -161,13 +161,13 @@ curl http://<server-ip>:8080/health
 
 ### SSL/TLS сертификаты
 
-Для HTTPS доступа настройте Let's Encrypt сертификаты:
+Для HTTPS доступа настройте Let's Encrypt через `cert-manager`:
 
 ```bash
 cd /opt/pinz/Backend
 
-# Установите сертификат для домена
-DOMAIN=your-domain.com EMAIL=admin@your-domain.com ./setup-certbot.sh
+# Установите cert-manager и выпустите сертификат для домена
+DOMAIN=your-domain.com EMAIL=admin@your-domain.com ./setup-cert-manager.sh
 
 # Проверьте что TLS secret создан
 kubectl get secret pinz-tls -n istio-system
@@ -176,15 +176,18 @@ kubectl get secret pinz-tls -n istio-system
 ```
 
 Скрипт автоматически:
+- Установит `cert-manager`
+- Создаст `ClusterIssuer` Let's Encrypt
 - Выпустит сертификат через Let's Encrypt
-- Создаст Istio TLS secret
-- Настроит автоматическое обновление
-- Временно снимет редирект `80 -> Istio NodePort` на время проверки домена
+- Создаст/обновит Istio TLS secret `istio-system/pinz-tls`
+- Настроит автоматическое обновление сертификата через `cert-manager`
 
 **Требования:**
 - Зарегистрированный домен указывающий на сервер
 - Открытый входящий порт `80/tcp`
 - Email для уведомлений Let's Encrypt
+
+Для совместимости `./setup-certbot.sh` оставлен как wrapper на `./setup-cert-manager.sh`.
 
 ### Make команды (теперь работают)
 

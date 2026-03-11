@@ -236,6 +236,7 @@ clone_repository() {
 
     # Ensure scripts are executable (if they exist)
     [[ -f "deploy.sh" ]] && chmod +x deploy.sh
+    [[ -f "setup-cert-manager.sh" ]] && chmod +x setup-cert-manager.sh
     [[ -f "setup-server.sh" ]] && chmod +x setup-server.sh
     [[ -f "setup-certbot.sh" ]] && chmod +x setup-certbot.sh
     log_success "Repository cloned and switched to develop branch"
