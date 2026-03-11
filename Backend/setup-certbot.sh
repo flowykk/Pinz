@@ -18,12 +18,13 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOMAIN="${DOMAIN:-}"
 EMAIL="${EMAIL:-}"
 TLS_SECRET_NAME="${TLS_SECRET_NAME:-pinz-tls}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
 ACME_WEBROOT="${ACME_WEBROOT:-/var/www/acme-challenge}"
-K8S_MANIFESTS_DIR="${K8S_MANIFESTS_DIR:-./k8s-istio}"
+K8S_MANIFESTS_DIR="${K8S_MANIFESTS_DIR:-${SCRIPT_DIR}/k8s-istio}"
 SKIP_ISSUE="${SKIP_ISSUE:-false}"
 DRY_RUN="${DRY_RUN:-false}"
 
@@ -50,12 +51,83 @@ kubectl get ns "$ISTIO_NAMESPACE" >/dev/null 2>&1 \
   || { echo "[ERROR] Kubernetes namespace not found: $ISTIO_NAMESPACE"; exit 1; }
 
 # ---------------------------------------------------------------------------
-# Deploy acme-challenge nginx pod + VirtualService route
+# Istio ingress resources
+# ---------------------------------------------------------------------------
+apply_istio_ingress_resources() {
+  echo "[INFO] Applying Istio Gateway and VirtualService for ${DOMAIN}..."
+  kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: pinz-gateway
+  namespace: default
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "${DOMAIN}"
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: ${TLS_SECRET_NAME}
+      hosts:
+        - "${DOMAIN}"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-gateway
+  namespace: default
+spec:
+  hosts:
+    - "${DOMAIN}"
+  gateways:
+    - pinz-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /.well-known/acme-challenge/
+      route:
+        - destination:
+            host: acme-challenge.${ISTIO_NAMESPACE}.svc.cluster.local
+            port:
+              number: 80
+    - match:
+        - uri:
+            prefix: /health
+      route:
+        - destination:
+            host: api-gateway.default.svc.cluster.local
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: api-gateway.default.svc.cluster.local
+            port:
+              number: 8080
+EOF
+}
+
+# ---------------------------------------------------------------------------
+# Deploy acme-challenge nginx pod + required Istio policies
 # ---------------------------------------------------------------------------
 deploy_acme_handler() {
   echo "[INFO] Deploying acme-challenge handler..."
   kubectl apply -f "${K8S_MANIFESTS_DIR}/acme-challenge.yaml"
-  kubectl apply -f "${K8S_MANIFESTS_DIR}/virtual-service.yaml"
+  kubectl apply -f "${K8S_MANIFESTS_DIR}/destination-rule.yaml"
+  kubectl apply -f "${K8S_MANIFESTS_DIR}/peer-authentication.yaml"
+  apply_istio_ingress_resources
 
   echo "[INFO] Waiting for acme-challenge pod to be ready..."
   kubectl rollout status deployment/acme-challenge -n "${ISTIO_NAMESPACE}" --timeout=60s
