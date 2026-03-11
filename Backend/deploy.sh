@@ -49,24 +49,6 @@ is_server() {
     [[ -f "/opt/pinz/Backend/deploy.sh" ]] || [[ "$PWD" == "/opt/pinz/Backend" ]]
 }
 
-# Update repository
-update_repo() {
-    if is_server && [[ -d ".git" ]]; then
-        log_info "Updating repository on server..."
-
-        # Get current branch
-        local current_branch=$(git branch --show-current)
-
-        # Pull latest changes
-        git pull origin "$current_branch"
-
-        # Reset any local changes (optional, be careful with this)
-        # git reset --hard origin/"$current_branch"
-
-        log_success "Repository updated successfully"
-    fi
-}
-
 # Load environment variables
 load_env() {
     if [[ -f "$ENV_FILE" ]]; then
@@ -94,7 +76,11 @@ validate_env() {
     log_info "Validating environment..."
 
     # Check required tools
-    local required_tools=("docker" "kubectl" "helm" "helmfile")
+    local required_tools=("kubectl" "helm" "helmfile")
+
+    if is_ci || [[ "${SKIP_PULL:-false}" != "true" ]]; then
+        required_tools+=("docker")
+    fi
 
     for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then
@@ -103,8 +89,8 @@ validate_env() {
         fi
     done
 
-    # Check Docker daemon
-    if ! docker info &> /dev/null; then
+    # Check Docker daemon only when docker-based auth/pull is required.
+    if (is_ci || [[ "${SKIP_PULL:-false}" != "true" ]]) && ! docker info &> /dev/null; then
         log_error "Docker daemon is not running"
         exit 1
     fi
@@ -235,97 +221,28 @@ apply_external_services() {
     log_success "External services applied"
 }
 
-# Apply Istio ingress resources
+# Apply Istio resources from static manifests.
 apply_istio_routing() {
     if [[ ! -d "$ISTIO_CONFIG_DIR" ]]; then
         log_warning "Istio config directory not found: $ISTIO_CONFIG_DIR"
-        log_warning "Skipping Istio Gateway/VirtualService apply"
+        log_warning "Skipping Istio resource apply"
         return 0
     fi
 
     if ! kubectl get ns "$ISTIO_NAMESPACE" &>/dev/null; then
         log_warning "Istio namespace (${ISTIO_NAMESPACE}) not found"
-        log_warning "Skipping Istio Gateway/VirtualService apply"
+        log_warning "Skipping Istio resource apply"
         return 0
     fi
 
-    log_info "Applying Istio ingress resources from: $ISTIO_CONFIG_DIR"
+    log_info "Applying Istio resources from: $ISTIO_CONFIG_DIR"
     kubectl apply -f "$ISTIO_CONFIG_DIR"
-    reconcile_istio_ingress_resources
-    log_success "Istio ingress resources applied"
+    log_success "Istio resources applied"
 
     if ! kubectl get secret "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" &>/dev/null; then
         log_warning "TLS secret ${ISTIO_NAMESPACE}/${TLS_SECRET_NAME} not found. HTTPS on port 443 will not work until secret is created."
         log_warning "Run setup-cert-manager.sh (or legacy setup-certbot.sh) or create secret manually."
     fi
-}
-
-# Align Istio host/secret settings with the current environment.
-reconcile_istio_ingress_resources() {
-    log_info "Reconciling Istio Gateway/VirtualService for host: ${DOMAIN}"
-    kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: pinz-gateway
-  namespace: default
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-    - port:
-        number: 80
-        name: http
-        protocol: HTTP
-      hosts:
-        - "${DOMAIN}"
-    - port:
-        number: 443
-        name: https
-        protocol: HTTPS
-      tls:
-        mode: SIMPLE
-        credentialName: ${TLS_SECRET_NAME}
-      hosts:
-        - "${DOMAIN}"
----
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: api-gateway
-  namespace: default
-spec:
-  hosts:
-    - "${DOMAIN}"
-  gateways:
-    - pinz-gateway
-  http:
-    - match:
-        - port: 80
-          uri:
-            prefix: /
-      redirect:
-        scheme: https
-        redirectCode: 301
-    - match:
-        - port: 443
-          uri:
-            prefix: /health
-      route:
-        - destination:
-            host: api-gateway.default.svc.cluster.local
-            port:
-              number: 8080
-    - match:
-        - port: 443
-          uri:
-            prefix: /
-      route:
-        - destination:
-            host: api-gateway.default.svc.cluster.local
-            port:
-              number: 8080
-EOF
 }
 
 # Ensure standard ports are forwarded to Istio ingress NodePorts.
@@ -376,35 +293,6 @@ setup_port_forwarding() {
     fi
 }
 
-# Verify that ServiceAccounts referenced by deployments exist.
-# If a SA is missing the pod controller silently fails with FailedCreate,
-# the deployment stays Available (old pod alive) but the rollout never progresses.
-verify_service_accounts() {
-    local -A sa_map=(
-        [api-gateway]=api-gateway-sa
-        [auth-service]=auth-service-sa
-    )
-    local missing=0
-
-    for deploy in "${!sa_map[@]}"; do
-        local sa="${sa_map[$deploy]}"
-        if ! kubectl get serviceaccount "$sa" &>/dev/null; then
-            log_error "ServiceAccount '$sa' (required by deployment/$deploy) not found."
-            log_error "Creating it now..."
-            kubectl create serviceaccount "$sa"
-            missing=1
-        fi
-    done
-
-    if [[ "$missing" -eq 1 ]]; then
-        log_warning "One or more ServiceAccounts were missing and have been created."
-        log_warning "This usually means helmfile applied the Deployment before the SA template."
-        log_warning "Re-running helmfile to reconcile..."
-        cd "$PROJECT_DIR"
-        helmfile -f "$HELMFILE_CONFIG" apply
-    fi
-}
-
 # Wait until a Deployment object exists in the cluster (it may take a few seconds
 # after helmfile apply for the API server to register the resource).
 wait_for_deployment_object() {
@@ -428,8 +316,6 @@ wait_for_deployment_object() {
 # Wait for deployment to be ready
 wait_for_deployment() {
     log_info "Waiting for deployment to be ready..."
-
-    verify_service_accounts
 
     local deployments=("api-gateway" "auth-service")
 
@@ -538,9 +424,6 @@ main() {
     log_info "Running in CI: $(is_ci && echo 'Yes' || echo 'No')"
     log_info "Running on server: $(is_server && echo 'Yes' || echo 'No')"
 
-    # Update repository if on server
-    update_repo
-
     # Load environment
     load_env
 
@@ -556,11 +439,11 @@ main() {
     # Select deployment configs
     select_helmfile
 
-    # Deploy application
-    deploy_app
-
     # Apply external services for infrastructure access
     apply_external_services
+
+    # Deploy application
+    deploy_app
 
     # Apply Istio ingress routing resources (if present)
     apply_istio_routing

@@ -45,7 +45,7 @@ k8s-build:
 	docker build -t pinz-api-gateway:latest -f api-gateway-service/Dockerfile api-gateway-service
 
 k8s-deploy:
-	helmfile -f helmfile.local.yaml.gotmpl apply \
+	helmfile -f helmfile.local.yaml.gotmpl apply && \
 	kubectl rollout restart deployment/api-gateway deployment/auth-service
 
 k8s-istio:

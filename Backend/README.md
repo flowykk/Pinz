@@ -151,6 +151,9 @@ chmod +x setup-server.sh
 ```bash
 cd /opt/pinz/Backend
 
+# Сначала обновите код на сервере
+git pull
+
 # Ручной деплой
 ./deploy.sh
 
