@@ -79,7 +79,10 @@ load_env() {
     fi
 
     # Set defaults for required variables
+    DOMAIN="${DOMAIN:-pinz.website}"
     SERVER_IP="${SERVER_IP:-host.docker.internal}"
+    TLS_SECRET_NAME="${TLS_SECRET_NAME:-pinz-tls}"
+    ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
     POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-pinz_password}"
     JWT_SECRET_KEY="${JWT_SECRET_KEY:-change-me-in-production}"
     # On k3s servers docker pull is not required; containerd pulls images directly.
@@ -240,20 +243,88 @@ apply_istio_routing() {
         return 0
     fi
 
-    if ! kubectl get ns istio-system &>/dev/null; then
-        log_warning "Istio namespace (istio-system) not found"
+    if ! kubectl get ns "$ISTIO_NAMESPACE" &>/dev/null; then
+        log_warning "Istio namespace (${ISTIO_NAMESPACE}) not found"
         log_warning "Skipping Istio Gateway/VirtualService apply"
         return 0
     fi
 
     log_info "Applying Istio ingress resources from: $ISTIO_CONFIG_DIR"
     kubectl apply -f "$ISTIO_CONFIG_DIR"
+    reconcile_istio_ingress_resources
     log_success "Istio ingress resources applied"
 
-    if ! kubectl get secret pinz-tls -n istio-system &>/dev/null; then
-        log_warning "TLS secret istio-system/pinz-tls not found. HTTPS on port 443 will not work until secret is created."
+    if ! kubectl get secret "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" &>/dev/null; then
+        log_warning "TLS secret ${ISTIO_NAMESPACE}/${TLS_SECRET_NAME} not found. HTTPS on port 443 will not work until secret is created."
         log_warning "Run setup-certbot.sh or create secret manually."
     fi
+}
+
+# Align Istio host/secret settings with the current environment.
+reconcile_istio_ingress_resources() {
+    log_info "Reconciling Istio Gateway/VirtualService for host: ${DOMAIN}"
+    kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: pinz-gateway
+  namespace: default
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "${DOMAIN}"
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: ${TLS_SECRET_NAME}
+      hosts:
+        - "${DOMAIN}"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-gateway
+  namespace: default
+spec:
+  hosts:
+    - "${DOMAIN}"
+  gateways:
+    - pinz-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /.well-known/acme-challenge/
+      route:
+        - destination:
+            host: acme-challenge.${ISTIO_NAMESPACE}.svc.cluster.local
+            port:
+              number: 80
+    - match:
+        - uri:
+            prefix: /health
+      route:
+        - destination:
+            host: api-gateway.default.svc.cluster.local
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: api-gateway.default.svc.cluster.local
+            port:
+              number: 8080
+EOF
 }
 
 # Ensure standard ports are forwarded to Istio ingress NodePorts.
