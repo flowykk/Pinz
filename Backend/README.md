@@ -43,10 +43,10 @@ export JWT_SECRET_KEY=your-jwt-secret
 | | Swagger UI | http://localhost:8080/swagger/index.html |
 | | Auth gRPC | localhost:50051 |
 | | Логи | `docker-compose logs -f api-gateway-service` |
-| **Production** | API Gateway | `http://<server-ip>:<port>` (автоматически определяется) |
-| | Health check | `curl http://<server-ip>:<port>/health` |
-| | Swagger UI | `http://<server-ip>:<port>/swagger/index.html` |
-| | **Порт** | 30569 (NodePort) или 80 (LoadBalancer) |
+| **Production** | API Gateway | `http://<domain>` |
+| | Health check | `curl http://<domain>/health` |
+| | Swagger UI | `https://<domain>/swagger/index.html` |
+| | **Порты** | 80 / 443 (снаружи перенаправляются на Istio ingress) |
 
 ## Эндпоинты (REST)
 
@@ -156,7 +156,7 @@ cd /opt/pinz/Backend
 
 # Проверка статуса
 kubectl get pods
-curl http://<server-ip>:8080/health
+curl http://<domain>/health
 ```
 
 ### SSL/TLS сертификаты
