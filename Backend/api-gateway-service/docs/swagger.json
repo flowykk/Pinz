@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "pinz.example.com",
+    "host": "pinz.website",
     "basePath": "/",
     "paths": {
         "/api/v1/auth/email": {
