@@ -10,11 +10,11 @@ service:
   port: 50051
 
 env:
-  dbHost: host.docker.internal
+  dbHost: db
   dbPort: "5432"
   dbUser: pinz_user
   dbName: pinz_db
-  redisAddr: host.docker.internal:6379
+  redisAddr: redis:6379
   grpcPort: ":50051"
 
 secret:
