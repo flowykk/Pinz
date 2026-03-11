@@ -351,11 +351,18 @@ setup_port_forwarding() {
 
     log_info "Ensuring port forwarding 80→${http_nodeport}, 443→${https_nodeport}"
 
-    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
-        sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport"
+    # Remove legacy broad redirects first. They also catch pod egress traffic
+    # that happens to target external port 80/443, which breaks outbound HTTPS.
+    sudo iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport" 2>/dev/null || true
+    sudo iptables -t nat -D PREROUTING -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport" 2>/dev/null || true
+
+    # Only redirect traffic addressed to this node. Do not intercept forwarded
+    # pod traffic to arbitrary internet destinations.
+    if ! sudo iptables -t nat -C PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport"
     fi
-    if ! sudo iptables -t nat -C PREROUTING -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
-        sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport"
+    if ! sudo iptables -t nat -C PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport"
     fi
     if ! sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
         sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport"

@@ -125,9 +125,30 @@ cleanup_legacy_resources() {
     /etc/letsencrypt/renewal-hooks/deploy/pinz-sync-istio-secret.sh 2>/dev/null || true
 }
 
+show_cert_manager_diagnostics() {
+  echo "[INFO] Certificate status:"
+  kubectl describe certificate "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" || true
+
+  echo "[INFO] CertificateRequests:"
+  kubectl get certificaterequests -A || true
+
+  echo "[INFO] Orders:"
+  kubectl get orders -A || true
+
+  echo "[INFO] Challenges:"
+  kubectl get challenges -A || true
+
+  echo "[INFO] Solver ingresses:"
+  kubectl get ingress -A || true
+}
+
 wait_for_certificate() {
   echo "[INFO] Waiting for certificate ${ISTIO_NAMESPACE}/${TLS_SECRET_NAME}..."
-  kubectl wait --for=condition=Ready "certificate/${TLS_SECRET_NAME}" -n "$ISTIO_NAMESPACE" --timeout=600s
+  if ! kubectl wait --for=condition=Ready "certificate/${TLS_SECRET_NAME}" -n "$ISTIO_NAMESPACE" --timeout=600s; then
+    echo "[ERROR] Certificate did not become Ready within 10 minutes."
+    show_cert_manager_diagnostics
+    return 1
+  fi
   kubectl get secret "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" >/dev/null
 }
 
