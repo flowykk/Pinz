@@ -3,7 +3,7 @@ definitions:
   pinz_backend_api-gateway-service_internal_requests.DevLoginRequest:
     properties:
       email:
-        example: dev@example.com
+        example: user@example.com
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_requests.LogoutRequest:

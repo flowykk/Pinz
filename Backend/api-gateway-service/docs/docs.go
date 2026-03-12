@@ -486,7 +486,7 @@ const docTemplate = `{
             "properties": {
                 "email": {
                     "type": "string",
-                    "example": "dev@example.com"
+                    "example": "user@example.com"
                 }
             }
         },
