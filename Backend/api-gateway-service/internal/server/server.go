@@ -46,6 +46,7 @@ func NewServer(deps *di.Dependencies) *Server {
 		r.Post("/auth/passkey/login/finish", deps.AuthHandler.PasskeyLoginFinish)
 		r.Post("/auth/refresh", deps.AuthHandler.RefreshToken)
 		r.Post("/auth/logout", deps.AuthHandler.Logout)
+		r.Post("/auth/dev-login", deps.AuthHandler.DevLogin)
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(

@@ -39,3 +39,7 @@ type RefreshTokenRequest struct {
 type LogoutRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+type DevLoginRequest struct {
+	Email string `json:"email" example:"dev@example.com"`
+}

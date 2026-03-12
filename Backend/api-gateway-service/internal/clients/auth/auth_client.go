@@ -65,6 +65,10 @@ func (c *Client) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutR
 	return c.client.Logout(ctx, req)
 }
 
+func (c *Client) DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*pb.DevLoginResponse, error) {
+	return c.client.DevLogin(ctx, req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }
