@@ -41,5 +41,5 @@ type LogoutRequest struct {
 }
 
 type DevLoginRequest struct {
-	Email string `json:"email" example:"dev@example.com"`
+	Email string `json:"email" example:"user@example.com"`
 }
