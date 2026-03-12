@@ -36,3 +36,8 @@ type RefreshTokenResponse struct {
 type LogoutResponse struct {
 	Success bool `json:"success"`
 }
+
+type DevLoginResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}

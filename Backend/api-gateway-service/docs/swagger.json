@@ -9,6 +9,58 @@
     "host": "pinz.example.com",
     "basePath": "/",
     "paths": {
+        "/api/v1/auth/dev-login": {
+            "post": {
+                "description": "For development use only. Returns access and refresh tokens for any existing user without passkey verification.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Dev login — bypass passkey, get tokens by email only",
+                "parameters": [
+                    {
+                        "description": "User email",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.DevLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DevLoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/email": {
             "post": {
                 "description": "User sends email. Response indicates if user is registered (next step: passkey login) or not (next step: email verification). registration_id is set only when is_registered is false.",
@@ -423,6 +475,15 @@
         }
     },
     "definitions": {
+        "pinz_backend_api-gateway-service_internal_requests.DevLoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "dev@example.com"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_requests.LogoutRequest": {
             "type": "object",
             "properties": {
@@ -502,6 +563,17 @@
                     "type": "string"
                 },
                 "verification_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.DevLoginResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
                     "type": "string"
                 }
             }

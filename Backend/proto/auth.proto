@@ -13,6 +13,7 @@ service AuthService {
   rpc PasskeyLoginFinish(PasskeyLoginFinishRequest) returns (PasskeyLoginFinishResponse) {}
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+  rpc DevLogin(DevLoginRequest) returns (DevLoginResponse) {}
 }
 
 message User {
@@ -92,4 +93,13 @@ message LogoutRequest {
 
 message LogoutResponse {
   bool success = 1;
+}
+
+message DevLoginRequest {
+  string email = 1;
+}
+
+message DevLoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
 }

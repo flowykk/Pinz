@@ -203,6 +203,34 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.RefreshTokenResponse{AccessToken: resp.GetAccessToken()})
 }
 
+// @Summary Dev login — bypass passkey, get tokens by email only
+// @Description For development use only. Returns access and refresh tokens for any existing user without passkey verification.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body requests.DevLoginRequest true "User email"
+// @Success 200 {object} responses.DevLoginResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/auth/dev-login [post]
+func (h *AuthHandler) DevLogin(w http.ResponseWriter, r *http.Request) {
+	var req requests.DevLoginRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, fmt.Sprintf("invalid request body: %v", err))
+		return
+	}
+	resp, err := h.authSvc.DevLogin(r.Context(), req.Email)
+	if err != nil {
+		handleServiceError(w, err, "DevLogin")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.DevLoginResponse{
+		AccessToken:  resp.GetAccessToken(),
+		RefreshToken: resp.GetRefreshToken(),
+	})
+}
+
 // @Summary Logout
 // @Tags auth
 // @Accept json

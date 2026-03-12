@@ -476,6 +476,31 @@ func (s *AuthService) issueTokens(ctx context.Context, u *models.User) (*pb.Pass
 	}, nil
 }
 
+func (s *AuthService) DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*pb.DevLoginResponse, error) {
+	email := req.GetEmail()
+	if email == "" {
+		return nil, status.Error(codes.InvalidArgument, "email is required")
+	}
+
+	u, err := s.userRepo.GetUserByEmail(email)
+	if err == sql.ErrNoRows {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+	if err != nil {
+		log.Printf("DevLogin: get user: %v", err)
+		return nil, status.Error(codes.Internal, "failed to get user")
+	}
+
+	resp, err := s.issueTokens(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.DevLoginResponse{
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+	}, nil
+}
+
 func isUniqueViolation(err error) bool {
 	var e *pgconn.PgError
 	if errors.As(err, &e) && e.Code == "23505" {

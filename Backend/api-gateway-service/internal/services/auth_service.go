@@ -15,6 +15,7 @@ type AuthServiceInterface interface {
 	PasskeyLoginFinish(ctx context.Context, email string, credentialJSON []byte) (*pb.PasskeyLoginFinishResponse, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*pb.RefreshTokenResponse, error)
 	Logout(ctx context.Context, refreshToken string) (*pb.LogoutResponse, error)
+	DevLogin(ctx context.Context, email string) (*pb.DevLoginResponse, error)
 }
 
 type AuthClient interface {
@@ -26,6 +27,7 @@ type AuthClient interface {
 	PasskeyLoginFinish(ctx context.Context, req *pb.PasskeyLoginFinishRequest) (*pb.PasskeyLoginFinishResponse, error)
 	RefreshToken(ctx context.Context, req *pb.RefreshTokenRequest) (*pb.RefreshTokenResponse, error)
 	Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error)
+	DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*pb.DevLoginResponse, error)
 }
 
 type AuthService struct {
@@ -78,4 +80,8 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*p
 
 func (s *AuthService) Logout(ctx context.Context, refreshToken string) (*pb.LogoutResponse, error) {
 	return s.authClient.Logout(ctx, &pb.LogoutRequest{RefreshToken: refreshToken})
+}
+
+func (s *AuthService) DevLogin(ctx context.Context, email string) (*pb.DevLoginResponse, error) {
+	return s.authClient.DevLogin(ctx, &pb.DevLoginRequest{Email: email})
 }
