@@ -124,7 +124,7 @@ definitions:
       success:
         type: boolean
     type: object
-host: pinz.example.com
+host: pinz.website
 info:
   contact: {}
   description: API Gateway for Pinz mobile client
