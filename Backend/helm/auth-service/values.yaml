@@ -10,16 +10,28 @@ service:
   port: 50051
 
 env:
-  dbHost: host.docker.internal
+  dbHost: db
   dbPort: "5432"
   dbUser: pinz_user
   dbName: pinz_db
-  redisAddr: host.docker.internal:6379
+  redisAddr: redis:6379
   grpcPort: ":50051"
 
 secret:
-  dbPassword: "pinz_password"
-  jwtSecretKey: "change-me-in-production"
+  dbPassword: "REPLACE_IN_PRODUCTION"
+  jwtSecretKey: "REPLACE_IN_PRODUCTION"
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "128Mi"
+
+pdb:
+  enabled: false
+  minAvailable: 1
 
 dockerConfig:
   auths:

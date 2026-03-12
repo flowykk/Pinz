@@ -163,10 +163,58 @@ configure_firewall() {
     sudo ufw allow 22/tcp    # SSH
     sudo ufw allow 80/tcp    # HTTP
     sudo ufw allow 443/tcp   # HTTPS
-    sudo ufw allow 8080/tcp  # API Gateway
     sudo ufw allow 6443/tcp  # k3s API
     sudo ufw --force enable
     log_success "Firewall configured"
+}
+
+# Forward ports 80/443 to Istio IngressGateway NodePorts.
+# k3s does not have a cloud LoadBalancer by default, so we resolve real NodePort
+# values from istio-ingressgateway and map standard ports via iptables.
+setup_port_forwarding() {
+    local http_nodeport
+    local https_nodeport
+    http_nodeport=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+    https_nodeport=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.port==443)].nodePort}')
+
+    if [[ -z "$http_nodeport" ]] || [[ -z "$https_nodeport" ]]; then
+        log_warning "Cannot resolve Istio ingress NodePorts, skipping iptables forwarding"
+        return 0
+    fi
+
+    log_info "Setting up port forwarding 80→${http_nodeport}, 443→${https_nodeport}..."
+
+    # Remove legacy broad redirects first. They also catch forwarded pod egress
+    # to the internet on ports 80/443, which breaks outbound connectivity.
+    sudo iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport" 2>/dev/null || true
+    sudo iptables -t nat -D PREROUTING -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport" 2>/dev/null || true
+
+    # PREROUTING handles external traffic to VPS. Match only node-local
+    # destinations so pod egress to arbitrary remote 80/443 is not intercepted.
+    if ! sudo iptables -t nat -C PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport"
+    fi
+    if ! sudo iptables -t nat -C PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport"
+    fi
+
+    # OUTPUT handles local checks like curl http://localhost/health.
+    if ! sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport"
+    fi
+    if ! sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 443 -j REDIRECT --to-port "$https_nodeport"
+    fi
+
+    # Persist rules across reboots
+    if command -v netfilter-persistent &>/dev/null; then
+        sudo netfilter-persistent save
+    else
+        sudo apt-get install -y iptables-persistent
+        sudo netfilter-persistent save
+    fi
+
+    log_success "Port forwarding configured: :80 → NodePort ${http_nodeport}, :443 → NodePort ${https_nodeport}"
 }
 
 # Create project directories
@@ -194,7 +242,9 @@ clone_repository() {
 
     # Ensure scripts are executable (if they exist)
     [[ -f "deploy.sh" ]] && chmod +x deploy.sh
+    [[ -f "setup-cert-manager.sh" ]] && chmod +x setup-cert-manager.sh
     [[ -f "setup-server.sh" ]] && chmod +x setup-server.sh
+    [[ -f "setup-certbot.sh" ]] && chmod +x setup-certbot.sh
     log_success "Repository cloned and switched to develop branch"
 }
 
@@ -213,6 +263,9 @@ create_env_file() {
 
 # Server Configuration
 SERVER_IP=${server_ip}
+DOMAIN=${DOMAIN:-pinz.website}
+# k3s pulls images via containerd directly; docker pull is not needed on this server.
+SKIP_PULL=true
 
 # Database
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pinz_secure_password_$(openssl rand -hex 16)}
@@ -418,11 +471,34 @@ print_instructions() {
     echo ""
 }
 
+# Guard: abort if the server is already set up unless --force is passed.
+# Re-running setup reinstalls k3s and Istio which breaks running deployments.
+check_already_setup() {
+    local already=0
+
+    command -v kubectl &>/dev/null && kubectl get nodes &>/dev/null && already=1
+
+    if [[ "$already" -eq 1 ]] && [[ "${FORCE_SETUP:-false}" != "true" ]]; then
+        log_error "Server appears to already be set up (kubectl cluster is accessible)."
+        log_error ""
+        log_error "Re-running setup-server.sh will reinstall k3s and Istio, breaking"
+        log_error "any running deployments."
+        log_error ""
+        log_error "If you only want to deploy the application, use:"
+        log_error "  cd /opt/pinz/Backend && ./deploy.sh"
+        log_error ""
+        log_error "To force a full re-setup anyway (DANGEROUS):"
+        log_error "  FORCE_SETUP=true ./setup-server.sh"
+        exit 1
+    fi
+}
+
 # Main setup function
 main() {
     log_info "🚀 Starting complete Pinz Backend server setup..."
 
     check_root
+    check_already_setup
     update_system
     install_docker
     install_k3s
@@ -432,11 +508,13 @@ main() {
     install_istio
     install_tools
     configure_firewall
+    setup_port_forwarding
     create_directories
     clone_repository
     create_env_file
     setup_infrastructure
     setup_istio
+    setup_port_forwarding
     test_deployment
     create_deploy_user
     setup_ssh_for_cd

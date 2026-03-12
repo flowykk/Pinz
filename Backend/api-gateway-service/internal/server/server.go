@@ -34,6 +34,9 @@ func NewServer(deps *di.Dependencies) *Server {
 	// Health check endpoint
 	r.Get("/health", handlers.HealthCheck)
 
+	// Apple App Site Association — required by Apple CDN, no redirects allowed
+	r.Get("/.well-known/apple-app-site-association", handlers.AppleAppSiteAssociation)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/email", deps.AuthHandler.SubmitEmail)
 		r.Post("/auth/verify-email", deps.AuthHandler.VerifyEmailCode)

@@ -14,6 +14,7 @@ public protocol AppRouting {
     func navigateToPostPreview(trip: Trip, selectedPins: [Pin])
 
     func navigateToMediaInfo(media: MediaItem)
+    func navigateToLocalMediaInfo(media: LoadedMedia)
 
     func navigateToEmailChange(email: String, action: EmailChangeAction)
     func navigateToStatistics()

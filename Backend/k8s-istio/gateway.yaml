@@ -12,4 +12,13 @@ spec:
         name: http
         protocol: HTTP
       hosts:
-        - "*"
+        - "pinz.website"
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: pinz-tls
+      hosts:
+        - "pinz.website"

@@ -28,12 +28,14 @@ final class PinCreationViewModel {
 
     enum Route {
         case back
+        case mediaInfo(LoadedMedia)
     }
 
     enum Intent {
         case addTag(MediaTag)
         case deleteTag(MediaTag)
         case addMedias([PhotosPickerItem])
+        case deleteMedia(UUID)
 
         case navigate(Route)
     }
@@ -57,6 +59,8 @@ final class PinCreationViewModel {
             switch route {
             case .back:
                 router?.pop()
+            case let .mediaInfo(media):
+                router?.navigateToLocalMediaInfo(media: media)
             }
         case let .addTag(tag):
             tags.append(tag)
@@ -68,16 +72,27 @@ final class PinCreationViewModel {
             medias.append(contentsOf: placeholders)
 
             Task {
-                for (index, item) in items.enumerated() {
-                    let id = placeholderIds[index]
-                    if let loaded = await MediaLoader.shared.load(from: item, id: id) {
-                        guard let idx = medias.firstIndex(where: { $0.id == id }) else { continue }
-                        medias[idx] = loaded
-                    } else {
-                        medias.removeAll { $0.id == id }
+                await withTaskGroup(of: (UUID, LoadedMedia?).self) { group in
+                    for (index, item) in items.enumerated() {
+                        let id = placeholderIds[index]
+                        group.addTask {
+                            let loaded = await MediaLoader.shared.load(from: item, id: id)
+                            return (id, loaded)
+                        }
+                    }
+
+                    for await (id, loaded) in group {
+                        if let loaded {
+                            guard let idx = medias.firstIndex(where: { $0.id == id }) else { continue }
+                            medias[idx] = loaded
+                        } else {
+                            medias.removeAll { $0.id == id }
+                        }
                     }
                 }
             }
+        case let .deleteMedia(mediaId):
+            medias.removeAll { $0.id == mediaId }
         }
     }
 

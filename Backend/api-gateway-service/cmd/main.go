@@ -1,7 +1,7 @@
 // @title Pinz API Gateway
 // @version 1.0
 // @description API Gateway for Pinz mobile client
-// @host pinz.example.com
+// @host pinz.website
 // @BasePath /
 // @securityDefinitions.apikey BearerAuth
 // @in header

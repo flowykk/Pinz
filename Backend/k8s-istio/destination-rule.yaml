@@ -8,3 +8,25 @@ spec:
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: db-external
+  namespace: default
+spec:
+  host: db.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: redis-external
+  namespace: default
+spec:
+  host: redis.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE

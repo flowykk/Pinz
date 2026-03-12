@@ -30,11 +30,11 @@ public struct MediaBadgesView<
             VStack(spacing: 0) {
                 leadingTopBadge
                 Spacer()
-                trailingTopBadge
+                leadingBottomBadge
             }
             Spacer()
             VStack(spacing: 0) {
-                leadingBottomBadge
+                trailingTopBadge
                 Spacer()
                 trailingBottomBadge
             }

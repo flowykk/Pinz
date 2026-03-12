@@ -35,6 +35,7 @@ public enum PinInfoRoute: Hashable {
 
 public enum MediaRoute: Hashable {
     case info(media: MediaItem)
+    case localInfo(media: LoadedMedia)
 }
 
 public enum Route: Hashable {

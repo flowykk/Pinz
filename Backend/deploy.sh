@@ -49,24 +49,6 @@ is_server() {
     [[ -f "/opt/pinz/Backend/deploy.sh" ]] || [[ "$PWD" == "/opt/pinz/Backend" ]]
 }
 
-# Update repository
-update_repo() {
-    if is_server && [[ -d ".git" ]]; then
-        log_info "Updating repository on server..."
-
-        # Get current branch
-        local current_branch=$(git branch --show-current)
-
-        # Pull latest changes
-        git pull origin "$current_branch"
-
-        # Reset any local changes (optional, be careful with this)
-        # git reset --hard origin/"$current_branch"
-
-        log_success "Repository updated successfully"
-    fi
-}
-
 # Load environment variables
 load_env() {
     if [[ -f "$ENV_FILE" ]]; then
@@ -79,9 +61,14 @@ load_env() {
     fi
 
     # Set defaults for required variables
+    DOMAIN="${DOMAIN:-pinz.website}"
     SERVER_IP="${SERVER_IP:-host.docker.internal}"
-    POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-pinz_password}"
-    JWT_SECRET_KEY="${JWT_SECRET_KEY:-change-me-in-production}"
+    TLS_SECRET_NAME="${TLS_SECRET_NAME:-pinz-tls}"
+    ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
+    POSTGRES_PASSWORD="${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env or environment}"
+    JWT_SECRET_KEY="${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set in .env or environment}"
+    # On k3s servers docker pull is not required; containerd pulls images directly.
+    SKIP_PULL="${SKIP_PULL:-false}"
 }
 
 # Validate environment
@@ -89,7 +76,11 @@ validate_env() {
     log_info "Validating environment..."
 
     # Check required tools
-    local required_tools=("docker" "kubectl" "helm" "helmfile")
+    local required_tools=("kubectl" "helm" "helmfile")
+
+    if is_ci || [[ "${SKIP_PULL:-false}" != "true" ]]; then
+        required_tools+=("docker")
+    fi
 
     for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then
@@ -98,8 +89,8 @@ validate_env() {
         fi
     done
 
-    # Check Docker daemon
-    if ! docker info &> /dev/null; then
+    # Check Docker daemon only when docker-based auth/pull is required.
+    if (is_ci || [[ "${SKIP_PULL:-false}" != "true" ]]) && ! docker info &> /dev/null; then
         log_error "Docker daemon is not running"
         exit 1
     fi
@@ -124,42 +115,64 @@ validate_env() {
     log_success "Environment validation passed"
 }
 
-# Setup Docker registry authentication
+# Check registry reachability (quick TCP probe, no auth required).
+registry_reachable() {
+    timeout 5 bash -c ">/dev/tcp/ghcr.io/443" 2>/dev/null
+}
+
+# Setup Docker registry authentication.
+# On a k3s server this is best-effort: k3s uses containerd and pulls images
+# directly when pods start, so docker login / docker pull are not required.
+# In CI (GitHub Actions) login is mandatory because the build step pushes.
 setup_docker_auth() {
     if is_ci; then
         log_info "Setting up Docker authentication for CI"
         echo "${GITHUB_TOKEN:-}" | docker login "$DOCKER_REGISTRY" -u "${GITHUB_ACTOR:-}" --password-stdin
+        return
+    fi
+
+    if [[ "${SKIP_PULL:-false}" == "true" ]]; then
+        log_info "SKIP_PULL=true — skipping Docker auth"
+        return
+    fi
+
+    if ! registry_reachable; then
+        log_warning "Cannot reach $DOCKER_REGISTRY (network timeout)."
+        log_warning "k3s will pull images directly via containerd when pods start."
+        log_warning "Set SKIP_PULL=true to suppress this check in future runs."
+        return
+    fi
+
+    log_info "Setting up Docker authentication for server"
+    if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+        echo "$GITHUB_TOKEN" | docker login "$DOCKER_REGISTRY" -u "${GITHUB_ACTOR:-$USER}" --password-stdin
     else
-        log_info "Setting up Docker authentication for server"
-        # Try to login with GitHub token if available
-        if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-            echo "$GITHUB_TOKEN" | docker login "$DOCKER_REGISTRY" -u "${GITHUB_ACTOR:-$USER}" --password-stdin
-        else
-            log_warning "GITHUB_TOKEN not set. Please login to Docker registry manually:"
-            log_warning "docker login $DOCKER_REGISTRY"
-            log_warning "Or set GITHUB_TOKEN environment variable"
-            # Try to login anyway, maybe user already logged in
-            if ! docker pull "${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-api-gateway:${IMAGE_TAG}" &>/dev/null; then
-                log_error "Cannot access Docker registry. Please authenticate first."
-                exit 1
-            fi
-        fi
+        log_warning "GITHUB_TOKEN not set — skipping docker login (registry is public)"
     fi
 }
 
-# Pull Docker images
+# Pre-pull Docker images into the Docker daemon cache.
+# On k3s this is optional: containerd handles pulls independently.
+# Skipped automatically when registry is unreachable or SKIP_PULL=true.
 pull_images() {
+    if [[ "${SKIP_PULL:-false}" == "true" ]]; then
+        log_info "SKIP_PULL=true — skipping image pull"
+        return
+    fi
+
+    if ! registry_reachable; then
+        log_warning "Registry unreachable — skipping docker pull (k3s will pull on pod start)"
+        return
+    fi
+
     local api_gateway_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-api-gateway:${IMAGE_TAG}"
     local auth_service_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-auth-service:${IMAGE_TAG}"
 
     log_info "Pulling Docker images..."
-    log_info "API Gateway: $api_gateway_image"
-    log_info "Auth Service: $auth_service_image"
+    docker pull "$api_gateway_image" || log_warning "Pull failed for $api_gateway_image (non-fatal on k3s)"
+    docker pull "$auth_service_image" || log_warning "Pull failed for $auth_service_image (non-fatal on k3s)"
 
-    docker pull "$api_gateway_image"
-    docker pull "$auth_service_image"
-
-    log_success "Images pulled successfully"
+    log_success "Images pull step complete"
 }
 
 # Select Helmfile configuration
@@ -184,8 +197,8 @@ deploy_app() {
     export DOCKER_REPO="$DOCKER_REPO"
     export IMAGE_TAG="$IMAGE_TAG"
     export SERVER_IP="${SERVER_IP:-host.docker.internal}"
-    export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-pinz_password}"
-    export JWT_SECRET_KEY="${JWT_SECRET_KEY:-change-me-in-production}"
+    export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
+    export JWT_SECRET_KEY="${JWT_SECRET_KEY}"
 
     cd "$PROJECT_DIR"
     helmfile -f "$HELMFILE_CONFIG" apply
@@ -193,61 +206,192 @@ deploy_app() {
     log_success "Application deployed successfully"
 }
 
-# Apply Istio ingress resources
+# Apply external services for infrastructure access
+apply_external_services() {
+    local external_services_file="${PROJECT_DIR}/k8s/k8s-external-services.yaml"
+
+    if [[ ! -f "$external_services_file" ]]; then
+        log_warning "External services file not found: $external_services_file"
+        log_warning "Skipping external services apply"
+        return 0
+    fi
+
+    if [[ -z "${SERVER_IP:-}" ]]; then
+        log_error "SERVER_IP is not set — cannot apply external services (DB_HOST/REDIS_ADDR would be unresolvable)"
+        exit 1
+    fi
+
+    log_info "Applying external services from: $external_services_file (SERVER_IP=${SERVER_IP})"
+    SERVER_IP="$SERVER_IP" envsubst '${SERVER_IP}' < "$external_services_file" | kubectl apply -f -
+    log_success "External services applied"
+}
+
+# Apply Kubernetes NetworkPolicy manifests (ingress segmentation layer).
+apply_network_policies() {
+    local network_policy_file="${PROJECT_DIR}/k8s/k8s-network-policies.yaml"
+
+    if [[ ! -f "$network_policy_file" ]]; then
+        log_warning "NetworkPolicy file not found: $network_policy_file"
+        log_warning "Skipping NetworkPolicy apply"
+        return 0
+    fi
+
+    log_info "Applying NetworkPolicy resources from: $network_policy_file"
+    kubectl apply -f "$network_policy_file"
+    log_success "NetworkPolicy resources applied"
+}
+
+# Apply Istio resources from static manifests.
 apply_istio_routing() {
     if [[ ! -d "$ISTIO_CONFIG_DIR" ]]; then
         log_warning "Istio config directory not found: $ISTIO_CONFIG_DIR"
-        log_warning "Skipping Istio Gateway/VirtualService apply"
+        log_warning "Skipping Istio resource apply"
         return 0
     fi
 
-    if ! kubectl get ns istio-system &>/dev/null; then
-        log_warning "Istio namespace (istio-system) not found"
-        log_warning "Skipping Istio Gateway/VirtualService apply"
+    if ! kubectl get ns "$ISTIO_NAMESPACE" &>/dev/null; then
+        log_warning "Istio namespace (${ISTIO_NAMESPACE}) not found"
+        log_warning "Skipping Istio resource apply"
         return 0
     fi
 
-    log_info "Applying Istio ingress resources from: $ISTIO_CONFIG_DIR"
+    log_info "Applying Istio resources from: $ISTIO_CONFIG_DIR"
     kubectl apply -f "$ISTIO_CONFIG_DIR"
-    log_success "Istio ingress resources applied"
+    log_success "Istio resources applied"
+
+    if ! kubectl get secret "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" &>/dev/null; then
+        log_warning "TLS secret ${ISTIO_NAMESPACE}/${TLS_SECRET_NAME} not found. HTTPS on port 443 will not work until secret is created."
+        log_warning "Run setup-cert-manager.sh (or legacy setup-certbot.sh) or create secret manually."
+    fi
+}
+
+# Ensure standard ports are forwarded to Istio ingress NodePorts.
+setup_port_forwarding() {
+    if ! is_server; then
+        return 0
+    fi
+
+    if ! command -v sudo &>/dev/null; then
+        log_warning "sudo not found, skipping iptables setup"
+        return 0
+    fi
+
+    local http_nodeport
+    local https_nodeport
+    http_nodeport=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+    https_nodeport=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.port==443)].nodePort}')
+
+    if [[ -z "$http_nodeport" ]] || [[ -z "$https_nodeport" ]]; then
+        log_warning "Cannot resolve Istio ingress NodePorts, skipping iptables setup"
+        return 0
+    fi
+
+    log_info "Ensuring port forwarding 80→${http_nodeport}, 443→${https_nodeport}"
+
+    # Remove legacy broad redirects first. They also catch pod egress traffic
+    # that happens to target external port 80/443, which breaks outbound HTTPS.
+    sudo iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport" 2>/dev/null || true
+    sudo iptables -t nat -D PREROUTING -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport" 2>/dev/null || true
+
+    # Only redirect traffic addressed to this node. Do not intercept forwarded
+    # pod traffic to arbitrary internet destinations.
+    if ! sudo iptables -t nat -C PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 80 -j REDIRECT --to-port "$http_nodeport"
+    fi
+    if ! sudo iptables -t nat -C PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A PREROUTING -m addrtype --dst-type LOCAL -p tcp --dport 443 -j REDIRECT --to-port "$https_nodeport"
+    fi
+    if ! sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-port "$http_nodeport"
+    fi
+    if ! sudo iptables -t nat -C OUTPUT -p tcp -d 127.0.0.1 --dport 443 -j REDIRECT --to-port "$https_nodeport" &>/dev/null; then
+        sudo iptables -t nat -A OUTPUT -p tcp -d 127.0.0.1 --dport 443 -j REDIRECT --to-port "$https_nodeport"
+    fi
+
+    if command -v netfilter-persistent &>/dev/null; then
+        sudo netfilter-persistent save
+    fi
+}
+
+# Wait until a Deployment object exists in the cluster (it may take a few seconds
+# after helmfile apply for the API server to register the resource).
+wait_for_deployment_object() {
+    local deploy="$1"
+    local max_wait=60
+    local elapsed=0
+
+    log_info "Waiting for Deployment object '$deploy' to appear..."
+    until kubectl get deployment "$deploy" &>/dev/null; do
+        if [[ $elapsed -ge $max_wait ]]; then
+            log_error "Deployment object '$deploy' did not appear within ${max_wait}s."
+            log_error "helmfile apply may have failed. Check helmfile output above."
+            return 1
+        fi
+        sleep 3
+        (( elapsed += 3 ))
+    done
+    log_info "Deployment object '$deploy' found after ${elapsed}s."
 }
 
 # Wait for deployment to be ready
 wait_for_deployment() {
     log_info "Waiting for deployment to be ready..."
 
-    # Wait for pods to be ready
-    kubectl wait --for=condition=available --timeout=300s deployment/api-gateway
-    kubectl wait --for=condition=available --timeout=300s deployment/auth-service
+    local deployments=("api-gateway" "auth-service")
 
-    # Wait for rollout to complete
-    kubectl rollout status deployment/api-gateway --timeout=300s
-    kubectl rollout status deployment/auth-service --timeout=300s
+    for deploy in "${deployments[@]}"; do
+        # Ensure the Deployment object itself exists before calling rollout status.
+        wait_for_deployment_object "$deploy" || return 1
 
-    log_success "Deployment is ready"
+        log_info "Checking rollout status for: $deploy"
+
+        if ! kubectl rollout status "deployment/${deploy}" --timeout=600s; then
+            log_error "Rollout timed out for: $deploy"
+            log_error "--- Pod list ---"
+            kubectl get pods -l "app=${deploy}" -o wide
+            log_error "--- Events ---"
+            kubectl describe deployment "${deploy}" | tail -30
+            local pending_pod
+            pending_pod=$(kubectl get pods -l "app=${deploy}" \
+                --field-selector='status.phase!=Running' \
+                -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+            if [[ -n "$pending_pod" ]]; then
+                log_error "--- Pending pod logs: $pending_pod ---"
+                kubectl describe pod "$pending_pod"
+            fi
+            return 1
+        fi
+
+        log_success "Rollout complete: $deploy"
+    done
+
+    log_success "All deployments are ready"
 }
 
 # Health check
 health_check() {
     log_info "Performing health checks..."
 
-    # Get service URL
     local api_url=""
     if is_server; then
-        # On server, check internal service
-        api_url="http://api-gateway.default.svc.cluster.local:8080"
+        # Prefer domain name; fall back to SERVER_IP then node internal IP.
+        local host="${DOMAIN:-${SERVER_IP:-$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')}}"
+        api_url="http://$host"
+        log_info "Using server access: $api_url (port 80 → Istio NodePort via iptables)"
     else
-        # Locally, try to get from minikube or ingress
         api_url="http://localhost:8080"
     fi
 
-    # Wait for service to respond
+    # Always send Host: pinz.website so Istio VirtualService matches regardless
+    # of whether the URL is a domain name, IP, or NodePort.
+    local host_header="${DOMAIN:-pinz.website}"
+
     local max_attempts=30
     local attempt=1
 
     while [[ $attempt -le $max_attempts ]]; do
-        if curl -f -s "$api_url/health" &> /dev/null; then
-            log_success "Health check passed: $api_url/health"
+        if curl -f -s -H "Host: ${host_header}" "$api_url/health" &> /dev/null; then
+            log_success "Health check passed: $api_url/health (Host: ${host_header})"
             return 0
         fi
 
@@ -257,6 +401,7 @@ health_check() {
     done
 
     log_error "Health check failed after $max_attempts attempts"
+    log_error "Tip: check that Gateway/VirtualService are applied: kubectl get gateways.networking.istio.io,virtualservice -n default"
     return 1
 }
 
@@ -299,9 +444,6 @@ main() {
     log_info "Running in CI: $(is_ci && echo 'Yes' || echo 'No')"
     log_info "Running on server: $(is_server && echo 'Yes' || echo 'No')"
 
-    # Update repository if on server
-    update_repo
-
     # Load environment
     load_env
 
@@ -317,11 +459,20 @@ main() {
     # Select deployment configs
     select_helmfile
 
+    # Apply external services for infrastructure access
+    apply_external_services
+
     # Deploy application
     deploy_app
 
     # Apply Istio ingress routing resources (if present)
     apply_istio_routing
+
+    # Apply Kubernetes NetworkPolicy ingress segmentation
+    apply_network_policies
+
+    # Sync port forwarding rules for standard external ports
+    setup_port_forwarding
 
     # Wait for readiness
     wait_for_deployment
@@ -333,7 +484,19 @@ main() {
     show_status
 
     log_success "🎉 Deployment completed successfully!"
-    log_info "Application is available at: http://<your-server-ip>:8080"
+
+    # Show access information
+    if is_server; then
+        local host="${DOMAIN:-${SERVER_IP:-$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')}}"
+        log_info ""
+        log_info "External Access Information:"
+        log_info "  HTTP:   http://$host/health"
+        log_info "  HTTPS:  https://$host/health"
+        log_info "  Swagger: https://$host/swagger/index.html"
+        log_info "  (port 80/443 → Istio NodePort via iptables)"
+    else
+        log_info "Application is available at: http://localhost:8080"
+    fi
 }
 
 # Parse command line arguments
@@ -357,6 +520,7 @@ while [[ $# -gt 0 ]]; do
             echo "  SERVER_IP                Server IP address for database access"
             echo "  POSTGRES_PASSWORD        Database password"
             echo "  JWT_SECRET_KEY           JWT secret key"
+            echo "  SKIP_PULL=true           Skip docker auth/pull (k3s pulls via containerd)"
             echo ""
             echo "Examples:"
             echo "  $0                                    # Deploy with latest tag"

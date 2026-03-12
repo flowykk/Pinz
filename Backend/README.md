@@ -4,18 +4,49 @@
 
 ## Запуск
 
+### Локальная разработка
 ```bash
 docker-compose up -d
 ```
 
+### Production развертывание
+
+**Требования:**
+- Kubernetes кластер (k3s/minikube/kubeadm)
+- Istio service mesh
+- Helm, Helmfile, kubectl
+- Docker registry доступ
+
+**Развертывание:**
+```bash
+# На сервере в директории Backend
+./deploy.sh
+
+# Или с конкретным тегом
+./deploy.sh --image-tag v1.0.0
+```
+
+**Окружение:**
+```bash
+# Переменные окружения (или .env файл)
+export IMAGE_TAG=v1.0.0
+export SERVER_IP=your-server-ip
+export POSTGRES_PASSWORD=your-db-password
+export JWT_SECRET_KEY=your-jwt-secret
+```
+
 **Адреса после запуска:**
 
-| Ресурс | URL / Команда |
-|--------|---------------|
-| API Gateway | http://localhost:8080 |
-| Swagger UI | http://localhost:8080/swagger/index.html |
-| Auth gRPC | localhost:50051 |
-| Логи | `docker-compose logs -f api-gateway-service` / `docker-compose logs -f auth-service` |
+| Окружение | Ресурс | URL / Команда |
+|-----------|--------|---------------|
+| **Локально** | API Gateway | http://localhost:8080 |
+| | Swagger UI | http://localhost:8080/swagger/index.html |
+| | Auth gRPC | localhost:50051 |
+| | Логи | `docker-compose logs -f api-gateway-service` |
+| **Production** | API Gateway | `http://<domain>` |
+| | Health check | `curl http://<domain>/health` |
+| | Swagger UI | `https://<domain>/swagger/index.html` |
+| | **Порты** | 80 / 443 (снаружи перенаправляются на Istio ingress) |
 
 ## Эндпоинты (REST)
 
@@ -120,13 +151,46 @@ chmod +x setup-server.sh
 ```bash
 cd /opt/pinz/Backend
 
+# Сначала обновите код на сервере
+git pull
+
 # Ручной деплой
 ./deploy.sh
 
 # Проверка статуса
 kubectl get pods
-curl http://<server-ip>:8080/health
+curl http://<domain>/health
 ```
+
+### SSL/TLS сертификаты
+
+Для HTTPS доступа настройте Let's Encrypt через `cert-manager`:
+
+```bash
+cd /opt/pinz/Backend
+
+# Установите cert-manager и выпустите сертификат для домена
+DOMAIN=your-domain.com EMAIL=admin@your-domain.com ./setup-cert-manager.sh
+
+# Проверьте что TLS secret создан
+kubectl get secret pinz-tls -n istio-system
+
+# Теперь доступен HTTPS: https://your-domain.com
+```
+
+Скрипт автоматически:
+- Установит `cert-manager`
+- Создаст `ClusterIssuer` Let's Encrypt
+- Выпустит сертификат через Let's Encrypt
+- Создаст/обновит Istio TLS secret `istio-system/pinz-tls`
+- Настроит автоматическое обновление сертификата через `cert-manager`
+
+**Требования:**
+- Зарегистрированный домен указывающий на сервер
+- Открытый входящий порт `80/tcp`
+- Email для уведомлений Let's Encrypt
+
+Для совместимости `./setup-certbot.sh` оставлен как wrapper на `./setup-cert-manager.sh`.
 
 ### Make команды (теперь работают)
 
