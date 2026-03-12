@@ -9,15 +9,27 @@ type VerifyEmailCodeRequest struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-type SetPasswordAndUsernameRequest struct {
+type PasskeyRegisterBeginRequest struct {
 	RegistrationID string `json:"registration_id"`
-	Password       string `json:"password"`
 	Username       string `json:"username"`
 }
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+// PasskeyRegisterFinishRequest carries the raw attestation JSON from the authenticator.
+type PasskeyRegisterFinishRequest struct {
+	RegistrationID string `json:"registration_id"`
+	// CredentialJSON is the PublicKeyCredential (attestation) object serialised to JSON by the client.
+	CredentialJSON []byte `json:"credential_json" swaggertype:"string" format:"base64"`
+}
+
+type PasskeyLoginBeginRequest struct {
+	Email string `json:"email" example:"user@example.com"`
+}
+
+// PasskeyLoginFinishRequest carries the raw assertion JSON from the authenticator.
+type PasskeyLoginFinishRequest struct {
+	Email string `json:"email" example:"user@example.com"`
+	// CredentialJSON is the PublicKeyCredential (assertion) object serialised to JSON by the client.
+	CredentialJSON []byte `json:"credential_json" swaggertype:"string" format:"base64"`
 }
 
 type RefreshTokenRequest struct {

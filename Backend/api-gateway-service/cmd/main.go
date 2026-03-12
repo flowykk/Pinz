@@ -3,6 +3,10 @@
 // @description API Gateway for Pinz mobile client
 // @host pinz.website
 // @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and the JWT access token.
 package main
 
 import (

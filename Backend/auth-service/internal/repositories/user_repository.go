@@ -22,20 +22,19 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 }
 
 func (r *UserRepository) GetUserByEmail(email string) (*models.User, error) {
-	q := psq.Select("id", "email", "password_hash", "username", "avatar_url", "created_at").
+	q := psq.Select("id", "email", "username", "avatar_url", "created_at").
 		From("users").
 		Where(sq.Eq{"email": email})
 	row := q.RunWith(r.db).QueryRow()
 	var u models.User
-	var id, avatarURL sql.NullString
-	err := row.Scan(&id, &u.Email, &u.PasswordHash, &u.Username, &avatarURL, &u.CreatedAt)
+	var avatarURL sql.NullString
+	err := row.Scan(&u.ID, &u.Email, &u.Username, &avatarURL, &u.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
 		return nil, err
 	}
-	u.ID = id.String
 	if avatarURL.Valid {
 		u.AvatarURL = avatarURL.String
 	}
@@ -44,19 +43,17 @@ func (r *UserRepository) GetUserByEmail(email string) (*models.User, error) {
 
 func (r *UserRepository) CreateUser(u *models.User) error {
 	q := psq.Insert("users").
-		Columns("email", "password_hash", "username", "avatar_url").
-		Values(u.Email, u.PasswordHash, u.Username, u.AvatarURL).
-		Suffix("RETURNING id, created_at")
+		Columns("id", "email", "username", "avatar_url").
+		Values(u.ID, u.Email, u.Username, u.AvatarURL).
+		Suffix("RETURNING created_at")
 	sqlStr, args, err := q.ToSql()
 	if err != nil {
 		return err
 	}
 	row := r.db.QueryRow(sqlStr, args...)
-	var id string
-	if err := row.Scan(&id, &u.CreatedAt); err != nil {
+	if err := row.Scan(&u.CreatedAt); err != nil {
 		return err
 	}
-	u.ID = id
 	return nil
 }
 
@@ -85,13 +82,13 @@ func (r *UserRepository) GetRefreshToken(token string) (*models.RefreshToken, er
 }
 
 func (r *UserRepository) GetUserByID(userID string) (*models.User, error) {
-	q := psq.Select("id", "email", "password_hash", "username", "avatar_url", "created_at").
+	q := psq.Select("id", "email", "username", "avatar_url", "created_at").
 		From("users").
 		Where(sq.Eq{"id": userID})
 	row := q.RunWith(r.db).QueryRow()
 	var u models.User
 	var avatarURL sql.NullString
-	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Username, &avatarURL, &u.CreatedAt)
+	err := row.Scan(&u.ID, &u.Email, &u.Username, &avatarURL, &u.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows

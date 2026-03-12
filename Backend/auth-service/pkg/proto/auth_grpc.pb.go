@@ -19,12 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_SubmitEmail_FullMethodName            = "/auth.AuthService/SubmitEmail"
-	AuthService_VerifyEmailCode_FullMethodName        = "/auth.AuthService/VerifyEmailCode"
-	AuthService_SetPasswordAndUsername_FullMethodName = "/auth.AuthService/SetPasswordAndUsername"
-	AuthService_Login_FullMethodName                  = "/auth.AuthService/Login"
-	AuthService_RefreshToken_FullMethodName           = "/auth.AuthService/RefreshToken"
-	AuthService_Logout_FullMethodName                 = "/auth.AuthService/Logout"
+	AuthService_SubmitEmail_FullMethodName           = "/auth.AuthService/SubmitEmail"
+	AuthService_VerifyEmailCode_FullMethodName       = "/auth.AuthService/VerifyEmailCode"
+	AuthService_PasskeyRegisterBegin_FullMethodName  = "/auth.AuthService/PasskeyRegisterBegin"
+	AuthService_PasskeyRegisterFinish_FullMethodName = "/auth.AuthService/PasskeyRegisterFinish"
+	AuthService_PasskeyLoginBegin_FullMethodName     = "/auth.AuthService/PasskeyLoginBegin"
+	AuthService_PasskeyLoginFinish_FullMethodName    = "/auth.AuthService/PasskeyLoginFinish"
+	AuthService_RefreshToken_FullMethodName          = "/auth.AuthService/RefreshToken"
+	AuthService_Logout_FullMethodName                = "/auth.AuthService/Logout"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -33,8 +35,10 @@ const (
 type AuthServiceClient interface {
 	SubmitEmail(ctx context.Context, in *SubmitEmailRequest, opts ...grpc.CallOption) (*SubmitEmailResponse, error)
 	VerifyEmailCode(ctx context.Context, in *VerifyEmailCodeRequest, opts ...grpc.CallOption) (*VerifyEmailCodeResponse, error)
-	SetPasswordAndUsername(ctx context.Context, in *SetPasswordAndUsernameRequest, opts ...grpc.CallOption) (*SetPasswordAndUsernameResponse, error)
-	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	PasskeyRegisterBegin(ctx context.Context, in *PasskeyRegisterBeginRequest, opts ...grpc.CallOption) (*PasskeyRegisterBeginResponse, error)
+	PasskeyRegisterFinish(ctx context.Context, in *PasskeyRegisterFinishRequest, opts ...grpc.CallOption) (*PasskeyRegisterFinishResponse, error)
+	PasskeyLoginBegin(ctx context.Context, in *PasskeyLoginBeginRequest, opts ...grpc.CallOption) (*PasskeyLoginBeginResponse, error)
+	PasskeyLoginFinish(ctx context.Context, in *PasskeyLoginFinishRequest, opts ...grpc.CallOption) (*PasskeyLoginFinishResponse, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
 }
@@ -67,20 +71,40 @@ func (c *authServiceClient) VerifyEmailCode(ctx context.Context, in *VerifyEmail
 	return out, nil
 }
 
-func (c *authServiceClient) SetPasswordAndUsername(ctx context.Context, in *SetPasswordAndUsernameRequest, opts ...grpc.CallOption) (*SetPasswordAndUsernameResponse, error) {
+func (c *authServiceClient) PasskeyRegisterBegin(ctx context.Context, in *PasskeyRegisterBeginRequest, opts ...grpc.CallOption) (*PasskeyRegisterBeginResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SetPasswordAndUsernameResponse)
-	err := c.cc.Invoke(ctx, AuthService_SetPasswordAndUsername_FullMethodName, in, out, cOpts...)
+	out := new(PasskeyRegisterBeginResponse)
+	err := c.cc.Invoke(ctx, AuthService_PasskeyRegisterBegin_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+func (c *authServiceClient) PasskeyRegisterFinish(ctx context.Context, in *PasskeyRegisterFinishRequest, opts ...grpc.CallOption) (*PasskeyRegisterFinishResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LoginResponse)
-	err := c.cc.Invoke(ctx, AuthService_Login_FullMethodName, in, out, cOpts...)
+	out := new(PasskeyRegisterFinishResponse)
+	err := c.cc.Invoke(ctx, AuthService_PasskeyRegisterFinish_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) PasskeyLoginBegin(ctx context.Context, in *PasskeyLoginBeginRequest, opts ...grpc.CallOption) (*PasskeyLoginBeginResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PasskeyLoginBeginResponse)
+	err := c.cc.Invoke(ctx, AuthService_PasskeyLoginBegin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) PasskeyLoginFinish(ctx context.Context, in *PasskeyLoginFinishRequest, opts ...grpc.CallOption) (*PasskeyLoginFinishResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PasskeyLoginFinishResponse)
+	err := c.cc.Invoke(ctx, AuthService_PasskeyLoginFinish_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +137,10 @@ func (c *authServiceClient) Logout(ctx context.Context, in *LogoutRequest, opts 
 type AuthServiceServer interface {
 	SubmitEmail(context.Context, *SubmitEmailRequest) (*SubmitEmailResponse, error)
 	VerifyEmailCode(context.Context, *VerifyEmailCodeRequest) (*VerifyEmailCodeResponse, error)
-	SetPasswordAndUsername(context.Context, *SetPasswordAndUsernameRequest) (*SetPasswordAndUsernameResponse, error)
-	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	PasskeyRegisterBegin(context.Context, *PasskeyRegisterBeginRequest) (*PasskeyRegisterBeginResponse, error)
+	PasskeyRegisterFinish(context.Context, *PasskeyRegisterFinishRequest) (*PasskeyRegisterFinishResponse, error)
+	PasskeyLoginBegin(context.Context, *PasskeyLoginBeginRequest) (*PasskeyLoginBeginResponse, error)
+	PasskeyLoginFinish(context.Context, *PasskeyLoginFinishRequest) (*PasskeyLoginFinishResponse, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
 	Logout(context.Context, *LogoutRequest) (*LogoutResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
@@ -133,11 +159,17 @@ func (UnimplementedAuthServiceServer) SubmitEmail(context.Context, *SubmitEmailR
 func (UnimplementedAuthServiceServer) VerifyEmailCode(context.Context, *VerifyEmailCodeRequest) (*VerifyEmailCodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyEmailCode not implemented")
 }
-func (UnimplementedAuthServiceServer) SetPasswordAndUsername(context.Context, *SetPasswordAndUsernameRequest) (*SetPasswordAndUsernameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetPasswordAndUsername not implemented")
+func (UnimplementedAuthServiceServer) PasskeyRegisterBegin(context.Context, *PasskeyRegisterBeginRequest) (*PasskeyRegisterBeginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PasskeyRegisterBegin not implemented")
 }
-func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+func (UnimplementedAuthServiceServer) PasskeyRegisterFinish(context.Context, *PasskeyRegisterFinishRequest) (*PasskeyRegisterFinishResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PasskeyRegisterFinish not implemented")
+}
+func (UnimplementedAuthServiceServer) PasskeyLoginBegin(context.Context, *PasskeyLoginBeginRequest) (*PasskeyLoginBeginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PasskeyLoginBegin not implemented")
+}
+func (UnimplementedAuthServiceServer) PasskeyLoginFinish(context.Context, *PasskeyLoginFinishRequest) (*PasskeyLoginFinishResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PasskeyLoginFinish not implemented")
 }
 func (UnimplementedAuthServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
@@ -202,38 +234,74 @@ func _AuthService_VerifyEmailCode_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_SetPasswordAndUsername_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetPasswordAndUsernameRequest)
+func _AuthService_PasskeyRegisterBegin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PasskeyRegisterBeginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).SetPasswordAndUsername(ctx, in)
+		return srv.(AuthServiceServer).PasskeyRegisterBegin(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_SetPasswordAndUsername_FullMethodName,
+		FullMethod: AuthService_PasskeyRegisterBegin_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).SetPasswordAndUsername(ctx, req.(*SetPasswordAndUsernameRequest))
+		return srv.(AuthServiceServer).PasskeyRegisterBegin(ctx, req.(*PasskeyRegisterBeginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginRequest)
+func _AuthService_PasskeyRegisterFinish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PasskeyRegisterFinishRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).Login(ctx, in)
+		return srv.(AuthServiceServer).PasskeyRegisterFinish(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_Login_FullMethodName,
+		FullMethod: AuthService_PasskeyRegisterFinish_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Login(ctx, req.(*LoginRequest))
+		return srv.(AuthServiceServer).PasskeyRegisterFinish(ctx, req.(*PasskeyRegisterFinishRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_PasskeyLoginBegin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PasskeyLoginBeginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).PasskeyLoginBegin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_PasskeyLoginBegin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).PasskeyLoginBegin(ctx, req.(*PasskeyLoginBeginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_PasskeyLoginFinish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PasskeyLoginFinishRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).PasskeyLoginFinish(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_PasskeyLoginFinish_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).PasskeyLoginFinish(ctx, req.(*PasskeyLoginFinishRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -290,12 +358,20 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_VerifyEmailCode_Handler,
 		},
 		{
-			MethodName: "SetPasswordAndUsername",
-			Handler:    _AuthService_SetPasswordAndUsername_Handler,
+			MethodName: "PasskeyRegisterBegin",
+			Handler:    _AuthService_PasskeyRegisterBegin_Handler,
 		},
 		{
-			MethodName: "Login",
-			Handler:    _AuthService_Login_Handler,
+			MethodName: "PasskeyRegisterFinish",
+			Handler:    _AuthService_PasskeyRegisterFinish_Handler,
+		},
+		{
+			MethodName: "PasskeyLoginBegin",
+			Handler:    _AuthService_PasskeyLoginBegin_Handler,
+		},
+		{
+			MethodName: "PasskeyLoginFinish",
+			Handler:    _AuthService_PasskeyLoginFinish_Handler,
 		},
 		{
 			MethodName: "RefreshToken",

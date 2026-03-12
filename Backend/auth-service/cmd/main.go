@@ -26,7 +26,10 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	deps := di.BuildDependencies(sqlDB, redisClient)
+	deps, err := di.BuildDependencies(sqlDB, redisClient)
+	if err != nil {
+		log.Fatalf("di: %v", err)
+	}
 	if err := server.RunGRPCServer(deps.AuthService); err != nil {
 		log.Fatalf("server: %v", err)
 	}
