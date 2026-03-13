@@ -39,8 +39,9 @@ func (h *AuthHandler) SubmitEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.SubmitEmailResponse{
-		IsRegistered:   resp.GetIsRegistered(),
-		RegistrationID: resp.GetRegistrationKey(),
+		IsRegistered:     resp.GetIsRegistered(),
+		RegistrationID:   resp.GetRegistrationKey(),
+		VerificationCode: resp.GetVerificationCode(),
 	})
 }
 

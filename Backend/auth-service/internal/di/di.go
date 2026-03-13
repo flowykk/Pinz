@@ -21,7 +21,7 @@ type Dependencies struct {
 func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, error) {
 	rpID := os.Getenv("WEBAUTHN_RP_ID")
 	if rpID == "" {
-		rpID = "localhost"
+		rpID = "pinz.website"
 	}
 	rpDisplayName := os.Getenv("WEBAUTHN_RP_DISPLAY_NAME")
 	if rpDisplayName == "" {
@@ -29,7 +29,7 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 	}
 	rpOrigin := os.Getenv("WEBAUTHN_RP_ORIGIN")
 	if rpOrigin == "" {
-		rpOrigin = "http://localhost"
+		rpOrigin = "https://pinz.website"
 	}
 
 	wa, err := webauthn.New(&webauthn.Config{

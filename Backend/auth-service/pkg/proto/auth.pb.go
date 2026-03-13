@@ -142,11 +142,12 @@ func (x *SubmitEmailRequest) GetEmail() string {
 }
 
 type SubmitEmailResponse struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	IsRegistered    bool                   `protobuf:"varint,1,opt,name=is_registered,json=isRegistered,proto3" json:"is_registered,omitempty"`
-	RegistrationKey string                 `protobuf:"bytes,2,opt,name=registration_key,json=registrationKey,proto3" json:"registration_key,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	IsRegistered     bool                   `protobuf:"varint,1,opt,name=is_registered,json=isRegistered,proto3" json:"is_registered,omitempty"`
+	RegistrationKey  string                 `protobuf:"bytes,2,opt,name=registration_key,json=registrationKey,proto3" json:"registration_key,omitempty"`
+	VerificationCode string                 `protobuf:"bytes,3,opt,name=verification_code,json=verificationCode,proto3" json:"verification_code,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *SubmitEmailResponse) Reset() {
@@ -189,6 +190,13 @@ func (x *SubmitEmailResponse) GetIsRegistered() bool {
 func (x *SubmitEmailResponse) GetRegistrationKey() string {
 	if x != nil {
 		return x.RegistrationKey
+	}
+	return ""
+}
+
+func (x *SubmitEmailResponse) GetVerificationCode() string {
+	if x != nil {
+		return x.VerificationCode
 	}
 	return ""
 }
@@ -967,10 +975,11 @@ const file_auth_proto_rawDesc = "" +
 	"avatar_url\x18\x04 \x01(\tR\tavatarUrl\x12&\n" +
 	"\x0fcreated_at_unix\x18\x05 \x01(\x03R\rcreatedAtUnix\"*\n" +
 	"\x12SubmitEmailRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\"e\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\"\x92\x01\n" +
 	"\x13SubmitEmailResponse\x12#\n" +
 	"\ris_registered\x18\x01 \x01(\bR\fisRegistered\x12)\n" +
-	"\x10registration_key\x18\x02 \x01(\tR\x0fregistrationKey\"n\n" +
+	"\x10registration_key\x18\x02 \x01(\tR\x0fregistrationKey\x12+\n" +
+	"\x11verification_code\x18\x03 \x01(\tR\x10verificationCode\"n\n" +
 	"\x16VerifyEmailCodeRequest\x12'\n" +
 	"\x0fregistration_id\x18\x01 \x01(\tR\x0eregistrationId\x12+\n" +
 	"\x11verification_code\x18\x02 \x01(\tR\x10verificationCode\"3\n" +

@@ -118,7 +118,11 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 		log.Printf("SubmitEmail: redis Expire %s: %v", redisKey, err)
 	}
 
-	return &pb.SubmitEmailResponse{IsRegistered: false, RegistrationKey: registrationID}, nil
+	return &pb.SubmitEmailResponse{
+		IsRegistered:     false,
+		RegistrationKey:  registrationID,
+		VerificationCode: code,
+	}, nil
 }
 
 func (s *AuthService) VerifyEmailCode(ctx context.Context, req *pb.VerifyEmailCodeRequest) (*pb.VerifyEmailCodeResponse, error) {
