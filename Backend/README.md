@@ -1,136 +1,156 @@
 # Pinz Backend
 
-Микросервисный бэкенд приложения Pinz (итерация 1: фундамент и авторизация).
+Микросервисный бэкенд приложения Pinz: авторизация, passkey, JWT, observability.
 
-## Запуск
+## Архитектура
 
-### Локальная разработка
-```bash
-docker-compose up -d
+```
+                     ┌──────────────────────────────────────┐
+                     │           Kubernetes (Minikube)       │
+                     │                                       │
+  Client ──► Istio ──► api-gateway ──gRPC──► auth-service   │
+                     │                                       │
+                     │  otel-collector  tempo  grafana       │
+                     │  prometheus      loki                 │
+                     └──────────────────────────────────────┘
+                                    │
+                     ┌──────────────┴──────────────┐
+                     │     Docker Compose (host)    │
+                     │     PostgreSQL    Redis       │
+                     └─────────────────────────────┘
 ```
 
-### Production развертывание
-
-**Требования:**
-- Kubernetes кластер (k3s/minikube/kubeadm)
-- Istio service mesh
-- Helm, Helmfile, kubectl
-- Docker registry доступ
-
-**Развертывание:**
-```bash
-# На сервере в директории Backend
-./deploy.sh
-
-# Или с конкретным тегом
-./deploy.sh --image-tag v1.0.0
-```
-
-**Окружение:**
-```bash
-# Переменные окружения (или .env файл)
-export IMAGE_TAG=v1.0.0
-export SERVER_IP=your-server-ip
-export POSTGRES_PASSWORD=your-db-password
-export JWT_SECRET_KEY=your-jwt-secret
-```
-
-**Адреса после запуска:**
-
-| Окружение | Ресурс | URL / Команда |
-|-----------|--------|---------------|
-| **Локально** | API Gateway | http://localhost:8080 |
-| | Swagger UI | http://localhost:8080/swagger/index.html |
-| | Auth gRPC | localhost:50051 |
-| | Логи | `docker-compose logs -f api-gateway-service` |
-| **Production** | API Gateway | `http://<domain>` |
-| | Health check | `curl http://<domain>/health` |
-| | Swagger UI | `https://<domain>/swagger/index.html` |
-| | **Порты** | 80 / 443 (снаружи перенаправляются на Istio ingress) |
-
-## Эндпоинты (REST)
-
-- `POST /api/v1/auth/email` — первый шаг: пользователь вводит почту. Тело: `{"email":"user@example.com"}`. Ответ: `{"is_registered": true|false, "registration_key": "..."}`. При `is_registered: true` клиент показывает экран ввода пароля (далее login); при `false` — экран ввода кода с почты (`registration_key` передаётся в verify-email и finish-register).
-- `POST /api/v1/auth/verify-email` — проверка кода (при регистрации).
-- `POST /api/v1/auth/finish-register` — установка пароля и username (при регистрации).
-- `POST /api/v1/auth/login` — вход по email и паролю.
-- `POST /api/v1/auth/refresh` — обновление access-токена.
-- `POST /api/v1/auth/logout` — выход.
+| Компонент | Роль |
+|---|---|
+| **api-gateway-service** | REST → gRPC прокси, HTTP-трейсинг |
+| **auth-service** | Бизнес-логика авторизации, passkey, JWT |
+| **otel-collector** | Приём и маршрутизация телеметрии (OTLP) |
+| **tempo** | Хранение распределённых трейсов |
+| **prometheus** | Метрики (RED + бизнес + Go runtime) |
+| **loki** | Структурированные логи |
+| **grafana** | Дашборды, корреляция трейс↔лог↔метрика |
 
 ## Стек
 
-- Go 1.23, chi, gRPC, Protobuf, PostgreSQL, Redis, Squirrel, JWT, swaggo.
+Go 1.25 · chi · gRPC · Protobuf · PostgreSQL · Redis · JWT · OpenTelemetry · Istio · Helm · Helmfile
 
-## Регенерация proto и swagger
+## Эндпоинты (REST)
 
-```bash
-# Proto — единая точка из корня Backend (Backend/proto/*.proto)
-cd Backend && make proto
+| Метод | Путь | Описание |
+|---|---|---|
+| POST | `/api/v1/auth/email` | Ввод почты. Ответ: `{"is_registered": bool, "registration_key": "..."}` |
+| POST | `/api/v1/auth/verify-email` | Проверка кода из письма |
+| POST | `/api/v1/auth/finish-register` | Установка пароля и username |
+| POST | `/api/v1/auth/login` | Вход по email + пароль |
+| POST | `/api/v1/auth/refresh` | Обновление access-токена |
+| POST | `/api/v1/auth/logout` | Выход |
 
-# Swagger — только для API Gateway
-cd api-gateway-service && make swagger
-```
+Swagger UI: `http://pinz.example.com/swagger/index.html`
 
-## Локальный линтинг
+## Локальная разработка (Minikube + Istio)
 
-```bash
-# Проверить все сервисы
-make lint
+### Требования
 
-# Проверить только API Gateway
-make lint-api
+- Minikube, Docker, kubectl
+- Helm, Helmfile
+- istioctl
 
-# Проверить только Auth Service
-make lint-auth
-```
-
-## Локальный деплой (Minikube + Istio)
-
-Требуется: Minikube, Helm, Helmfile, istioctl, Docker.
+### Первоначальная настройка кластера (один раз)
 
 ```bash
-# 1. Инфраструктура (PostgreSQL, Redis)
-make infra-up
-
-# 2. Minikube + Istio (выполнить один раз)
 minikube start --cpus 4 --memory 4096 --driver=docker
 minikube addons enable metrics-server
 istioctl install --set profile=demo -y
 kubectl label namespace default istio-injection=enabled
+```
 
-# 3. Istio-ресурсы (mTLS, Gateway, VirtualService)
-make k8s-istio
+### Запуск полного стека
 
-# 4. Сборка образов и деплой приложения
+```bash
+# Инфраструктура (PostgreSQL, Redis) — Docker Compose
+make infra-up
+
+# Observability (OTel Collector, Tempo, Prometheus, Loki, Grafana) — k8s
+make obs-up
+
+# Сборка образов внутри Minikube и деплой приложения
 make k8s-build
+make k8s-istio
 make k8s-deploy
 
-# 5. Доступ (в отдельном терминале)
-sudo minikube tunnel
+# Или всё одной командой
+make all-up
+```
 
-# 6. Проброс хоста в /etc/hosts (один раз)
+### Остановка
+
+```bash
+make all-down
+```
+
+### Адреса
+
+| Ресурс | URL / команда |
+|---|---|
+| API Gateway | `http://localhost:8080` (после `make dev`) |
+| Swagger UI | `http://localhost:8080/swagger/index.html` |
+| **Grafana** | `make grafana` → http://localhost:3000 |
+| Логи | `kubectl logs -f deployment/api-gateway` |
+| Трейсы | Grafana → Explore → Tempo |
+| Метрики | Grafana → Dashboards → Pinz — Service Overview |
+
+### /etc/hosts (один раз)
+
+```bash
 sudo sed -i '' '/pinz.example.com/d' /etc/hosts
 echo "127.0.0.1 pinz.example.com" | sudo tee -a /etc/hosts
 ```
 
-**Адреса (Minikube + Istio):**
+### make dev
 
-| Ресурс | URL / Команда |
-|--------|---------------|
-| API Gateway | http://pinz.example.com |
-| Swagger UI | http://pinz.example.com/swagger/index.html |
-| Логи | `kubectl logs -f deployment/api-gateway` / `kubectl logs -f deployment/auth-service` |
-| Трейсинг (Jaeger) | `istioctl dashboard jaeger` или `kubectl port-forward svc/tracing 16686:80 -n istio-system` → http://localhost:16686 |
-| Мониторинг (Kiali) | `istioctl dashboard kiali` или `kubectl port-forward svc/kiali 20001:20001 -n istio-system` → http://localhost:20001 |
-| Prometheus | `kubectl port-forward svc/prometheus 9090:9090 -n istio-system` → http://localhost:9090 |
+```bash
+make dev    # api-gateway → http://localhost:8080 (Ctrl+C для остановки)
+```
 
-Observability addons (Prometheus, Kiali, Jaeger) устанавливаются отдельно: см. `deploy.md`, раздел 9.
+## Make команды
+
+### Инфраструктура
+
+```bash
+make infra-up       # PostgreSQL + Redis (Docker Compose)
+make infra-down     # Остановка инфраструктуры
+```
+
+### Observability
+
+```bash
+make obs-up         # Запустить стек (OTel Collector, Tempo, Prometheus, Loki, Grafana)
+make obs-down       # Удалить из k8s
+make obs-status     # Статус obs-подов
+make grafana        # port-forward → http://localhost:3000
+```
+
+### Kubernetes
+
+```bash
+make k8s-build      # Сборка образов внутри Minikube
+make k8s-istio      # Применить Istio-ресурсы (mTLS, Gateway, VirtualService)
+make k8s-deploy     # Деплой через helmfile + rollout restart
+```
+
+### Кодогенерация и линтинг
+
+```bash
+make proto          # Генерация protobuf (Backend/proto/*.proto)
+make swagger        # Генерация swagger (api-gateway-service)
+make lint           # Запустить golangci-lint для обоих сервисов
+make lint-api       # Только api-gateway-service
+make lint-auth      # Только auth-service
+```
 
 ## Production развертывание (VPS)
 
 ### Полная настройка сервера
-
-Используйте скрипт `setup-server.sh` для полной автоматизированной настройки:
 
 ```bash
 # На чистом сервере Ubuntu 22.04
@@ -139,95 +159,82 @@ chmod +x setup-server.sh
 ./setup-server.sh --repo-url https://github.com/flowykk/Pinz.git
 ```
 
-Этот скрипт установит:
-- Docker, k3s, Helm, Helmfile, Istio
-- Склонирует репозиторий
-- Настроит инфраструктуру (PostgreSQL, Redis)
-- Создаст переменные окружения
-- Подготовит CI/CD доступ
+Скрипт установит Docker, k3s, Helm, Helmfile, Istio, склонирует репозиторий и настроит инфраструктуру.
 
-### После настройки
+### Адреса (Production)
+
+| Ресурс | URL |
+|---|---|
+| API Gateway | https://pinz.website |
+| Swagger UI | https://pinz.website/swagger/index.html |
+| Health check | `curl https://pinz.website/health` |
+
+### Деплой
 
 ```bash
 cd /opt/pinz/Backend
-
-# Сначала обновите код на сервере
-git pull
 
 # Ручной деплой
 ./deploy.sh
 
-# Проверка статуса
-kubectl get pods
-curl http://<domain>/health
+# Деплой с конкретным тегом
+./deploy.sh --image-tag v1.2.3
 ```
 
-### SSL/TLS сертификаты
-
-Для HTTPS доступа настройте Let's Encrypt через `cert-manager`:
+### Переменные окружения
 
 ```bash
-cd /opt/pinz/Backend
+export IMAGE_TAG=v1.0.0
+export SERVER_IP=pinz.website
+export POSTGRES_PASSWORD=your-db-password
+export JWT_SECRET_KEY=your-jwt-secret
+```
 
-# Установите cert-manager и выпустите сертификат для домена
-DOMAIN=your-domain.com EMAIL=admin@your-domain.com ./setup-cert-manager.sh
+### SSL/TLS (Let's Encrypt)
 
-# Проверьте что TLS secret создан
+```bash
+DOMAIN=pinz.website EMAIL=admin@pinz.website ./setup-cert-manager.sh
+# → https://pinz.website доступен после выпуска сертификата
 kubectl get secret pinz-tls -n istio-system
-
-# Теперь доступен HTTPS: https://your-domain.com
 ```
 
-Скрипт автоматически:
-- Установит `cert-manager`
-- Создаст `ClusterIssuer` Let's Encrypt
-- Выпустит сертификат через Let's Encrypt
-- Создаст/обновит Istio TLS secret `istio-system/pinz-tls`
-- Настроит автоматическое обновление сертификата через `cert-manager`
+### CI/CD (GitHub Actions)
 
-**Требования:**
-- Зарегистрированный домен указывающий на сервер
-- Открытый входящий порт `80/tcp`
-- Email для уведомлений Let's Encrypt
+- **CI**: сборка, тесты, линтинг — на каждом PR/push
+- **CD**: автодеплой при мерже в `main`
 
-Для совместимости `./setup-certbot.sh` оставлен как wrapper на `./setup-cert-manager.sh`.
+GitHub Secrets:
 
-### Make команды (теперь работают)
+| Secret | Описание |
+|---|---|
+| `VPS_HOST` | IP/домен сервера |
+| `VPS_USER` | SSH пользователь |
+| `VPS_SSH_KEY` | Приватный SSH ключ |
+| `POSTGRES_PASSWORD` | Пароль БД |
+| `JWT_SECRET_KEY` | Секрет JWT |
 
-```bash
-# Управление инфраструктурой
-make infra-up      # Запуск PostgreSQL + Redis
-make infra-down    # Остановка инфраструктуры
+## Observability
 
-# Kubernetes операции
-make k8s-build     # Сборка Docker образов
-make k8s-deploy    # Деплой в Kubernetes
-make k8s-istio     # Установка Istio ресурсов
+Весь стек работает в k8s (namespace `default`). Приложения отправляют телеметрию на `otel-collector:4317` (OTLP gRPC).
 
-# Кодогенерация
-make proto         # Генерация protobuf
-make swagger       # Генерация swagger
-```
+**Что собирается:**
 
-### CI/CD
+| Сигнал | Источник | Бэкенд |
+|---|---|---|
+| Трейсы | HTTP-запросы, gRPC-вызовы, SQL, Redis | Tempo |
+| Метрики | RED (rate/errors/duration), auth counters, Go runtime | Prometheus |
+| Логи | `slog` → OTLP bridge | Loki |
 
-Проект поддерживает автоматическое развертывание через GitHub Actions:
+**Корреляции в Grafana**: клик по трейсу открывает связанные логи и метрики.
 
-- **CI**: Сборка, тесты, линтинг на каждом PR/push
-- **CD**: Автоматический деплой на `main` ветку
-
-Для настройки CD добавьте в GitHub Secrets:
-- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`
-- `POSTGRES_PASSWORD`, `JWT_SECRET_KEY`
-
-### Ручной деплой с локальной машины
+## Регенерация proto и swagger
 
 ```bash
-# Настройка SSH доступа к серверу
-ssh-copy-id user@your-server
+# Proto — из корня Backend/
+make proto
 
-# Деплой с локальной машины
-IMAGE_TAG=v1.2.3 ./deploy.sh
+# Swagger
+make swagger
 ```
 
 Подробная документация: `DEPLOYMENT.md`, `ci-cd.md`, `deploy.md`.

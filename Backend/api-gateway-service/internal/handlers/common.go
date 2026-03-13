@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -42,14 +42,14 @@ func respondError(w http.ResponseWriter, statusCode int, message string) {
 	respondJSON(w, statusCode, responses.ErrorResponse{Error: message})
 }
 
-func handleServiceError(w http.ResponseWriter, err error, action string) {
+func handleServiceError(w http.ResponseWriter, r *http.Request, err error, action string) {
 	st, ok := status.FromError(err)
 	if !ok {
-		log.Printf("%s: %v", action, err)
+		slog.ErrorContext(r.Context(), "service error", "action", action, "error", err)
 		respondError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
-	log.Printf("%s (gRPC %s): %s", action, st.Code().String(), st.Message())
+	slog.WarnContext(r.Context(), "grpc error", "action", action, "code", st.Code().String(), "msg", st.Message())
 	switch st.Code() {
 	case codes.InvalidArgument:
 		respondError(w, http.StatusBadRequest, st.Message())

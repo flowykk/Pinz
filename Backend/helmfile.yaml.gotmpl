@@ -16,6 +16,10 @@ releases:
           dbName: pinz_db
           redisAddr: "redis:6379"
           grpcPort: ":50051"
+          otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+          otelServiceName: "auth-service"
+          otelTracesSampler: "parentbased_traceid_ratio"
+          otelTracesSamplerArg: "1.0"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
           jwtSecretKey: "{{ env "JWT_SECRET_KEY" | default "change-me-in-production" }}"
@@ -33,3 +37,7 @@ releases:
       - env:
           apiGatewayPort: "8080"
           authServiceGrpcAddress: auth-service.default.svc.cluster.local:50051
+          otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+          otelServiceName: "api-gateway-service"
+          otelTracesSampler: "parentbased_traceid_ratio"
+          otelTracesSamplerArg: "1.0"

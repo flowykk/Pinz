@@ -49,6 +49,8 @@ spec:
             - containerPort: {{ .Values.service.port }}
               name: grpc
           env:
+            - name: USER
+              value: "app"
             - name: GRPC_PORT
               value: {{ .Values.env.grpcPort | quote }}
             - name: DB_HOST
@@ -71,6 +73,14 @@ spec:
                 secretKeyRef:
                   name: auth-service-secret
                   key: jwt-secret-key
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.env.otelExporterEndpoint | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.env.otelServiceName | quote }}
+            - name: OTEL_TRACES_SAMPLER
+              value: {{ .Values.env.otelTracesSampler | quote }}
+            - name: OTEL_TRACES_SAMPLER_ARG
+              value: {{ .Values.env.otelTracesSamplerArg | quote }}
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}

@@ -2,12 +2,13 @@ package server
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -19,34 +20,34 @@ func RunGRPCServer(authService pb.AuthServiceServer) error {
 	port := os.Getenv("GRPC_PORT")
 	if port == "" {
 		port = ":50051"
-		log.Println("GRPC_PORT not set, using :50051")
+		slog.Warn("GRPC_PORT not set, using :50051")
 	}
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
 
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	pb.RegisterAuthServiceServer(srv, authService)
 
 	healthSrv := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(srv, healthSrv)
 	healthSrv.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
-	log.Printf("gRPC server listening on %s", port)
+	slog.Info("gRPC server listening", "port", port)
 
 	go func() {
 		if err := srv.Serve(lis); err != nil {
-			log.Fatalf("grpc serve: %v", err)
+			slog.Error("gRPC serve error", "error", err)
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutting down gRPC server...")
-	// Announce NOT_SERVING before draining so Kubernetes stops routing traffic
-	// to this pod before connections are forcibly closed.
+	slog.Info("Shutting down gRPC server...")
 	healthSrv.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	srv.GracefulStop()
 	return nil

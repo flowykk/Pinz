@@ -88,7 +88,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build api-gateway-service
-        run: docker build -t api-gateway-service:v${{ github.sha }} -f Backend/api-gateway-service/Dockerfile Backend/api-gateway-service
+        run: docker build -t api-gateway-service:v${{ github.sha }} -f Backend/api-gateway-service/Dockerfile Backend
 
       - name: Build auth-service
-        run: docker build -t auth-service:v${{ github.sha }} -f Backend/auth-service/Dockerfile Backend/auth-service
+        run: docker build -t auth-service:v${{ github.sha }} -f Backend/auth-service/Dockerfile Backend

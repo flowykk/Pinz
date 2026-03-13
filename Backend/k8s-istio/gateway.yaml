@@ -13,6 +13,7 @@ spec:
         protocol: HTTP
       hosts:
         - "pinz.website"
+        - "pinz.example.com"
     - port:
         number: 443
         name: https

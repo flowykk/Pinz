@@ -16,33 +16,56 @@ swagger:
 	$(MAKE) -C api-gateway-service swagger
 
 # Local linting
-.PHONY: lint lint-api lint-auth install-lint
-lint: check-lint lint-api lint-auth
-
-check-lint:
-	@if ! command -v golangci-lint >/dev/null 2>&1; then \
-		echo "golangci-lint not found. Installing..."; \
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v2.10.1; \
-	fi
+.PHONY: lint lint-api lint-auth
+lint: lint-api lint-auth
 
 lint-api:
-	cd api-gateway-service && golangci-lint run ./...
+	cd api-gateway-service && go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0 run ./...
 
 lint-auth:
-	cd auth-service && golangci-lint run ./...
+	cd auth-service && go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0 run ./...
 
-# Local k8s deployment (Minikube + Istio)
-.PHONY: infra-up infra-down k8s-build k8s-deploy k8s-istio all-up
+# Infra: Postgres + Redis (Docker Compose, accessible via host.docker.internal from k8s)
+.PHONY: infra-up infra-down
 infra-up:
 	docker compose -f docker-compose.infra.yml up -d
 
 infra-down:
 	docker compose -f docker-compose.infra.yml down
 
+# Observability stack: OTel Collector, Tempo, Prometheus, Loki, Grafana — all in k8s
+.PHONY: obs-up obs-down obs-status grafana
+obs-up:
+	kubectl apply -f k8s/k8s-observability.yaml
+	@echo ""
+	@echo "  Grafana access:  make grafana  (port-forward 3000)"
+	@echo "  Check status:    make obs-status"
+	@echo ""
+
+obs-down:
+	kubectl delete -f k8s/k8s-observability.yaml
+
+obs-status:
+	kubectl get pods -l component=observability
+
+# Open Grafana via port-forward (runs in foreground, Ctrl+C to stop)
+grafana:
+	@echo "Grafana → http://localhost:3000"
+	kubectl port-forward svc/grafana 3000:3000
+
+# Direct port-forward to api-gateway (bypasses Lima conflicts on :80/:443)
+# Access: http://localhost:8080
+dev:
+	@echo "API    → http://localhost:8080"
+	@echo "Swagger → http://localhost:8080/swagger/index.html"
+	kubectl port-forward svc/api-gateway 8080:8080
+
+# k8s: build images inside Minikube, apply Istio, deploy via helmfile
+.PHONY: k8s-build k8s-deploy k8s-istio
 k8s-build:
 	eval $$(minikube docker-env) && \
-	docker build -t pinz-auth-service:latest -f auth-service/Dockerfile auth-service && \
-	docker build -t pinz-api-gateway:latest -f api-gateway-service/Dockerfile api-gateway-service
+	docker build -t backend-auth-service:latest -f auth-service/Dockerfile . && \
+	docker build -t backend-api-gateway-service:latest -f api-gateway-service/Dockerfile .
 
 k8s-deploy:
 	helmfile -f helmfile.local.yaml.gotmpl apply && \
@@ -51,6 +74,11 @@ k8s-deploy:
 k8s-istio:
 	kubectl apply -f k8s-istio/
 
-# Full deployment: infra + build + istio + deploy
-.PHONY: all-up
-all-up: infra-up k8s-build k8s-istio k8s-deploy
+# Full local stack: infra (docker) + observability (k8s) + app (k8s)
+.PHONY: all-up all-down
+all-up: infra-up obs-up k8s-build k8s-istio k8s-deploy
+
+all-down:
+	kubectl delete -f k8s/k8s-observability.yaml || true
+	helmfile -f helmfile.local.yaml.gotmpl destroy || true
+	docker compose -f docker-compose.infra.yml down

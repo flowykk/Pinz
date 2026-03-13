@@ -1,0 +1,113 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": { "list": [] },
+  "description": "Pinz — distributed traces (Tempo). Use Explore → Tempo for search by service/duration.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "compass",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["pinz", "observability"],
+      "targetBlank": false,
+      "title": "Service Overview (metrics)",
+      "tooltip": "",
+      "type": "dashboard",
+      "uid": "pinz-service-overview"
+    },
+    {
+      "asDropdown": false,
+      "icon": "doc",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["pinz", "observability"],
+      "targetBlank": false,
+      "title": "Logs",
+      "tooltip": "",
+      "type": "dashboard",
+      "uid": "pinz-logs"
+    }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Trace search",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 1 },
+      "id": 2,
+      "options": {
+        "dedupStrategy": "none",
+        "showLogs": true,
+        "showServiceMap": true,
+        "showTraceIDSearch": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "tempo", "uid": "tempo" },
+          "queryType": "traceqlSearch",
+          "refId": "A",
+          "traceqlSearch": {
+            "filters": [],
+            "limit": 20,
+            "query": "${traceId}"
+          }
+        }
+      ],
+      "title": "Recent traces (Pinz services)",
+      "type": "traces"
+    },
+    {
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 11 },
+      "id": 3,
+      "options": {
+        "content": "**Time range:** set to \"Last 15 minutes\" or \"Last 1 hour\" so traces are in range.\n\n**Explore → Tempo:** full search by duration, status, tags. Or paste a **Trace ID** above.\n\n**From a trace:** use \"Logs for this span\" and \"Metrics\" to jump to Loki and Prometheus.",
+        "mode": "markdown"
+      },
+      "title": "Tips",
+      "type": "text"
+    },
+    {
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 15 },
+      "id": 4,
+      "options": {
+        "content": "If the panel above is empty: open **Explore** (compass in sidebar) → datasource **Tempo** → tab **Search** → run query `{}` and set time range **Last 1 hour**.",
+        "mode": "markdown"
+      },
+      "title": "Fallback: Explore",
+      "type": "text"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["pinz", "observability", "traces"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "{}", "value": "{}" },
+        "hide": 0,
+        "label": "Trace ID",
+        "name": "traceId",
+        "options": [{ "selected": true, "text": "{}", "value": "{}" }],
+        "query": "{}",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Pinz — Traces",
+  "uid": "pinz-traces",
+  "version": 1
+}
