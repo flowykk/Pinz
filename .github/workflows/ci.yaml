@@ -37,12 +37,18 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Lint api-gateway-service
-        run: go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0 run ./...
-        working-directory: Backend/api-gateway-service
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: v1.61.0
+          install-mode: goinstall
+          working-directory: Backend/api-gateway-service
 
       - name: Lint auth-service
-        run: go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0 run ./...
-        working-directory: Backend/auth-service
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: v1.61.0
+          install-mode: goinstall
+          working-directory: Backend/auth-service
 
   test:
     runs-on: ubuntu-latest
