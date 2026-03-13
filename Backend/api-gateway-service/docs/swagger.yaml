@@ -118,6 +118,9 @@ definitions:
       registration_id:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
+      verification_code:
+        example: "1234"
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.VerifyEmailCodeResponse:
     properties:
