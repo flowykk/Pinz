@@ -18,7 +18,7 @@ env:
   grpcPort: ":50052"
   otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
   otelServiceName: "trip-service"
-  otelTracesSampler: "parentbased_traceid_ratio"
+  otelTracesSampler: "parentbased_traceidratio"
   otelTracesSamplerArg: "1.0"
 
 secret:

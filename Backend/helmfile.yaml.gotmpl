@@ -18,7 +18,7 @@ releases:
           grpcPort: ":50051"
           otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
           otelServiceName: "auth-service"
-          otelTracesSampler: "parentbased_traceid_ratio"
+          otelTracesSampler: "parentbased_traceidratio"
           otelTracesSamplerArg: "1.0"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
@@ -41,7 +41,7 @@ releases:
           grpcPort: ":50052"
           otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
           otelServiceName: "trip-service"
-          otelTracesSampler: "parentbased_traceid_ratio"
+          otelTracesSampler: "parentbased_traceidratio"
           otelTracesSamplerArg: "1.0"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
@@ -63,5 +63,5 @@ releases:
           tripServiceGrpcAddress: trip-service.default.svc.cluster.local:50052
           otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
           otelServiceName: "api-gateway-service"
-          otelTracesSampler: "parentbased_traceid_ratio"
+          otelTracesSampler: "parentbased_traceidratio"
           otelTracesSamplerArg: "1.0"
