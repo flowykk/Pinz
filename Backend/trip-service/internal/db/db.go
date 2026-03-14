@@ -45,7 +45,23 @@ CREATE TABLE IF NOT EXISTS trip_participants (
 )
 
 func InitDB() (*sql.DB, error) {
-	db, err := otelsql.Open("pgx", dsn(),
+	dsnStr := dsn()
+	// Log connection target without password
+	host := os.Getenv("DB_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("DB_PORT")
+	if port == "" {
+		port = "5432"
+	}
+	dbname := os.Getenv("DB_NAME")
+	if dbname == "" {
+		dbname = "pinz_trips"
+	}
+	slog.Info("db: opening connection", "host", host, "port", port, "database", dbname)
+
+	db, err := otelsql.Open("pgx", dsnStr,
 		otelsql.WithAttributes(semconv.DBSystemPostgreSQL),
 		otelsql.WithSpanOptions(otelsql.SpanOptions{
 			Ping:           false,
@@ -54,30 +70,38 @@ func InitDB() (*sql.DB, error) {
 		}),
 	)
 	if err != nil {
+		slog.Error("db: open failed", "error", err)
 		return nil, fmt.Errorf("open: %w", err)
 	}
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(5 * time.Minute)
 
+	slog.Info("db: pinging")
 	if err := db.Ping(); err != nil {
 		db.Close()
+		slog.Error("db: ping failed", "error", err)
 		return nil, fmt.Errorf("ping: %w", err)
 	}
-	slog.Info("connected to database")
+	slog.Info("db: connected")
 
 	if _, err := otelsql.RegisterDBStatsMetrics(db,
 		otelsql.WithAttributes(semconv.DBSystemPostgreSQL),
 	); err != nil {
-		slog.Warn("failed to register db stats metrics", "error", err)
+		slog.Warn("db: failed to register metrics", "error", err)
 	}
 
-	for _, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL} {
+	slog.Info("db: running migrations (postgis, trips, trip_participants)")
+	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL} {
+		name := []string{"postgis", "trips", "trip_participants"}[i]
 		if _, err := db.Exec(ddl); err != nil {
 			db.Close()
-			return nil, fmt.Errorf("migration: %w", err)
+			slog.Error("db: migration failed", "object", name, "error", err)
+			return nil, fmt.Errorf("migration %s: %w", name, err)
 		}
+		slog.Info("db: migration ok", "object", name)
 	}
+	slog.Info("db: init complete")
 	return db, nil
 }
 

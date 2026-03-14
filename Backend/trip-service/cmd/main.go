@@ -17,10 +17,12 @@ import (
 )
 
 func main() {
+	slog.Info("trip-service starting")
 	_ = godotenv.Load()
 
 	ctx := context.Background()
 
+	slog.Info("initializing OTel")
 	otelProviders, err := pinzotel.Init(ctx, "trip-service", "1.0.0")
 	if err != nil {
 		slog.Warn("OTel init failed, running without telemetry", "error", err)
@@ -31,6 +33,7 @@ func main() {
 			otelProviders.Shutdown(shutCtx)
 		}()
 		slog.SetDefault(slog.New(otelslog.NewHandler("trip-service")))
+		slog.Info("OTel initialized")
 		if err := runtimemetrics.Start(
 			runtimemetrics.WithMinimumReadMemStatsInterval(15 * time.Second),
 		); err != nil {
@@ -38,18 +41,22 @@ func main() {
 		}
 	}
 
+	slog.Info("connecting to database")
 	sqlDB, err := db.InitDB()
 	if err != nil {
 		slog.Error("db init failed", "error", err)
 		os.Exit(1)
 	}
 	defer sqlDB.Close()
+	slog.Info("database ready")
 
+	slog.Info("building dependencies")
 	deps, err := di.BuildDependencies(sqlDB)
 	if err != nil {
 		slog.Error("failed to build dependencies", "error", err)
 		os.Exit(1)
 	}
+	slog.Info("dependencies ready, starting gRPC server")
 	if err := server.RunGRPCServer(deps.TripService); err != nil {
 		slog.Error("gRPC server error", "error", err)
 		os.Exit(1)

@@ -22,8 +22,10 @@ func RunGRPCServer(tripService pb.TripServiceServer) error {
 		port = ":50052"
 		slog.Warn("GRPC_PORT not set, using :50052")
 	}
+	slog.Info("gRPC: binding to port", "port", port)
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
+		slog.Error("gRPC: listen failed", "port", port, "error", err)
 		return fmt.Errorf("listen: %w", err)
 	}
 
