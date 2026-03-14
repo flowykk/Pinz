@@ -65,6 +65,8 @@ func handleServiceError(w http.ResponseWriter, r *http.Request, err error, actio
 		respondError(w, http.StatusServiceUnavailable, "service unavailable")
 	case codes.DeadlineExceeded:
 		respondError(w, http.StatusGatewayTimeout, st.Message())
+	case codes.Unimplemented:
+		respondError(w, http.StatusNotImplemented, st.Message())
 	default:
 		respondError(w, http.StatusInternalServerError, "internal server error")
 	}

@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package trip;
+
+option go_package = "pinz/backend/trip-service/pkg/proto";
+
+service TripService {
+  rpc CreateTrip(CreateTripRequest) returns (CreateTripResponse);
+  rpc GetTrip(GetTripRequest) returns (GetTripResponse);
+  rpc ListUserTrips(ListUserTripsRequest) returns (ListUserTripsResponse);
+  rpc UpdateTrip(UpdateTripRequest) returns (UpdateTripResponse);
+  rpc DeleteTrip(DeleteTripRequest) returns (DeleteTripResponse);
+  // Поток создания (tripCreationFlow.md), Фаза 3/5:
+  rpc ProcessMediaGrouping(ProcessMediaGroupingRequest) returns (ProcessMediaGroupingResponse);
+  rpc ApplyGroupsAndProcess(ApplyGroupsAndProcessRequest) returns (ApplyGroupsAndProcessResponse);
+  rpc GetTripReview(GetTripReviewRequest) returns (GetTripReviewResponse);
+  rpc FinalizeTrip(FinalizeTripRequest) returns (FinalizeTripResponse);
+}
+
+message Trip {
+  string id = 1;
+  string owner_user_id = 2;
+  string name = 3;
+  string description = 4;
+  string category = 5;
+  string season = 6;
+  string status = 7;
+  string privacy_level = 8;
+  int64 start_date_unix = 9;
+  int64 end_date_unix = 10;
+  int32 likes_count = 11;
+  int32 dislikes_count = 12;
+  string cover_url = 13;
+  bool is_published = 14;
+  bool is_generated = 15;
+  int64 created_at_unix = 16;
+  int64 updated_at_unix = 17;
+}
+
+message CreateTripRequest {
+  string owner_user_id = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+  string season = 5;
+  string privacy_level = 6;
+  repeated FileToUpload files_to_upload = 7;
+}
+
+message FileToUpload {
+  string client_id = 1;
+  string content_type = 2;
+}
+
+message CreateTripResponse {
+  string trip_id = 1;
+  string status = 2;
+  repeated UploadUrl upload_urls = 3;
+}
+
+message UploadUrl {
+  string client_id = 1;
+  string s3_key = 2;
+  string url = 3;
+}
+
+message GetTripRequest {
+  string trip_id = 1;
+  string user_id = 2;
+}
+
+message GetTripResponse {
+  Trip trip = 1;
+}
+
+message ListUserTripsRequest {
+  string user_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListUserTripsResponse {
+  repeated Trip trips = 1;
+}
+
+message UpdateTripRequest {
+  string trip_id = 1;
+  string user_id = 2;
+  optional string name = 3;
+  optional string description = 4;
+  optional string category = 5;
+  optional string season = 6;
+  optional string privacy_level = 7;
+  optional int64 start_date_unix = 8;
+  optional int64 end_date_unix = 9;
+  optional string cover_url = 10;
+}
+
+message UpdateTripResponse {
+  Trip trip = 1;
+}
+
+message DeleteTripRequest {
+  string trip_id = 1;
+  string user_id = 2;
+}
+
+message DeleteTripResponse {
+  bool success = 1;
+}
+
+message ProcessMediaGroupingRequest {}
+message ProcessMediaGroupingResponse {}
+
+message ApplyGroupsAndProcessRequest {}
+message ApplyGroupsAndProcessResponse {}
+
+message GetTripReviewRequest {}
+message GetTripReviewResponse {}
+
+message FinalizeTripRequest {}
+message FinalizeTripResponse {}

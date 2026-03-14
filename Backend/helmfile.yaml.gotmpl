@@ -24,11 +24,34 @@ releases:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
           jwtSecretKey: "{{ env "JWT_SECRET_KEY" | default "change-me-in-production" }}"
 
+  - name: trip-service
+    namespace: default
+    chart: ./helm/trip-service
+    values:
+      - image:
+          repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-trip-service"
+          tag: "{{ env "IMAGE_TAG" | default "latest" }}"
+          pullPolicy: Always
+      - env:
+          dbHost: "db-trips"
+          dbPort: "5433"
+          dbUser: pinz_user
+          dbName: pinz_trips
+          redisAddr: "redis:6379"
+          grpcPort: ":50052"
+          otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+          otelServiceName: "trip-service"
+          otelTracesSampler: "parentbased_traceid_ratio"
+          otelTracesSamplerArg: "1.0"
+      - secret:
+          dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
+
   - name: api-gateway
     namespace: default
     chart: ./helm/api-gateway
     needs:
       - default/auth-service
+      - default/trip-service
     values:
       - image:
           repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-api-gateway"
@@ -37,6 +60,7 @@ releases:
       - env:
           apiGatewayPort: "8080"
           authServiceGrpcAddress: auth-service.default.svc.cluster.local:50051
+          tripServiceGrpcAddress: trip-service.default.svc.cluster.local:50052
           otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
           otelServiceName: "api-gateway-service"
           otelTracesSampler: "parentbased_traceid_ratio"

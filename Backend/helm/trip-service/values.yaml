@@ -1,23 +1,28 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/dmitry-pr/pinz-api-gateway
+  repository: ghcr.io/dmitry-pr/pinz-trip-service
   tag: latest
   pullPolicy: IfNotPresent
 
 service:
-  name: http
-  port: 8080
+  name: grpc
+  port: 50052
 
 env:
-  apiGatewayPort: "8080"
-  authServiceGrpcAddress: "auth-service:50051"
-  tripServiceGrpcAddress: "trip-service:50052"
-  swaggerHost: ""
+  dbHost: db-trips
+  dbPort: "5433"
+  dbUser: pinz_user
+  dbName: pinz_trips
+  redisAddr: redis:6379
+  grpcPort: ":50052"
   otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
-  otelServiceName: "api-gateway-service"
+  otelServiceName: "trip-service"
   otelTracesSampler: "parentbased_traceid_ratio"
   otelTracesSamplerArg: "1.0"
+
+secret:
+  dbPassword: "REPLACE_IN_PRODUCTION"
 
 resources:
   requests:

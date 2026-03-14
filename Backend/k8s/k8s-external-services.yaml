@@ -39,3 +39,25 @@ subsets:
   - ip: ${SERVER_IP}
   ports:
   - port: 6379
+---
+# Отдельный инстанс PostgreSQL для Trip Service (порт 5433 на хосте)
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-trips
+  namespace: default
+spec:
+  ports:
+  - port: 5433
+    targetPort: 5433
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: db-trips
+  namespace: default
+subsets:
+- addresses:
+  - ip: ${SERVER_IP}
+  ports:
+  - port: 5433
