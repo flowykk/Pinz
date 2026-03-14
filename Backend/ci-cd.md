@@ -47,7 +47,7 @@ Pinz/
 | Шаг | Runs on | Команды |
 |-----|---------|---------|
 | Checkout | runner | `actions/checkout@v4` |
-| Setup Go | runner | `actions/setup-go@v5` с `go-version: '1.23'` |
+| Setup Go | runner | `actions/setup-go@v5` с `go-version: '1.25'` |
 | Cache | runner | `actions/cache` для `~/.cache/go-build`, `go.sum` |
 | Lint | runner | `golangci-lint run ./...` (для каждого сервиса) |
 | Test | runner | `go test ./...` (для каждого сервиса) |
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.25'
       - uses: golangci/golangci-lint-action@v4
         with:
           version: latest
@@ -105,7 +105,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.25'
       - run: go test ./...
         working-directory: Backend/${{ matrix.service }}
 
@@ -220,7 +220,7 @@ Runner зарегистрирован на VPS, имеет доступ к `kube
 - Jobs: lint, test, build
 - Path filters для Backend
 - Branches: `main`, `develop`, `PINZ-*`
-- Go 1.23, golangci-lint
+- Go 1.25, golangci-lint
 
 ### 6.2 .github/workflows/cd.yaml
 

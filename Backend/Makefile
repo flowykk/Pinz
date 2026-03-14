@@ -16,14 +16,14 @@ swagger:
 	$(MAKE) -C api-gateway-service swagger
 
 # Local linting
-.PHONY: lint lint-api lint-auth
+.PHONY: lint lint-api lint-auth check-lint
 lint: lint-api lint-auth
 
 lint-api:
-	cd api-gateway-service && go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0 run ./...
+	cd api-gateway-service && golangci-lint run ./...
 
 lint-auth:
-	cd auth-service && go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0 run ./...
+	cd auth-service && golangci-lint run ./...
 
 # Infra: Postgres + Redis (Docker Compose, accessible via host.docker.internal from k8s)
 .PHONY: infra-up infra-down
