@@ -234,12 +234,6 @@ public struct ProfileView: View {
                     trailing: .valuesIcon([.text(viewModel.user.email)], ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.emailChange)) }
                 )),
-                .default(Setting.DefaultSetting(
-                    id: "profilePasswordChanging",
-                    leading: .title("Сменить пароль"),
-                    trailing: .icon(ProfileIcon.chevronRight),
-                    action: .plain { }
-                )),
             ],
         )
 

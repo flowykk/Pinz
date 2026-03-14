@@ -1,8 +1,9 @@
 import SwiftUI
 import PinzNetworking
 import PinzBase
+import PinzDomain
 
-@Observable
+@MainActor @Observable
 final class PlacesWishlistViewModel {
 
     enum Route {
@@ -13,8 +14,14 @@ final class PlacesWishlistViewModel {
         case navigate(Route)
     }
 
+    let wishlist: [WishlistElement]
+
     private let networkService = NetworkService()
     private var router: AppRouting?
+
+    init(wishlist: [WishlistElement] = WishlistElement.stubs) {
+        self.wishlist = wishlist
+    }
 
     func dispatch(_ intent: Intent) {
         switch intent {

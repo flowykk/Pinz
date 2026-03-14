@@ -12,18 +12,36 @@ public struct PlacesWishlistView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            Header(leftView: {
-                PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.navigate(.back))
+        CollapsibleHeader(needsBlur: true) {
+            header
+        } content: {
+            VStack {
+                let wishlist = viewModel.wishlist
+                ForEach(wishlist.indices, id: \.self) { index in
+                    WishlistElementView(element: wishlist[index]) { element in
+                        // TODO: navigate to wishlist element screen
+                    }.padding(.horizontal, 12)
+                    if index != wishlist.count - 1 {
+                        Divider().padding(.leading, 12)
+                    }
                 }
-            }, centerView: {
-                HeaderTitle("Желанные места")
-            })
-
-            Spacer()
+            }
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
+    }
+
+    private var header: some View {
+        Header(leftView: {
+            PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                viewModel.dispatch(.navigate(.back))
+            }
+        }, centerView: {
+            HeaderTitle("Желанные места")
+        }, rightView: {
+            PinzButton(type: .icon(.plus), tint: PinzUIAsset.textPrimary.swiftUIColor) {
+                // TODO: navigate to adding wishlist element form
+            }
+        })
     }
 }

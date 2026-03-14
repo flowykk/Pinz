@@ -3,13 +3,13 @@ import PinzUI
 
 struct AddPersonView: View {
 
-    @Environment(\.appRouter) private var router
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 0) {
             Header(leftView: {
                 PinzButton(type: .icon(.xmark), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    router?.pop()
+                    dismiss()
                 }
             })
 
