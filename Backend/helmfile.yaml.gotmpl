@@ -41,7 +41,7 @@ releases:
           grpcPort: ":50052"
           otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
           otelServiceName: "trip-service"
-          otelTracesSampler: "parentbased_traceidratio"
+          otelTracesSampler: "parentbased_always_on"
           otelTracesSamplerArg: "1.0"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
