@@ -96,6 +96,12 @@ EOF
 
 apply_certificate() {
   echo "[INFO] Requesting certificate for ${DOMAIN}..."
+  # Build dnsNames: DOMAIN first, then EXTRA_DOMAINS (comma-separated). One - "    - name" per line.
+  local extra_dns
+  extra_dns=""
+  if [[ -n "${EXTRA_DOMAINS:-}" ]]; then
+    extra_dns=$(echo "${EXTRA_DOMAINS}" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | sed 's/^/    - /')
+  fi
   kubectl apply -f - <<EOF
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -110,7 +116,7 @@ spec:
   commonName: ${DOMAIN}
   dnsNames:
     - ${DOMAIN}
-    ${EXTRA_DOMAINS:+$(echo "$EXTRA_DOMAINS" | sed 's/,/\n    - /g' | sed 's/^/    - /')}
+${extra_dns}
 EOF
 }
 
@@ -146,7 +152,16 @@ show_cert_manager_diagnostics() {
 }
 
 wait_for_certificate() {
-  echo "[INFO] Waiting for certificate ${ISTIO_NAMESPACE}/${TLS_SECRET_NAME}..."
+  echo "[INFO] Checking certificate ${ISTIO_NAMESPACE}/${TLS_SECRET_NAME}..."
+  if kubectl get "certificate/${TLS_SECRET_NAME}" -n "$ISTIO_NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q True; then
+    echo "[INFO] Certificate is already Ready, skipping wait."
+    kubectl get secret "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" >/dev/null
+    return 0
+  fi
+
+  echo "[INFO] Waiting for certificate (up to 10 min). If stuck, in another terminal run:"
+  echo "       kubectl describe certificate $TLS_SECRET_NAME -n $ISTIO_NAMESPACE"
+  echo "       kubectl get challenges -A"
   if ! kubectl wait --for=condition=Ready "certificate/${TLS_SECRET_NAME}" -n "$ISTIO_NAMESPACE" --timeout=600s; then
     echo "[ERROR] Certificate did not become Ready within 10 minutes."
     show_cert_manager_diagnostics
