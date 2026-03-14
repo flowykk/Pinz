@@ -24,7 +24,7 @@ func (r *CredentialRepository) CreateCredential(userID string, cred *webauthn.Cr
 		return err
 	}
 	q := psq.Insert("passkey_credentials").
-		Columns("user_id", "credential_id", "credential_data").
+		Columns("user_id", "credential_id", "credential_json").
 		Values(userID, cred.ID, data)
 	_, err = q.RunWith(r.db).Exec()
 	return err
@@ -33,7 +33,7 @@ func (r *CredentialRepository) CreateCredential(userID string, cred *webauthn.Cr
 // GetCredentialsByUserID returns all WebAuthn credentials registered for a user.
 func (r *CredentialRepository) GetCredentialsByUserID(userID string) ([]webauthn.Credential, error) {
 	rows, err := r.db.Query(
-		`SELECT credential_data FROM passkey_credentials WHERE user_id = $1`,
+		`SELECT credential_json FROM passkey_credentials WHERE user_id = $1`,
 		userID,
 	)
 	if err != nil {
@@ -64,7 +64,7 @@ func (r *CredentialRepository) UpdateCredential(cred *webauthn.Credential) error
 		return err
 	}
 	res, err := r.db.Exec(
-		`UPDATE passkey_credentials SET credential_data = $1 WHERE credential_id = $2`,
+		`UPDATE passkey_credentials SET credential_json = $1 WHERE credential_id = $2`,
 		data, cred.ID,
 	)
 	if err != nil {
