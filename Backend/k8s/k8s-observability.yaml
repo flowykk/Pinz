@@ -340,7 +340,7 @@ spec:
       containers:
         - name: loki
           image: grafana/loki:latest
-          args: ["-config.file=/etc/loki/config.yaml"]
+          args: ["-config.file=/etc/loki/config.yaml", "-target=all"]
           ports:
             - containerPort: 3100
               name: http
