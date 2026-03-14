@@ -127,6 +127,8 @@ public struct WishlistCreationView: View {
             ) {
                 viewModel.dispatch(.continue)
             }
+            .disabledWithOpacity(viewModel.isCompleteButtonDisabled)
+            .animation(.easeInOut(duration: 0.3), value: viewModel.isCompleteButtonDisabled)
         }
     }
 }

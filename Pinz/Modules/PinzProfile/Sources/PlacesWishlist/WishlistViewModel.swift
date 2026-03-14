@@ -4,7 +4,7 @@ import PinzBase
 import PinzDomain
 
 @MainActor @Observable
-final class PlacesWishlistViewModel {
+final class WishlistViewModel {
 
     enum Route {
         case wishlistElementCreation

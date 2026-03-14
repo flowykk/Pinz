@@ -33,6 +33,17 @@ final class WishlistCreationViewModel {
     private let networkService = NetworkService()
     private var router: AppRouting?
 
+    var isCompleteButtonDisabled: Bool {
+        switch state {
+        case .name:
+            return name.isEmpty
+        case .description:
+            return description.isEmpty
+        case .photo:
+            return image == nil
+        }
+    }
+
     init(onCreated: @escaping (WishlistElement) -> Void) {
         self.onCreated = onCreated
     }
