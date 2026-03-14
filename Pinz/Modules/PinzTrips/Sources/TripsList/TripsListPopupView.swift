@@ -45,13 +45,4 @@ struct TripsListPopupView: View {
             Spacer()
         }
     }
-
-    private var gradientWithButtons: some View {
-        BottomGradientWithButtons {
-            PinzButton(
-                type: .slot(style: .primary, title: "Добавить путешествие"),
-                tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-            ) {}
-        }
-    }
 }

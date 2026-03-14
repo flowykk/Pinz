@@ -32,13 +32,4 @@ public struct TripsListView: View {
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
     }
-
-    private var gradientWithButtons: some View {
-        BottomGradientWithButtons {
-            PinzButton(
-                type: .slot(style: .primary, title: "Добавить путешествие"),
-                tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-            ) {}
-        }
-    }
 }

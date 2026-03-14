@@ -198,6 +198,7 @@ public struct PinCreationView: View {
 
     private var descriptionEditing: some View {
         DescriptionEditingView(
+            title: "Описание",
             text: Binding(get: {
                 viewModel.description ?? ""
             }, set: { value in

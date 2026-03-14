@@ -38,6 +38,10 @@ public enum MediaRoute: Hashable {
     case localInfo(media: LoadedMedia)
 }
 
+public enum WishlistRoute: Hashable {
+    case creation
+}
+
 public enum Route: Hashable {
     case main
     case trip(TripRoute)
@@ -45,4 +49,5 @@ public enum Route: Hashable {
     case profile(ProfileRoute)
     case pinInfo(PinInfoRoute)
     case media(MediaRoute)
+    case wishlist(WishlistRoute)
 }

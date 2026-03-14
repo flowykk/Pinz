@@ -86,6 +86,11 @@ public struct RootView<Content: View>: View {
             case let .localInfo(media):
                 MediaInfoView(localMedia: media)
             }
+        case let .wishlist(wishlistRoute):
+            switch wishlistRoute {
+            case .creation:
+                WishlistCreationView()
+            }
         }
     }
 }

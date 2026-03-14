@@ -7,6 +7,7 @@ import PinzDomain
 final class PlacesWishlistViewModel {
 
     enum Route {
+        case wishlistElementCreation
         case back
     }
 
@@ -27,6 +28,8 @@ final class PlacesWishlistViewModel {
         switch intent {
         case let .navigate(route):
             switch route {
+            case .wishlistElementCreation:
+                router?.navigateToWishlistElementCreation()
             case .back:
                 router?.pop()
             }

@@ -40,7 +40,7 @@ public struct PlacesWishlistView: View {
             HeaderTitle("Желанные места")
         }, rightView: {
             PinzButton(type: .icon(.plus), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                // TODO: navigate to adding wishlist element form
+                viewModel.dispatch(.navigate(.wishlistElementCreation))
             }
         })
     }
