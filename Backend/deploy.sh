@@ -241,6 +241,27 @@ apply_network_policies() {
     log_success "NetworkPolicy resources applied"
 }
 
+# Apply observability stack (OTel Collector, Tempo, Prometheus, Loki, Grafana).
+# On VPS, GF_SERVER_ROOT_URL is set to https://grafana.pinz.website for correct links/redirects.
+apply_observability() {
+    local observability_file="${PROJECT_DIR}/k8s/k8s-observability.yaml"
+
+    if [[ ! -f "$observability_file" ]]; then
+        log_warning "Observability manifest not found: $observability_file"
+        log_warning "Skipping observability stack apply"
+        return 0
+    fi
+
+    log_info "Applying observability stack from: $observability_file"
+    if is_server; then
+        export GRAFANA_ROOT_URL="${GRAFANA_ROOT_URL:-https://grafana.pinz.website}"
+        sed "s|http://localhost:3000|${GRAFANA_ROOT_URL}|g" "$observability_file" | kubectl apply -f -
+    else
+        kubectl apply -f "$observability_file"
+    fi
+    log_success "Observability stack applied"
+}
+
 # Apply Istio resources from static manifests.
 apply_istio_routing() {
     if [[ ! -d "$ISTIO_CONFIG_DIR" ]]; then
@@ -465,6 +486,9 @@ main() {
     # Deploy application
     deploy_app
 
+    # Apply observability stack (Grafana, Tempo, Loki, etc.)
+    apply_observability
+
     # Apply Istio ingress routing resources (if present)
     apply_istio_routing
 
@@ -493,6 +517,7 @@ main() {
         log_info "  HTTP:   http://$host/health"
         log_info "  HTTPS:  https://$host/health"
         log_info "  Swagger: https://$host/swagger/index.html"
+        log_info "  Grafana: https://grafana.pinz.website"
         log_info "  (port 80/443 → Istio NodePort via iptables)"
     else
         log_info "Application is available at: http://localhost:8080"

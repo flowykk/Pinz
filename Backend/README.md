@@ -168,6 +168,7 @@ chmod +x setup-server.sh
 | API Gateway | https://pinz.website |
 | Swagger UI | https://pinz.website/swagger/index.html |
 | Health check | `curl https://pinz.website/health` |
+| **Grafana** | https://grafana.pinz.website (дашборды, трейсы, логи, метрики) |
 
 ### Деплой
 
@@ -195,6 +196,10 @@ export JWT_SECRET_KEY=your-jwt-secret
 ```bash
 DOMAIN=pinz.website EMAIL=admin@pinz.website ./setup-cert-manager.sh
 # → https://pinz.website доступен после выпуска сертификата
+
+# С поддоменом для Grafana (один сертификат на оба имени):
+EXTRA_DOMAINS=grafana.pinz.website DOMAIN=pinz.website EMAIL=admin@pinz.website ./setup-cert-manager.sh
+
 kubectl get secret pinz-tls -n istio-system
 ```
 
@@ -215,7 +220,7 @@ GitHub Secrets:
 
 ## Observability
 
-Весь стек работает в k8s (namespace `default`). Приложения отправляют телеметрию на `otel-collector:4317` (OTLP gRPC).
+Весь стек работает в k8s (namespace `default`). Приложения отправляют телеметрию на `otel-collector:4317` (OTLP gRPC). На VPS стек observability (OTel Collector, Tempo, Prometheus, Loki, Grafana) поднимается автоматически при деплое (`deploy.sh`).
 
 **Что собирается:**
 
@@ -224,6 +229,13 @@ GitHub Secrets:
 | Трейсы | HTTP-запросы, gRPC-вызовы, SQL, Redis | Tempo |
 | Метрики | RED (rate/errors/duration), auth counters, Go runtime | Prometheus |
 | Логи | `slog` → OTLP bridge | Loki |
+
+**Grafana:**
+
+| Среда | Доступ |
+|---|---|
+| Локально | `make grafana` → http://localhost:3000 |
+| VPS (Production) | https://grafana.pinz.website |
 
 **Корреляции в Grafana**: клик по трейсу открывает связанные логи и метрики.
 

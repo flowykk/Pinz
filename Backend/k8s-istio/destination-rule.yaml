@@ -42,3 +42,15 @@ spec:
   trafficPolicy:
     tls:
       mode: DISABLE
+---
+# Grafana has no Istio sidecar; ingress must use plain HTTP to avoid WRONG_VERSION_NUMBER
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: grafana-plain
+  namespace: default
+spec:
+  host: grafana.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
