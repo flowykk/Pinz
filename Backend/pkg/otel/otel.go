@@ -47,7 +47,6 @@ func Init(ctx context.Context, serviceName, version string) (*Providers, error) 
 	if endpoint == "" {
 		endpoint = "localhost:4317"
 	}
-	_, _ = fmt.Fprintf(os.Stderr, "otel: init start endpoint=%s\n", endpoint)
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
