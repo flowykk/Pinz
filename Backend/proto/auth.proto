@@ -31,6 +31,7 @@ message SubmitEmailRequest {
 message SubmitEmailResponse {
   bool is_registered = 1;
   string registration_key = 2;
+  string verification_code = 3;
 }
 
 message VerifyEmailCodeRequest {

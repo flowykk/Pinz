@@ -137,8 +137,10 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 
 	span.SetAttributes(attribute.Bool("auth.user_exists", false))
 	registrationID := uuid.New().String()
-	code := utils.GenerateVerificationCode()
+  
+	code := "1111" // TODO: replace with utils.GenerateVerificationCode() when email sending is ready
 	slog.InfoContext(ctx, "verification code generated", "registration_id", registrationID, "code", code)
+
 	redisKey := "registration:" + registrationID
 	if err := s.redisRepo.HSet(ctx, redisKey, "email", email, "code", code); err != nil {
 		slog.ErrorContext(ctx, "SubmitEmail: redis HSet", "key", redisKey, "error", err)
