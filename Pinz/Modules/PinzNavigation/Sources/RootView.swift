@@ -19,6 +19,7 @@ public struct RootView<Content: View>: View {
     public var body: some View {
         NavigationStack(path: $router.path) {
             rootContent
+                .toolbar(.hidden)
                 .navigationDestination(for: Route.self) { route in
                     destinationView(for: route).toolbar(.hidden)
                 }
