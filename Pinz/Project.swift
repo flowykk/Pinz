@@ -19,6 +19,11 @@ let project = Project(
             ),
             sources: ["Pinz/Sources/**"],
             resources: ["Pinz/Resources/**"],
+            entitlements: .dictionary([
+                "com.apple.developer.associated-domains": .array([
+                    .string("webcredentials:pinz.website")
+                ])
+            ]),
             dependencies: [
                 .project(target: "PinzBase", path: "Modules/PinzBase"),
                 .project(target: "PinzDomain", path: "Modules/PinzDomain"),
@@ -36,6 +41,8 @@ let project = Project(
                 base: [
                     "ASSETCATALOG_COMPILER_APPICON_NAME": "PinzLightP",
                     "ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS": "YES",
+                    "DEVELOPMENT_TEAM": "ABNY5S6RA5",
+                    "CODE_SIGN_STYLE": "Automatic",
                 ]
             )
         ),

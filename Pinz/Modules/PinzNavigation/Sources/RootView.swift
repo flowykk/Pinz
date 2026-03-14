@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzAuthentication
 import PinzProfile
 import PinzTrips
 import PinzPins
@@ -28,6 +29,9 @@ public struct RootView<Content: View>: View {
     @ViewBuilder
     private func destinationView(for route: Route) -> some View {
         switch route {
+        case .main:
+            TripView(trips: Trip.stubs())
+                .navigationBarBackButtonHidden(true)
         case let .trip(tripRoute):
             switch tripRoute {
             case let .info(trip):

@@ -4,9 +4,15 @@ import PinzBase
 
 @MainActor @Observable
 public final class AppRouter: AppRouting {
-    public var path: [Route] = []
+    public var path: [Route]
 
-    public init() {}
+    public init(initialPath: [Route] = []) {
+        self.path = initialPath
+    }
+
+    public func navigateToMain() {
+        path = [.main]
+    }
 
     public func navigate(to route: Route) {
         path.append(route)

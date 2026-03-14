@@ -39,6 +39,7 @@ public enum MediaRoute: Hashable {
 }
 
 public enum Route: Hashable {
+    case main
     case trip(TripRoute)
     case tripInfo(TripInfoRoute)
     case profile(ProfileRoute)
