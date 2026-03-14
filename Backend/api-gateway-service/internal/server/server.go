@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +13,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	chiMW "github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"pinz/backend/api-gateway-service/internal/di"
 	"pinz/backend/api-gateway-service/internal/handlers"
@@ -26,15 +29,33 @@ type Server struct {
 
 func NewServer(deps *di.Dependencies) *Server {
 	r := chi.NewRouter()
+
+	// OTel HTTP tracing — must be the outermost middleware so it wraps the full
+	// request lifecycle. A second middleware (below) updates the span name with
+	// the chi route pattern once routing is complete.
+	r.Use(otelhttp.NewMiddleware("api-gateway"))
+
+	// After routing, enrich the active span with the matched route pattern so
+	// traces are grouped by endpoint rather than raw URL.
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			span := trace.SpanFromContext(r.Context())
+			next.ServeHTTP(w, r)
+			if chiCtx := chi.RouteContext(r.Context()); chiCtx != nil {
+				if pattern := chiCtx.RoutePattern(); pattern != "" {
+					span.SetName(r.Method + " " + pattern)
+					span.SetAttributes(attribute.String("http.route", pattern))
+				}
+			}
+		})
+	})
+
 	r.Use(chiMW.RequestID)
 	r.Use(chiMW.Logger)
 	r.Use(chiMW.Recoverer)
 	r.Use(chiMW.Timeout(10 * time.Second))
 
-	// Health check endpoint
 	r.Get("/health", handlers.HealthCheck)
-
-	// Apple App Site Association — required by Apple CDN, no redirects allowed
 	r.Get("/.well-known/apple-app-site-association", handlers.AppleAppSiteAssociation)
 
 	r.Route("/api/v1", func(r chi.Router) {
@@ -58,11 +79,10 @@ func NewServer(deps *di.Dependencies) *Server {
 	if port == "" {
 		port = "8080"
 	}
-	addr := ":" + port
 
 	return &Server{
 		Server: http.Server{
-			Addr:         addr,
+			Addr:         ":" + port,
 			Handler:      r,
 			ReadTimeout:  15 * time.Second,
 			WriteTimeout: 15 * time.Second,
@@ -72,22 +92,22 @@ func NewServer(deps *di.Dependencies) *Server {
 
 func (s *Server) Run() error {
 	go func() {
-		log.Printf("API Gateway listening on %s", s.Addr)
+		slog.Info("API Gateway listening", "addr", s.Addr)
 		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("ListenAndServe: %v", err)
+			slog.Error("ListenAndServe error", "error", err)
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutting down...")
+	slog.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := s.Shutdown(ctx); err != nil {
 		return fmt.Errorf("shutdown: %w", err)
 	}
-	log.Println("Server stopped")
+	slog.Info("Server stopped")
 	return nil
 }

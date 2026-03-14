@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -14,6 +14,10 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -69,6 +73,11 @@ type AuthService struct {
 	redisRepo *repositories.RedisRepository
 	validator *validator.Validate
 	wa        *webauthn.WebAuthn
+
+	tracer              trace.Tracer
+	loginCounter        metric.Int64Counter
+	registrationCounter metric.Int64Counter
+	tokenRefreshCounter metric.Int64Counter
 }
 
 func NewAuthService(
@@ -78,16 +87,36 @@ func NewAuthService(
 	validator *validator.Validate,
 	wa *webauthn.WebAuthn,
 ) *AuthService {
+	tracer := otel.Tracer("auth-service")
+	meter := otel.Meter("auth-service")
+
+	loginCounter, _ := meter.Int64Counter("auth.logins.total",
+		metric.WithDescription("Total login attempts by method and status"),
+	)
+	registrationCounter, _ := meter.Int64Counter("auth.registrations.total",
+		metric.WithDescription("Total registration attempts"),
+	)
+	tokenRefreshCounter, _ := meter.Int64Counter("auth.token_refresh.total",
+		metric.WithDescription("Total token refresh operations"),
+	)
+
 	return &AuthService{
-		userRepo:  userRepo,
-		credRepo:  credRepo,
-		redisRepo: redisRepo,
-		validator: validator,
-		wa:        wa,
+		userRepo:            userRepo,
+		credRepo:            credRepo,
+		redisRepo:           redisRepo,
+		validator:           validator,
+		wa:                  wa,
+		tracer:              tracer,
+		loginCounter:        loginCounter,
+		registrationCounter: registrationCounter,
+		tokenRefreshCounter: tokenRefreshCounter,
 	}
 }
 
 func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailRequest) (*pb.SubmitEmailResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.SubmitEmail")
+	defer span.End()
+
 	email := req.GetEmail()
 	if email == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
@@ -98,28 +127,38 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 
 	_, err := s.userRepo.GetUserByEmail(email)
 	if err == nil {
+		span.SetAttributes(attribute.Bool("auth.user_exists", true))
 		return &pb.SubmitEmailResponse{IsRegistered: true, RegistrationKey: ""}, nil
 	}
 	if err != sql.ErrNoRows {
-		log.Printf("SubmitEmail: get user by email %s: %v", email, err)
+		slog.ErrorContext(ctx, "SubmitEmail: get user by email", "error", err)
 		return nil, status.Error(codes.Internal, "failed to check user existence")
 	}
 
+	span.SetAttributes(attribute.Bool("auth.user_exists", false))
 	registrationID := uuid.New().String()
+  
 	code := "1111" // TODO: replace with utils.GenerateVerificationCode() when email sending is ready
+	slog.InfoContext(ctx, "verification code generated", "registration_id", registrationID, "code", code)
+
 	redisKey := "registration:" + registrationID
 	if err := s.redisRepo.HSet(ctx, redisKey, "email", email, "code", code); err != nil {
-		log.Printf("SubmitEmail: redis HSet %s: %v", redisKey, err)
+		slog.ErrorContext(ctx, "SubmitEmail: redis HSet", "key", redisKey, "error", err)
 		return nil, status.Error(codes.Internal, "failed to store registration data")
 	}
 	if err := s.redisRepo.Expire(ctx, redisKey, 15*time.Minute); err != nil {
-		log.Printf("SubmitEmail: redis Expire %s: %v", redisKey, err)
+		slog.WarnContext(ctx, "SubmitEmail: redis Expire", "key", redisKey, "error", err)
 	}
 
 	return &pb.SubmitEmailResponse{IsRegistered: false, RegistrationKey: registrationID}, nil
 }
 
 func (s *AuthService) VerifyEmailCode(ctx context.Context, req *pb.VerifyEmailCodeRequest) (*pb.VerifyEmailCodeResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.VerifyEmailCode",
+		trace.WithAttributes(attribute.String("auth.flow", "email_verification")),
+	)
+	defer span.End()
+
 	rid := req.GetRegistrationId()
 	code := req.GetVerificationCode()
 	if rid == "" || code == "" {
@@ -132,9 +171,11 @@ func (s *AuthService) VerifyEmailCode(ctx context.Context, req *pb.VerifyEmailCo
 		return nil, status.Error(codes.NotFound, "invalid or expired registration id")
 	}
 	if data["code"] != code {
+		span.SetAttributes(attribute.Bool("auth.code_valid", false))
 		return &pb.VerifyEmailCodeResponse{Success: false}, status.Error(codes.InvalidArgument, "invalid verification code")
 	}
 
+	span.SetAttributes(attribute.Bool("auth.code_valid", true))
 	verifiedKey := "verified:" + rid
 	if err := s.redisRepo.SetEX(ctx, verifiedKey, data["email"], 2*time.Hour); err != nil {
 		return nil, status.Error(codes.Internal, "failed to finalize verification")
@@ -145,6 +186,11 @@ func (s *AuthService) VerifyEmailCode(ctx context.Context, req *pb.VerifyEmailCo
 }
 
 func (s *AuthService) PasskeyRegisterBegin(ctx context.Context, req *pb.PasskeyRegisterBeginRequest) (*pb.PasskeyRegisterBeginResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.PasskeyRegisterBegin",
+		trace.WithAttributes(attribute.String("auth.flow", "passkey_registration")),
+	)
+	defer span.End()
+
 	rid := req.GetRegistrationId()
 	username := req.GetUsername()
 	if rid == "" || username == "" {
@@ -159,7 +205,6 @@ func (s *AuthService) PasskeyRegisterBegin(ctx context.Context, req *pb.PasskeyR
 		return nil, status.Error(codes.NotFound, "invalid or expired registration id")
 	}
 
-	// Pre-generate the user's UUID so we can use it as WebAuthnID and later insert it into the DB.
 	pendingUserID := uuid.New()
 	user := &pendingUser{
 		id:          pendingUserID[:],
@@ -172,7 +217,7 @@ func (s *AuthService) PasskeyRegisterBegin(ctx context.Context, req *pb.PasskeyR
 		webauthn.WithExtensions(map[string]any{"credProps": true}),
 	)
 	if err != nil {
-		log.Printf("PasskeyRegisterBegin: %v", err)
+		slog.ErrorContext(ctx, "PasskeyRegisterBegin: begin registration", "error", err)
 		return nil, status.Error(codes.Internal, "failed to begin passkey registration")
 	}
 
@@ -190,7 +235,6 @@ func (s *AuthService) PasskeyRegisterBegin(ctx context.Context, req *pb.PasskeyR
 		return nil, status.Error(codes.Internal, "failed to store registration session")
 	}
 
-	// Keep the verified email key alive for the finish step.
 	_ = s.redisRepo.Expire(ctx, verifiedKey, 5*time.Minute)
 
 	optionsJSON, err := json.Marshal(creation)
@@ -201,6 +245,11 @@ func (s *AuthService) PasskeyRegisterBegin(ctx context.Context, req *pb.PasskeyR
 }
 
 func (s *AuthService) PasskeyRegisterFinish(ctx context.Context, req *pb.PasskeyRegisterFinishRequest) (*pb.PasskeyRegisterFinishResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.PasskeyRegisterFinish",
+		trace.WithAttributes(attribute.String("auth.flow", "passkey_registration")),
+	)
+	defer span.End()
+
 	rid := req.GetRegistrationId()
 	credJSON := req.GetCredentialJson()
 	if rid == "" || len(credJSON) == 0 {
@@ -250,23 +299,33 @@ func (s *AuthService) PasskeyRegisterFinish(ctx context.Context, req *pb.Passkey
 	}
 	if err := s.userRepo.CreateUser(u); err != nil {
 		if isUniqueViolation(err) {
+			s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "conflict")))
 			return nil, status.Error(codes.AlreadyExists, "user with this email or username already exists")
 		}
-		log.Printf("PasskeyRegisterFinish: create user: %v", err)
+		slog.ErrorContext(ctx, "PasskeyRegisterFinish: create user", "error", err)
+		s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "error")))
 		return nil, status.Error(codes.Internal, "failed to create user")
 	}
 
 	if err := s.credRepo.CreateCredential(u.ID, credential); err != nil {
-		log.Printf("PasskeyRegisterFinish: save credential: %v", err)
+		slog.ErrorContext(ctx, "PasskeyRegisterFinish: save credential", "error", err)
+		s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "error")))
 		return nil, status.Error(codes.Internal, "failed to save passkey credential")
 	}
 
 	_ = s.redisRepo.Del(ctx, verifiedKey, sessionKey)
+	s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "success")))
+	slog.InfoContext(ctx, "user registered", "username", u.Username)
 
 	return s.issueTokens(ctx, u)
 }
 
 func (s *AuthService) PasskeyLoginBegin(ctx context.Context, req *pb.PasskeyLoginBeginRequest) (*pb.PasskeyLoginBeginResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.PasskeyLoginBegin",
+		trace.WithAttributes(attribute.String("auth.flow", "passkey_login")),
+	)
+	defer span.End()
+
 	email := req.GetEmail()
 	if email == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
@@ -277,13 +336,13 @@ func (s *AuthService) PasskeyLoginBegin(ctx context.Context, req *pb.PasskeyLogi
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
 	if err != nil {
-		log.Printf("PasskeyLoginBegin: get user: %v", err)
+		slog.ErrorContext(ctx, "PasskeyLoginBegin: get user", "error", err)
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
 
 	creds, err := s.credRepo.GetCredentialsByUserID(u.ID)
 	if err != nil {
-		log.Printf("PasskeyLoginBegin: get credentials: %v", err)
+		slog.ErrorContext(ctx, "PasskeyLoginBegin: get credentials", "error", err)
 		return nil, status.Error(codes.Internal, "failed to get credentials")
 	}
 	if len(creds) == 0 {
@@ -303,7 +362,7 @@ func (s *AuthService) PasskeyLoginBegin(ctx context.Context, req *pb.PasskeyLogi
 
 	assertion, session, err := s.wa.BeginLogin(waUser)
 	if err != nil {
-		log.Printf("PasskeyLoginBegin: %v", err)
+		slog.ErrorContext(ctx, "PasskeyLoginBegin: begin login", "error", err)
 		return nil, status.Error(codes.Internal, "failed to begin passkey login")
 	}
 
@@ -325,6 +384,11 @@ func (s *AuthService) PasskeyLoginBegin(ctx context.Context, req *pb.PasskeyLogi
 }
 
 func (s *AuthService) PasskeyLoginFinish(ctx context.Context, req *pb.PasskeyLoginFinishRequest) (*pb.PasskeyLoginFinishResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.PasskeyLoginFinish",
+		trace.WithAttributes(attribute.String("auth.flow", "passkey_login")),
+	)
+	defer span.End()
+
 	email := req.GetEmail()
 	credJSON := req.GetCredentialJson()
 	if email == "" || len(credJSON) == 0 {
@@ -333,10 +397,14 @@ func (s *AuthService) PasskeyLoginFinish(ctx context.Context, req *pb.PasskeyLog
 
 	u, err := s.userRepo.GetUserByEmail(email)
 	if err == sql.ErrNoRows {
+		s.loginCounter.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("method", "passkey"),
+			attribute.String("status", "not_found"),
+		))
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 	if err != nil {
-		log.Printf("PasskeyLoginFinish: get user: %v", err)
+		slog.ErrorContext(ctx, "PasskeyLoginFinish: get user", "error", err)
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
 
@@ -353,7 +421,7 @@ func (s *AuthService) PasskeyLoginFinish(ctx context.Context, req *pb.PasskeyLog
 
 	creds, err := s.credRepo.GetCredentialsByUserID(u.ID)
 	if err != nil {
-		log.Printf("PasskeyLoginFinish: get credentials: %v", err)
+		slog.ErrorContext(ctx, "PasskeyLoginFinish: get credentials", "error", err)
 		return nil, status.Error(codes.Internal, "failed to get credentials")
 	}
 
@@ -374,13 +442,23 @@ func (s *AuthService) PasskeyLoginFinish(ctx context.Context, req *pb.PasskeyLog
 	}
 	updatedCred, err := s.wa.ValidateLogin(waUser, ls.SessionData, parsedAssertion)
 	if err != nil {
+		s.loginCounter.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("method", "passkey"),
+			attribute.String("status", "invalid"),
+		))
 		return nil, status.Errorf(codes.Unauthenticated, "passkey verification failed: %v", err)
 	}
 
 	if err := s.credRepo.UpdateCredential(updatedCred); err != nil {
-		log.Printf("PasskeyLoginFinish: update credential: %v", err)
+		slog.WarnContext(ctx, "PasskeyLoginFinish: update credential", "error", err)
 	}
 	_ = s.redisRepo.Del(ctx, sessionKey)
+
+	s.loginCounter.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("method", "passkey"),
+		attribute.String("status", "success"),
+	))
+	slog.InfoContext(ctx, "user logged in", "username", u.Username)
 
 	resp, err := s.issueTokens(ctx, u)
 	if err != nil {
@@ -393,6 +471,9 @@ func (s *AuthService) PasskeyLoginFinish(ctx context.Context, req *pb.PasskeyLog
 }
 
 func (s *AuthService) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequest) (*pb.RefreshTokenResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.RefreshToken")
+	defer span.End()
+
 	rt := req.GetRefreshToken()
 	if rt == "" {
 		return nil, status.Error(codes.InvalidArgument, "refresh_token is required")
@@ -403,7 +484,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequ
 		return nil, status.Error(codes.Unauthenticated, "invalid refresh token")
 	}
 	if err != nil {
-		log.Printf("RefreshToken: get token: %v", err)
+		slog.ErrorContext(ctx, "RefreshToken: get token", "error", err)
 		return nil, status.Error(codes.Internal, "failed to get refresh token")
 	}
 	if time.Now().After(rec.ExpiresAt) {
@@ -412,7 +493,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequ
 
 	u, err := s.userRepo.GetUserByID(rec.UserID)
 	if err != nil {
-		log.Printf("RefreshToken: get user: %v", err)
+		slog.ErrorContext(ctx, "RefreshToken: get user", "error", err)
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
 
@@ -425,10 +506,14 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequ
 		return nil, status.Error(codes.Internal, "failed to generate access token")
 	}
 
+	s.tokenRefreshCounter.Add(ctx, 1)
 	return &pb.RefreshTokenResponse{AccessToken: accessToken}, nil
 }
 
 func (s *AuthService) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.Logout")
+	defer span.End()
+
 	rt := req.GetRefreshToken()
 	if rt == "" {
 		return nil, status.Error(codes.InvalidArgument, "refresh_token is required")
@@ -439,18 +524,21 @@ func (s *AuthService) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.Lo
 		return &pb.LogoutResponse{Success: true}, nil
 	}
 	if err != nil {
-		log.Printf("Logout: get token: %v", err)
+		slog.ErrorContext(ctx, "Logout: get token", "error", err)
 		return nil, status.Error(codes.Internal, "failed to get refresh token")
 	}
 	if err := s.userRepo.DeleteRefreshToken(rec.ID); err != nil {
-		log.Printf("Logout: delete token: %v", err)
+		slog.ErrorContext(ctx, "Logout: delete token", "error", err)
 		return nil, status.Error(codes.Internal, "failed to delete refresh token")
 	}
 	return &pb.LogoutResponse{Success: true}, nil
 }
 
-// issueTokens creates an access+refresh token pair and persists the session for the given user.
+// issueTokens creates an access+refresh token pair and persists the session.
 func (s *AuthService) issueTokens(ctx context.Context, u *models.User) (*pb.PasskeyRegisterFinishResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.issueTokens")
+	defer span.End()
+
 	secret := os.Getenv("JWT_SECRET_KEY")
 	if secret == "" {
 		return nil, status.Error(codes.Internal, "JWT_SECRET_KEY not set")
@@ -465,7 +553,7 @@ func (s *AuthService) issueTokens(ctx context.Context, u *models.User) (*pb.Pass
 	}
 	expiresAt := time.Now().Add(30 * 24 * time.Hour)
 	if err := s.userRepo.AddSession(u.ID, refreshToken, expiresAt); err != nil {
-		log.Printf("issueTokens: add session: %v", err)
+		slog.ErrorContext(ctx, "issueTokens: add session", "error", err)
 		return nil, status.Error(codes.Internal, "failed to save session")
 	}
 	return &pb.PasskeyRegisterFinishResponse{
@@ -475,6 +563,11 @@ func (s *AuthService) issueTokens(ctx context.Context, u *models.User) (*pb.Pass
 }
 
 func (s *AuthService) DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*pb.DevLoginResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.DevLogin",
+		trace.WithAttributes(attribute.String("auth.flow", "dev_login")),
+	)
+	defer span.End()
+
 	email := req.GetEmail()
 	if email == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
@@ -485,9 +578,14 @@ func (s *AuthService) DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*p
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
 	if err != nil {
-		log.Printf("DevLogin: get user: %v", err)
+		slog.ErrorContext(ctx, "DevLogin: get user", "error", err)
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
+
+	s.loginCounter.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("method", "dev"),
+		attribute.String("status", "success"),
+	))
 
 	resp, err := s.issueTokens(ctx, u)
 	if err != nil {

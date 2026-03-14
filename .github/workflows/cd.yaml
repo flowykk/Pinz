@@ -37,7 +37,7 @@ jobs:
       - name: Build and push api-gateway-service
         uses: docker/build-push-action@v5
         with:
-          context: Backend/api-gateway-service
+          context: Backend
           file: Backend/api-gateway-service/Dockerfile
           push: true
           tags: |
@@ -49,7 +49,7 @@ jobs:
       - name: Build and push auth-service
         uses: docker/build-push-action@v5
         with:
-          context: Backend/auth-service
+          context: Backend
           file: Backend/auth-service/Dockerfile
           push: true
           tags: |

@@ -16,6 +16,10 @@ env:
   dbName: pinz_db
   redisAddr: redis:6379
   grpcPort: ":50051"
+  otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+  otelServiceName: "auth-service"
+  otelTracesSampler: "parentbased_traceid_ratio"
+  otelTracesSamplerArg: "1.0"
 
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"

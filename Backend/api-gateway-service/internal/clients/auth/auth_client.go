@@ -3,9 +3,10 @@ package auth
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -21,9 +22,12 @@ func NewClient() (*Client, error) {
 	addr := os.Getenv("AUTH_SERVICE_GRPC_ADDRESS")
 	if addr == "" {
 		addr = "localhost:50051"
-		log.Println("AUTH_SERVICE_GRPC_ADDRESS not set, using localhost:50051")
+		slog.Warn("AUTH_SERVICE_GRPC_ADDRESS not set, using localhost:50051")
 	}
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("auth gRPC client: %w", err)
 	}

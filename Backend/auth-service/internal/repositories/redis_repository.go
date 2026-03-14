@@ -3,9 +3,11 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -19,24 +21,34 @@ func NewRedisRepository(client *redis.Client) *RedisRepository {
 
 func InitRedisClient() (*redis.Client, error) {
 	addr := os.Getenv("REDIS_ADDR")
+	var client *redis.Client
+
 	if addr == "" {
 		if u := os.Getenv("REDIS_URL"); u != "" {
 			opt, err := redis.ParseURL(u)
 			if err != nil {
 				return nil, err
 			}
-			client := redis.NewClient(opt)
-			if err := client.Ping(context.Background()).Err(); err != nil {
-				return nil, err
-			}
-			return client, nil
+			client = redis.NewClient(opt)
+		} else {
+			addr = "localhost:6379"
+			client = redis.NewClient(&redis.Options{Addr: addr})
 		}
-		addr = "localhost:6379"
+	} else {
+		client = redis.NewClient(&redis.Options{Addr: addr})
 	}
-	client := redis.NewClient(&redis.Options{Addr: addr})
+
 	if err := client.Ping(context.Background()).Err(); err != nil {
 		return nil, fmt.Errorf("redis ping: %w", err)
 	}
+
+	if err := redisotel.InstrumentTracing(client); err != nil {
+		slog.Warn("redis tracing instrumentation failed", "error", err)
+	}
+	if err := redisotel.InstrumentMetrics(client); err != nil {
+		slog.Warn("redis metrics instrumentation failed", "error", err)
+	}
+
 	return client, nil
 }
 

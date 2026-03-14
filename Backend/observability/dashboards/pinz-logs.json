@@ -1,0 +1,122 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": { "list": [] },
+  "description": "Pinz — structured logs from Loki (slog via OTLP)",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    { "asDropdown": false, "icon": "compass", "includeVars": true, "keepTime": true, "tags": ["pinz", "observability"], "targetBlank": false, "title": "Service Overview (metrics)", "tooltip": "", "type": "dashboard", "uid": "pinz-service-overview" },
+    { "asDropdown": false, "icon": "list-ul", "includeVars": true, "keepTime": true, "tags": ["pinz", "observability"], "targetBlank": false, "title": "Traces", "tooltip": "", "type": "dashboard", "uid": "pinz-traces" }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Log volume",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 1 },
+      "id": 2,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service_name) (rate({service_name=~\"$service\", severity_text=~\"$level\"} [$__interval]))",
+          "legendFormat": "{{service_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Log rate by service",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "id": 3,
+      "title": "Logs",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 10 },
+      "id": 4,
+      "options": {
+        "showLabels": true,
+        "showTime": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "expr": "{service_name=~\"$service\", severity_text=~\"$level\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent logs (all services)",
+      "type": "logs"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["pinz", "observability", "logs"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "All", "value": "api-gateway-service|auth-service" },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Service",
+        "multi": false,
+        "name": "service",
+        "options": [
+          { "selected": true, "text": "All", "value": "api-gateway-service|auth-service" },
+          { "selected": false, "text": "api-gateway-service", "value": "api-gateway-service" },
+          { "selected": false, "text": "auth-service", "value": "auth-service" }
+        ],
+        "query": "api-gateway-service|auth-service,api-gateway-service,auth-service",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": { "selected": true, "text": "All", "value": ".*" },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Level",
+        "multi": false,
+        "name": "level",
+        "options": [
+          { "selected": true, "text": "All", "value": ".*" },
+          { "selected": false, "text": "Error", "value": "ERROR" },
+          { "selected": false, "text": "Warn", "value": "WARN" },
+          { "selected": false, "text": "Info", "value": "INFO" },
+          { "selected": false, "text": "Debug", "value": "DEBUG" }
+        ],
+        "query": ".*,ERROR,WARN,INFO,DEBUG",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Pinz — Logs",
+  "uid": "pinz-logs",
+  "version": 1
+}

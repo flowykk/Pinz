@@ -30,3 +30,15 @@ spec:
   trafficPolicy:
     tls:
       mode: DISABLE
+---
+# otel-collector has no Istio sidecar; apps must use plain TCP for OTLP
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: otel-collector-plain
+  namespace: default
+spec:
+  host: otel-collector.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE

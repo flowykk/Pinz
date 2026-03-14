@@ -24,7 +24,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.25'
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -36,17 +36,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Install golangci-lint (built with Go 1.25)
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
       - name: Lint api-gateway-service
-        uses: golangci/golangci-lint-action@v4
-        with:
-          version: latest
-          working-directory: Backend/api-gateway-service
+        run: golangci-lint run --path-prefix=Backend/api-gateway-service
+        working-directory: Backend/api-gateway-service
 
       - name: Lint auth-service
-        uses: golangci/golangci-lint-action@v4
-        with:
-          version: latest
-          working-directory: Backend/auth-service
+        run: golangci-lint run --path-prefix=Backend/auth-service
+        working-directory: Backend/auth-service
 
   test:
     runs-on: ubuntu-latest
@@ -60,7 +59,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.25'
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -88,7 +87,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build api-gateway-service
-        run: docker build -t api-gateway-service:v${{ github.sha }} -f Backend/api-gateway-service/Dockerfile Backend/api-gateway-service
+        run: docker build -t api-gateway-service:v${{ github.sha }} -f Backend/api-gateway-service/Dockerfile Backend
 
       - name: Build auth-service
-        run: docker build -t auth-service:v${{ github.sha }} -f Backend/auth-service/Dockerfile Backend/auth-service
+        run: docker build -t auth-service:v${{ github.sha }} -f Backend/auth-service/Dockerfile Backend

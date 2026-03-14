@@ -3,11 +3,13 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
+	"github.com/XSAM/otelsql"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
 const (
@@ -37,7 +39,14 @@ CREATE TABLE IF NOT EXISTS passkey_credentials (
 )
 
 func InitDB() (*sql.DB, error) {
-	db, err := sql.Open("pgx", dsn())
+	db, err := otelsql.Open("pgx", dsn(),
+		otelsql.WithAttributes(semconv.DBSystemPostgreSQL),
+		otelsql.WithSpanOptions(otelsql.SpanOptions{
+			Ping:           false,
+			RowsNext:       false,
+			DisableErrSkip: true,
+		}),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
 	}
@@ -49,7 +58,13 @@ func InitDB() (*sql.DB, error) {
 		db.Close()
 		return nil, fmt.Errorf("ping: %w", err)
 	}
-	log.Println("Connected to DB")
+	slog.Info("connected to database")
+
+	if _, err := otelsql.RegisterDBStatsMetrics(db,
+		otelsql.WithAttributes(semconv.DBSystemPostgreSQL),
+	); err != nil {
+		slog.Warn("failed to register db stats metrics", "error", err)
+	}
 
 	for _, ddl := range []string{usersDDL, refreshTokensDDL, passkeyCredentialsDDL} {
 		if _, err := db.Exec(ddl); err != nil {

@@ -49,10 +49,22 @@ spec:
             - containerPort: {{ .Values.service.port }}
               name: http
           env:
+            - name: USER
+              value: "app"
             - name: API_GATEWAY_PORT
               value: {{ .Values.env.apiGatewayPort | quote }}
             - name: AUTH_SERVICE_GRPC_ADDRESS
               value: {{ .Values.env.authServiceGrpcAddress | quote }}
+            - name: SWAGGER_HOST
+              value: {{ .Values.env.swaggerHost | default "" | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.env.otelExporterEndpoint | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.env.otelServiceName | quote }}
+            - name: OTEL_TRACES_SAMPLER
+              value: {{ .Values.env.otelTracesSampler | quote }}
+            - name: OTEL_TRACES_SAMPLER_ARG
+              value: {{ .Values.env.otelTracesSamplerArg | quote }}
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}

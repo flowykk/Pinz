@@ -35,7 +35,7 @@ func (h *AuthHandler) SubmitEmail(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := h.authSvc.SubmitEmail(r.Context(), req.Email)
 	if err != nil {
-		handleServiceError(w, err, "SubmitEmail")
+		handleServiceError(w, r, err, "SubmitEmail")
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.SubmitEmailResponse{
@@ -62,7 +62,7 @@ func (h *AuthHandler) VerifyEmailCode(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := h.authSvc.VerifyEmailCode(r.Context(), req.RegistrationID, req.VerificationCode)
 	if err != nil {
-		handleServiceError(w, err, "VerifyEmailCode")
+		handleServiceError(w, r, err, "VerifyEmailCode")
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.VerifyEmailCodeResponse{Success: resp.GetSuccess()})
@@ -87,7 +87,7 @@ func (h *AuthHandler) PasskeyRegisterBegin(w http.ResponseWriter, r *http.Reques
 	}
 	resp, err := h.authSvc.PasskeyRegisterBegin(r.Context(), req.RegistrationID, req.Username)
 	if err != nil {
-		handleServiceError(w, err, "PasskeyRegisterBegin")
+		handleServiceError(w, r, err, "PasskeyRegisterBegin")
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.PasskeyRegisterBeginResponse{
@@ -115,7 +115,7 @@ func (h *AuthHandler) PasskeyRegisterFinish(w http.ResponseWriter, r *http.Reque
 	}
 	resp, err := h.authSvc.PasskeyRegisterFinish(r.Context(), req.RegistrationID, req.CredentialJSON)
 	if err != nil {
-		handleServiceError(w, err, "PasskeyRegisterFinish")
+		handleServiceError(w, r, err, "PasskeyRegisterFinish")
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.PasskeyRegisterFinishResponse{
@@ -143,7 +143,7 @@ func (h *AuthHandler) PasskeyLoginBegin(w http.ResponseWriter, r *http.Request) 
 	}
 	resp, err := h.authSvc.PasskeyLoginBegin(r.Context(), req.Email)
 	if err != nil {
-		handleServiceError(w, err, "PasskeyLoginBegin")
+		handleServiceError(w, r, err, "PasskeyLoginBegin")
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.PasskeyLoginBeginResponse{
@@ -170,7 +170,7 @@ func (h *AuthHandler) PasskeyLoginFinish(w http.ResponseWriter, r *http.Request)
 	}
 	resp, err := h.authSvc.PasskeyLoginFinish(r.Context(), req.Email, req.CredentialJSON)
 	if err != nil {
-		handleServiceError(w, err, "PasskeyLoginFinish")
+		handleServiceError(w, r, err, "PasskeyLoginFinish")
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.PasskeyLoginFinishResponse{
@@ -197,7 +197,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := h.authSvc.RefreshToken(r.Context(), req.RefreshToken)
 	if err != nil {
-		handleServiceError(w, err, "RefreshToken")
+		handleServiceError(w, r, err, "RefreshToken")
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.RefreshTokenResponse{AccessToken: resp.GetAccessToken()})
@@ -222,7 +222,7 @@ func (h *AuthHandler) DevLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := h.authSvc.DevLogin(r.Context(), req.Email)
 	if err != nil {
-		handleServiceError(w, err, "DevLogin")
+		handleServiceError(w, r, err, "DevLogin")
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.DevLoginResponse{
@@ -249,7 +249,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := h.authSvc.Logout(r.Context(), req.RefreshToken)
 	if err != nil {
-		handleServiceError(w, err, "Logout")
+		handleServiceError(w, r, err, "Logout")
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.LogoutResponse{Success: resp.GetSuccess()})
