@@ -4,8 +4,12 @@ import (
 	"net/http"
 
 	"pinz/backend/api-gateway-service/internal/clients/trip"
+	"pinz/backend/api-gateway-service/internal/responses"
 	"pinz/backend/api-gateway-service/pkg/proto"
 )
+
+// Ensure responses is parsed by swag for @Failure annotations.
+var _ = responses.ErrorResponse{}
 
 type TripHandler struct {
 	tripClient *trip.Client
