@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzAuthentication
 import PinzNavigation
 import PinzTrips
 import CoreLocation
@@ -10,19 +11,56 @@ import PinzPins
 
 @main
 struct PinzApp: App {
-    @State private var router = AppRouter()
+    @State private var router = AppRouter(
+        initialPath: TokenStorage.shared.isAuthenticated ? [.main] : []
+    )
 
     var body: some Scene {
         WindowGroup {
-            RootView(router: router) {
-//                PinInfoView(pin: Pin.stubs()[0])
+            ZStack {
+                RootView(router: router) {
+                    AuthFlowView()
+                }
 
-//                PinPlaceChangeView(pin: Pin.stubs()[0], onSave: { _ in })
-
-//                PinStoryView(pins: Pin.stubs())
-//                TripInfoView(
-                TripView(trips: Trip.stubs())
-            }.toolbar(.hidden)
+#if DEBUG
+                debugResetButton
+#endif
+            }
         }
     }
+
+#if DEBUG
+    @State private var showResetConfirmation = false
+
+    private var debugResetButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Button {
+                    showResetConfirmation = true
+                } label: {
+                    Color.red.opacity(0.6)
+                        .frame(width: 20, height: 20)
+                        .clipShape(Rectangle())
+                }
+                .alert("Сбросить данные?", isPresented: $showResetConfirmation) {
+                    Button("Сбросить", role: .destructive) {
+                        TokenStorage.shared.clear()
+                        UserDefaults.standard.removePersistentDomain(
+                            forName: Bundle.main.bundleIdentifier ?? ""
+                        )
+                        router.path = []
+                    }
+                    Button("Отмена", role: .cancel) {}
+                } message: {
+                    Text("Удалит токены и UserDefaults. Приложение вернётся к экрану авторизации.")
+                }
+                Spacer()
+            }
+            Spacer()
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(true)
+    }
+#endif
 }
