@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -107,8 +106,7 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 	}
 
 	registrationID := uuid.New().String()
-	code := utils.GenerateVerificationCode()
-	fmt.Println(code)
+	code := "1111" // TODO: replace with utils.GenerateVerificationCode() when email sending is ready
 	redisKey := "registration:" + registrationID
 	if err := s.redisRepo.HSet(ctx, redisKey, "email", email, "code", code); err != nil {
 		log.Printf("SubmitEmail: redis HSet %s: %v", redisKey, err)
@@ -118,11 +116,7 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 		log.Printf("SubmitEmail: redis Expire %s: %v", redisKey, err)
 	}
 
-	return &pb.SubmitEmailResponse{
-		IsRegistered:     false,
-		RegistrationKey:  registrationID,
-		VerificationCode: code,
-	}, nil
+	return &pb.SubmitEmailResponse{IsRegistered: false, RegistrationKey: registrationID}, nil
 }
 
 func (s *AuthService) VerifyEmailCode(ctx context.Context, req *pb.VerifyEmailCodeRequest) (*pb.VerifyEmailCodeResponse, error) {
