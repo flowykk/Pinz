@@ -6,71 +6,77 @@ import PinzBase
 import PinzDomain
 
 public protocol NetworkServiceProtocol {
-    func checkEmail(email: String) async throws -> SuccessResponse
-
-    func register(email: String) async throws -> RegisterResponse
+    func submitEmail(email: String) async throws -> SubmitEmailResponse
     func verifyEmail(registrationId: String, verificationCode: String) async throws -> SuccessResponse
-    func finishRegister(password: String, registrationId: String, username: String) async throws -> UserTokensResponse
 
-    func login(email: String, password: String) async throws -> UserTokensResponse
+    func passkeyLoginBegin(email: String) async throws -> PasskeyOptionsResponse
+    func passkeyLoginFinish(email: String, credentialJSON: String) async throws -> UserTokensResponse
 
+    func passkeyRegisterBegin(registrationId: String, username: String) async throws -> PasskeyOptionsResponse
+    func passkeyRegisterFinish(registrationId: String, credentialJSON: String) async throws -> UserTokensResponse
+
+    func refreshToken(refreshToken: String) async throws -> RefreshTokenResponse
+    func logout(refreshToken: String) async throws -> SuccessResponse
 }
 
 public final class NetworkService: NetworkServiceProtocol {
-    private let provider = NetworkProvider<PinzAPI>(stub: true, stubDelay: 1)
+    private let provider = NetworkProvider<PinzAPI>()
 
     public init() {}
 
-    public func checkEmail(email: String) async throws -> SuccessResponse {
+    public func submitEmail(email: String) async throws -> SubmitEmailResponse {
         try await provider.request(
-            .checkEmail(
-                email: email
-            ),
-            type: SuccessResponse.self
-        )
-    }
-
-    public func register(email: String) async throws -> RegisterResponse {
-        try await provider.request(
-            .register(
-                email: email
-            ),
-            type: RegisterResponse.self
+            .submitEmail(email: email),
+            type: SubmitEmailResponse.self
         )
     }
 
     public func verifyEmail(registrationId: String, verificationCode: String) async throws -> SuccessResponse {
         try await provider.request(
-            .verifyEmail(
-                registrationId: registrationId,
-                verificationCode: verificationCode
-            ),
+            .verifyEmail(registrationId: registrationId, verificationCode: verificationCode),
             type: SuccessResponse.self
         )
     }
 
-    public func finishRegister(
-        password: String,
-        registrationId: String,
-        username: String
-    ) async throws -> UserTokensResponse {
+    public func passkeyLoginBegin(email: String) async throws -> PasskeyOptionsResponse {
         try await provider.request(
-            .finishRegister(
-                password: password,
-                registrationId: registrationId,
-                username: username
-            ),
+            .passkeyLoginBegin(email: email),
+            type: PasskeyOptionsResponse.self
+        )
+    }
+
+    public func passkeyLoginFinish(email: String, credentialJSON: String) async throws -> UserTokensResponse {
+        try await provider.request(
+            .passkeyLoginFinish(email: email, credentialJSON: credentialJSON),
             type: UserTokensResponse.self
         )
     }
 
-    public func login(email: String, password: String) async throws -> UserTokensResponse {
+    public func passkeyRegisterBegin(registrationId: String, username: String) async throws -> PasskeyOptionsResponse {
         try await provider.request(
-            .login(
-                email: email,
-                password: password
-            ),
+            .passkeyRegisterBegin(registrationId: registrationId, username: username),
+            type: PasskeyOptionsResponse.self
+        )
+    }
+
+    public func passkeyRegisterFinish(registrationId: String, credentialJSON: String) async throws -> UserTokensResponse {
+        try await provider.request(
+            .passkeyRegisterFinish(registrationId: registrationId, credentialJSON: credentialJSON),
             type: UserTokensResponse.self
+        )
+    }
+
+    public func refreshToken(refreshToken: String) async throws -> RefreshTokenResponse {
+        try await provider.request(
+            .refreshToken(refreshToken: refreshToken),
+            type: RefreshTokenResponse.self
+        )
+    }
+
+    public func logout(refreshToken: String) async throws -> SuccessResponse {
+        try await provider.request(
+            .logout(refreshToken: refreshToken),
+            type: SuccessResponse.self
         )
     }
 }

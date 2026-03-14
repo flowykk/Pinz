@@ -1,13 +1,15 @@
 import SwiftUI
 import MapKit
+import PinzBase
 import PinzUI
 
 public struct AuthFlowView: View {
     @State private var viewModel = AuthFlowViewModel()
     @FocusState private var isFieldFocused: Bool
-    
+    @Environment(\.appRouter) private var router
+
     public init() {}
-    
+
     public var body: some View {
         Map(position: $viewModel.cameraPosition) { }
             .mapStyle(.imagery(elevation: .realistic))
@@ -32,18 +34,19 @@ public struct AuthFlowView: View {
                                 welcomeOverlay.transition(.opacity)
                             case .email:
                                 emailInputOverlay.transition(.move(edge: .bottom))
-                            case .auth:
-                                authPasswordOverlay.transition(.move(edge: .bottom))
-                            case let .register(registerState):
+                            case .login(let loginState):
+                                switch loginState {
+                                case .passkeyPrompt:
+                                    passkeyPromptOverlay.transition(.move(edge: .bottom))
+                                }
+                            case .register(let registerState):
                                 switch registerState {
                                 case .code:
                                     registerCodeOverlay.transition(.move(edge: .bottom))
-                                case .password:
-                                    registerPasswordOverlay.transition(.move(edge: .bottom))
-                                case .repeatPassword:
-                                    registerRepeatPasswordOverlay.transition(.move(edge: .bottom))
                                 case .nickname:
                                     registerNicknameOverlay.transition(.move(edge: .bottom))
+                                case .passkeyPrompt:
+                                    passkeyPromptOverlay.transition(.move(edge: .bottom))
                                 }
                             }
                         }
@@ -60,12 +63,13 @@ public struct AuthFlowView: View {
             }
             .animation(.easeInOut(duration: 0.2), value: viewModel.state)
             .onAppear {
+                viewModel.setRouter(router)
                 viewModel.dispatch(.startRotation)
             }
     }
 }
 
-// MARK: Main flow views
+// MARK: - Main flow views
 
 extension AuthFlowView {
     private var welcomeOverlay: some View {
@@ -79,11 +83,11 @@ extension AuthFlowView {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 28))
                         .foregroundColor(.black)
+                        .frame(width: 78, height: 54)
                         .background(
                             Rectangle()
                                 .fill(.white)
                                 .cornerRadius(16)
-                                .frame(width: 78, height: 54)
                         )
                 }
                 .padding(.bottom, 50)
@@ -117,27 +121,18 @@ extension AuthFlowView {
             }
         }
     }
-}
 
-// MARK: - Auth flow views
-
-extension AuthFlowView {
-    private var authPasswordOverlay: some View {
-        PinzTextField(
-            label: "password:",
-            style: .default(placeholder: "shhhhhhhhh"),
-            text: $viewModel.text,
-            keyboardType: .default,
-            action: .plain {
-                print("Gone to Feed")
-            }
-        )
-        .focused($isFieldFocused)
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isFieldFocused = true
-            }
+    private var passkeyPromptOverlay: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .tint(.white)
+                .scaleEffect(1.2)
+            Text("Подтвердите при помощи Face ID")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.white)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
     }
 }
 
@@ -149,47 +144,11 @@ extension AuthFlowView {
             label: "verification code:",
             style: .segmented(4),
             text: $viewModel.text,
-            keyboardType: .default,
+            keyboardType: .numberPad,
             action: .async {
                 try await viewModel.asyncDispatch(.continue)
             }
         )
-    }
-
-    private var registerPasswordOverlay: some View {
-        PinzTextField(
-            label: "password:",
-            style: .default(placeholder: "shhhhhhhhh"),
-            text: $viewModel.text,
-            keyboardType: .default,
-            action: .async {
-                try await viewModel.asyncDispatch(.continue)
-            }
-        )
-        .focused($isFieldFocused)
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isFieldFocused = true
-            }
-        }
-    }
-
-    private var registerRepeatPasswordOverlay: some View {
-        PinzTextField(
-            label: "password:",
-            style: .default(placeholder: "repeat shh"),
-            text: $viewModel.text,
-            keyboardType: .default,
-            action: .async {
-                try await viewModel.asyncDispatch(.continue)
-            }
-        )
-        .focused($isFieldFocused)
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isFieldFocused = true
-            }
-        }
     }
 
     private var registerNicknameOverlay: some View {
