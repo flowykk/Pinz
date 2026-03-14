@@ -23,7 +23,10 @@ func main() {
 	ctx := context.Background()
 
 	slog.Info("initializing OTel")
-	otelProviders, err := pinzotel.Init(ctx, "trip-service", "1.0.0")
+	otelCtx, otelCancel := context.WithTimeout(ctx, 15*time.Second)
+	defer otelCancel()
+	otelProviders, err := pinzotel.Init(otelCtx, "trip-service", "1.0.0")
+	slog.Info("OTel init returned", "err", err)
 	if err != nil {
 		slog.Warn("OTel init failed, running without telemetry", "error", err)
 	} else {
