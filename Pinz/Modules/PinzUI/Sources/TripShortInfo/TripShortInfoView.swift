@@ -4,6 +4,11 @@ import PinzDomain
 
 public struct TripShortInfoView: View {
 
+    enum Constants {
+        static let elementHeight: CGFloat = 125
+        static let imageWidth: CGFloat = 100
+    }
+
     private let trip: Trip
     private let onTripTapped: (Trip) -> Void
 
@@ -21,12 +26,11 @@ public struct TripShortInfoView: View {
         Button {
             onTripTapped(trip)
         } label: {
-            HStack() {
+            HStack(spacing: 12) {
                 Image(uiImage: trip.image ?? PinzDomainAsset.groupPlaceholder.image)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 100, height: 130)
-                    .clipped()
+                    .frame(width: Constants.imageWidth, height: Constants.elementHeight)
                     .cornerRadius(16)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -44,13 +48,16 @@ public struct TripShortInfoView: View {
                             .roundedFount(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                             .lineLimit(5)
                     }
+                    Spacer(minLength: 0)
                 }
+
+                Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
                     .roundedFount(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
             }
         }
         .buttonStyle(.plain)
-        .frame(height: 130)
+        .frame(height: Constants.elementHeight)
     }
 }

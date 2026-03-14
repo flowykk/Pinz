@@ -220,6 +220,11 @@ final class AuthFlowViewModel {
     }
 
     private func performLogin() async throws {
+#if targetEnvironment(simulator)
+        TokenStorage.shared.save(accessToken: "sim_access_token", refreshToken: "sim_refresh_token")
+        router?.navigateToMain()
+        return
+#endif
         do {
             let options = try await networkService.passkeyLoginBegin(email: email)
             let credentialJSON = try await passkeyService.performAssertion(optionsJSON: options.optionsJson)
@@ -234,6 +239,11 @@ final class AuthFlowViewModel {
     }
 
     private func performRegistration() async throws {
+#if targetEnvironment(simulator)
+        TokenStorage.shared.save(accessToken: "sim_access_token", refreshToken: "sim_refresh_token")
+        router?.navigateToMain()
+        return
+#endif
         let options = try await networkService.passkeyRegisterBegin(
             registrationId: registrationId,
             username: username

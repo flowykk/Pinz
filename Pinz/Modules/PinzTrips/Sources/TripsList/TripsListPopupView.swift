@@ -24,7 +24,7 @@ struct TripsListPopupView: View {
         ZStack {
             ScrollView {
                 DefaultTripsListView(trips: trips, onTripTapped: onTripTapped)
-                    .padding(.top, 60).padding(.bottom, 90)
+                    .padding(.top, 70).padding(.bottom, 90)
             }
 
             header
