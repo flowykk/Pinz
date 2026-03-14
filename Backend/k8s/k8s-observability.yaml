@@ -315,18 +315,6 @@ data:
 
     limits_config:
       allow_structured_metadata: true
-      otlp_config:
-        resource_attributes:
-          attributes_config:
-            - action: index_label
-              attributes:
-                - service.name
-                - deployment.environment
-        log_attributes:
-          attributes_config:
-            - action: index_label
-              attributes:
-                - severity_text
 ---
 apiVersion: apps/v1
 kind: Deployment
