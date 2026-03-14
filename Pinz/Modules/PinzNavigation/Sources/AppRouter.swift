@@ -119,8 +119,8 @@ extension AppRouter {
 // MARK: - Wishlist Routing
 
 extension AppRouter {
-    public func navigateToWishlistElementCreation() {
-        navigate(to: .wishlist(.creation))
+    public func navigateToWishlistElementCreation(action: WishlistCreationAction) {
+        navigate(to: .wishlist(.creation(action: action)))
     }
 }
 

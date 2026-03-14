@@ -2,32 +2,52 @@ import SwiftUI
 import PhotosUI
 import PinzNetworking
 import PinzBase
+import PinzDomain
 
 @MainActor
 @Observable
 final class WishlistCreationViewModel {
+
+    enum State {
+        case name
+        case description
+        case photo
+    }
 
     enum Route {
         case back
     }
 
     enum Intent {
-        case complete
+        case `continue`
         case selectPhoto(PhotosPickerItem)
         case navigate(Route)
     }
 
+    var state: State = .name
     var image: UIImage?
     var name: String = ""
     var description: String = ""
 
+    private let onCreated: (WishlistElement) -> Void
     private let networkService = NetworkService()
     private var router: AppRouting?
 
+    init(onCreated: @escaping (WishlistElement) -> Void) {
+        self.onCreated = onCreated
+    }
+
     func dispatch(_ intent: Intent) {
         switch intent {
-        case .complete:
-            router?.pop()
+        case .continue:
+            switch state {
+            case .name:        changeState(to: .description)
+            case .description: changeState(to: .photo)
+            case .photo:
+                guard let image else { return }
+                onCreated(WishlistElement(image: image, title: name, description: description))
+                router?.pop()
+            }
         case let .selectPhoto(item):
             Task {
                 guard let loaded = await MediaLoader.shared.load(from: item) else { return }
@@ -47,5 +67,11 @@ final class WishlistCreationViewModel {
 
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+    }
+
+    private func changeState(to state: State) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            self.state = state
+        }
     }
 }

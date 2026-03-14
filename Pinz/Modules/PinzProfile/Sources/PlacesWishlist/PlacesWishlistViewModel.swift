@@ -15,7 +15,7 @@ final class PlacesWishlistViewModel {
         case navigate(Route)
     }
 
-    let wishlist: [WishlistElement]
+    var wishlist: [WishlistElement]
 
     private let networkService = NetworkService()
     private var router: AppRouting?
@@ -29,7 +29,9 @@ final class PlacesWishlistViewModel {
         case let .navigate(route):
             switch route {
             case .wishlistElementCreation:
-                router?.navigateToWishlistElementCreation()
+                router?.navigateToWishlistElementCreation(action: WishlistCreationAction { [weak self] element in
+                    self?.wishlist.append(element)
+                })
             case .back:
                 router?.pop()
             }

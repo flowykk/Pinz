@@ -88,8 +88,8 @@ public struct RootView<Content: View>: View {
             }
         case let .wishlist(wishlistRoute):
             switch wishlistRoute {
-            case .creation:
-                WishlistCreationView()
+            case let .creation(action):
+                WishlistCreationView(onCreated: action.action)
             }
         }
     }

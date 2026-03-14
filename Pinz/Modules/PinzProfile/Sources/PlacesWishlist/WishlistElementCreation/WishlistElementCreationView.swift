@@ -1,6 +1,7 @@
 import SwiftUI
 import PhotosUI
 import PinzUI
+import PinzDomain
 
 enum WishlistCreationIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -16,27 +17,34 @@ public struct WishlistCreationView: View {
 
     @Environment(\.appRouter) private var router
 
-    public init() {
-        viewModel = WishlistCreationViewModel()
+    public init(onCreated: @escaping (WishlistElement) -> Void) {
+        viewModel = WishlistCreationViewModel(onCreated: onCreated)
     }
 
     public var body: some View {
         ZStack {
-            VStack(spacing: 0) {
+            VStack {
                 Header(leftView: {
                     PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
                         viewModel.dispatch(.navigate(.back))
                     }
                 })
-
-                content
-                    .padding(.horizontal, 12)
-                    .padding(.top, 12)
-
-                Spacer(minLength: 0)
+                Spacer()
+                gradientWithButtons
             }
 
-            gradientWithButtons
+            VStack {
+                if viewModel.state == .photo {
+                    photoUploading
+                } else {
+                    VStack(spacing: 12) {
+                        nameInput
+                        if viewModel.state == .description {
+                            descriptionInput
+                        }
+                    }
+                }
+            }.padding(.horizontal, 12)
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
@@ -53,23 +61,43 @@ public struct WishlistCreationView: View {
         }
     }
 
-    private var content: some View {
-        VStack (spacing: 12) {
-            imageUploading
-            textFields
-        }
+    @ViewBuilder
+    private var nameInput: some View {
+        SettingsGroup(
+            settings: [
+                .textField(Setting.TextFieldSetting(
+                    id: "wishlistElementNameTextField",
+                    text: $viewModel.name,
+                    placeholder: "Название места"
+                ))
+            ],
+            subtitle: "Название места должно состоять из букв, цифр, точки и подчеркивания"
+        )
     }
 
     @ViewBuilder
-    private var imageUploading: some View {
+    private var descriptionInput: some View {
+        DescriptionEditingView(
+            text: Binding(get: {
+                viewModel.description
+            }, set: { value in
+                viewModel.description = value
+            }),
+            placeholder: "Описание места"
+        )
+    }
+
+    @ViewBuilder
+    private var photoUploading: some View {
         if let image = viewModel.image {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .center, spacing: 4) {
                 Button {
                     isPhotoPickerPresented = true
                 } label: {
                     Image(uiImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
                         .cornerRadius(24)
                 }.buttonStyle(.plain)
 
@@ -90,38 +118,15 @@ public struct WishlistCreationView: View {
         }
     }
 
-    @ViewBuilder
-    private var textFields: some View {
-        SettingsGroup(
-            settings: [
-                .textField(Setting.TextFieldSetting(
-                    id: "wishlistElementNameTextField",
-                    text: $viewModel.name,
-                    placeholder: "Название места"
-                )),
-            ],
-            subtitle: "Название места должно состоять из букв, цифр, точки и подчеркивания"
-        )
-
-        DescriptionEditingView(
-            text: Binding(get: {
-                viewModel.description
-            }, set: { value in
-                viewModel.description = value
-            }),
-            placeholder: "Описание места"
-        )
-    }
-
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             PinzButton(
-                type: .slot(style: .primary, title: "Готово"),
+                type: .slot(style: .primary, title: viewModel.state == .photo ? "Готово" : "Далее"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 disabled: false
             ) {
-                viewModel.dispatch(.complete)
-            } //.disabledWithOpacity(viewModel.name.isEmpty)
+                viewModel.dispatch(.continue)
+            }
         }
     }
 }
