@@ -13,6 +13,7 @@
 #   ISTIO_NAMESPACE=istio-system    (default: istio-system)
 #   CERT_MANAGER_NAMESPACE=cert-manager (default: cert-manager)
 #   STAGING=true                    use Let's Encrypt staging
+#   EXTRA_DOMAINS=grafana.pinz.website   comma-separated extra SANs for the certificate
 
 set -euo pipefail
 
@@ -22,6 +23,7 @@ TLS_SECRET_NAME="${TLS_SECRET_NAME:-pinz-tls}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
 CERT_MANAGER_NAMESPACE="${CERT_MANAGER_NAMESPACE:-cert-manager}"
 STAGING="${STAGING:-false}"
+EXTRA_DOMAINS="${EXTRA_DOMAINS:-}"
 
 ISSUER_NAME="letsencrypt-prod"
 ACME_SERVER="https://acme-v02.api.letsencrypt.org/directory"
@@ -34,7 +36,7 @@ fi
 
 if [[ -z "$DOMAIN" ]] || [[ -z "$EMAIL" ]]; then
   echo "Usage: DOMAIN=api.example.com EMAIL=admin@example.com ./setup-cert-manager.sh"
-  echo "Optional: TLS_SECRET_NAME=pinz-tls  ISTIO_NAMESPACE=istio-system  CERT_MANAGER_NAMESPACE=cert-manager  STAGING=true"
+  echo "Optional: TLS_SECRET_NAME=pinz-tls  ISTIO_NAMESPACE=istio-system  EXTRA_DOMAINS=grafana.pinz.website  STAGING=true"
   exit 1
 fi
 
@@ -108,6 +110,7 @@ spec:
   commonName: ${DOMAIN}
   dnsNames:
     - ${DOMAIN}
+    ${EXTRA_DOMAINS:+$(echo "$EXTRA_DOMAINS" | sed 's/,/\n    - /g' | sed 's/^/    - /')}
 EOF
 }
 

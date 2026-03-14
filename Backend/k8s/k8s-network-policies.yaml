@@ -45,6 +45,27 @@ spec:
         - protocol: TCP
           port: 8080
 ---
+# Allow the Istio ingress gateway to reach Grafana (grafana.pinz.website).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-gateway-to-grafana
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 3000
+---
 # Allow api-gateway pods to call auth-service on its gRPC port.
 # Source is matched at the pod level; Istio AuthorizationPolicy adds
 # SPIFFE principal verification on top of this.
