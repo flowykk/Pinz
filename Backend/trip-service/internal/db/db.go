@@ -42,6 +42,28 @@ CREATE TABLE IF NOT EXISTS trip_participants (
   joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (trip_id, user_id)
 );`
+	invitationLinksDDL = `
+CREATE TABLE IF NOT EXISTS invitation_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);`
+	tripSettingsDDL = `
+CREATE TABLE IF NOT EXISTS trip_settings (
+  user_id UUID NOT NULL,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  notifications_enabled BOOLEAN NOT NULL DEFAULT true,
+  PRIMARY KEY (user_id, trip_id)
+);`
+	tripPrivacyDDL = `
+CREATE TABLE IF NOT EXISTS trip_privacy (
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  privacy_level TEXT NOT NULL,
+  PRIMARY KEY (trip_id, user_id)
+);`
 )
 
 func InitDB() (*sql.DB, error) {
@@ -90,9 +112,9 @@ func InitDB() (*sql.DB, error) {
 		slog.Warn("db: failed to register metrics", "error", err)
 	}
 
-	slog.Info("db: running migrations (postgis, trips, trip_participants)")
-	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL} {
-		name := []string{"postgis", "trips", "trip_participants"}[i]
+	slog.Info("db: running migrations (postgis, trips, trip_participants, invitation_links, trip_settings, trip_privacy)")
+	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL, invitationLinksDDL, tripSettingsDDL, tripPrivacyDDL} {
+		name := []string{"postgis", "trips", "trip_participants", "invitation_links", "trip_settings", "trip_privacy"}[i]
 		if _, err := db.Exec(ddl); err != nil {
 			db.Close()
 			slog.Error("db: migration failed", "object", name, "error", err)

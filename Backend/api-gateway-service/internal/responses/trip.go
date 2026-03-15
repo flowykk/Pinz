@@ -34,3 +34,28 @@ type UploadURL struct {
 	S3Key    string `json:"s3_key"`
 	URL      string `json:"url"`
 }
+
+// GenerateInviteLinkResponse is the response for POST /api/v1/trips/:id/invite
+type GenerateInviteLinkResponse struct {
+	InviteLinkID  string `json:"invite_link_id"`
+	Token         string `json:"token"`
+	InviteURL     string `json:"invite_url,omitempty"`
+	ExpiresAtUnix int64  `json:"expires_at_unix"`
+}
+
+// JoinTripByTokenResponse is the response for POST /api/v1/trips/join
+type JoinTripByTokenResponse struct {
+	TripID        string `json:"trip_id"`
+	AlreadyJoined bool   `json:"already_joined"`
+}
+
+// LeaveTripResponse is the response for POST /api/v1/trips/:id/leave
+type LeaveTripResponse struct {
+	Success     bool `json:"success"`
+	TripDeleted bool `json:"trip_deleted"`
+}
+
+// TransferAdminResponse is the response for POST /api/v1/trips/:id/transfer-admin
+type TransferAdminResponse struct {
+	Success bool `json:"success"`
+}

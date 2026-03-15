@@ -1,2 +1,6 @@
 Pinz/.DS_Store
 Pinz/.DS_Store
+
+# Local env with secrets (Backend api-gateway-service, auth-service)
+.env
+**/.env

@@ -10,6 +10,12 @@ service TripService {
   rpc ListUserTrips(ListUserTripsRequest) returns (ListUserTripsResponse);
   rpc UpdateTrip(UpdateTripRequest) returns (UpdateTripResponse);
   rpc DeleteTrip(DeleteTripRequest) returns (DeleteTripResponse);
+  // Участники и инвайты (Фаза 2)
+  rpc GenerateInviteLink(GenerateInviteLinkRequest) returns (GenerateInviteLinkResponse);
+  rpc JoinTripByToken(JoinTripByTokenRequest) returns (JoinTripByTokenResponse);
+  rpc RemoveParticipant(RemoveParticipantRequest) returns (RemoveParticipantResponse);
+  rpc LeaveTrip(LeaveTripRequest) returns (LeaveTripResponse);
+  rpc TransferAdmin(TransferAdminRequest) returns (TransferAdminResponse);
   // Поток создания (tripCreationFlow.md), Фаза 3/5:
   rpc ProcessMediaGrouping(ProcessMediaGroupingRequest) returns (ProcessMediaGroupingResponse);
   rpc ApplyGroupsAndProcess(ApplyGroupsAndProcessRequest) returns (ApplyGroupsAndProcessResponse);
@@ -120,3 +126,47 @@ message GetTripReviewResponse {}
 
 message FinalizeTripRequest {}
 message FinalizeTripResponse {}
+
+// Участники и инвайты
+message GenerateInviteLinkRequest {
+  string trip_id = 1;
+  int64 expires_in_seconds = 2;  // TTL ссылки, например 86400 = 24 часа
+}
+message GenerateInviteLinkResponse {
+  string invite_link_id = 1;
+  string token = 2;
+  string invite_url = 3;   // полный URL для шаринга (клиент или gateway может собрать)
+  int64 expires_at_unix = 4;
+}
+
+message JoinTripByTokenRequest {
+  string token = 1;
+}
+message JoinTripByTokenResponse {
+  string trip_id = 1;
+  bool already_joined = 2;
+}
+
+message RemoveParticipantRequest {
+  string trip_id = 1;
+  string user_id = 2;  // участник, которого удаляем
+}
+message RemoveParticipantResponse {
+  bool success = 1;
+}
+
+message LeaveTripRequest {
+  string trip_id = 1;
+}
+message LeaveTripResponse {
+  bool success = 1;
+  bool trip_deleted = 2;  // true если трип удалён (был единственный участник)
+}
+
+message TransferAdminRequest {
+  string trip_id = 1;
+  string new_admin_user_id = 2;
+}
+message TransferAdminResponse {
+  bool success = 1;
+}

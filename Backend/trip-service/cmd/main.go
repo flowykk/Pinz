@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
 
 	pinzotel "pinz/backend/pkg/otel"
 	"pinz/backend/trip-service/internal/db"
 	"pinz/backend/trip-service/internal/di"
+	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/server"
 )
 
@@ -48,8 +50,16 @@ func main() {
 	defer sqlDB.Close()
 	slog.Info("database ready")
 
+	var redisClient *redis.Client
+	if rc, err := repositories.InitRedisClient(); err != nil {
+		slog.Warn("redis not available, trip events will not be published", "error", err)
+	} else if rc != nil {
+		redisClient = rc
+		defer redisClient.Close()
+	}
+
 	slog.Info("building dependencies")
-	deps, err := di.BuildDependencies(sqlDB)
+	deps, err := di.BuildDependencies(sqlDB, redisClient)
 	if err != nil {
 		slog.Error("failed to build dependencies", "error", err)
 		os.Exit(1)

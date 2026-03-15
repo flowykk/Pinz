@@ -25,6 +25,11 @@ type TripClient interface {
 	ListUserTrips(ctx context.Context, req *proto.ListUserTripsRequest) (*proto.ListUserTripsResponse, error)
 	UpdateTrip(ctx context.Context, req *proto.UpdateTripRequest) (*proto.UpdateTripResponse, error)
 	DeleteTrip(ctx context.Context, req *proto.DeleteTripRequest) (*proto.DeleteTripResponse, error)
+	GenerateInviteLink(ctx context.Context, req *proto.GenerateInviteLinkRequest) (*proto.GenerateInviteLinkResponse, error)
+	JoinTripByToken(ctx context.Context, req *proto.JoinTripByTokenRequest) (*proto.JoinTripByTokenResponse, error)
+	RemoveParticipant(ctx context.Context, req *proto.RemoveParticipantRequest) (*proto.RemoveParticipantResponse, error)
+	LeaveTrip(ctx context.Context, req *proto.LeaveTripRequest) (*proto.LeaveTripResponse, error)
+	TransferAdmin(ctx context.Context, req *proto.TransferAdminRequest) (*proto.TransferAdminResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient) *TripHandler {
@@ -248,6 +253,208 @@ func (h *TripHandler) DeleteTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// GenerateInviteLink creates an invite link for a trip (participants only).
+// @Summary Generate invite link
+// @Description Creates an invite link for the trip. Only participants can generate. Requires JWT.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.GenerateInviteLinkRequest false "Optional expires_in_seconds"
+// @Success 201 {object} responses.GenerateInviteLinkResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/invite [post]
+func (h *TripHandler) GenerateInviteLink(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.GenerateInviteLinkRequest
+	_ = decodeJSONBody(r, &req)
+	protoReq := &proto.GenerateInviteLinkRequest{TripId: tripID}
+	if req.ExpiresInSeconds != nil {
+		protoReq.ExpiresInSeconds = *req.ExpiresInSeconds
+	}
+	resp, err := h.tripClient.GenerateInviteLink(ctx, protoReq)
+	if err != nil {
+		handleServiceError(w, r, err, "GenerateInviteLink")
+		return
+	}
+	respondJSON(w, http.StatusCreated, responses.GenerateInviteLinkResponse{
+		InviteLinkID:  resp.GetInviteLinkId(),
+		Token:         resp.GetToken(),
+		InviteURL:     resp.GetInviteUrl(),
+		ExpiresAtUnix: resp.GetExpiresAtUnix(),
+	})
+}
+
+// JoinTripByToken joins a trip using an invite token.
+// @Summary Join trip by token
+// @Description Joins the current user to a trip using an invite token. Requires JWT.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body requests.JoinTripByTokenRequest true "Token"
+// @Success 200 {object} responses.JoinTripByTokenResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/join [post]
+func (h *TripHandler) JoinTripByToken(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	var req requests.JoinTripByTokenRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	resp, err := h.tripClient.JoinTripByToken(ctx, &proto.JoinTripByTokenRequest{Token: req.Token})
+	if err != nil {
+		handleServiceError(w, r, err, "JoinTripByToken")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.JoinTripByTokenResponse{
+		TripID:        resp.GetTripId(),
+		AlreadyJoined: resp.GetAlreadyJoined(),
+	})
+}
+
+// RemoveParticipant removes a participant from the trip (admin only).
+// @Summary Remove participant
+// @Description Removes a participant from the trip. Only admin can remove. Requires JWT.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param user_id path string true "User ID to remove"
+// @Success 204
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/participants/{user_id} [delete]
+func (h *TripHandler) RemoveParticipant(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	participantUserID := chi.URLParam(r, "user_id")
+	if tripID == "" || participantUserID == "" {
+		respondError(w, http.StatusBadRequest, "trip id and user_id required")
+		return
+	}
+	_, err := h.tripClient.RemoveParticipant(ctx, &proto.RemoveParticipantRequest{TripId: tripID, UserId: participantUserID})
+	if err != nil {
+		handleServiceError(w, r, err, "RemoveParticipant")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// LeaveTrip makes the current user leave the trip.
+// @Summary Leave trip
+// @Description Current user leaves the trip. If sole admin, trip may be deleted or new admin assigned. Requires JWT.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Success 200 {object} responses.LeaveTripResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/leave [post]
+func (h *TripHandler) LeaveTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	resp, err := h.tripClient.LeaveTrip(ctx, &proto.LeaveTripRequest{TripId: tripID})
+	if err != nil {
+		handleServiceError(w, r, err, "LeaveTrip")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.LeaveTripResponse{
+		Success:     resp.GetSuccess(),
+		TripDeleted: resp.GetTripDeleted(),
+	})
+}
+
+// TransferAdmin transfers admin rights to another participant.
+// @Summary Transfer admin
+// @Description Transfers trip admin to another participant. Only current admin can transfer. Requires JWT.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.TransferAdminRequest true "New admin user ID"
+// @Success 200 {object} responses.TransferAdminResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/transfer-admin [post]
+func (h *TripHandler) TransferAdmin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.TransferAdminRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	if req.NewAdminUserID == "" {
+		respondError(w, http.StatusBadRequest, "new_admin_user_id required")
+		return
+	}
+	_, err := h.tripClient.TransferAdmin(ctx, &proto.TransferAdminRequest{TripId: tripID, NewAdminUserId: req.NewAdminUserID})
+	if err != nil {
+		handleServiceError(w, r, err, "TransferAdmin")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.TransferAdminResponse{Success: true})
 }
 
 func tripProtoToResponse(t *proto.Trip) responses.Trip {
