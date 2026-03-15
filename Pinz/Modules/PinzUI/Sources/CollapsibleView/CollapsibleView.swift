@@ -30,7 +30,7 @@ public struct CollapsibleView<Content: View>: View {
             HStack {
                 Spacer()
                 BadgeView(
-                    icon: collapsed ? .collapse : .expand,
+                    icon: collapsed ? .expand : .collapse,
                     badgeSize: 36,
                     iconSize: 18
                 ) {
