@@ -53,6 +53,11 @@ spec:
               value: "app"
             - name: API_GATEWAY_PORT
               value: {{ .Values.env.apiGatewayPort | quote }}
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: jwt-secret-key
             - name: AUTH_SERVICE_GRPC_ADDRESS
               value: {{ .Values.env.authServiceGrpcAddress | quote }}
             - name: TRIP_SERVICE_GRPC_ADDRESS

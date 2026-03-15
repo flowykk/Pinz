@@ -30,3 +30,12 @@ type TripParticipant struct {
 	IsAdmin  bool
 	JoinedAt time.Time
 }
+
+// InvitationLink is a shareable link to join a trip.
+type InvitationLink struct {
+	ID        string
+	TripID    string
+	Token     string
+	ExpiresAt time.Time
+	CreatedAt time.Time
+}

@@ -24,6 +24,11 @@ const (
 	TripService_ListUserTrips_FullMethodName         = "/trip.TripService/ListUserTrips"
 	TripService_UpdateTrip_FullMethodName            = "/trip.TripService/UpdateTrip"
 	TripService_DeleteTrip_FullMethodName            = "/trip.TripService/DeleteTrip"
+	TripService_GenerateInviteLink_FullMethodName    = "/trip.TripService/GenerateInviteLink"
+	TripService_JoinTripByToken_FullMethodName       = "/trip.TripService/JoinTripByToken"
+	TripService_RemoveParticipant_FullMethodName     = "/trip.TripService/RemoveParticipant"
+	TripService_LeaveTrip_FullMethodName             = "/trip.TripService/LeaveTrip"
+	TripService_TransferAdmin_FullMethodName         = "/trip.TripService/TransferAdmin"
 	TripService_ProcessMediaGrouping_FullMethodName  = "/trip.TripService/ProcessMediaGrouping"
 	TripService_ApplyGroupsAndProcess_FullMethodName = "/trip.TripService/ApplyGroupsAndProcess"
 	TripService_GetTripReview_FullMethodName         = "/trip.TripService/GetTripReview"
@@ -39,6 +44,12 @@ type TripServiceClient interface {
 	ListUserTrips(ctx context.Context, in *ListUserTripsRequest, opts ...grpc.CallOption) (*ListUserTripsResponse, error)
 	UpdateTrip(ctx context.Context, in *UpdateTripRequest, opts ...grpc.CallOption) (*UpdateTripResponse, error)
 	DeleteTrip(ctx context.Context, in *DeleteTripRequest, opts ...grpc.CallOption) (*DeleteTripResponse, error)
+	// Участники и инвайты (Фаза 2)
+	GenerateInviteLink(ctx context.Context, in *GenerateInviteLinkRequest, opts ...grpc.CallOption) (*GenerateInviteLinkResponse, error)
+	JoinTripByToken(ctx context.Context, in *JoinTripByTokenRequest, opts ...grpc.CallOption) (*JoinTripByTokenResponse, error)
+	RemoveParticipant(ctx context.Context, in *RemoveParticipantRequest, opts ...grpc.CallOption) (*RemoveParticipantResponse, error)
+	LeaveTrip(ctx context.Context, in *LeaveTripRequest, opts ...grpc.CallOption) (*LeaveTripResponse, error)
+	TransferAdmin(ctx context.Context, in *TransferAdminRequest, opts ...grpc.CallOption) (*TransferAdminResponse, error)
 	// Поток создания (tripCreationFlow.md), Фаза 3/5:
 	ProcessMediaGrouping(ctx context.Context, in *ProcessMediaGroupingRequest, opts ...grpc.CallOption) (*ProcessMediaGroupingResponse, error)
 	ApplyGroupsAndProcess(ctx context.Context, in *ApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*ApplyGroupsAndProcessResponse, error)
@@ -104,6 +115,56 @@ func (c *tripServiceClient) DeleteTrip(ctx context.Context, in *DeleteTripReques
 	return out, nil
 }
 
+func (c *tripServiceClient) GenerateInviteLink(ctx context.Context, in *GenerateInviteLinkRequest, opts ...grpc.CallOption) (*GenerateInviteLinkResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateInviteLinkResponse)
+	err := c.cc.Invoke(ctx, TripService_GenerateInviteLink_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) JoinTripByToken(ctx context.Context, in *JoinTripByTokenRequest, opts ...grpc.CallOption) (*JoinTripByTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(JoinTripByTokenResponse)
+	err := c.cc.Invoke(ctx, TripService_JoinTripByToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) RemoveParticipant(ctx context.Context, in *RemoveParticipantRequest, opts ...grpc.CallOption) (*RemoveParticipantResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveParticipantResponse)
+	err := c.cc.Invoke(ctx, TripService_RemoveParticipant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) LeaveTrip(ctx context.Context, in *LeaveTripRequest, opts ...grpc.CallOption) (*LeaveTripResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LeaveTripResponse)
+	err := c.cc.Invoke(ctx, TripService_LeaveTrip_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) TransferAdmin(ctx context.Context, in *TransferAdminRequest, opts ...grpc.CallOption) (*TransferAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TransferAdminResponse)
+	err := c.cc.Invoke(ctx, TripService_TransferAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *tripServiceClient) ProcessMediaGrouping(ctx context.Context, in *ProcessMediaGroupingRequest, opts ...grpc.CallOption) (*ProcessMediaGroupingResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ProcessMediaGroupingResponse)
@@ -153,6 +214,12 @@ type TripServiceServer interface {
 	ListUserTrips(context.Context, *ListUserTripsRequest) (*ListUserTripsResponse, error)
 	UpdateTrip(context.Context, *UpdateTripRequest) (*UpdateTripResponse, error)
 	DeleteTrip(context.Context, *DeleteTripRequest) (*DeleteTripResponse, error)
+	// Участники и инвайты (Фаза 2)
+	GenerateInviteLink(context.Context, *GenerateInviteLinkRequest) (*GenerateInviteLinkResponse, error)
+	JoinTripByToken(context.Context, *JoinTripByTokenRequest) (*JoinTripByTokenResponse, error)
+	RemoveParticipant(context.Context, *RemoveParticipantRequest) (*RemoveParticipantResponse, error)
+	LeaveTrip(context.Context, *LeaveTripRequest) (*LeaveTripResponse, error)
+	TransferAdmin(context.Context, *TransferAdminRequest) (*TransferAdminResponse, error)
 	// Поток создания (tripCreationFlow.md), Фаза 3/5:
 	ProcessMediaGrouping(context.Context, *ProcessMediaGroupingRequest) (*ProcessMediaGroupingResponse, error)
 	ApplyGroupsAndProcess(context.Context, *ApplyGroupsAndProcessRequest) (*ApplyGroupsAndProcessResponse, error)
@@ -182,6 +249,21 @@ func (UnimplementedTripServiceServer) UpdateTrip(context.Context, *UpdateTripReq
 }
 func (UnimplementedTripServiceServer) DeleteTrip(context.Context, *DeleteTripRequest) (*DeleteTripResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTrip not implemented")
+}
+func (UnimplementedTripServiceServer) GenerateInviteLink(context.Context, *GenerateInviteLinkRequest) (*GenerateInviteLinkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateInviteLink not implemented")
+}
+func (UnimplementedTripServiceServer) JoinTripByToken(context.Context, *JoinTripByTokenRequest) (*JoinTripByTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method JoinTripByToken not implemented")
+}
+func (UnimplementedTripServiceServer) RemoveParticipant(context.Context, *RemoveParticipantRequest) (*RemoveParticipantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveParticipant not implemented")
+}
+func (UnimplementedTripServiceServer) LeaveTrip(context.Context, *LeaveTripRequest) (*LeaveTripResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LeaveTrip not implemented")
+}
+func (UnimplementedTripServiceServer) TransferAdmin(context.Context, *TransferAdminRequest) (*TransferAdminResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TransferAdmin not implemented")
 }
 func (UnimplementedTripServiceServer) ProcessMediaGrouping(context.Context, *ProcessMediaGroupingRequest) (*ProcessMediaGroupingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ProcessMediaGrouping not implemented")
@@ -306,6 +388,96 @@ func _TripService_DeleteTrip_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_GenerateInviteLink_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateInviteLinkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).GenerateInviteLink(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_GenerateInviteLink_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).GenerateInviteLink(ctx, req.(*GenerateInviteLinkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_JoinTripByToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinTripByTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).JoinTripByToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_JoinTripByToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).JoinTripByToken(ctx, req.(*JoinTripByTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_RemoveParticipant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveParticipantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).RemoveParticipant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_RemoveParticipant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).RemoveParticipant(ctx, req.(*RemoveParticipantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_LeaveTrip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeaveTripRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).LeaveTrip(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_LeaveTrip_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).LeaveTrip(ctx, req.(*LeaveTripRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_TransferAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).TransferAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_TransferAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).TransferAdmin(ctx, req.(*TransferAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TripService_ProcessMediaGrouping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProcessMediaGroupingRequest)
 	if err := dec(in); err != nil {
@@ -404,6 +576,26 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteTrip",
 			Handler:    _TripService_DeleteTrip_Handler,
+		},
+		{
+			MethodName: "GenerateInviteLink",
+			Handler:    _TripService_GenerateInviteLink_Handler,
+		},
+		{
+			MethodName: "JoinTripByToken",
+			Handler:    _TripService_JoinTripByToken_Handler,
+		},
+		{
+			MethodName: "RemoveParticipant",
+			Handler:    _TripService_RemoveParticipant_Handler,
+		},
+		{
+			MethodName: "LeaveTrip",
+			Handler:    _TripService_LeaveTrip_Handler,
+		},
+		{
+			MethodName: "TransferAdmin",
+			Handler:    _TripService_TransferAdmin_Handler,
 		},
 		{
 			MethodName: "ProcessMediaGrouping",

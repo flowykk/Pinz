@@ -19,6 +19,16 @@ definitions:
         example: user@example.com
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.GenerateInviteLinkRequest:
+    properties:
+      expires_in_seconds:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.JoinTripByTokenRequest:
+    properties:
+      token:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.LogoutRequest:
     properties:
       refresh_token:
@@ -67,6 +77,11 @@ definitions:
     properties:
       email:
         example: user@example.com
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.TransferAdminRequest:
+    properties:
+      new_admin_user_id:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest:
@@ -118,6 +133,31 @@ definitions:
       error:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.GenerateInviteLinkResponse:
+    properties:
+      expires_at_unix:
+        type: integer
+      invite_link_id:
+        type: string
+      invite_url:
+        type: string
+      token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.JoinTripByTokenResponse:
+    properties:
+      already_joined:
+        type: boolean
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.LeaveTripResponse:
+    properties:
+      success:
+        type: boolean
+      trip_deleted:
+        type: boolean
+    type: object
   pinz_backend_api-gateway-service_internal_responses.LogoutResponse:
     properties:
       success:
@@ -161,6 +201,11 @@ definitions:
       registration_id:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TransferAdminResponse:
+    properties:
+      success:
+        type: boolean
     type: object
   pinz_backend_api-gateway-service_internal_responses.Trip:
     properties:
@@ -711,6 +756,229 @@ paths:
       security:
       - BearerAuth: []
       summary: Update trip
+      tags:
+      - trips
+  /api/v1/trips/{id}/invite:
+    post:
+      consumes:
+      - application/json
+      description: Creates an invite link for the trip. Only participants can generate.
+        Requires JWT.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Optional expires_in_seconds
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.GenerateInviteLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GenerateInviteLinkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate invite link
+      tags:
+      - trips
+  /api/v1/trips/{id}/leave:
+    post:
+      consumes:
+      - application/json
+      description: Current user leaves the trip. If sole admin, trip may be deleted
+        or new admin assigned. Requires JWT.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.LeaveTripResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Leave trip
+      tags:
+      - trips
+  /api/v1/trips/{id}/participants/{user_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a participant from the trip. Only admin can remove. Requires
+        JWT.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID to remove
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove participant
+      tags:
+      - trips
+  /api/v1/trips/{id}/transfer-admin:
+    post:
+      consumes:
+      - application/json
+      description: Transfers trip admin to another participant. Only current admin
+        can transfer. Requires JWT.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New admin user ID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.TransferAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TransferAdminResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Transfer admin
+      tags:
+      - trips
+  /api/v1/trips/join:
+    post:
+      consumes:
+      - application/json
+      description: Joins the current user to a trip using an invite token. Requires
+        JWT.
+      parameters:
+      - description: Token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.JoinTripByTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.JoinTripByTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Join trip by token
       tags:
       - trips
 securityDefinitions:

@@ -2,6 +2,9 @@ package di
 
 import (
 	"database/sql"
+	"log/slog"
+
+	"github.com/redis/go-redis/v9"
 
 	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/services"
@@ -12,9 +15,17 @@ type Dependencies struct {
 	TripService pb.TripServiceServer
 }
 
-func BuildDependencies(db *sql.DB) (*Dependencies, error) {
+func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, error) {
 	tripRepo := repositories.NewTripRepository(db)
 	participantRepo := repositories.NewTripParticipantRepository(db)
-	tripSvc := services.NewTripService(tripRepo, participantRepo)
+	inviteRepo := repositories.NewInvitationLinkRepository(db)
+	settingsRepo := repositories.NewTripSettingsRepository(db)
+	var eventRepo *repositories.RedisRepository
+	if redisClient != nil {
+		eventRepo = repositories.NewRedisRepository(redisClient)
+	} else {
+		slog.Warn("trip-service: Redis not configured, trip events will not be published")
+	}
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventRepo)
 	return &Dependencies{TripService: tripSvc}, nil
 }

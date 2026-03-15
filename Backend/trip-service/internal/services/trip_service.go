@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -14,16 +15,30 @@ import (
 	pb "pinz/backend/trip-service/pkg/proto"
 )
 
+const defaultInviteExpiresInSec = 86400 // 24 hours
+
 type TripService struct {
 	pb.UnimplementedTripServiceServer
 	tripRepo        *repositories.TripRepository
 	participantRepo *repositories.TripParticipantRepository
+	inviteRepo      *repositories.InvitationLinkRepository
+	settingsRepo    *repositories.TripSettingsRepository
+	eventRepo       *repositories.RedisRepository
 }
 
-func NewTripService(tripRepo *repositories.TripRepository, participantRepo *repositories.TripParticipantRepository) *TripService {
+func NewTripService(
+	tripRepo *repositories.TripRepository,
+	participantRepo *repositories.TripParticipantRepository,
+	inviteRepo *repositories.InvitationLinkRepository,
+	settingsRepo *repositories.TripSettingsRepository,
+	eventRepo *repositories.RedisRepository,
+) *TripService {
 	return &TripService{
 		tripRepo:        tripRepo,
 		participantRepo: participantRepo,
+		inviteRepo:      inviteRepo,
+		settingsRepo:    settingsRepo,
+		eventRepo:       eventRepo,
 	}
 }
 
@@ -256,6 +271,214 @@ func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest)
 	}
 	// Трип не удалён, админ сменился
 	return &pb.DeleteTripResponse{Success: true}, nil
+}
+
+// GenerateInviteLink — только участники трипа могут генерировать ссылку (ТЗ 3.18).
+func (s *TripService) GenerateInviteLink(ctx context.Context, req *pb.GenerateInviteLinkRequest) (*pb.GenerateInviteLinkResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check participant")
+	}
+	if !participant {
+		return nil, status.Error(codes.PermissionDenied, "only participants can generate invite link")
+	}
+	expiresIn := req.GetExpiresInSeconds()
+	if expiresIn <= 0 {
+		expiresIn = defaultInviteExpiresInSec
+	}
+	if expiresIn > 30*24*3600 {
+		expiresIn = 30 * 24 * 3600
+	}
+	expiresAt := time.Now().Add(time.Duration(expiresIn) * time.Second)
+	token := uuid.New().String()
+	link := &models.InvitationLink{
+		ID:        uuid.New().String(),
+		TripID:    tripID,
+		Token:     token,
+		ExpiresAt: expiresAt,
+	}
+	if err := s.inviteRepo.Create(link); err != nil {
+		return nil, status.Error(codes.Internal, "failed to create invite link")
+	}
+	return &pb.GenerateInviteLinkResponse{
+		InviteLinkId:  link.ID,
+		Token:         token,
+		InviteUrl:     "", // клиент/gateway собирает URL по token
+		ExpiresAtUnix: expiresAt.Unix(),
+	}, nil
+}
+
+// JoinTripByToken — добавление в trip_participants по токену инвайта, событие PARTICIPANT_JOINED.
+func (s *TripService) JoinTripByToken(ctx context.Context, req *pb.JoinTripByTokenRequest) (*pb.JoinTripByTokenResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	token := req.GetToken()
+	if token == "" {
+		return nil, status.Error(codes.InvalidArgument, "token is required")
+	}
+	link, err := s.inviteRepo.GetByToken(token)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "invite link not found or expired")
+		}
+		return nil, status.Error(codes.Internal, "failed to get invite link")
+	}
+	if time.Now().After(link.ExpiresAt) {
+		return nil, status.Error(codes.FailedPrecondition, "invite link expired")
+	}
+	already, err := s.participantRepo.IsParticipant(link.TripID, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check participant")
+	}
+	if already {
+		return &pb.JoinTripByTokenResponse{TripId: link.TripID, AlreadyJoined: true}, nil
+	}
+	if _, err := s.tripRepo.GetByID(link.TripID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	participant := &models.TripParticipant{TripID: link.TripID, UserID: userID, IsAdmin: false}
+	if err := s.participantRepo.Add(participant); err != nil {
+		return nil, status.Error(codes.Internal, "failed to add participant")
+	}
+	_ = s.settingsRepo.EnsureDefaultSettings(link.TripID, userID)
+	if s.eventRepo != nil {
+		_ = s.eventRepo.PublishTripEvent(ctx, "PARTICIPANT_JOINED", link.TripID, userID)
+	}
+	return &pb.JoinTripByTokenResponse{TripId: link.TripID, AlreadyJoined: false}, nil
+}
+
+// RemoveParticipant — только админ может удалить участника (ТЗ 3.19), событие PARTICIPANT_REMOVED.
+func (s *TripService) RemoveParticipant(ctx context.Context, req *pb.RemoveParticipantRequest) (*pb.RemoveParticipantResponse, error) {
+	callerID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	targetUserID := req.GetUserId()
+	if tripID == "" || targetUserID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id and user_id are required")
+	}
+	isAdmin, err := s.participantRepo.IsAdmin(tripID, callerID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check admin")
+	}
+	if !isAdmin {
+		return nil, status.Error(codes.PermissionDenied, "only admin can remove participant")
+	}
+	if targetUserID == callerID {
+		return nil, status.Error(codes.InvalidArgument, "use LeaveTrip to leave yourself")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(tripID, targetUserID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check participant")
+	}
+	if !isParticipant {
+		return nil, status.Error(codes.NotFound, "user is not a participant")
+	}
+	if err := s.participantRepo.Remove(tripID, targetUserID); err != nil {
+		return nil, status.Error(codes.Internal, "failed to remove participant")
+	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.PublishTripEvent(ctx, "PARTICIPANT_REMOVED", tripID, targetUserID)
+	}
+	return &pb.RemoveParticipantResponse{Success: true}, nil
+}
+
+// LeaveTrip — любой участник выходит (ТЗ 3.20). Если единственный админ — удаляем трип (3.21);
+// иначе назначаем нового админа (3.22), событие PARTICIPANT_LEFT или ADMIN_CHANGED.
+func (s *TripService) LeaveTrip(ctx context.Context, req *pb.LeaveTripRequest) (*pb.LeaveTripResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	wasAdmin, err := s.participantRepo.IsAdmin(tripID, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check admin")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check participant")
+	}
+	if !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if err := s.participantRepo.Remove(tripID, userID); err != nil {
+		return nil, status.Error(codes.Internal, "failed to leave trip")
+	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.PublishTripEvent(ctx, "PARTICIPANT_LEFT", tripID, userID)
+	}
+	participants, err := s.participantRepo.GetByTripID(tripID)
+	if err != nil {
+		return &pb.LeaveTripResponse{Success: true, TripDeleted: false}, nil
+	}
+	if len(participants) == 0 {
+		_ = s.tripRepo.Delete(tripID)
+		return &pb.LeaveTripResponse{Success: true, TripDeleted: true}, nil
+	}
+	if wasAdmin {
+		if err := s.participantRepo.SetAdmin(tripID, participants[0].UserID); err != nil {
+			return nil, status.Error(codes.Internal, "failed to assign new admin")
+		}
+		if s.eventRepo != nil {
+			_ = s.eventRepo.PublishTripEvent(ctx, "ADMIN_CHANGED", tripID, participants[0].UserID)
+		}
+	}
+	return &pb.LeaveTripResponse{Success: true, TripDeleted: false}, nil
+}
+
+// TransferAdmin — только текущий админ может передать права (ТЗ 3.22.1), событие ADMIN_CHANGED.
+func (s *TripService) TransferAdmin(ctx context.Context, req *pb.TransferAdminRequest) (*pb.TransferAdminResponse, error) {
+	callerID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	newAdminID := req.GetNewAdminUserId()
+	if tripID == "" || newAdminID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id and new_admin_user_id are required")
+	}
+	isAdmin, err := s.participantRepo.IsAdmin(tripID, callerID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check admin")
+	}
+	if !isAdmin {
+		return nil, status.Error(codes.PermissionDenied, "only admin can transfer admin")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, newAdminID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check participant")
+	}
+	if !participant {
+		return nil, status.Error(codes.InvalidArgument, "new admin must be a participant")
+	}
+	if newAdminID == callerID {
+		return &pb.TransferAdminResponse{Success: true}, nil
+	}
+	if err := s.participantRepo.SetAdmin(tripID, newAdminID); err != nil {
+		return nil, status.Error(codes.Internal, "failed to transfer admin")
+	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.PublishTripEvent(ctx, "ADMIN_CHANGED", tripID, newAdminID)
+	}
+	return &pb.TransferAdminResponse{Success: true}, nil
 }
 
 func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessMediaGroupingRequest) (*pb.ProcessMediaGroupingResponse, error) {

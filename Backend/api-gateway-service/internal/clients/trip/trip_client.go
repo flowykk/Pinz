@@ -70,6 +70,26 @@ func (c *Client) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest) (*pb
 	return c.client.DeleteTrip(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) GenerateInviteLink(ctx context.Context, req *pb.GenerateInviteLinkRequest) (*pb.GenerateInviteLinkResponse, error) {
+	return c.client.GenerateInviteLink(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) JoinTripByToken(ctx context.Context, req *pb.JoinTripByTokenRequest) (*pb.JoinTripByTokenResponse, error) {
+	return c.client.JoinTripByToken(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) RemoveParticipant(ctx context.Context, req *pb.RemoveParticipantRequest) (*pb.RemoveParticipantResponse, error) {
+	return c.client.RemoveParticipant(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) LeaveTrip(ctx context.Context, req *pb.LeaveTripRequest) (*pb.LeaveTripResponse, error) {
+	return c.client.LeaveTrip(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) TransferAdmin(ctx context.Context, req *pb.TransferAdminRequest) (*pb.TransferAdminResponse, error) {
+	return c.client.TransferAdmin(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

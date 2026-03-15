@@ -20,3 +20,18 @@ type UpdateTripRequest struct {
 	EndDateUnix   *int64  `json:"end_date_unix,omitempty"`
 	CoverURL      *string `json:"cover_url,omitempty"`
 }
+
+// GenerateInviteLinkRequest is the REST body for POST /api/v1/trips/:id/invite
+type GenerateInviteLinkRequest struct {
+	ExpiresInSeconds *int64 `json:"expires_in_seconds,omitempty"`
+}
+
+// JoinTripByTokenRequest is the REST body for POST /api/v1/trips/join
+type JoinTripByTokenRequest struct {
+	Token string `json:"token"`
+}
+
+// TransferAdminRequest is the REST body for POST /api/v1/trips/:id/transfer-admin
+type TransferAdminRequest struct {
+	NewAdminUserID string `json:"new_admin_user_id"`
+}
