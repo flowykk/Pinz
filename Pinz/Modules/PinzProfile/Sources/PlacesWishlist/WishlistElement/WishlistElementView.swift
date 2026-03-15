@@ -95,11 +95,7 @@ public struct WishlistElementView: View {
                     isPhotoPickerPresented = true
                 }
             } label: {
-                Image(uiImage: viewModel.element.image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .cornerRadius(24)
+                CollapsibleImageView(image: viewModel.element.image)
             }
             .buttonStyle(.plain)
 
