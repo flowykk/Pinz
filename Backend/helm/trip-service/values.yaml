@@ -1,37 +1,36 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/dmitry-pr/pinz-auth-service
+  repository: ghcr.io/dmitry-pr/pinz-trip-service
   tag: latest
   pullPolicy: IfNotPresent
 
 service:
   name: grpc
-  port: 50051
+  port: 50052
 
 env:
-  dbHost: db
-  dbPort: "5432"
+  dbHost: db-trips
+  dbPort: "5433"
   dbUser: pinz_user
-  dbName: pinz_db
+  dbName: pinz_trips
   redisAddr: redis:6379
-  grpcPort: ":50051"
+  grpcPort: ":50052"
   otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
-  otelServiceName: "auth-service"
-  otelTracesSampler: "parentbased_traceidratio"
+  otelServiceName: "trip-service"
+  otelTracesSampler: "parentbased_always_on"
   otelTracesSamplerArg: "1.0"
 
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"
-  jwtSecretKey: "REPLACE_IN_PRODUCTION"
 
 resources:
   requests:
     cpu: "50m"
-    memory: "64Mi"
+    memory: "48Mi"
   limits:
     cpu: "200m"
-    memory: "128Mi"
+    memory: "96Mi"
 
 pdb:
   enabled: false

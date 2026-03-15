@@ -1,7 +1,7 @@
-# Единая точка генерации proto: Backend/proto -> auth-service/pkg/proto, api-gateway-service/pkg/proto
+# Единая точка генерации proto: Backend/proto -> auth-service/pkg/proto, api-gateway-service/pkg/proto, trip-service/pkg/proto
 .PHONY: proto
 proto:
-	mkdir -p auth-service/pkg/proto api-gateway-service/pkg/proto
+	mkdir -p auth-service/pkg/proto api-gateway-service/pkg/proto trip-service/pkg/proto
 	protoc -I proto \
 		--go_out=auth-service --go_opt=module=pinz/backend/auth-service \
 		--go-grpc_out=auth-service --go-grpc_opt=module=pinz/backend/auth-service \
@@ -10,6 +10,14 @@ proto:
 		--go_out=api-gateway-service --go_opt=module=pinz/backend/api-gateway-service --go_opt=Mauth.proto=pinz/backend/api-gateway-service/pkg/proto \
 		--go-grpc_out=api-gateway-service 		--go-grpc_opt=module=pinz/backend/api-gateway-service --go-grpc_opt=Mauth.proto=pinz/backend/api-gateway-service/pkg/proto \
 		proto/auth.proto
+	protoc -I proto \
+		--go_out=trip-service --go_opt=module=pinz/backend/trip-service \
+		--go-grpc_out=trip-service --go-grpc_opt=module=pinz/backend/trip-service \
+		proto/trip.proto
+	protoc -I proto \
+		--go_out=api-gateway-service --go_opt=module=pinz/backend/api-gateway-service --go_opt=Mtrip.proto=pinz/backend/api-gateway-service/pkg/proto \
+		--go-grpc_out=api-gateway-service --go-grpc_opt=module=pinz/backend/api-gateway-service --go-grpc_opt=Mtrip.proto=pinz/backend/api-gateway-service/pkg/proto \
+		proto/trip.proto
 
 .PHONY: swagger
 swagger:
@@ -17,13 +25,16 @@ swagger:
 
 # Local linting
 .PHONY: lint lint-api lint-auth check-lint
-lint: lint-api lint-auth
+lint: lint-api lint-auth lint-trip
 
 lint-api:
 	cd api-gateway-service && golangci-lint run ./...
 
 lint-auth:
 	cd auth-service && golangci-lint run ./...
+
+lint-trip:
+	cd trip-service && golangci-lint run ./...
 
 # Infra: Postgres + Redis (Docker Compose, accessible via host.docker.internal from k8s)
 .PHONY: infra-up infra-down
@@ -65,11 +76,12 @@ dev:
 k8s-build:
 	eval $$(minikube docker-env) && \
 	docker build -t backend-auth-service:latest -f auth-service/Dockerfile . && \
+	docker build -t backend-trip-service:latest -f trip-service/Dockerfile . && \
 	docker build -t backend-api-gateway-service:latest -f api-gateway-service/Dockerfile .
 
 k8s-deploy:
 	helmfile -f helmfile.local.yaml.gotmpl apply && \
-	kubectl rollout restart deployment/api-gateway deployment/auth-service
+	kubectl rollout restart deployment/api-gateway deployment/auth-service deployment/trip-service
 
 k8s-istio:
 	kubectl apply -f k8s-istio/

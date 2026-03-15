@@ -142,6 +142,64 @@
     {
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "id": 17,
+      "title": "Trip Service — gRPC",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps" }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 19 },
+      "id": 18,
+      "targets": [
+        {
+          "expr": "sum(rate(pinz_rpc_server_call_duration_seconds_count{job=\"trip-service\"}[1m])) by (rpc_method)",
+          "legendFormat": "{{rpc_method}}",
+          "refId": "A"
+        }
+      ],
+      "title": "gRPC Request Rate (trip-service)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "ms" }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 19 },
+      "id": 19,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(pinz_rpc_server_call_duration_seconds_bucket{job=\"trip-service\"}[1m])) by (le, rpc_method))",
+          "legendFormat": "p99 {{rpc_method}}",
+          "refId": "A"
+        }
+      ],
+      "title": "gRPC Duration p99 (trip-service)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
+      "id": 20,
+      "targets": [
+        {
+          "expr": "sum(rate(pinz_rpc_server_call_duration_seconds_count{job=\"trip-service\",rpc_response_status_code!=\"OK\"}[1m])) by (rpc_method)",
+          "legendFormat": "errors {{rpc_method}}",
+          "refId": "A"
+        }
+      ],
+      "title": "gRPC Error Rate (trip-service)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
       "id": 9,
       "title": "Auth Business Metrics",
       "type": "row"
@@ -151,7 +209,7 @@
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 19 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 28 },
       "id": 10,
       "targets": [
         {
@@ -168,7 +226,7 @@
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 19 },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 28 },
       "id": 11,
       "targets": [
         {
@@ -185,7 +243,7 @@
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 28 },
       "id": 12,
       "targets": [
         {
@@ -199,7 +257,7 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
       "id": 13,
       "title": "Go Runtime",
       "type": "row"
@@ -209,11 +267,11 @@
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 28 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 37 },
       "id": 14,
       "targets": [
         {
-          "expr": "pinz_go_goroutine_count{job=~\"api-gateway-service|auth-service\"}",
+          "expr": "pinz_go_goroutine_count{job=~\"api-gateway-service|auth-service|trip-service\"}",
           "legendFormat": "{{job}}",
           "refId": "A"
         }
@@ -226,11 +284,11 @@
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" }, "unit": "bytes" }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 28 },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 37 },
       "id": 15,
       "targets": [
         {
-          "expr": "pinz_go_memory_used_bytes{job=~\"api-gateway-service|auth-service\"}",
+          "expr": "pinz_go_memory_used_bytes{job=~\"api-gateway-service|auth-service|trip-service\"}",
           "legendFormat": "{{job}}",
           "refId": "A"
         }
@@ -243,11 +301,11 @@
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" }, "unit": "bytes" }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 28 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 37 },
       "id": 16,
       "targets": [
         {
-          "expr": "pinz_go_memory_allocated_bytes_total{job=~\"api-gateway-service|auth-service\"}",
+          "expr": "pinz_go_memory_allocated_bytes_total{job=~\"api-gateway-service|auth-service|trip-service\"}",
           "legendFormat": "{{job}}",
           "refId": "A"
         }

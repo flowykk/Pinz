@@ -167,10 +167,12 @@ pull_images() {
 
     local api_gateway_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-api-gateway:${IMAGE_TAG}"
     local auth_service_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-auth-service:${IMAGE_TAG}"
+    local trip_service_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-trip-service:${IMAGE_TAG}"
 
     log_info "Pulling Docker images..."
     docker pull "$api_gateway_image" || log_warning "Pull failed for $api_gateway_image (non-fatal on k3s)"
     docker pull "$auth_service_image" || log_warning "Pull failed for $auth_service_image (non-fatal on k3s)"
+    docker pull "$trip_service_image" || log_warning "Pull failed for $trip_service_image (non-fatal on k3s)"
 
     log_success "Images pull step complete"
 }
@@ -204,6 +206,30 @@ deploy_app() {
     helmfile -f "$HELMFILE_CONFIG" apply
 
     log_success "Application deployed successfully"
+}
+
+# Start or ensure infrastructure (Postgres x2, Redis) via Docker Compose.
+# Idempotent: already running containers are left as-is.
+start_infra() {
+    local compose_file="${PROJECT_DIR}/docker-compose.infra.yml"
+    if [[ ! -f "$compose_file" ]]; then
+        log_warning "Infra compose not found: $compose_file — skipping (assume external DB/Redis)"
+        return 0
+    fi
+    if ! command -v docker &>/dev/null; then
+        log_warning "docker not found — skipping infra start (assume external DB/Redis)"
+        return 0
+    fi
+    if ! docker info &>/dev/null; then
+        log_warning "Docker daemon not reachable — skipping infra start"
+        return 0
+    fi
+    log_info "Starting infrastructure (Postgres x2, Redis) if not already running..."
+    (cd "$PROJECT_DIR" && docker compose -f docker-compose.infra.yml up -d) || {
+        log_warning "Infra start failed (non-fatal); ensure DB and Redis are available"
+        return 0
+    }
+    log_success "Infrastructure ready"
 }
 
 # Apply external services for infrastructure access
@@ -358,7 +384,7 @@ wait_for_deployment_object() {
 wait_for_deployment() {
     log_info "Waiting for deployment to be ready..."
 
-    local deployments=("api-gateway" "auth-service")
+    local deployments=("api-gateway" "auth-service" "trip-service")
 
     for deploy in "${deployments[@]}"; do
         # Ensure the Deployment object itself exists before calling rollout status.
@@ -479,6 +505,9 @@ main() {
 
     # Select deployment configs
     select_helmfile
+
+    # Start infra (Postgres x2, Redis) if not already running
+    start_infra
 
     # Apply external services for infrastructure access
     apply_external_services

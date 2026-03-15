@@ -20,6 +20,18 @@ spec:
     tls:
       mode: DISABLE
 ---
+# Trip Service DB (external Postgres on host:5433) — plain TCP, no mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: db-trips-external
+  namespace: default
+spec:
+  host: db-trips.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:

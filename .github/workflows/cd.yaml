@@ -58,6 +58,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push trip-service
+        uses: docker/build-push-action@v5
+        with:
+          context: Backend
+          file: Backend/trip-service/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-trip-service:latest
+            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-trip-service:${{ steps.set-image-tag.outputs.image-tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push

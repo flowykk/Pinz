@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-gateway
+  name: trip-service
   labels:
-    app: api-gateway
+    app: trip-service
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: api-gateway
+      app: trip-service
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -17,9 +17,9 @@ spec:
   template:
     metadata:
       labels:
-        app: api-gateway
+        app: trip-service
     spec:
-      serviceAccountName: api-gateway-sa
+      serviceAccountName: trip-service-sa
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -33,10 +33,10 @@ spec:
               podAffinityTerm:
                 labelSelector:
                   matchLabels:
-                    app: api-gateway
+                    app: trip-service
                 topologyKey: kubernetes.io/hostname
       containers:
-        - name: api-gateway
+        - name: trip-service
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
@@ -47,18 +47,27 @@ spec:
                 - ALL
           ports:
             - containerPort: {{ .Values.service.port }}
-              name: http
+              name: grpc
           env:
             - name: USER
               value: "app"
-            - name: API_GATEWAY_PORT
-              value: {{ .Values.env.apiGatewayPort | quote }}
-            - name: AUTH_SERVICE_GRPC_ADDRESS
-              value: {{ .Values.env.authServiceGrpcAddress | quote }}
-            - name: TRIP_SERVICE_GRPC_ADDRESS
-              value: {{ .Values.env.tripServiceGrpcAddress | quote }}
-            - name: SWAGGER_HOST
-              value: {{ .Values.env.swaggerHost | default "" | quote }}
+            - name: GRPC_PORT
+              value: {{ .Values.env.grpcPort | quote }}
+            - name: DB_HOST
+              value: {{ .Values.env.dbHost | quote }}
+            - name: DB_PORT
+              value: {{ .Values.env.dbPort | quote }}
+            - name: DB_USER
+              value: {{ .Values.env.dbUser | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trip-service-secret
+                  key: db-password
+            - name: DB_NAME
+              value: {{ .Values.env.dbName | quote }}
+            - name: REDIS_ADDR
+              value: {{ .Values.env.redisAddr | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.env.otelExporterEndpoint | quote }}
             - name: OTEL_SERVICE_NAME
@@ -75,17 +84,15 @@ spec:
               cpu: {{ .Values.resources.limits.cpu | quote }}
               memory: {{ .Values.resources.limits.memory | quote }}
           readinessProbe:
-            httpGet:
-              path: /health
-              port: http
+            grpc:
+              port: {{ .Values.service.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
           livenessProbe:
-            httpGet:
-              path: /health
-              port: http
+            grpc:
+              port: {{ .Values.service.port }}
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 3

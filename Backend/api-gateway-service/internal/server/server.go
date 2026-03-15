@@ -68,6 +68,14 @@ func NewServer(deps *di.Dependencies) *Server {
 		r.Post("/auth/refresh", deps.AuthHandler.RefreshToken)
 		r.Post("/auth/logout", deps.AuthHandler.Logout)
 		r.Post("/auth/dev-login", deps.AuthHandler.DevLogin)
+
+		r.Route("/trips", func(r chi.Router) {
+			r.Get("/", deps.TripHandler.ListTrips)
+			r.Post("/", deps.TripHandler.CreateTrip)
+			r.Get("/{id}", deps.TripHandler.GetTrip)
+			r.Patch("/{id}", deps.TripHandler.UpdateTrip)
+			r.Delete("/{id}", deps.TripHandler.DeleteTrip)
+		})
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(

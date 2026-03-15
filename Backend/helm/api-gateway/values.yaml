@@ -12,10 +12,11 @@ service:
 env:
   apiGatewayPort: "8080"
   authServiceGrpcAddress: "auth-service:50051"
+  tripServiceGrpcAddress: "trip-service:50052"
   swaggerHost: ""
   otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
   otelServiceName: "api-gateway-service"
-  otelTracesSampler: "parentbased_traceid_ratio"
+  otelTracesSampler: "parentbased_traceidratio"
   otelTracesSamplerArg: "1.0"
 
 resources:
