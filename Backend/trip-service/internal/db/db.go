@@ -118,7 +118,7 @@ func dsn() string {
 	if user == "" {
 		user = "pinz_user"
 	}
-	password := os.Getenv("DB_PASSWORD")
+	password := os.Getenv("POSTGRES_PASSWORD")
 	if password == "" {
 		password = "pinz_password"
 	}
