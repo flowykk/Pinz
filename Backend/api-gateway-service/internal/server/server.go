@@ -19,6 +19,7 @@ import (
 
 	"pinz/backend/api-gateway-service/internal/di"
 	"pinz/backend/api-gateway-service/internal/handlers"
+	"pinz/backend/api-gateway-service/internal/middleware"
 
 	_ "pinz/backend/api-gateway-service/docs"
 )
@@ -70,6 +71,7 @@ func NewServer(deps *di.Dependencies) *Server {
 		r.Post("/auth/dev-login", deps.AuthHandler.DevLogin)
 
 		r.Route("/trips", func(r chi.Router) {
+			r.Use(middleware.RequireJWT)
 			r.Get("/", deps.TripHandler.ListTrips)
 			r.Post("/", deps.TripHandler.CreateTrip)
 			r.Get("/{id}", deps.TripHandler.GetTrip)

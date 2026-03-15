@@ -9,9 +9,13 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 
+	"pinz/backend/api-gateway-service/internal/middleware"
 	pb "pinz/backend/api-gateway-service/pkg/proto"
 )
+
+const metadataUserIDKey = "x-user-id"
 
 type Client struct {
 	conn   *grpc.ClientConn
@@ -37,24 +41,33 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
+// withUserIDMetadata adds x-user-id from context to outgoing gRPC metadata.
+func withUserIDMetadata(ctx context.Context) context.Context {
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		return ctx
+	}
+	return metadata.AppendToOutgoingContext(ctx, metadataUserIDKey, userID)
+}
+
 func (c *Client) CreateTrip(ctx context.Context, req *pb.CreateTripRequest) (*pb.CreateTripResponse, error) {
-	return c.client.CreateTrip(ctx, req)
+	return c.client.CreateTrip(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.GetTripResponse, error) {
-	return c.client.GetTrip(ctx, req)
+	return c.client.GetTrip(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) ListUserTrips(ctx context.Context, req *pb.ListUserTripsRequest) (*pb.ListUserTripsResponse, error) {
-	return c.client.ListUserTrips(ctx, req)
+	return c.client.ListUserTrips(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest) (*pb.UpdateTripResponse, error) {
-	return c.client.UpdateTrip(ctx, req)
+	return c.client.UpdateTrip(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest) (*pb.DeleteTripResponse, error) {
-	return c.client.DeleteTrip(ctx, req)
+	return c.client.DeleteTrip(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) Close() error {

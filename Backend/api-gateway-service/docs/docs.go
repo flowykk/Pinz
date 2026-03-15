@@ -503,7 +503,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "object"
+                                "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
                             }
                         }
                     },
@@ -513,8 +513,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
-                    "501": {
-                        "description": "Not Implemented",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -527,7 +527,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new trip. Requires JWT. user_id will be taken from JWT in task 2.",
+                "description": "Creates a new trip. Requires JWT. user_id is taken from JWT.",
                 "consumes": [
                     "application/json"
                 ],
@@ -545,7 +545,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.CreateTripRequest"
                         }
                     }
                 ],
@@ -553,7 +553,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CreateTripResponse"
                         }
                     },
                     "400": {
@@ -568,8 +568,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
-                    "501": {
-                        "description": "Not Implemented",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -584,7 +584,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns a single trip by ID. Requires JWT.",
+                "description": "Returns a single trip by ID. Requires JWT. User must be a participant.",
                 "consumes": [
                     "application/json"
                 ],
@@ -608,11 +608,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -623,8 +629,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
-                    "501": {
-                        "description": "Not Implemented",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -637,7 +643,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes a trip. Requires JWT.",
+                "description": "Deletes a trip. Requires JWT. Only owner can delete.",
                 "consumes": [
                     "application/json"
                 ],
@@ -667,14 +673,20 @@ const docTemplate = `{
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
-                    "501": {
-                        "description": "Not Implemented",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -687,7 +699,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates trip metadata. Requires JWT.",
+                "description": "Updates trip metadata. Requires JWT. Only admin can update.",
                 "consumes": [
                     "application/json"
                 ],
@@ -712,7 +724,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest"
                         }
                     }
                 ],
@@ -720,7 +732,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
                         }
                     },
                     "400": {
@@ -735,14 +747,20 @@ const docTemplate = `{
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
-                    "501": {
-                        "description": "Not Implemented",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -752,6 +770,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "pinz_backend_api-gateway-service_internal_requests.CreateTripRequest": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "privacy_level": {
+                    "type": "string"
+                },
+                "season": {
+                    "type": "string"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_requests.DevLoginRequest": {
             "type": "object",
             "properties": {
@@ -833,6 +871,35 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "cover_url": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_date_unix": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "privacy_level": {
+                    "type": "string"
+                },
+                "season": {
+                    "type": "string"
+                },
+                "start_date_unix": {
+                    "type": "integer"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_requests.VerifyEmailCodeRequest": {
             "type": "object",
             "properties": {
@@ -841,6 +908,23 @@ const docTemplate = `{
                 },
                 "verification_code": {
                     "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.CreateTripResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "string"
+                },
+                "upload_urls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL"
+                    }
                 }
             }
         },
@@ -928,6 +1012,76 @@ const docTemplate = `{
                 "registration_id": {
                     "type": "string",
                     "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.Trip": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "cover_url": {
+                    "type": "string"
+                },
+                "created_at_unix": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "dislikes_count": {
+                    "type": "integer"
+                },
+                "end_date_unix": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_generated": {
+                    "type": "boolean"
+                },
+                "is_published": {
+                    "type": "boolean"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner_user_id": {
+                    "type": "string"
+                },
+                "privacy_level": {
+                    "type": "string"
+                },
+                "season": {
+                    "type": "string"
+                },
+                "start_date_unix": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at_unix": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.UploadURL": {
+            "type": "object",
+            "properties": {
+                "client_id": {
+                    "type": "string"
+                },
+                "s3_key": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },

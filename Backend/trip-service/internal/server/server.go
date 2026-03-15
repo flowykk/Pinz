@@ -31,6 +31,7 @@ func RunGRPCServer(tripService pb.TripServiceServer) error {
 
 	srv := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+		grpc.UnaryInterceptor(AuthUnaryInterceptor),
 	)
 	pb.RegisterTripServiceServer(srv, tripService)
 

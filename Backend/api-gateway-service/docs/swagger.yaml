@@ -1,5 +1,18 @@
 basePath: /
 definitions:
+  pinz_backend_api-gateway-service_internal_requests.CreateTripRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      privacy_level:
+        type: string
+      season:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.DevLoginRequest:
     properties:
       email:
@@ -56,12 +69,42 @@ definitions:
         example: user@example.com
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest:
+    properties:
+      category:
+        type: string
+      cover_url:
+        type: string
+      description:
+        type: string
+      end_date_unix:
+        type: integer
+      name:
+        type: string
+      privacy_level:
+        type: string
+      season:
+        type: string
+      start_date_unix:
+        type: integer
+    type: object
   pinz_backend_api-gateway-service_internal_requests.VerifyEmailCodeRequest:
     properties:
       registration_id:
         type: string
       verification_code:
         type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.CreateTripResponse:
+    properties:
+      status:
+        type: string
+      trip_id:
+        type: string
+      upload_urls:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
+        type: array
     type: object
   pinz_backend_api-gateway-service_internal_responses.DevLoginResponse:
     properties:
@@ -117,6 +160,52 @@ definitions:
         type: boolean
       registration_id:
         example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.Trip:
+    properties:
+      category:
+        type: string
+      cover_url:
+        type: string
+      created_at_unix:
+        type: integer
+      description:
+        type: string
+      dislikes_count:
+        type: integer
+      end_date_unix:
+        type: integer
+      id:
+        type: string
+      is_generated:
+        type: boolean
+      is_published:
+        type: boolean
+      likes_count:
+        type: integer
+      name:
+        type: string
+      owner_user_id:
+        type: string
+      privacy_level:
+        type: string
+      season:
+        type: string
+      start_date_unix:
+        type: integer
+      status:
+        type: string
+      updated_at_unix:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.UploadURL:
+    properties:
+      client_id:
+        type: string
+      s3_key:
+        type: string
+      url:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.VerifyEmailCodeResponse:
@@ -451,14 +540,14 @@ paths:
           description: OK
           schema:
             items:
-              type: object
+              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
             type: array
         "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "501":
-          description: Not Implemented
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
       security:
@@ -469,22 +558,21 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new trip. Requires JWT. user_id will be taken from JWT
-        in task 2.
+      description: Creates a new trip. Requires JWT. user_id is taken from JWT.
       parameters:
       - description: Trip creation payload
         in: body
         name: body
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.CreateTripRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            type: object
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CreateTripResponse'
         "400":
           description: Bad Request
           schema:
@@ -493,8 +581,8 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "501":
-          description: Not Implemented
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
       security:
@@ -506,7 +594,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Deletes a trip. Requires JWT.
+      description: Deletes a trip. Requires JWT. Only owner can delete.
       parameters:
       - description: Trip ID
         in: path
@@ -522,12 +610,16 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "501":
-          description: Not Implemented
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
       security:
@@ -538,7 +630,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Returns a single trip by ID. Requires JWT.
+      description: Returns a single trip by ID. Requires JWT. User must be a participant.
       parameters:
       - description: Trip ID
         in: path
@@ -551,17 +643,21 @@ paths:
         "200":
           description: OK
           schema:
-            type: object
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "501":
-          description: Not Implemented
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
       security:
@@ -572,7 +668,7 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates trip metadata. Requires JWT.
+      description: Updates trip metadata. Requires JWT. Only admin can update.
       parameters:
       - description: Trip ID
         in: path
@@ -584,14 +680,14 @@ paths:
         name: body
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            type: object
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
         "400":
           description: Bad Request
           schema:
@@ -600,12 +696,16 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "501":
-          description: Not Implemented
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
       security:
