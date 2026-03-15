@@ -44,11 +44,6 @@ CREATE TABLE IF NOT EXISTS trip_participants (
 );`
 )
 
-// dsnRedacted returns connection string with password masked for logging.
-func dsnRedacted(host, port, user, dbname string) string {
-	return fmt.Sprintf("postgres://%s:***@%s:%s/%s?sslmode=disable", user, host, port, dbname)
-}
-
 func InitDB() (*sql.DB, error) {
 	dsnStr := dsn()
 	host := os.Getenv("DB_HOST")
@@ -59,15 +54,11 @@ func InitDB() (*sql.DB, error) {
 	if port == "" {
 		port = "5432"
 	}
-	user := os.Getenv("DB_USER")
-	if user == "" {
-		user = "pinz_user"
-	}
 	dbname := os.Getenv("DB_NAME")
 	if dbname == "" {
 		dbname = "pinz_trips"
 	}
-	slog.Info("db: opening connection", "dsn", dsnRedacted(host, port, user, dbname), "host", host, "port", port, "database", dbname)
+	slog.Info("db: opening connection", "host", host, "port", port, "database", dbname)
 
 	db, err := otelsql.Open("pgx", dsnStr,
 		otelsql.WithAttributes(semconv.DBSystemPostgreSQL),
