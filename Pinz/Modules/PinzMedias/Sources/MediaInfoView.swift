@@ -78,10 +78,7 @@ public struct MediaInfoView: View {
         case .local(let media):
             switch media.content {
             case .image(let image):
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .cornerRadius(24)
+                CollapsibleImageView(image: image)
             case .video:
                 videoPlayerSection
             case .loading:
@@ -98,38 +95,38 @@ public struct MediaInfoView: View {
     private var videoPlayerSection: some View {
         if let controller = playerController {
             let ratio = controller.naturalSize.map { $0.width / $0.height } ?? 1.0
-            VideoPlayerView(player: controller.player)
-                .aspectRatio(ratio, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 24))
-                .overlay {
-                    if !controller.isPlaying {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 52))
-                            .foregroundStyle(.white.opacity(0.9))
-                            .shadow(radius: 8)
-                    }
+            CollapsibleView(limitedHeight: 50) {
+                VideoPlayerView(player: controller.player)
+                    .aspectRatio(ratio, contentMode: .fill)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .overlay {
+                if !controller.isPlaying {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 52))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .shadow(radius: 8)
+                }
 
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    controller.toggleMute()
-                                }
-                            } label: {
-                                Image(systemName: controller.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                                    .roundedFount(size: 16, foregroundColor: .white)
-                                    .padding(10)
-                            }.disabledWithOpacity(!controller.hasAudio)
-                        }
+                VStack {
+                    HStack {
+                        BadgeView(
+                            icon: controller.isMuted ? .soundOff : .soundOn,
+                            badgeSize: 36,
+                            iconSize: 18
+                        ) {
+                            controller.toggleMute()
+                        }.disabledWithOpacity(!controller.hasAudio, opacity: 0.5)
                         Spacer()
                     }
+                    Spacer()
+                }.padding(8)
+            }
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    controller.togglePlayback()
                 }
-                .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        controller.togglePlayback()
-                    }
-                }
+            }
         }
     }
 
@@ -144,12 +141,9 @@ public struct MediaInfoView: View {
                     ProgressView()
                         .tint(.white)
                 }
-                .cornerRadius(16)
-        case .ready(let image):
-            Image(uiImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
                 .cornerRadius(24)
+        case .ready(let image):
+            CollapsibleImageView(image: image)
         case .failure:
             Rectangle()
                 .fill(Color.gray.opacity(0.3))
@@ -158,7 +152,7 @@ public struct MediaInfoView: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.white)
                 }
-                .cornerRadius(16)
+                .cornerRadius(24)
         }
     }
 
