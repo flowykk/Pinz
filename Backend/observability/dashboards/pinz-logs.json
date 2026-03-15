@@ -78,18 +78,19 @@
   "templating": {
     "list": [
       {
-        "current": { "selected": true, "text": "All", "value": "api-gateway-service|auth-service" },
+        "current": { "selected": true, "text": "All", "value": "api-gateway-service|auth-service|trip-service" },
         "hide": 0,
         "includeAll": false,
         "label": "Service",
         "multi": false,
         "name": "service",
         "options": [
-          { "selected": true, "text": "All", "value": "api-gateway-service|auth-service" },
+          { "selected": true, "text": "All", "value": "api-gateway-service|auth-service|trip-service" },
           { "selected": false, "text": "api-gateway-service", "value": "api-gateway-service" },
-          { "selected": false, "text": "auth-service", "value": "auth-service" }
+          { "selected": false, "text": "auth-service", "value": "auth-service" },
+          { "selected": false, "text": "trip-service", "value": "trip-service" }
         ],
-        "query": "api-gateway-service|auth-service,api-gateway-service,auth-service",
+        "query": "api-gateway-service|auth-service|trip-service,api-gateway-service,auth-service,trip-service",
         "skipUrlSync": false,
         "type": "custom"
       },

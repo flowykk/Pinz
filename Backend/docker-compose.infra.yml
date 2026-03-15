@@ -10,7 +10,7 @@ services:
     container_name: pinz-db
     environment:
       POSTGRES_USER: pinz_user
-      POSTGRES_PASSWORD: pinz_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pinz_password}
       POSTGRES_DB: pinz_db
     ports:
       - "5432:5432"
@@ -27,7 +27,7 @@ services:
     container_name: pinz-db-trips
     environment:
       POSTGRES_USER: pinz_user
-      POSTGRES_PASSWORD: pinz_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pinz_password}
       POSTGRES_DB: pinz_trips
     ports:
       - "5433:5432"
