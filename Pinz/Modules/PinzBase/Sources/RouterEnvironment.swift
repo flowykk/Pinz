@@ -27,6 +27,8 @@ public protocol AppRouting {
 
     func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction)
 
+    func navigateToWishlistElementCreation(action: WishlistCreationAction)
+
     func pop()
     func pop(by count: Int)
 }

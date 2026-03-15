@@ -4,9 +4,10 @@ import PinzBase
 import PinzDomain
 
 @MainActor @Observable
-final class PlacesWishlistViewModel {
+final class WishlistViewModel {
 
     enum Route {
+        case wishlistElementCreation
         case back
     }
 
@@ -14,7 +15,7 @@ final class PlacesWishlistViewModel {
         case navigate(Route)
     }
 
-    let wishlist: [WishlistElement]
+    var wishlist: [WishlistElement]
 
     private let networkService = NetworkService()
     private var router: AppRouting?
@@ -27,6 +28,10 @@ final class PlacesWishlistViewModel {
         switch intent {
         case let .navigate(route):
             switch route {
+            case .wishlistElementCreation:
+                router?.navigateToWishlistElementCreation(action: WishlistCreationAction { [weak self] element in
+                    self?.wishlist.append(element)
+                })
             case .back:
                 router?.pop()
             }

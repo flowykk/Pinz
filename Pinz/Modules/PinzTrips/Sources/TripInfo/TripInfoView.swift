@@ -307,6 +307,7 @@ public struct TripInfoView: View {
 
     private var descriptionEditing: some View {
         DescriptionEditingView(
+            title: "Описание",
             text: Binding(get: {
                 viewModel.trip.description ?? ""
             }, set: { value in

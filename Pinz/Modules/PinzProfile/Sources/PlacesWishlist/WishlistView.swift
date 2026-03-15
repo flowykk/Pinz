@@ -1,14 +1,14 @@
 import SwiftUI
 import PinzUI
 
-public struct PlacesWishlistView: View {
+public struct WishlistView: View {
 
-    @State private var viewModel: PlacesWishlistViewModel
+    @State private var viewModel: WishlistViewModel
 
     @Environment(\.appRouter) private var router
 
     public init() {
-        viewModel = PlacesWishlistViewModel()
+        viewModel = WishlistViewModel()
     }
 
     public var body: some View {
@@ -40,7 +40,7 @@ public struct PlacesWishlistView: View {
             HeaderTitle("Желанные места")
         }, rightView: {
             PinzButton(type: .icon(.plus), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                // TODO: navigate to adding wishlist element form
+                viewModel.dispatch(.navigate(.wishlistElementCreation))
             }
         })
     }

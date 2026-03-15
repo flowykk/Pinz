@@ -66,7 +66,7 @@ public struct RootView<Content: View>: View {
             case .trips:
                 TripsListView(trips: Trip.stubs())
             case .wishlist:
-                PlacesWishlistView()
+                WishlistView()
             case .saved:
                 SavedMapsView()
             case .notifications:
@@ -85,6 +85,11 @@ public struct RootView<Content: View>: View {
                 MediaInfoView(media: media)
             case let .localInfo(media):
                 MediaInfoView(localMedia: media)
+            }
+        case let .wishlist(wishlistRoute):
+            switch wishlistRoute {
+            case let .creation(action):
+                WishlistCreationView(onCreated: action.action)
             }
         }
     }

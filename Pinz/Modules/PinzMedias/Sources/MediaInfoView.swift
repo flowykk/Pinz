@@ -81,14 +81,14 @@ public struct MediaInfoView: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .cornerRadius(36)
+                    .cornerRadius(24)
             case .video:
                 videoPlayerSection
             case .loading:
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
                     .aspectRatio(1, contentMode: .fit)
-                    .cornerRadius(16)
+                    .cornerRadius(24)
                     .overlay { ProgressView().tint(.white) }
             }
         }

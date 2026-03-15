@@ -102,6 +102,7 @@ extension PinInfoView {
 
     private var descriptionEditing: some View {
         DescriptionEditingView(
+            title: "Описание",
             text: Binding(get: {
                 viewModel.pin.description ?? ""
             }, set: { value in
