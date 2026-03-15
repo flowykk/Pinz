@@ -82,6 +82,10 @@ func NewServer(deps *di.Dependencies) *Server {
 			r.Post("/{id}/leave", deps.TripHandler.LeaveTrip)
 			r.Post("/{id}/transfer-admin", deps.TripHandler.TransferAdmin)
 			r.Delete("/{id}/participants/{user_id}", deps.TripHandler.RemoveParticipant)
+			r.Post("/{id}/media/process-grouping", deps.TripHandler.ProcessMediaGrouping)
+			r.Post("/{id}/apply-groups-and-process", deps.TripHandler.ApplyGroupsAndProcess)
+			r.Get("/{id}/review", deps.TripHandler.GetTripReview)
+			r.Post("/{id}/finalize", deps.TripHandler.FinalizeTrip)
 		})
 	})
 

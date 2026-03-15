@@ -64,6 +64,57 @@ CREATE TABLE IF NOT EXISTS trip_privacy (
   privacy_level TEXT NOT NULL,
   PRIMARY KEY (trip_id, user_id)
 );`
+	// PINZ-97: pins, media, tags, pin_privacy, media_privacy (tripCreationFlow.md)
+	pinsDDL = `
+CREATE TABLE IF NOT EXISTS pins (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  location GEOMETRY(Point, 4326),
+  category TEXT NOT NULL,
+  privacy_level TEXT NOT NULL DEFAULT 'Private',
+  media_count INT NOT NULL DEFAULT 0,
+  start_time TIMESTAMPTZ,
+  end_time TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);`
+	mediaDDL = `
+CREATE TABLE IF NOT EXISTS media (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  pin_id UUID REFERENCES pins(id) ON DELETE SET NULL,
+  s3_key TEXT NOT NULL,
+  media_type TEXT NOT NULL,
+  location GEOMETRY(Point, 4326),
+  captured_at TIMESTAMPTZ,
+  battle_rating INT NOT NULL DEFAULT 0,
+  privacy_level TEXT NOT NULL DEFAULT 'Private',
+  similar_group_id UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);`
+	tagsDDL = `
+CREATE TABLE IF NOT EXISTS tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  pin_id UUID REFERENCES pins(id) ON DELETE CASCADE,
+  tag TEXT NOT NULL,
+  UNIQUE(trip_id, pin_id, tag)
+);`
+	pinPrivacyDDL = `
+CREATE TABLE IF NOT EXISTS pin_privacy (
+  pin_id UUID NOT NULL REFERENCES pins(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  privacy_level TEXT NOT NULL,
+  PRIMARY KEY (pin_id, user_id)
+);`
+	mediaPrivacyDDL = `
+CREATE TABLE IF NOT EXISTS media_privacy (
+  media_id UUID NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  privacy_level TEXT NOT NULL,
+  PRIMARY KEY (media_id, user_id)
+);`
 )
 
 func InitDB() (*sql.DB, error) {
@@ -112,15 +163,21 @@ func InitDB() (*sql.DB, error) {
 		slog.Warn("db: failed to register metrics", "error", err)
 	}
 
-	slog.Info("db: running migrations (postgis, trips, trip_participants, invitation_links, trip_settings, trip_privacy)")
-	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL, invitationLinksDDL, tripSettingsDDL, tripPrivacyDDL} {
-		name := []string{"postgis", "trips", "trip_participants", "invitation_links", "trip_settings", "trip_privacy"}[i]
+	slog.Info("db: running migrations (postgis, trips, ..., pins, media, tags, pin_privacy, media_privacy)")
+	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL, invitationLinksDDL, tripSettingsDDL, tripPrivacyDDL, pinsDDL, mediaDDL, tagsDDL, pinPrivacyDDL, mediaPrivacyDDL} {
+		name := []string{"postgis", "trips", "trip_participants", "invitation_links", "trip_settings", "trip_privacy", "pins", "media", "tags", "pin_privacy", "media_privacy"}[i]
 		if _, err := db.Exec(ddl); err != nil {
 			db.Close()
 			slog.Error("db: migration failed", "object", name, "error", err)
 			return nil, fmt.Errorf("migration %s: %w", name, err)
 		}
 		slog.Info("db: migration ok", "object", name)
+	}
+	// Добавляем similar_group_id для поддержки нескольких групп похожих медиа внутри пина (существующие БД).
+	if _, err := db.Exec("ALTER TABLE media ADD COLUMN IF NOT EXISTS similar_group_id UUID"); err != nil {
+		db.Close()
+		slog.Error("db: migration media.similar_group_id failed", "error", err)
+		return nil, fmt.Errorf("migration media.similar_group_id: %w", err)
 	}
 	slog.Info("db: init complete")
 	return db, nil

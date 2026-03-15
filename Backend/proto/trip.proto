@@ -115,17 +115,97 @@ message DeleteTripResponse {
   bool success = 1;
 }
 
-message ProcessMediaGroupingRequest {}
-message ProcessMediaGroupingResponse {}
+// ProcessMediaGrouping: save media, cluster by geo/time, return draft_pins (tripCreationFlow.md stage 2)
+message ProcessMediaGroupingRequest {
+  string trip_id = 1;
+  repeated MediaMeta media = 2;
+}
+message MediaMeta {
+  string s3_key = 1;
+  string media_type = 2;  // image, video
+  int64 captured_at_unix = 3;
+  optional double latitude = 4;
+  optional double longitude = 5;
+}
+message ProcessMediaGroupingResponse {
+  string trip_id = 1;
+  string status = 2;
+  repeated DraftPin draft_pins = 3;
+}
+message DraftPin {
+  string draft_pin_id = 1;
+  repeated DraftPinMedia media = 2;
+}
+message DraftPinMedia {
+  string media_id = 1;
+  string url = 2;   // read URL (from Media Service or placeholder)
+  string type = 3;  // image, video
+}
 
-message ApplyGroupsAndProcessRequest {}
-message ApplyGroupsAndProcessResponse {}
+// ApplyGroupsAndProcess: apply user grouping, create pins, push to Redis Streams, return 202
+message ApplyGroupsAndProcessRequest {
+  string trip_id = 1;
+  repeated DraftPinInput draft_pins = 2;
+  repeated string deleted_media_ids = 3;
+}
+message DraftPinInput {
+  string draft_pin_id = 1;
+  repeated string media_ids = 2;
+}
+message ApplyGroupsAndProcessResponse {
+  string message = 1;
+  string status = 2;
+}
 
-message GetTripReviewRequest {}
-message GetTripReviewResponse {}
+// GetTripReview: pins with tags, geo, issues, similar (tripCreationFlow.md stage 4)
+message GetTripReviewRequest {
+  string trip_id = 1;
+}
+message GetTripReviewResponse {
+  string trip_id = 1;
+  string status = 2;
+  repeated MediaSimilarGroup similar = 3;
+  repeated ReviewPin pins = 4;
+}
+message MediaSimilarGroup {
+  repeated string media_ids = 1;
+}
+message ReviewPin {
+  string pin_id = 1;
+  string name = 2;
+  string category = 3;
+  optional double latitude = 4;
+  optional double longitude = 5;
+  string location_name = 6;
+  int64 start_time_unix = 7;
+  int64 end_time_unix = 8;
+  repeated string issues = 9;   // MISSING_COORDINATES, MISSING_DATES
+  repeated string tags = 10;
+  repeated ReviewPinMedia media = 11;
+}
+message ReviewPinMedia {
+  string media_id = 1;
+  string url = 2;
+  string privacy_level = 4;
+}
 
-message FinalizeTripRequest {}
-message FinalizeTripResponse {}
+// FinalizeTrip: apply pin_updates, delete media, reverse geocoding, aggregate trip, READY, TRIP_PUBLISHED
+message FinalizeTripRequest {
+  string trip_id = 1;
+  repeated PinUpdate pin_updates = 2;
+  repeated string media_to_delete = 3;
+}
+message PinUpdate {
+  string pin_id = 1;
+  optional string name = 2;
+  optional double latitude = 3;
+  optional double longitude = 4;
+}
+message FinalizeTripResponse {
+  string trip_id = 1;
+  string status = 2;
+  string message = 3;
+}
 
 // Участники и инвайты
 message GenerateInviteLinkRequest {

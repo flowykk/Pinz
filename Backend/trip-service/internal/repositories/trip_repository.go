@@ -186,3 +186,16 @@ func (r *TripRepository) Delete(id string) error {
 	}
 	return nil
 }
+
+// SetStatus updates only trip status (for flow: UPLOADING, DRAFT_GROUPING_REVIEW, PROCESSING, DRAFT_FINAL_REVIEW, READY).
+func (r *TripRepository) SetStatus(tripID, status string) error {
+	res, err := psq.Update("trips").Set("status", status).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID}).RunWith(r.db).Exec()
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}

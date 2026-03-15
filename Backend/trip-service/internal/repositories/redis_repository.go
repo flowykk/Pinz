@@ -10,7 +10,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const tripEventsStream = "pinz:trip:events"
+const (
+	tripEventsStream = "pinz:trip:events"
+	mlTasksStream    = "pinz:trip:ml:tasks"
+)
 
 // RedisRepository provides Redis client and trip event streaming for Notification Service.
 type RedisRepository struct {
@@ -71,6 +74,19 @@ func (r *RedisRepository) PublishTripEvent(ctx context.Context, eventType string
 	}).Err()
 	if err != nil {
 		slog.WarnContext(ctx, "PublishTripEvent failed", "event", eventType, "trip_id", tripID, "error", err)
+		return err
+	}
+	return nil
+}
+
+// AddMLTask adds a task to the ML/processing stream (for worker: apply-groups-and-process flow).
+func (r *RedisRepository) AddMLTask(ctx context.Context, tripID string) error {
+	err := r.client.XAdd(ctx, &redis.XAddArgs{
+		Stream: mlTasksStream,
+		Values: map[string]interface{}{"trip_id": tripID},
+	}).Err()
+	if err != nil {
+		slog.WarnContext(ctx, "AddMLTask failed", "trip_id", tripID, "error", err)
 		return err
 	}
 	return nil

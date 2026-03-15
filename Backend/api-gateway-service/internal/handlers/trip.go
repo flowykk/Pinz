@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -30,6 +31,10 @@ type TripClient interface {
 	RemoveParticipant(ctx context.Context, req *proto.RemoveParticipantRequest) (*proto.RemoveParticipantResponse, error)
 	LeaveTrip(ctx context.Context, req *proto.LeaveTripRequest) (*proto.LeaveTripResponse, error)
 	TransferAdmin(ctx context.Context, req *proto.TransferAdminRequest) (*proto.TransferAdminResponse, error)
+	ProcessMediaGrouping(ctx context.Context, req *proto.ProcessMediaGroupingRequest) (*proto.ProcessMediaGroupingResponse, error)
+	ApplyGroupsAndProcess(ctx context.Context, req *proto.ApplyGroupsAndProcessRequest) (*proto.ApplyGroupsAndProcessResponse, error)
+	GetTripReview(ctx context.Context, req *proto.GetTripReviewRequest) (*proto.GetTripReviewResponse, error)
+	FinalizeTrip(ctx context.Context, req *proto.FinalizeTripRequest) (*proto.FinalizeTripResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient) *TripHandler {
@@ -98,13 +103,18 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 		return
 	}
+	protoFiles := make([]*proto.FileToUpload, 0, len(req.FilesToUpload))
+	for _, f := range req.FilesToUpload {
+		protoFiles = append(protoFiles, &proto.FileToUpload{ClientId: f.ClientID, ContentType: f.ContentType})
+	}
 	resp, err := h.tripClient.CreateTrip(ctx, &proto.CreateTripRequest{
-		OwnerUserId:  userID,
-		Name:         req.Name,
-		Description:  req.Description,
-		Category:     req.Category,
-		Season:       req.Season,
-		PrivacyLevel: req.PrivacyLevel,
+		OwnerUserId:   userID,
+		Name:          req.Name,
+		Description:   req.Description,
+		Category:      req.Category,
+		Season:        req.Season,
+		PrivacyLevel:  req.PrivacyLevel,
+		FilesToUpload: protoFiles,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "CreateTrip")
@@ -455,6 +465,212 @@ func (h *TripHandler) TransferAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.TransferAdminResponse{Success: true})
+}
+
+// ProcessMediaGrouping saves media metadata and returns draft pins (tripCreationFlow stage 2).
+// @Summary Process media grouping
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.ProcessMediaGroupingRequest true "Media metadata"
+// @Success 200 {object} responses.ProcessMediaGroupingResponse
+// @Router /api/v1/trips/{id}/media/process-grouping [post]
+func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.ProcessMediaGroupingRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	media := make([]*proto.MediaMeta, 0, len(req.Media))
+	for _, m := range req.Media {
+		mm := &proto.MediaMeta{S3Key: m.S3Key, MediaType: m.MediaType}
+		if m.CapturedAt != "" {
+			if t, err := time.Parse(time.RFC3339, m.CapturedAt); err == nil {
+				mm.CapturedAtUnix = t.Unix()
+			}
+		}
+		if m.Latitude != nil {
+			mm.Latitude = m.Latitude
+		}
+		if m.Longitude != nil {
+			mm.Longitude = m.Longitude
+		}
+		media = append(media, mm)
+	}
+	resp, err := h.tripClient.ProcessMediaGrouping(ctx, &proto.ProcessMediaGroupingRequest{TripId: tripID, Media: media})
+	if err != nil {
+		handleServiceError(w, r, err, "ProcessMediaGrouping")
+		return
+	}
+	draftPins := make([]responses.DraftPin, 0, len(resp.GetDraftPins()))
+	for _, dp := range resp.GetDraftPins() {
+		mediaList := make([]responses.DraftPinMedia, 0, len(dp.GetMedia()))
+		for _, m := range dp.GetMedia() {
+			mediaList = append(mediaList, responses.DraftPinMedia{MediaID: m.GetMediaId(), URL: m.GetUrl(), Type: m.GetType()})
+		}
+		draftPins = append(draftPins, responses.DraftPin{DraftPinID: dp.GetDraftPinId(), Media: mediaList})
+	}
+	respondJSON(w, http.StatusOK, responses.ProcessMediaGroupingResponse{
+		TripID:    resp.GetTripId(),
+		Status:    resp.GetStatus(),
+		DraftPins: draftPins,
+	})
+}
+
+// ApplyGroupsAndProcess applies user grouping and starts processing (202).
+// @Summary Apply groups and process
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.ApplyGroupsAndProcessRequest true "Draft pins and deleted media"
+// @Success 202 {object} responses.ApplyGroupsAndProcessResponse
+// @Router /api/v1/trips/{id}/apply-groups-and-process [post]
+func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.ApplyGroupsAndProcessRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	draftPins := make([]*proto.DraftPinInput, 0, len(req.DraftPins))
+	for _, dp := range req.DraftPins {
+		draftPins = append(draftPins, &proto.DraftPinInput{DraftPinId: dp.DraftPinID, MediaIds: dp.MediaIDs})
+	}
+	resp, err := h.tripClient.ApplyGroupsAndProcess(ctx, &proto.ApplyGroupsAndProcessRequest{
+		TripId:          tripID,
+		DraftPins:       draftPins,
+		DeletedMediaIds: req.DeletedMediaIDs,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "ApplyGroupsAndProcess")
+		return
+	}
+	respondJSON(w, http.StatusAccepted, responses.ApplyGroupsAndProcessResponse{
+		Message: resp.GetMessage(),
+		Status:  resp.GetStatus(),
+	})
+}
+
+// GetTripReview returns pins with tags, issues, similar for review (tripCreationFlow stage 4).
+// @Summary Get trip review
+// @Tags trips
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Success 200 {object} responses.GetTripReviewResponse
+// @Router /api/v1/trips/{id}/review [get]
+func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	resp, err := h.tripClient.GetTripReview(ctx, &proto.GetTripReviewRequest{TripId: tripID})
+	if err != nil {
+		handleServiceError(w, r, err, "GetTripReview")
+		return
+	}
+	similar := make([][]string, 0, len(resp.GetSimilar()))
+	for _, g := range resp.GetSimilar() {
+		similar = append(similar, g.GetMediaIds())
+	}
+	pins := make([]responses.ReviewPin, 0, len(resp.GetPins()))
+	for _, p := range resp.GetPins() {
+		mediaList := make([]responses.ReviewPinMedia, 0, len(p.GetMedia()))
+		for _, m := range p.GetMedia() {
+			mediaList = append(mediaList, responses.ReviewPinMedia{
+				MediaID: m.GetMediaId(), URL: m.GetUrl(), PrivacyLevel: m.GetPrivacyLevel(),
+			})
+		}
+		rp := responses.ReviewPin{
+			PinID: p.GetPinId(), Name: p.GetName(), Category: p.GetCategory(),
+			LocationName: p.GetLocationName(), StartTimeUnix: p.GetStartTimeUnix(), EndTimeUnix: p.GetEndTimeUnix(),
+			Issues: p.GetIssues(), Tags: p.GetTags(), Media: mediaList,
+		}
+		if p.Latitude != nil {
+			rp.Latitude = p.Latitude
+		}
+		if p.Longitude != nil {
+			rp.Longitude = p.Longitude
+		}
+		pins = append(pins, rp)
+	}
+	respondJSON(w, http.StatusOK, responses.GetTripReviewResponse{
+		TripID: resp.GetTripId(), Status: resp.GetStatus(), Similar: similar, Pins: pins,
+	})
+}
+
+// FinalizeTrip applies pin updates, deletes media, sets trip READY (tripCreationFlow stage 5).
+// @Summary Finalize trip
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.FinalizeTripRequest true "Pin updates and media to delete"
+// @Success 200 {object} responses.FinalizeTripResponse
+// @Router /api/v1/trips/{id}/finalize [post]
+func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.FinalizeTripRequest
+	_ = decodeJSONBody(r, &req)
+	pinUpdates := make([]*proto.PinUpdate, 0, len(req.PinUpdates))
+	for _, pu := range req.PinUpdates {
+		pinUpdates = append(pinUpdates, &proto.PinUpdate{
+			PinId: pu.PinID, Name: pu.Name, Latitude: pu.Latitude, Longitude: pu.Longitude,
+		})
+	}
+	resp, err := h.tripClient.FinalizeTrip(ctx, &proto.FinalizeTripRequest{
+		TripId: tripID, PinUpdates: pinUpdates, MediaToDelete: req.MediaToDelete,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "FinalizeTrip")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.FinalizeTripResponse{
+		TripID: resp.GetTripId(), Status: resp.GetStatus(), Message: resp.GetMessage(),
+	})
 }
 
 func tripProtoToResponse(t *proto.Trip) responses.Trip {

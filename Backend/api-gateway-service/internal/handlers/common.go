@@ -67,8 +67,10 @@ func handleServiceError(w http.ResponseWriter, r *http.Request, err error, actio
 		respondError(w, http.StatusGatewayTimeout, st.Message())
 	case codes.Unimplemented:
 		respondError(w, http.StatusNotImplemented, st.Message())
+	case codes.FailedPrecondition:
+		respondError(w, http.StatusConflict, st.Message())
 	default:
-		respondError(w, http.StatusInternalServerError, "internal server error")
+		respondError(w, http.StatusInternalServerError, st.Message())
 	}
 }
 

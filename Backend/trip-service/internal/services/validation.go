@@ -1,9 +1,19 @@
 package services
 
-// Limits from task.txt
+// Limits from task.txt (4.1.2)
 const (
 	MaxNameLength        = 100
 	MaxDescriptionLength = 5000
+	MaxMediaPerTrip      = 500
+	MaxVideosPerTrip     = 50
+	MaxTagsPerPin        = 10
+	MaxTagLength         = 15
+)
+
+// Clustering params (task 3.9: ~50-100m, time diff <10 min)
+const (
+	ClusterRadiusMeters = 75
+	TimeClusterMinutes  = 10
 )
 
 var (
