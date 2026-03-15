@@ -59,3 +59,66 @@ type LeaveTripResponse struct {
 type TransferAdminResponse struct {
 	Success bool `json:"success"`
 }
+
+// ProcessMediaGroupingResponse is the response for POST /api/v1/trips/:id/media/process-grouping
+type ProcessMediaGroupingResponse struct {
+	TripID    string     `json:"trip_id"`
+	Status    string     `json:"status"`
+	DraftPins []DraftPin `json:"draft_pins"`
+}
+
+// DraftPin is one draft pin with media list.
+type DraftPin struct {
+	DraftPinID string          `json:"draft_pin_id"`
+	Media      []DraftPinMedia `json:"media"`
+}
+
+// DraftPinMedia is media in a draft pin.
+type DraftPinMedia struct {
+	MediaID string `json:"media_id"`
+	URL     string `json:"url"`
+	Type    string `json:"type"`
+}
+
+// ApplyGroupsAndProcessResponse is the response for POST /api/v1/trips/:id/apply-groups-and-process (202)
+type ApplyGroupsAndProcessResponse struct {
+	Message string `json:"message"`
+	Status  string `json:"status"`
+}
+
+// GetTripReviewResponse is the response for GET /api/v1/trips/:id/review
+type GetTripReviewResponse struct {
+	TripID  string      `json:"trip_id"`
+	Status  string      `json:"status"`
+	Similar [][]string  `json:"similar"` // groups of similar media IDs
+	Pins    []ReviewPin `json:"pins"`
+}
+
+// ReviewPin is a pin in the review step.
+type ReviewPin struct {
+	PinID         string           `json:"pin_id"`
+	Name          string           `json:"name"`
+	Category      string           `json:"category"`
+	Latitude      *float64         `json:"latitude,omitempty"`
+	Longitude     *float64         `json:"longitude,omitempty"`
+	LocationName  string           `json:"location_name,omitempty"`
+	StartTimeUnix int64            `json:"start_time_unix,omitempty"`
+	EndTimeUnix   int64            `json:"end_time_unix,omitempty"`
+	Issues        []string         `json:"issues,omitempty"`
+	Tags          []string         `json:"tags,omitempty"`
+	Media         []ReviewPinMedia `json:"media,omitempty"`
+}
+
+// ReviewPinMedia is media in a review pin.
+type ReviewPinMedia struct {
+	MediaID      string `json:"media_id"`
+	URL          string `json:"url"`
+	PrivacyLevel string `json:"privacy_level"`
+}
+
+// FinalizeTripResponse is the response for POST /api/v1/trips/:id/finalize
+type FinalizeTripResponse struct {
+	TripID  string `json:"trip_id"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}

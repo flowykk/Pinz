@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +25,9 @@ type TripService struct {
 	inviteRepo      *repositories.InvitationLinkRepository
 	settingsRepo    *repositories.TripSettingsRepository
 	eventRepo       *repositories.RedisRepository
+	mediaRepo       *repositories.MediaRepository
+	pinRepo         *repositories.PinRepository
+	tagRepo         *repositories.TagRepository
 }
 
 func NewTripService(
@@ -32,6 +36,9 @@ func NewTripService(
 	inviteRepo *repositories.InvitationLinkRepository,
 	settingsRepo *repositories.TripSettingsRepository,
 	eventRepo *repositories.RedisRepository,
+	mediaRepo *repositories.MediaRepository,
+	pinRepo *repositories.PinRepository,
+	tagRepo *repositories.TagRepository,
 ) *TripService {
 	return &TripService{
 		tripRepo:        tripRepo,
@@ -39,6 +46,9 @@ func NewTripService(
 		inviteRepo:      inviteRepo,
 		settingsRepo:    settingsRepo,
 		eventRepo:       eventRepo,
+		mediaRepo:       mediaRepo,
+		pinRepo:         pinRepo,
+		tagRepo:         tagRepo,
 	}
 }
 
@@ -74,13 +84,17 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: Public, Private, Restricted")
 	}
 
+	tripStatus := "Created"
+	if len(req.GetFilesToUpload()) > 0 {
+		tripStatus = "UPLOADING"
+	}
 	trip := &models.Trip{
 		OwnerUserID:   userID,
 		Name:          name,
 		Description:   req.GetDescription(),
 		Category:      category,
 		Season:        season,
-		Status:        "Created",
+		Status:        tripStatus,
 		PrivacyLevel:  privacyLevel,
 		LikesCount:    0,
 		DislikesCount: 0,
@@ -94,10 +108,20 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	if err := s.participantRepo.Add(participant); err != nil {
 		return nil, status.Error(codes.Internal, "failed to add owner as participant")
 	}
+	uploadUrls := make([]*pb.UploadUrl, 0, len(req.GetFilesToUpload()))
+	for _, f := range req.GetFilesToUpload() {
+		ext := contentTypeToExt(f.GetContentType())
+		s3Key := "trips/" + trip.ID + "/" + f.GetClientId() + ext
+		uploadUrls = append(uploadUrls, &pb.UploadUrl{
+			ClientId: f.GetClientId(),
+			S3Key:    s3Key,
+			Url:      "", // Media Service will provide presigned URL; stub for now
+		})
+	}
 	return &pb.CreateTripResponse{
 		TripId:     trip.ID,
 		Status:     trip.Status,
-		UploadUrls: []*pb.UploadUrl{}, // Phase 3: Media Service
+		UploadUrls: uploadUrls,
 	}, nil
 }
 
@@ -482,19 +506,357 @@ func (s *TripService) TransferAdmin(ctx context.Context, req *pb.TransferAdminRe
 }
 
 func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessMediaGroupingRequest) (*pb.ProcessMediaGroupingResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "ProcessMediaGrouping will be implemented in phase 3")
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if trip.Status != "UPLOADING" && trip.Status != "Created" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be in UPLOADING or Created to process media grouping")
+	}
+	total, videos, _ := s.mediaRepo.CountByTripID(tripID)
+	newVideos := 0
+	for _, m := range req.GetMedia() {
+		if m.GetMediaType() == "video" {
+			newVideos++
+		}
+	}
+	if total+len(req.GetMedia()) > MaxMediaPerTrip {
+		return nil, status.Errorf(codes.InvalidArgument, "trip may have at most %d media", MaxMediaPerTrip)
+	}
+	if videos+newVideos > MaxVideosPerTrip {
+		return nil, status.Errorf(codes.InvalidArgument, "trip may have at most %d videos", MaxVideosPerTrip)
+	}
+	// Save media to DB (pin_id = nil)
+	for _, meta := range req.GetMedia() {
+		media := &models.Media{
+			TripID:       tripID,
+			S3Key:        meta.GetS3Key(),
+			MediaType:    meta.GetMediaType(),
+			BattleRating: 0,
+			PrivacyLevel: trip.PrivacyLevel,
+		}
+		if meta.CapturedAtUnix != 0 {
+			t := time.Unix(meta.GetCapturedAtUnix(), 0)
+			media.CapturedAt = &t
+		}
+		if meta.Latitude != nil && meta.Longitude != nil {
+			lat, lon := meta.GetLatitude(), meta.GetLongitude()
+			media.Latitude = &lat
+			media.Longitude = &lon
+		}
+		if err := s.mediaRepo.Create(media); err != nil {
+			return nil, status.Error(codes.Internal, "failed to save media")
+		}
+	}
+	// Cluster and build draft_pins (PostGIS + time grouping)
+	draftPins := clusterMediaToDraftPins(s.mediaRepo, tripID)
+	if err := s.tripRepo.SetStatus(tripID, "DRAFT_GROUPING_REVIEW"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update trip status")
+	}
+	// Build response: draft_pins with media URLs (stub)
+	mediaList, _ := s.mediaRepo.ListByTripID(tripID)
+	mediaByID := make(map[string]*models.Media)
+	for _, m := range mediaList {
+		mediaByID[m.ID] = m
+	}
+	respPins := make([]*pb.DraftPin, 0, len(draftPins))
+	for i, group := range draftPins {
+		draftPinID := fmt.Sprintf("cluster-%d", i)
+		if i == len(draftPins)-1 && len(group) > 0 {
+			if m := mediaByID[group[0]]; m != nil && m.Latitude == nil && m.CapturedAt == nil {
+				draftPinID = "draft-unassigned"
+			}
+		}
+		dp := &pb.DraftPin{DraftPinId: draftPinID}
+		for _, mediaID := range group {
+			m := mediaByID[mediaID]
+			if m == nil {
+				continue
+			}
+			dp.Media = append(dp.Media, &pb.DraftPinMedia{
+				MediaId: m.ID,
+				Url:     "", // Media Service read URL; stub
+				Type:    m.MediaType,
+			})
+		}
+		respPins = append(respPins, dp)
+	}
+	return &pb.ProcessMediaGroupingResponse{
+		TripId:    tripID,
+		Status:    "DRAFT_GROUPING_REVIEW",
+		DraftPins: respPins,
+	}, nil
 }
 
 func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGroupsAndProcessRequest) (*pb.ApplyGroupsAndProcessResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "ApplyGroupsAndProcess will be implemented in phase 3")
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	if trip.Status != "DRAFT_GROUPING_REVIEW" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be in DRAFT_GROUPING_REVIEW")
+	}
+	// Delete rejected media
+	if len(req.GetDeletedMediaIds()) > 0 {
+		if err := s.mediaRepo.DeleteByIDs(req.GetDeletedMediaIds()); err != nil {
+			return nil, status.Error(codes.Internal, "failed to delete media")
+		}
+	}
+	// Create one pin per draft_pin and assign media
+	for _, dp := range req.GetDraftPins() {
+		if len(dp.GetMediaIds()) == 0 {
+			continue
+		}
+		pin := &models.Pin{
+			TripID:       tripID,
+			Name:         "Pin",
+			Description:  "",
+			Category:     trip.Category,
+			PrivacyLevel: trip.PrivacyLevel,
+			MediaCount:   int32(len(dp.GetMediaIds())),
+		}
+		if err := s.pinRepo.Create(pin); err != nil {
+			return nil, status.Error(codes.Internal, "failed to create pin")
+		}
+		if err := s.mediaRepo.UpdatePinIDByIDs(dp.GetMediaIds(), pin.ID); err != nil {
+			return nil, status.Error(codes.Internal, "failed to assign media to pin")
+		}
+		// Compute start_time/end_time from media (first/last by captured_at)
+		updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pin.ID)
+	}
+	// Status -> PROCESSING, push to Redis Streams for worker
+	if err := s.tripRepo.SetStatus(tripID, "PROCESSING"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update status")
+	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.AddMLTask(ctx, tripID)
+	}
+	return &pb.ApplyGroupsAndProcessResponse{
+		Message: "Processing started",
+		Status:  "PROCESSING",
+	}, nil
 }
 
 func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRequest) (*pb.GetTripReviewResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "GetTripReview will be implemented in phase 3")
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	if trip.Status != "DRAFT_FINAL_REVIEW" && trip.Status != "PROCESSING" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be in DRAFT_FINAL_REVIEW or PROCESSING for review")
+	}
+	pins, err := s.pinRepo.ListByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list pins")
+	}
+	tagsByPin, _ := s.tagRepo.GetByTripID(tripID)
+	mediaList, _ := s.mediaRepo.ListByTripID(tripID)
+	// similar — двумерный массив: группы медиа с одинаковым similar_group_id по всему трипу (без привязки к пину).
+	groupIDToIDs := make(map[string][]string)
+	for _, m := range mediaList {
+		if m.SimilarGroupID != nil {
+			groupIDToIDs[*m.SimilarGroupID] = append(groupIDToIDs[*m.SimilarGroupID], m.ID)
+		}
+	}
+	var similar []*pb.MediaSimilarGroup
+	for _, ids := range groupIDToIDs {
+		if len(ids) >= 2 {
+			similar = append(similar, &pb.MediaSimilarGroup{MediaIds: ids})
+		}
+	}
+	respPins := make([]*pb.ReviewPin, 0, len(pins))
+	for _, pin := range pins {
+		var pinMedia []*models.Media
+		for _, m := range mediaList {
+			if m.PinID != nil && *m.PinID == pin.ID {
+				pinMedia = append(pinMedia, m)
+			}
+		}
+		issues := []string{}
+		if pin.Latitude == nil || pin.Longitude == nil {
+			issues = append(issues, "MISSING_COORDINATES")
+		}
+		if pin.StartTime == nil || pin.EndTime == nil {
+			issues = append(issues, "MISSING_DATES")
+		}
+		tags := tagsByPin[pin.ID]
+		if tags == nil {
+			tags = []string{}
+		}
+		reviewMedia := make([]*pb.ReviewPinMedia, 0, len(pinMedia))
+		for _, m := range pinMedia {
+			reviewMedia = append(reviewMedia, &pb.ReviewPinMedia{
+				MediaId:      m.ID,
+				Url:          "",
+				PrivacyLevel: m.PrivacyLevel,
+			})
+		}
+		var startUnix, endUnix int64
+		if pin.StartTime != nil {
+			startUnix = pin.StartTime.Unix()
+		}
+		if pin.EndTime != nil {
+			endUnix = pin.EndTime.Unix()
+		}
+		rp := &pb.ReviewPin{
+			PinId:         pin.ID,
+			Name:          pin.Name,
+			Category:      pin.Category,
+			LocationName:  "",
+			StartTimeUnix: startUnix,
+			EndTimeUnix:   endUnix,
+			Issues:        issues,
+			Tags:          tags,
+			Media:         reviewMedia,
+		}
+		if pin.Latitude != nil {
+			rp.Latitude = pin.Latitude
+		}
+		if pin.Longitude != nil {
+			rp.Longitude = pin.Longitude
+		}
+		respPins = append(respPins, rp)
+	}
+	return &pb.GetTripReviewResponse{
+		TripId:  tripID,
+		Status:  trip.Status,
+		Similar: similar,
+		Pins:    respPins,
+	}, nil
 }
 
 func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequest) (*pb.FinalizeTripResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "FinalizeTrip will be implemented in phase 3")
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	if trip.Status != "DRAFT_FINAL_REVIEW" && trip.Status != "PROCESSING" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be in DRAFT_FINAL_REVIEW or PROCESSING to finalize")
+	}
+	// Apply pin_updates (name, manual lat/lon) — task 4.1.2: название пина не более 100 символов
+	for _, pu := range req.GetPinUpdates() {
+		pin, err := s.pinRepo.GetByID(pu.GetPinId())
+		if err != nil {
+			continue
+		}
+		if pu.Name != nil {
+			name := pu.GetName()
+			if len(name) > MaxNameLength {
+				return nil, status.Errorf(codes.InvalidArgument, "pin name must be at most %d characters", MaxNameLength)
+			}
+			pin.Name = name
+		}
+		if pu.Latitude != nil && pu.Longitude != nil {
+			pin.Latitude = pu.Latitude
+			pin.Longitude = pu.Longitude
+		}
+		_ = s.pinRepo.Update(pin)
+	}
+	// Delete media (DB only; S3 via Media Service later)
+	if len(req.GetMediaToDelete()) > 0 {
+		_ = s.mediaRepo.DeleteByIDs(req.GetMediaToDelete())
+	}
+	// Aggregate trip: cover_url (first media), start_date, end_date from pins
+	pins, _ := s.pinRepo.ListByTripID(tripID)
+	var minStart, maxEnd *time.Time
+	var coverURL string
+	mediaList, _ := s.mediaRepo.ListByTripID(tripID)
+	for _, m := range mediaList {
+		if m.PinID == nil {
+			continue
+		}
+		if coverURL == "" && m.MediaType == "image" {
+			coverURL = "" // would be Media Service URL from s3_key
+		}
+		break
+	}
+	for _, p := range pins {
+		if p.StartTime != nil {
+			if minStart == nil || p.StartTime.Before(*minStart) {
+				minStart = p.StartTime
+			}
+		}
+		if p.EndTime != nil {
+			if maxEnd == nil || p.EndTime.After(*maxEnd) {
+				maxEnd = p.EndTime
+			}
+		}
+	}
+	trip.CoverURL = coverURL
+	trip.StartDate = minStart
+	trip.EndDate = maxEnd
+	_ = s.tripRepo.Update(trip)
+	if err := s.tripRepo.SetStatus(tripID, "READY"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update status")
+	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.PublishTripEvent(ctx, "TRIP_PUBLISHED", tripID, userID)
+	}
+	return &pb.FinalizeTripResponse{
+		TripId:  tripID,
+		Status:  "READY",
+		Message: "Trip successfully published",
+	}, nil
 }
 
 func tripToProto(t *models.Trip) *pb.Trip {

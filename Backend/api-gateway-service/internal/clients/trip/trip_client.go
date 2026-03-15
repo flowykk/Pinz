@@ -90,6 +90,22 @@ func (c *Client) TransferAdmin(ctx context.Context, req *pb.TransferAdminRequest
 	return c.client.TransferAdmin(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessMediaGroupingRequest) (*pb.ProcessMediaGroupingResponse, error) {
+	return c.client.ProcessMediaGrouping(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGroupsAndProcessRequest) (*pb.ApplyGroupsAndProcessResponse, error) {
+	return c.client.ApplyGroupsAndProcess(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) GetTripReview(ctx context.Context, req *pb.GetTripReviewRequest) (*pb.GetTripReviewResponse, error) {
+	return c.client.GetTripReview(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequest) (*pb.FinalizeTripResponse, error) {
+	return c.client.FinalizeTrip(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

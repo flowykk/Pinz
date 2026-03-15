@@ -1,11 +1,26 @@
 basePath: /
 definitions:
+  pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest:
+    properties:
+      deleted_media_ids:
+        items:
+          type: string
+        type: array
+      draft_pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.DraftPinInput'
+        type: array
+    type: object
   pinz_backend_api-gateway-service_internal_requests.CreateTripRequest:
     properties:
       category:
         type: string
       description:
         type: string
+      files_to_upload:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
+        type: array
       name:
         type: string
       privacy_level:
@@ -18,6 +33,33 @@ definitions:
       email:
         example: user@example.com
         type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.DraftPinInput:
+    properties:
+      draft_pin_id:
+        type: string
+      media_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry:
+    properties:
+      client_id:
+        type: string
+      content_type:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.FinalizeTripRequest:
+    properties:
+      media_to_delete:
+        items:
+          type: string
+        type: array
+      pin_updates:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PinUpdateInput'
+        type: array
     type: object
   pinz_backend_api-gateway-service_internal_requests.GenerateInviteLinkRequest:
     properties:
@@ -32,6 +74,20 @@ definitions:
   pinz_backend_api-gateway-service_internal_requests.LogoutRequest:
     properties:
       refresh_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry:
+    properties:
+      captured_at:
+        description: ISO8601
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      media_type:
+        type: string
+      s3_key:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_requests.PasskeyLoginBeginRequest:
@@ -67,6 +123,24 @@ definitions:
         type: string
       registration_id:
         type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PinUpdateInput:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+      pin_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest:
+    properties:
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry'
+        type: array
     type: object
   pinz_backend_api-gateway-service_internal_requests.RefreshTokenRequest:
     properties:
@@ -110,6 +184,13 @@ definitions:
       verification_code:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_responses.CreateTripResponse:
     properties:
       status:
@@ -128,9 +209,36 @@ definitions:
       refresh_token:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.DraftPin:
+    properties:
+      draft_pin_id:
+        type: string
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DraftPinMedia'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DraftPinMedia:
+    properties:
+      media_id:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_responses.ErrorResponse:
     properties:
       error:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+      trip_id:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.GenerateInviteLinkResponse:
@@ -142,6 +250,24 @@ definitions:
       invite_url:
         type: string
       token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.GetTripReviewResponse:
+    properties:
+      pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ReviewPin'
+        type: array
+      similar:
+        description: groups of similar media IDs
+        items:
+          items:
+            type: string
+          type: array
+        type: array
+      status:
+        type: string
+      trip_id:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.JoinTripByTokenResponse:
@@ -189,9 +315,60 @@ definitions:
       refresh_token:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse:
+    properties:
+      draft_pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DraftPin'
+        type: array
+      status:
+        type: string
+      trip_id:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_responses.RefreshTokenResponse:
     properties:
       access_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ReviewPin:
+    properties:
+      category:
+        type: string
+      end_time_unix:
+        type: integer
+      issues:
+        items:
+          type: string
+        type: array
+      latitude:
+        type: number
+      location_name:
+        type: string
+      longitude:
+        type: number
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ReviewPinMedia'
+        type: array
+      name:
+        type: string
+      pin_id:
+        type: string
+      start_time_unix:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ReviewPinMedia:
+    properties:
+      media_id:
+        type: string
+      privacy_level:
+        type: string
+      url:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.SubmitEmailResponse:
@@ -758,6 +935,62 @@ paths:
       summary: Update trip
       tags:
       - trips
+  /api/v1/trips/{id}/apply-groups-and-process:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Draft pins and deleted media
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse'
+      security:
+      - BearerAuth: []
+      summary: Apply groups and process
+      tags:
+      - trips
+  /api/v1/trips/{id}/finalize:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pin updates and media to delete
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizeTripRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse'
+      security:
+      - BearerAuth: []
+      summary: Finalize trip
+      tags:
+      - trips
   /api/v1/trips/{id}/invite:
     post:
       consumes:
@@ -847,6 +1080,34 @@ paths:
       summary: Leave trip
       tags:
       - trips
+  /api/v1/trips/{id}/media/process-grouping:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Media metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse'
+      security:
+      - BearerAuth: []
+      summary: Process media grouping
+      tags:
+      - trips
   /api/v1/trips/{id}/participants/{user_id}:
     delete:
       consumes:
@@ -892,6 +1153,26 @@ paths:
       security:
       - BearerAuth: []
       summary: Remove participant
+      tags:
+      - trips
+  /api/v1/trips/{id}/review:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetTripReviewResponse'
+      security:
+      - BearerAuth: []
+      summary: Get trip review
       tags:
       - trips
   /api/v1/trips/{id}/transfer-admin:
