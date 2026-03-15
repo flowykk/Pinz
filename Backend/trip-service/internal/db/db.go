@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS trip_participants (
 
 func InitDB() (*sql.DB, error) {
 	dsnStr := dsn()
-	// Log connection target without password
 	host := os.Getenv("DB_HOST")
 	if host == "" {
 		host = "localhost"
