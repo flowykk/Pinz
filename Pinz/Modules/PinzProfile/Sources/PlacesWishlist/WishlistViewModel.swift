@@ -7,6 +7,7 @@ import PinzDomain
 final class WishlistViewModel {
 
     enum Route {
+        case wishlistElement(WishlistElement)
         case wishlistElementCreation
         case back
     }
@@ -28,6 +29,8 @@ final class WishlistViewModel {
         switch intent {
         case let .navigate(route):
             switch route {
+            case let .wishlistElement(element):
+                router?.navigateToWishlistElement(element: element)
             case .wishlistElementCreation:
                 router?.navigateToWishlistElementCreation(action: WishlistCreationAction { [weak self] element in
                     self?.wishlist.append(element)

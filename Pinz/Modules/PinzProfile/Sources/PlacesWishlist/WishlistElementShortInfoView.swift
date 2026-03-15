@@ -2,7 +2,7 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 
-struct WishlistElementView: View {
+struct WishlistElementShortInfoView: View {
 
     enum Constants {
         static let elementHeight: CGFloat = 125

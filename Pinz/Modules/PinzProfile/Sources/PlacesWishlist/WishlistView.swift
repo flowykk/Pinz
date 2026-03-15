@@ -18,8 +18,8 @@ public struct WishlistView: View {
             VStack {
                 let wishlist = viewModel.wishlist
                 ForEach(wishlist.indices, id: \.self) { index in
-                    WishlistElementView(element: wishlist[index]) { element in
-                        // TODO: navigate to wishlist element screen
+                    WishlistElementShortInfoView(element: wishlist[index]) { element in
+                        viewModel.dispatch(.navigate(.wishlistElement(element)))
                     }.padding(.horizontal, 12)
                     if index != wishlist.count - 1 {
                         Divider().padding(.leading, 12)
