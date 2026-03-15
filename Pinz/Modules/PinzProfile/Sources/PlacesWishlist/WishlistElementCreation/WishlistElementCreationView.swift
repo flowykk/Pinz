@@ -9,16 +9,16 @@ enum WishlistCreationIcon: String, Setting.Icon {
     case camera = "camera.fill"
 }
 
-public struct WishlistCreationView: View {
+public struct WishlistElementCreationView: View {
 
-    @State private var viewModel: WishlistCreationViewModel
+    @State private var viewModel: WishlistElementCreationViewModel
     @State private var isPhotoPickerPresented: Bool = false
     @State private var pickerItems: [PhotosPickerItem] = []
 
     @Environment(\.appRouter) private var router
 
     public init(onCreated: @escaping (WishlistElement) -> Void) {
-        viewModel = WishlistCreationViewModel(onCreated: onCreated)
+        viewModel = WishlistElementCreationViewModel(onCreated: onCreated)
     }
 
     public var body: some View {

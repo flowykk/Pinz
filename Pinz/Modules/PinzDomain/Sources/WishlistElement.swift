@@ -1,9 +1,9 @@
 import SwiftUI
 
-public struct WishlistElement {
-    public let image: UIImage
-    public let title: String
-    public let description: String
+public struct WishlistElement: Hashable {
+    public var image: UIImage
+    public var title: String
+    public var description: String
 
     public init(image: UIImage, title: String, description: String) {
         self.image = image

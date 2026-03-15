@@ -39,6 +39,7 @@ public enum MediaRoute: Hashable {
 }
 
 public enum WishlistRoute: Hashable {
+    case element(element: WishlistElement)
     case creation(action: WishlistCreationAction)
 }
 

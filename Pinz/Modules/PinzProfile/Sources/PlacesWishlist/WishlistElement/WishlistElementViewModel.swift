@@ -4,14 +4,12 @@ import PinzNetworking
 import PinzBase
 import PinzDomain
 
-@MainActor
-@Observable
-final class WishlistElementCreationViewModel {
+@MainActor @Observable
+final class WishlistElementViewModel {
 
     enum State {
-        case name
-        case description
-        case photo
+        case `default`
+        case editing
     }
 
     enum Route {
@@ -19,55 +17,38 @@ final class WishlistElementCreationViewModel {
     }
 
     enum Intent {
-        case `continue`
         case selectPhoto(PhotosPickerItem)
+        case edit
+        case endEdit
+
         case navigate(Route)
     }
 
-    var state: State = .name
-    var image: UIImage?
-    var name: String = ""
-    var description: String = ""
+    var element: WishlistElement
+    var state: State = .default
 
-    private let onCreated: (WishlistElement) -> Void
     private let networkService = NetworkService()
     private var router: AppRouting?
 
-    var isCompleteButtonDisabled: Bool {
-        switch state {
-        case .name:
-            return name.isEmpty
-        case .description:
-            return description.isEmpty
-        case .photo:
-            return image == nil
-        }
-    }
-
-    init(onCreated: @escaping (WishlistElement) -> Void) {
-        self.onCreated = onCreated
+    init(element: WishlistElement) {
+        self.element = element
     }
 
     func dispatch(_ intent: Intent) {
         switch intent {
-        case .continue:
-            switch state {
-            case .name:        changeState(to: .description)
-            case .description: changeState(to: .photo)
-            case .photo:
-                guard let image else { return }
-                onCreated(WishlistElement(image: image, title: name, description: description))
-                router?.pop()
-            }
         case let .selectPhoto(item):
             Task {
                 guard let loaded = await MediaLoader.shared.load(from: item) else { return }
                 if case let .image(uiImage) = loaded.content {
                     withAnimation(.easeInOut(duration: 0.3)) {
-                        image = uiImage
+                        element.image = uiImage
                     }
                 }
             }
+        case .edit:
+            changeState(to: .editing)
+        case .endEdit:
+            changeState(to: .default)
         case let .navigate(route):
             switch route {
             case .back:
