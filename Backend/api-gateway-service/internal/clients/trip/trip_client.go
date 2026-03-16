@@ -106,6 +106,10 @@ func (c *Client) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequest) 
 	return c.client.FinalizeTrip(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) PublishTrip(ctx context.Context, req *pb.PublishTripRequest) (*pb.PublishTripResponse, error) {
+	return c.client.PublishTrip(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) UpdateTripSettings(ctx context.Context, req *pb.UpdateTripSettingsRequest) (*pb.UpdateTripSettingsResponse, error) {
 	return c.client.UpdateTripSettings(withUserIDMetadata(ctx), req)
 }

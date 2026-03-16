@@ -21,6 +21,8 @@ service TripService {
   rpc ApplyGroupsAndProcess(ApplyGroupsAndProcessRequest) returns (ApplyGroupsAndProcessResponse);
   rpc GetTripReview(GetTripReviewRequest) returns (GetTripReviewResponse);
   rpc FinalizeTrip(FinalizeTripRequest) returns (FinalizeTripResponse);
+  // Публикация в ленту (PINZ-105, ТЗ 3.3): вся поездка целиком или выбранные пины
+  rpc PublishTrip(PublishTripRequest) returns (PublishTripResponse);
   // PINZ-98: лента, лайки, избранное, настройки уведомлений
   rpc UpdateTripSettings(UpdateTripSettingsRequest) returns (UpdateTripSettingsResponse);
   rpc ListFeed(ListFeedRequest) returns (ListFeedResponse);
@@ -122,6 +124,18 @@ message DeleteTripResponse {
   bool success = 1;
 }
 
+// PublishTrip: отдельный флоу публикации в общую ленту (ТЗ 3.3, PINZ-105).
+// publish_whole=true публикует всю поездку; иначе публикуются только выбранные пины (pin_ids).
+message PublishTripRequest {
+  string trip_id = 1;
+  bool publish_whole = 2;
+  repeated string pin_ids = 3;
+}
+
+message PublishTripResponse {
+  Trip trip = 1;
+}
+
 // ProcessMediaGrouping: save media, cluster by geo/time, return draft_pins (tripCreationFlow.md stage 2)
 message ProcessMediaGroupingRequest {
   string trip_id = 1;
@@ -196,7 +210,7 @@ message ReviewPinMedia {
   string privacy_level = 4;
 }
 
-// FinalizeTrip: apply pin_updates, delete media, reverse geocoding, aggregate trip, READY, TRIP_PUBLISHED
+// FinalizeTrip: apply pin_updates, delete media, reverse geocoding, aggregate trip, READY, TRIP_READY
 message FinalizeTripRequest {
   string trip_id = 1;
   repeated PinUpdate pin_updates = 2;

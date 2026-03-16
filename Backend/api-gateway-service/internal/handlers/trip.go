@@ -35,6 +35,7 @@ type TripClient interface {
 	ApplyGroupsAndProcess(ctx context.Context, req *proto.ApplyGroupsAndProcessRequest) (*proto.ApplyGroupsAndProcessResponse, error)
 	GetTripReview(ctx context.Context, req *proto.GetTripReviewRequest) (*proto.GetTripReviewResponse, error)
 	FinalizeTrip(ctx context.Context, req *proto.FinalizeTripRequest) (*proto.FinalizeTripResponse, error)
+	PublishTrip(ctx context.Context, req *proto.PublishTripRequest) (*proto.PublishTripResponse, error)
 	UpdateTripSettings(ctx context.Context, req *proto.UpdateTripSettingsRequest) (*proto.UpdateTripSettingsResponse, error)
 	ListFeed(ctx context.Context, req *proto.ListFeedRequest) (*proto.ListFeedResponse, error)
 	LikeTrip(ctx context.Context, req *proto.LikeTripRequest) (*proto.LikeTripResponse, error)
@@ -677,6 +678,48 @@ func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.FinalizeTripResponse{
 		TripID: resp.GetTripId(), Status: resp.GetStatus(), Message: resp.GetMessage(),
 	})
+}
+
+// PublishTrip публикует трип в общую ленту (PINZ-105, ТЗ 3.3).
+// @Summary Publish trip to feed
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.PublishTripRequest true "Publish payload (publish_whole or pin_ids)"
+// @Success 200 {object} responses.Trip
+// @Router /api/v1/trips/{id}/publish [post]
+func (h *TripHandler) PublishTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	_ = userID // user_id пробрасывается в gRPC метаданных, в теле не нужен
+
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.PublishTripRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	protoReq := &proto.PublishTripRequest{
+		TripId:       tripID,
+		PublishWhole: req.PublishWhole,
+		PinIds:       req.PinIDs,
+	}
+	resp, err := h.tripClient.PublishTrip(ctx, protoReq)
+	if err != nil {
+		handleServiceError(w, r, err, "PublishTrip")
+		return
+	}
+	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
 }
 
 // UpdateTripSettings updates notifications for the trip (PINZ-98, ТЗ 12.4.1).

@@ -75,6 +75,12 @@ type FinalizeTripRequest struct {
 	MediaToDelete []string         `json:"media_to_delete,omitempty"`
 }
 
+// PublishTripRequest is the REST body for POST /api/v1/trips/:id/publish (PINZ-105, ТЗ 3.3).
+type PublishTripRequest struct {
+	PublishWhole bool     `json:"publish_whole,omitempty"`
+	PinIDs       []string `json:"pin_ids,omitempty"`
+}
+
 // PinUpdateInput is name and/or manual coordinates for a pin.
 type PinUpdateInput struct {
 	PinID     string   `json:"pin_id"`

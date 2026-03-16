@@ -1353,6 +1353,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/trips/{id}/publish": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Publish trip to feed",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Publish payload (publish_whole or pin_ids)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.PublishTripRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trips/{id}/review": {
             "get": {
                 "security": [
@@ -1714,6 +1759,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry"
                     }
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.PublishTripRequest": {
+            "type": "object",
+            "properties": {
+                "pin_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "publish_whole": {
+                    "type": "boolean"
                 }
             }
         },
