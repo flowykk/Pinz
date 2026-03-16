@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -13,9 +14,13 @@ import (
 const (
 	tripEventsStream = "pinz:trip:events"
 	mlTasksStream    = "pinz:trip:ml:tasks"
+
+	userEventsChannelPrefix = "pinz:user:"
+	userEventsChannelSuffix = ":events"
 )
 
-// RedisRepository provides Redis client and trip event streaming for Notification Service.
+// RedisRepository provides Redis client and trip event streaming for Notification/Statistics
+// services, as well as Pub/Sub channels for WebSocket notifications via API Gateway.
 type RedisRepository struct {
 	client *redis.Client
 }
@@ -87,6 +92,34 @@ func (r *RedisRepository) AddMLTask(ctx context.Context, tripID string) error {
 	}).Err()
 	if err != nil {
 		slog.WarnContext(ctx, "AddMLTask failed", "trip_id", tripID, "error", err)
+		return err
+	}
+	return nil
+}
+
+// PublishUserEvent publishes a JSON event to the per-user Pub/Sub channel used by API Gateway
+// WebSocket connections. Message format follows tripCreationFlow.md:
+//
+//	{
+//	  "event": "<event_type>",
+//	  "payload": { ... arbitrary JSON ... }
+//	}
+func (r *RedisRepository) PublishUserEvent(ctx context.Context, userID, eventType string, payload map[string]interface{}) error {
+	if r == nil || r.client == nil {
+		return nil
+	}
+	msg := map[string]interface{}{
+		"event":   eventType,
+		"payload": payload,
+	}
+	data, err := json.Marshal(msg)
+	if err != nil {
+		slog.WarnContext(ctx, "PublishUserEvent marshal failed", "user_id", userID, "event", eventType, "error", err)
+		return err
+	}
+	channel := userEventsChannelPrefix + userID + userEventsChannelSuffix
+	if err := r.client.Publish(ctx, channel, data).Err(); err != nil {
+		slog.WarnContext(ctx, "PublishUserEvent failed", "channel", channel, "event", eventType, "error", err)
 		return err
 	}
 	return nil

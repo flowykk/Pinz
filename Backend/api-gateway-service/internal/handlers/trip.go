@@ -85,10 +85,10 @@ func (h *TripHandler) ListTrips(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
-// CreateTrip creates a new trip.
-// @Summary Create a new trip
-// @Description Creates a new trip. Requires JWT. user_id is taken from JWT.
-// @Tags trips
+// CreateTrip creates a new trip (creation flow, stage 1).
+// @Summary [1] Create a new trip
+// @Description Creates a new trip (creation flow stage 1: init + S3 upload URLs). Requires JWT. user_id is taken from JWT.
+// @Tags trip-creation
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -97,7 +97,7 @@ func (h *TripHandler) ListTrips(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} responses.ErrorResponse
 // @Failure 401 {object} responses.ErrorResponse
 // @Failure 500 {object} responses.ErrorResponse
-// @Router /api/v1/trips [post]
+// @Router /api/v1/trip/creation/start [post]
 func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -475,15 +475,15 @@ func (h *TripHandler) TransferAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 // ProcessMediaGrouping saves media metadata and returns draft pins (tripCreationFlow stage 2).
-// @Summary Process media grouping
-// @Tags trips
+// @Summary [2] Process media grouping
+// @Tags trip-creation
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Trip ID"
 // @Param body body requests.ProcessMediaGroupingRequest true "Media metadata"
 // @Success 200 {object} responses.ProcessMediaGroupingResponse
-// @Router /api/v1/trips/{id}/media/process-grouping [post]
+// @Router /api/v1/trip/creation/{id}/media/process-grouping [post]
 func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -538,15 +538,15 @@ func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Reques
 }
 
 // ApplyGroupsAndProcess applies user grouping and starts processing (202).
-// @Summary Apply groups and process
-// @Tags trips
+// @Summary [3] Apply groups and process
+// @Tags trip-creation
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Trip ID"
 // @Param body body requests.ApplyGroupsAndProcessRequest true "Draft pins and deleted media"
 // @Success 202 {object} responses.ApplyGroupsAndProcessResponse
-// @Router /api/v1/trips/{id}/apply-groups-and-process [post]
+// @Router /api/v1/trip/creation/{id}/apply-groups-and-process [post]
 func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -584,13 +584,13 @@ func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Reque
 }
 
 // GetTripReview returns pins with tags, issues, similar for review (tripCreationFlow stage 4).
-// @Summary Get trip review
-// @Tags trips
+// @Summary [4] Get trip review
+// @Tags trip-creation
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Trip ID"
 // @Success 200 {object} responses.GetTripReviewResponse
-// @Router /api/v1/trips/{id}/review [get]
+// @Router /api/v1/trip/creation/{id}/review [get]
 func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -639,15 +639,15 @@ func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
 }
 
 // FinalizeTrip applies pin updates, deletes media, sets trip READY (tripCreationFlow stage 5).
-// @Summary Finalize trip
-// @Tags trips
+// @Summary [5] Finalize trip
+// @Tags trip-creation
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Trip ID"
 // @Param body body requests.FinalizeTripRequest true "Pin updates and media to delete"
 // @Success 200 {object} responses.FinalizeTripResponse
-// @Router /api/v1/trips/{id}/finalize [post]
+// @Router /api/v1/trip/creation/{id}/finalize [post]
 func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)

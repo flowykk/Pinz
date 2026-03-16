@@ -815,37 +815,116 @@ paths:
       summary: List feed
       tags:
       - feed
-  /api/v1/trips:
-    get:
+  /api/v1/trip/creation/{id}/apply-groups-and-process:
+    post:
       consumes:
       - application/json
-      description: Returns list of trips for the authenticated user. Requires JWT.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Draft pins and deleted media
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse'
+      security:
+      - BearerAuth: []
+      summary: '[3] Apply groups and process'
+      tags:
+      - trip-creation
+  /api/v1/trip/creation/{id}/finalize:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pin updates and media to delete
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizeTripRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
-            type: array
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse'
       security:
       - BearerAuth: []
-      summary: List current user's trips
+      summary: '[5] Finalize trip'
       tags:
-      - trips
+      - trip-creation
+  /api/v1/trip/creation/{id}/media/process-grouping:
     post:
       consumes:
       - application/json
-      description: Creates a new trip. Requires JWT. user_id is taken from JWT.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Media metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse'
+      security:
+      - BearerAuth: []
+      summary: '[2] Process media grouping'
+      tags:
+      - trip-creation
+  /api/v1/trip/creation/{id}/review:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetTripReviewResponse'
+      security:
+      - BearerAuth: []
+      summary: '[4] Get trip review'
+      tags:
+      - trip-creation
+  /api/v1/trip/creation/start:
+    post:
+      consumes:
+      - application/json
+      description: 'Creates a new trip (creation flow stage 1: init + S3 upload URLs).
+        Requires JWT. user_id is taken from JWT.'
       parameters:
       - description: Trip creation payload
         in: body
@@ -874,7 +953,34 @@ paths:
             $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Create a new trip
+      summary: '[1] Create a new trip'
+      tags:
+      - trip-creation
+  /api/v1/trips:
+    get:
+      consumes:
+      - application/json
+      description: Returns list of trips for the authenticated user. Requires JWT.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List current user's trips
       tags:
       - trips
   /api/v1/trips/{id}:
@@ -1000,34 +1106,6 @@ paths:
       summary: Update trip
       tags:
       - trips
-  /api/v1/trips/{id}/apply-groups-and-process:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Draft pins and deleted media
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest'
-      produces:
-      - application/json
-      responses:
-        "202":
-          description: Accepted
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse'
-      security:
-      - BearerAuth: []
-      summary: Apply groups and process
-      tags:
-      - trips
   /api/v1/trips/{id}/dislike:
     post:
       parameters:
@@ -1077,34 +1155,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Add trip to favourites
-      tags:
-      - trips
-  /api/v1/trips/{id}/finalize:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Pin updates and media to delete
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizeTripRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse'
-      security:
-      - BearerAuth: []
-      summary: Finalize trip
       tags:
       - trips
   /api/v1/trips/{id}/invite:
@@ -1214,34 +1264,6 @@ paths:
       summary: Like trip
       tags:
       - trips
-  /api/v1/trips/{id}/media/process-grouping:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Media metadata
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse'
-      security:
-      - BearerAuth: []
-      summary: Process media grouping
-      tags:
-      - trips
   /api/v1/trips/{id}/participants/{user_id}:
     delete:
       consumes:
@@ -1315,26 +1337,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Publish trip to feed
-      tags:
-      - trips
-  /api/v1/trips/{id}/review:
-    get:
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetTripReviewResponse'
-      security:
-      - BearerAuth: []
-      summary: Get trip review
       tags:
       - trips
   /api/v1/trips/{id}/settings:

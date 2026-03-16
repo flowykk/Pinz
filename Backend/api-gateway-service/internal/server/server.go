@@ -59,6 +59,12 @@ func NewServer(deps *di.Dependencies) *Server {
 	r.Get("/health", handlers.HealthCheck)
 	r.Get("/.well-known/apple-app-site-association", handlers.AppleAppSiteAssociation)
 
+	// WebSocket endpoint for real-time trip events (PINZ-99).
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireJWT)
+		r.Get("/v1/ws", deps.WSHandler.ServeWS)
+	})
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/email", deps.AuthHandler.SubmitEmail)
 		r.Post("/auth/verify-email", deps.AuthHandler.VerifyEmailCode)
@@ -70,6 +76,7 @@ func NewServer(deps *di.Dependencies) *Server {
 		r.Post("/auth/logout", deps.AuthHandler.Logout)
 		r.Post("/auth/dev-login", deps.AuthHandler.DevLogin)
 
+		// Основные операции над путешествиями.
 		r.Route("/trips", func(r chi.Router) {
 			r.Use(middleware.RequireJWT)
 			r.Get("/", deps.TripHandler.ListTrips)
@@ -87,6 +94,12 @@ func NewServer(deps *di.Dependencies) *Server {
 			r.Post("/{id}/favourite", deps.TripHandler.AddToFavourites)
 			r.Delete("/{id}/favourite", deps.TripHandler.RemoveFromFavourites)
 			r.Delete("/{id}/participants/{user_id}", deps.TripHandler.RemoveParticipant)
+		})
+
+		// Этапы создания путешествия (creation flow).
+		r.Route("/trip/creation", func(r chi.Router) {
+			r.Use(middleware.RequireJWT)
+			r.Post("/start", deps.TripHandler.CreateTrip)
 			r.Post("/{id}/media/process-grouping", deps.TripHandler.ProcessMediaGrouping)
 			r.Post("/{id}/apply-groups-and-process", deps.TripHandler.ApplyGroupsAndProcess)
 			r.Get("/{id}/review", deps.TripHandler.GetTripReview)

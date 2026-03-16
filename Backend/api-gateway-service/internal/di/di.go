@@ -12,6 +12,7 @@ type Dependencies struct {
 	AuthClient  *auth.Client
 	TripHandler *handlers.TripHandler
 	TripClient  *trip.Client
+	WSHandler   *handlers.WSHandler
 }
 
 func BuildDependencies() (*Dependencies, error) {
@@ -22,18 +23,29 @@ func BuildDependencies() (*Dependencies, error) {
 	authSvc := services.NewAuthService(authClient)
 	authHandler := handlers.NewAuthHandler(authSvc)
 
-	tripClient, err := trip.NewClient()
+	redisClient, err := services.InitRedisClient()
 	if err != nil {
 		_ = authClient.Close()
 		return nil, err
 	}
+
+	tripClient, err := trip.NewClient()
+	if err != nil {
+		_ = authClient.Close()
+		if redisClient != nil {
+			_ = redisClient.Close()
+		}
+		return nil, err
+	}
 	tripHandler := handlers.NewTripHandler(tripClient)
+	wsHandler := handlers.NewWSHandler(redisClient)
 
 	return &Dependencies{
 		AuthHandler: authHandler,
 		AuthClient:  authClient,
 		TripHandler: tripHandler,
 		TripClient:  tripClient,
+		WSHandler:   wsHandler,
 	}, nil
 }
 
