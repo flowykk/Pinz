@@ -22,8 +22,9 @@
 
 | Компонент | Роль |
 |---|---|
-| **api-gateway-service** | REST → gRPC прокси, HTTP-трейсинг |
+| **api-gateway-service** | REST → gRPC прокси, HTTP-трейсинг, WebSocket |
 | **auth-service** | Бизнес-логика авторизации, passkey, JWT |
+| **trip-service** | Путешествия, пины, медиа, участники, лента, async-флоу |
 | **otel-collector** | Приём и маршрутизация телеметрии (OTLP) |
 | **tempo** | Хранение распределённых трейсов |
 | **prometheus** | Метрики (RED + бизнес + Go runtime) |
@@ -36,6 +37,8 @@ Go 1.25 · chi · gRPC · Protobuf · PostgreSQL · Redis · JWT · OpenTelemetr
 
 ## Эндпоинты (REST)
 
+### Auth (auth-service через API Gateway)
+
 | Метод | Путь | Описание |
 |---|---|---|
 | POST | `/api/v1/auth/email` | Ввод почты. Ответ: `{"is_registered": bool, "registration_key": "..."}` |
@@ -44,6 +47,44 @@ Go 1.25 · chi · gRPC · Protobuf · PostgreSQL · Redis · JWT · OpenTelemetr
 | POST | `/api/v1/auth/login` | Вход по email + пароль |
 | POST | `/api/v1/auth/refresh` | Обновление access-токена |
 | POST | `/api/v1/auth/logout` | Выход |
+
+### Trip creation flow (trip-service через API Gateway)
+
+| Шаг | Метод | Путь | Описание |
+|---|---|---|---|
+| 1 | POST | `/api/v1/trip/creation/start` | Создание путешествия + выдача `files_to_upload` → S3 presigned URLs (пока URL заглушка) |
+| 2 | POST | `/api/v1/trip/creation/{trip_id}/media/process-grouping` | Передача метаданных медиа, первичная группировка по гео/времени, статус `DRAFT_GROUPING_REVIEW` |
+| 3 | POST | `/api/v1/trip/creation/{trip_id}/apply-groups-and-process` | Применение ручных групп, создание пинов, статус `PROCESSING`, задача в Redis Streams `pinz:trip:ml:tasks` |
+| 4 | GET | `/api/v1/trip/creation/{trip_id}/review` | Результат фоновой обработки: пины, теги, `issues`, массив `similar` (похожие медиа) |
+| 5 | POST | `/api/v1/trip/creation/{trip_id}/finalize` | Финальное ревью, ручные правки, удаление медиа, агрегация трипа, статус `READY` |
+
+Real‑time уведомление о завершении шага 3–4 идёт через WebSocket:
+
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/v1/ws` | WebSocket‑канал. Аутентификация по JWT; сервер подписывает подключение на Redis Pub/Sub `pinz:user:{user_id}:events`. Воркер trip-service публикует событие `TRIP_PROCESSING_COMPLETED` с payload `{ "trip_id", "status": "DRAFT_FINAL_REVIEW" }`. |
+
+### Trip core / feed (trip-service через API Gateway)
+
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/api/v1/trips` | Список своих путешествий (учитывая участие в трипах) |
+| POST | `/api/v1/trips` | Создание путешествия (тот же gRPC, что и `trip/creation/start`; основной путь — `trip/creation/start`) |
+| GET | `/api/v1/trips/{id}` | Детали путешествия (только участники или те, у кого в избранном при soft‑delete) |
+| PATCH | `/api/v1/trips/{id}` | Редактирование параметров путешествия (название, сезон, приватность и т.д.) |
+| DELETE | `/api/v1/trips/{id}` | Удаление путешествия с учётом избранного (полное или soft‑delete; см. PINZ‑98) |
+| POST | `/api/v1/trips/{id}/invite` | Генерация инвайт‑ссылки (участники) |
+| POST | `/api/v1/trips/join` | Присоединение к путешествию по токену инвайта |
+| POST | `/api/v1/trips/{id}/leave` | Выход из путешествия; при уходе единственного админа трип удаляется или назначается новый админ (по ТЗ) |
+| DELETE | `/api/v1/trips/{id}/participants/{user_id}` | Удаление участника (только админ) |
+| POST | `/api/v1/trips/{id}/transfer-admin` | Передача прав администратора другому участнику |
+| PATCH | `/api/v1/trips/{id}/settings` | Вкл/выкл уведомлений по путешествию (ТЗ 12.4.1, PINZ‑98) |
+| POST | `/api/v1/trips/{id}/publish` | Публикация путешествия в общую ленту целиком или по выбранным пинам (PINZ‑105) |
+| GET | `/api/v1/feed` | Общая лента опубликованных путешествий (фильтры: категория, сезон, локация; сортировка по дате/рейтингу) |
+| POST | `/api/v1/trips/{id}/like` | Лайк путешествия |
+| POST | `/api/v1/trips/{id}/dislike` | Дизлайк путешествия |
+| POST | `/api/v1/trips/{id}/favourite` | Добавить путешествие в избранное |
+| DELETE | `/api/v1/trips/{id}/favourite` | Удалить путешествие из избранного |
 
 Swagger UI: `http://pinz.example.com/swagger/index.html`
 

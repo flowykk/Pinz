@@ -544,6 +544,231 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/trip/creation/start": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new trip (creation flow stage 1: init + S3 upload URLs). Requires JWT. user_id is taken from JWT.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-creation"
+                ],
+                "summary": "[1] Create a new trip",
+                "parameters": [
+                    {
+                        "description": "Trip creation payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.CreateTripRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CreateTripResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trip/creation/{id}/apply-groups-and-process": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-creation"
+                ],
+                "summary": "[3] Apply groups and process",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Draft pins and deleted media",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trip/creation/{id}/finalize": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-creation"
+                ],
+                "summary": "[5] Finalize trip",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Pin updates and media to delete",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizeTripRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trip/creation/{id}/media/process-grouping": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-creation"
+                ],
+                "summary": "[2] Process media grouping",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Media metadata",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trip/creation/{id}/review": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-creation"
+                ],
+                "summary": "[4] Get trip review",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.GetTripReviewResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trips": {
             "get": {
                 "security": [
@@ -570,61 +795,6 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
                             }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a new trip. Requires JWT. user_id is taken from JWT.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Create a new trip",
-                "parameters": [
-                    {
-                        "description": "Trip creation payload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.CreateTripRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CreateTripResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
                     "401": {
@@ -896,51 +1066,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/apply-groups-and-process": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Apply groups and process",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Draft pins and deleted media",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "202": {
-                        "description": "Accepted",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/trips/{id}/dislike": {
             "post": {
                 "security": [
@@ -1022,51 +1147,6 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/finalize": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Finalize trip",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Pin updates and media to delete",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizeTripRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse"
-                        }
                     }
                 }
             }
@@ -1237,51 +1317,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/media/process-grouping": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Process media grouping",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Media metadata",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/trips/{id}/participants/{user_id}": {
             "delete": {
                 "security": [
@@ -1393,39 +1428,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/review": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Get trip review",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.GetTripReviewResponse"
                         }
                     }
                 }
