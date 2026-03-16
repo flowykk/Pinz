@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -13,6 +14,10 @@ import (
 
 	"pinz/backend/api-gateway-service/internal/responses"
 )
+
+func parseInt(s string) (int, error) {
+	return strconv.Atoi(s)
+}
 
 func decodeJSONBody(r *http.Request, dst interface{}) error {
 	if r.Header.Get("Content-Type") != "application/json" {

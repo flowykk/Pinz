@@ -1,6 +1,10 @@
 package repositories
 
-import "database/sql"
+import (
+	"database/sql"
+
+	sq "github.com/Masterminds/squirrel"
+)
 
 type TripSettingsRepository struct {
 	db *sql.DB
@@ -19,4 +23,20 @@ func (r *TripSettingsRepository) EnsureDefaultSettings(tripID, userID string) er
 		Suffix("ON CONFLICT (user_id, trip_id) DO NOTHING").
 		RunWith(r.db).Exec()
 	return err
+}
+
+// UpdateNotifications updates notifications_enabled for the user's trip settings (PINZ-98, ТЗ 12.4.1).
+func (r *TripSettingsRepository) UpdateNotifications(tripID, userID string, enabled bool) error {
+	res, err := psq.Update("trip_settings").
+		Set("notifications_enabled", enabled).
+		Where(sq.Eq{"trip_id": tripID, "user_id": userID}).
+		RunWith(r.db).Exec()
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }

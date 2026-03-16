@@ -101,6 +101,12 @@ func (r *TripParticipantRepository) Remove(tripID, userID string) error {
 	return nil
 }
 
+// RemoveAllByTripID removes all participants from the trip (PINZ-98 soft delete).
+func (r *TripParticipantRepository) RemoveAllByTripID(tripID string) error {
+	_, err := psq.Delete("trip_participants").Where(sq.Eq{"trip_id": tripID}).RunWith(r.db).Exec()
+	return err
+}
+
 // SetAdmin sets the given user as the only admin for the trip (is_admin=true for userID, false for others).
 func (r *TripParticipantRepository) SetAdmin(tripID, userID string) error {
 	_, err := psq.Update("trip_participants").

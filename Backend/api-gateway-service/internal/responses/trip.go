@@ -122,3 +122,13 @@ type FinalizeTripResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
+
+// TripSettingsResponse is the response for PATCH /api/v1/trips/:id/settings (PINZ-98).
+type TripSettingsResponse struct {
+	Success bool `json:"success"`
+}
+
+// SuccessResponse is a generic success response for like/dislike/favourite.
+type SuccessResponse struct {
+	Success bool `json:"success"`
+}

@@ -33,6 +33,12 @@ const (
 	TripService_ApplyGroupsAndProcess_FullMethodName = "/trip.TripService/ApplyGroupsAndProcess"
 	TripService_GetTripReview_FullMethodName         = "/trip.TripService/GetTripReview"
 	TripService_FinalizeTrip_FullMethodName          = "/trip.TripService/FinalizeTrip"
+	TripService_UpdateTripSettings_FullMethodName    = "/trip.TripService/UpdateTripSettings"
+	TripService_ListFeed_FullMethodName              = "/trip.TripService/ListFeed"
+	TripService_LikeTrip_FullMethodName              = "/trip.TripService/LikeTrip"
+	TripService_DislikeTrip_FullMethodName           = "/trip.TripService/DislikeTrip"
+	TripService_AddToFavourites_FullMethodName       = "/trip.TripService/AddToFavourites"
+	TripService_RemoveFromFavourites_FullMethodName  = "/trip.TripService/RemoveFromFavourites"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -55,6 +61,13 @@ type TripServiceClient interface {
 	ApplyGroupsAndProcess(ctx context.Context, in *ApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*ApplyGroupsAndProcessResponse, error)
 	GetTripReview(ctx context.Context, in *GetTripReviewRequest, opts ...grpc.CallOption) (*GetTripReviewResponse, error)
 	FinalizeTrip(ctx context.Context, in *FinalizeTripRequest, opts ...grpc.CallOption) (*FinalizeTripResponse, error)
+	// PINZ-98: лента, лайки, избранное, настройки уведомлений
+	UpdateTripSettings(ctx context.Context, in *UpdateTripSettingsRequest, opts ...grpc.CallOption) (*UpdateTripSettingsResponse, error)
+	ListFeed(ctx context.Context, in *ListFeedRequest, opts ...grpc.CallOption) (*ListFeedResponse, error)
+	LikeTrip(ctx context.Context, in *LikeTripRequest, opts ...grpc.CallOption) (*LikeTripResponse, error)
+	DislikeTrip(ctx context.Context, in *DislikeTripRequest, opts ...grpc.CallOption) (*DislikeTripResponse, error)
+	AddToFavourites(ctx context.Context, in *AddToFavouritesRequest, opts ...grpc.CallOption) (*AddToFavouritesResponse, error)
+	RemoveFromFavourites(ctx context.Context, in *RemoveFromFavouritesRequest, opts ...grpc.CallOption) (*RemoveFromFavouritesResponse, error)
 }
 
 type tripServiceClient struct {
@@ -205,6 +218,66 @@ func (c *tripServiceClient) FinalizeTrip(ctx context.Context, in *FinalizeTripRe
 	return out, nil
 }
 
+func (c *tripServiceClient) UpdateTripSettings(ctx context.Context, in *UpdateTripSettingsRequest, opts ...grpc.CallOption) (*UpdateTripSettingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateTripSettingsResponse)
+	err := c.cc.Invoke(ctx, TripService_UpdateTripSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) ListFeed(ctx context.Context, in *ListFeedRequest, opts ...grpc.CallOption) (*ListFeedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFeedResponse)
+	err := c.cc.Invoke(ctx, TripService_ListFeed_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) LikeTrip(ctx context.Context, in *LikeTripRequest, opts ...grpc.CallOption) (*LikeTripResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LikeTripResponse)
+	err := c.cc.Invoke(ctx, TripService_LikeTrip_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) DislikeTrip(ctx context.Context, in *DislikeTripRequest, opts ...grpc.CallOption) (*DislikeTripResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DislikeTripResponse)
+	err := c.cc.Invoke(ctx, TripService_DislikeTrip_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) AddToFavourites(ctx context.Context, in *AddToFavouritesRequest, opts ...grpc.CallOption) (*AddToFavouritesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddToFavouritesResponse)
+	err := c.cc.Invoke(ctx, TripService_AddToFavourites_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) RemoveFromFavourites(ctx context.Context, in *RemoveFromFavouritesRequest, opts ...grpc.CallOption) (*RemoveFromFavouritesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveFromFavouritesResponse)
+	err := c.cc.Invoke(ctx, TripService_RemoveFromFavourites_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TripServiceServer is the server API for TripService service.
 // All implementations must embed UnimplementedTripServiceServer
 // for forward compatibility.
@@ -225,6 +298,13 @@ type TripServiceServer interface {
 	ApplyGroupsAndProcess(context.Context, *ApplyGroupsAndProcessRequest) (*ApplyGroupsAndProcessResponse, error)
 	GetTripReview(context.Context, *GetTripReviewRequest) (*GetTripReviewResponse, error)
 	FinalizeTrip(context.Context, *FinalizeTripRequest) (*FinalizeTripResponse, error)
+	// PINZ-98: лента, лайки, избранное, настройки уведомлений
+	UpdateTripSettings(context.Context, *UpdateTripSettingsRequest) (*UpdateTripSettingsResponse, error)
+	ListFeed(context.Context, *ListFeedRequest) (*ListFeedResponse, error)
+	LikeTrip(context.Context, *LikeTripRequest) (*LikeTripResponse, error)
+	DislikeTrip(context.Context, *DislikeTripRequest) (*DislikeTripResponse, error)
+	AddToFavourites(context.Context, *AddToFavouritesRequest) (*AddToFavouritesResponse, error)
+	RemoveFromFavourites(context.Context, *RemoveFromFavouritesRequest) (*RemoveFromFavouritesResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
 
@@ -276,6 +356,24 @@ func (UnimplementedTripServiceServer) GetTripReview(context.Context, *GetTripRev
 }
 func (UnimplementedTripServiceServer) FinalizeTrip(context.Context, *FinalizeTripRequest) (*FinalizeTripResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeTrip not implemented")
+}
+func (UnimplementedTripServiceServer) UpdateTripSettings(context.Context, *UpdateTripSettingsRequest) (*UpdateTripSettingsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateTripSettings not implemented")
+}
+func (UnimplementedTripServiceServer) ListFeed(context.Context, *ListFeedRequest) (*ListFeedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFeed not implemented")
+}
+func (UnimplementedTripServiceServer) LikeTrip(context.Context, *LikeTripRequest) (*LikeTripResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LikeTrip not implemented")
+}
+func (UnimplementedTripServiceServer) DislikeTrip(context.Context, *DislikeTripRequest) (*DislikeTripResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DislikeTrip not implemented")
+}
+func (UnimplementedTripServiceServer) AddToFavourites(context.Context, *AddToFavouritesRequest) (*AddToFavouritesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddToFavourites not implemented")
+}
+func (UnimplementedTripServiceServer) RemoveFromFavourites(context.Context, *RemoveFromFavouritesRequest) (*RemoveFromFavouritesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromFavourites not implemented")
 }
 func (UnimplementedTripServiceServer) mustEmbedUnimplementedTripServiceServer() {}
 func (UnimplementedTripServiceServer) testEmbeddedByValue()                     {}
@@ -550,6 +648,114 @@ func _TripService_FinalizeTrip_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_UpdateTripSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateTripSettingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).UpdateTripSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_UpdateTripSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).UpdateTripSettings(ctx, req.(*UpdateTripSettingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_ListFeed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFeedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).ListFeed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_ListFeed_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).ListFeed(ctx, req.(*ListFeedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_LikeTrip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LikeTripRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).LikeTrip(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_LikeTrip_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).LikeTrip(ctx, req.(*LikeTripRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_DislikeTrip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DislikeTripRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).DislikeTrip(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_DislikeTrip_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).DislikeTrip(ctx, req.(*DislikeTripRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_AddToFavourites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddToFavouritesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddToFavourites(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddToFavourites_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddToFavourites(ctx, req.(*AddToFavouritesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_RemoveFromFavourites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveFromFavouritesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).RemoveFromFavourites(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_RemoveFromFavourites_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).RemoveFromFavourites(ctx, req.(*RemoveFromFavouritesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TripService_ServiceDesc is the grpc.ServiceDesc for TripService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -612,6 +818,30 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FinalizeTrip",
 			Handler:    _TripService_FinalizeTrip_Handler,
+		},
+		{
+			MethodName: "UpdateTripSettings",
+			Handler:    _TripService_UpdateTripSettings_Handler,
+		},
+		{
+			MethodName: "ListFeed",
+			Handler:    _TripService_ListFeed_Handler,
+		},
+		{
+			MethodName: "LikeTrip",
+			Handler:    _TripService_LikeTrip_Handler,
+		},
+		{
+			MethodName: "DislikeTrip",
+			Handler:    _TripService_DislikeTrip_Handler,
+		},
+		{
+			MethodName: "AddToFavourites",
+			Handler:    _TripService_AddToFavourites_Handler,
+		},
+		{
+			MethodName: "RemoveFromFavourites",
+			Handler:    _TripService_RemoveFromFavourites_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

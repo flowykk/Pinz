@@ -50,7 +50,7 @@ func (r *TripRepository) GetByID(id string) (*models.Trip, error) {
 	q := psq.Select(
 		"id", "owner_user_id", "name", "description", "category", "season",
 		"status", "privacy_level", "start_date", "end_date",
-		"likes_count", "dislikes_count", "cover_url", "is_published", "is_generated",
+		"likes_count", "dislikes_count", "cover_url", "is_published", "is_generated", "is_soft_deleted",
 		"created_at", "updated_at",
 	).From("trips").Where(sq.Eq{"id": id})
 	sqlStr, args, err := q.ToSql()
@@ -64,7 +64,7 @@ func (r *TripRepository) GetByID(id string) (*models.Trip, error) {
 	err = row.Scan(
 		&t.ID, &t.OwnerUserID, &t.Name, &desc, &t.Category, &t.Season,
 		&t.Status, &t.PrivacyLevel, &startDate, &endDate,
-		&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated,
+		&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
 		&t.CreatedAt, &t.UpdatedAt,
 	)
 	if err != nil {
@@ -93,7 +93,7 @@ func (r *TripRepository) ListByUserID(userID string, limit, offset int32) ([]*mo
 	q := psq.Select(
 		"t.id", "t.owner_user_id", "t.name", "t.description", "t.category", "t.season",
 		"t.status", "t.privacy_level", "t.start_date", "t.end_date",
-		"t.likes_count", "t.dislikes_count", "t.cover_url", "t.is_published", "t.is_generated",
+		"t.likes_count", "t.dislikes_count", "t.cover_url", "t.is_published", "t.is_generated", "t.is_soft_deleted",
 		"t.created_at", "t.updated_at",
 	).From("trips t").
 		InnerJoin("trip_participants tp ON tp.trip_id = t.id").
@@ -118,7 +118,7 @@ func (r *TripRepository) ListByUserID(userID string, limit, offset int32) ([]*mo
 		if err := rows.Scan(
 			&t.ID, &t.OwnerUserID, &t.Name, &desc, &t.Category, &t.Season,
 			&t.Status, &t.PrivacyLevel, &startDate, &endDate,
-			&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated,
+			&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
 			&t.CreatedAt, &t.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -148,7 +148,8 @@ func (r *TripRepository) Update(t *models.Trip) error {
 		Set("category", t.Category).
 		Set("season", t.Season).
 		Set("privacy_level", t.PrivacyLevel).
-		Set("cover_url", t.CoverURL)
+		Set("cover_url", t.CoverURL).
+		Set("is_published", t.IsPublished)
 	if t.StartDate != nil {
 		u = u.Set("start_date", t.StartDate)
 	} else {
@@ -198,4 +199,82 @@ func (r *TripRepository) SetStatus(tripID, status string) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+// SetSoftDeleted sets is_soft_deleted=true (PINZ-98: admin delete when trip is in others' favourites).
+func (r *TripRepository) SetSoftDeleted(tripID string) error {
+	res, err := psq.Update("trips").Set("is_soft_deleted", true).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID}).RunWith(r.db).Exec()
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+// ListFeed returns published trips for the feed (PINZ-98). Excludes soft-deleted. Optional filters: category, season, locationID. sortBy: "date" or "rating".
+func (r *TripRepository) ListFeed(limit, offset int32, category, season string, locationID *int, sortBy string) ([]*models.Trip, error) {
+	q := psq.Select(
+		"t.id", "t.owner_user_id", "t.name", "t.description", "t.category", "t.season",
+		"t.status", "t.privacy_level", "t.start_date", "t.end_date",
+		"t.likes_count", "t.dislikes_count", "t.cover_url", "t.is_published", "t.is_generated", "t.is_soft_deleted",
+		"t.created_at", "t.updated_at",
+	).From("trips t").
+		Where(sq.Eq{"t.is_published": true}).
+		Where(sq.Eq{"t.is_soft_deleted": false})
+	if category != "" {
+		q = q.Where(sq.Eq{"t.category": category})
+	}
+	if season != "" {
+		q = q.Where(sq.Eq{"t.season": season})
+	}
+	if locationID != nil {
+		q = q.InnerJoin("trip_locations tl ON tl.trip_id = t.id").Where(sq.Eq{"tl.location_id": *locationID})
+	}
+	switch sortBy {
+	case "rating":
+		q = q.OrderBy("(t.likes_count - t.dislikes_count) DESC", "t.updated_at DESC")
+	default:
+		q = q.OrderBy("t.updated_at DESC")
+	}
+	q = q.Limit(uint64(limit)).Offset(uint64(offset))
+	sqlStr, args, err := q.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.db.Query(sqlStr, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var trips []*models.Trip
+	for rows.Next() {
+		var t models.Trip
+		var desc, coverURL sql.NullString
+		var startDate, endDate sql.NullTime
+		if err := rows.Scan(
+			&t.ID, &t.OwnerUserID, &t.Name, &desc, &t.Category, &t.Season,
+			&t.Status, &t.PrivacyLevel, &startDate, &endDate,
+			&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
+			&t.CreatedAt, &t.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		if desc.Valid {
+			t.Description = desc.String
+		}
+		if coverURL.Valid {
+			t.CoverURL = coverURL.String
+		}
+		if startDate.Valid {
+			t.StartDate = &startDate.Time
+		}
+		if endDate.Valid {
+			t.EndDate = &endDate.Time
+		}
+		trips = append(trips, &t)
+	}
+	return trips, rows.Err()
 }

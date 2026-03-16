@@ -35,6 +35,12 @@ type TripClient interface {
 	ApplyGroupsAndProcess(ctx context.Context, req *proto.ApplyGroupsAndProcessRequest) (*proto.ApplyGroupsAndProcessResponse, error)
 	GetTripReview(ctx context.Context, req *proto.GetTripReviewRequest) (*proto.GetTripReviewResponse, error)
 	FinalizeTrip(ctx context.Context, req *proto.FinalizeTripRequest) (*proto.FinalizeTripResponse, error)
+	UpdateTripSettings(ctx context.Context, req *proto.UpdateTripSettingsRequest) (*proto.UpdateTripSettingsResponse, error)
+	ListFeed(ctx context.Context, req *proto.ListFeedRequest) (*proto.ListFeedResponse, error)
+	LikeTrip(ctx context.Context, req *proto.LikeTripRequest) (*proto.LikeTripResponse, error)
+	DislikeTrip(ctx context.Context, req *proto.DislikeTripRequest) (*proto.DislikeTripResponse, error)
+	AddToFavourites(ctx context.Context, req *proto.AddToFavouritesRequest) (*proto.AddToFavouritesResponse, error)
+	RemoveFromFavourites(ctx context.Context, req *proto.RemoveFromFavouritesRequest) (*proto.RemoveFromFavouritesResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient) *TripHandler {
@@ -671,6 +677,215 @@ func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.FinalizeTripResponse{
 		TripID: resp.GetTripId(), Status: resp.GetStatus(), Message: resp.GetMessage(),
 	})
+}
+
+// UpdateTripSettings updates notifications for the trip (PINZ-98, ТЗ 12.4.1).
+// @Summary Update trip notification settings
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.TripSettingsRequest true "notifications_enabled"
+// @Success 200 {object} responses.TripSettingsResponse
+// @Router /api/v1/trips/{id}/settings [patch]
+func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.TripSettingsRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	_, err := h.tripClient.UpdateTripSettings(ctx, &proto.UpdateTripSettingsRequest{
+		TripId:               tripID,
+		NotificationsEnabled: req.NotificationsEnabled,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "UpdateTripSettings")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.TripSettingsResponse{Success: true})
+}
+
+// ListFeed returns published trips for the feed (PINZ-98).
+// @Summary List feed
+// @Tags feed
+// @Produce json
+// @Security BearerAuth
+// @Param limit query int false "limit"
+// @Param offset query int false "offset"
+// @Param category query string false "category"
+// @Param season query string false "season"
+// @Param location_id query int false "location_id"
+// @Param sort_by query string false "date|rating"
+// @Success 200 {array} responses.Trip
+// @Router /api/v1/feed [get]
+func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	limit := int32(20)
+	offset := int32(0)
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if n, err := parseInt(l); err == nil && n > 0 {
+			limit = int32(n)
+		}
+	}
+	if o := r.URL.Query().Get("offset"); o != "" {
+		if n, err := parseInt(o); err == nil && n >= 0 {
+			offset = int32(n)
+		}
+	}
+	category := r.URL.Query().Get("category")
+	season := r.URL.Query().Get("season")
+	sortBy := r.URL.Query().Get("sort_by")
+	if sortBy == "" {
+		sortBy = "date"
+	}
+	var locationID int32
+	if lid := r.URL.Query().Get("location_id"); lid != "" {
+		if n, err := parseInt(lid); err == nil {
+			locationID = int32(n)
+		}
+	}
+	resp, err := h.tripClient.ListFeed(ctx, &proto.ListFeedRequest{
+		Limit:      limit,
+		Offset:     offset,
+		Category:   category,
+		Season:     season,
+		LocationId: locationID,
+		SortBy:     sortBy,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "ListFeed")
+		return
+	}
+	out := make([]responses.Trip, len(resp.GetTrips()))
+	for i, t := range resp.GetTrips() {
+		out[i] = tripProtoToResponse(t)
+	}
+	respondJSON(w, http.StatusOK, out)
+}
+
+// LikeTrip adds a like to the trip (PINZ-98).
+// @Summary Like trip
+// @Tags trips
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Success 200 {object} responses.SuccessResponse
+// @Router /api/v1/trips/{id}/like [post]
+func (h *TripHandler) LikeTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	_, err := h.tripClient.LikeTrip(ctx, &proto.LikeTripRequest{TripId: tripID})
+	if err != nil {
+		handleServiceError(w, r, err, "LikeTrip")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
+}
+
+// DislikeTrip adds a dislike to the trip (PINZ-98).
+// @Summary Dislike trip
+// @Tags trips
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Success 200 {object} responses.SuccessResponse
+// @Router /api/v1/trips/{id}/dislike [post]
+func (h *TripHandler) DislikeTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	_, err := h.tripClient.DislikeTrip(ctx, &proto.DislikeTripRequest{TripId: tripID})
+	if err != nil {
+		handleServiceError(w, r, err, "DislikeTrip")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
+}
+
+// AddToFavourites adds the trip to user's favourites (PINZ-98).
+// @Summary Add trip to favourites
+// @Tags trips
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Success 200 {object} responses.SuccessResponse
+// @Router /api/v1/trips/{id}/favourite [post]
+func (h *TripHandler) AddToFavourites(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	_, err := h.tripClient.AddToFavourites(ctx, &proto.AddToFavouritesRequest{TripId: tripID})
+	if err != nil {
+		handleServiceError(w, r, err, "AddToFavourites")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
+}
+
+// RemoveFromFavourites removes the trip from user's favourites (PINZ-98).
+// @Summary Remove trip from favourites
+// @Tags trips
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Success 204
+// @Router /api/v1/trips/{id}/favourite [delete]
+func (h *TripHandler) RemoveFromFavourites(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	_, err := h.tripClient.RemoveFromFavourites(ctx, &proto.RemoveFromFavouritesRequest{TripId: tripID})
+	if err != nil {
+		handleServiceError(w, r, err, "RemoveFromFavourites")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func tripProtoToResponse(t *proto.Trip) responses.Trip {

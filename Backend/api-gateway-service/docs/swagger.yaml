@@ -158,6 +158,11 @@ definitions:
       new_admin_user_id:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.TripSettingsRequest:
+    properties:
+      notifications_enabled:
+        type: boolean
+    type: object
   pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest:
     properties:
       category:
@@ -379,6 +384,11 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.SuccessResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
   pinz_backend_api-gateway-service_internal_responses.TransferAdminResponse:
     properties:
       success:
@@ -420,6 +430,11 @@ definitions:
         type: string
       updated_at_unix:
         type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TripSettingsResponse:
+    properties:
+      success:
+        type: boolean
     type: object
   pinz_backend_api-gateway-service_internal_responses.UploadURL:
     properties:
@@ -750,6 +765,47 @@ paths:
       summary: Verify email code
       tags:
       - auth
+  /api/v1/feed:
+    get:
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      - description: category
+        in: query
+        name: category
+        type: string
+      - description: season
+        in: query
+        name: season
+        type: string
+      - description: location_id
+        in: query
+        name: location_id
+        type: integer
+      - description: date|rating
+        in: query
+        name: sort_by
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List feed
+      tags:
+      - feed
   /api/v1/trips:
     get:
       consumes:
@@ -963,6 +1019,57 @@ paths:
       summary: Apply groups and process
       tags:
       - trips
+  /api/v1/trips/{id}/dislike:
+    post:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SuccessResponse'
+      security:
+      - BearerAuth: []
+      summary: Dislike trip
+      tags:
+      - trips
+  /api/v1/trips/{id}/favourite:
+    delete:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Remove trip from favourites
+      tags:
+      - trips
+    post:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SuccessResponse'
+      security:
+      - BearerAuth: []
+      summary: Add trip to favourites
+      tags:
+      - trips
   /api/v1/trips/{id}/finalize:
     post:
       consumes:
@@ -1080,6 +1187,24 @@ paths:
       summary: Leave trip
       tags:
       - trips
+  /api/v1/trips/{id}/like:
+    post:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SuccessResponse'
+      security:
+      - BearerAuth: []
+      summary: Like trip
+      tags:
+      - trips
   /api/v1/trips/{id}/media/process-grouping:
     post:
       consumes:
@@ -1173,6 +1298,34 @@ paths:
       security:
       - BearerAuth: []
       summary: Get trip review
+      tags:
+      - trips
+  /api/v1/trips/{id}/settings:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: notifications_enabled
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.TripSettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripSettingsResponse'
+      security:
+      - BearerAuth: []
+      summary: Update trip notification settings
       tags:
       - trips
   /api/v1/trips/{id}/transfer-admin:
