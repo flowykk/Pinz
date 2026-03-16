@@ -23,12 +23,14 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 	mediaRepo := repositories.NewMediaRepository(db)
 	pinRepo := repositories.NewPinRepository(db)
 	tagRepo := repositories.NewTagRepository(db)
+	socialRepo := repositories.NewSocialRepository(db)
+	favouriteRepo := repositories.NewFavouriteRepository(db)
 	var eventRepo *repositories.RedisRepository
 	if redisClient != nil {
 		eventRepo = repositories.NewRedisRepository(redisClient)
 	} else {
 		slog.Warn("trip-service: Redis not configured, trip events will not be published")
 	}
-	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventRepo, mediaRepo, pinRepo, tagRepo)
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventRepo, mediaRepo, pinRepo, tagRepo, socialRepo, favouriteRepo)
 	return &Dependencies{TripService: tripSvc}, nil
 }

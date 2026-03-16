@@ -21,6 +21,13 @@ service TripService {
   rpc ApplyGroupsAndProcess(ApplyGroupsAndProcessRequest) returns (ApplyGroupsAndProcessResponse);
   rpc GetTripReview(GetTripReviewRequest) returns (GetTripReviewResponse);
   rpc FinalizeTrip(FinalizeTripRequest) returns (FinalizeTripResponse);
+  // PINZ-98: лента, лайки, избранное, настройки уведомлений
+  rpc UpdateTripSettings(UpdateTripSettingsRequest) returns (UpdateTripSettingsResponse);
+  rpc ListFeed(ListFeedRequest) returns (ListFeedResponse);
+  rpc LikeTrip(LikeTripRequest) returns (LikeTripResponse);
+  rpc DislikeTrip(DislikeTripRequest) returns (DislikeTripResponse);
+  rpc AddToFavourites(AddToFavouritesRequest) returns (AddToFavouritesResponse);
+  rpc RemoveFromFavourites(RemoveFromFavouritesRequest) returns (RemoveFromFavouritesResponse);
 }
 
 message Trip {
@@ -248,5 +255,55 @@ message TransferAdminRequest {
   string new_admin_user_id = 2;
 }
 message TransferAdminResponse {
+  bool success = 1;
+}
+
+// PINZ-98: настройки уведомлений по трипу (ТЗ 12.4.1)
+message UpdateTripSettingsRequest {
+  string trip_id = 1;
+  bool notifications_enabled = 2;
+}
+message UpdateTripSettingsResponse {
+  bool success = 1;
+}
+
+// PINZ-98: лента опубликованных трипов
+message ListFeedRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string category = 3;   // optional filter
+  string season = 4;     // optional filter
+  int32 location_id = 5; // optional filter (geo_registry id)
+  string sort_by = 6;   // "date" or "rating"
+}
+message ListFeedResponse {
+  repeated Trip trips = 1;
+}
+
+message LikeTripRequest {
+  string trip_id = 1;
+}
+message LikeTripResponse {
+  bool success = 1;
+}
+
+message DislikeTripRequest {
+  string trip_id = 1;
+}
+message DislikeTripResponse {
+  bool success = 1;
+}
+
+message AddToFavouritesRequest {
+  string trip_id = 1;
+}
+message AddToFavouritesResponse {
+  bool success = 1;
+}
+
+message RemoveFromFavouritesRequest {
+  string trip_id = 1;
+}
+message RemoveFromFavouritesResponse {
   bool success = 1;
 }

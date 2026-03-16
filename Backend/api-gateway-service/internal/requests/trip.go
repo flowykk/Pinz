@@ -82,3 +82,8 @@ type PinUpdateInput struct {
 	Latitude  *float64 `json:"latitude,omitempty"`
 	Longitude *float64 `json:"longitude,omitempty"`
 }
+
+// TripSettingsRequest is the REST body for PATCH /api/v1/trips/:id/settings (PINZ-98, ТЗ 12.4.1).
+type TripSettingsRequest struct {
+	NotificationsEnabled bool `json:"notifications_enabled"`
+}

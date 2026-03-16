@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS trips (
   cover_url TEXT,
   is_published BOOLEAN NOT NULL DEFAULT false,
   is_generated BOOLEAN NOT NULL DEFAULT false,
+  is_soft_deleted BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );`
@@ -115,6 +116,34 @@ CREATE TABLE IF NOT EXISTS media_privacy (
   privacy_level TEXT NOT NULL,
   PRIMARY KEY (media_id, user_id)
 );`
+	// PINZ-98: social (likes/dislikes), favourite, geo_registry, trip_locations
+	socialDDL = `
+CREATE TABLE IF NOT EXISTS social (
+  user_id UUID NOT NULL,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  reaction TEXT NOT NULL,
+  PRIMARY KEY (user_id, trip_id)
+);`
+	favouriteDDL = `
+CREATE TABLE IF NOT EXISTS favourite (
+  user_id UUID NOT NULL,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, trip_id)
+);`
+	geoRegistryDDL = `
+CREATE TABLE IF NOT EXISTS geo_registry (
+  id INT PRIMARY KEY,
+  parent_id INT REFERENCES geo_registry(id),
+  name TEXT NOT NULL,
+  type TEXT NOT NULL
+);`
+	tripLocationsDDL = `
+CREATE TABLE IF NOT EXISTS trip_locations (
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  location_id INT NOT NULL REFERENCES geo_registry(id),
+  PRIMARY KEY (trip_id, location_id)
+);`
 )
 
 func InitDB() (*sql.DB, error) {
@@ -163,9 +192,9 @@ func InitDB() (*sql.DB, error) {
 		slog.Warn("db: failed to register metrics", "error", err)
 	}
 
-	slog.Info("db: running migrations (postgis, trips, ..., pins, media, tags, pin_privacy, media_privacy)")
-	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL, invitationLinksDDL, tripSettingsDDL, tripPrivacyDDL, pinsDDL, mediaDDL, tagsDDL, pinPrivacyDDL, mediaPrivacyDDL} {
-		name := []string{"postgis", "trips", "trip_participants", "invitation_links", "trip_settings", "trip_privacy", "pins", "media", "tags", "pin_privacy", "media_privacy"}[i]
+	slog.Info("db: running migrations (postgis, trips, ..., social, favourite, geo_registry, trip_locations)")
+	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL, invitationLinksDDL, tripSettingsDDL, tripPrivacyDDL, pinsDDL, mediaDDL, tagsDDL, pinPrivacyDDL, mediaPrivacyDDL, socialDDL, favouriteDDL, geoRegistryDDL, tripLocationsDDL} {
+		name := []string{"postgis", "trips", "trip_participants", "invitation_links", "trip_settings", "trip_privacy", "pins", "media", "tags", "pin_privacy", "media_privacy", "social", "favourite", "geo_registry", "trip_locations"}[i]
 		if _, err := db.Exec(ddl); err != nil {
 			db.Close()
 			slog.Error("db: migration failed", "object", name, "error", err)
@@ -178,6 +207,12 @@ func InitDB() (*sql.DB, error) {
 		db.Close()
 		slog.Error("db: migration media.similar_group_id failed", "error", err)
 		return nil, fmt.Errorf("migration media.similar_group_id: %w", err)
+	}
+	// PINZ-98: is_soft_deleted for admin delete when trip is in others' favourites.
+	if _, err := db.Exec("ALTER TABLE trips ADD COLUMN IF NOT EXISTS is_soft_deleted BOOLEAN NOT NULL DEFAULT false"); err != nil {
+		db.Close()
+		slog.Error("db: migration trips.is_soft_deleted failed", "error", err)
+		return nil, fmt.Errorf("migration trips.is_soft_deleted: %w", err)
 	}
 	slog.Info("db: init complete")
 	return db, nil

@@ -106,6 +106,30 @@ func (c *Client) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequest) 
 	return c.client.FinalizeTrip(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) UpdateTripSettings(ctx context.Context, req *pb.UpdateTripSettingsRequest) (*pb.UpdateTripSettingsResponse, error) {
+	return c.client.UpdateTripSettings(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*pb.ListFeedResponse, error) {
+	return c.client.ListFeed(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) LikeTrip(ctx context.Context, req *pb.LikeTripRequest) (*pb.LikeTripResponse, error) {
+	return c.client.LikeTrip(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) DislikeTrip(ctx context.Context, req *pb.DislikeTripRequest) (*pb.DislikeTripResponse, error) {
+	return c.client.DislikeTrip(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) AddToFavourites(ctx context.Context, req *pb.AddToFavouritesRequest) (*pb.AddToFavouritesResponse, error) {
+	return c.client.AddToFavourites(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFromFavouritesRequest) (*pb.RemoveFromFavouritesResponse, error) {
+	return c.client.RemoveFromFavourites(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

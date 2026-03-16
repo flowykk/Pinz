@@ -479,6 +479,71 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/feed": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "feed"
+                ],
+                "summary": "List feed",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "category",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "season",
+                        "name": "season",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "location_id",
+                        "name": "location_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "date|rating",
+                        "name": "sort_by",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trips": {
             "get": {
                 "security": [
@@ -876,6 +941,91 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/trips/{id}/dislike": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Dislike trip",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.SuccessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/favourite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Add trip to favourites",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.SuccessResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Remove trip from favourites",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/api/v1/trips/{id}/finalize": {
             "post": {
                 "security": [
@@ -1057,6 +1207,36 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/trips/{id}/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Like trip",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.SuccessResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trips/{id}/media/process-grouping": {
             "post": {
                 "security": [
@@ -1201,6 +1381,51 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.GetTripReviewResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/settings": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Update trip notification settings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "notifications_enabled",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.TripSettingsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TripSettingsResponse"
                         }
                     }
                 }
@@ -1514,6 +1739,14 @@ const docTemplate = `{
             "properties": {
                 "new_admin_user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.TripSettingsRequest": {
+            "type": "object",
+            "properties": {
+                "notifications_enabled": {
+                    "type": "boolean"
                 }
             }
         },
@@ -1858,6 +2091,14 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_responses.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_responses.TransferAdminResponse": {
             "type": "object",
             "properties": {
@@ -1919,6 +2160,14 @@ const docTemplate = `{
                 },
                 "updated_at_unix": {
                     "type": "integer"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.TripSettingsResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
                 }
             }
         },

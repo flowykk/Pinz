@@ -28,6 +28,8 @@ type TripService struct {
 	mediaRepo       *repositories.MediaRepository
 	pinRepo         *repositories.PinRepository
 	tagRepo         *repositories.TagRepository
+	socialRepo      *repositories.SocialRepository
+	favouriteRepo   *repositories.FavouriteRepository
 }
 
 func NewTripService(
@@ -39,6 +41,8 @@ func NewTripService(
 	mediaRepo *repositories.MediaRepository,
 	pinRepo *repositories.PinRepository,
 	tagRepo *repositories.TagRepository,
+	socialRepo *repositories.SocialRepository,
+	favouriteRepo *repositories.FavouriteRepository,
 ) *TripService {
 	return &TripService{
 		tripRepo:        tripRepo,
@@ -49,6 +53,8 @@ func NewTripService(
 		mediaRepo:       mediaRepo,
 		pinRepo:         pinRepo,
 		tagRepo:         tagRepo,
+		socialRepo:      socialRepo,
+		favouriteRepo:   favouriteRepo,
 	}
 }
 
@@ -145,10 +151,18 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to check participant")
 	}
-	if !ok {
-		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	if ok {
+		return &pb.GetTripResponse{Trip: tripToProto(trip)}, nil
 	}
-	return &pb.GetTripResponse{Trip: tripToProto(trip)}, nil
+	// PINZ-98: allow access if user has trip in favourites (e.g. after soft delete)
+	hasFav, err := s.favouriteRepo.HasFavourite(userID, tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check favourite")
+	}
+	if hasFav {
+		return &pb.GetTripResponse{Trip: tripToProto(trip)}, nil
+	}
+	return nil, status.Error(codes.PermissionDenied, "not a participant")
 }
 
 func (s *TripService) ListUserTrips(ctx context.Context, req *pb.ListUserTripsRequest) (*pb.ListUserTripsResponse, error) {
@@ -252,9 +266,7 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 	return &pb.UpdateTripResponse{Trip: tripToProto(updated)}, nil
 }
 
-// DeleteTrip реализован через механизм выхода участника из группы (ТЗ 3.21, 3.22, 3.24).
-// Удалять путешествие может только администратор: он выходит из трипа; если он был
-// единственным участником — трип удаляется (3.21); иначе назначается новый админ (3.22).
+// DeleteTrip — только админ. PINZ-98 (ТЗ 3.24.1/3.24.2): если трип в избранном у других — soft delete (удаление из списка участников); иначе — полное удаление.
 func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest) (*pb.DeleteTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -269,9 +281,23 @@ func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest)
 		return nil, status.Error(codes.Internal, "failed to check admin")
 	}
 	if !isAdmin {
-		return nil, status.Error(codes.PermissionDenied, "only admin can delete trip (by leaving)")
+		return nil, status.Error(codes.PermissionDenied, "only admin can delete trip")
 	}
-	// Выход админа из группы (механизм выхода участника)
+	// 3.24: если трип в избранном у других пользователей — soft delete
+	inOthersFav, err := s.favouriteRepo.HasFavouritesByOtherUsers(tripID, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check favourites")
+	}
+	if inOthersFav {
+		if err := s.participantRepo.RemoveAllByTripID(tripID); err != nil {
+			return nil, status.Error(codes.Internal, "failed to remove participants")
+		}
+		if err := s.tripRepo.SetSoftDeleted(tripID); err != nil {
+			return nil, status.Error(codes.Internal, "failed to soft delete trip")
+		}
+		return &pb.DeleteTripResponse{Success: true}, nil
+	}
+	// Полное удаление: выходим админа, если 0 участников — удаляем трип, иначе назначаем нового админа
 	if err := s.participantRepo.Remove(tripID, userID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Error(codes.NotFound, "trip not found")
@@ -283,17 +309,14 @@ func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest)
 		return nil, status.Error(codes.Internal, "failed to list participants")
 	}
 	if len(participants) == 0 {
-		// 3.21: единственный участник-администратор вышел — удаляем трип
 		if err := s.tripRepo.Delete(tripID); err != nil {
 			return nil, status.Error(codes.Internal, "failed to delete trip")
 		}
 		return &pb.DeleteTripResponse{Success: true}, nil
 	}
-	// 3.22: есть другие участники — назначаем нового админа случайным образом (берём первого)
 	if err := s.participantRepo.SetAdmin(tripID, participants[0].UserID); err != nil {
 		return nil, status.Error(codes.Internal, "failed to assign new admin")
 	}
-	// Трип не удалён, админ сменился
 	return &pb.DeleteTripResponse{Success: true}, nil
 }
 
@@ -845,6 +868,7 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 	trip.CoverURL = coverURL
 	trip.StartDate = minStart
 	trip.EndDate = maxEnd
+	// Публикация в ленту — отдельный флоу (вся поездка или выбранные пины), не при finalize
 	_ = s.tripRepo.Update(trip)
 	if err := s.tripRepo.SetStatus(tripID, "READY"); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update status")
@@ -857,6 +881,149 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 		Status:  "READY",
 		Message: "Trip successfully published",
 	}, nil
+}
+
+// UpdateTripSettings — ТЗ 12.4.1: вкл/выкл уведомлений по трипу. Только участник, только свои настройки.
+func (s *TripService) UpdateTripSettings(ctx context.Context, req *pb.UpdateTripSettingsRequest) (*pb.UpdateTripSettingsResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	_ = s.settingsRepo.EnsureDefaultSettings(tripID, userID)
+	if err := s.settingsRepo.UpdateNotifications(tripID, userID, req.GetNotificationsEnabled()); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update settings")
+	}
+	return &pb.UpdateTripSettingsResponse{Success: true}, nil
+}
+
+// ListFeed — лента опубликованных трипов (PINZ-98). Пагинация 20, фильтры category/season/location, сортировка date|rating.
+func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*pb.ListFeedResponse, error) {
+	_, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	limit := req.GetLimit()
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	offset := req.GetOffset()
+	if offset < 0 {
+		offset = 0
+	}
+	sortBy := req.GetSortBy()
+	if sortBy != "rating" && sortBy != "date" {
+		sortBy = "date"
+	}
+	var locationID *int
+	if req.GetLocationId() != 0 {
+		id := int(req.GetLocationId())
+		locationID = &id
+	}
+	trips, err := s.tripRepo.ListFeed(limit, offset, req.GetCategory(), req.GetSeason(), locationID, sortBy)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list feed")
+	}
+	out := make([]*pb.Trip, len(trips))
+	for i, t := range trips {
+		out[i] = tripToProto(t)
+	}
+	return &pb.ListFeedResponse{Trips: out}, nil
+}
+
+// LikeTrip — поставить лайк трипу в ленте (PINZ-98).
+func (s *TripService) LikeTrip(ctx context.Context, req *pb.LikeTripRequest) (*pb.LikeTripResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil || trip == nil {
+		return nil, status.Error(codes.NotFound, "trip not found")
+	}
+	if !trip.IsPublished {
+		return nil, status.Error(codes.FailedPrecondition, "trip is not published")
+	}
+	if err := s.socialRepo.SetReaction(userID, tripID, "Like"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to set like")
+	}
+	return &pb.LikeTripResponse{Success: true}, nil
+}
+
+// DislikeTrip — поставить дизлайк трипу в ленте (PINZ-98).
+func (s *TripService) DislikeTrip(ctx context.Context, req *pb.DislikeTripRequest) (*pb.DislikeTripResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil || trip == nil {
+		return nil, status.Error(codes.NotFound, "trip not found")
+	}
+	if !trip.IsPublished {
+		return nil, status.Error(codes.FailedPrecondition, "trip is not published")
+	}
+	if err := s.socialRepo.SetReaction(userID, tripID, "Dislike"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to set dislike")
+	}
+	return &pb.DislikeTripResponse{Success: true}, nil
+}
+
+// AddToFavourites — добавить трип в избранное (PINZ-98).
+func (s *TripService) AddToFavourites(ctx context.Context, req *pb.AddToFavouritesRequest) (*pb.AddToFavouritesResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil || trip == nil {
+		return nil, status.Error(codes.NotFound, "trip not found")
+	}
+	if !trip.IsPublished {
+		return nil, status.Error(codes.FailedPrecondition, "trip is not published")
+	}
+	if err := s.favouriteRepo.Add(userID, tripID); err != nil {
+		return nil, status.Error(codes.Internal, "failed to add to favourites")
+	}
+	return &pb.AddToFavouritesResponse{Success: true}, nil
+}
+
+// RemoveFromFavourites — убрать трип из избранного (PINZ-98).
+func (s *TripService) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFromFavouritesRequest) (*pb.RemoveFromFavouritesResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	if err := s.favouriteRepo.Remove(userID, tripID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "not in favourites")
+		}
+		return nil, status.Error(codes.Internal, "failed to remove from favourites")
+	}
+	return &pb.RemoveFromFavouritesResponse{Success: true}, nil
 }
 
 func tripToProto(t *models.Trip) *pb.Trip {
