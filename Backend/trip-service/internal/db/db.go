@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS pins (
   media_count INT NOT NULL DEFAULT 0,
   start_time TIMESTAMPTZ,
   end_time TIMESTAMPTZ,
+  is_published_in_feed BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );`
 	mediaDDL = `
@@ -213,6 +214,12 @@ func InitDB() (*sql.DB, error) {
 		db.Close()
 		slog.Error("db: migration trips.is_soft_deleted failed", "error", err)
 		return nil, fmt.Errorf("migration trips.is_soft_deleted: %w", err)
+	}
+	// PINZ-105: is_published_in_feed для отметки опубликованных в ленту пинов.
+	if _, err := db.Exec("ALTER TABLE pins ADD COLUMN IF NOT EXISTS is_published_in_feed BOOLEAN NOT NULL DEFAULT false"); err != nil {
+		db.Close()
+		slog.Error("db: migration pins.is_published_in_feed failed", "error", err)
+		return nil, fmt.Errorf("migration pins.is_published_in_feed: %w", err)
 	}
 	slog.Info("db: init complete")
 	return db, nil

@@ -18,8 +18,8 @@ func NewPinRepository(db *sql.DB) *PinRepository {
 }
 
 func (r *PinRepository) Create(p *models.Pin) error {
-	cols := []string{"trip_id", "name", "description", "category", "privacy_level", "media_count"}
-	vals := []interface{}{p.TripID, p.Name, p.Description, p.Category, p.PrivacyLevel, p.MediaCount}
+	cols := []string{"trip_id", "name", "description", "category", "privacy_level", "media_count", "is_published_in_feed"}
+	vals := []interface{}{p.TripID, p.Name, p.Description, p.Category, p.PrivacyLevel, p.MediaCount, p.IsPublishedInFeed}
 	if p.Latitude != nil && p.Longitude != nil {
 		cols = append(cols, "location")
 		vals = append(vals, sq.Expr("ST_SetSRID(ST_MakePoint(?, ?), 4326)", *p.Longitude, *p.Latitude))
@@ -47,14 +47,15 @@ func (r *PinRepository) Create(p *models.Pin) error {
 func (r *PinRepository) GetByID(id string) (*models.Pin, error) {
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
 		ST_X(location)::float as lat, ST_Y(location)::float as lon,
-		start_time, end_time, created_at
+		start_time, end_time, is_published_in_feed, created_at
 		FROM pins WHERE id = $1`
 	var p models.Pin
 	var desc sql.NullString
 	var lat, lon sql.NullFloat64
 	var startTime, endTime sql.NullTime
+	var isPublished sql.NullBool
 	err := r.db.QueryRow(sqlStr, id).Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-		&lat, &lon, &startTime, &endTime, &p.CreatedAt)
+		&lat, &lon, &startTime, &endTime, &isPublished, &p.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
@@ -76,13 +77,16 @@ func (r *PinRepository) GetByID(id string) (*models.Pin, error) {
 	if endTime.Valid {
 		p.EndTime = &endTime.Time
 	}
+	if isPublished.Valid {
+		p.IsPublishedInFeed = isPublished.Bool
+	}
 	return &p, nil
 }
 
 func (r *PinRepository) ListByTripID(tripID string) ([]*models.Pin, error) {
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
 		ST_X(location)::float as lat, ST_Y(location)::float as lon,
-		start_time, end_time, created_at
+		start_time, end_time, is_published_in_feed, created_at
 		FROM pins WHERE trip_id = $1 ORDER BY start_time ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
 	if err != nil {
@@ -95,8 +99,9 @@ func (r *PinRepository) ListByTripID(tripID string) ([]*models.Pin, error) {
 		var desc sql.NullString
 		var lat, lon sql.NullFloat64
 		var startTime, endTime sql.NullTime
+		var isPublished sql.NullBool
 		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-			&lat, &lon, &startTime, &endTime, &p.CreatedAt); err != nil {
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		if desc.Valid {
@@ -114,6 +119,9 @@ func (r *PinRepository) ListByTripID(tripID string) ([]*models.Pin, error) {
 		if endTime.Valid {
 			p.EndTime = &endTime.Time
 		}
+		if isPublished.Valid {
+			p.IsPublishedInFeed = isPublished.Bool
+		}
 		list = append(list, &p)
 	}
 	return list, rows.Err()
@@ -125,7 +133,8 @@ func (r *PinRepository) Update(p *models.Pin) error {
 		Set("description", p.Description).
 		Set("category", p.Category).
 		Set("privacy_level", p.PrivacyLevel).
-		Set("media_count", p.MediaCount)
+		Set("media_count", p.MediaCount).
+		Set("is_published_in_feed", p.IsPublishedInFeed)
 	if p.Latitude != nil && p.Longitude != nil {
 		u = u.Set("location", sq.Expr("ST_SetSRID(ST_MakePoint(?, ?), 4326)", *p.Longitude, *p.Latitude))
 	} else {

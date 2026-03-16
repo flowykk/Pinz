@@ -868,19 +868,110 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 	trip.CoverURL = coverURL
 	trip.StartDate = minStart
 	trip.EndDate = maxEnd
-	// Публикация в ленту — отдельный флоу (вся поездка или выбранные пины), не при finalize
 	_ = s.tripRepo.Update(trip)
 	if err := s.tripRepo.SetStatus(tripID, "READY"); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
-	if s.eventRepo != nil {
-		_ = s.eventRepo.PublishTripEvent(ctx, "TRIP_PUBLISHED", tripID, userID)
-	}
 	return &pb.FinalizeTripResponse{
 		TripId:  tripID,
 		Status:  "READY",
-		Message: "Trip successfully published",
+		Message: "Trip finalized",
 	}, nil
+}
+
+// PublishTrip — отдельный флоу публикации в общую ленту (PINZ-105, ТЗ 3.3).
+// publish_whole=true публикует всю поездку; иначе публикуются только выбранные пины.
+// Для упрощения текущей реализации список опубликованных пинов отдельно не сохраняется —
+// trip помечается как is_published=true, а выборка пинов для отображения выполняется на клиенте.
+func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripRequest) (*pb.PublishTripResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check participant")
+	}
+	if !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+
+	if trip.Status != "READY" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be READY to publish")
+	}
+
+	publishWhole := req.GetPublishWhole()
+	pinIDs := req.GetPinIds()
+
+	if publishWhole && len(pinIDs) > 0 {
+		return nil, status.Error(codes.InvalidArgument, "pin_ids must be empty when publish_whole is true")
+	}
+	if !publishWhole && len(pinIDs) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "pin_ids must be provided when publish_whole is false")
+	}
+
+	// Валидация и установка флага публикации на пинах.
+	pins, err := s.pinRepo.ListByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list pins")
+	}
+	pinIDSet := make(map[string]*models.Pin, len(pins))
+	for _, p := range pins {
+		pinIDSet[p.ID] = p
+	}
+
+	// Сбрасываем старое состояние публикации, чтобы можно было переопубликовать с другим набором пинов.
+	for _, p := range pins {
+		p.IsPublishedInFeed = false
+		_ = s.pinRepo.Update(p)
+	}
+
+	if publishWhole {
+		for _, p := range pins {
+			p.IsPublishedInFeed = true
+			_ = s.pinRepo.Update(p)
+		}
+	} else {
+		for _, id := range pinIDs {
+			p, ok := pinIDSet[id]
+			if !ok {
+				return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("pin_id %s does not belong to trip", id))
+			}
+			p.IsPublishedInFeed = true
+			_ = s.pinRepo.Update(p)
+		}
+	}
+
+	wasPublished := trip.IsPublished
+	if !trip.IsPublished {
+		trip.IsPublished = true
+		if err := s.tripRepo.Update(trip); err != nil {
+			return nil, status.Error(codes.Internal, "failed to publish trip")
+		}
+	}
+
+	if s.eventRepo != nil && !wasPublished {
+		_ = s.eventRepo.PublishTripEvent(ctx, "TRIP_READY", tripID, userID)
+	}
+
+	updated, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to reload trip")
+	}
+	return &pb.PublishTripResponse{Trip: tripToProto(updated)}, nil
 }
 
 // UpdateTripSettings — ТЗ 12.4.1: вкл/выкл уведомлений по трипу. Только участник, только свои настройки.

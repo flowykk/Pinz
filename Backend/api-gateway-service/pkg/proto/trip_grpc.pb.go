@@ -33,6 +33,7 @@ const (
 	TripService_ApplyGroupsAndProcess_FullMethodName = "/trip.TripService/ApplyGroupsAndProcess"
 	TripService_GetTripReview_FullMethodName         = "/trip.TripService/GetTripReview"
 	TripService_FinalizeTrip_FullMethodName          = "/trip.TripService/FinalizeTrip"
+	TripService_PublishTrip_FullMethodName           = "/trip.TripService/PublishTrip"
 	TripService_UpdateTripSettings_FullMethodName    = "/trip.TripService/UpdateTripSettings"
 	TripService_ListFeed_FullMethodName              = "/trip.TripService/ListFeed"
 	TripService_LikeTrip_FullMethodName              = "/trip.TripService/LikeTrip"
@@ -61,6 +62,8 @@ type TripServiceClient interface {
 	ApplyGroupsAndProcess(ctx context.Context, in *ApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*ApplyGroupsAndProcessResponse, error)
 	GetTripReview(ctx context.Context, in *GetTripReviewRequest, opts ...grpc.CallOption) (*GetTripReviewResponse, error)
 	FinalizeTrip(ctx context.Context, in *FinalizeTripRequest, opts ...grpc.CallOption) (*FinalizeTripResponse, error)
+	// Публикация в ленту (PINZ-105, ТЗ 3.3): вся поездка целиком или выбранные пины
+	PublishTrip(ctx context.Context, in *PublishTripRequest, opts ...grpc.CallOption) (*PublishTripResponse, error)
 	// PINZ-98: лента, лайки, избранное, настройки уведомлений
 	UpdateTripSettings(ctx context.Context, in *UpdateTripSettingsRequest, opts ...grpc.CallOption) (*UpdateTripSettingsResponse, error)
 	ListFeed(ctx context.Context, in *ListFeedRequest, opts ...grpc.CallOption) (*ListFeedResponse, error)
@@ -218,6 +221,16 @@ func (c *tripServiceClient) FinalizeTrip(ctx context.Context, in *FinalizeTripRe
 	return out, nil
 }
 
+func (c *tripServiceClient) PublishTrip(ctx context.Context, in *PublishTripRequest, opts ...grpc.CallOption) (*PublishTripResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PublishTripResponse)
+	err := c.cc.Invoke(ctx, TripService_PublishTrip_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *tripServiceClient) UpdateTripSettings(ctx context.Context, in *UpdateTripSettingsRequest, opts ...grpc.CallOption) (*UpdateTripSettingsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateTripSettingsResponse)
@@ -298,6 +311,8 @@ type TripServiceServer interface {
 	ApplyGroupsAndProcess(context.Context, *ApplyGroupsAndProcessRequest) (*ApplyGroupsAndProcessResponse, error)
 	GetTripReview(context.Context, *GetTripReviewRequest) (*GetTripReviewResponse, error)
 	FinalizeTrip(context.Context, *FinalizeTripRequest) (*FinalizeTripResponse, error)
+	// Публикация в ленту (PINZ-105, ТЗ 3.3): вся поездка целиком или выбранные пины
+	PublishTrip(context.Context, *PublishTripRequest) (*PublishTripResponse, error)
 	// PINZ-98: лента, лайки, избранное, настройки уведомлений
 	UpdateTripSettings(context.Context, *UpdateTripSettingsRequest) (*UpdateTripSettingsResponse, error)
 	ListFeed(context.Context, *ListFeedRequest) (*ListFeedResponse, error)
@@ -356,6 +371,9 @@ func (UnimplementedTripServiceServer) GetTripReview(context.Context, *GetTripRev
 }
 func (UnimplementedTripServiceServer) FinalizeTrip(context.Context, *FinalizeTripRequest) (*FinalizeTripResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeTrip not implemented")
+}
+func (UnimplementedTripServiceServer) PublishTrip(context.Context, *PublishTripRequest) (*PublishTripResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublishTrip not implemented")
 }
 func (UnimplementedTripServiceServer) UpdateTripSettings(context.Context, *UpdateTripSettingsRequest) (*UpdateTripSettingsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateTripSettings not implemented")
@@ -648,6 +666,24 @@ func _TripService_FinalizeTrip_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_PublishTrip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishTripRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).PublishTrip(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_PublishTrip_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).PublishTrip(ctx, req.(*PublishTripRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TripService_UpdateTripSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateTripSettingsRequest)
 	if err := dec(in); err != nil {
@@ -818,6 +854,10 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FinalizeTrip",
 			Handler:    _TripService_FinalizeTrip_Handler,
+		},
+		{
+			MethodName: "PublishTrip",
+			Handler:    _TripService_PublishTrip_Handler,
 		},
 		{
 			MethodName: "UpdateTripSettings",

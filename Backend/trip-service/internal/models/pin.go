@@ -4,18 +4,19 @@ import "time"
 
 // Pin is a point on the trip map (pin from tripCreationFlow).
 type Pin struct {
-	ID           string
-	TripID       string
-	Name         string
-	Description  string
-	Latitude     *float64
-	Longitude    *float64
-	Category     string
-	PrivacyLevel string
-	MediaCount   int32
-	StartTime    *time.Time
-	EndTime      *time.Time
-	CreatedAt    time.Time
+	ID                string
+	TripID            string
+	Name              string
+	Description       string
+	Latitude          *float64
+	Longitude         *float64
+	Category          string
+	PrivacyLevel      string
+	MediaCount        int32
+	StartTime         *time.Time
+	EndTime           *time.Time
+	IsPublishedInFeed bool
+	CreatedAt         time.Time
 }
 
 // Media is a photo or video in a trip.
