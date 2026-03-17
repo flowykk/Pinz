@@ -53,7 +53,7 @@ func (r *FavouriteRepository) HasFavourite(userID, tripID string) (bool, error) 
 	return true, nil
 }
 
-// HasFavouritesByOtherUsers returns true if any user other than excludeUserID has this trip in favourites (PINZ-98: for soft delete check).
+// HasFavouritesByOtherUsers returns true if any user other than excludeUserID has this trip in favourites.
 func (r *FavouriteRepository) HasFavouritesByOtherUsers(tripID, excludeUserID string) (bool, error) {
 	var d int
 	err := r.db.QueryRow(

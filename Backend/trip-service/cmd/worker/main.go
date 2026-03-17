@@ -31,12 +31,19 @@ func main() {
 
 	tripRepo := repositories.NewTripRepository(database)
 	participantRepo := repositories.NewTripParticipantRepository(database)
+	geoRepo := repositories.NewGeoRegistryRepository(database)
+	mediaRepo := repositories.NewMediaRepository(database)
+	tagRepo := repositories.NewTagRepository(database)
+	pinRepo := repositories.NewPinRepository(database)
+	tripPrivacyRepo := repositories.NewTripPrivacyRepository(database)
+	pinPrivacyRepo := repositories.NewPinPrivacyRepository(database)
+	mediaPrivacyRepo := repositories.NewMediaPrivacyRepository(database)
 	var eventRepo *repositories.RedisRepository
 	if redisClient != nil {
 		eventRepo = repositories.NewRedisRepository(redisClient)
 	}
 
-	if err := worker.Run(ctx, redisClient, tripRepo, participantRepo, eventRepo); err != nil {
+	if err := worker.Run(ctx, redisClient, tripRepo, participantRepo, geoRepo, mediaRepo, tagRepo, pinRepo, eventRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo); err != nil {
 		slog.Error("worker: run failed", "error", err)
 		os.Exit(1)
 	}

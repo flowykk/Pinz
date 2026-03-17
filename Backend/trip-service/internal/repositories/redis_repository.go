@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 )
 
 const (
-	tripEventsStream = "pinz:trip:events"
-	mlTasksStream    = "pinz:trip:ml:tasks"
+	tripEventsStream    = "pinz:trip:events"
+	mlTasksStream       = "pinz:trip:ml:tasks"
+	mlResultsStream     = "pinz:trip:ml:results"
+	mlContextPrefix     = "pinz:trip:ml:context:"
+	privacyEventsStream = "pinz:trip:privacy:events"
 
 	userEventsChannelPrefix = "pinz:user:"
 	userEventsChannelSuffix = ":events"
@@ -84,6 +88,26 @@ func (r *RedisRepository) PublishTripEvent(ctx context.Context, eventType string
 	return nil
 }
 
+func (r *RedisRepository) ReadMLResults(ctx context.Context, group, consumer string, count int64, blockMs int64) ([]redis.XStream, error) {
+	if r == nil || r.client == nil {
+		return nil, nil
+	}
+	streams, err := r.client.XReadGroup(ctx, &redis.XReadGroupArgs{
+		Group:    group,
+		Consumer: consumer,
+		Streams:  []string{mlResultsStream, ">"},
+		Count:    count,
+		Block:    time.Duration(blockMs) * time.Millisecond,
+	}).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return streams, nil
+}
+
 // AddMLTask adds a task to the ML/processing stream (for worker: apply-groups-and-process flow).
 func (r *RedisRepository) AddMLTask(ctx context.Context, tripID string) error {
 	err := r.client.XAdd(ctx, &redis.XAddArgs{
@@ -97,8 +121,87 @@ func (r *RedisRepository) AddMLTask(ctx context.Context, tripID string) error {
 	return nil
 }
 
+// AddMLTaskWithFlow adds a task with flow marker and optional new pin ids (for add-media).
+func (r *RedisRepository) AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error {
+	vals := map[string]interface{}{"trip_id": tripID}
+	if flow != "" {
+		vals["flow"] = flow
+	}
+	if len(newPinIDs) > 0 {
+		if b, err := json.Marshal(newPinIDs); err == nil {
+			vals["new_pin_ids"] = string(b)
+		}
+	}
+	return r.client.XAdd(ctx, &redis.XAddArgs{
+		Stream: mlTasksStream,
+		Values: vals,
+	}).Err()
+}
+
+// SetMLContext stores flow-scoped context for later filtering ML results (TTL).
+func (r *RedisRepository) SetMLContext(ctx context.Context, tripID, flow string, newPinIDs []string, ttl time.Duration) error {
+	if tripID == "" {
+		return nil
+	}
+	vals := map[string]interface{}{}
+	if flow != "" {
+		vals["flow"] = flow
+	}
+	if len(newPinIDs) > 0 {
+		if b, err := json.Marshal(newPinIDs); err == nil {
+			vals["new_pin_ids"] = string(b)
+		}
+	}
+	if len(vals) == 0 {
+		return nil
+	}
+	key := mlContextPrefix + tripID
+	if err := r.client.HSet(ctx, key, vals).Err(); err != nil {
+		return err
+	}
+	if ttl > 0 {
+		_ = r.client.Expire(ctx, key, ttl).Err()
+	}
+	return nil
+}
+
+// GetMLContext returns flow and new_pin_ids (if present) for the trip.
+func (r *RedisRepository) GetMLContext(ctx context.Context, tripID string) (flow string, newPinIDs []string, err error) {
+	if tripID == "" {
+		return "", nil, nil
+	}
+	key := mlContextPrefix + tripID
+	m, err := r.client.HGetAll(ctx, key).Result()
+	if err != nil || len(m) == 0 {
+		return "", nil, err
+	}
+	flow = m["flow"]
+	if s := m["new_pin_ids"]; s != "" {
+		_ = json.Unmarshal([]byte(s), &newPinIDs)
+	}
+	return flow, newPinIDs, nil
+}
+
+// PublishPrivacyEvent publishes a PRIVACY_CHANGED event for worker aggregation.
+func (r *RedisRepository) PublishPrivacyEvent(ctx context.Context, objectType, objectID, tripID, userID, privacyLevel string) error {
+	if r == nil || r.client == nil {
+		return nil
+	}
+	return r.client.XAdd(ctx, &redis.XAddArgs{
+		Stream: privacyEventsStream,
+		Values: map[string]interface{}{
+			"event_type":    "PRIVACY_CHANGED",
+			"object_type":   objectType,
+			"object_id":     objectID,
+			"trip_id":       tripID,
+			"user_id":       userID,
+			"privacy_level": privacyLevel,
+		},
+	}).Err()
+}
+
 // PublishUserEvent publishes a JSON event to the per-user Pub/Sub channel used by API Gateway
-// WebSocket connections. Message format follows tripCreationFlow.md:
+// WebSocket connections. Message format:
 //
 //	{
 //	  "event": "<event_type>",

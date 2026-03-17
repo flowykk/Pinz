@@ -1,12 +1,11 @@
 package requests
 
-// CreateTripRequest is the REST body for POST /api/v1/trips (tripCreationFlow.md stage 1)
+// CreateTripRequest is the REST body for POST /api/v1/trips (creation/start). Privacy is set by default and changed via PATCH .../privacy + worker.
 type CreateTripRequest struct {
 	Name          string              `json:"name"`
 	Description   string              `json:"description"`
 	Category      string              `json:"category"`
 	Season        string              `json:"season"`
-	PrivacyLevel  string              `json:"privacy_level"`
 	FilesToUpload []FileToUploadEntry `json:"files_to_upload,omitempty"`
 }
 
@@ -50,11 +49,12 @@ type ProcessMediaGroupingRequest struct {
 
 // MediaMetaEntry is metadata for one uploaded media file.
 type MediaMetaEntry struct {
-	S3Key      string   `json:"s3_key"`
-	MediaType  string   `json:"media_type"`
-	CapturedAt string   `json:"captured_at,omitempty"` // ISO8601
-	Latitude   *float64 `json:"latitude,omitempty"`
-	Longitude  *float64 `json:"longitude,omitempty"`
+	S3Key       string   `json:"s3_key"`
+	MediaType   string   `json:"media_type"`
+	CapturedAt  string   `json:"captured_at,omitempty"` // ISO8601
+	Latitude    *float64 `json:"latitude,omitempty"`
+	Longitude   *float64 `json:"longitude,omitempty"`
+	ContentHash *string  `json:"content_hash,omitempty"` // e.g. SHA-256 for duplicate detection
 }
 
 // ApplyGroupsAndProcessRequest is the REST body for POST /api/v1/trips/:id/apply-groups-and-process
@@ -75,7 +75,7 @@ type FinalizeTripRequest struct {
 	MediaToDelete []string         `json:"media_to_delete,omitempty"`
 }
 
-// PublishTripRequest is the REST body for POST /api/v1/trips/:id/publish (PINZ-105, ТЗ 3.3).
+// PublishTripRequest is the REST body for POST /api/v1/trips/:id/publish.
 type PublishTripRequest struct {
 	PublishWhole bool     `json:"publish_whole,omitempty"`
 	PinIDs       []string `json:"pin_ids,omitempty"`
@@ -83,13 +83,46 @@ type PublishTripRequest struct {
 
 // PinUpdateInput is name and/or manual coordinates for a pin.
 type PinUpdateInput struct {
-	PinID     string   `json:"pin_id"`
-	Name      *string  `json:"name,omitempty"`
-	Latitude  *float64 `json:"latitude,omitempty"`
-	Longitude *float64 `json:"longitude,omitempty"`
+	PinID        string   `json:"pin_id"`
+	Name         *string  `json:"name,omitempty"`
+	Latitude     *float64 `json:"latitude,omitempty"`
+	Longitude    *float64 `json:"longitude,omitempty"`
+	Description  *string  `json:"description,omitempty"`
+	Category     *string  `json:"category,omitempty"`
+	PrivacyLevel *string  `json:"privacy_level,omitempty"`
+	Tags         []string `json:"tags,omitempty"`
 }
 
-// TripSettingsRequest is the REST body for PATCH /api/v1/trips/:id/settings (PINZ-98, ТЗ 12.4.1).
+type UpdatePinRequest struct {
+	Name          *string  `json:"name,omitempty"`
+	Description   *string  `json:"description,omitempty"`
+	Category      *string  `json:"category,omitempty"`
+	PrivacyLevel  *string  `json:"privacy_level,omitempty"`
+	Latitude      *float64 `json:"latitude,omitempty"`
+	Longitude     *float64 `json:"longitude,omitempty"`
+	StartTimeUnix *int64   `json:"start_time_unix,omitempty"`
+	EndTimeUnix   *int64   `json:"end_time_unix,omitempty"`
+}
+
+// AddMediaStartRequest is the REST body for POST /api/v1/trips/:id/media/add/start
+type AddMediaStartRequest struct {
+	FilesToUpload []FileToUploadEntry `json:"files_to_upload,omitempty"`
+}
+
+// AddMediaProcessGroupingRequest is the REST body for POST /api/v1/trips/:id/media/add/process-grouping
+type AddMediaProcessGroupingRequest struct {
+	SessionID string           `json:"session_id"`
+	Media     []MediaMetaEntry `json:"media"`
+}
+
+// AddMediaApplyGroupsAndProcessRequest is the REST body for POST /api/v1/trips/:id/media/add/apply-groups-and-process
+type AddMediaApplyGroupsAndProcessRequest struct {
+	SessionID       string          `json:"session_id"`
+	DraftPins       []DraftPinInput `json:"draft_pins"`
+	DeletedMediaIDs []string        `json:"deleted_media_ids,omitempty"`
+}
+
+// TripSettingsRequest is the REST body for PATCH /api/v1/trips/:id/settings.
 type TripSettingsRequest struct {
 	NotificationsEnabled bool `json:"notifications_enabled"`
 }

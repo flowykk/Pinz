@@ -19,7 +19,7 @@ type Trip struct {
 	CoverURL      string
 	IsPublished   bool
 	IsGenerated   bool
-	IsSoftDeleted bool // PINZ-98: true when admin deleted but trip is in others' favourites
+	IsSoftDeleted bool
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

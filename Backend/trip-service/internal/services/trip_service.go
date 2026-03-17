@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,16 +21,24 @@ const defaultInviteExpiresInSec = 86400 // 24 hours
 
 type TripService struct {
 	pb.UnimplementedTripServiceServer
-	tripRepo        *repositories.TripRepository
-	participantRepo *repositories.TripParticipantRepository
-	inviteRepo      *repositories.InvitationLinkRepository
-	settingsRepo    *repositories.TripSettingsRepository
-	eventRepo       *repositories.RedisRepository
-	mediaRepo       *repositories.MediaRepository
-	pinRepo         *repositories.PinRepository
-	tagRepo         *repositories.TagRepository
-	socialRepo      *repositories.SocialRepository
-	favouriteRepo   *repositories.FavouriteRepository
+	tripRepo            *repositories.TripRepository
+	participantRepo     *repositories.TripParticipantRepository
+	inviteRepo          *repositories.InvitationLinkRepository
+	settingsRepo        *repositories.TripSettingsRepository
+	eventRepo           *repositories.RedisRepository
+	mediaRepo           *repositories.MediaRepository
+	pinRepo             *repositories.PinRepository
+	tagRepo             *repositories.TagRepository
+	socialRepo          *repositories.SocialRepository
+	favouriteRepo       *repositories.FavouriteRepository
+	geoRepo             *repositories.GeoRegistryRepository
+	geocodingClient     *GeocodingClient
+	mediaURLs           MediaURLResolver
+	addMediaSessionRepo *repositories.AddMediaSessionRepository
+	tripPrivacyRepo     *repositories.TripPrivacyRepository
+	pinPrivacyRepo      *repositories.PinPrivacyRepository
+	mediaPrivacyRepo    *repositories.MediaPrivacyRepository
+	pinHiddenRepo       *repositories.PinHiddenRepository
 }
 
 func NewTripService(
@@ -43,18 +52,34 @@ func NewTripService(
 	tagRepo *repositories.TagRepository,
 	socialRepo *repositories.SocialRepository,
 	favouriteRepo *repositories.FavouriteRepository,
+	geoRepo *repositories.GeoRegistryRepository,
+	geocodingClient *GeocodingClient,
+	addMediaSessionRepo *repositories.AddMediaSessionRepository,
+	tripPrivacyRepo *repositories.TripPrivacyRepository,
+	pinPrivacyRepo *repositories.PinPrivacyRepository,
+	mediaPrivacyRepo *repositories.MediaPrivacyRepository,
+	pinHiddenRepo *repositories.PinHiddenRepository,
 ) *TripService {
+	var resolver MediaURLResolver = stubMediaURLResolver{}
 	return &TripService{
-		tripRepo:        tripRepo,
-		participantRepo: participantRepo,
-		inviteRepo:      inviteRepo,
-		settingsRepo:    settingsRepo,
-		eventRepo:       eventRepo,
-		mediaRepo:       mediaRepo,
-		pinRepo:         pinRepo,
-		tagRepo:         tagRepo,
-		socialRepo:      socialRepo,
-		favouriteRepo:   favouriteRepo,
+		tripRepo:            tripRepo,
+		participantRepo:     participantRepo,
+		inviteRepo:          inviteRepo,
+		settingsRepo:        settingsRepo,
+		eventRepo:           eventRepo,
+		mediaRepo:           mediaRepo,
+		pinRepo:             pinRepo,
+		tagRepo:             tagRepo,
+		socialRepo:          socialRepo,
+		favouriteRepo:       favouriteRepo,
+		geoRepo:             geoRepo,
+		geocodingClient:     geocodingClient,
+		mediaURLs:           resolver,
+		addMediaSessionRepo: addMediaSessionRepo,
+		tripPrivacyRepo:     tripPrivacyRepo,
+		pinPrivacyRepo:      pinPrivacyRepo,
+		mediaPrivacyRepo:    mediaPrivacyRepo,
+		pinHiddenRepo:       pinHiddenRepo,
 	}
 }
 
@@ -82,13 +107,8 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	if season == "" || !validateSeason(season) {
 		return nil, status.Error(codes.InvalidArgument, "season must be one of: Зима, Весна, Лето, Осень")
 	}
-	privacyLevel := req.GetPrivacyLevel()
-	if privacyLevel == "" {
-		privacyLevel = "Private"
-	}
-	if !validatePrivacyLevel(privacyLevel) {
-		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: Public, Private, Restricted")
-	}
+	// Privacy level is set by default; participants change it via UpdateTripPrivacy, worker aggregates.
+	privacyLevel := "Private"
 
 	tripStatus := "Created"
 	if len(req.GetFilesToUpload()) > 0 {
@@ -114,6 +134,11 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	if err := s.participantRepo.Add(participant); err != nil {
 		return nil, status.Error(codes.Internal, "failed to add owner as participant")
 	}
+	for _, f := range req.GetFilesToUpload() {
+		if !validateContentType(f.GetContentType()) {
+			return nil, status.Error(codes.InvalidArgument, "content_type must be one of: image/jpeg, image/png, image/heic, video/mp4, video/quicktime")
+		}
+	}
 	uploadUrls := make([]*pb.UploadUrl, 0, len(req.GetFilesToUpload()))
 	for _, f := range req.GetFilesToUpload() {
 		ext := contentTypeToExt(f.GetContentType())
@@ -121,7 +146,7 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 		uploadUrls = append(uploadUrls, &pb.UploadUrl{
 			ClientId: f.GetClientId(),
 			S3Key:    s3Key,
-			Url:      "", // Media Service will provide presigned URL; stub for now
+			Url:      s.mediaURLs.PresignedUploadURL(s3Key),
 		})
 	}
 	return &pb.CreateTripResponse{
@@ -147,22 +172,119 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 		}
 		return nil, status.Error(codes.Internal, "failed to get trip")
 	}
-	ok, err = s.participantRepo.IsParticipant(tripID, userID)
+	isParticipant, err := s.participantRepo.IsParticipant(tripID, userID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to check participant")
 	}
-	if ok {
-		return &pb.GetTripResponse{Trip: tripToProto(trip)}, nil
+	if !isParticipant {
+		if trip.PrivacyLevel != "Public" {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
 	}
-	// PINZ-98: allow access if user has trip in favourites (e.g. after soft delete)
-	hasFav, err := s.favouriteRepo.HasFavourite(userID, tripID)
+	pins, err := s.pinRepo.ListByTripID(tripID)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to check favourite")
+		return nil, status.Error(codes.Internal, "failed to list pins")
 	}
-	if hasFav {
-		return &pb.GetTripResponse{Trip: tripToProto(trip)}, nil
+	if s.pinHiddenRepo != nil {
+		hiddenIDs, _ := s.pinHiddenRepo.ListHiddenPinIDsForUser(tripID, userID)
+		hiddenSet := make(map[string]struct{}, len(hiddenIDs))
+		for _, id := range hiddenIDs {
+			hiddenSet[id] = struct{}{}
+		}
+		filtered := pins[:0]
+		for _, p := range pins {
+			if _, ok := hiddenSet[p.ID]; !ok {
+				filtered = append(filtered, p)
+			}
+		}
+		pins = filtered
 	}
-	return nil, status.Error(codes.PermissionDenied, "not a participant")
+	mediaList, err := s.mediaRepo.ListByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list media")
+	}
+	if !isParticipant {
+		pins = filterPinsByPrivacy(pins, "Public")
+		mediaList = filterMediaByPrivacy(mediaList, "Public")
+	}
+	publicPinIDs := make(map[string]struct{})
+	for _, p := range pins {
+		publicPinIDs[p.ID] = struct{}{}
+	}
+	mediaByPin := make(map[string][]*models.Media)
+	for _, m := range mediaList {
+		if m.PinID == nil {
+			continue
+		}
+		if isParticipant {
+			mediaByPin[*m.PinID] = append(mediaByPin[*m.PinID], m)
+		} else if _, ok := publicPinIDs[*m.PinID]; ok {
+			mediaByPin[*m.PinID] = append(mediaByPin[*m.PinID], m)
+		}
+	}
+	outPins := make([]*pb.TripDetailPin, 0, len(pins))
+	for _, p := range pins {
+		pinMedia := mediaByPin[p.ID]
+		pbMedia := make([]*pb.TripDetailMedia, 0, len(pinMedia))
+		for _, m := range pinMedia {
+			pbMedia = append(pbMedia, &pb.TripDetailMedia{
+				Id:           m.ID,
+				S3Key:        m.S3Key,
+				MediaType:    m.MediaType,
+				PrivacyLevel: m.PrivacyLevel,
+			})
+		}
+		dp := &pb.TripDetailPin{
+			Id:           p.ID,
+			Name:         p.Name,
+			Description:  p.Description,
+			Category:     p.Category,
+			PrivacyLevel: p.PrivacyLevel,
+			Media:        pbMedia,
+		}
+		if p.Latitude != nil {
+			dp.Latitude = p.Latitude
+		}
+		if p.Longitude != nil {
+			dp.Longitude = p.Longitude
+		}
+		if p.StartTime != nil {
+			dp.StartTimeUnix = p.StartTime.Unix()
+		}
+		if p.EndTime != nil {
+			dp.EndTimeUnix = p.EndTime.Unix()
+		}
+		outPins = append(outPins, dp)
+	}
+	participants, err := s.participantRepo.GetByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list participants")
+	}
+	participantRefs := make([]*pb.TripParticipantRef, 0, len(participants))
+	for _, p := range participants {
+		participantRefs = append(participantRefs, &pb.TripParticipantRef{UserId: p.UserID, IsAdmin: p.IsAdmin})
+	}
+	return &pb.GetTripResponse{Trip: tripToProto(trip), Pins: outPins, Participants: participantRefs}, nil
+}
+
+func filterPinsByPrivacy(pins []*models.Pin, level string) []*models.Pin {
+	out := make([]*models.Pin, 0, len(pins))
+	for _, p := range pins {
+		if p.PrivacyLevel == level {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+func filterMediaByPrivacy(media []*models.Media, level string) []*models.Media {
+	out := make([]*models.Media, 0, len(media))
+	for _, m := range media {
+		if m.PrivacyLevel == level {
+			out = append(out, m)
+		}
+	}
+	return out
 }
 
 func (s *TripService) ListUserTrips(ctx context.Context, req *pb.ListUserTripsRequest) (*pb.ListUserTripsResponse, error) {
@@ -205,7 +327,6 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 		}
 		return nil, status.Error(codes.Internal, "failed to get trip")
 	}
-	// ТЗ 3.2: редактировать параметры путешествия может любой участник
 	participant, err := s.participantRepo.IsParticipant(tripID, userID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to check participant")
@@ -266,7 +387,6 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 	return &pb.UpdateTripResponse{Trip: tripToProto(updated)}, nil
 }
 
-// DeleteTrip — только админ. PINZ-98 (ТЗ 3.24.1/3.24.2): если трип в избранном у других — soft delete (удаление из списка участников); иначе — полное удаление.
 func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest) (*pb.DeleteTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -297,7 +417,6 @@ func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest)
 		}
 		return &pb.DeleteTripResponse{Success: true}, nil
 	}
-	// Полное удаление: выходим админа, если 0 участников — удаляем трип, иначе назначаем нового админа
 	if err := s.participantRepo.Remove(tripID, userID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Error(codes.NotFound, "trip not found")
@@ -320,7 +439,6 @@ func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest)
 	return &pb.DeleteTripResponse{Success: true}, nil
 }
 
-// GenerateInviteLink — только участники трипа могут генерировать ссылку (ТЗ 3.18).
 func (s *TripService) GenerateInviteLink(ctx context.Context, req *pb.GenerateInviteLinkRequest) (*pb.GenerateInviteLinkResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -358,7 +476,7 @@ func (s *TripService) GenerateInviteLink(ctx context.Context, req *pb.GenerateIn
 	return &pb.GenerateInviteLinkResponse{
 		InviteLinkId:  link.ID,
 		Token:         token,
-		InviteUrl:     "", // клиент/gateway собирает URL по token
+		InviteUrl:     "",
 		ExpiresAtUnix: expiresAt.Unix(),
 	}, nil
 }
@@ -407,7 +525,6 @@ func (s *TripService) JoinTripByToken(ctx context.Context, req *pb.JoinTripByTok
 	return &pb.JoinTripByTokenResponse{TripId: link.TripID, AlreadyJoined: false}, nil
 }
 
-// RemoveParticipant — только админ может удалить участника (ТЗ 3.19), событие PARTICIPANT_REMOVED.
 func (s *TripService) RemoveParticipant(ctx context.Context, req *pb.RemoveParticipantRequest) (*pb.RemoveParticipantResponse, error) {
 	callerID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -444,8 +561,6 @@ func (s *TripService) RemoveParticipant(ctx context.Context, req *pb.RemoveParti
 	return &pb.RemoveParticipantResponse{Success: true}, nil
 }
 
-// LeaveTrip — любой участник выходит (ТЗ 3.20). Если единственный админ — удаляем трип (3.21);
-// иначе назначаем нового админа (3.22), событие PARTICIPANT_LEFT или ADMIN_CHANGED.
 func (s *TripService) LeaveTrip(ctx context.Context, req *pb.LeaveTripRequest) (*pb.LeaveTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -491,7 +606,6 @@ func (s *TripService) LeaveTrip(ctx context.Context, req *pb.LeaveTripRequest) (
 	return &pb.LeaveTripResponse{Success: true, TripDeleted: false}, nil
 }
 
-// TransferAdmin — только текущий админ может передать права (ТЗ 3.22.1), событие ADMIN_CHANGED.
 func (s *TripService) TransferAdmin(ctx context.Context, req *pb.TransferAdminRequest) (*pb.TransferAdminResponse, error) {
 	callerID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -554,6 +668,9 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 	total, videos, _ := s.mediaRepo.CountByTripID(tripID)
 	newVideos := 0
 	for _, m := range req.GetMedia() {
+		if err := validateMediaMeta(m); err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
 		if m.GetMediaType() == "video" {
 			newVideos++
 		}
@@ -581,6 +698,9 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 			lat, lon := meta.GetLatitude(), meta.GetLongitude()
 			media.Latitude = &lat
 			media.Longitude = &lon
+		}
+		if meta.ContentHash != nil {
+			media.ContentHash = meta.ContentHash
 		}
 		if err := s.mediaRepo.Create(media); err != nil {
 			return nil, status.Error(codes.Internal, "failed to save media")
@@ -613,7 +733,7 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 			}
 			dp.Media = append(dp.Media, &pb.DraftPinMedia{
 				MediaId: m.ID,
-				Url:     "", // Media Service read URL; stub
+				Url:     s.mediaURLs.ReadURL(m.S3Key),
 				Type:    m.MediaType,
 			})
 		}
@@ -623,6 +743,388 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 		TripId:    tripID,
 		Status:    "DRAFT_GROUPING_REVIEW",
 		DraftPins: respPins,
+	}, nil
+}
+
+// AddMediaStart возвращает s3_key и (в будущем) presigned URL для загрузки новых медиа в существующий трип.
+func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRequest) (*pb.AddMediaStartResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	if _, err := s.tripRepo.GetByID(tripID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !isParticipant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+
+	existingMediaList, _ := s.mediaRepo.ListByTripID(tripID)
+	existingIDs := make([]string, 0, len(existingMediaList))
+	for _, m := range existingMediaList {
+		existingIDs = append(existingIDs, m.ID)
+	}
+	sessionID := ""
+	if s.addMediaSessionRepo != nil {
+		if sid, err := s.addMediaSessionRepo.Create(ctx, tripID, existingIDs); err == nil {
+			sessionID = sid
+		}
+	}
+
+	for _, f := range req.GetFilesToUpload() {
+		if !validateContentType(f.GetContentType()) {
+			return nil, status.Error(codes.InvalidArgument, "content_type must be one of: image/jpeg, image/png, image/heic, video/mp4, video/quicktime")
+		}
+	}
+	uploadUrls := make([]*pb.UploadUrl, 0, len(req.GetFilesToUpload()))
+	for _, f := range req.GetFilesToUpload() {
+		ext := contentTypeToExt(f.GetContentType())
+		s3Key := "trips/" + tripID + "/" + f.GetClientId() + ext
+		uploadUrls = append(uploadUrls, &pb.UploadUrl{
+			ClientId: f.GetClientId(),
+			S3Key:    s3Key,
+			Url:      s.mediaURLs.PresignedUploadURL(s3Key),
+		})
+	}
+	return &pb.AddMediaStartResponse{
+		TripId:     tripID,
+		SessionId:  sessionID,
+		UploadUrls: uploadUrls,
+	}, nil
+}
+
+// AddMediaProcessGrouping сохраняет метаданные новых медиа и группирует их относительно существующих пинов.
+func (s *TripService) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMediaProcessGroupingRequest) (*pb.AddMediaProcessGroupingResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	sessionID := req.GetSessionId()
+	if sessionID == "" {
+		return nil, status.Error(codes.InvalidArgument, "session_id is required")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if trip.Status != "READY" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be READY to add media")
+	}
+
+	total, videos, _ := s.mediaRepo.CountByTripID(tripID)
+	newVideos := 0
+	for _, m := range req.GetMedia() {
+		if err := validateMediaMeta(m); err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		if m.GetMediaType() == "video" {
+			newVideos++
+		}
+	}
+	if total+len(req.GetMedia()) > MaxMediaPerTrip {
+		return nil, status.Errorf(codes.InvalidArgument, "trip may have at most %d media", MaxMediaPerTrip)
+	}
+	if videos+newVideos > MaxVideosPerTrip {
+		return nil, status.Errorf(codes.InvalidArgument, "trip may have at most %d videos", MaxVideosPerTrip)
+	}
+
+	existingList, sidTripID, err := s.addMediaSessionRepo.GetExistingMediaIDs(ctx, sessionID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "add-media session not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to load add-media session")
+	}
+	if sidTripID != tripID {
+		return nil, status.Error(codes.InvalidArgument, "session_id does not match trip_id")
+	}
+	existingIDs := make(map[string]struct{}, len(existingList))
+	for _, id := range existingList {
+		existingIDs[id] = struct{}{}
+	}
+
+	for _, meta := range req.GetMedia() {
+		media := &models.Media{
+			TripID:       tripID,
+			S3Key:        meta.GetS3Key(),
+			MediaType:    meta.GetMediaType(),
+			BattleRating: 0,
+			PrivacyLevel: trip.PrivacyLevel,
+		}
+		if meta.CapturedAtUnix != 0 {
+			t := time.Unix(meta.GetCapturedAtUnix(), 0)
+			media.CapturedAt = &t
+		}
+		if meta.Latitude != nil && meta.Longitude != nil {
+			lat, lon := meta.GetLatitude(), meta.GetLongitude()
+			media.Latitude = &lat
+			media.Longitude = &lon
+		}
+		if meta.ContentHash != nil {
+			media.ContentHash = meta.ContentHash
+		}
+		if err := s.mediaRepo.Create(media); err != nil {
+			return nil, status.Error(codes.Internal, "failed to save media")
+		}
+	}
+
+	pins, err := s.pinRepo.ListByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list pins")
+	}
+	mediaList, _ := s.mediaRepo.ListByTripID(tripID)
+	mediaByID := make(map[string]*models.Media, len(mediaList))
+	for _, m := range mediaList {
+		mediaByID[m.ID] = m
+	}
+	var newMedia []*models.Media
+	for _, m := range mediaList {
+		if _, ok := existingIDs[m.ID]; !ok {
+			newMedia = append(newMedia, m)
+		}
+	}
+
+	attached, remaining, unassigned := attachNewMediaToExistingPins(newMedia, pins, ClusterRadiusMeters, TimeClusterMinutes)
+	newPinGroups := clusterNewMediaStandalone(remaining, ClusterRadiusMeters, TimeClusterMinutes)
+
+	// 1) existing pins groups: include existing media (read_only=true) + attached new media (read_only=false)
+	respPins := make([]*pb.GroupedPin, 0, len(pins)+len(newPinGroups)+1)
+	for _, p := range pins {
+		gp := &pb.GroupedPin{PinId: p.ID, ReadOnly: true}
+		// existing media for this pin
+		for _, m := range mediaList {
+			if m.PinID != nil && *m.PinID == p.ID {
+				gp.Media = append(gp.Media, &pb.GroupedMedia{
+					MediaId:  m.ID,
+					ReadOnly: true,
+					Url:      s.mediaURLs.ReadURL(m.S3Key),
+					Type:     m.MediaType,
+				})
+			}
+		}
+		// attached new media
+		for _, mid := range attached[p.ID] {
+			if m := mediaByID[mid]; m != nil {
+				gp.Media = append(gp.Media, &pb.GroupedMedia{
+					MediaId:  m.ID,
+					ReadOnly: false,
+					Url:      s.mediaURLs.ReadURL(m.S3Key),
+					Type:     m.MediaType,
+				})
+			}
+		}
+		respPins = append(respPins, gp)
+	}
+
+	// 2) new pins groups
+	for i, group := range newPinGroups {
+		gp := &pb.GroupedPin{PinId: fmt.Sprintf("new-%d", i), ReadOnly: false}
+		for _, mid := range group {
+			if m := mediaByID[mid]; m != nil {
+				gp.Media = append(gp.Media, &pb.GroupedMedia{
+					MediaId:  m.ID,
+					ReadOnly: false,
+					Url:      s.mediaURLs.ReadURL(m.S3Key),
+					Type:     m.MediaType,
+				})
+			}
+		}
+		respPins = append(respPins, gp)
+	}
+
+	// 3) unassigned
+	if len(unassigned) > 0 {
+		gp := &pb.GroupedPin{PinId: "unassigned", ReadOnly: false}
+		for _, mid := range unassigned {
+			if m := mediaByID[mid]; m != nil {
+				gp.Media = append(gp.Media, &pb.GroupedMedia{
+					MediaId:  m.ID,
+					ReadOnly: false,
+					Url:      s.mediaURLs.ReadURL(m.S3Key),
+					Type:     m.MediaType,
+				})
+			}
+		}
+		respPins = append(respPins, gp)
+	}
+
+	return &pb.AddMediaProcessGroupingResponse{
+		TripId:    tripID,
+		SessionId: sessionID,
+		Pins:      respPins,
+	}, nil
+}
+
+// AddMediaApplyGroupsAndProcess применяет группировку новых медиа и запускает фоновую обработку (ML).
+func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb.AddMediaApplyGroupsAndProcessRequest) (*pb.AddMediaApplyGroupsAndProcessResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	sessionID := req.GetSessionId()
+	if sessionID == "" {
+		return nil, status.Error(codes.InvalidArgument, "session_id is required")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	if trip.Status != "READY" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be READY to apply added media")
+	}
+
+	if s.addMediaSessionRepo == nil {
+		return nil, status.Error(codes.FailedPrecondition, "add-media sessions not configured")
+	}
+	existingIDsList, sidTripID, err := s.addMediaSessionRepo.GetExistingMediaIDs(ctx, sessionID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "add-media session not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to load add-media session")
+	}
+	if sidTripID != tripID {
+		return nil, status.Error(codes.InvalidArgument, "session_id does not match trip_id")
+	}
+	existingIDs := make(map[string]struct{}, len(existingIDsList))
+	for _, id := range existingIDsList {
+		existingIDs[id] = struct{}{}
+	}
+	for _, mid := range req.GetDeletedMediaIds() {
+		if _, ok := existingIDs[mid]; ok {
+			return nil, status.Error(codes.InvalidArgument, "cannot delete existing media in add-media flow")
+		}
+	}
+	for _, dp := range req.GetDraftPins() {
+		for _, mid := range dp.GetMediaIds() {
+			if _, ok := existingIDs[mid]; ok {
+				return nil, status.Error(codes.InvalidArgument, "cannot move existing media in add-media flow")
+			}
+		}
+	}
+
+	tripMedia, err := s.mediaRepo.ListByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list trip media")
+	}
+	hashToIDs := make(map[string][]string)
+	for _, m := range tripMedia {
+		if m.ContentHash != nil && *m.ContentHash != "" {
+			hashToIDs[*m.ContentHash] = append(hashToIDs[*m.ContentHash], m.ID)
+		}
+	}
+	duplicateMediaIDs := make(map[string]struct{})
+	for _, ids := range hashToIDs {
+		if len(ids) <= 1 {
+			continue
+		}
+		for i := 1; i < len(ids); i++ {
+			duplicateMediaIDs[ids[i]] = struct{}{}
+		}
+	}
+	toDelete := make([]string, 0, len(req.GetDeletedMediaIds())+len(duplicateMediaIDs))
+	toDelete = append(toDelete, req.GetDeletedMediaIds()...)
+	for mid := range duplicateMediaIDs {
+		toDelete = append(toDelete, mid)
+	}
+	if len(toDelete) > 0 {
+		if err := s.mediaRepo.DeleteByIDs(toDelete); err != nil {
+			return nil, status.Error(codes.Internal, "failed to delete media")
+		}
+	}
+
+	pins, err := s.pinRepo.ListByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list pins")
+	}
+	pinByID := make(map[string]*models.Pin, len(pins))
+	for _, p := range pins {
+		pinByID[p.ID] = p
+	}
+
+	newPinIDs := make([]string, 0)
+	for _, dp := range req.GetDraftPins() {
+		mediaIDs := make([]string, 0, len(dp.GetMediaIds()))
+		for _, mid := range dp.GetMediaIds() {
+			if _, isDup := duplicateMediaIDs[mid]; !isDup {
+				mediaIDs = append(mediaIDs, mid)
+			}
+		}
+		if len(mediaIDs) == 0 {
+			continue
+		}
+		draftID := dp.GetDraftPinId()
+		if existingPin, ok := pinByID[draftID]; ok {
+			if err := s.mediaRepo.UpdatePinIDByIDs(mediaIDs, existingPin.ID); err != nil {
+				return nil, status.Error(codes.Internal, "failed to assign media to existing pin")
+			}
+			existingPin.MediaCount += int32(len(mediaIDs))
+			if err := s.pinRepo.Update(existingPin); err != nil {
+				return nil, status.Error(codes.Internal, "failed to update existing pin")
+			}
+			updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, existingPin.ID)
+			continue
+		}
+
+		pin := &models.Pin{
+			TripID:       tripID,
+			Name:         "Pin",
+			Description:  "",
+			Category:     trip.Category,
+			PrivacyLevel: trip.PrivacyLevel,
+			MediaCount:   int32(len(mediaIDs)),
+		}
+		if err := s.pinRepo.Create(pin); err != nil {
+			return nil, status.Error(codes.Internal, "failed to create pin")
+		}
+		newPinIDs = append(newPinIDs, pin.ID)
+		if err := s.mediaRepo.UpdatePinIDByIDs(mediaIDs, pin.ID); err != nil {
+			return nil, status.Error(codes.Internal, "failed to assign media to pin")
+		}
+		updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pin.ID)
+	}
+
+	if err := s.tripRepo.SetStatus(tripID, "PROCESSING"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update status")
+	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.SetMLContext(ctx, tripID, "add_media", newPinIDs, 2*time.Hour)
+		_ = s.eventRepo.AddMLTaskWithFlow(ctx, tripID, "add_media", newPinIDs)
+	}
+
+	return &pb.AddMediaApplyGroupsAndProcessResponse{
+		Message: "Processing started",
+		Status:  "PROCESSING",
 	}, nil
 }
 
@@ -649,15 +1151,64 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 	if trip.Status != "DRAFT_GROUPING_REVIEW" {
 		return nil, status.Error(codes.FailedPrecondition, "trip must be in DRAFT_GROUPING_REVIEW")
 	}
-	// Delete rejected media
-	if len(req.GetDeletedMediaIds()) > 0 {
-		if err := s.mediaRepo.DeleteByIDs(req.GetDeletedMediaIds()); err != nil {
+	tripMedia, err := s.mediaRepo.ListByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list trip media")
+	}
+	tripMediaIDs := make(map[string]struct{}, len(tripMedia))
+	for _, m := range tripMedia {
+		tripMediaIDs[m.ID] = struct{}{}
+	}
+	hashToIDs := make(map[string][]string)
+	for _, m := range tripMedia {
+		if m.ContentHash != nil && *m.ContentHash != "" {
+			hashToIDs[*m.ContentHash] = append(hashToIDs[*m.ContentHash], m.ID)
+		}
+	}
+	duplicateMediaIDs := make(map[string]struct{})
+	for _, ids := range hashToIDs {
+		if len(ids) <= 1 {
+			continue
+		}
+		for i := 1; i < len(ids); i++ {
+			duplicateMediaIDs[ids[i]] = struct{}{}
+		}
+	}
+	for _, mid := range req.GetDeletedMediaIds() {
+		if _, ok := tripMediaIDs[mid]; !ok {
+			return nil, status.Errorf(codes.InvalidArgument, "media_id %q does not belong to this trip", mid)
+		}
+	}
+	seenInDraftPins := make(map[string]struct{})
+	for _, dp := range req.GetDraftPins() {
+		for _, mid := range dp.GetMediaIds() {
+			if _, ok := tripMediaIDs[mid]; !ok {
+				return nil, status.Errorf(codes.InvalidArgument, "media_id %q does not belong to this trip", mid)
+			}
+			if _, dup := seenInDraftPins[mid]; dup {
+				return nil, status.Errorf(codes.InvalidArgument, "media_id %q must not appear in more than one pin", mid)
+			}
+			seenInDraftPins[mid] = struct{}{}
+		}
+	}
+	toDelete := make([]string, 0, len(req.GetDeletedMediaIds())+len(duplicateMediaIDs))
+	toDelete = append(toDelete, req.GetDeletedMediaIds()...)
+	for mid := range duplicateMediaIDs {
+		toDelete = append(toDelete, mid)
+	}
+	if len(toDelete) > 0 {
+		if err := s.mediaRepo.DeleteByIDs(toDelete); err != nil {
 			return nil, status.Error(codes.Internal, "failed to delete media")
 		}
 	}
-	// Create one pin per draft_pin and assign media
 	for _, dp := range req.GetDraftPins() {
-		if len(dp.GetMediaIds()) == 0 {
+		mediaIDs := make([]string, 0, len(dp.GetMediaIds()))
+		for _, mid := range dp.GetMediaIds() {
+			if _, isDup := duplicateMediaIDs[mid]; !isDup {
+				mediaIDs = append(mediaIDs, mid)
+			}
+		}
+		if len(mediaIDs) == 0 {
 			continue
 		}
 		pin := &models.Pin{
@@ -666,18 +1217,16 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 			Description:  "",
 			Category:     trip.Category,
 			PrivacyLevel: trip.PrivacyLevel,
-			MediaCount:   int32(len(dp.GetMediaIds())),
+			MediaCount:   int32(len(mediaIDs)),
 		}
 		if err := s.pinRepo.Create(pin); err != nil {
 			return nil, status.Error(codes.Internal, "failed to create pin")
 		}
-		if err := s.mediaRepo.UpdatePinIDByIDs(dp.GetMediaIds(), pin.ID); err != nil {
+		if err := s.mediaRepo.UpdatePinIDByIDs(mediaIDs, pin.ID); err != nil {
 			return nil, status.Error(codes.Internal, "failed to assign media to pin")
 		}
-		// Compute start_time/end_time from media (first/last by captured_at)
 		updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pin.ID)
 	}
-	// Status -> PROCESSING, push to Redis Streams for worker
 	if err := s.tripRepo.SetStatus(tripID, "PROCESSING"); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
@@ -717,6 +1266,20 @@ func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRe
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list pins")
 	}
+	if s.pinHiddenRepo != nil {
+		hiddenIDs, _ := s.pinHiddenRepo.ListHiddenPinIDsForUser(tripID, userID)
+		hiddenSet := make(map[string]struct{}, len(hiddenIDs))
+		for _, id := range hiddenIDs {
+			hiddenSet[id] = struct{}{}
+		}
+		filtered := pins[:0]
+		for _, p := range pins {
+			if _, ok := hiddenSet[p.ID]; !ok {
+				filtered = append(filtered, p)
+			}
+		}
+		pins = filtered
+	}
 	tagsByPin, _ := s.tagRepo.GetByTripID(tripID)
 	mediaList, _ := s.mediaRepo.ListByTripID(tripID)
 	// similar — двумерный массив: группы медиа с одинаковым similar_group_id по всему трипу (без привязки к пину).
@@ -755,7 +1318,7 @@ func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRe
 		for _, m := range pinMedia {
 			reviewMedia = append(reviewMedia, &pb.ReviewPinMedia{
 				MediaId:      m.ID,
-				Url:          "",
+				Url:          s.mediaURLs.ReadURL(m.S3Key),
 				PrivacyLevel: m.PrivacyLevel,
 			})
 		}
@@ -816,10 +1379,12 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 	if trip.Status != "DRAFT_FINAL_REVIEW" && trip.Status != "PROCESSING" {
 		return nil, status.Error(codes.FailedPrecondition, "trip must be in DRAFT_FINAL_REVIEW or PROCESSING to finalize")
 	}
-	// Apply pin_updates (name, manual lat/lon) — task 4.1.2: название пина не более 100 символов
 	for _, pu := range req.GetPinUpdates() {
 		pin, err := s.pinRepo.GetByID(pu.GetPinId())
 		if err != nil {
+			continue
+		}
+		if pin.TripID != tripID {
 			continue
 		}
 		if pu.Name != nil {
@@ -829,30 +1394,44 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 			}
 			pin.Name = name
 		}
+		if pu.Description != nil {
+			desc := pu.GetDescription()
+			if len(desc) > MaxDescriptionLength {
+				return nil, status.Errorf(codes.InvalidArgument, "pin description must be at most %d characters", MaxDescriptionLength)
+			}
+			pin.Description = desc
+		}
+		if pu.Category != nil {
+			if !validatePinCategory(pu.GetCategory()) {
+				return nil, status.Error(codes.InvalidArgument, "invalid pin category")
+			}
+			pin.Category = pu.GetCategory()
+		}
+		if pu.PrivacyLevel != nil {
+			if !validatePrivacyLevel(pu.GetPrivacyLevel()) {
+				return nil, status.Error(codes.InvalidArgument, "invalid pin privacy_level")
+			}
+			pin.PrivacyLevel = pu.GetPrivacyLevel()
+		}
 		if pu.Latitude != nil && pu.Longitude != nil {
 			pin.Latitude = pu.Latitude
 			pin.Longitude = pu.Longitude
 		}
-		_ = s.pinRepo.Update(pin)
+		if err := s.pinRepo.Update(pin); err != nil {
+			return nil, status.Error(codes.Internal, "failed to update pin")
+		}
+		if len(pu.GetTags()) > 0 {
+			if err := s.tagRepo.SetForPin(tripID, pin.ID, pu.GetTags()); err != nil {
+				return nil, status.Error(codes.Internal, "failed to update pin tags")
+			}
+		}
 	}
 	// Delete media (DB only; S3 via Media Service later)
 	if len(req.GetMediaToDelete()) > 0 {
 		_ = s.mediaRepo.DeleteByIDs(req.GetMediaToDelete())
 	}
-	// Aggregate trip: cover_url (first media), start_date, end_date from pins
 	pins, _ := s.pinRepo.ListByTripID(tripID)
 	var minStart, maxEnd *time.Time
-	var coverURL string
-	mediaList, _ := s.mediaRepo.ListByTripID(tripID)
-	for _, m := range mediaList {
-		if m.PinID == nil {
-			continue
-		}
-		if coverURL == "" && m.MediaType == "image" {
-			coverURL = "" // would be Media Service URL from s3_key
-		}
-		break
-	}
 	for _, p := range pins {
 		if p.StartTime != nil {
 			if minStart == nil || p.StartTime.Before(*minStart) {
@@ -865,7 +1444,6 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 			}
 		}
 	}
-	trip.CoverURL = coverURL
 	trip.StartDate = minStart
 	trip.EndDate = maxEnd
 	_ = s.tripRepo.Update(trip)
@@ -879,10 +1457,6 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 	}, nil
 }
 
-// PublishTrip — отдельный флоу публикации в общую ленту (PINZ-105, ТЗ 3.3).
-// publish_whole=true публикует всю поездку; иначе публикуются только выбранные пины.
-// Для упрощения текущей реализации список опубликованных пинов отдельно не сохраняется —
-// trip помечается как is_published=true, а выборка пинов для отображения выполняется на клиенте.
 func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripRequest) (*pb.PublishTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -912,6 +1486,9 @@ func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripReques
 	if trip.Status != "READY" {
 		return nil, status.Error(codes.FailedPrecondition, "trip must be READY to publish")
 	}
+	if trip.PrivacyLevel != "Public" {
+		return nil, status.Error(codes.FailedPrecondition, "cannot publish private trip; set privacy to Public first")
+	}
 
 	publishWhole := req.GetPublishWhole()
 	pinIDs := req.GetPinIds()
@@ -923,7 +1500,6 @@ func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripReques
 		return nil, status.Error(codes.InvalidArgument, "pin_ids must be provided when publish_whole is false")
 	}
 
-	// Валидация и установка флага публикации на пинах.
 	pins, err := s.pinRepo.ListByTripID(tripID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list pins")
@@ -933,7 +1509,6 @@ func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripReques
 		pinIDSet[p.ID] = p
 	}
 
-	// Сбрасываем старое состояние публикации, чтобы можно было переопубликовать с другим набором пинов.
 	for _, p := range pins {
 		p.IsPublishedInFeed = false
 		_ = s.pinRepo.Update(p)
@@ -974,7 +1549,6 @@ func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripReques
 	return &pb.PublishTripResponse{Trip: tripToProto(updated)}, nil
 }
 
-// UpdateTripSettings — ТЗ 12.4.1: вкл/выкл уведомлений по трипу. Только участник, только свои настройки.
 func (s *TripService) UpdateTripSettings(ctx context.Context, req *pb.UpdateTripSettingsRequest) (*pb.UpdateTripSettingsResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -995,7 +1569,6 @@ func (s *TripService) UpdateTripSettings(ctx context.Context, req *pb.UpdateTrip
 	return &pb.UpdateTripSettingsResponse{Success: true}, nil
 }
 
-// ListFeed — лента опубликованных трипов (PINZ-98). Пагинация 20, фильтры category/season/location, сортировка date|rating.
 func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*pb.ListFeedResponse, error) {
 	_, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -1013,23 +1586,42 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 	if sortBy != "rating" && sortBy != "date" {
 		sortBy = "date"
 	}
-	var locationID *int
-	if req.GetLocationId() != 0 {
-		id := int(req.GetLocationId())
-		locationID = &id
+	var locationIDs []int
+	if req.GetLocationName() != "" {
+		ids, err := s.geoRepo.FindLocationIDsByName(ctx, req.GetLocationName())
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to resolve location")
+		}
+		locationIDs = ids
+	} else if req.GetLocationId() != 0 {
+		locationIDs = []int{int(req.GetLocationId())}
 	}
-	trips, err := s.tripRepo.ListFeed(limit, offset, req.GetCategory(), req.GetSeason(), locationID, sortBy)
+	trips, err := s.tripRepo.ListFeed(limit, offset, req.GetCategory(), req.GetSeason(), locationIDs, sortBy)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list feed")
 	}
+	tripIDs := make([]string, len(trips))
+	for i, t := range trips {
+		tripIDs[i] = t.ID
+	}
+	pinsByTrip, _ := s.pinRepo.ListPublishedPinsByTripIDs(tripIDs)
+	mediaByTrip, _ := s.mediaRepo.TopMediaByTripIDs(tripIDs, 8)
 	out := make([]*pb.Trip, len(trips))
+	cards := make([]*pb.FeedCard, len(trips))
 	for i, t := range trips {
 		out[i] = tripToProto(t)
+		card := &pb.FeedCard{Trip: out[i]}
+		for _, fp := range pinsByTrip[t.ID] {
+			card.Pins = append(card.Pins, &pb.FeedCardPin{Id: fp.ID, Latitude: fp.Latitude, Longitude: fp.Longitude})
+		}
+		for _, fm := range mediaByTrip[t.ID] {
+			card.Media = append(card.Media, &pb.FeedCardMedia{Id: fm.ID, S3Key: fm.S3Key, MediaType: fm.MediaType})
+		}
+		cards[i] = card
 	}
-	return &pb.ListFeedResponse{Trips: out}, nil
+	return &pb.ListFeedResponse{Trips: out, Cards: cards}, nil
 }
 
-// LikeTrip — поставить лайк трипу в ленте (PINZ-98).
 func (s *TripService) LikeTrip(ctx context.Context, req *pb.LikeTripRequest) (*pb.LikeTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -1052,7 +1644,6 @@ func (s *TripService) LikeTrip(ctx context.Context, req *pb.LikeTripRequest) (*p
 	return &pb.LikeTripResponse{Success: true}, nil
 }
 
-// DislikeTrip — поставить дизлайк трипу в ленте (PINZ-98).
 func (s *TripService) DislikeTrip(ctx context.Context, req *pb.DislikeTripRequest) (*pb.DislikeTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -1075,7 +1666,6 @@ func (s *TripService) DislikeTrip(ctx context.Context, req *pb.DislikeTripReques
 	return &pb.DislikeTripResponse{Success: true}, nil
 }
 
-// AddToFavourites — добавить трип в избранное (PINZ-98).
 func (s *TripService) AddToFavourites(ctx context.Context, req *pb.AddToFavouritesRequest) (*pb.AddToFavouritesResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -1098,7 +1688,6 @@ func (s *TripService) AddToFavourites(ctx context.Context, req *pb.AddToFavourit
 	return &pb.AddToFavouritesResponse{Success: true}, nil
 }
 
-// RemoveFromFavourites — убрать трип из избранного (PINZ-98).
 func (s *TripService) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFromFavouritesRequest) (*pb.RemoveFromFavouritesResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -1115,6 +1704,383 @@ func (s *TripService) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFr
 		return nil, status.Error(codes.Internal, "failed to remove from favourites")
 	}
 	return &pb.RemoveFromFavouritesResponse{Success: true}, nil
+}
+
+func (s *TripService) UpdateTripPrivacy(ctx context.Context, req *pb.UpdateTripPrivacyRequest) (*pb.UpdateTripPrivacyResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	level := req.GetPrivacyLevel()
+	if level != "Public" && level != "Private" {
+		return nil, status.Error(codes.InvalidArgument, "privacy_level must be Public or Private (Restricted is set only by system)")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !isParticipant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if s.tripPrivacyRepo == nil {
+		return nil, status.Error(codes.Unavailable, "privacy not configured")
+	}
+	if err := s.tripPrivacyRepo.Upsert(ctx, tripID, userID, level); err != nil {
+		return nil, status.Error(codes.Internal, "failed to save privacy choice")
+	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.PublishPrivacyEvent(ctx, "trip", tripID, tripID, userID, level)
+	}
+	return &pb.UpdateTripPrivacyResponse{Success: true}, nil
+}
+
+// UpdatePinPrivacy: участник меняет приватность пина; Restricted запрещён.
+func (s *TripService) UpdatePinPrivacy(ctx context.Context, req *pb.UpdatePinPrivacyRequest) (*pb.UpdatePinPrivacyResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	pinID := req.GetPinId()
+	if pinID == "" {
+		return nil, status.Error(codes.InvalidArgument, "pin_id is required")
+	}
+	level := req.GetPrivacyLevel()
+	if level != "Public" && level != "Private" {
+		return nil, status.Error(codes.InvalidArgument, "privacy_level must be Public or Private")
+	}
+	pin, err := s.pinRepo.GetByID(pinID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "pin not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get pin")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(pin.TripID, userID)
+	if err != nil || !isParticipant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if s.pinPrivacyRepo == nil {
+		return nil, status.Error(codes.Unavailable, "privacy not configured")
+	}
+	if err := s.pinPrivacyRepo.Upsert(ctx, pinID, userID, level); err != nil {
+		return nil, status.Error(codes.Internal, "failed to save privacy choice")
+	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.PublishPrivacyEvent(ctx, "pin", pinID, pin.TripID, userID, level)
+	}
+	return &pb.UpdatePinPrivacyResponse{Success: true}, nil
+}
+
+func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (*pb.UpdatePinResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	pinID := req.GetPinId()
+	if pinID == "" {
+		return nil, status.Error(codes.InvalidArgument, "pin_id is required")
+	}
+	pin, err := s.pinRepo.GetByID(pinID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "pin not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get pin")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(pin.TripID, userID)
+	if err != nil || !isParticipant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if req.Name != nil {
+		name := strings.TrimSpace(*req.Name)
+		if len(name) > MaxNameLength {
+			return nil, status.Errorf(codes.InvalidArgument, "name must be at most %d characters", MaxNameLength)
+		}
+		pin.Name = name
+	}
+	if req.Description != nil {
+		desc := strings.TrimSpace(*req.Description)
+		if len(desc) > MaxDescriptionLength {
+			return nil, status.Errorf(codes.InvalidArgument, "description must be at most %d characters", MaxDescriptionLength)
+		}
+		pin.Description = desc
+	}
+	if req.Category != nil {
+		c := strings.TrimSpace(*req.Category)
+		if !validatePinCategory(c) {
+			return nil, status.Error(codes.InvalidArgument, "invalid pin category")
+		}
+		pin.Category = c
+	}
+	if req.PrivacyLevel != nil {
+		level := *req.PrivacyLevel
+		if level != "Public" && level != "Private" {
+			return nil, status.Error(codes.InvalidArgument, "privacy_level must be Public or Private")
+		}
+		pin.PrivacyLevel = level
+	}
+	if req.Latitude != nil && req.Longitude != nil {
+		lat, lon := *req.Latitude, *req.Longitude
+		pin.Latitude = &lat
+		pin.Longitude = &lon
+	} else if req.Latitude != nil || req.Longitude != nil {
+		return nil, status.Error(codes.InvalidArgument, "both latitude and longitude must be set together")
+	}
+	if req.StartTimeUnix != nil {
+		t := time.Unix(*req.StartTimeUnix, 0)
+		pin.StartTime = &t
+	}
+	if req.EndTimeUnix != nil {
+		t := time.Unix(*req.EndTimeUnix, 0)
+		pin.EndTime = &t
+	}
+	if err := s.pinRepo.Update(pin); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "pin not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to update pin")
+	}
+	return &pb.UpdatePinResponse{Success: true}, nil
+}
+
+// UpdateMediaPrivacy: участник меняет приватность медиа; Restricted запрещён.
+func (s *TripService) UpdateMediaPrivacy(ctx context.Context, req *pb.UpdateMediaPrivacyRequest) (*pb.UpdateMediaPrivacyResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	mediaID := req.GetMediaId()
+	if mediaID == "" {
+		return nil, status.Error(codes.InvalidArgument, "media_id is required")
+	}
+	level := req.GetPrivacyLevel()
+	if level != "Public" && level != "Private" {
+		return nil, status.Error(codes.InvalidArgument, "privacy_level must be Public or Private")
+	}
+	media, err := s.mediaRepo.GetByID(mediaID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "media not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get media")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(media.TripID, userID)
+	if err != nil || !isParticipant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if s.mediaPrivacyRepo == nil {
+		return nil, status.Error(codes.Unavailable, "privacy not configured")
+	}
+	if err := s.mediaPrivacyRepo.Upsert(ctx, mediaID, userID, level); err != nil {
+		return nil, status.Error(codes.Internal, "failed to save privacy choice")
+	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.PublishPrivacyEvent(ctx, "media", mediaID, media.TripID, userID, level)
+	}
+	return &pb.UpdateMediaPrivacyResponse{Success: true}, nil
+}
+
+func (s *TripService) SearchPins(ctx context.Context, req *pb.SearchPinsRequest) (*pb.SearchPinsResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	query := req.GetQuery()
+	if query == "" {
+		return &pb.SearchPinsResponse{Pins: nil}, nil
+	}
+	limit := req.GetLimit()
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	offset := req.GetOffset()
+	if offset < 0 {
+		offset = 0
+	}
+	pins, err := s.pinRepo.SearchByUserID(userID, query, limit, offset)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "search failed")
+	}
+	items := make([]*pb.SearchPinItem, 0, len(pins))
+	for _, p := range pins {
+		tags, _ := s.tagRepo.GetByPinID(p.ID)
+		items = append(items, &pb.SearchPinItem{
+			PinId:       p.ID,
+			TripId:      p.TripID,
+			Name:        p.Name,
+			Description: p.Description,
+			Category:    p.Category,
+			Tags:        tags,
+		})
+	}
+	return &pb.SearchPinsResponse{Pins: items}, nil
+}
+
+func (s *TripService) CreatePin(ctx context.Context, req *pb.CreatePinRequest) (*pb.CreatePinResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	mediaIDs := req.GetMediaIds()
+	if len(mediaIDs) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "at least one media_id is required")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !isParticipant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	for _, mid := range mediaIDs {
+		media, err := s.mediaRepo.GetByID(mid)
+		if err != nil || media == nil || media.TripID != tripID {
+			return nil, status.Error(codes.InvalidArgument, "media must belong to the trip")
+		}
+	}
+	pin := &models.Pin{
+		TripID:       tripID,
+		Name:         "Pin",
+		Category:     trip.Category,
+		PrivacyLevel: trip.PrivacyLevel,
+		MediaCount:   int32(len(mediaIDs)),
+	}
+	if err := s.pinRepo.Create(pin); err != nil {
+		return nil, status.Error(codes.Internal, "failed to create pin")
+	}
+	if err := s.mediaRepo.UpdatePinIDByIDs(mediaIDs, pin.ID); err != nil {
+		_ = s.pinRepo.Delete(pin.ID)
+		return nil, status.Error(codes.Internal, "failed to assign media to pin")
+	}
+	updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pin.ID)
+	return &pb.CreatePinResponse{PinId: pin.ID}, nil
+}
+
+func (s *TripService) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (*pb.DeletePinResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	pinID := req.GetPinId()
+	if pinID == "" {
+		return nil, status.Error(codes.InvalidArgument, "pin_id is required")
+	}
+	pin, err := s.pinRepo.GetByID(pinID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "pin not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get pin")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(pin.TripID, userID)
+	if err != nil || !isParticipant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if s.pinHiddenRepo != nil {
+		inOthersFav, err := s.favouriteRepo.HasFavouritesByOtherUsers(pin.TripID, userID)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to check favourites")
+		}
+		if inOthersFav {
+			if err := s.pinHiddenRepo.HidePinForUser(pinID, userID); err != nil {
+				return nil, status.Error(codes.Internal, "failed to hide pin")
+			}
+			return &pb.DeletePinResponse{Success: true}, nil
+		}
+	}
+	if err := s.pinRepo.Delete(pinID); err != nil {
+		return nil, status.Error(codes.Internal, "failed to delete pin")
+	}
+	return &pb.DeletePinResponse{Success: true}, nil
+}
+
+func (s *TripService) AddPinTags(ctx context.Context, req *pb.AddPinTagsRequest) (*pb.AddPinTagsResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	pinID := req.GetPinId()
+	if pinID == "" {
+		return nil, status.Error(codes.InvalidArgument, "pin_id is required")
+	}
+	pin, err := s.pinRepo.GetByID(pinID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "pin not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get pin")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(pin.TripID, userID)
+	if err != nil || !isParticipant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	current, _ := s.tagRepo.GetByPinID(pinID)
+	seen := make(map[string]struct{}, len(current))
+	for _, t := range current {
+		seen[t] = struct{}{}
+	}
+	for _, t := range req.GetTags() {
+		if t != "" && len(t) <= MaxTagLength {
+			seen[t] = struct{}{}
+		}
+	}
+	merged := make([]string, 0, len(seen))
+	for t := range seen {
+		merged = append(merged, t)
+	}
+	if len(merged) > MaxTagsPerPin {
+		merged = merged[:MaxTagsPerPin]
+	}
+	if err := s.tagRepo.SetForPin(pin.TripID, pinID, merged); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update tags")
+	}
+	return &pb.AddPinTagsResponse{Success: true}, nil
+}
+
+func (s *TripService) RemovePinTags(ctx context.Context, req *pb.RemovePinTagsRequest) (*pb.RemovePinTagsResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	pinID := req.GetPinId()
+	if pinID == "" {
+		return nil, status.Error(codes.InvalidArgument, "pin_id is required")
+	}
+	pin, err := s.pinRepo.GetByID(pinID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "pin not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get pin")
+	}
+	isParticipant, err := s.participantRepo.IsParticipant(pin.TripID, userID)
+	if err != nil || !isParticipant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	toRemove := make(map[string]struct{}, len(req.GetTags()))
+	for _, t := range req.GetTags() {
+		toRemove[t] = struct{}{}
+	}
+	current, _ := s.tagRepo.GetByPinID(pinID)
+	var merged []string
+	for _, t := range current {
+		if _, ok := toRemove[t]; !ok {
+			merged = append(merged, t)
+		}
+	}
+	if err := s.tagRepo.SetForPin(pin.TripID, pinID, merged); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update tags")
+	}
+	return &pb.RemovePinTagsResponse{Success: true}, nil
 }
 
 func tripToProto(t *models.Trip) *pb.Trip {

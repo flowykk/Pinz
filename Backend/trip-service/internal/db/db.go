@@ -65,7 +65,6 @@ CREATE TABLE IF NOT EXISTS trip_privacy (
   privacy_level TEXT NOT NULL,
   PRIMARY KEY (trip_id, user_id)
 );`
-	// PINZ-97: pins, media, tags, pin_privacy, media_privacy (tripCreationFlow.md)
 	pinsDDL = `
 CREATE TABLE IF NOT EXISTS pins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -117,7 +116,6 @@ CREATE TABLE IF NOT EXISTS media_privacy (
   privacy_level TEXT NOT NULL,
   PRIMARY KEY (media_id, user_id)
 );`
-	// PINZ-98: social (likes/dislikes), favourite, geo_registry, trip_locations
 	socialDDL = `
 CREATE TABLE IF NOT EXISTS social (
   user_id UUID NOT NULL,
@@ -144,6 +142,19 @@ CREATE TABLE IF NOT EXISTS trip_locations (
   trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
   location_id INT NOT NULL REFERENCES geo_registry(id),
   PRIMARY KEY (trip_id, location_id)
+);`
+	addMediaSessionsDDL = `
+CREATE TABLE IF NOT EXISTS add_media_sessions (
+  session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  existing_media_ids JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);`
+	pinHiddenByUserDDL = `
+CREATE TABLE IF NOT EXISTS pin_hidden_by_user (
+  pin_id UUID NOT NULL REFERENCES pins(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  PRIMARY KEY (pin_id, user_id)
 );`
 )
 
@@ -193,9 +204,9 @@ func InitDB() (*sql.DB, error) {
 		slog.Warn("db: failed to register metrics", "error", err)
 	}
 
-	slog.Info("db: running migrations (postgis, trips, ..., social, favourite, geo_registry, trip_locations)")
-	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL, invitationLinksDDL, tripSettingsDDL, tripPrivacyDDL, pinsDDL, mediaDDL, tagsDDL, pinPrivacyDDL, mediaPrivacyDDL, socialDDL, favouriteDDL, geoRegistryDDL, tripLocationsDDL} {
-		name := []string{"postgis", "trips", "trip_participants", "invitation_links", "trip_settings", "trip_privacy", "pins", "media", "tags", "pin_privacy", "media_privacy", "social", "favourite", "geo_registry", "trip_locations"}[i]
+	slog.Info("db: running migrations (postgis, trips, ..., add_media_sessions, pin_hidden_by_user)")
+	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL, invitationLinksDDL, tripSettingsDDL, tripPrivacyDDL, pinsDDL, mediaDDL, tagsDDL, pinPrivacyDDL, mediaPrivacyDDL, socialDDL, favouriteDDL, geoRegistryDDL, tripLocationsDDL, addMediaSessionsDDL, pinHiddenByUserDDL} {
+		name := []string{"postgis", "trips", "trip_participants", "invitation_links", "trip_settings", "trip_privacy", "pins", "media", "tags", "pin_privacy", "media_privacy", "social", "favourite", "geo_registry", "trip_locations", "add_media_sessions", "pin_hidden_by_user"}[i]
 		if _, err := db.Exec(ddl); err != nil {
 			db.Close()
 			slog.Error("db: migration failed", "object", name, "error", err)
@@ -203,23 +214,25 @@ func InitDB() (*sql.DB, error) {
 		}
 		slog.Info("db: migration ok", "object", name)
 	}
-	// Добавляем similar_group_id для поддержки нескольких групп похожих медиа внутри пина (существующие БД).
 	if _, err := db.Exec("ALTER TABLE media ADD COLUMN IF NOT EXISTS similar_group_id UUID"); err != nil {
 		db.Close()
 		slog.Error("db: migration media.similar_group_id failed", "error", err)
 		return nil, fmt.Errorf("migration media.similar_group_id: %w", err)
 	}
-	// PINZ-98: is_soft_deleted for admin delete when trip is in others' favourites.
 	if _, err := db.Exec("ALTER TABLE trips ADD COLUMN IF NOT EXISTS is_soft_deleted BOOLEAN NOT NULL DEFAULT false"); err != nil {
 		db.Close()
 		slog.Error("db: migration trips.is_soft_deleted failed", "error", err)
 		return nil, fmt.Errorf("migration trips.is_soft_deleted: %w", err)
 	}
-	// PINZ-105: is_published_in_feed для отметки опубликованных в ленту пинов.
 	if _, err := db.Exec("ALTER TABLE pins ADD COLUMN IF NOT EXISTS is_published_in_feed BOOLEAN NOT NULL DEFAULT false"); err != nil {
 		db.Close()
 		slog.Error("db: migration pins.is_published_in_feed failed", "error", err)
 		return nil, fmt.Errorf("migration pins.is_published_in_feed: %w", err)
+	}
+	if _, err := db.Exec("ALTER TABLE media ADD COLUMN IF NOT EXISTS content_hash TEXT"); err != nil {
+		db.Close()
+		slog.Error("db: migration media.content_hash failed", "error", err)
+		return nil, fmt.Errorf("migration media.content_hash: %w", err)
 	}
 	slog.Info("db: init complete")
 	return db, nil
