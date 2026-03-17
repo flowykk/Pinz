@@ -3,6 +3,8 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 
@@ -166,6 +168,19 @@ func (r *PinRepository) Update(p *models.Pin) error {
 	return nil
 }
 
+// SetPrivacyLevel updates only pin privacy_level (used by privacy aggregation worker).
+func (r *PinRepository) SetPrivacyLevel(pinID, level string) error {
+	res, err := psq.Update("pins").Set("privacy_level", level).Where(sq.Eq{"id": pinID}).RunWith(r.db).Exec()
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 func (r *PinRepository) Delete(id string) error {
 	res, err := psq.Delete("pins").Where(sq.Eq{"id": id}).RunWith(r.db).Exec()
 	if err != nil {
@@ -181,4 +196,93 @@ func (r *PinRepository) Delete(id string) error {
 func (r *PinRepository) DeleteByTripID(tripID string) error {
 	_, err := psq.Delete("pins").Where(sq.Eq{"trip_id": tripID}).RunWith(r.db).Exec()
 	return err
+}
+
+// SearchByUserID returns pins from trips where user is participant, matching query in name, description or tag.
+func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32) ([]*models.Pin, error) {
+	if query == "" {
+		return nil, nil
+	}
+	pattern := "%" + query + "%"
+	sqlStr := `SELECT DISTINCT ON (p.id) p.id, p.trip_id, p.name, p.description, p.category, p.privacy_level, p.media_count,
+		ST_X(p.location)::float as lat, ST_Y(p.location)::float as lon,
+		p.start_time, p.end_time, p.is_published_in_feed, p.created_at
+		FROM pins p
+		INNER JOIN trip_participants tp ON tp.trip_id = p.trip_id AND tp.user_id = $1
+		LEFT JOIN tags t ON t.pin_id = p.id AND t.trip_id = p.trip_id
+		WHERE p.name ILIKE $2 OR p.description ILIKE $2 OR t.tag ILIKE $2
+		ORDER BY p.id, p.created_at DESC
+		LIMIT $3 OFFSET $4`
+	rows, err := r.db.Query(sqlStr, userID, pattern, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []*models.Pin
+	for rows.Next() {
+		var p models.Pin
+		var desc sql.NullString
+		var lat, lon sql.NullFloat64
+		var startTime, endTime sql.NullTime
+		var isPublished sql.NullBool
+		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		if desc.Valid {
+			p.Description = desc.String
+		}
+		if lat.Valid {
+			p.Latitude = &lat.Float64
+		}
+		if lon.Valid {
+			p.Longitude = &lon.Float64
+		}
+		if startTime.Valid {
+			p.StartTime = &startTime.Time
+		}
+		if endTime.Valid {
+			p.EndTime = &endTime.Time
+		}
+		if isPublished.Valid {
+			p.IsPublishedInFeed = isPublished.Bool
+		}
+		list = append(list, &p)
+	}
+	return list, rows.Err()
+}
+
+type FeedPin struct {
+	ID        string
+	Latitude  float64
+	Longitude float64
+}
+
+func (r *PinRepository) ListPublishedPinsByTripIDs(tripIDs []string) (map[string][]*FeedPin, error) {
+	if len(tripIDs) == 0 {
+		return nil, nil
+	}
+	placeholders := make([]string, len(tripIDs))
+	args := make([]interface{}, len(tripIDs))
+	for i, id := range tripIDs {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+	sqlStr := `SELECT id, trip_id, ST_X(location)::float as lat, ST_Y(location)::float as lon
+		FROM pins WHERE trip_id IN (` + strings.Join(placeholders, ",") + `) AND is_published_in_feed = true AND location IS NOT NULL`
+	rows, err := r.db.Query(sqlStr, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make(map[string][]*FeedPin)
+	for rows.Next() {
+		var id, tripID string
+		var lat, lon float64
+		if err := rows.Scan(&id, &tripID, &lat, &lon); err != nil {
+			return nil, err
+		}
+		out[tripID] = append(out[tripID], &FeedPin{ID: id, Latitude: lat, Longitude: lon})
+	}
+	return out, rows.Err()
 }

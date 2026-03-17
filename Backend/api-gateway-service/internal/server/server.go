@@ -59,7 +59,7 @@ func NewServer(deps *di.Dependencies) *Server {
 	r.Get("/health", handlers.HealthCheck)
 	r.Get("/.well-known/apple-app-site-association", handlers.AppleAppSiteAssociation)
 
-	// WebSocket endpoint for real-time trip events (PINZ-99).
+	// WebSocket endpoint for real-time trip events.
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RequireJWT)
 		r.Get("/v1/ws", deps.WSHandler.ServeWS)
@@ -76,12 +76,14 @@ func NewServer(deps *di.Dependencies) *Server {
 		r.Post("/auth/logout", deps.AuthHandler.Logout)
 		r.Post("/auth/dev-login", deps.AuthHandler.DevLogin)
 
-		// Основные операции над путешествиями.
 		r.Route("/trips", func(r chi.Router) {
 			r.Use(middleware.RequireJWT)
 			r.Get("/", deps.TripHandler.ListTrips)
 			r.Post("/", deps.TripHandler.CreateTrip)
 			r.Post("/join", deps.TripHandler.JoinTripByToken)
+			r.Post("/{id}/media/add/start", deps.TripHandler.AddMediaStart)
+			r.Post("/{id}/media/add/process-grouping", deps.TripHandler.AddMediaProcessGrouping)
+			r.Post("/{id}/media/add/apply-groups-and-process", deps.TripHandler.AddMediaApplyGroupsAndProcess)
 			r.Get("/{id}", deps.TripHandler.GetTrip)
 			r.Patch("/{id}", deps.TripHandler.UpdateTrip)
 			r.Delete("/{id}", deps.TripHandler.DeleteTrip)
@@ -94,9 +96,24 @@ func NewServer(deps *di.Dependencies) *Server {
 			r.Post("/{id}/favourite", deps.TripHandler.AddToFavourites)
 			r.Delete("/{id}/favourite", deps.TripHandler.RemoveFromFavourites)
 			r.Delete("/{id}/participants/{user_id}", deps.TripHandler.RemoveParticipant)
+			r.Patch("/{id}/privacy", deps.TripHandler.UpdateTripPrivacy)
+			r.Post("/{id}/publish", deps.TripHandler.PublishTrip)
+		})
+		r.Route("/pins", func(r chi.Router) {
+			r.Use(middleware.RequireJWT)
+			r.Get("/search", deps.TripHandler.SearchPins)
+			r.Post("/", deps.TripHandler.CreatePin)
+			r.Patch("/{id}/privacy", deps.TripHandler.UpdatePinPrivacy)
+			r.Patch("/{id}", deps.TripHandler.UpdatePin)
+			r.Delete("/{id}", deps.TripHandler.DeletePin)
+			r.Post("/{id}/tags", deps.TripHandler.AddPinTags)
+			r.Delete("/{id}/tags", deps.TripHandler.RemovePinTags)
+		})
+		r.Route("/media", func(r chi.Router) {
+			r.Use(middleware.RequireJWT)
+			r.Patch("/{id}/privacy", deps.TripHandler.UpdateMediaPrivacy)
 		})
 
-		// Этапы создания путешествия (creation flow).
 		r.Route("/trip/creation", func(r chi.Router) {
 			r.Use(middleware.RequireJWT)
 			r.Post("/start", deps.TripHandler.CreateTrip)

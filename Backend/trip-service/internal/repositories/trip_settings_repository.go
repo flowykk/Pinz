@@ -25,7 +25,7 @@ func (r *TripSettingsRepository) EnsureDefaultSettings(tripID, userID string) er
 	return err
 }
 
-// UpdateNotifications updates notifications_enabled for the user's trip settings (PINZ-98, ТЗ 12.4.1).
+// UpdateNotifications updates notifications_enabled for the user's trip settings.
 func (r *TripSettingsRepository) UpdateNotifications(tripID, userID string, enabled bool) error {
 	res, err := psq.Update("trip_settings").
 		Set("notifications_enabled", enabled).

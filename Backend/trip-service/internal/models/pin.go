@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-// Pin is a point on the trip map (pin from tripCreationFlow).
+// Pin is a point on the trip map.
 type Pin struct {
 	ID                string
 	TripID            string
@@ -32,7 +32,8 @@ type Media struct {
 	CapturedAt     *time.Time
 	BattleRating   int32
 	PrivacyLevel   string
-	SimilarGroupID *string // один и тот же UUID = одна группа похожих внутри пина
+	SimilarGroupID *string
+	ContentHash    *string
 	CreatedAt      time.Time
 }
 

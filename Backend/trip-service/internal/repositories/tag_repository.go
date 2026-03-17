@@ -12,17 +12,28 @@ type TagRepository struct {
 	db *sql.DB
 }
 
+const (
+	maxTagsPerPin = 10
+	maxTagLength  = 15
+)
+
 func NewTagRepository(db *sql.DB) *TagRepository {
 	return &TagRepository{db: db}
 }
 
 func (r *TagRepository) SetForPin(tripID, pinID string, tags []string) error {
+	if len(tags) > maxTagsPerPin {
+		tags = tags[:maxTagsPerPin]
+	}
 	if _, err := psq.Delete("tags").Where(sq.Eq{"trip_id": tripID, "pin_id": pinID}).RunWith(r.db).Exec(); err != nil {
 		return err
 	}
 	for _, tag := range tags {
 		if tag == "" {
 			continue
+		}
+		if len(tag) > maxTagLength {
+			tag = tag[:maxTagLength]
 		}
 		t := &models.Tag{TripID: tripID, PinID: pinID, Tag: tag}
 		if err := r.Add(t); err != nil {
@@ -33,6 +44,12 @@ func (r *TagRepository) SetForPin(tripID, pinID string, tags []string) error {
 }
 
 func (r *TagRepository) Add(t *models.Tag) error {
+	if t.Tag == "" {
+		return nil
+	}
+	if len(t.Tag) > maxTagLength {
+		t.Tag = t.Tag[:maxTagLength]
+	}
 	q := psq.Insert("tags").Columns("trip_id", "pin_id", "tag").Values(t.TripID, t.PinID, t.Tag).Suffix("RETURNING id")
 	sqlStr, args, err := q.ToSql()
 	if err != nil {

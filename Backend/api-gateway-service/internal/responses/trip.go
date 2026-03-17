@@ -21,11 +21,76 @@ type Trip struct {
 	UpdatedAtUnix int64  `json:"updated_at_unix"`
 }
 
+type TripParticipantRef struct {
+	UserID  string `json:"user_id"`
+	IsAdmin bool   `json:"is_admin"`
+}
+
+// GetTripResponse is the response for GET /api/v1/trips/{id} (trip with pins and media).
+type GetTripResponse struct {
+	Trip         TripDetail           `json:"trip"`
+	Pins         []TripDetailPinItem  `json:"pins"`
+	Participants []TripParticipantRef `json:"participants"`
+}
+
+// TripDetail is the same as Trip, used as nested in GetTripResponse.
+type TripDetail = Trip
+
+// TripDetailPinItem is a pin with media for GET trip.
+type TripDetailPinItem struct {
+	ID            string                `json:"id"`
+	Name          string                `json:"name"`
+	Description   string                `json:"description"`
+	Category      string                `json:"category"`
+	PrivacyLevel  string                `json:"privacy_level"`
+	Latitude      *float64              `json:"latitude,omitempty"`
+	Longitude     *float64              `json:"longitude,omitempty"`
+	StartTimeUnix int64                 `json:"start_time_unix,omitempty"`
+	EndTimeUnix   int64                 `json:"end_time_unix,omitempty"`
+	Media         []TripDetailMediaItem `json:"media"`
+}
+
+// TripDetailMediaItem is media in a trip detail pin.
+type TripDetailMediaItem struct {
+	ID           string `json:"id"`
+	S3Key        string `json:"s3_key"`
+	MediaType    string `json:"media_type"`
+	PrivacyLevel string `json:"privacy_level"`
+}
+
 // CreateTripResponse is the response for POST /api/v1/trips
 type CreateTripResponse struct {
 	TripID     string      `json:"trip_id"`
 	Status     string      `json:"status"`
 	UploadURLs []UploadURL `json:"upload_urls"`
+}
+
+// AddMediaStartResponse is the response for POST /api/v1/trips/:id/media/add/start
+type AddMediaStartResponse struct {
+	TripID     string      `json:"trip_id"`
+	SessionID  string      `json:"session_id"`
+	UploadURLs []UploadURL `json:"upload_urls"`
+}
+
+// AddMediaGroupedPin represents a pin group (existing or new) in add-media grouping response.
+type AddMediaGroupedPin struct {
+	PinID    string                 `json:"pin_id"`
+	ReadOnly bool                   `json:"read_only"`
+	Media    []AddMediaGroupedMedia `json:"media"`
+}
+
+type AddMediaGroupedMedia struct {
+	MediaID  string `json:"media_id"`
+	ReadOnly bool   `json:"read_only"`
+	URL      string `json:"url"`
+	Type     string `json:"type"`
+}
+
+// AddMediaProcessGroupingResponse is the response for POST /api/v1/trips/:id/media/add/process-grouping
+type AddMediaProcessGroupingResponse struct {
+	TripID    string               `json:"trip_id"`
+	SessionID string               `json:"session_id"`
+	Pins      []AddMediaGroupedPin `json:"pins"`
 }
 
 // UploadURL is a single presigned URL (phase 3).
@@ -123,7 +188,7 @@ type FinalizeTripResponse struct {
 	Message string `json:"message"`
 }
 
-// TripSettingsResponse is the response for PATCH /api/v1/trips/:id/settings (PINZ-98).
+// TripSettingsResponse is the response for PATCH /api/v1/trips/:id/settings.
 type TripSettingsResponse struct {
 	Success bool `json:"success"`
 }
@@ -131,4 +196,47 @@ type TripSettingsResponse struct {
 // SuccessResponse is a generic success response for like/dislike/favourite.
 type SuccessResponse struct {
 	Success bool `json:"success"`
+}
+
+// SearchPinItem is one pin in search results.
+type SearchPinItem struct {
+	PinID       string   `json:"pin_id"`
+	TripID      string   `json:"trip_id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Category    string   `json:"category"`
+	Tags        []string `json:"tags"`
+}
+
+// SearchPinsResponse is the response for GET /api/v1/pins/search.
+type SearchPinsResponse struct {
+	Pins []SearchPinItem `json:"pins"`
+}
+
+// CreatePinResponse is the response for POST /api/v1/pins.
+type CreatePinResponse struct {
+	PinID string `json:"pin_id"`
+}
+
+type FeedCardPin struct {
+	ID        string  `json:"id"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+type FeedCardMedia struct {
+	ID        string `json:"id"`
+	S3Key     string `json:"s3_key"`
+	MediaType string `json:"media_type"`
+}
+
+type FeedCard struct {
+	Trip  Trip            `json:"trip"`
+	Pins  []FeedCardPin   `json:"pins"`
+	Media []FeedCardMedia `json:"media"`
+}
+
+type ListFeedResponse struct {
+	Trips []Trip     `json:"trips,omitempty"`
+	Cards []FeedCard `json:"cards"`
 }
