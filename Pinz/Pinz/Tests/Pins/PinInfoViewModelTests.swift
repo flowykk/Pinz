@@ -1,0 +1,79 @@
+import XCTest
+import CoreLocation
+@testable import PinzPins
+import PinzBase
+import PinzDomain
+
+final class PinInfoViewModelTests: XCTestCase {
+
+    private var mockRouter: MockRouter!
+    private var sut: PinInfoViewModel!
+    private let pin = Pin.stubs().first!
+
+    override func setUp() {
+        super.setUp()
+        mockRouter = MockRouter()
+        sut = PinInfoViewModel(pin: pin)
+        sut.setRouter(mockRouter)
+    }
+
+    override func tearDown() {
+        sut = nil
+        super.tearDown()
+    }
+
+    func test_initialState() {
+        XCTAssertEqual(sut.state, .info)
+        XCTAssertFalse(sut.isEditing)
+    }
+
+    func test_edit_changesStateToEditing() {
+        sut.dispatch(.edit)
+        XCTAssertEqual(sut.state, .editing)
+        XCTAssertTrue(sut.isEditing)
+    }
+
+    func test_edit_remembersPreviousState() {
+        sut.dispatch(.edit)
+        sut.dispatch(.endEdit)
+        XCTAssertEqual(sut.state, .info)
+    }
+
+    func test_editFromGallery_returnsToGallery() {
+        sut.state = .gallery
+        sut.dispatch(.edit)
+        sut.dispatch(.endEdit)
+        XCTAssertEqual(sut.state, .gallery)
+    }
+
+    func test_addTag_appendsTag() {
+        let tag = MediaTag(tag: "TestTag")
+        sut.dispatch(.addTag(tag))
+        XCTAssertTrue(sut.pin.tags.contains(where: { $0.tag == "TestTag" }))
+    }
+
+    func test_deleteTag_removesTag() {
+        let tag = MediaTag(tag: "RemoveMe")
+        sut.dispatch(.addTag(tag))
+        sut.dispatch(.deleteTag(tag))
+        XCTAssertFalse(sut.pin.tags.contains(where: { $0.tag == "RemoveMe" }))
+    }
+
+    func test_navigate_back_callsPop() {
+        sut.dispatch(.navigate(.back))
+        XCTAssertEqual(mockRouter.popCallCount, 1)
+    }
+
+    func test_navigate_changePlace_callsRouter() {
+        sut.dispatch(.navigate(.changePlace))
+        XCTAssertNotNil(mockRouter.navigatedPinPlaceChange)
+    }
+
+    func test_navigate_changePlace_action_updatesCoordinate() {
+        sut.dispatch(.navigate(.changePlace))
+        let newCoord = CLLocationCoordinate2D(latitude: 10, longitude: 20)
+        mockRouter.navigatedPinPlaceChange?.action.action(newCoord)
+        XCTAssertEqual(sut.pin.coordinates.latitude, 10)
+        XCTAssertEqual(sut.pin.coordinates.longitude, 20)
+    }
+}
