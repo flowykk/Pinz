@@ -43,6 +43,7 @@ let project = Project(
                     "ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS": "YES",
                     "DEVELOPMENT_TEAM": "ABNY5S6RA5",
                     "CODE_SIGN_STYLE": "Automatic",
+                    "CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION": "YES",
                 ]
             )
         ),
@@ -56,6 +57,15 @@ let project = Project(
             sources: ["Pinz/Tests/**"],
             resources: [],
             dependencies: [.target(name: "Pinz")]
+        )
+    ],
+    schemes: [
+        .scheme(
+            name: "Pinz",
+            shared: true,
+            buildAction: .buildAction(targets: [.target("Pinz")]),
+            testAction: .testPlans([.relativeToManifest("PinzUnitTests.xctestplan")]),
+            runAction: .runAction(executable: .target("Pinz"))
         )
     ]
 )
