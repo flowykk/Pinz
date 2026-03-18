@@ -1,0 +1,23 @@
+{
+  "configurations" : [
+    {
+      "id" : "44073EBF-50E4-4D5F-8EB2-7033790C2616",
+      "name" : "UI Tests",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Pinz.xcodeproj",
+        "name" : "PinzUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
