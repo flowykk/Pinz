@@ -57,6 +57,17 @@ let project = Project(
             sources: ["Pinz/Tests/**"],
             resources: [],
             dependencies: [.target(name: "Pinz")]
+        ),
+        .target(
+            name: "PinzUITests",
+            destinations: .iOS,
+            product: .uiTests,
+            bundleId: "io.tuist.PinzUITests",
+            deploymentTargets: .iOS("18.0"),
+            infoPlist: .default,
+            sources: ["Pinz/UITests/**"],
+            resources: [],
+            dependencies: [.target(name: "Pinz")]
         )
     ],
     schemes: [
@@ -64,7 +75,10 @@ let project = Project(
             name: "Pinz",
             shared: true,
             buildAction: .buildAction(targets: [.target("Pinz")]),
-            testAction: .testPlans([.relativeToManifest("PinzUnitTests.xctestplan")]),
+            testAction: .testPlans([
+                .relativeToManifest("PinzUnitTests.xctestplan"),
+                .relativeToManifest("PinzUITests.xctestplan")
+            ]),
             runAction: .runAction(executable: .target("Pinz"))
         )
     ]
