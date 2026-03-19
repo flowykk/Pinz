@@ -18,6 +18,26 @@ final class NetworkProvider<T: TargetType> {
         )
     }
 
+    func requestRaw(_ target: T) async throws -> Moya.Response {
+        Self.logRequest(target: target)
+        return try await withCheckedThrowingContinuation { continuation in
+            provider.request(target) { result in
+                switch result {
+                case .success(let response):
+                    Self.logResponse(target: target, response: response)
+                    guard response.statusCode >= 200 && response.statusCode < 300 else {
+                        continuation.resume(throwing: HTTPError(statusCode: response.statusCode, reason: response.debugDescription))
+                        return
+                    }
+                    continuation.resume(returning: response)
+                case .failure(let error):
+                    Self.logError(target: target, error: error)
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
     func request<D: Decodable>(_ target: T, type: D.Type) async throws -> D {
         Self.logRequest(target: target)
         return try await withCheckedThrowingContinuation { continuation in
