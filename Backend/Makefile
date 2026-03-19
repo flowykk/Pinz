@@ -1,3 +1,7 @@
+# Proxy-friendly env for go mod tidy / go get (override in env or .env).
+GOPROXY ?= https://proxy.golang.org,direct
+export GOPROXY
+
 # Единая точка генерации proto: Backend/proto -> auth-service/pkg/proto, api-gateway-service/pkg/proto, trip-service/pkg/proto
 .PHONY: proto
 proto:
@@ -19,9 +23,24 @@ proto:
 		--go-grpc_out=api-gateway-service --go-grpc_opt=module=pinz/backend/api-gateway-service --go-grpc_opt=Mtrip.proto=pinz/backend/api-gateway-service/pkg/proto \
 		proto/trip.proto
 
+# Автогенерация gomock (internal/mocks в auth, api-gateway, trip-service).
+.PHONY: mocks
+mocks:
+	cd auth-service && go generate ./internal/mocks/...
+	cd api-gateway-service && go generate ./internal/mocks/...
+	cd trip-service && go generate ./internal/mocks/...
+
 .PHONY: swagger
 swagger:
 	$(MAKE) -C api-gateway-service swagger
+
+.PHONY: tidy
+tidy:
+	cd pkg/otel && go mod tidy
+	cd auth-service && go mod tidy
+	cd trip-service && go mod tidy
+	cd api-gateway-service && go mod tidy
+	cd e2e && go mod tidy
 
 # Local linting
 .PHONY: lint lint-api lint-auth check-lint
@@ -35,6 +54,63 @@ lint-auth:
 
 lint-trip:
 	cd trip-service && golangci-lint run ./...
+
+# Tests (unit/integration/e2e) + coverage
+# test-unit: -short skips DB/Docker integration tests (auth/trip integration use testing.Short()).
+# test-integration: full tests; requires Docker for integration packages.
+# For Lima/Colima: DOCKER_HOST is auto-set when default socket is missing (testcontainers)
+.PHONY: test test-unit test-unit-only test-integration test-e2e test-all
+test: test-unit
+
+# Export DOCKER_HOST for testcontainers when using Lima/Colima (socket not at /var/run/docker.sock)
+DOCKER_HOST ?= $(shell [ -S /var/run/docker.sock ] || docker context inspect --format '{{.Endpoints.docker.Host}}' 2>/dev/null)
+export DOCKER_HOST
+export TESTCONTAINERS_RYUK_DISABLED ?= true
+
+test-unit:
+	cd auth-service && go test -short ./...
+	cd trip-service && go test -short ./...
+	cd api-gateway-service && go test -short ./...
+
+# Alias: same as test-unit (integration tests skipped via -short).
+test-unit-only: test-unit
+
+test-integration:
+	cd auth-service && go test ./...
+	cd trip-service && go test ./...
+	cd api-gateway-service && go test ./...
+
+test-e2e:
+	cd e2e && PINZ_E2E_STRICT=1 go test ./...
+
+test-all: test-unit test-e2e
+
+.PHONY: coverage coverage-auth coverage-trip coverage-gateway
+coverage: coverage-auth coverage-trip coverage-gateway
+
+# Проверка покрытия только по internal/services (auth, trip) и internal/handlers (api-gateway).
+.PHONY: coverage-check
+MIN_COVER ?= 80
+coverage-check:
+	@echo "Minimum coverage (services/handlers): $(MIN_COVER)%"
+	@cd auth-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	@cd auth-service && go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$$3); print "auth-service internal/services:",$$3"%"; if ($$3+0 < $(MIN_COVER)+0) exit 1}'
+	@cd trip-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	@cd trip-service && go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$$3); print "trip-service internal/services:",$$3"%"; if ($$3+0 < $(MIN_COVER)+0) exit 1}'
+	@cd api-gateway-service && go test -short ./internal/handlers/... -coverprofile=coverage.out
+	@cd api-gateway-service && go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$$3); print "api-gateway-service internal/handlers:",$$3"%"; if ($$3+0 < $(MIN_COVER)+0) exit 1}'
+
+coverage-auth:
+	cd auth-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	cd auth-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
+
+coverage-trip:
+	cd trip-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	cd trip-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
+
+coverage-gateway:
+	cd api-gateway-service && go test -short ./internal/handlers/... -coverprofile=coverage.out
+	cd api-gateway-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
 
 # Infra: Postgres + Redis (Docker Compose, accessible via host.docker.internal from k8s)
 .PHONY: infra-up infra-down

@@ -68,3 +68,33 @@ func (r *FavouriteRepository) HasFavouritesByOtherUsers(tripID, excludeUserID st
 	}
 	return true, nil
 }
+
+// ListTripIDsByUserID returns trip IDs for the user's favourites, ordered by created_at DESC (newest first).
+func (r *FavouriteRepository) ListTripIDsByUserID(userID string, limit, offset int32) ([]string, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	rows, err := psq.Select("trip_id").
+		From("favourite").
+		Where(sq.Eq{"user_id": userID}).
+		OrderBy("created_at DESC").
+		Limit(uint64(limit)).
+		Offset(uint64(offset)).
+		RunWith(r.db).Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}

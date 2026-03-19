@@ -30,6 +30,7 @@ service TripService {
   rpc DislikeTrip(DislikeTripRequest) returns (DislikeTripResponse);
   rpc AddToFavourites(AddToFavouritesRequest) returns (AddToFavouritesResponse);
   rpc RemoveFromFavourites(RemoveFromFavouritesRequest) returns (RemoveFromFavouritesResponse);
+  rpc ListFavourites(ListFavouritesRequest) returns (ListFavouritesResponse);
 }
 
 message Trip {
@@ -84,8 +85,31 @@ message GetTripRequest {
   string user_id = 2;
 }
 
+// TripPin is a pin with media for GetTrip response (map view).
+message TripPin {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+  optional double latitude = 5;
+  optional double longitude = 6;
+  int64 start_time_unix = 7;
+  int64 end_time_unix = 8;
+  string privacy_level = 9;
+  repeated string tags = 10;
+  repeated TripPinMedia media = 11;
+}
+message TripPinMedia {
+  string media_id = 1;
+  string url = 2;           // presigned or CDN URL; may be empty if resolved elsewhere
+  string media_type = 3;    // photo, video
+  int64 captured_at_unix = 4;
+  string privacy_level = 5;
+}
+
 message GetTripResponse {
   Trip trip = 1;
+  repeated TripPin pins = 2;
 }
 
 message ListUserTripsRequest {
@@ -320,4 +344,12 @@ message RemoveFromFavouritesRequest {
 }
 message RemoveFromFavouritesResponse {
   bool success = 1;
+}
+
+message ListFavouritesRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+message ListFavouritesResponse {
+  repeated Trip trips = 1;
 }

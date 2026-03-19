@@ -21,6 +21,36 @@ type Trip struct {
 	UpdatedAtUnix int64  `json:"updated_at_unix"`
 }
 
+// GetTripResponse is the response for GET /api/v1/trips/{id} (trip with pins and media).
+type GetTripResponse struct {
+	Trip Trip      `json:"trip"`
+	Pins []TripPin `json:"pins"`
+}
+
+// TripPin is a pin with media for trip view.
+type TripPin struct {
+	ID            string         `json:"id"`
+	Name          string         `json:"name"`
+	Description   string         `json:"description"`
+	Category      string         `json:"category"`
+	Latitude      *float64       `json:"latitude,omitempty"`
+	Longitude     *float64       `json:"longitude,omitempty"`
+	StartTimeUnix int64          `json:"start_time_unix,omitempty"`
+	EndTimeUnix   int64          `json:"end_time_unix,omitempty"`
+	PrivacyLevel  string         `json:"privacy_level"`
+	Tags          []string       `json:"tags,omitempty"`
+	Media         []TripPinMedia `json:"media,omitempty"`
+}
+
+// TripPinMedia is media inside a pin.
+type TripPinMedia struct {
+	MediaID        string `json:"media_id"`
+	URL            string `json:"url"`
+	MediaType      string `json:"media_type"`
+	CapturedAtUnix int64  `json:"captured_at_unix,omitempty"`
+	PrivacyLevel   string `json:"privacy_level"`
+}
+
 // CreateTripResponse is the response for POST /api/v1/trips
 type CreateTripResponse struct {
 	TripID     string      `json:"trip_id"`
@@ -55,12 +85,7 @@ type LeaveTripResponse struct {
 	TripDeleted bool `json:"trip_deleted"`
 }
 
-// TransferAdminResponse is the response for POST /api/v1/trips/:id/transfer-admin
-type TransferAdminResponse struct {
-	Success bool `json:"success"`
-}
-
-// ProcessMediaGroupingResponse is the response for POST /api/v1/trips/:id/media/process-grouping
+// ProcessMediaGroupingResponse is the response for POST /api/v1/trips/creation/:id/media/process-grouping
 type ProcessMediaGroupingResponse struct {
 	TripID    string     `json:"trip_id"`
 	Status    string     `json:"status"`
@@ -80,13 +105,13 @@ type DraftPinMedia struct {
 	Type    string `json:"type"`
 }
 
-// ApplyGroupsAndProcessResponse is the response for POST /api/v1/trips/:id/apply-groups-and-process (202)
+// ApplyGroupsAndProcessResponse is the response for POST /api/v1/trips/creation/:id/apply-groups-and-process (202)
 type ApplyGroupsAndProcessResponse struct {
 	Message string `json:"message"`
 	Status  string `json:"status"`
 }
 
-// GetTripReviewResponse is the response for GET /api/v1/trips/:id/review
+// GetTripReviewResponse is the response for GET /api/v1/trips/creation/:id/review
 type GetTripReviewResponse struct {
 	TripID  string      `json:"trip_id"`
 	Status  string      `json:"status"`
@@ -116,7 +141,7 @@ type ReviewPinMedia struct {
 	PrivacyLevel string `json:"privacy_level"`
 }
 
-// FinalizeTripResponse is the response for POST /api/v1/trips/:id/finalize
+// FinalizeTripResponse is the response for POST /api/v1/trips/creation/:id/finalize
 type FinalizeTripResponse struct {
 	TripID  string `json:"trip_id"`
 	Status  string `json:"status"`

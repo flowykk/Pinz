@@ -80,15 +80,21 @@ func NewServer(deps *di.Dependencies) *Server {
 		r.Route("/trips", func(r chi.Router) {
 			r.Use(middleware.RequireJWT)
 			r.Get("/", deps.TripHandler.ListTrips)
+			r.Get("/favourites", deps.TripHandler.ListFavourites)
 			r.Post("/", deps.TripHandler.CreateTrip)
 			r.Post("/join", deps.TripHandler.JoinTripByToken)
+			r.Post("/creation/start", deps.TripHandler.CreateTrip)
+			r.Post("/creation/{id}/media/process-grouping", deps.TripHandler.ProcessMediaGrouping)
+			r.Post("/creation/{id}/apply-groups-and-process", deps.TripHandler.ApplyGroupsAndProcess)
+			r.Get("/creation/{id}/review", deps.TripHandler.GetTripReview)
+			r.Post("/creation/{id}/finalize", deps.TripHandler.FinalizeTrip)
 			r.Get("/{id}", deps.TripHandler.GetTrip)
 			r.Patch("/{id}", deps.TripHandler.UpdateTrip)
 			r.Delete("/{id}", deps.TripHandler.DeleteTrip)
 			r.Patch("/{id}/settings", deps.TripHandler.UpdateTripSettings)
 			r.Post("/{id}/invite", deps.TripHandler.GenerateInviteLink)
 			r.Post("/{id}/leave", deps.TripHandler.LeaveTrip)
-			r.Post("/{id}/transfer-admin", deps.TripHandler.TransferAdmin)
+			r.Post("/{id}/publish", deps.TripHandler.PublishTrip)
 			r.Post("/{id}/like", deps.TripHandler.LikeTrip)
 			r.Post("/{id}/dislike", deps.TripHandler.DislikeTrip)
 			r.Post("/{id}/favourite", deps.TripHandler.AddToFavourites)
@@ -96,15 +102,6 @@ func NewServer(deps *di.Dependencies) *Server {
 			r.Delete("/{id}/participants/{user_id}", deps.TripHandler.RemoveParticipant)
 		})
 
-		// Этапы создания путешествия (creation flow).
-		r.Route("/trip/creation", func(r chi.Router) {
-			r.Use(middleware.RequireJWT)
-			r.Post("/start", deps.TripHandler.CreateTrip)
-			r.Post("/{id}/media/process-grouping", deps.TripHandler.ProcessMediaGrouping)
-			r.Post("/{id}/apply-groups-and-process", deps.TripHandler.ApplyGroupsAndProcess)
-			r.Get("/{id}/review", deps.TripHandler.GetTripReview)
-			r.Post("/{id}/finalize", deps.TripHandler.FinalizeTrip)
-		})
 		r.Route("/feed", func(r chi.Router) {
 			r.Use(middleware.RequireJWT)
 			r.Get("/", deps.TripHandler.ListFeed)

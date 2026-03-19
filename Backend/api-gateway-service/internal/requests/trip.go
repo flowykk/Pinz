@@ -38,12 +38,7 @@ type JoinTripByTokenRequest struct {
 	Token string `json:"token"`
 }
 
-// TransferAdminRequest is the REST body for POST /api/v1/trips/:id/transfer-admin
-type TransferAdminRequest struct {
-	NewAdminUserID string `json:"new_admin_user_id"`
-}
-
-// ProcessMediaGroupingRequest is the REST body for POST /api/v1/trips/:id/media/process-grouping
+// ProcessMediaGroupingRequest is the REST body for POST /api/v1/trips/creation/:id/media/process-grouping
 type ProcessMediaGroupingRequest struct {
 	Media []MediaMetaEntry `json:"media"`
 }
@@ -57,7 +52,7 @@ type MediaMetaEntry struct {
 	Longitude  *float64 `json:"longitude,omitempty"`
 }
 
-// ApplyGroupsAndProcessRequest is the REST body for POST /api/v1/trips/:id/apply-groups-and-process
+// ApplyGroupsAndProcessRequest is the REST body for POST /api/v1/trips/creation/:id/apply-groups-and-process
 type ApplyGroupsAndProcessRequest struct {
 	DraftPins       []DraftPinInput `json:"draft_pins"`
 	DeletedMediaIDs []string        `json:"deleted_media_ids,omitempty"`
@@ -69,7 +64,7 @@ type DraftPinInput struct {
 	MediaIDs   []string `json:"media_ids"`
 }
 
-// FinalizeTripRequest is the REST body for POST /api/v1/trips/:id/finalize
+// FinalizeTripRequest is the REST body for POST /api/v1/trips/creation/:id/finalize
 type FinalizeTripRequest struct {
 	PinUpdates    []PinUpdateInput `json:"pin_updates,omitempty"`
 	MediaToDelete []string         `json:"media_to_delete,omitempty"`

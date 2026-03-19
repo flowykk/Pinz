@@ -86,10 +86,6 @@ func (c *Client) LeaveTrip(ctx context.Context, req *pb.LeaveTripRequest) (*pb.L
 	return c.client.LeaveTrip(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) TransferAdmin(ctx context.Context, req *pb.TransferAdminRequest) (*pb.TransferAdminResponse, error) {
-	return c.client.TransferAdmin(withUserIDMetadata(ctx), req)
-}
-
 func (c *Client) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessMediaGroupingRequest) (*pb.ProcessMediaGroupingResponse, error) {
 	return c.client.ProcessMediaGrouping(withUserIDMetadata(ctx), req)
 }
@@ -132,6 +128,10 @@ func (c *Client) AddToFavourites(ctx context.Context, req *pb.AddToFavouritesReq
 
 func (c *Client) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFromFavouritesRequest) (*pb.RemoveFromFavouritesResponse, error) {
 	return c.client.RemoveFromFavourites(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) ListFavourites(ctx context.Context, req *pb.ListFavouritesRequest) (*pb.ListFavouritesResponse, error) {
+	return c.client.ListFavourites(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) Close() error {

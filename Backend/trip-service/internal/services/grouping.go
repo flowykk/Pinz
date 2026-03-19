@@ -9,7 +9,7 @@ import (
 
 // clusterMediaToDraftPins returns groups of media IDs: first by PostGIS clustering (with location),
 // then media with time only assigned to nearest cluster (<10 min), rest in last group.
-func clusterMediaToDraftPins(mediaRepo *repositories.MediaRepository, tripID string) [][]string {
+func clusterMediaToDraftPins(mediaRepo repositories.MediaRepositoryInterface, tripID string) [][]string {
 	mediaList, err := mediaRepo.ListByTripID(tripID)
 	if err != nil || len(mediaList) == 0 {
 		return nil
@@ -94,7 +94,7 @@ func clusterMediaToDraftPins(mediaRepo *repositories.MediaRepository, tripID str
 	return result
 }
 
-func updatePinTimesAndLocation(pinRepo *repositories.PinRepository, mediaRepo *repositories.MediaRepository, pinID string) {
+func updatePinTimesAndLocation(pinRepo repositories.PinRepositoryInterface, mediaRepo repositories.MediaRepositoryInterface, pinID string) {
 	pinMedia, err := mediaRepo.ListByPinID(pinID)
 	if err != nil || len(pinMedia) == 0 {
 		return

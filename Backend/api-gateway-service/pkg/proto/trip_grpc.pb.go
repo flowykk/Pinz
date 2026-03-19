@@ -40,6 +40,7 @@ const (
 	TripService_DislikeTrip_FullMethodName           = "/trip.TripService/DislikeTrip"
 	TripService_AddToFavourites_FullMethodName       = "/trip.TripService/AddToFavourites"
 	TripService_RemoveFromFavourites_FullMethodName  = "/trip.TripService/RemoveFromFavourites"
+	TripService_ListFavourites_FullMethodName        = "/trip.TripService/ListFavourites"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -71,6 +72,7 @@ type TripServiceClient interface {
 	DislikeTrip(ctx context.Context, in *DislikeTripRequest, opts ...grpc.CallOption) (*DislikeTripResponse, error)
 	AddToFavourites(ctx context.Context, in *AddToFavouritesRequest, opts ...grpc.CallOption) (*AddToFavouritesResponse, error)
 	RemoveFromFavourites(ctx context.Context, in *RemoveFromFavouritesRequest, opts ...grpc.CallOption) (*RemoveFromFavouritesResponse, error)
+	ListFavourites(ctx context.Context, in *ListFavouritesRequest, opts ...grpc.CallOption) (*ListFavouritesResponse, error)
 }
 
 type tripServiceClient struct {
@@ -291,6 +293,16 @@ func (c *tripServiceClient) RemoveFromFavourites(ctx context.Context, in *Remove
 	return out, nil
 }
 
+func (c *tripServiceClient) ListFavourites(ctx context.Context, in *ListFavouritesRequest, opts ...grpc.CallOption) (*ListFavouritesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFavouritesResponse)
+	err := c.cc.Invoke(ctx, TripService_ListFavourites_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TripServiceServer is the server API for TripService service.
 // All implementations must embed UnimplementedTripServiceServer
 // for forward compatibility.
@@ -320,6 +332,7 @@ type TripServiceServer interface {
 	DislikeTrip(context.Context, *DislikeTripRequest) (*DislikeTripResponse, error)
 	AddToFavourites(context.Context, *AddToFavouritesRequest) (*AddToFavouritesResponse, error)
 	RemoveFromFavourites(context.Context, *RemoveFromFavouritesRequest) (*RemoveFromFavouritesResponse, error)
+	ListFavourites(context.Context, *ListFavouritesRequest) (*ListFavouritesResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
 
@@ -392,6 +405,9 @@ func (UnimplementedTripServiceServer) AddToFavourites(context.Context, *AddToFav
 }
 func (UnimplementedTripServiceServer) RemoveFromFavourites(context.Context, *RemoveFromFavouritesRequest) (*RemoveFromFavouritesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromFavourites not implemented")
+}
+func (UnimplementedTripServiceServer) ListFavourites(context.Context, *ListFavouritesRequest) (*ListFavouritesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFavourites not implemented")
 }
 func (UnimplementedTripServiceServer) mustEmbedUnimplementedTripServiceServer() {}
 func (UnimplementedTripServiceServer) testEmbeddedByValue()                     {}
@@ -792,6 +808,24 @@ func _TripService_RemoveFromFavourites_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_ListFavourites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFavouritesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).ListFavourites(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_ListFavourites_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).ListFavourites(ctx, req.(*ListFavouritesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TripService_ServiceDesc is the grpc.ServiceDesc for TripService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -882,6 +916,10 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveFromFavourites",
 			Handler:    _TripService_RemoveFromFavourites_Handler,
+		},
+		{
+			MethodName: "ListFavourites",
+			Handler:    _TripService_ListFavourites_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

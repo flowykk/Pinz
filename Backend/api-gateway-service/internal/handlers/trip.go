@@ -30,7 +30,6 @@ type TripClient interface {
 	JoinTripByToken(ctx context.Context, req *proto.JoinTripByTokenRequest) (*proto.JoinTripByTokenResponse, error)
 	RemoveParticipant(ctx context.Context, req *proto.RemoveParticipantRequest) (*proto.RemoveParticipantResponse, error)
 	LeaveTrip(ctx context.Context, req *proto.LeaveTripRequest) (*proto.LeaveTripResponse, error)
-	TransferAdmin(ctx context.Context, req *proto.TransferAdminRequest) (*proto.TransferAdminResponse, error)
 	ProcessMediaGrouping(ctx context.Context, req *proto.ProcessMediaGroupingRequest) (*proto.ProcessMediaGroupingResponse, error)
 	ApplyGroupsAndProcess(ctx context.Context, req *proto.ApplyGroupsAndProcessRequest) (*proto.ApplyGroupsAndProcessResponse, error)
 	GetTripReview(ctx context.Context, req *proto.GetTripReviewRequest) (*proto.GetTripReviewResponse, error)
@@ -42,6 +41,7 @@ type TripClient interface {
 	DislikeTrip(ctx context.Context, req *proto.DislikeTripRequest) (*proto.DislikeTripResponse, error)
 	AddToFavourites(ctx context.Context, req *proto.AddToFavouritesRequest) (*proto.AddToFavouritesResponse, error)
 	RemoveFromFavourites(ctx context.Context, req *proto.RemoveFromFavouritesRequest) (*proto.RemoveFromFavouritesResponse, error)
+	ListFavourites(ctx context.Context, req *proto.ListFavouritesRequest) (*proto.ListFavouritesResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient) *TripHandler {
@@ -97,7 +97,7 @@ func (h *TripHandler) ListTrips(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} responses.ErrorResponse
 // @Failure 401 {object} responses.ErrorResponse
 // @Failure 500 {object} responses.ErrorResponse
-// @Router /api/v1/trip/creation/start [post]
+// @Router /api/v1/trips/creation/start [post]
 func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -138,15 +138,15 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetTrip returns a single trip by ID.
+// GetTrip returns a single trip by ID with pins and media.
 // @Summary Get trip by ID
-// @Description Returns a single trip by ID. Requires JWT. User must be a participant.
+// @Description Returns a single trip by ID with pins and media in each pin. Requires JWT. User must be a participant.
 // @Tags trips
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Trip ID"
-// @Success 200 {object} responses.Trip
+// @Success 200 {object} responses.GetTripResponse
 // @Failure 401 {object} responses.ErrorResponse
 // @Failure 403 {object} responses.ErrorResponse
 // @Failure 404 {object} responses.ErrorResponse
@@ -169,7 +169,7 @@ func (h *TripHandler) GetTrip(w http.ResponseWriter, r *http.Request) {
 		handleServiceError(w, r, err, "GetTrip")
 		return
 	}
-	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
+	respondJSON(w, http.StatusOK, getTripResponseToREST(resp))
 }
 
 // UpdateTrip updates trip metadata.
@@ -430,50 +430,6 @@ func (h *TripHandler) LeaveTrip(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// TransferAdmin transfers admin rights to another participant.
-// @Summary Transfer admin
-// @Description Transfers trip admin to another participant. Only current admin can transfer. Requires JWT.
-// @Tags trips
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Trip ID"
-// @Param body body requests.TransferAdminRequest true "New admin user ID"
-// @Success 200 {object} responses.TransferAdminResponse
-// @Failure 400 {object} responses.ErrorResponse
-// @Failure 401 {object} responses.ErrorResponse
-// @Failure 403 {object} responses.ErrorResponse
-// @Failure 500 {object} responses.ErrorResponse
-// @Router /api/v1/trips/{id}/transfer-admin [post]
-func (h *TripHandler) TransferAdmin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := middleware.UserIDFromContext(ctx)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tripID := chi.URLParam(r, "id")
-	if tripID == "" {
-		respondError(w, http.StatusBadRequest, "trip id required")
-		return
-	}
-	var req requests.TransferAdminRequest
-	if err := decodeJSONBody(r, &req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
-		return
-	}
-	if req.NewAdminUserID == "" {
-		respondError(w, http.StatusBadRequest, "new_admin_user_id required")
-		return
-	}
-	_, err := h.tripClient.TransferAdmin(ctx, &proto.TransferAdminRequest{TripId: tripID, NewAdminUserId: req.NewAdminUserID})
-	if err != nil {
-		handleServiceError(w, r, err, "TransferAdmin")
-		return
-	}
-	respondJSON(w, http.StatusOK, responses.TransferAdminResponse{Success: true})
-}
-
 // ProcessMediaGrouping saves media metadata and returns draft pins (tripCreationFlow stage 2).
 // @Summary [2] Process media grouping
 // @Tags trip-creation
@@ -483,7 +439,7 @@ func (h *TripHandler) TransferAdmin(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Trip ID"
 // @Param body body requests.ProcessMediaGroupingRequest true "Media metadata"
 // @Success 200 {object} responses.ProcessMediaGroupingResponse
-// @Router /api/v1/trip/creation/{id}/media/process-grouping [post]
+// @Router /api/v1/trips/creation/{id}/media/process-grouping [post]
 func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -546,7 +502,7 @@ func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Reques
 // @Param id path string true "Trip ID"
 // @Param body body requests.ApplyGroupsAndProcessRequest true "Draft pins and deleted media"
 // @Success 202 {object} responses.ApplyGroupsAndProcessResponse
-// @Router /api/v1/trip/creation/{id}/apply-groups-and-process [post]
+// @Router /api/v1/trips/creation/{id}/apply-groups-and-process [post]
 func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -590,7 +546,7 @@ func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Reque
 // @Security BearerAuth
 // @Param id path string true "Trip ID"
 // @Success 200 {object} responses.GetTripReviewResponse
-// @Router /api/v1/trip/creation/{id}/review [get]
+// @Router /api/v1/trips/creation/{id}/review [get]
 func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -647,7 +603,7 @@ func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Trip ID"
 // @Param body body requests.FinalizeTripRequest true "Pin updates and media to delete"
 // @Success 200 {object} responses.FinalizeTripResponse
-// @Router /api/v1/trip/creation/{id}/finalize [post]
+// @Router /api/v1/trips/creation/{id}/finalize [post]
 func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -931,6 +887,48 @@ func (h *TripHandler) RemoveFromFavourites(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// ListFavourites returns the current user's favourite trips (PINZ-98).
+// @Summary List favourite trips
+// @Description Returns trips the user has added to favourites. Supports limit and offset query params.
+// @Tags trips
+// @Security BearerAuth
+// @Param limit query int false "Limit (default 20, max 100)"
+// @Param offset query int false "Offset (default 0)"
+// @Success 200 {array} responses.Trip
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/favourites [get]
+func (h *TripHandler) ListFavourites(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	limit := int32(20)
+	offset := int32(0)
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if n, err := parseInt(l); err == nil && n > 0 && n <= 100 {
+			limit = int32(n)
+		}
+	}
+	if o := r.URL.Query().Get("offset"); o != "" {
+		if n, err := parseInt(o); err == nil && n >= 0 {
+			offset = int32(n)
+		}
+	}
+	resp, err := h.tripClient.ListFavourites(ctx, &proto.ListFavouritesRequest{Limit: limit, Offset: offset})
+	if err != nil {
+		handleServiceError(w, r, err, "ListFavourites")
+		return
+	}
+	out := make([]responses.Trip, len(resp.GetTrips()))
+	for i, t := range resp.GetTrips() {
+		out[i] = tripProtoToResponse(t)
+	}
+	respondJSON(w, http.StatusOK, out)
+}
+
 func tripProtoToResponse(t *proto.Trip) responses.Trip {
 	if t == nil {
 		return responses.Trip{}
@@ -954,4 +952,43 @@ func tripProtoToResponse(t *proto.Trip) responses.Trip {
 		CreatedAtUnix: t.GetCreatedAtUnix(),
 		UpdatedAtUnix: t.GetUpdatedAtUnix(),
 	}
+}
+
+func getTripResponseToREST(resp *proto.GetTripResponse) responses.GetTripResponse {
+	out := responses.GetTripResponse{
+		Trip: tripProtoToResponse(resp.GetTrip()),
+		Pins: make([]responses.TripPin, 0, len(resp.GetPins())),
+	}
+	for _, p := range resp.GetPins() {
+		if p == nil {
+			continue
+		}
+		pin := responses.TripPin{
+			ID:            p.GetId(),
+			Name:          p.GetName(),
+			Description:   p.GetDescription(),
+			Category:      p.GetCategory(),
+			Latitude:      p.Latitude,
+			Longitude:     p.Longitude,
+			StartTimeUnix: p.GetStartTimeUnix(),
+			EndTimeUnix:   p.GetEndTimeUnix(),
+			PrivacyLevel:  p.GetPrivacyLevel(),
+			Tags:          p.GetTags(),
+			Media:         make([]responses.TripPinMedia, 0, len(p.GetMedia())),
+		}
+		for _, m := range p.GetMedia() {
+			if m == nil {
+				continue
+			}
+			pin.Media = append(pin.Media, responses.TripPinMedia{
+				MediaID:        m.GetMediaId(),
+				URL:            m.GetUrl(),
+				MediaType:      m.GetMediaType(),
+				CapturedAtUnix: m.GetCapturedAtUnix(),
+				PrivacyLevel:   m.GetPrivacyLevel(),
+			})
+		}
+		out.Pins = append(out.Pins, pin)
+	}
+	return out
 }

@@ -509,16 +509,218 @@ func (x *GetTripRequest) GetUserId() string {
 	return ""
 }
 
+// TripPin is a pin with media for GetTrip response (map view).
+type TripPin struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Category      string                 `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`
+	Latitude      *float64               `protobuf:"fixed64,5,opt,name=latitude,proto3,oneof" json:"latitude,omitempty"`
+	Longitude     *float64               `protobuf:"fixed64,6,opt,name=longitude,proto3,oneof" json:"longitude,omitempty"`
+	StartTimeUnix int64                  `protobuf:"varint,7,opt,name=start_time_unix,json=startTimeUnix,proto3" json:"start_time_unix,omitempty"`
+	EndTimeUnix   int64                  `protobuf:"varint,8,opt,name=end_time_unix,json=endTimeUnix,proto3" json:"end_time_unix,omitempty"`
+	PrivacyLevel  string                 `protobuf:"bytes,9,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
+	Tags          []string               `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
+	Media         []*TripPinMedia        `protobuf:"bytes,11,rep,name=media,proto3" json:"media,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TripPin) Reset() {
+	*x = TripPin{}
+	mi := &file_trip_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TripPin) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TripPin) ProtoMessage() {}
+
+func (x *TripPin) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TripPin.ProtoReflect.Descriptor instead.
+func (*TripPin) Descriptor() ([]byte, []int) {
+	return file_trip_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *TripPin) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *TripPin) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TripPin) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *TripPin) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *TripPin) GetLatitude() float64 {
+	if x != nil && x.Latitude != nil {
+		return *x.Latitude
+	}
+	return 0
+}
+
+func (x *TripPin) GetLongitude() float64 {
+	if x != nil && x.Longitude != nil {
+		return *x.Longitude
+	}
+	return 0
+}
+
+func (x *TripPin) GetStartTimeUnix() int64 {
+	if x != nil {
+		return x.StartTimeUnix
+	}
+	return 0
+}
+
+func (x *TripPin) GetEndTimeUnix() int64 {
+	if x != nil {
+		return x.EndTimeUnix
+	}
+	return 0
+}
+
+func (x *TripPin) GetPrivacyLevel() string {
+	if x != nil {
+		return x.PrivacyLevel
+	}
+	return ""
+}
+
+func (x *TripPin) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *TripPin) GetMedia() []*TripPinMedia {
+	if x != nil {
+		return x.Media
+	}
+	return nil
+}
+
+type TripPinMedia struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	MediaId        string                 `protobuf:"bytes,1,opt,name=media_id,json=mediaId,proto3" json:"media_id,omitempty"`
+	Url            string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`                              // presigned or CDN URL; may be empty if resolved elsewhere
+	MediaType      string                 `protobuf:"bytes,3,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // photo, video
+	CapturedAtUnix int64                  `protobuf:"varint,4,opt,name=captured_at_unix,json=capturedAtUnix,proto3" json:"captured_at_unix,omitempty"`
+	PrivacyLevel   string                 `protobuf:"bytes,5,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *TripPinMedia) Reset() {
+	*x = TripPinMedia{}
+	mi := &file_trip_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TripPinMedia) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TripPinMedia) ProtoMessage() {}
+
+func (x *TripPinMedia) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TripPinMedia.ProtoReflect.Descriptor instead.
+func (*TripPinMedia) Descriptor() ([]byte, []int) {
+	return file_trip_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *TripPinMedia) GetMediaId() string {
+	if x != nil {
+		return x.MediaId
+	}
+	return ""
+}
+
+func (x *TripPinMedia) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *TripPinMedia) GetMediaType() string {
+	if x != nil {
+		return x.MediaType
+	}
+	return ""
+}
+
+func (x *TripPinMedia) GetCapturedAtUnix() int64 {
+	if x != nil {
+		return x.CapturedAtUnix
+	}
+	return 0
+}
+
+func (x *TripPinMedia) GetPrivacyLevel() string {
+	if x != nil {
+		return x.PrivacyLevel
+	}
+	return ""
+}
+
 type GetTripResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Trip          *Trip                  `protobuf:"bytes,1,opt,name=trip,proto3" json:"trip,omitempty"`
+	Pins          []*TripPin             `protobuf:"bytes,2,rep,name=pins,proto3" json:"pins,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetTripResponse) Reset() {
 	*x = GetTripResponse{}
-	mi := &file_trip_proto_msgTypes[6]
+	mi := &file_trip_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -530,7 +732,7 @@ func (x *GetTripResponse) String() string {
 func (*GetTripResponse) ProtoMessage() {}
 
 func (x *GetTripResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[6]
+	mi := &file_trip_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -543,12 +745,19 @@ func (x *GetTripResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTripResponse.ProtoReflect.Descriptor instead.
 func (*GetTripResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{6}
+	return file_trip_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetTripResponse) GetTrip() *Trip {
 	if x != nil {
 		return x.Trip
+	}
+	return nil
+}
+
+func (x *GetTripResponse) GetPins() []*TripPin {
+	if x != nil {
+		return x.Pins
 	}
 	return nil
 }
@@ -564,7 +773,7 @@ type ListUserTripsRequest struct {
 
 func (x *ListUserTripsRequest) Reset() {
 	*x = ListUserTripsRequest{}
-	mi := &file_trip_proto_msgTypes[7]
+	mi := &file_trip_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -576,7 +785,7 @@ func (x *ListUserTripsRequest) String() string {
 func (*ListUserTripsRequest) ProtoMessage() {}
 
 func (x *ListUserTripsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[7]
+	mi := &file_trip_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -589,7 +798,7 @@ func (x *ListUserTripsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserTripsRequest.ProtoReflect.Descriptor instead.
 func (*ListUserTripsRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{7}
+	return file_trip_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ListUserTripsRequest) GetUserId() string {
@@ -622,7 +831,7 @@ type ListUserTripsResponse struct {
 
 func (x *ListUserTripsResponse) Reset() {
 	*x = ListUserTripsResponse{}
-	mi := &file_trip_proto_msgTypes[8]
+	mi := &file_trip_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -634,7 +843,7 @@ func (x *ListUserTripsResponse) String() string {
 func (*ListUserTripsResponse) ProtoMessage() {}
 
 func (x *ListUserTripsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[8]
+	mi := &file_trip_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -647,7 +856,7 @@ func (x *ListUserTripsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserTripsResponse.ProtoReflect.Descriptor instead.
 func (*ListUserTripsResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{8}
+	return file_trip_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListUserTripsResponse) GetTrips() []*Trip {
@@ -675,7 +884,7 @@ type UpdateTripRequest struct {
 
 func (x *UpdateTripRequest) Reset() {
 	*x = UpdateTripRequest{}
-	mi := &file_trip_proto_msgTypes[9]
+	mi := &file_trip_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -687,7 +896,7 @@ func (x *UpdateTripRequest) String() string {
 func (*UpdateTripRequest) ProtoMessage() {}
 
 func (x *UpdateTripRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[9]
+	mi := &file_trip_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -700,7 +909,7 @@ func (x *UpdateTripRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTripRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTripRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{9}
+	return file_trip_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UpdateTripRequest) GetTripId() string {
@@ -782,7 +991,7 @@ type UpdateTripResponse struct {
 
 func (x *UpdateTripResponse) Reset() {
 	*x = UpdateTripResponse{}
-	mi := &file_trip_proto_msgTypes[10]
+	mi := &file_trip_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -794,7 +1003,7 @@ func (x *UpdateTripResponse) String() string {
 func (*UpdateTripResponse) ProtoMessage() {}
 
 func (x *UpdateTripResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[10]
+	mi := &file_trip_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -807,7 +1016,7 @@ func (x *UpdateTripResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTripResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTripResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{10}
+	return file_trip_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *UpdateTripResponse) GetTrip() *Trip {
@@ -827,7 +1036,7 @@ type DeleteTripRequest struct {
 
 func (x *DeleteTripRequest) Reset() {
 	*x = DeleteTripRequest{}
-	mi := &file_trip_proto_msgTypes[11]
+	mi := &file_trip_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -839,7 +1048,7 @@ func (x *DeleteTripRequest) String() string {
 func (*DeleteTripRequest) ProtoMessage() {}
 
 func (x *DeleteTripRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[11]
+	mi := &file_trip_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -852,7 +1061,7 @@ func (x *DeleteTripRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTripRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTripRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{11}
+	return file_trip_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DeleteTripRequest) GetTripId() string {
@@ -878,7 +1087,7 @@ type DeleteTripResponse struct {
 
 func (x *DeleteTripResponse) Reset() {
 	*x = DeleteTripResponse{}
-	mi := &file_trip_proto_msgTypes[12]
+	mi := &file_trip_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -890,7 +1099,7 @@ func (x *DeleteTripResponse) String() string {
 func (*DeleteTripResponse) ProtoMessage() {}
 
 func (x *DeleteTripResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[12]
+	mi := &file_trip_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -903,7 +1112,7 @@ func (x *DeleteTripResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTripResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTripResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{12}
+	return file_trip_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *DeleteTripResponse) GetSuccess() bool {
@@ -926,7 +1135,7 @@ type PublishTripRequest struct {
 
 func (x *PublishTripRequest) Reset() {
 	*x = PublishTripRequest{}
-	mi := &file_trip_proto_msgTypes[13]
+	mi := &file_trip_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -938,7 +1147,7 @@ func (x *PublishTripRequest) String() string {
 func (*PublishTripRequest) ProtoMessage() {}
 
 func (x *PublishTripRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[13]
+	mi := &file_trip_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -951,7 +1160,7 @@ func (x *PublishTripRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublishTripRequest.ProtoReflect.Descriptor instead.
 func (*PublishTripRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{13}
+	return file_trip_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *PublishTripRequest) GetTripId() string {
@@ -984,7 +1193,7 @@ type PublishTripResponse struct {
 
 func (x *PublishTripResponse) Reset() {
 	*x = PublishTripResponse{}
-	mi := &file_trip_proto_msgTypes[14]
+	mi := &file_trip_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -996,7 +1205,7 @@ func (x *PublishTripResponse) String() string {
 func (*PublishTripResponse) ProtoMessage() {}
 
 func (x *PublishTripResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[14]
+	mi := &file_trip_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1009,7 +1218,7 @@ func (x *PublishTripResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublishTripResponse.ProtoReflect.Descriptor instead.
 func (*PublishTripResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{14}
+	return file_trip_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *PublishTripResponse) GetTrip() *Trip {
@@ -1030,7 +1239,7 @@ type ProcessMediaGroupingRequest struct {
 
 func (x *ProcessMediaGroupingRequest) Reset() {
 	*x = ProcessMediaGroupingRequest{}
-	mi := &file_trip_proto_msgTypes[15]
+	mi := &file_trip_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1042,7 +1251,7 @@ func (x *ProcessMediaGroupingRequest) String() string {
 func (*ProcessMediaGroupingRequest) ProtoMessage() {}
 
 func (x *ProcessMediaGroupingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[15]
+	mi := &file_trip_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1055,7 +1264,7 @@ func (x *ProcessMediaGroupingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProcessMediaGroupingRequest.ProtoReflect.Descriptor instead.
 func (*ProcessMediaGroupingRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{15}
+	return file_trip_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ProcessMediaGroupingRequest) GetTripId() string {
@@ -1085,7 +1294,7 @@ type MediaMeta struct {
 
 func (x *MediaMeta) Reset() {
 	*x = MediaMeta{}
-	mi := &file_trip_proto_msgTypes[16]
+	mi := &file_trip_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1097,7 +1306,7 @@ func (x *MediaMeta) String() string {
 func (*MediaMeta) ProtoMessage() {}
 
 func (x *MediaMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[16]
+	mi := &file_trip_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1110,7 +1319,7 @@ func (x *MediaMeta) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MediaMeta.ProtoReflect.Descriptor instead.
 func (*MediaMeta) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{16}
+	return file_trip_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *MediaMeta) GetS3Key() string {
@@ -1159,7 +1368,7 @@ type ProcessMediaGroupingResponse struct {
 
 func (x *ProcessMediaGroupingResponse) Reset() {
 	*x = ProcessMediaGroupingResponse{}
-	mi := &file_trip_proto_msgTypes[17]
+	mi := &file_trip_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1171,7 +1380,7 @@ func (x *ProcessMediaGroupingResponse) String() string {
 func (*ProcessMediaGroupingResponse) ProtoMessage() {}
 
 func (x *ProcessMediaGroupingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[17]
+	mi := &file_trip_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1184,7 +1393,7 @@ func (x *ProcessMediaGroupingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProcessMediaGroupingResponse.ProtoReflect.Descriptor instead.
 func (*ProcessMediaGroupingResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{17}
+	return file_trip_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ProcessMediaGroupingResponse) GetTripId() string {
@@ -1218,7 +1427,7 @@ type DraftPin struct {
 
 func (x *DraftPin) Reset() {
 	*x = DraftPin{}
-	mi := &file_trip_proto_msgTypes[18]
+	mi := &file_trip_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1230,7 +1439,7 @@ func (x *DraftPin) String() string {
 func (*DraftPin) ProtoMessage() {}
 
 func (x *DraftPin) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[18]
+	mi := &file_trip_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1243,7 +1452,7 @@ func (x *DraftPin) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DraftPin.ProtoReflect.Descriptor instead.
 func (*DraftPin) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{18}
+	return file_trip_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DraftPin) GetDraftPinId() string {
@@ -1271,7 +1480,7 @@ type DraftPinMedia struct {
 
 func (x *DraftPinMedia) Reset() {
 	*x = DraftPinMedia{}
-	mi := &file_trip_proto_msgTypes[19]
+	mi := &file_trip_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1283,7 +1492,7 @@ func (x *DraftPinMedia) String() string {
 func (*DraftPinMedia) ProtoMessage() {}
 
 func (x *DraftPinMedia) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[19]
+	mi := &file_trip_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1296,7 +1505,7 @@ func (x *DraftPinMedia) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DraftPinMedia.ProtoReflect.Descriptor instead.
 func (*DraftPinMedia) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{19}
+	return file_trip_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *DraftPinMedia) GetMediaId() string {
@@ -1332,7 +1541,7 @@ type ApplyGroupsAndProcessRequest struct {
 
 func (x *ApplyGroupsAndProcessRequest) Reset() {
 	*x = ApplyGroupsAndProcessRequest{}
-	mi := &file_trip_proto_msgTypes[20]
+	mi := &file_trip_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1344,7 +1553,7 @@ func (x *ApplyGroupsAndProcessRequest) String() string {
 func (*ApplyGroupsAndProcessRequest) ProtoMessage() {}
 
 func (x *ApplyGroupsAndProcessRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[20]
+	mi := &file_trip_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1357,7 +1566,7 @@ func (x *ApplyGroupsAndProcessRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplyGroupsAndProcessRequest.ProtoReflect.Descriptor instead.
 func (*ApplyGroupsAndProcessRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{20}
+	return file_trip_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ApplyGroupsAndProcessRequest) GetTripId() string {
@@ -1391,7 +1600,7 @@ type DraftPinInput struct {
 
 func (x *DraftPinInput) Reset() {
 	*x = DraftPinInput{}
-	mi := &file_trip_proto_msgTypes[21]
+	mi := &file_trip_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1403,7 +1612,7 @@ func (x *DraftPinInput) String() string {
 func (*DraftPinInput) ProtoMessage() {}
 
 func (x *DraftPinInput) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[21]
+	mi := &file_trip_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1416,7 +1625,7 @@ func (x *DraftPinInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DraftPinInput.ProtoReflect.Descriptor instead.
 func (*DraftPinInput) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{21}
+	return file_trip_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *DraftPinInput) GetDraftPinId() string {
@@ -1443,7 +1652,7 @@ type ApplyGroupsAndProcessResponse struct {
 
 func (x *ApplyGroupsAndProcessResponse) Reset() {
 	*x = ApplyGroupsAndProcessResponse{}
-	mi := &file_trip_proto_msgTypes[22]
+	mi := &file_trip_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1455,7 +1664,7 @@ func (x *ApplyGroupsAndProcessResponse) String() string {
 func (*ApplyGroupsAndProcessResponse) ProtoMessage() {}
 
 func (x *ApplyGroupsAndProcessResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[22]
+	mi := &file_trip_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1468,7 +1677,7 @@ func (x *ApplyGroupsAndProcessResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplyGroupsAndProcessResponse.ProtoReflect.Descriptor instead.
 func (*ApplyGroupsAndProcessResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{22}
+	return file_trip_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ApplyGroupsAndProcessResponse) GetMessage() string {
@@ -1495,7 +1704,7 @@ type GetTripReviewRequest struct {
 
 func (x *GetTripReviewRequest) Reset() {
 	*x = GetTripReviewRequest{}
-	mi := &file_trip_proto_msgTypes[23]
+	mi := &file_trip_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1507,7 +1716,7 @@ func (x *GetTripReviewRequest) String() string {
 func (*GetTripReviewRequest) ProtoMessage() {}
 
 func (x *GetTripReviewRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[23]
+	mi := &file_trip_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1520,7 +1729,7 @@ func (x *GetTripReviewRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTripReviewRequest.ProtoReflect.Descriptor instead.
 func (*GetTripReviewRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{23}
+	return file_trip_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GetTripReviewRequest) GetTripId() string {
@@ -1542,7 +1751,7 @@ type GetTripReviewResponse struct {
 
 func (x *GetTripReviewResponse) Reset() {
 	*x = GetTripReviewResponse{}
-	mi := &file_trip_proto_msgTypes[24]
+	mi := &file_trip_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1554,7 +1763,7 @@ func (x *GetTripReviewResponse) String() string {
 func (*GetTripReviewResponse) ProtoMessage() {}
 
 func (x *GetTripReviewResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[24]
+	mi := &file_trip_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1567,7 +1776,7 @@ func (x *GetTripReviewResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTripReviewResponse.ProtoReflect.Descriptor instead.
 func (*GetTripReviewResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{24}
+	return file_trip_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetTripReviewResponse) GetTripId() string {
@@ -1607,7 +1816,7 @@ type MediaSimilarGroup struct {
 
 func (x *MediaSimilarGroup) Reset() {
 	*x = MediaSimilarGroup{}
-	mi := &file_trip_proto_msgTypes[25]
+	mi := &file_trip_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1619,7 +1828,7 @@ func (x *MediaSimilarGroup) String() string {
 func (*MediaSimilarGroup) ProtoMessage() {}
 
 func (x *MediaSimilarGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[25]
+	mi := &file_trip_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1632,7 +1841,7 @@ func (x *MediaSimilarGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MediaSimilarGroup.ProtoReflect.Descriptor instead.
 func (*MediaSimilarGroup) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{25}
+	return file_trip_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *MediaSimilarGroup) GetMediaIds() []string {
@@ -1661,7 +1870,7 @@ type ReviewPin struct {
 
 func (x *ReviewPin) Reset() {
 	*x = ReviewPin{}
-	mi := &file_trip_proto_msgTypes[26]
+	mi := &file_trip_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1673,7 +1882,7 @@ func (x *ReviewPin) String() string {
 func (*ReviewPin) ProtoMessage() {}
 
 func (x *ReviewPin) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[26]
+	mi := &file_trip_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1686,7 +1895,7 @@ func (x *ReviewPin) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewPin.ProtoReflect.Descriptor instead.
 func (*ReviewPin) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{26}
+	return file_trip_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ReviewPin) GetPinId() string {
@@ -1777,7 +1986,7 @@ type ReviewPinMedia struct {
 
 func (x *ReviewPinMedia) Reset() {
 	*x = ReviewPinMedia{}
-	mi := &file_trip_proto_msgTypes[27]
+	mi := &file_trip_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1789,7 +1998,7 @@ func (x *ReviewPinMedia) String() string {
 func (*ReviewPinMedia) ProtoMessage() {}
 
 func (x *ReviewPinMedia) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[27]
+	mi := &file_trip_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1802,7 +2011,7 @@ func (x *ReviewPinMedia) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewPinMedia.ProtoReflect.Descriptor instead.
 func (*ReviewPinMedia) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{27}
+	return file_trip_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ReviewPinMedia) GetMediaId() string {
@@ -1838,7 +2047,7 @@ type FinalizeTripRequest struct {
 
 func (x *FinalizeTripRequest) Reset() {
 	*x = FinalizeTripRequest{}
-	mi := &file_trip_proto_msgTypes[28]
+	mi := &file_trip_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1850,7 +2059,7 @@ func (x *FinalizeTripRequest) String() string {
 func (*FinalizeTripRequest) ProtoMessage() {}
 
 func (x *FinalizeTripRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[28]
+	mi := &file_trip_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1863,7 +2072,7 @@ func (x *FinalizeTripRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinalizeTripRequest.ProtoReflect.Descriptor instead.
 func (*FinalizeTripRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{28}
+	return file_trip_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *FinalizeTripRequest) GetTripId() string {
@@ -1899,7 +2108,7 @@ type PinUpdate struct {
 
 func (x *PinUpdate) Reset() {
 	*x = PinUpdate{}
-	mi := &file_trip_proto_msgTypes[29]
+	mi := &file_trip_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1911,7 +2120,7 @@ func (x *PinUpdate) String() string {
 func (*PinUpdate) ProtoMessage() {}
 
 func (x *PinUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[29]
+	mi := &file_trip_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1924,7 +2133,7 @@ func (x *PinUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PinUpdate.ProtoReflect.Descriptor instead.
 func (*PinUpdate) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{29}
+	return file_trip_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *PinUpdate) GetPinId() string {
@@ -1966,7 +2175,7 @@ type FinalizeTripResponse struct {
 
 func (x *FinalizeTripResponse) Reset() {
 	*x = FinalizeTripResponse{}
-	mi := &file_trip_proto_msgTypes[30]
+	mi := &file_trip_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1978,7 +2187,7 @@ func (x *FinalizeTripResponse) String() string {
 func (*FinalizeTripResponse) ProtoMessage() {}
 
 func (x *FinalizeTripResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[30]
+	mi := &file_trip_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1991,7 +2200,7 @@ func (x *FinalizeTripResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinalizeTripResponse.ProtoReflect.Descriptor instead.
 func (*FinalizeTripResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{30}
+	return file_trip_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *FinalizeTripResponse) GetTripId() string {
@@ -2026,7 +2235,7 @@ type GenerateInviteLinkRequest struct {
 
 func (x *GenerateInviteLinkRequest) Reset() {
 	*x = GenerateInviteLinkRequest{}
-	mi := &file_trip_proto_msgTypes[31]
+	mi := &file_trip_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2038,7 +2247,7 @@ func (x *GenerateInviteLinkRequest) String() string {
 func (*GenerateInviteLinkRequest) ProtoMessage() {}
 
 func (x *GenerateInviteLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[31]
+	mi := &file_trip_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2051,7 +2260,7 @@ func (x *GenerateInviteLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateInviteLinkRequest.ProtoReflect.Descriptor instead.
 func (*GenerateInviteLinkRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{31}
+	return file_trip_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *GenerateInviteLinkRequest) GetTripId() string {
@@ -2080,7 +2289,7 @@ type GenerateInviteLinkResponse struct {
 
 func (x *GenerateInviteLinkResponse) Reset() {
 	*x = GenerateInviteLinkResponse{}
-	mi := &file_trip_proto_msgTypes[32]
+	mi := &file_trip_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2092,7 +2301,7 @@ func (x *GenerateInviteLinkResponse) String() string {
 func (*GenerateInviteLinkResponse) ProtoMessage() {}
 
 func (x *GenerateInviteLinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[32]
+	mi := &file_trip_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2105,7 +2314,7 @@ func (x *GenerateInviteLinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateInviteLinkResponse.ProtoReflect.Descriptor instead.
 func (*GenerateInviteLinkResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{32}
+	return file_trip_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GenerateInviteLinkResponse) GetInviteLinkId() string {
@@ -2145,7 +2354,7 @@ type JoinTripByTokenRequest struct {
 
 func (x *JoinTripByTokenRequest) Reset() {
 	*x = JoinTripByTokenRequest{}
-	mi := &file_trip_proto_msgTypes[33]
+	mi := &file_trip_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2157,7 +2366,7 @@ func (x *JoinTripByTokenRequest) String() string {
 func (*JoinTripByTokenRequest) ProtoMessage() {}
 
 func (x *JoinTripByTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[33]
+	mi := &file_trip_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2170,7 +2379,7 @@ func (x *JoinTripByTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinTripByTokenRequest.ProtoReflect.Descriptor instead.
 func (*JoinTripByTokenRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{33}
+	return file_trip_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *JoinTripByTokenRequest) GetToken() string {
@@ -2190,7 +2399,7 @@ type JoinTripByTokenResponse struct {
 
 func (x *JoinTripByTokenResponse) Reset() {
 	*x = JoinTripByTokenResponse{}
-	mi := &file_trip_proto_msgTypes[34]
+	mi := &file_trip_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2202,7 +2411,7 @@ func (x *JoinTripByTokenResponse) String() string {
 func (*JoinTripByTokenResponse) ProtoMessage() {}
 
 func (x *JoinTripByTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[34]
+	mi := &file_trip_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2215,7 +2424,7 @@ func (x *JoinTripByTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinTripByTokenResponse.ProtoReflect.Descriptor instead.
 func (*JoinTripByTokenResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{34}
+	return file_trip_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *JoinTripByTokenResponse) GetTripId() string {
@@ -2242,7 +2451,7 @@ type RemoveParticipantRequest struct {
 
 func (x *RemoveParticipantRequest) Reset() {
 	*x = RemoveParticipantRequest{}
-	mi := &file_trip_proto_msgTypes[35]
+	mi := &file_trip_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2254,7 +2463,7 @@ func (x *RemoveParticipantRequest) String() string {
 func (*RemoveParticipantRequest) ProtoMessage() {}
 
 func (x *RemoveParticipantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[35]
+	mi := &file_trip_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2267,7 +2476,7 @@ func (x *RemoveParticipantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveParticipantRequest.ProtoReflect.Descriptor instead.
 func (*RemoveParticipantRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{35}
+	return file_trip_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *RemoveParticipantRequest) GetTripId() string {
@@ -2293,7 +2502,7 @@ type RemoveParticipantResponse struct {
 
 func (x *RemoveParticipantResponse) Reset() {
 	*x = RemoveParticipantResponse{}
-	mi := &file_trip_proto_msgTypes[36]
+	mi := &file_trip_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2305,7 +2514,7 @@ func (x *RemoveParticipantResponse) String() string {
 func (*RemoveParticipantResponse) ProtoMessage() {}
 
 func (x *RemoveParticipantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[36]
+	mi := &file_trip_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2318,7 +2527,7 @@ func (x *RemoveParticipantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveParticipantResponse.ProtoReflect.Descriptor instead.
 func (*RemoveParticipantResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{36}
+	return file_trip_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *RemoveParticipantResponse) GetSuccess() bool {
@@ -2337,7 +2546,7 @@ type LeaveTripRequest struct {
 
 func (x *LeaveTripRequest) Reset() {
 	*x = LeaveTripRequest{}
-	mi := &file_trip_proto_msgTypes[37]
+	mi := &file_trip_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2349,7 +2558,7 @@ func (x *LeaveTripRequest) String() string {
 func (*LeaveTripRequest) ProtoMessage() {}
 
 func (x *LeaveTripRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[37]
+	mi := &file_trip_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2362,7 +2571,7 @@ func (x *LeaveTripRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaveTripRequest.ProtoReflect.Descriptor instead.
 func (*LeaveTripRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{37}
+	return file_trip_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *LeaveTripRequest) GetTripId() string {
@@ -2382,7 +2591,7 @@ type LeaveTripResponse struct {
 
 func (x *LeaveTripResponse) Reset() {
 	*x = LeaveTripResponse{}
-	mi := &file_trip_proto_msgTypes[38]
+	mi := &file_trip_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2394,7 +2603,7 @@ func (x *LeaveTripResponse) String() string {
 func (*LeaveTripResponse) ProtoMessage() {}
 
 func (x *LeaveTripResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[38]
+	mi := &file_trip_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2407,7 +2616,7 @@ func (x *LeaveTripResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaveTripResponse.ProtoReflect.Descriptor instead.
 func (*LeaveTripResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{38}
+	return file_trip_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *LeaveTripResponse) GetSuccess() bool {
@@ -2434,7 +2643,7 @@ type TransferAdminRequest struct {
 
 func (x *TransferAdminRequest) Reset() {
 	*x = TransferAdminRequest{}
-	mi := &file_trip_proto_msgTypes[39]
+	mi := &file_trip_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2446,7 +2655,7 @@ func (x *TransferAdminRequest) String() string {
 func (*TransferAdminRequest) ProtoMessage() {}
 
 func (x *TransferAdminRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[39]
+	mi := &file_trip_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2459,7 +2668,7 @@ func (x *TransferAdminRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferAdminRequest.ProtoReflect.Descriptor instead.
 func (*TransferAdminRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{39}
+	return file_trip_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *TransferAdminRequest) GetTripId() string {
@@ -2485,7 +2694,7 @@ type TransferAdminResponse struct {
 
 func (x *TransferAdminResponse) Reset() {
 	*x = TransferAdminResponse{}
-	mi := &file_trip_proto_msgTypes[40]
+	mi := &file_trip_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2497,7 +2706,7 @@ func (x *TransferAdminResponse) String() string {
 func (*TransferAdminResponse) ProtoMessage() {}
 
 func (x *TransferAdminResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[40]
+	mi := &file_trip_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2510,7 +2719,7 @@ func (x *TransferAdminResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferAdminResponse.ProtoReflect.Descriptor instead.
 func (*TransferAdminResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{40}
+	return file_trip_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *TransferAdminResponse) GetSuccess() bool {
@@ -2531,7 +2740,7 @@ type UpdateTripSettingsRequest struct {
 
 func (x *UpdateTripSettingsRequest) Reset() {
 	*x = UpdateTripSettingsRequest{}
-	mi := &file_trip_proto_msgTypes[41]
+	mi := &file_trip_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2543,7 +2752,7 @@ func (x *UpdateTripSettingsRequest) String() string {
 func (*UpdateTripSettingsRequest) ProtoMessage() {}
 
 func (x *UpdateTripSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[41]
+	mi := &file_trip_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2556,7 +2765,7 @@ func (x *UpdateTripSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTripSettingsRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTripSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{41}
+	return file_trip_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *UpdateTripSettingsRequest) GetTripId() string {
@@ -2582,7 +2791,7 @@ type UpdateTripSettingsResponse struct {
 
 func (x *UpdateTripSettingsResponse) Reset() {
 	*x = UpdateTripSettingsResponse{}
-	mi := &file_trip_proto_msgTypes[42]
+	mi := &file_trip_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2594,7 +2803,7 @@ func (x *UpdateTripSettingsResponse) String() string {
 func (*UpdateTripSettingsResponse) ProtoMessage() {}
 
 func (x *UpdateTripSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[42]
+	mi := &file_trip_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2607,7 +2816,7 @@ func (x *UpdateTripSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTripSettingsResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTripSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{42}
+	return file_trip_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *UpdateTripSettingsResponse) GetSuccess() bool {
@@ -2632,7 +2841,7 @@ type ListFeedRequest struct {
 
 func (x *ListFeedRequest) Reset() {
 	*x = ListFeedRequest{}
-	mi := &file_trip_proto_msgTypes[43]
+	mi := &file_trip_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2644,7 +2853,7 @@ func (x *ListFeedRequest) String() string {
 func (*ListFeedRequest) ProtoMessage() {}
 
 func (x *ListFeedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[43]
+	mi := &file_trip_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2657,7 +2866,7 @@ func (x *ListFeedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFeedRequest.ProtoReflect.Descriptor instead.
 func (*ListFeedRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{43}
+	return file_trip_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *ListFeedRequest) GetLimit() int32 {
@@ -2711,7 +2920,7 @@ type ListFeedResponse struct {
 
 func (x *ListFeedResponse) Reset() {
 	*x = ListFeedResponse{}
-	mi := &file_trip_proto_msgTypes[44]
+	mi := &file_trip_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2723,7 +2932,7 @@ func (x *ListFeedResponse) String() string {
 func (*ListFeedResponse) ProtoMessage() {}
 
 func (x *ListFeedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[44]
+	mi := &file_trip_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2736,7 +2945,7 @@ func (x *ListFeedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFeedResponse.ProtoReflect.Descriptor instead.
 func (*ListFeedResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{44}
+	return file_trip_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *ListFeedResponse) GetTrips() []*Trip {
@@ -2755,7 +2964,7 @@ type LikeTripRequest struct {
 
 func (x *LikeTripRequest) Reset() {
 	*x = LikeTripRequest{}
-	mi := &file_trip_proto_msgTypes[45]
+	mi := &file_trip_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2767,7 +2976,7 @@ func (x *LikeTripRequest) String() string {
 func (*LikeTripRequest) ProtoMessage() {}
 
 func (x *LikeTripRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[45]
+	mi := &file_trip_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2780,7 +2989,7 @@ func (x *LikeTripRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LikeTripRequest.ProtoReflect.Descriptor instead.
 func (*LikeTripRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{45}
+	return file_trip_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *LikeTripRequest) GetTripId() string {
@@ -2799,7 +3008,7 @@ type LikeTripResponse struct {
 
 func (x *LikeTripResponse) Reset() {
 	*x = LikeTripResponse{}
-	mi := &file_trip_proto_msgTypes[46]
+	mi := &file_trip_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2811,7 +3020,7 @@ func (x *LikeTripResponse) String() string {
 func (*LikeTripResponse) ProtoMessage() {}
 
 func (x *LikeTripResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[46]
+	mi := &file_trip_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2824,7 +3033,7 @@ func (x *LikeTripResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LikeTripResponse.ProtoReflect.Descriptor instead.
 func (*LikeTripResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{46}
+	return file_trip_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *LikeTripResponse) GetSuccess() bool {
@@ -2843,7 +3052,7 @@ type DislikeTripRequest struct {
 
 func (x *DislikeTripRequest) Reset() {
 	*x = DislikeTripRequest{}
-	mi := &file_trip_proto_msgTypes[47]
+	mi := &file_trip_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2855,7 +3064,7 @@ func (x *DislikeTripRequest) String() string {
 func (*DislikeTripRequest) ProtoMessage() {}
 
 func (x *DislikeTripRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[47]
+	mi := &file_trip_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2868,7 +3077,7 @@ func (x *DislikeTripRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DislikeTripRequest.ProtoReflect.Descriptor instead.
 func (*DislikeTripRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{47}
+	return file_trip_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *DislikeTripRequest) GetTripId() string {
@@ -2887,7 +3096,7 @@ type DislikeTripResponse struct {
 
 func (x *DislikeTripResponse) Reset() {
 	*x = DislikeTripResponse{}
-	mi := &file_trip_proto_msgTypes[48]
+	mi := &file_trip_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2899,7 +3108,7 @@ func (x *DislikeTripResponse) String() string {
 func (*DislikeTripResponse) ProtoMessage() {}
 
 func (x *DislikeTripResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[48]
+	mi := &file_trip_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2912,7 +3121,7 @@ func (x *DislikeTripResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DislikeTripResponse.ProtoReflect.Descriptor instead.
 func (*DislikeTripResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{48}
+	return file_trip_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *DislikeTripResponse) GetSuccess() bool {
@@ -2931,7 +3140,7 @@ type AddToFavouritesRequest struct {
 
 func (x *AddToFavouritesRequest) Reset() {
 	*x = AddToFavouritesRequest{}
-	mi := &file_trip_proto_msgTypes[49]
+	mi := &file_trip_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2943,7 +3152,7 @@ func (x *AddToFavouritesRequest) String() string {
 func (*AddToFavouritesRequest) ProtoMessage() {}
 
 func (x *AddToFavouritesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[49]
+	mi := &file_trip_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2956,7 +3165,7 @@ func (x *AddToFavouritesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddToFavouritesRequest.ProtoReflect.Descriptor instead.
 func (*AddToFavouritesRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{49}
+	return file_trip_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *AddToFavouritesRequest) GetTripId() string {
@@ -2975,7 +3184,7 @@ type AddToFavouritesResponse struct {
 
 func (x *AddToFavouritesResponse) Reset() {
 	*x = AddToFavouritesResponse{}
-	mi := &file_trip_proto_msgTypes[50]
+	mi := &file_trip_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2987,7 +3196,7 @@ func (x *AddToFavouritesResponse) String() string {
 func (*AddToFavouritesResponse) ProtoMessage() {}
 
 func (x *AddToFavouritesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[50]
+	mi := &file_trip_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3000,7 +3209,7 @@ func (x *AddToFavouritesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddToFavouritesResponse.ProtoReflect.Descriptor instead.
 func (*AddToFavouritesResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{50}
+	return file_trip_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *AddToFavouritesResponse) GetSuccess() bool {
@@ -3019,7 +3228,7 @@ type RemoveFromFavouritesRequest struct {
 
 func (x *RemoveFromFavouritesRequest) Reset() {
 	*x = RemoveFromFavouritesRequest{}
-	mi := &file_trip_proto_msgTypes[51]
+	mi := &file_trip_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3031,7 +3240,7 @@ func (x *RemoveFromFavouritesRequest) String() string {
 func (*RemoveFromFavouritesRequest) ProtoMessage() {}
 
 func (x *RemoveFromFavouritesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[51]
+	mi := &file_trip_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3044,7 +3253,7 @@ func (x *RemoveFromFavouritesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFromFavouritesRequest.ProtoReflect.Descriptor instead.
 func (*RemoveFromFavouritesRequest) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{51}
+	return file_trip_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *RemoveFromFavouritesRequest) GetTripId() string {
@@ -3063,7 +3272,7 @@ type RemoveFromFavouritesResponse struct {
 
 func (x *RemoveFromFavouritesResponse) Reset() {
 	*x = RemoveFromFavouritesResponse{}
-	mi := &file_trip_proto_msgTypes[52]
+	mi := &file_trip_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3075,7 +3284,7 @@ func (x *RemoveFromFavouritesResponse) String() string {
 func (*RemoveFromFavouritesResponse) ProtoMessage() {}
 
 func (x *RemoveFromFavouritesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trip_proto_msgTypes[52]
+	mi := &file_trip_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3088,7 +3297,7 @@ func (x *RemoveFromFavouritesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFromFavouritesResponse.ProtoReflect.Descriptor instead.
 func (*RemoveFromFavouritesResponse) Descriptor() ([]byte, []int) {
-	return file_trip_proto_rawDescGZIP(), []int{52}
+	return file_trip_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *RemoveFromFavouritesResponse) GetSuccess() bool {
@@ -3096,6 +3305,102 @@ func (x *RemoveFromFavouritesResponse) GetSuccess() bool {
 		return x.Success
 	}
 	return false
+}
+
+type ListFavouritesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFavouritesRequest) Reset() {
+	*x = ListFavouritesRequest{}
+	mi := &file_trip_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFavouritesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFavouritesRequest) ProtoMessage() {}
+
+func (x *ListFavouritesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_proto_msgTypes[55]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFavouritesRequest.ProtoReflect.Descriptor instead.
+func (*ListFavouritesRequest) Descriptor() ([]byte, []int) {
+	return file_trip_proto_rawDescGZIP(), []int{55}
+}
+
+func (x *ListFavouritesRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *ListFavouritesRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type ListFavouritesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Trips         []*Trip                `protobuf:"bytes,1,rep,name=trips,proto3" json:"trips,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFavouritesResponse) Reset() {
+	*x = ListFavouritesResponse{}
+	mi := &file_trip_proto_msgTypes[56]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFavouritesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFavouritesResponse) ProtoMessage() {}
+
+func (x *ListFavouritesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_proto_msgTypes[56]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFavouritesResponse.ProtoReflect.Descriptor instead.
+func (*ListFavouritesResponse) Descriptor() ([]byte, []int) {
+	return file_trip_proto_rawDescGZIP(), []int{56}
+}
+
+func (x *ListFavouritesResponse) GetTrips() []*Trip {
+	if x != nil {
+		return x.Trips
+	}
+	return nil
 }
 
 var File_trip_proto protoreflect.FileDescriptor
@@ -3146,10 +3451,34 @@ const file_trip_proto_rawDesc = "" +
 	"\x03url\x18\x03 \x01(\tR\x03url\"B\n" +
 	"\x0eGetTripRequest\x12\x17\n" +
 	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"1\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xf9\x02\n" +
+	"\aTripPin\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1a\n" +
+	"\bcategory\x18\x04 \x01(\tR\bcategory\x12\x1f\n" +
+	"\blatitude\x18\x05 \x01(\x01H\x00R\blatitude\x88\x01\x01\x12!\n" +
+	"\tlongitude\x18\x06 \x01(\x01H\x01R\tlongitude\x88\x01\x01\x12&\n" +
+	"\x0fstart_time_unix\x18\a \x01(\x03R\rstartTimeUnix\x12\"\n" +
+	"\rend_time_unix\x18\b \x01(\x03R\vendTimeUnix\x12#\n" +
+	"\rprivacy_level\x18\t \x01(\tR\fprivacyLevel\x12\x12\n" +
+	"\x04tags\x18\n" +
+	" \x03(\tR\x04tags\x12(\n" +
+	"\x05media\x18\v \x03(\v2\x12.trip.TripPinMediaR\x05mediaB\v\n" +
+	"\t_latitudeB\f\n" +
+	"\n" +
+	"_longitude\"\xa9\x01\n" +
+	"\fTripPinMedia\x12\x19\n" +
+	"\bmedia_id\x18\x01 \x01(\tR\amediaId\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1d\n" +
+	"\n" +
+	"media_type\x18\x03 \x01(\tR\tmediaType\x12(\n" +
+	"\x10captured_at_unix\x18\x04 \x01(\x03R\x0ecapturedAtUnix\x12#\n" +
+	"\rprivacy_level\x18\x05 \x01(\tR\fprivacyLevel\"T\n" +
 	"\x0fGetTripResponse\x12\x1e\n" +
 	"\x04trip\x18\x01 \x01(\v2\n" +
-	".trip.TripR\x04trip\"]\n" +
+	".trip.TripR\x04trip\x12!\n" +
+	"\x04pins\x18\x02 \x03(\v2\r.trip.TripPinR\x04pins\"]\n" +
 	"\x14ListUserTripsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
@@ -3338,7 +3667,13 @@ const file_trip_proto_rawDesc = "" +
 	"\x1bRemoveFromFavouritesRequest\x12\x17\n" +
 	"\atrip_id\x18\x01 \x01(\tR\x06tripId\"8\n" +
 	"\x1cRemoveFromFavouritesResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xb1\f\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"E\n" +
+	"\x15ListFavouritesRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x05R\x06offset\":\n" +
+	"\x16ListFavouritesResponse\x12 \n" +
+	"\x05trips\x18\x01 \x03(\v2\n" +
+	".trip.TripR\x05trips2\xfe\f\n" +
 	"\vTripService\x12?\n" +
 	"\n" +
 	"CreateTrip\x12\x17.trip.CreateTripRequest\x1a\x18.trip.CreateTripResponse\x126\n" +
@@ -3363,7 +3698,8 @@ const file_trip_proto_rawDesc = "" +
 	"\bLikeTrip\x12\x15.trip.LikeTripRequest\x1a\x16.trip.LikeTripResponse\x12B\n" +
 	"\vDislikeTrip\x12\x18.trip.DislikeTripRequest\x1a\x19.trip.DislikeTripResponse\x12N\n" +
 	"\x0fAddToFavourites\x12\x1c.trip.AddToFavouritesRequest\x1a\x1d.trip.AddToFavouritesResponse\x12]\n" +
-	"\x14RemoveFromFavourites\x12!.trip.RemoveFromFavouritesRequest\x1a\".trip.RemoveFromFavouritesResponseB%Z#pinz/backend/trip-service/pkg/protob\x06proto3"
+	"\x14RemoveFromFavourites\x12!.trip.RemoveFromFavouritesRequest\x1a\".trip.RemoveFromFavouritesResponse\x12K\n" +
+	"\x0eListFavourites\x12\x1b.trip.ListFavouritesRequest\x1a\x1c.trip.ListFavouritesResponseB%Z#pinz/backend/trip-service/pkg/protob\x06proto3"
 
 var (
 	file_trip_proto_rawDescOnce sync.Once
@@ -3377,7 +3713,7 @@ func file_trip_proto_rawDescGZIP() []byte {
 	return file_trip_proto_rawDescData
 }
 
-var file_trip_proto_msgTypes = make([]protoimpl.MessageInfo, 53)
+var file_trip_proto_msgTypes = make([]protoimpl.MessageInfo, 57)
 var file_trip_proto_goTypes = []any{
 	(*Trip)(nil),                          // 0: trip.Trip
 	(*CreateTripRequest)(nil),             // 1: trip.CreateTripRequest
@@ -3385,117 +3721,126 @@ var file_trip_proto_goTypes = []any{
 	(*CreateTripResponse)(nil),            // 3: trip.CreateTripResponse
 	(*UploadUrl)(nil),                     // 4: trip.UploadUrl
 	(*GetTripRequest)(nil),                // 5: trip.GetTripRequest
-	(*GetTripResponse)(nil),               // 6: trip.GetTripResponse
-	(*ListUserTripsRequest)(nil),          // 7: trip.ListUserTripsRequest
-	(*ListUserTripsResponse)(nil),         // 8: trip.ListUserTripsResponse
-	(*UpdateTripRequest)(nil),             // 9: trip.UpdateTripRequest
-	(*UpdateTripResponse)(nil),            // 10: trip.UpdateTripResponse
-	(*DeleteTripRequest)(nil),             // 11: trip.DeleteTripRequest
-	(*DeleteTripResponse)(nil),            // 12: trip.DeleteTripResponse
-	(*PublishTripRequest)(nil),            // 13: trip.PublishTripRequest
-	(*PublishTripResponse)(nil),           // 14: trip.PublishTripResponse
-	(*ProcessMediaGroupingRequest)(nil),   // 15: trip.ProcessMediaGroupingRequest
-	(*MediaMeta)(nil),                     // 16: trip.MediaMeta
-	(*ProcessMediaGroupingResponse)(nil),  // 17: trip.ProcessMediaGroupingResponse
-	(*DraftPin)(nil),                      // 18: trip.DraftPin
-	(*DraftPinMedia)(nil),                 // 19: trip.DraftPinMedia
-	(*ApplyGroupsAndProcessRequest)(nil),  // 20: trip.ApplyGroupsAndProcessRequest
-	(*DraftPinInput)(nil),                 // 21: trip.DraftPinInput
-	(*ApplyGroupsAndProcessResponse)(nil), // 22: trip.ApplyGroupsAndProcessResponse
-	(*GetTripReviewRequest)(nil),          // 23: trip.GetTripReviewRequest
-	(*GetTripReviewResponse)(nil),         // 24: trip.GetTripReviewResponse
-	(*MediaSimilarGroup)(nil),             // 25: trip.MediaSimilarGroup
-	(*ReviewPin)(nil),                     // 26: trip.ReviewPin
-	(*ReviewPinMedia)(nil),                // 27: trip.ReviewPinMedia
-	(*FinalizeTripRequest)(nil),           // 28: trip.FinalizeTripRequest
-	(*PinUpdate)(nil),                     // 29: trip.PinUpdate
-	(*FinalizeTripResponse)(nil),          // 30: trip.FinalizeTripResponse
-	(*GenerateInviteLinkRequest)(nil),     // 31: trip.GenerateInviteLinkRequest
-	(*GenerateInviteLinkResponse)(nil),    // 32: trip.GenerateInviteLinkResponse
-	(*JoinTripByTokenRequest)(nil),        // 33: trip.JoinTripByTokenRequest
-	(*JoinTripByTokenResponse)(nil),       // 34: trip.JoinTripByTokenResponse
-	(*RemoveParticipantRequest)(nil),      // 35: trip.RemoveParticipantRequest
-	(*RemoveParticipantResponse)(nil),     // 36: trip.RemoveParticipantResponse
-	(*LeaveTripRequest)(nil),              // 37: trip.LeaveTripRequest
-	(*LeaveTripResponse)(nil),             // 38: trip.LeaveTripResponse
-	(*TransferAdminRequest)(nil),          // 39: trip.TransferAdminRequest
-	(*TransferAdminResponse)(nil),         // 40: trip.TransferAdminResponse
-	(*UpdateTripSettingsRequest)(nil),     // 41: trip.UpdateTripSettingsRequest
-	(*UpdateTripSettingsResponse)(nil),    // 42: trip.UpdateTripSettingsResponse
-	(*ListFeedRequest)(nil),               // 43: trip.ListFeedRequest
-	(*ListFeedResponse)(nil),              // 44: trip.ListFeedResponse
-	(*LikeTripRequest)(nil),               // 45: trip.LikeTripRequest
-	(*LikeTripResponse)(nil),              // 46: trip.LikeTripResponse
-	(*DislikeTripRequest)(nil),            // 47: trip.DislikeTripRequest
-	(*DislikeTripResponse)(nil),           // 48: trip.DislikeTripResponse
-	(*AddToFavouritesRequest)(nil),        // 49: trip.AddToFavouritesRequest
-	(*AddToFavouritesResponse)(nil),       // 50: trip.AddToFavouritesResponse
-	(*RemoveFromFavouritesRequest)(nil),   // 51: trip.RemoveFromFavouritesRequest
-	(*RemoveFromFavouritesResponse)(nil),  // 52: trip.RemoveFromFavouritesResponse
+	(*TripPin)(nil),                       // 6: trip.TripPin
+	(*TripPinMedia)(nil),                  // 7: trip.TripPinMedia
+	(*GetTripResponse)(nil),               // 8: trip.GetTripResponse
+	(*ListUserTripsRequest)(nil),          // 9: trip.ListUserTripsRequest
+	(*ListUserTripsResponse)(nil),         // 10: trip.ListUserTripsResponse
+	(*UpdateTripRequest)(nil),             // 11: trip.UpdateTripRequest
+	(*UpdateTripResponse)(nil),            // 12: trip.UpdateTripResponse
+	(*DeleteTripRequest)(nil),             // 13: trip.DeleteTripRequest
+	(*DeleteTripResponse)(nil),            // 14: trip.DeleteTripResponse
+	(*PublishTripRequest)(nil),            // 15: trip.PublishTripRequest
+	(*PublishTripResponse)(nil),           // 16: trip.PublishTripResponse
+	(*ProcessMediaGroupingRequest)(nil),   // 17: trip.ProcessMediaGroupingRequest
+	(*MediaMeta)(nil),                     // 18: trip.MediaMeta
+	(*ProcessMediaGroupingResponse)(nil),  // 19: trip.ProcessMediaGroupingResponse
+	(*DraftPin)(nil),                      // 20: trip.DraftPin
+	(*DraftPinMedia)(nil),                 // 21: trip.DraftPinMedia
+	(*ApplyGroupsAndProcessRequest)(nil),  // 22: trip.ApplyGroupsAndProcessRequest
+	(*DraftPinInput)(nil),                 // 23: trip.DraftPinInput
+	(*ApplyGroupsAndProcessResponse)(nil), // 24: trip.ApplyGroupsAndProcessResponse
+	(*GetTripReviewRequest)(nil),          // 25: trip.GetTripReviewRequest
+	(*GetTripReviewResponse)(nil),         // 26: trip.GetTripReviewResponse
+	(*MediaSimilarGroup)(nil),             // 27: trip.MediaSimilarGroup
+	(*ReviewPin)(nil),                     // 28: trip.ReviewPin
+	(*ReviewPinMedia)(nil),                // 29: trip.ReviewPinMedia
+	(*FinalizeTripRequest)(nil),           // 30: trip.FinalizeTripRequest
+	(*PinUpdate)(nil),                     // 31: trip.PinUpdate
+	(*FinalizeTripResponse)(nil),          // 32: trip.FinalizeTripResponse
+	(*GenerateInviteLinkRequest)(nil),     // 33: trip.GenerateInviteLinkRequest
+	(*GenerateInviteLinkResponse)(nil),    // 34: trip.GenerateInviteLinkResponse
+	(*JoinTripByTokenRequest)(nil),        // 35: trip.JoinTripByTokenRequest
+	(*JoinTripByTokenResponse)(nil),       // 36: trip.JoinTripByTokenResponse
+	(*RemoveParticipantRequest)(nil),      // 37: trip.RemoveParticipantRequest
+	(*RemoveParticipantResponse)(nil),     // 38: trip.RemoveParticipantResponse
+	(*LeaveTripRequest)(nil),              // 39: trip.LeaveTripRequest
+	(*LeaveTripResponse)(nil),             // 40: trip.LeaveTripResponse
+	(*TransferAdminRequest)(nil),          // 41: trip.TransferAdminRequest
+	(*TransferAdminResponse)(nil),         // 42: trip.TransferAdminResponse
+	(*UpdateTripSettingsRequest)(nil),     // 43: trip.UpdateTripSettingsRequest
+	(*UpdateTripSettingsResponse)(nil),    // 44: trip.UpdateTripSettingsResponse
+	(*ListFeedRequest)(nil),               // 45: trip.ListFeedRequest
+	(*ListFeedResponse)(nil),              // 46: trip.ListFeedResponse
+	(*LikeTripRequest)(nil),               // 47: trip.LikeTripRequest
+	(*LikeTripResponse)(nil),              // 48: trip.LikeTripResponse
+	(*DislikeTripRequest)(nil),            // 49: trip.DislikeTripRequest
+	(*DislikeTripResponse)(nil),           // 50: trip.DislikeTripResponse
+	(*AddToFavouritesRequest)(nil),        // 51: trip.AddToFavouritesRequest
+	(*AddToFavouritesResponse)(nil),       // 52: trip.AddToFavouritesResponse
+	(*RemoveFromFavouritesRequest)(nil),   // 53: trip.RemoveFromFavouritesRequest
+	(*RemoveFromFavouritesResponse)(nil),  // 54: trip.RemoveFromFavouritesResponse
+	(*ListFavouritesRequest)(nil),         // 55: trip.ListFavouritesRequest
+	(*ListFavouritesResponse)(nil),        // 56: trip.ListFavouritesResponse
 }
 var file_trip_proto_depIdxs = []int32{
 	2,  // 0: trip.CreateTripRequest.files_to_upload:type_name -> trip.FileToUpload
 	4,  // 1: trip.CreateTripResponse.upload_urls:type_name -> trip.UploadUrl
-	0,  // 2: trip.GetTripResponse.trip:type_name -> trip.Trip
-	0,  // 3: trip.ListUserTripsResponse.trips:type_name -> trip.Trip
-	0,  // 4: trip.UpdateTripResponse.trip:type_name -> trip.Trip
-	0,  // 5: trip.PublishTripResponse.trip:type_name -> trip.Trip
-	16, // 6: trip.ProcessMediaGroupingRequest.media:type_name -> trip.MediaMeta
-	18, // 7: trip.ProcessMediaGroupingResponse.draft_pins:type_name -> trip.DraftPin
-	19, // 8: trip.DraftPin.media:type_name -> trip.DraftPinMedia
-	21, // 9: trip.ApplyGroupsAndProcessRequest.draft_pins:type_name -> trip.DraftPinInput
-	25, // 10: trip.GetTripReviewResponse.similar:type_name -> trip.MediaSimilarGroup
-	26, // 11: trip.GetTripReviewResponse.pins:type_name -> trip.ReviewPin
-	27, // 12: trip.ReviewPin.media:type_name -> trip.ReviewPinMedia
-	29, // 13: trip.FinalizeTripRequest.pin_updates:type_name -> trip.PinUpdate
-	0,  // 14: trip.ListFeedResponse.trips:type_name -> trip.Trip
-	1,  // 15: trip.TripService.CreateTrip:input_type -> trip.CreateTripRequest
-	5,  // 16: trip.TripService.GetTrip:input_type -> trip.GetTripRequest
-	7,  // 17: trip.TripService.ListUserTrips:input_type -> trip.ListUserTripsRequest
-	9,  // 18: trip.TripService.UpdateTrip:input_type -> trip.UpdateTripRequest
-	11, // 19: trip.TripService.DeleteTrip:input_type -> trip.DeleteTripRequest
-	31, // 20: trip.TripService.GenerateInviteLink:input_type -> trip.GenerateInviteLinkRequest
-	33, // 21: trip.TripService.JoinTripByToken:input_type -> trip.JoinTripByTokenRequest
-	35, // 22: trip.TripService.RemoveParticipant:input_type -> trip.RemoveParticipantRequest
-	37, // 23: trip.TripService.LeaveTrip:input_type -> trip.LeaveTripRequest
-	39, // 24: trip.TripService.TransferAdmin:input_type -> trip.TransferAdminRequest
-	15, // 25: trip.TripService.ProcessMediaGrouping:input_type -> trip.ProcessMediaGroupingRequest
-	20, // 26: trip.TripService.ApplyGroupsAndProcess:input_type -> trip.ApplyGroupsAndProcessRequest
-	23, // 27: trip.TripService.GetTripReview:input_type -> trip.GetTripReviewRequest
-	28, // 28: trip.TripService.FinalizeTrip:input_type -> trip.FinalizeTripRequest
-	13, // 29: trip.TripService.PublishTrip:input_type -> trip.PublishTripRequest
-	41, // 30: trip.TripService.UpdateTripSettings:input_type -> trip.UpdateTripSettingsRequest
-	43, // 31: trip.TripService.ListFeed:input_type -> trip.ListFeedRequest
-	45, // 32: trip.TripService.LikeTrip:input_type -> trip.LikeTripRequest
-	47, // 33: trip.TripService.DislikeTrip:input_type -> trip.DislikeTripRequest
-	49, // 34: trip.TripService.AddToFavourites:input_type -> trip.AddToFavouritesRequest
-	51, // 35: trip.TripService.RemoveFromFavourites:input_type -> trip.RemoveFromFavouritesRequest
-	3,  // 36: trip.TripService.CreateTrip:output_type -> trip.CreateTripResponse
-	6,  // 37: trip.TripService.GetTrip:output_type -> trip.GetTripResponse
-	8,  // 38: trip.TripService.ListUserTrips:output_type -> trip.ListUserTripsResponse
-	10, // 39: trip.TripService.UpdateTrip:output_type -> trip.UpdateTripResponse
-	12, // 40: trip.TripService.DeleteTrip:output_type -> trip.DeleteTripResponse
-	32, // 41: trip.TripService.GenerateInviteLink:output_type -> trip.GenerateInviteLinkResponse
-	34, // 42: trip.TripService.JoinTripByToken:output_type -> trip.JoinTripByTokenResponse
-	36, // 43: trip.TripService.RemoveParticipant:output_type -> trip.RemoveParticipantResponse
-	38, // 44: trip.TripService.LeaveTrip:output_type -> trip.LeaveTripResponse
-	40, // 45: trip.TripService.TransferAdmin:output_type -> trip.TransferAdminResponse
-	17, // 46: trip.TripService.ProcessMediaGrouping:output_type -> trip.ProcessMediaGroupingResponse
-	22, // 47: trip.TripService.ApplyGroupsAndProcess:output_type -> trip.ApplyGroupsAndProcessResponse
-	24, // 48: trip.TripService.GetTripReview:output_type -> trip.GetTripReviewResponse
-	30, // 49: trip.TripService.FinalizeTrip:output_type -> trip.FinalizeTripResponse
-	14, // 50: trip.TripService.PublishTrip:output_type -> trip.PublishTripResponse
-	42, // 51: trip.TripService.UpdateTripSettings:output_type -> trip.UpdateTripSettingsResponse
-	44, // 52: trip.TripService.ListFeed:output_type -> trip.ListFeedResponse
-	46, // 53: trip.TripService.LikeTrip:output_type -> trip.LikeTripResponse
-	48, // 54: trip.TripService.DislikeTrip:output_type -> trip.DislikeTripResponse
-	50, // 55: trip.TripService.AddToFavourites:output_type -> trip.AddToFavouritesResponse
-	52, // 56: trip.TripService.RemoveFromFavourites:output_type -> trip.RemoveFromFavouritesResponse
-	36, // [36:57] is the sub-list for method output_type
-	15, // [15:36] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	7,  // 2: trip.TripPin.media:type_name -> trip.TripPinMedia
+	0,  // 3: trip.GetTripResponse.trip:type_name -> trip.Trip
+	6,  // 4: trip.GetTripResponse.pins:type_name -> trip.TripPin
+	0,  // 5: trip.ListUserTripsResponse.trips:type_name -> trip.Trip
+	0,  // 6: trip.UpdateTripResponse.trip:type_name -> trip.Trip
+	0,  // 7: trip.PublishTripResponse.trip:type_name -> trip.Trip
+	18, // 8: trip.ProcessMediaGroupingRequest.media:type_name -> trip.MediaMeta
+	20, // 9: trip.ProcessMediaGroupingResponse.draft_pins:type_name -> trip.DraftPin
+	21, // 10: trip.DraftPin.media:type_name -> trip.DraftPinMedia
+	23, // 11: trip.ApplyGroupsAndProcessRequest.draft_pins:type_name -> trip.DraftPinInput
+	27, // 12: trip.GetTripReviewResponse.similar:type_name -> trip.MediaSimilarGroup
+	28, // 13: trip.GetTripReviewResponse.pins:type_name -> trip.ReviewPin
+	29, // 14: trip.ReviewPin.media:type_name -> trip.ReviewPinMedia
+	31, // 15: trip.FinalizeTripRequest.pin_updates:type_name -> trip.PinUpdate
+	0,  // 16: trip.ListFeedResponse.trips:type_name -> trip.Trip
+	0,  // 17: trip.ListFavouritesResponse.trips:type_name -> trip.Trip
+	1,  // 18: trip.TripService.CreateTrip:input_type -> trip.CreateTripRequest
+	5,  // 19: trip.TripService.GetTrip:input_type -> trip.GetTripRequest
+	9,  // 20: trip.TripService.ListUserTrips:input_type -> trip.ListUserTripsRequest
+	11, // 21: trip.TripService.UpdateTrip:input_type -> trip.UpdateTripRequest
+	13, // 22: trip.TripService.DeleteTrip:input_type -> trip.DeleteTripRequest
+	33, // 23: trip.TripService.GenerateInviteLink:input_type -> trip.GenerateInviteLinkRequest
+	35, // 24: trip.TripService.JoinTripByToken:input_type -> trip.JoinTripByTokenRequest
+	37, // 25: trip.TripService.RemoveParticipant:input_type -> trip.RemoveParticipantRequest
+	39, // 26: trip.TripService.LeaveTrip:input_type -> trip.LeaveTripRequest
+	41, // 27: trip.TripService.TransferAdmin:input_type -> trip.TransferAdminRequest
+	17, // 28: trip.TripService.ProcessMediaGrouping:input_type -> trip.ProcessMediaGroupingRequest
+	22, // 29: trip.TripService.ApplyGroupsAndProcess:input_type -> trip.ApplyGroupsAndProcessRequest
+	25, // 30: trip.TripService.GetTripReview:input_type -> trip.GetTripReviewRequest
+	30, // 31: trip.TripService.FinalizeTrip:input_type -> trip.FinalizeTripRequest
+	15, // 32: trip.TripService.PublishTrip:input_type -> trip.PublishTripRequest
+	43, // 33: trip.TripService.UpdateTripSettings:input_type -> trip.UpdateTripSettingsRequest
+	45, // 34: trip.TripService.ListFeed:input_type -> trip.ListFeedRequest
+	47, // 35: trip.TripService.LikeTrip:input_type -> trip.LikeTripRequest
+	49, // 36: trip.TripService.DislikeTrip:input_type -> trip.DislikeTripRequest
+	51, // 37: trip.TripService.AddToFavourites:input_type -> trip.AddToFavouritesRequest
+	53, // 38: trip.TripService.RemoveFromFavourites:input_type -> trip.RemoveFromFavouritesRequest
+	55, // 39: trip.TripService.ListFavourites:input_type -> trip.ListFavouritesRequest
+	3,  // 40: trip.TripService.CreateTrip:output_type -> trip.CreateTripResponse
+	8,  // 41: trip.TripService.GetTrip:output_type -> trip.GetTripResponse
+	10, // 42: trip.TripService.ListUserTrips:output_type -> trip.ListUserTripsResponse
+	12, // 43: trip.TripService.UpdateTrip:output_type -> trip.UpdateTripResponse
+	14, // 44: trip.TripService.DeleteTrip:output_type -> trip.DeleteTripResponse
+	34, // 45: trip.TripService.GenerateInviteLink:output_type -> trip.GenerateInviteLinkResponse
+	36, // 46: trip.TripService.JoinTripByToken:output_type -> trip.JoinTripByTokenResponse
+	38, // 47: trip.TripService.RemoveParticipant:output_type -> trip.RemoveParticipantResponse
+	40, // 48: trip.TripService.LeaveTrip:output_type -> trip.LeaveTripResponse
+	42, // 49: trip.TripService.TransferAdmin:output_type -> trip.TransferAdminResponse
+	19, // 50: trip.TripService.ProcessMediaGrouping:output_type -> trip.ProcessMediaGroupingResponse
+	24, // 51: trip.TripService.ApplyGroupsAndProcess:output_type -> trip.ApplyGroupsAndProcessResponse
+	26, // 52: trip.TripService.GetTripReview:output_type -> trip.GetTripReviewResponse
+	32, // 53: trip.TripService.FinalizeTrip:output_type -> trip.FinalizeTripResponse
+	16, // 54: trip.TripService.PublishTrip:output_type -> trip.PublishTripResponse
+	44, // 55: trip.TripService.UpdateTripSettings:output_type -> trip.UpdateTripSettingsResponse
+	46, // 56: trip.TripService.ListFeed:output_type -> trip.ListFeedResponse
+	48, // 57: trip.TripService.LikeTrip:output_type -> trip.LikeTripResponse
+	50, // 58: trip.TripService.DislikeTrip:output_type -> trip.DislikeTripResponse
+	52, // 59: trip.TripService.AddToFavourites:output_type -> trip.AddToFavouritesResponse
+	54, // 60: trip.TripService.RemoveFromFavourites:output_type -> trip.RemoveFromFavouritesResponse
+	56, // 61: trip.TripService.ListFavourites:output_type -> trip.ListFavouritesResponse
+	40, // [40:62] is the sub-list for method output_type
+	18, // [18:40] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_trip_proto_init() }
@@ -3503,17 +3848,18 @@ func file_trip_proto_init() {
 	if File_trip_proto != nil {
 		return
 	}
-	file_trip_proto_msgTypes[9].OneofWrappers = []any{}
-	file_trip_proto_msgTypes[16].OneofWrappers = []any{}
-	file_trip_proto_msgTypes[26].OneofWrappers = []any{}
-	file_trip_proto_msgTypes[29].OneofWrappers = []any{}
+	file_trip_proto_msgTypes[6].OneofWrappers = []any{}
+	file_trip_proto_msgTypes[11].OneofWrappers = []any{}
+	file_trip_proto_msgTypes[18].OneofWrappers = []any{}
+	file_trip_proto_msgTypes[28].OneofWrappers = []any{}
+	file_trip_proto_msgTypes[31].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trip_proto_rawDesc), len(file_trip_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   53,
+			NumMessages:   57,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

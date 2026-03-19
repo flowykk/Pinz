@@ -20,29 +20,29 @@ const defaultInviteExpiresInSec = 86400 // 24 hours
 
 type TripService struct {
 	pb.UnimplementedTripServiceServer
-	tripRepo        *repositories.TripRepository
-	participantRepo *repositories.TripParticipantRepository
-	inviteRepo      *repositories.InvitationLinkRepository
-	settingsRepo    *repositories.TripSettingsRepository
-	eventRepo       *repositories.RedisRepository
-	mediaRepo       *repositories.MediaRepository
-	pinRepo         *repositories.PinRepository
-	tagRepo         *repositories.TagRepository
-	socialRepo      *repositories.SocialRepository
-	favouriteRepo   *repositories.FavouriteRepository
+	tripRepo        repositories.TripRepositoryInterface
+	participantRepo repositories.TripParticipantRepositoryInterface
+	inviteRepo      repositories.InvitationLinkRepositoryInterface
+	settingsRepo    repositories.TripSettingsRepositoryInterface
+	eventRepo       repositories.TripEventPublisher
+	mediaRepo       repositories.MediaRepositoryInterface
+	pinRepo         repositories.PinRepositoryInterface
+	tagRepo         repositories.TagRepositoryInterface
+	socialRepo      repositories.SocialRepositoryInterface
+	favouriteRepo   repositories.FavouriteRepositoryInterface
 }
 
 func NewTripService(
-	tripRepo *repositories.TripRepository,
-	participantRepo *repositories.TripParticipantRepository,
-	inviteRepo *repositories.InvitationLinkRepository,
-	settingsRepo *repositories.TripSettingsRepository,
-	eventRepo *repositories.RedisRepository,
-	mediaRepo *repositories.MediaRepository,
-	pinRepo *repositories.PinRepository,
-	tagRepo *repositories.TagRepository,
-	socialRepo *repositories.SocialRepository,
-	favouriteRepo *repositories.FavouriteRepository,
+	tripRepo repositories.TripRepositoryInterface,
+	participantRepo repositories.TripParticipantRepositoryInterface,
+	inviteRepo repositories.InvitationLinkRepositoryInterface,
+	settingsRepo repositories.TripSettingsRepositoryInterface,
+	eventRepo repositories.TripEventPublisher,
+	mediaRepo repositories.MediaRepositoryInterface,
+	pinRepo repositories.PinRepositoryInterface,
+	tagRepo repositories.TagRepositoryInterface,
+	socialRepo repositories.SocialRepositoryInterface,
+	favouriteRepo repositories.FavouriteRepositoryInterface,
 ) *TripService {
 	return &TripService{
 		tripRepo:        tripRepo,
@@ -152,7 +152,11 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 		return nil, status.Error(codes.Internal, "failed to check participant")
 	}
 	if ok {
-		return &pb.GetTripResponse{Trip: tripToProto(trip)}, nil
+		resp, err := s.getTripResponseWithPins(trip)
+		if err != nil {
+			return nil, err
+		}
+		return resp, nil
 	}
 	// PINZ-98: allow access if user has trip in favourites (e.g. after soft delete)
 	hasFav, err := s.favouriteRepo.HasFavourite(userID, tripID)
@@ -160,9 +164,77 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 		return nil, status.Error(codes.Internal, "failed to check favourite")
 	}
 	if hasFav {
-		return &pb.GetTripResponse{Trip: tripToProto(trip)}, nil
+		resp, err := s.getTripResponseWithPins(trip)
+		if err != nil {
+			return nil, err
+		}
+		return resp, nil
 	}
 	return nil, status.Error(codes.PermissionDenied, "not a participant")
+}
+
+// getTripResponseWithPins builds GetTripResponse with trip and pins (each pin with its media).
+func (s *TripService) getTripResponseWithPins(trip *models.Trip) (*pb.GetTripResponse, error) {
+	pins, err := s.pinRepo.ListByTripID(trip.ID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list pins")
+	}
+	tagsByPin, _ := s.tagRepo.GetByTripID(trip.ID)
+	if tagsByPin == nil {
+		tagsByPin = make(map[string][]string)
+	}
+	outPins := make([]*pb.TripPin, 0, len(pins))
+	for _, pin := range pins {
+		mediaList, err := s.mediaRepo.ListByPinID(pin.ID)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to list pin media")
+		}
+		tags := tagsByPin[pin.ID]
+		if tags == nil {
+			tags = []string{}
+		}
+		outPins = append(outPins, pinWithMediaToProto(pin, mediaList, tags))
+	}
+	return &pb.GetTripResponse{
+		Trip: tripToProto(trip),
+		Pins: outPins,
+	}, nil
+}
+
+func pinWithMediaToProto(pin *models.Pin, mediaList []*models.Media, tags []string) *pb.TripPin {
+	out := &pb.TripPin{
+		Id:           pin.ID,
+		Name:         pin.Name,
+		Description:  pin.Description,
+		Category:     pin.Category,
+		PrivacyLevel: pin.PrivacyLevel,
+		Tags:         tags,
+	}
+	if pin.Latitude != nil {
+		out.Latitude = pin.Latitude
+	}
+	if pin.Longitude != nil {
+		out.Longitude = pin.Longitude
+	}
+	if pin.StartTime != nil {
+		out.StartTimeUnix = pin.StartTime.Unix()
+	}
+	if pin.EndTime != nil {
+		out.EndTimeUnix = pin.EndTime.Unix()
+	}
+	for _, m := range mediaList {
+		pm := &pb.TripPinMedia{
+			MediaId:      m.ID,
+			Url:          "", // Media service or gateway may resolve presigned URL
+			MediaType:    m.MediaType,
+			PrivacyLevel: m.PrivacyLevel,
+		}
+		if m.CapturedAt != nil {
+			pm.CapturedAtUnix = m.CapturedAt.Unix()
+		}
+		out.Media = append(out.Media, pm)
+	}
+	return out
 }
 
 func (s *TripService) ListUserTrips(ctx context.Context, req *pb.ListUserTripsRequest) (*pb.ListUserTripsResponse, error) {
@@ -418,15 +490,15 @@ func (s *TripService) RemoveParticipant(ctx context.Context, req *pb.RemoveParti
 	if tripID == "" || targetUserID == "" {
 		return nil, status.Error(codes.InvalidArgument, "trip_id and user_id are required")
 	}
+	if targetUserID == callerID {
+		return nil, status.Error(codes.InvalidArgument, "use LeaveTrip to leave yourself")
+	}
 	isAdmin, err := s.participantRepo.IsAdmin(tripID, callerID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to check admin")
 	}
 	if !isAdmin {
 		return nil, status.Error(codes.PermissionDenied, "only admin can remove participant")
-	}
-	if targetUserID == callerID {
-		return nil, status.Error(codes.InvalidArgument, "use LeaveTrip to leave yourself")
 	}
 	isParticipant, err := s.participantRepo.IsParticipant(tripID, targetUserID)
 	if err != nil {
@@ -1115,6 +1187,41 @@ func (s *TripService) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFr
 		return nil, status.Error(codes.Internal, "failed to remove from favourites")
 	}
 	return &pb.RemoveFromFavouritesResponse{Success: true}, nil
+}
+
+// ListFavourites returns trips that the current user has added to favourites (PINZ-98). Excludes soft-deleted trips.
+func (s *TripService) ListFavourites(ctx context.Context, req *pb.ListFavouritesRequest) (*pb.ListFavouritesResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	limit := req.GetLimit()
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	offset := req.GetOffset()
+	if offset < 0 {
+		offset = 0
+	}
+	tripIDs, err := s.favouriteRepo.ListTripIDsByUserID(userID, limit, offset)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list favourites")
+	}
+	out := make([]*pb.Trip, 0, len(tripIDs))
+	for _, id := range tripIDs {
+		trip, err := s.tripRepo.GetByID(id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				continue
+			}
+			return nil, status.Error(codes.Internal, "failed to get trip")
+		}
+		if trip.IsSoftDeleted {
+			continue
+		}
+		out = append(out, tripToProto(trip))
+	}
+	return &pb.ListFavouritesResponse{Trips: out}, nil
 }
 
 func tripToProto(t *models.Trip) *pb.Trip {
