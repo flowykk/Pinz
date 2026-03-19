@@ -1,6 +1,6 @@
 import Foundation
 
-public struct UserTokensResponse: Codable {
+public struct UserTokensDTO: Codable {
     public let accessToken: String
     public let refreshToken: String
 
@@ -14,4 +14,3 @@ public struct UserTokensResponse: Codable {
         case refreshToken = "refresh_token"
     }
 }
-

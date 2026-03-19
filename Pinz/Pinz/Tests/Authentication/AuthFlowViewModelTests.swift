@@ -92,7 +92,7 @@ final class AuthFlowViewModelTests: XCTestCase {
 
     func test_asyncContinue_fromEmail_unregisteredUser_goesToRegisterCode() async throws {
         mockNetwork.submitEmailResult = .success(
-            SubmitEmailResponse(isRegistered: false, registrationId: "reg-001")
+            SubmitEmailDTO(isRegistered: false, registrationId: "reg-001")
         )
         sut.state = .email
         sut.text = "new@example.com"
@@ -106,7 +106,7 @@ final class AuthFlowViewModelTests: XCTestCase {
     func test_asyncContinue_fromEmail_registeredUser_simulator_navigatesToMain() async throws {
         // On simulator, performLogin skips passkey and goes straight to navigateToMain
         mockNetwork.submitEmailResult = .success(
-            SubmitEmailResponse(isRegistered: true, registrationId: nil)
+            SubmitEmailDTO(isRegistered: true, registrationId: nil)
         )
         sut.state = .email
         sut.text = "existing@example.com"
@@ -136,7 +136,7 @@ final class AuthFlowViewModelTests: XCTestCase {
     // MARK: - Async: Register code
 
     func test_asyncContinue_fromRegisterCode_success_goesToNickname() async throws {
-        mockNetwork.verifyEmailResult = .success(SuccessResponse(success: true))
+        mockNetwork.verifyEmailResult = .success(SuccessDTO(success: true))
         sut.state = .register(.code)
         sut.text = "1234"
 
