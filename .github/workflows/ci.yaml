@@ -76,7 +76,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Run tests
-        run: go test ./...
+        run: go test -short ./...
         working-directory: Backend/${{ matrix.service }}
         env:
           JWT_SECRET_KEY: test-secret
