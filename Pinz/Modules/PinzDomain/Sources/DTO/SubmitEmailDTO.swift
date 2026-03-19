@@ -1,6 +1,6 @@
 import Foundation
 
-public struct SubmitEmailResponse: Codable {
+public struct SubmitEmailDTO: Codable {
     public let isRegistered: Bool
     public let registrationId: String?
 

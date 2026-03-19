@@ -1,21 +1,61 @@
-import SwiftUI
+// swiftlint:disable file_length
 import Moya
 import Foundation
 import PinzBase
+import PinzDomain
 
 enum PinzAPI {
+    // Auth
+    case devLogin(email: String)
     case submitEmail(email: String)
     case verifyEmail(registrationId: String, verificationCode: String)
-
     case passkeyLoginBegin(email: String)
     case passkeyLoginFinish(email: String, credentialJSON: String)
-
     case passkeyRegisterBegin(registrationId: String, username: String)
     case passkeyRegisterFinish(registrationId: String, credentialJSON: String)
-
     case refreshToken(refreshToken: String)
     case logout(refreshToken: String)
+
+    // Feed
+    case getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, locationName: String?, sortBy: String?)
+
+    // Trips CRUD
+    case getTrips
+    case getTrip(id: String)
+    case updateTrip(
+        id: String, name: String?, description: String?, category: String?,
+        season: String?, privacyLevel: String?, coverUrl: String?,
+        startDateUnix: Int?, endDateUnix: Int?
+    )
+    case deleteTrip(id: String)
+
+    // Trip actions
+    case joinTripByToken(token: String)
+    case generateInviteLink(tripId: String, expiresInSeconds: Int?)
+    case leaveTrip(id: String)
+    case removeParticipant(tripId: String, userId: String)
+    case publishTrip(id: String, publishWhole: Bool, pinIds: [String])
+    case updateTripSettings(id: String, notificationsEnabled: Bool)
+    case transferAdmin(id: String, newAdminUserId: String)
+    case likeTrip(id: String)
+    case dislikeTrip(id: String)
+    case addTripToFavourites(id: String)
+    case removeTripFromFavourites(id: String)
+
+    // Add-media flow
+    case addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO])
+    case addMediaProcessGrouping(tripId: String, sessionId: String, media: [MediaMetaEntryDTO])
+    case addMediaApplyGroupsAndProcess(tripId: String, sessionId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String])
+
+    // Trip creation flow
+    case createTrip(name: String, description: String?, category: String?, season: String?, filesToUpload: [FileToUploadDTO])
+    case processMediaGrouping(tripId: String, media: [MediaMetaEntryDTO])
+    case applyGroupsAndProcess(tripId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String])
+    case getTripReview(tripId: String)
+    case finalizeTrip(tripId: String, pinUpdates: [PinUpdateInputDTO], mediaToDelete: [String])
 }
+
+// MARK: - TargetType
 
 extension PinzAPI: TargetType {
     var baseURL: URL {
@@ -27,108 +67,224 @@ extension PinzAPI: TargetType {
 
     var path: String {
         switch self {
-        case .submitEmail:
-            return "/auth/email"
-        case .verifyEmail:
-            return "/auth/verify-email"
-        case .passkeyLoginBegin:
-            return "/auth/passkey/login/begin"
-        case .passkeyLoginFinish:
-            return "/auth/passkey/login/finish"
-        case .passkeyRegisterBegin:
-            return "/auth/passkey/register/begin"
-        case .passkeyRegisterFinish:
-            return "/auth/passkey/register/finish"
-        case .refreshToken:
-            return "/auth/refresh"
-        case .logout:
-            return "/auth/logout"
+        case .devLogin: return "/auth/dev-login"
+        case .submitEmail: return "/auth/email"
+        case .verifyEmail: return "/auth/verify-email"
+        case .passkeyLoginBegin: return "/auth/passkey/login/begin"
+        case .passkeyLoginFinish: return "/auth/passkey/login/finish"
+        case .passkeyRegisterBegin: return "/auth/passkey/register/begin"
+        case .passkeyRegisterFinish: return "/auth/passkey/register/finish"
+        case .refreshToken: return "/auth/refresh"
+        case .logout: return "/auth/logout"
+        case .getFeed: return "/feed"
+        case .getTrips: return "/trips"
+        case .getTrip(let id): return "/trips/\(id)"
+        case .updateTrip(let id, _, _, _, _, _, _, _, _): return "/trips/\(id)"
+        case .deleteTrip(let id): return "/trips/\(id)"
+        case .joinTripByToken: return "/trips/join"
+        case .generateInviteLink(let tripId, _): return "/trips/\(tripId)/invite"
+        case .leaveTrip(let id): return "/trips/\(id)/leave"
+        case .removeParticipant(let tripId, let userId): return "/trips/\(tripId)/participants/\(userId)"
+        case .publishTrip(let id, _, _): return "/trips/\(id)/publish"
+        case .updateTripSettings(let id, _): return "/trips/\(id)/settings"
+        case .transferAdmin(let id, _): return "/trips/\(id)/transfer-admin"
+        case .likeTrip(let id): return "/trips/\(id)/like"
+        case .dislikeTrip(let id): return "/trips/\(id)/dislike"
+        case .addTripToFavourites(let id): return "/trips/\(id)/favourite"
+        case .removeTripFromFavourites(let id): return "/trips/\(id)/favourite"
+        case .addMediaStart(let tripId, _): return "/trips/\(tripId)/media/add/start"
+        case .addMediaProcessGrouping(let tripId, _, _): return "/trips/\(tripId)/media/add/process-grouping"
+        case .addMediaApplyGroupsAndProcess(let tripId, _, _, _): return "/trips/\(tripId)/media/add/apply-groups-and-process"
+        case .createTrip: return "/trip/creation/start"
+        case .processMediaGrouping(let tripId, _): return "/trip/creation/\(tripId)/media/process-grouping"
+        case .applyGroupsAndProcess(let tripId, _, _): return "/trip/creation/\(tripId)/apply-groups-and-process"
+        case .getTripReview(let tripId): return "/trip/creation/\(tripId)/review"
+        case .finalizeTrip(let tripId, _, _): return "/trip/creation/\(tripId)/finalize"
         }
     }
 
     var method: Moya.Method {
-        .post
+        switch self {
+        case .getFeed, .getTrips, .getTrip, .getTripReview:
+            return .get
+        case .updateTrip, .updateTripSettings:
+            return .patch
+        case .deleteTrip, .removeParticipant, .removeTripFromFavourites:
+            return .delete
+        default:
+            return .post
+        }
     }
 
+    // swiftlint:disable:next function_body_length
     var task: Moya.Task {
         switch self {
-        case let .submitEmail(email):
-            return jsonRequest(["email": email])
-        case let .verifyEmail(registrationId, verificationCode):
-            return jsonRequest(["registration_id": registrationId, "verification_code": verificationCode])
-        case let .passkeyLoginBegin(email):
-            return jsonRequest(["email": email])
-        case let .passkeyLoginFinish(email, credentialJSON):
-            return jsonRequest(["email": email, "credential_json": credentialJSON])
-        case let .passkeyRegisterBegin(registrationId, username):
-            return jsonRequest(["registration_id": registrationId, "username": username])
-        case let .passkeyRegisterFinish(registrationId, credentialJSON):
-            return jsonRequest(["registration_id": registrationId, "credential_json": credentialJSON])
-        case let .refreshToken(refreshToken):
-            return jsonRequest(["refresh_token": refreshToken])
-        case let .logout(refreshToken):
-            return jsonRequest(["refresh_token": refreshToken])
+        case .getTrips, .getTrip, .getTripReview, .deleteTrip, .removeParticipant,
+             .leaveTrip, .likeTrip, .dislikeTrip, .addTripToFavourites, .removeTripFromFavourites:
+            return .requestPlain
+
+        case let .getFeed(limit, offset, category, season, locationId, locationName, sortBy):
+            var params: [String: Any] = [:]
+            if let limit { params["limit"] = limit }
+            if let offset { params["offset"] = offset }
+            if let category { params["category"] = category }
+            if let season { params["season"] = season }
+            if let locationId { params["location_id"] = locationId }
+            if let locationName { params["location_name"] = locationName }
+            if let sortBy { params["sort_by"] = sortBy }
+            return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
+
+        case let .submitEmail(email): return jsonParams(["email": email])
+        case let .devLogin(email): return jsonParams(["email": email])
+        case let .verifyEmail(regId, code): return jsonParams(["registration_id": regId, "verification_code": code])
+        case let .passkeyLoginBegin(email): return jsonParams(["email": email])
+        case let .passkeyLoginFinish(email, cred): return jsonParams(["email": email, "credential_json": cred])
+        case let .passkeyRegisterBegin(regId, username): return jsonParams(["registration_id": regId, "username": username])
+        case let .passkeyRegisterFinish(regId, cred): return jsonParams(["registration_id": regId, "credential_json": cred])
+        case let .refreshToken(token): return jsonParams(["refresh_token": token])
+        case let .logout(token): return jsonParams(["refresh_token": token])
+
+        case let .joinTripByToken(token): return jsonParams(["token": token])
+        case let .generateInviteLink(_, secs):
+            var params: [String: Any] = [:]
+            if let secs { params["expires_in_seconds"] = secs }
+            return jsonParams(params)
+        case let .publishTrip(_, whole, pinIds): return jsonParams(["publish_whole": whole, "pin_ids": pinIds])
+        case let .updateTripSettings(_, enabled): return jsonParams(["notifications_enabled": enabled])
+        case let .transferAdmin(_, userId): return jsonParams(["new_admin_user_id": userId])
+
+        case let .updateTrip(_, name, desc, cat, season, privacy, cover, start, end):
+            var params: [String: Any] = [:]
+            if let name { params["name"] = name }
+            if let desc { params["description"] = desc }
+            if let cat { params["category"] = cat }
+            if let season { params["season"] = season }
+            if let privacy { params["privacy_level"] = privacy }
+            if let cover { params["cover_url"] = cover }
+            if let start { params["start_date_unix"] = start }
+            if let end { params["end_date_unix"] = end }
+            return jsonParams(params)
+
+        case let .createTrip(name, desc, cat, season, files):
+            struct Body: Encodable {
+                let name: String; let description: String?; let category: String?
+                let season: String?; let files_to_upload: [FileToUploadJSON]
+            }
+            return .requestJSONEncodable(Body(name: name, description: desc, category: cat, season: season, files_to_upload: files.map(FileToUploadJSON.init)))
+
+        case let .processMediaGrouping(_, media):
+            struct Body: Encodable { let media: [MediaMetaEntryJSON] }
+            return .requestJSONEncodable(Body(media: media.map(MediaMetaEntryJSON.init)))
+
+        case let .applyGroupsAndProcess(_, pins, deleted):
+            struct Body: Encodable { let draft_pins: [DraftPinInputJSON]; let deleted_media_ids: [String] }
+            return .requestJSONEncodable(Body(draft_pins: pins.map(DraftPinInputJSON.init), deleted_media_ids: deleted))
+
+        case let .finalizeTrip(_, updates, toDelete):
+            struct Body: Encodable { let pin_updates: [PinUpdateInputJSON]; let media_to_delete: [String] }
+            return .requestJSONEncodable(Body(pin_updates: updates.map(PinUpdateInputJSON.init), media_to_delete: toDelete))
+
+        case let .addMediaStart(_, files):
+            struct Body: Encodable { let files_to_upload: [FileToUploadJSON] }
+            return .requestJSONEncodable(Body(files_to_upload: files.map(FileToUploadJSON.init)))
+
+        case let .addMediaProcessGrouping(_, sessionId, media):
+            struct Body: Encodable { let session_id: String; let media: [MediaMetaEntryJSON] }
+            return .requestJSONEncodable(Body(session_id: sessionId, media: media.map(MediaMetaEntryJSON.init)))
+
+        case let .addMediaApplyGroupsAndProcess(_, sessionId, pins, deleted):
+            struct Body: Encodable { let session_id: String; let draft_pins: [DraftPinInputJSON]; let deleted_media_ids: [String] }
+            return .requestJSONEncodable(Body(session_id: sessionId, draft_pins: pins.map(DraftPinInputJSON.init), deleted_media_ids: deleted))
         }
     }
 
     var headers: [String: String]? {
-        return ["Content-Type": "application/json"]
+        switch self {
+        case .submitEmail, .devLogin, .verifyEmail,
+             .passkeyLoginBegin, .passkeyLoginFinish,
+             .passkeyRegisterBegin, .passkeyRegisterFinish,
+             .refreshToken:
+            return ["Content-Type": "application/json"]
+        default:
+            var result: [String: String] = ["Content-Type": "application/json"]
+            if let token = TokenStorage.shared.accessToken {
+                result["Authorization"] = "Bearer \(token)"
+            }
+            return result
+        }
     }
 
-    private func jsonRequest(_ parameters: [String: Any]) -> Moya.Task {
+    private func jsonParams(_ parameters: [String: Any]) -> Moya.Task {
         .requestParameters(parameters: parameters, encoding: JSONEncoding.default)
     }
 }
 
-// MARK: - Mocks
+// MARK: - Stubs
+
+// swiftlint:disable function_body_length
 extension PinzAPI {
     var sampleData: Data {
-        let result: String
+        let json: String
         switch self {
         case .submitEmail:
-            result = """
-            {"is_registered": false, "registration_id": "550e8400-e29b-41d4-a716-446655440000"}
-            """
+            json = #"{"is_registered": false, "registration_id": "550e8400-e29b-41d4-a716-446655440000"}"#
+        case .devLogin, .passkeyLoginFinish, .passkeyRegisterFinish:
+            json = #"{"access_token": "stub_access_token", "refresh_token": "stub_refresh_token"}"#
         case .verifyEmail:
-            result = """
-            {"success": true}
-            """
+            json = #"{"success": true}"#
         case .passkeyLoginBegin, .passkeyRegisterBegin:
-            result = """
-            {"options_json": "eyJjaGFsbGVuZ2UiOiJ0ZXN0In0="}
-            """
-        case .passkeyLoginFinish, .passkeyRegisterFinish:
-            result = """
-            {"access_token": "stub_access_token", "refresh_token": "stub_refresh_token"}
-            """
+            json = #"{"options_json": "eyJjaGFsbGVuZ2UiOiJ0ZXN0In0="}"#
         case .refreshToken:
-            result = """
-            {"access_token": "stub_new_access_token"}
-            """
+            json = #"{"access_token": "stub_new_access_token"}"#
         case .logout:
-            result = """
-            {"success": true}
-            """
+            json = #"{"success": true}"#
+        case .getFeed, .getTrips:
+            json = #"""
+            [{"id":"trip-001","name":"Paris Trip","description":"A lovely trip","category":"city","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":12,"dislikes_count":0,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}]
+            """#
+        case .getTrip, .updateTrip, .publishTrip:
+            json = #"""
+            {"id":"trip-001","name":"Paris Trip","description":"A lovely trip","category":"city","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":12,"dislikes_count":0,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}
+            """#
+        case .deleteTrip, .removeParticipant, .removeTripFromFavourites:
+            json = ""
+        case .joinTripByToken:
+            json = #"{"trip_id":"trip-001","already_joined":false}"#
+        case .generateInviteLink:
+            json = #"{"invite_link_id":"link-001","invite_url":"https://pinz.website/join/stub_token","token":"stub_token","expires_at_unix":1700300000}"#
+        case .leaveTrip:
+            json = #"{"success":true,"trip_deleted":false}"#
+        case .updateTripSettings, .transferAdmin, .likeTrip, .dislikeTrip, .addTripToFavourites:
+            json = #"{"success":true}"#
+        case .createTrip, .addMediaStart:
+            json = #"{"trip_id":"trip-001","status":"created","upload_urls":[{"client_id":"photo1","s3_key":"trips/trip-001/photo1.jpg","url":"https://s3.example.com/stub"}]}"#
+        case .processMediaGrouping, .addMediaProcessGrouping:
+            json = #"{"trip_id":"trip-001","status":"processed","draft_pins":[{"draft_pin_id":"draft-001","media":[{"media_id":"media-001","type":"photo","url":"https://s3.example.com/media-001"}]}]}"#
+        case .applyGroupsAndProcess, .addMediaApplyGroupsAndProcess:
+            json = #"{"status":"processing","message":"Groups applied, processing started"}"#
+        case .getTripReview:
+            json = #"{"trip_id":"trip-001","status":"ready","similar":[],"pins":[{"pin_id":"pin-001","name":"Eiffel Tower","category":"landmark","latitude":48.8584,"longitude":2.2945,"location_name":"Paris, France","start_time_unix":1700000000,"end_time_unix":1700003600,"tags":["iconic"],"issues":[],"media":[{"media_id":"media-001","url":"https://s3.example.com/media-001","privacy_level":"public"}]}]}"#
+        case .finalizeTrip:
+            json = #"{"trip_id":"trip-001","status":"finalized","message":"Trip finalized successfully"}"#
         }
-
-        return result.data(using: .utf8) ?? Data()
+        return json.data(using: .utf8) ?? Data()
     }
 }
+// swiftlint:enable function_body_length
+// swiftlint:enable file_length
+
+// MARK: - String helpers
 
 extension String {
-    func defaultUTF8Data() -> Data? {
-        self.data(using: .utf8)
-    }
+    func defaultUTF8Data() -> Data? { self.data(using: .utf8) }
 
     func toISO8601String() -> String? {
-        let inputFormatter = DateFormatter()
-        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
-        inputFormatter.dateFormat = "dd.MM.yyyy HH:mm"
-
-        guard let date = inputFormatter.date(from: self) else { return nil }
-
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return isoFormatter.string(from: date)
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.dateFormat = "dd.MM.yyyy HH:mm"
+        guard let date = fmt.date(from: self) else { return nil }
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return iso.string(from: date)
     }
 }

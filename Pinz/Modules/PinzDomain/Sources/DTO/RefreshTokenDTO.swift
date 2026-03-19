@@ -1,6 +1,6 @@
 import Foundation
 
-public struct RefreshTokenResponse: Codable {
+public struct RefreshTokenDTO: Codable {
     public let accessToken: String
 
     public init(accessToken: String) {
