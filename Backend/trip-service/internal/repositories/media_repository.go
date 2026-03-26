@@ -3,6 +3,8 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 
@@ -32,6 +34,10 @@ func (r *MediaRepository) Create(m *models.Media) error {
 		cols = append(cols, "location")
 		vals = append(vals, sq.Expr("ST_SetSRID(ST_MakePoint(?, ?), 4326)", *m.Longitude, *m.Latitude))
 	}
+	if m.ContentHash != nil {
+		cols = append(cols, "content_hash")
+		vals = append(vals, *m.ContentHash)
+	}
 	q := psq.Insert("media").Columns(cols...).Values(vals...).Suffix("RETURNING id, created_at")
 	sqlStr, args, err := q.ToSql()
 	if err != nil {
@@ -47,14 +53,14 @@ func (r *MediaRepository) Create(m *models.Media) error {
 func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_X(location)::float as lat, ST_Y(location)::float as lon,
-		captured_at, battle_rating, privacy_level, similar_group_id, created_at
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
 		FROM media WHERE id = $1`
 	var m models.Media
-	var pinID, similarGroupID sql.NullString
+	var pinID, similarGroupID, contentHash sql.NullString
 	var lat, lon sql.NullFloat64
 	var capturedAt sql.NullTime
 	err := r.db.QueryRow(sqlStr, id).Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
-		&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &m.CreatedAt)
+		&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &m.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
@@ -76,13 +82,16 @@ func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
 	if similarGroupID.Valid {
 		m.SimilarGroupID = &similarGroupID.String
 	}
+	if contentHash.Valid {
+		m.ContentHash = &contentHash.String
+	}
 	return &m, nil
 }
 
 func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_X(location)::float as lat, ST_Y(location)::float as lon,
-		captured_at, battle_rating, privacy_level, similar_group_id, created_at
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
 		FROM media WHERE trip_id = $1 ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
 	if err != nil {
@@ -92,11 +101,11 @@ func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 	var list []*models.Media
 	for rows.Next() {
 		var m models.Media
-		var pinID, similarGroupID sql.NullString
+		var pinID, similarGroupID, contentHash sql.NullString
 		var lat, lon sql.NullFloat64
 		var capturedAt sql.NullTime
 		if err := rows.Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
-			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &m.CreatedAt); err != nil {
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &m.CreatedAt); err != nil {
 			return nil, err
 		}
 		if pinID.Valid {
@@ -113,6 +122,9 @@ func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 		}
 		if similarGroupID.Valid {
 			m.SimilarGroupID = &similarGroupID.String
+		}
+		if contentHash.Valid {
+			m.ContentHash = &contentHash.String
 		}
 		list = append(list, &m)
 	}
@@ -156,6 +168,28 @@ func (r *MediaRepository) SetSimilarGroupID(mediaIDs []string, groupID string) e
 	return err
 }
 
+// MarkNSFW выставляет privacy_level='Restricted' для переданных медиа (цензура через ML).
+func (r *MediaRepository) MarkNSFW(mediaIDs []string) error {
+	if len(mediaIDs) == 0 {
+		return nil
+	}
+	_, err := psq.Update("media").Set("privacy_level", "Restricted").Where(sq.Eq{"id": mediaIDs}).RunWith(r.db).Exec()
+	return err
+}
+
+// SetPrivacyLevel sets privacy_level on a single media (used by privacy aggregation worker).
+func (r *MediaRepository) SetPrivacyLevel(mediaID, level string) error {
+	res, err := psq.Update("media").Set("privacy_level", level).Where(sq.Eq{"id": mediaID}).RunWith(r.db).Exec()
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 // CountByTripID returns total media count and video count for the trip (task limits: max 500 media, max 50 videos).
 func (r *MediaRepository) CountByTripID(tripID string) (total int, videos int, err error) {
 	err = r.db.QueryRow(`SELECT COUNT(*), COUNT(*) FILTER (WHERE media_type = 'video') FROM media WHERE trip_id = $1`, tripID).Scan(&total, &videos)
@@ -186,7 +220,7 @@ func (r *MediaRepository) ClusterIDsByLocation(tripID string, radiusMeters float
 func (r *MediaRepository) ListByPinID(pinID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_X(location)::float as lat, ST_Y(location)::float as lon,
-		captured_at, battle_rating, privacy_level, similar_group_id, created_at
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
 		FROM media WHERE pin_id = $1 ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, pinID)
 	if err != nil {
@@ -196,11 +230,11 @@ func (r *MediaRepository) ListByPinID(pinID string) ([]*models.Media, error) {
 	var list []*models.Media
 	for rows.Next() {
 		var m models.Media
-		var pinIDNull, similarGroupID sql.NullString
+		var pinIDNull, similarGroupID, contentHash sql.NullString
 		var lat, lon sql.NullFloat64
 		var capturedAt sql.NullTime
 		if err := rows.Scan(&m.ID, &m.TripID, &pinIDNull, &m.S3Key, &m.MediaType,
-			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &m.CreatedAt); err != nil {
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &m.CreatedAt); err != nil {
 			return nil, err
 		}
 		if pinIDNull.Valid {
@@ -218,7 +252,48 @@ func (r *MediaRepository) ListByPinID(pinID string) ([]*models.Media, error) {
 		if similarGroupID.Valid {
 			m.SimilarGroupID = &similarGroupID.String
 		}
+		if contentHash.Valid {
+			m.ContentHash = &contentHash.String
+		}
 		list = append(list, &m)
 	}
 	return list, rows.Err()
+}
+
+type FeedMedia struct {
+	ID        string
+	S3Key     string
+	MediaType string
+}
+
+func (r *MediaRepository) TopMediaByTripIDs(tripIDs []string, limitPerTrip int) (map[string][]*FeedMedia, error) {
+	if len(tripIDs) == 0 || limitPerTrip <= 0 {
+		return nil, nil
+	}
+	placeholders := make([]string, len(tripIDs))
+	args := make([]interface{}, len(tripIDs)+1)
+	for i, id := range tripIDs {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+	args[len(tripIDs)] = limitPerTrip
+	sqlStr := `SELECT id, trip_id, s3_key, media_type FROM (
+		SELECT id, trip_id, s3_key, media_type,
+			ROW_NUMBER() OVER (PARTITION BY trip_id ORDER BY battle_rating DESC, id) AS rn
+		FROM media WHERE trip_id IN (` + strings.Join(placeholders, ",") + `)
+	) sub WHERE rn <= $` + fmt.Sprintf("%d", len(tripIDs)+1)
+	rows, err := r.db.Query(sqlStr, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make(map[string][]*FeedMedia)
+	for rows.Next() {
+		var id, tripID, s3Key, mediaType string
+		if err := rows.Scan(&id, &tripID, &s3Key, &mediaType); err != nil {
+			return nil, err
+		}
+		out[tripID] = append(out[tripID], &FeedMedia{ID: id, S3Key: s3Key, MediaType: mediaType})
+	}
+	return out, rows.Err()
 }

@@ -188,6 +188,19 @@ func (r *TripRepository) Delete(id string) error {
 	return nil
 }
 
+// SetPrivacyLevel updates only trip privacy_level (used by privacy aggregation worker).
+func (r *TripRepository) SetPrivacyLevel(tripID, level string) error {
+	res, err := psq.Update("trips").Set("privacy_level", level).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID}).RunWith(r.db).Exec()
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 // SetStatus updates only trip status (for flow: UPLOADING, DRAFT_GROUPING_REVIEW, PROCESSING, DRAFT_FINAL_REVIEW, READY).
 func (r *TripRepository) SetStatus(tripID, status string) error {
 	res, err := psq.Update("trips").Set("status", status).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID}).RunWith(r.db).Exec()
@@ -201,7 +214,7 @@ func (r *TripRepository) SetStatus(tripID, status string) error {
 	return nil
 }
 
-// SetSoftDeleted sets is_soft_deleted=true (PINZ-98: admin delete when trip is in others' favourites).
+// SetSoftDeleted sets is_soft_deleted=true.
 func (r *TripRepository) SetSoftDeleted(tripID string) error {
 	res, err := psq.Update("trips").Set("is_soft_deleted", true).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID}).RunWith(r.db).Exec()
 	if err != nil {
@@ -214,8 +227,8 @@ func (r *TripRepository) SetSoftDeleted(tripID string) error {
 	return nil
 }
 
-// ListFeed returns published trips for the feed (PINZ-98). Excludes soft-deleted. Optional filters: category, season, locationID. sortBy: "date" or "rating".
-func (r *TripRepository) ListFeed(limit, offset int32, category, season string, locationID *int, sortBy string) ([]*models.Trip, error) {
+// ListFeed returns published trips for the feed. Excludes soft-deleted. Optional filters: category, season, locationIDs. sortBy: "date" or "rating".
+func (r *TripRepository) ListFeed(limit, offset int32, category, season string, locationIDs []int, sortBy string) ([]*models.Trip, error) {
 	q := psq.Select(
 		"t.id", "t.owner_user_id", "t.name", "t.description", "t.category", "t.season",
 		"t.status", "t.privacy_level", "t.start_date", "t.end_date",
@@ -223,15 +236,16 @@ func (r *TripRepository) ListFeed(limit, offset int32, category, season string, 
 		"t.created_at", "t.updated_at",
 	).From("trips t").
 		Where(sq.Eq{"t.is_published": true}).
-		Where(sq.Eq{"t.is_soft_deleted": false})
+		Where(sq.Eq{"t.is_soft_deleted": false}).
+		Where(sq.Eq{"t.privacy_level": "Public"})
 	if category != "" {
 		q = q.Where(sq.Eq{"t.category": category})
 	}
 	if season != "" {
 		q = q.Where(sq.Eq{"t.season": season})
 	}
-	if locationID != nil {
-		q = q.InnerJoin("trip_locations tl ON tl.trip_id = t.id").Where(sq.Eq{"tl.location_id": *locationID})
+	if len(locationIDs) > 0 {
+		q = q.InnerJoin("trip_locations tl ON tl.trip_id = t.id").Where(sq.Eq{"tl.location_id": locationIDs})
 	}
 	switch sortBy {
 	case "rating":

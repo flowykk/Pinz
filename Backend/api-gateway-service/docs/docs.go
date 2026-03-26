@@ -526,6 +526,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "location name (country or city)",
+                        "name": "location_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "date|rating",
                         "name": "sort_by",
                         "in": "query"
@@ -1368,6 +1374,141 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/trips/{id}/media/add/apply-groups-and-process": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Add-media: apply groups and process",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Draft pins and deleted media",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaApplyGroupsAndProcessRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/media/add/process-grouping": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Add-media: process grouping",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Media metadata",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/media/add/start": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "Start add-media flow (presigned URLs)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Files to upload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaStartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CreateTripResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trips/{id}/participants/{user_id}": {
             "delete": {
                 "security": [
@@ -1531,6 +1672,51 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "pinz_backend_api-gateway-service_internal_requests.AddMediaApplyGroupsAndProcessRequest": {
+            "type": "object",
+            "properties": {
+                "deleted_media_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "draft_pins": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.DraftPinInput"
+                    }
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest": {
+            "type": "object",
+            "properties": {
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry"
+                    }
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.AddMediaStartRequest": {
+            "type": "object",
+            "properties": {
+                "files_to_upload": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry"
+                    }
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest": {
             "type": "object",
             "properties": {
@@ -1564,9 +1750,6 @@ const docTemplate = `{
                     }
                 },
                 "name": {
-                    "type": "string"
-                },
-                "privacy_level": {
                     "type": "string"
                 },
                 "season": {
@@ -1656,6 +1839,10 @@ const docTemplate = `{
                     "description": "ISO8601",
                     "type": "string"
                 },
+                "content_hash": {
+                    "description": "e.g. SHA-256 for duplicate detection",
+                    "type": "string"
+                },
                 "latitude": {
                     "type": "number"
                 },
@@ -1720,6 +1907,12 @@ const docTemplate = `{
         "pinz_backend_api-gateway-service_internal_requests.PinUpdateInput": {
             "type": "object",
             "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "latitude": {
                     "type": "number"
                 },
@@ -1731,6 +1924,15 @@ const docTemplate = `{
                 },
                 "pin_id": {
                     "type": "string"
+                },
+                "privacy_level": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

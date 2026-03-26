@@ -1,12 +1,13 @@
 import Foundation
 
-public struct UserTokensResponse: Codable {
+public struct RefreshTokenDTO: Codable {
     public let accessToken: String
-    public let refreshToken: String
-    
+
+    public init(accessToken: String) {
+        self.accessToken = accessToken
+    }
+
     enum CodingKeys: String, CodingKey {
         case accessToken = "access_token"
-        case refreshToken = "refresh_token"
     }
 }
-

@@ -65,11 +65,17 @@ final class AuthFlowViewModel {
     private var registrationId: String = ""
     private var username: String = ""
 
-    private let networkService = NetworkService()
-    private let passkeyService = PasskeyService()
+    private let networkService: any NetworkServiceProtocol
+    private let passkeyService: any PasskeyServiceProtocol
     private var router: AppRouting?
 
-    init() {}
+    init(
+        networkService: (any NetworkServiceProtocol)? = nil,
+        passkeyService: (any PasskeyServiceProtocol)? = nil
+    ) {
+        self.networkService = networkService ?? NetworkService()
+        self.passkeyService = passkeyService ?? PasskeyService()
+    }
 
     func setRouter(_ router: AppRouting?) {
         self.router = router

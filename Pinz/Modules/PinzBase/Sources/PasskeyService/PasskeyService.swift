@@ -2,10 +2,18 @@ import AuthenticationServices
 import Foundation
 import UIKit
 
+// MARK: - PasskeyServiceProtocol
+
+@MainActor
+public protocol PasskeyServiceProtocol {
+    func performAssertion(optionsJSON: String) async throws -> String
+    func performAttestation(optionsJSON: String) async throws -> String
+}
+
 // MARK: - PasskeyService
 
 @MainActor
-public final class PasskeyService: NSObject {
+public final class PasskeyService: NSObject, PasskeyServiceProtocol {
 
     private var continuation: CheckedContinuation<ASAuthorization, Error>?
 

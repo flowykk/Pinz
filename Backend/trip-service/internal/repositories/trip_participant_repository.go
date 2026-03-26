@@ -101,7 +101,7 @@ func (r *TripParticipantRepository) Remove(tripID, userID string) error {
 	return nil
 }
 
-// RemoveAllByTripID removes all participants from the trip (PINZ-98 soft delete).
+// RemoveAllByTripID removes all participants from the trip.
 func (r *TripParticipantRepository) RemoveAllByTripID(tripID string) error {
 	_, err := psq.Delete("trip_participants").Where(sq.Eq{"trip_id": tripID}).RunWith(r.db).Exec()
 	return err

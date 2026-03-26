@@ -6,6 +6,7 @@ struct TripsListPopupView: View {
 
     private let trips: [Trip]
     private let onTripTapped: (Trip) -> Void
+    private let onTripCreationTapped: () -> Void
     private let onDismiss: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -13,10 +14,12 @@ struct TripsListPopupView: View {
     public init(
         trips: [Trip],
         onTripTapped: @escaping (Trip) -> Void,
+        onTripCreationTapped: @escaping () -> Void,
         onDismiss: (() -> Void)? = nil
     ) {
         self.trips = trips
         self.onTripTapped = onTripTapped
+        self.onTripCreationTapped = onTripCreationTapped
         self.onDismiss = onDismiss
     }
 
@@ -28,6 +31,8 @@ struct TripsListPopupView: View {
             }
 
             header
+
+            gradientWithButtons
         }.background(PinzUIAsset.background.swiftUIColor)
     }
 
@@ -43,6 +48,17 @@ struct TripsListPopupView: View {
                 .roundedFount(size: 20, weight: .semibold)
                 .padding(.top, 16)
             Spacer()
+        }
+    }
+
+    private var gradientWithButtons: some View {
+        BottomGradientWithButtons {
+            PinzButton(
+                type: .slot(style: .primary, title: "Создать путешествия"),
+                tint: PinzUIAsset.backgroundSecondary.swiftUIColor
+            ) {
+                onTripCreationTapped()
+            }
         }
     }
 }
