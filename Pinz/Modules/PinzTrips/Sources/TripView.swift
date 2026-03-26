@@ -79,12 +79,15 @@ public struct TripView: View {
                 }
                 return true
             }
-            TripsListPopupView(trips: otherTrips) { selectedTrip in
+            TripsListPopupView(trips: otherTrips, onTripTapped: { selectedTrip in
                 isTripsListPresented = false
                 withAnimation(.easeInOut(duration: 0.3)) {
                     viewModel.dispatch(.selectTrip(selectedTrip))
                 }
-            }
+            }, onTripCreationTapped: {
+                isTripsListPresented = false
+                viewModel.dispatch(.navigate(.tripCreation))
+            })
             .pinzSheet()
             .presentationDetents([.medium, .large])
         }

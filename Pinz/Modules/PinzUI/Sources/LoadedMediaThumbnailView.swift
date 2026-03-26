@@ -30,17 +30,19 @@ public struct LoadedMediaThumbnailView: View {
                 readyView(image: frame)
             }
         }.overlay {
-            MediaBadgesView {
-                if case .video = media.content {
-                    BadgeView(icon: .video)
+            MediaBadgesView(trailingTopBadge: {
+                HStack(spacing: 4) {
+                    Button {
+                        onMediaDelete()
+                    } label: {
+                        BadgeView(icon: .trash, color: PinzUIAsset.accentRed.swiftUIColor)
+                    }
+
+                    if case .video = media.content {
+                        BadgeView(icon: .video)
+                    }
                 }
-            } trailingTopBadge: {
-                Button {
-                    onMediaDelete()
-                } label: {
-                    BadgeView(icon: .trash, color: PinzUIAsset.accentRed.swiftUIColor)
-                }
-            }.padding(4)
+            }).padding(4)
         }
     }
 

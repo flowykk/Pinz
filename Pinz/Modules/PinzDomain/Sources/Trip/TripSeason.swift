@@ -1,4 +1,5 @@
 public enum TripSeason: PickerItem {
+    case none
     case summer
     case autumn
     case winter
@@ -8,6 +9,7 @@ public enum TripSeason: PickerItem {
 
     public var content: PickerItemContent {
         switch self {
+        case .none: .text("Не выбрано")
         case .summer: .text("Лето")
         case .autumn: .text("Осень")
         case .winter: .text("Зима")
