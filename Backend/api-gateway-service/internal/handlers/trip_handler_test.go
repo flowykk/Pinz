@@ -164,7 +164,6 @@ func TestTripHandler_CreateTrip_Success(t *testing.T) {
 			Description:   "desc",
 			Category:      "Отпуск",
 			Season:        "Лето",
-			PrivacyLevel:  "Private",
 			FilesToUpload: []*proto.FileToUpload{{ClientId: "c1", ContentType: "image/jpeg"}},
 		}).
 		Return(&proto.CreateTripResponse{
