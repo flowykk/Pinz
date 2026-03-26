@@ -120,7 +120,6 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		Description:   req.Description,
 		Category:      req.Category,
 		Season:        req.Season,
-		PrivacyLevel:  req.PrivacyLevel,
 		FilesToUpload: protoFiles,
 	})
 	if err != nil {
@@ -754,19 +753,24 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	if sortBy == "" {
 		sortBy = "date"
 	}
-	var locationID int32
+	locationIDs := make([]int32, 0, 4)
 	if lid := r.URL.Query().Get("location_id"); lid != "" {
 		if n, err := parseInt(lid); err == nil {
-			locationID = int32(n)
+			locationIDs = append(locationIDs, int32(n))
+		}
+	}
+	for _, raw := range r.URL.Query()["location_ids"] {
+		if n, err := parseInt(raw); err == nil {
+			locationIDs = append(locationIDs, int32(n))
 		}
 	}
 	resp, err := h.tripClient.ListFeed(ctx, &proto.ListFeedRequest{
-		Limit:      limit,
-		Offset:     offset,
-		Category:   category,
-		Season:     season,
-		LocationId: locationID,
-		SortBy:     sortBy,
+		Limit:       limit,
+		Offset:      offset,
+		Category:    category,
+		Season:      season,
+		LocationIds: locationIDs,
+		SortBy:      sortBy,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "ListFeed")

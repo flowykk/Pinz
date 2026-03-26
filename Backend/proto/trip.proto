@@ -311,7 +311,7 @@ message ListFeedRequest {
   int32 offset = 2;
   string category = 3;   // optional filter
   string season = 4;     // optional filter
-  int32 location_id = 5; // optional filter (geo_registry id)
+  repeated int32 location_ids = 5; // optional filter (geo_registry ids)
   string sort_by = 6;   // "date" or "rating"
 }
 message ListFeedResponse {

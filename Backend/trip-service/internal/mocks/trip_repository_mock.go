@@ -99,18 +99,18 @@ func (mr *MockTripRepositoryInterfaceMockRecorder) ListByUserID(userID, limit, o
 }
 
 // ListFeed mocks base method.
-func (m *MockTripRepositoryInterface) ListFeed(limit, offset int32, category, season string, locationID *int, sortBy string) ([]*models.Trip, error) {
+func (m *MockTripRepositoryInterface) ListFeed(limit, offset int32, category, season string, locationIDs []int, sortBy string) ([]*models.Trip, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListFeed", limit, offset, category, season, locationID, sortBy)
+	ret := m.ctrl.Call(m, "ListFeed", limit, offset, category, season, locationIDs, sortBy)
 	ret0, _ := ret[0].([]*models.Trip)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListFeed indicates an expected call of ListFeed.
-func (mr *MockTripRepositoryInterfaceMockRecorder) ListFeed(limit, offset, category, season, locationID, sortBy any) *gomock.Call {
+func (mr *MockTripRepositoryInterfaceMockRecorder) ListFeed(limit, offset, category, season, locationIDs, sortBy any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeed", reflect.TypeOf((*MockTripRepositoryInterface)(nil).ListFeed), limit, offset, category, season, locationID, sortBy)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeed", reflect.TypeOf((*MockTripRepositoryInterface)(nil).ListFeed), limit, offset, category, season, locationIDs, sortBy)
 }
 
 // SetSoftDeleted mocks base method.

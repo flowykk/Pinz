@@ -16,7 +16,7 @@ type TripRepositoryInterface interface {
 	Delete(id string) error
 	SetStatus(tripID, status string) error
 	SetSoftDeleted(tripID string) error
-	ListFeed(limit, offset int32, category, season string, locationID *int, sortBy string) ([]*models.Trip, error)
+	ListFeed(limit, offset int32, category, season string, locationIDs []int, sortBy string) ([]*models.Trip, error)
 }
 
 type TripParticipantRepositoryInterface interface {

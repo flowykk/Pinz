@@ -2831,10 +2831,10 @@ type ListFeedRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
 	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
-	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`                        // optional filter
-	Season        string                 `protobuf:"bytes,4,opt,name=season,proto3" json:"season,omitempty"`                            // optional filter
-	LocationId    int32                  `protobuf:"varint,5,opt,name=location_id,json=locationId,proto3" json:"location_id,omitempty"` // optional filter (geo_registry id)
-	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"`              // "date" or "rating"
+	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`                                  // optional filter
+	Season        string                 `protobuf:"bytes,4,opt,name=season,proto3" json:"season,omitempty"`                                      // optional filter
+	LocationIds   []int32                `protobuf:"varint,5,rep,packed,name=location_ids,json=locationIds,proto3" json:"location_ids,omitempty"` // optional filter (geo_registry ids)
+	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"`                        // "date" or "rating"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2897,11 +2897,11 @@ func (x *ListFeedRequest) GetSeason() string {
 	return ""
 }
 
-func (x *ListFeedRequest) GetLocationId() int32 {
+func (x *ListFeedRequest) GetLocationIds() []int32 {
 	if x != nil {
-		return x.LocationId
+		return x.LocationIds
 	}
-	return 0
+	return nil
 }
 
 func (x *ListFeedRequest) GetSortBy() string {
@@ -3640,14 +3640,13 @@ const file_trip_proto_rawDesc = "" +
 	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x123\n" +
 	"\x15notifications_enabled\x18\x02 \x01(\bR\x14notificationsEnabled\"6\n" +
 	"\x1aUpdateTripSettingsResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xad\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xaf\x01\n" +
 	"\x0fListFeedRequest\x12\x14\n" +
 	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x1a\n" +
 	"\bcategory\x18\x03 \x01(\tR\bcategory\x12\x16\n" +
-	"\x06season\x18\x04 \x01(\tR\x06season\x12\x1f\n" +
-	"\vlocation_id\x18\x05 \x01(\x05R\n" +
-	"locationId\x12\x17\n" +
+	"\x06season\x18\x04 \x01(\tR\x06season\x12!\n" +
+	"\flocation_ids\x18\x05 \x03(\x05R\vlocationIds\x12\x17\n" +
 	"\asort_by\x18\x06 \x01(\tR\x06sortBy\"4\n" +
 	"\x10ListFeedResponse\x12 \n" +
 	"\x05trips\x18\x01 \x03(\v2\n" +

@@ -1085,12 +1085,14 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 	if sortBy != "rating" && sortBy != "date" {
 		sortBy = "date"
 	}
-	var locationID *int
-	if req.GetLocationId() != 0 {
-		id := int(req.GetLocationId())
-		locationID = &id
+	locationProtoIDs := req.GetLocationIds()
+	locationIDs := make([]int, 0, len(locationProtoIDs))
+	for _, id := range locationProtoIDs {
+		if id > 0 {
+			locationIDs = append(locationIDs, int(id))
+		}
 	}
-	trips, err := s.tripRepo.ListFeed(limit, offset, req.GetCategory(), req.GetSeason(), locationID, sortBy)
+	trips, err := s.tripRepo.ListFeed(limit, offset, req.GetCategory(), req.GetSeason(), locationIDs, sortBy)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list feed")
 	}

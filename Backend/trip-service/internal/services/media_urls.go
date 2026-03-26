@@ -6,9 +6,3 @@ type MediaURLResolver interface {
 	// ReadURL возвращает URL для чтения медиа (используется в review/draft ответах).
 	ReadURL(s3Key string) string
 }
-
-// stubMediaURLResolver — реализация по умолчанию, не знающая ничего о S3.
-type stubMediaURLResolver struct{}
-
-func (stubMediaURLResolver) PresignedUploadURL(s3Key string) string { return "" }
-func (stubMediaURLResolver) ReadURL(s3Key string) string            { return "" }

@@ -1,34 +1,5 @@
 basePath: /
 definitions:
-  pinz_backend_api-gateway-service_internal_requests.AddMediaApplyGroupsAndProcessRequest:
-    properties:
-      deleted_media_ids:
-        items:
-          type: string
-        type: array
-      draft_pins:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.DraftPinInput'
-        type: array
-      session_id:
-        type: string
-    type: object
-  pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest:
-    properties:
-      media:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry'
-        type: array
-      session_id:
-        type: string
-    type: object
-  pinz_backend_api-gateway-service_internal_requests.AddMediaStartRequest:
-    properties:
-      files_to_upload:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
-        type: array
-    type: object
   pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest:
     properties:
       deleted_media_ids:
@@ -878,10 +849,6 @@ paths:
         in: query
         name: location_id
         type: integer
-      - description: location name (country or city)
-        in: query
-        name: location_name
-        type: string
       - description: date|rating
         in: query
         name: sort_by
@@ -1207,90 +1174,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Like trip
-      tags:
-      - trips
-  /api/v1/trips/{id}/media/add/apply-groups-and-process:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Draft pins and deleted media
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaApplyGroupsAndProcessRequest'
-      produces:
-      - application/json
-      responses:
-        "202":
-          description: Accepted
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse'
-      security:
-      - BearerAuth: []
-      summary: 'Add-media: apply groups and process'
-      tags:
-      - trips
-  /api/v1/trips/{id}/media/add/process-grouping:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Media metadata
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse'
-      security:
-      - BearerAuth: []
-      summary: 'Add-media: process grouping'
-      tags:
-      - trips
-  /api/v1/trips/{id}/media/add/start:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Files to upload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaStartRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CreateTripResponse'
-      security:
-      - BearerAuth: []
-      summary: Start add-media flow (presigned URLs)
       tags:
       - trips
   /api/v1/trips/{id}/participants/{user_id}:
