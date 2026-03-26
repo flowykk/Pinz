@@ -33,3 +33,21 @@ spec:
       to:
         - operation:
             ports: ["50051"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: trip-service
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: trip-service
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/default/sa/api-gateway-sa
+      to:
+        - operation:
+            ports: ["50052"]
