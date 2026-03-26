@@ -35,6 +35,10 @@ extension AppRouter {
         navigate(to: .trip(.info(trip: trip)))
     }
 
+    public func navigateToTripCreation() {
+        navigate(to: .trip(.creation))
+    }
+
     public func navigateToProfile(user: User) {
         navigate(to: .trip(.profile(user: user)))
     }

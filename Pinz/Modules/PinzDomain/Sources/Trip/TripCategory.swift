@@ -1,4 +1,5 @@
 public enum TripCategory: PickerItem {
+    case none
     case custom(String? = nil)
     case vacation
     case holidays
@@ -14,6 +15,7 @@ public enum TripCategory: PickerItem {
 
     public var value: String {
         switch self {
+        case .none: "Не выбрано"
         case let .custom(text): text ?? "Другое"
         case .vacation: "Отпуск"
         case .holidays: "Выходные"

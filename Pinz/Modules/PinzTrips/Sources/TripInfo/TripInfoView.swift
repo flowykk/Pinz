@@ -18,13 +18,6 @@ enum TripInfoIcon: String, Setting.Icon {
     case trash = "trash"
 }
 
-enum TripSeasonIcon: String, Setting.Icon {
-    case summer = "sun.max.fill"
-    case autumn = "cloud.fill"
-    case winter = "snowflake"
-    case spring = "leaf.fill"
-}
-
 public struct TripInfoView: View {
 
     @State private var viewModel: TripInfoViewModel
@@ -42,15 +35,6 @@ public struct TripInfoView: View {
     @State private var isStoriesPresented = false
 
     @Environment(\.appRouter) private var router
-
-    var tripSeasonIcon: TripSeasonIcon {
-        switch viewModel.trip.season {
-        case .summer: return .summer
-        case .autumn: return .autumn
-        case .winter: return .winter
-        case .spring: return .spring
-        }
-    }
 
     var datesSettingValue: String {
         if let startDate = viewModel.trip.startDate, let endDate = viewModel.trip.endDate {
@@ -228,7 +212,7 @@ public struct TripInfoView: View {
         let defaultSettings: [Setting] = [
             .default(Setting.DefaultSetting(
                 id: "tripSeason",
-                leading: .iconTitle(tripSeasonIcon, "Сезон"),
+                leading: .iconTitle(TripSeason.icon(for: viewModel.trip.season), "Сезон"),
                 trailing: .valuesIcon([.text(viewModel.trip.season.value)], TripInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.changeState) }
             )),
@@ -249,7 +233,7 @@ public struct TripInfoView: View {
         let editingSettings: [Setting] = [
             .picker(Setting.PickerSetting(
                 id: "tripSeasonPicker",
-                leading: .iconTitle(tripSeasonIcon, viewModel.trip.season.value),
+                leading: .iconTitle(TripSeason.icon(for: viewModel.trip.season), viewModel.trip.season.value),
                 isPickerPresented: $isSeasonPickerPresented
             )),
             .picker(Setting.PickerSetting(

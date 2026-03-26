@@ -8,6 +8,7 @@ final class TripViewModel {
 
     public enum Route {
         case tripInfo
+        case tripCreation
         case profile(User)
         case feed
         case members
@@ -79,6 +80,8 @@ final class TripViewModel {
                 if let trip {
                     router?.navigateToTripInfo(trip: trip)
                 }
+            case .tripCreation:
+                router?.navigateToTripCreation()
             case .profile(let user):
                 router?.navigateToProfile(user: user)
             case .feed:
