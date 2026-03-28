@@ -53,12 +53,13 @@ public struct ItemsPickerView<Item: PickerItem>: View {
                 type: .slot(style: .primary, title: "Готово"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 disabled: textFieldVisible && textFieldText.isEmpty,
-            ) {
-                isPresented = false
-                if selection.isCustomizable && !textFieldText.isEmpty {
-                    saveCustomizableItem?(textFieldText)
+                action: .plain {
+                    isPresented = false
+                    if selection.isCustomizable && !textFieldText.isEmpty {
+                        saveCustomizableItem?(textFieldText)
+                    }
                 }
-            }
+            )
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
         }

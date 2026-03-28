@@ -33,9 +33,10 @@ public struct DatePickerView: View {
             .labelsHidden()
             .measureHeight(for: pickerHeight)
 
-            PinzButton(type: .slot(style: .primary, title: "Готово")) {
-                isPresented = false
-            }
+            PinzButton(
+                type: .slot(style: .primary, title: "Готово"),
+                action: .plain { isPresented = false }
+            )
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
         }

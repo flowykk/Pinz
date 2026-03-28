@@ -33,15 +33,19 @@ public struct WishlistView: View {
 
     private var header: some View {
         Header(leftView: {
-            PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                viewModel.dispatch(.navigate(.back))
-            }
+            PinzButton(
+                type: .icon(.chevronLeft),
+                tint: PinzUIAsset.textPrimary.swiftUIColor,
+                action: .plain { viewModel.dispatch(.navigate(.back)) }
+            )
         }, centerView: {
             HeaderTitle("Желанные места")
         }, rightView: {
-            PinzButton(type: .icon(.plus), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                viewModel.dispatch(.navigate(.wishlistElementCreation))
-            }
+            PinzButton(
+                type: .icon(.plus),
+                tint: PinzUIAsset.textPrimary.swiftUIColor,
+                action: .plain { viewModel.dispatch(.navigate(.wishlistElementCreation)) }
+            )
         })
     }
 }

@@ -8,9 +8,11 @@ struct AddPersonView: View {
     var body: some View {
         VStack(spacing: 0) {
             Header(leftView: {
-                PinzButton(type: .icon(.xmark), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    dismiss()
-                }
+                PinzButton(
+                    type: .icon(.xmark),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { dismiss() }
+                )
             })
 
             Spacer()

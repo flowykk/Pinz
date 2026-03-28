@@ -50,25 +50,31 @@ public struct PinzImageEditor: View {
 
     var header: some View {
         Header {
-            PinzButton(type: .text("Отмена")) { dismiss() }
+            PinzButton(
+                type: .text("Отмена"),
+                action: .plain { dismiss() }
+            )
         } rightView: {
-            PinzButton(type: .text("Готово")) {
-                let renderer = ImageRenderer(content: imageView)
-                renderer.scale = UIScreen.main.scale
-                renderer.proposedSize = .init(CGSize(
-                    width: UIScreen.main.bounds.width,
-                    height: UIScreen.main.bounds.width
-                ))
+            PinzButton(
+                type: .text("Готово"),
+                action: .plain {
+                    let renderer = ImageRenderer(content: imageView)
+                    renderer.scale = UIScreen.main.scale
+                    renderer.proposedSize = .init(CGSize(
+                        width: UIScreen.main.bounds.width,
+                        height: UIScreen.main.bounds.width
+                    ))
 
-                onVideoCrop?(scale, offset)
+                    onVideoCrop?(scale, offset)
 
-                if let image = renderer.uiImage {
-                    onCrop(image, true)
-                } else {
-                    onCrop(nil, false)
+                    if let image = renderer.uiImage {
+                        onCrop(image, true)
+                    } else {
+                        onCrop(nil, false)
+                    }
+                    dismiss()
                 }
-                dismiss()
-            }
+            )
         }
     }
 

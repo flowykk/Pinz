@@ -80,14 +80,18 @@ public struct InitialTripSetupView: View {
     @ViewBuilder
     private var header: some View {
         Header(leftView: {
-            PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                viewModel.dispatch(.navigate(.back))
-            }
+            PinzButton(
+                type: .icon(.chevronLeft),
+                tint: PinzUIAsset.textPrimary.swiftUIColor,
+                action: .plain { viewModel.dispatch(.navigate(.back)) }
+            )
         }, rightView: {
             if viewModel.state == .gallery {
-                PinzButton(type: .icon(.plus), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    isMediaPickerPresented = true
-                }
+                PinzButton(
+                    type: .icon(.plus),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { isMediaPickerPresented = true }
+                )
             }
         })
     }
@@ -164,10 +168,11 @@ public struct InitialTripSetupView: View {
             PinzButton(
                 type: .slot(style: .primary, title: "Сформировать пины"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
-                disabled: false
-            ) {
+                disabled: false,
+                action: .plain {
 //                viewModel.dispatch(.navigate(.pinCreation))
-            }.disabledWithOpacity(
+                }
+            ).disabledWithOpacity(
                 viewModel.name.isEmpty
                 || viewModel.description?.isEmpty == true
                 || viewModel.category == .none

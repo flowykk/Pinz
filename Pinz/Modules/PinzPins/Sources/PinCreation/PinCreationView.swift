@@ -100,9 +100,11 @@ public struct PinCreationView: View {
     @ViewBuilder
     private var header: some View {
         Header(leftView: {
-            PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                viewModel.dispatch(.navigate(.back))
-            }
+            PinzButton(
+                type: .icon(.chevronLeft),
+                tint: PinzUIAsset.textPrimary.swiftUIColor,
+                action: .plain { viewModel.dispatch(.navigate(.back)) }
+            )
         }, centerView: {
             let defaultTitle = "Создание пина"
             HeaderTitle(
@@ -111,9 +113,11 @@ public struct PinCreationView: View {
             ).animation(.default, value: viewModel.name)
         }, rightView: {
             if viewModel.state == .gallery {
-                PinzButton(type: .icon(.plus), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    isMediaPickerPresented = true
-                }
+                PinzButton(
+                    type: .icon(.plus),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { isMediaPickerPresented = true }
+                )
             }
         })
     }
@@ -213,10 +217,9 @@ public struct PinCreationView: View {
             PinzButton(
                 type: .slot(style: .primary, title: "Далее"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
-                disabled: false
-            ) {
-//                viewModel.dispatch(.navigate(.pinCreation))
-            }.disabledWithOpacity(viewModel.name.isEmpty)
+                disabled: false,
+                action: .async { }
+            ).disabledWithOpacity(viewModel.name.isEmpty)
         }
     }
 }

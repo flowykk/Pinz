@@ -19,11 +19,15 @@ public struct AuthFlowView: View {
                 ZStack {
                     VStack {
                         if viewModel.state != .welcome {
-                            Header(leftView: {
-                                PinzButton(type: .icon(.chevronLeft), tint: .white) {
-                                    viewModel.dispatch(.back)
+                            Header(
+                                leftView: {
+                                    PinzButton(
+                                        type: .icon(.chevronLeft),
+                                        tint: .white,
+                                        action: .plain { viewModel.dispatch(.back) }
+                                    )
                                 }
-                            })
+                            )
                         }
 
                         Spacer()

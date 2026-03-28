@@ -55,10 +55,9 @@ struct TripsListPopupView: View {
         BottomGradientWithButtons {
             PinzButton(
                 type: .slot(style: .primary, title: "Создать путешествия"),
-                tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-            ) {
-                onTripCreationTapped()
-            }
+                tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                action: .plain { onTripCreationTapped() }
+            )
         }
     }
 }

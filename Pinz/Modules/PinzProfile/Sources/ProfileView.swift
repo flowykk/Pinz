@@ -90,32 +90,40 @@ public struct ProfileView: View {
         case .default:
             Header(
                 leftView: {
-                    PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                        viewModel.dispatch(.navigate(.back))
-                    }
+                    PinzButton(
+                        type: .icon(.chevronLeft),
+                        tint: PinzUIAsset.textPrimary.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.navigate(.back)) }
+                    )
                 },
                 rightView: {
                     HStack(spacing: 4) {
-                        PinzButton(type: .icon(.personAdd), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                            isAddPersonPresented = true
-                        }
-                        PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                            viewModel.dispatch(.changeState)
-                        }
+                        PinzButton(
+                            type: .icon(.personAdd),
+                            tint: PinzUIAsset.textPrimary.swiftUIColor,
+                            action: .plain { isAddPersonPresented = true }
+                        )
+                        PinzButton(
+                            type: .icon(.pencil),
+                            tint: PinzUIAsset.textPrimary.swiftUIColor,
+                            action: .plain { viewModel.dispatch(.changeState) }
+                        )
                     }
                 }
             )
         case .editing:
             Header {
-                PinzButton(type: .text("Отмена")) {
-                    viewModel.dispatch(.changeState)
-                }
+                PinzButton(
+                    type: .text("Отмена"),
+                    action: .plain { viewModel.dispatch(.changeState) }
+                )
             } centerView: {
                 HeaderTitle("Редактирование профиля")
             } rightView: {
-                PinzButton(type: .text("Готово")) {
-                    viewModel.dispatch(.changeState)
-                }
+                PinzButton(
+                    type: .text("Готово"),
+                    action: .plain { viewModel.dispatch(.changeState) }
+                )
             }
         }
     }

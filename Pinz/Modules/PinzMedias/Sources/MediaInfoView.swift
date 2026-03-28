@@ -158,16 +158,22 @@ public struct MediaInfoView: View {
 
     private var header: some View {
         Header(leftView: {
-            PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                router?.pop(by: 1)
-            }
+            PinzButton(
+                type: .icon(.chevronLeft),
+                tint: PinzUIAsset.textPrimary.swiftUIColor,
+                action: .plain { router?.pop(by: 1) }
+            )
         }, rightView: {
-            PinzButton(type: .icon(.crop), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-
-            }
-            PinzButton(type: .icon(.download), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-
-            }
+            PinzButton(
+                type: .icon(.crop),
+                tint: PinzUIAsset.textPrimary.swiftUIColor,
+                action: .plain { }
+            )
+            PinzButton(
+                type: .icon(.download),
+                tint: PinzUIAsset.textPrimary.swiftUIColor,
+                action: .plain { }
+            )
         })
     }
 

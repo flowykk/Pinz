@@ -123,31 +123,39 @@ public struct TripInfoView: View {
         switch viewModel.state {
         case .default:
             Header(leftView: {
-                PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.navigate(.back))
-                }
+                PinzButton(
+                    type: .icon(.chevronLeft),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.navigate(.back)) }
+                )
             }, centerView: {
                 HeaderTitle(
                     viewModel.trip.name,
                     subtitle: "\(viewModel.trip.category.value), \(viewModel.trip.season.value)"
                 )
             }, rightView: {
-                PinzButton(type: .icon(.stories), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    isStoriesPresented = true
-                }
-                PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.changeState)
-                }
+                PinzButton(
+                    type: .icon(.stories),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { isStoriesPresented = true }
+                )
+                PinzButton(
+                    type: .icon(.pencil),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.changeState) }
+                )
             })
         case .editing:
             Header {
-                PinzButton(type: .text("Отмена")) {
-                    viewModel.dispatch(.changeState)
-                }
+                PinzButton(
+                    type: .text("Отмена"),
+                    action: .plain { viewModel.dispatch(.changeState) }
+                )
             } rightView: {
-                PinzButton(type: .text("Готово")) {
-                    viewModel.dispatch(.changeState)
-                }
+                PinzButton(
+                    type: .text("Готово"),
+                    action: .plain { viewModel.dispatch(.changeState) }
+                )
             }
         }
     }
