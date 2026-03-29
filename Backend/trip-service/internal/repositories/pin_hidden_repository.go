@@ -1,41 +1,50 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
+
+	"pinz/backend/trip-service/internal/db/sqlcdb"
 )
 
 type PinHiddenRepository struct {
-	db *sql.DB
+	q *sqlcdb.Queries
 }
 
 func NewPinHiddenRepository(db *sql.DB) *PinHiddenRepository {
-	return &PinHiddenRepository{db: db}
+	return &PinHiddenRepository{q: sqlcdb.New(db)}
 }
 
 func (r *PinHiddenRepository) HidePinForUser(pinID, userID string) error {
-	_, err := r.db.Exec(
-		`INSERT INTO pin_hidden_by_user (pin_id, user_id) VALUES ($1, $2) ON CONFLICT (pin_id, user_id) DO NOTHING`,
-		pinID, userID,
-	)
-	return err
+	pid, err := uuid.Parse(pinID)
+	if err != nil {
+		return err
+	}
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	return r.q.PinHiddenInsert(context.Background(), sqlcdb.PinHiddenInsertParams{PinID: pid, UserID: uid})
 }
 
 func (r *PinHiddenRepository) ListHiddenPinIDsForUser(tripID, userID string) ([]string, error) {
-	rows, err := r.db.Query(
-		`SELECT ph.pin_id FROM pin_hidden_by_user ph INNER JOIN pins p ON p.id = ph.pin_id WHERE p.trip_id = $1 AND ph.user_id = $2`,
-		tripID, userID,
-	)
+	tid, err := uuid.Parse(tripID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var ids []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
 	}
-	return ids, rows.Err()
+	rows, err := r.q.PinHiddenListForUser(context.Background(), sqlcdb.PinHiddenListForUserParams{TripID: tid, UserID: uid})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(rows))
+	for _, id := range rows {
+		out = append(out, id.String())
+	}
+	return out, nil
 }

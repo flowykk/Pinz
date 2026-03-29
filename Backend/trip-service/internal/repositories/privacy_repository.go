@@ -3,6 +3,10 @@ package repositories
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
+
+	"pinz/backend/trip-service/internal/db/sqlcdb"
 )
 
 // PrivacyEntry is one per-user privacy choice.
@@ -12,99 +16,120 @@ type PrivacyEntry struct {
 }
 
 // TripPrivacyRepository handles trip_privacy table (per-user trip privacy).
-type TripPrivacyRepository struct{ db *sql.DB }
+type TripPrivacyRepository struct{ q *sqlcdb.Queries }
 
 func NewTripPrivacyRepository(db *sql.DB) *TripPrivacyRepository {
-	return &TripPrivacyRepository{db: db}
+	return &TripPrivacyRepository{q: sqlcdb.New(db)}
 }
 
 func (r *TripPrivacyRepository) Upsert(ctx context.Context, tripID, userID, privacyLevel string) error {
-	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO trip_privacy (trip_id, user_id, privacy_level) VALUES ($1, $2, $3)
-		 ON CONFLICT (trip_id, user_id) DO UPDATE SET privacy_level = $3`,
-		tripID, userID, privacyLevel)
-	return err
+	tid, err := uuid.Parse(tripID)
+	if err != nil {
+		return err
+	}
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	return r.q.TripPrivacyUpsert(ctx, sqlcdb.TripPrivacyUpsertParams{
+		TripID:       tid,
+		UserID:       uid,
+		PrivacyLevel: privacyLevel,
+	})
 }
 
 func (r *TripPrivacyRepository) GetByTripID(ctx context.Context, tripID string) ([]PrivacyEntry, error) {
-	rows, err := r.db.QueryContext(ctx, `SELECT user_id, privacy_level FROM trip_privacy WHERE trip_id = $1`, tripID)
+	tid, err := uuid.Parse(tripID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var out []PrivacyEntry
-	for rows.Next() {
-		var e PrivacyEntry
-		if err := rows.Scan(&e.UserID, &e.PrivacyLevel); err != nil {
-			return nil, err
-		}
-		out = append(out, e)
+	rows, err := r.q.TripPrivacyListByTrip(ctx, tid)
+	if err != nil {
+		return nil, err
 	}
-	return out, rows.Err()
+	out := make([]PrivacyEntry, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, PrivacyEntry{UserID: row.UserID.String(), PrivacyLevel: row.PrivacyLevel})
+	}
+	return out, nil
 }
 
 // PinPrivacyRepository handles pin_privacy table.
-type PinPrivacyRepository struct{ db *sql.DB }
+type PinPrivacyRepository struct{ q *sqlcdb.Queries }
 
 func NewPinPrivacyRepository(db *sql.DB) *PinPrivacyRepository {
-	return &PinPrivacyRepository{db: db}
+	return &PinPrivacyRepository{q: sqlcdb.New(db)}
 }
 
 func (r *PinPrivacyRepository) Upsert(ctx context.Context, pinID, userID, privacyLevel string) error {
-	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO pin_privacy (pin_id, user_id, privacy_level) VALUES ($1, $2, $3)
-		 ON CONFLICT (pin_id, user_id) DO UPDATE SET privacy_level = $3`,
-		pinID, userID, privacyLevel)
-	return err
+	pid, err := uuid.Parse(pinID)
+	if err != nil {
+		return err
+	}
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	return r.q.PinPrivacyUpsert(ctx, sqlcdb.PinPrivacyUpsertParams{
+		PinID:        pid,
+		UserID:       uid,
+		PrivacyLevel: privacyLevel,
+	})
 }
 
 func (r *PinPrivacyRepository) GetByPinID(ctx context.Context, pinID string) ([]PrivacyEntry, error) {
-	rows, err := r.db.QueryContext(ctx, `SELECT user_id, privacy_level FROM pin_privacy WHERE pin_id = $1`, pinID)
+	pid, err := uuid.Parse(pinID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var out []PrivacyEntry
-	for rows.Next() {
-		var e PrivacyEntry
-		if err := rows.Scan(&e.UserID, &e.PrivacyLevel); err != nil {
-			return nil, err
-		}
-		out = append(out, e)
+	rows, err := r.q.PinPrivacyListByPin(ctx, pid)
+	if err != nil {
+		return nil, err
 	}
-	return out, rows.Err()
+	out := make([]PrivacyEntry, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, PrivacyEntry{UserID: row.UserID.String(), PrivacyLevel: row.PrivacyLevel})
+	}
+	return out, nil
 }
 
 // MediaPrivacyRepository handles media_privacy table.
-type MediaPrivacyRepository struct{ db *sql.DB }
+type MediaPrivacyRepository struct{ q *sqlcdb.Queries }
 
 func NewMediaPrivacyRepository(db *sql.DB) *MediaPrivacyRepository {
-	return &MediaPrivacyRepository{db: db}
+	return &MediaPrivacyRepository{q: sqlcdb.New(db)}
 }
 
 func (r *MediaPrivacyRepository) Upsert(ctx context.Context, mediaID, userID, privacyLevel string) error {
-	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO media_privacy (media_id, user_id, privacy_level) VALUES ($1, $2, $3)
-		 ON CONFLICT (media_id, user_id) DO UPDATE SET privacy_level = $3`,
-		mediaID, userID, privacyLevel)
-	return err
+	mid, err := uuid.Parse(mediaID)
+	if err != nil {
+		return err
+	}
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	return r.q.MediaPrivacyUpsert(ctx, sqlcdb.MediaPrivacyUpsertParams{
+		MediaID:      mid,
+		UserID:       uid,
+		PrivacyLevel: privacyLevel,
+	})
 }
 
 func (r *MediaPrivacyRepository) GetByMediaID(ctx context.Context, mediaID string) ([]PrivacyEntry, error) {
-	rows, err := r.db.QueryContext(ctx, `SELECT user_id, privacy_level FROM media_privacy WHERE media_id = $1`, mediaID)
+	mid, err := uuid.Parse(mediaID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var out []PrivacyEntry
-	for rows.Next() {
-		var e PrivacyEntry
-		if err := rows.Scan(&e.UserID, &e.PrivacyLevel); err != nil {
-			return nil, err
-		}
-		out = append(out, e)
+	rows, err := r.q.MediaPrivacyListByMedia(ctx, mid)
+	if err != nil {
+		return nil, err
 	}
-	return out, rows.Err()
+	out := make([]PrivacyEntry, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, PrivacyEntry{UserID: row.UserID.String(), PrivacyLevel: row.PrivacyLevel})
+	}
+	return out, nil
 }
 
 // AggregatePrivacyLevel computes effective level from per-user choices: any Private -> Private; else Public. Restricted is never downgraded by this (ML sets it).
