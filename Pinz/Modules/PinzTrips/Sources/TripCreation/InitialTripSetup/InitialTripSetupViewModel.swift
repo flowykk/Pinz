@@ -8,7 +8,7 @@ import PinzDomain
 @Observable
 final class InitialTripSetupViewModel {
 
-    public enum State: SegmentedItem {
+    enum State: SegmentedItem {
         public var id: Self { self }
 
         case info
@@ -25,6 +25,7 @@ final class InitialTripSetupViewModel {
     }
 
     enum Route {
+        case preprocessedPins
         case back
     }
 
@@ -34,7 +35,12 @@ final class InitialTripSetupViewModel {
         case deleteMedia(UUID)
     }
 
+    enum AsyncIntent {
+        case `continue`
+    }
+
     var state: State = .info
+    private(set) var isLoading: Bool = false
 
     var name: String = ""
     var description: String?
@@ -49,6 +55,8 @@ final class InitialTripSetupViewModel {
         switch intent {
         case let .navigate(route):
             switch route {
+            case .preprocessedPins:
+                router?.navigateToTripCreationPreprocessedPins()
             case .back:
                 router?.pop()
             }
@@ -82,13 +90,29 @@ final class InitialTripSetupViewModel {
         }
     }
 
-    private func changeState(to state: State) {
-        withAnimation(.easeInOut(duration: 0.3)) {
-            self.state = state
+    func asyncDispatch(_ intent: AsyncIntent) async throws {
+        switch intent {
+        case .continue:
+            changeLoading(to: true)
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+            dispatch(.navigate(.preprocessedPins))
+            changeLoading(to: false)
         }
     }
 
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+    }
+
+    private func changeLoading(to isLoading: Bool) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            self.isLoading = isLoading
+        }
+    }
+
+    private func changeState(to state: State) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            self.state = state
+        }
     }
 }

@@ -35,10 +35,6 @@ extension AppRouter {
         navigate(to: .trip(.info(trip: trip)))
     }
 
-    public func navigateToTripCreation() {
-        navigate(to: .trip(.creation))
-    }
-
     public func navigateToProfile(user: User) {
         navigate(to: .trip(.profile(user: user)))
     }
@@ -73,6 +69,17 @@ extension AppRouter {
 
     public func navigateToPostPreview(trip: Trip, selectedPins: [Pin]) {
         navigate(to: .tripInfo(.postPreview(trip: trip, selectedPins: selectedPins)))
+    }
+}
+
+// MARK: - TripCreation Routing
+extension AppRouter {
+    public func navigateToTripCreationInitial() {
+        navigate(to: .tripCreation(.initial))
+    }
+
+    public func navigateToTripCreationPreprocessedPins() {
+        navigate(to: .tripCreation(.preprocessed))
     }
 }
 
