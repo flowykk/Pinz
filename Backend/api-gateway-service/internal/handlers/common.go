@@ -9,25 +9,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"pinz/backend/api-gateway-service/internal/responses"
 )
 
-func validUUID(s string) bool {
-	_, err := uuid.Parse(s)
-	return err == nil
-}
-
 func parseInt(s string) (int, error) {
 	return strconv.Atoi(s)
-}
-
-func parseInt32(s string) (int32, error) {
-	n, err := strconv.ParseInt(s, 10, 32)
-	return int32(n), err
 }
 
 func decodeJSONBody(r *http.Request, dst interface{}) error {

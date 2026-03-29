@@ -526,12 +526,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "location name (country or city)",
-                        "name": "location_name",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "date|rating",
                         "name": "sort_by",
                         "in": "query"
@@ -550,7 +544,50 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trip/creation/start": {
+        "/api/v1/trips": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns list of trips for the authenticated user. Requires JWT.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trips"
+                ],
+                "summary": "List current user's trips",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/creation/start": {
             "post": {
                 "security": [
                     {
@@ -607,7 +644,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trip/creation/{id}/apply-groups-and-process": {
+        "/api/v1/trips/creation/{id}/apply-groups-and-process": {
             "post": {
                 "security": [
                     {
@@ -652,7 +689,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trip/creation/{id}/finalize": {
+        "/api/v1/trips/creation/{id}/finalize": {
             "post": {
                 "security": [
                     {
@@ -697,7 +734,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trip/creation/{id}/media/process-grouping": {
+        "/api/v1/trips/creation/{id}/media/process-grouping": {
             "post": {
                 "security": [
                     {
@@ -742,7 +779,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trip/creation/{id}/review": {
+        "/api/v1/trips/creation/{id}/review": {
             "get": {
                 "security": [
                     {
@@ -775,24 +812,32 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips": {
+        "/api/v1/trips/favourites": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns list of trips for the authenticated user. Requires JWT.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+                "description": "Returns trips the user has added to favourites. Supports limit and offset query params.",
                 "tags": [
                     "trips"
                 ],
-                "summary": "List current user's trips",
+                "summary": "List favourite trips",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit (default 20, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -888,7 +933,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns a single trip by ID. Requires JWT. User must be a participant.",
+                "description": "Returns a single trip by ID with pins and media in each pin. Requires JWT. User must be a participant.",
                 "consumes": [
                     "application/json"
                 ],
@@ -912,7 +957,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.GetTripResponse"
                         }
                     },
                     "401": {
@@ -1323,141 +1368,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/media/add/apply-groups-and-process": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Add-media: apply groups and process",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Draft pins and deleted media",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaApplyGroupsAndProcessRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "202": {
-                        "description": "Accepted",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/media/add/process-grouping": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Add-media: process grouping",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Media metadata",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/media/add/start": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Start add-media flow (presigned URLs)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Files to upload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaStartRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CreateTripResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/trips/{id}/participants/{user_id}": {
             "delete": {
                 "security": [
@@ -1618,124 +1528,9 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/api/v1/trips/{id}/transfer-admin": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Transfers trip admin to another participant. Only current admin can transfer. Requires JWT.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "trips"
-                ],
-                "summary": "Transfer admin",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "New admin user ID",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.TransferAdminRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TransferAdminResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "pinz_backend_api-gateway-service_internal_requests.AddMediaApplyGroupsAndProcessRequest": {
-            "type": "object",
-            "properties": {
-                "deleted_media_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "draft_pins": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.DraftPinInput"
-                    }
-                },
-                "session_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest": {
-            "type": "object",
-            "properties": {
-                "media": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry"
-                    }
-                },
-                "session_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_requests.AddMediaStartRequest": {
-            "type": "object",
-            "properties": {
-                "files_to_upload": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry"
-                    }
-                }
-            }
-        },
         "pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest": {
             "type": "object",
             "properties": {
@@ -1997,14 +1792,6 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_requests.TransferAdminRequest": {
-            "type": "object",
-            "properties": {
-                "new_admin_user_id": {
-                    "type": "string"
-                }
-            }
-        },
         "pinz_backend_api-gateway-service_internal_requests.TripSettingsRequest": {
             "type": "object",
             "properties": {
@@ -2156,6 +1943,20 @@ const docTemplate = `{
                 },
                 "token": {
                     "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.GetTripResponse": {
+            "type": "object",
+            "properties": {
+                "pins": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin"
+                    }
+                },
+                "trip": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
                 }
             }
         },
@@ -2362,14 +2163,6 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.TransferAdminResponse": {
-            "type": "object",
-            "properties": {
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
         "pinz_backend_api-gateway-service_internal_responses.Trip": {
             "type": "object",
             "properties": {
@@ -2423,6 +2216,70 @@ const docTemplate = `{
                 },
                 "updated_at_unix": {
                     "type": "integer"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.TripPin": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_time_unix": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPinMedia"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "privacy_level": {
+                    "type": "string"
+                },
+                "start_time_unix": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.TripPinMedia": {
+            "type": "object",
+            "properties": {
+                "captured_at_unix": {
+                    "type": "integer"
+                },
+                "media_id": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "privacy_level": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },

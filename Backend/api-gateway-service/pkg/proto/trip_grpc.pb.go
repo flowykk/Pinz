@@ -19,39 +19,28 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TripService_CreateTrip_FullMethodName                    = "/trip.TripService/CreateTrip"
-	TripService_GetTrip_FullMethodName                       = "/trip.TripService/GetTrip"
-	TripService_ListUserTrips_FullMethodName                 = "/trip.TripService/ListUserTrips"
-	TripService_UpdateTrip_FullMethodName                    = "/trip.TripService/UpdateTrip"
-	TripService_DeleteTrip_FullMethodName                    = "/trip.TripService/DeleteTrip"
-	TripService_GenerateInviteLink_FullMethodName            = "/trip.TripService/GenerateInviteLink"
-	TripService_JoinTripByToken_FullMethodName               = "/trip.TripService/JoinTripByToken"
-	TripService_RemoveParticipant_FullMethodName             = "/trip.TripService/RemoveParticipant"
-	TripService_LeaveTrip_FullMethodName                     = "/trip.TripService/LeaveTrip"
-	TripService_TransferAdmin_FullMethodName                 = "/trip.TripService/TransferAdmin"
-	TripService_ProcessMediaGrouping_FullMethodName          = "/trip.TripService/ProcessMediaGrouping"
-	TripService_ApplyGroupsAndProcess_FullMethodName         = "/trip.TripService/ApplyGroupsAndProcess"
-	TripService_GetTripReview_FullMethodName                 = "/trip.TripService/GetTripReview"
-	TripService_FinalizeTrip_FullMethodName                  = "/trip.TripService/FinalizeTrip"
-	TripService_AddMediaStart_FullMethodName                 = "/trip.TripService/AddMediaStart"
-	TripService_AddMediaProcessGrouping_FullMethodName       = "/trip.TripService/AddMediaProcessGrouping"
-	TripService_AddMediaApplyGroupsAndProcess_FullMethodName = "/trip.TripService/AddMediaApplyGroupsAndProcess"
-	TripService_PublishTrip_FullMethodName                   = "/trip.TripService/PublishTrip"
-	TripService_UpdateTripSettings_FullMethodName            = "/trip.TripService/UpdateTripSettings"
-	TripService_ListFeed_FullMethodName                      = "/trip.TripService/ListFeed"
-	TripService_LikeTrip_FullMethodName                      = "/trip.TripService/LikeTrip"
-	TripService_DislikeTrip_FullMethodName                   = "/trip.TripService/DislikeTrip"
-	TripService_AddToFavourites_FullMethodName               = "/trip.TripService/AddToFavourites"
-	TripService_RemoveFromFavourites_FullMethodName          = "/trip.TripService/RemoveFromFavourites"
-	TripService_UpdateTripPrivacy_FullMethodName             = "/trip.TripService/UpdateTripPrivacy"
-	TripService_UpdatePinPrivacy_FullMethodName              = "/trip.TripService/UpdatePinPrivacy"
-	TripService_UpdateMediaPrivacy_FullMethodName            = "/trip.TripService/UpdateMediaPrivacy"
-	TripService_SearchPins_FullMethodName                    = "/trip.TripService/SearchPins"
-	TripService_CreatePin_FullMethodName                     = "/trip.TripService/CreatePin"
-	TripService_UpdatePin_FullMethodName                     = "/trip.TripService/UpdatePin"
-	TripService_DeletePin_FullMethodName                     = "/trip.TripService/DeletePin"
-	TripService_AddPinTags_FullMethodName                    = "/trip.TripService/AddPinTags"
-	TripService_RemovePinTags_FullMethodName                 = "/trip.TripService/RemovePinTags"
+	TripService_CreateTrip_FullMethodName            = "/trip.TripService/CreateTrip"
+	TripService_GetTrip_FullMethodName               = "/trip.TripService/GetTrip"
+	TripService_ListUserTrips_FullMethodName         = "/trip.TripService/ListUserTrips"
+	TripService_UpdateTrip_FullMethodName            = "/trip.TripService/UpdateTrip"
+	TripService_DeleteTrip_FullMethodName            = "/trip.TripService/DeleteTrip"
+	TripService_GenerateInviteLink_FullMethodName    = "/trip.TripService/GenerateInviteLink"
+	TripService_JoinTripByToken_FullMethodName       = "/trip.TripService/JoinTripByToken"
+	TripService_RemoveParticipant_FullMethodName     = "/trip.TripService/RemoveParticipant"
+	TripService_LeaveTrip_FullMethodName             = "/trip.TripService/LeaveTrip"
+	TripService_TransferAdmin_FullMethodName         = "/trip.TripService/TransferAdmin"
+	TripService_ProcessMediaGrouping_FullMethodName  = "/trip.TripService/ProcessMediaGrouping"
+	TripService_ApplyGroupsAndProcess_FullMethodName = "/trip.TripService/ApplyGroupsAndProcess"
+	TripService_GetTripReview_FullMethodName         = "/trip.TripService/GetTripReview"
+	TripService_FinalizeTrip_FullMethodName          = "/trip.TripService/FinalizeTrip"
+	TripService_PublishTrip_FullMethodName           = "/trip.TripService/PublishTrip"
+	TripService_UpdateTripSettings_FullMethodName    = "/trip.TripService/UpdateTripSettings"
+	TripService_ListFeed_FullMethodName              = "/trip.TripService/ListFeed"
+	TripService_LikeTrip_FullMethodName              = "/trip.TripService/LikeTrip"
+	TripService_DislikeTrip_FullMethodName           = "/trip.TripService/DislikeTrip"
+	TripService_AddToFavourites_FullMethodName       = "/trip.TripService/AddToFavourites"
+	TripService_RemoveFromFavourites_FullMethodName  = "/trip.TripService/RemoveFromFavourites"
+	TripService_ListFavourites_FullMethodName        = "/trip.TripService/ListFavourites"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -63,34 +52,27 @@ type TripServiceClient interface {
 	ListUserTrips(ctx context.Context, in *ListUserTripsRequest, opts ...grpc.CallOption) (*ListUserTripsResponse, error)
 	UpdateTrip(ctx context.Context, in *UpdateTripRequest, opts ...grpc.CallOption) (*UpdateTripResponse, error)
 	DeleteTrip(ctx context.Context, in *DeleteTripRequest, opts ...grpc.CallOption) (*DeleteTripResponse, error)
+	// Участники и инвайты (Фаза 2)
 	GenerateInviteLink(ctx context.Context, in *GenerateInviteLinkRequest, opts ...grpc.CallOption) (*GenerateInviteLinkResponse, error)
 	JoinTripByToken(ctx context.Context, in *JoinTripByTokenRequest, opts ...grpc.CallOption) (*JoinTripByTokenResponse, error)
 	RemoveParticipant(ctx context.Context, in *RemoveParticipantRequest, opts ...grpc.CallOption) (*RemoveParticipantResponse, error)
 	LeaveTrip(ctx context.Context, in *LeaveTripRequest, opts ...grpc.CallOption) (*LeaveTripResponse, error)
 	TransferAdmin(ctx context.Context, in *TransferAdminRequest, opts ...grpc.CallOption) (*TransferAdminResponse, error)
+	// Поток создания (tripCreationFlow.md), Фаза 3/5:
 	ProcessMediaGrouping(ctx context.Context, in *ProcessMediaGroupingRequest, opts ...grpc.CallOption) (*ProcessMediaGroupingResponse, error)
 	ApplyGroupsAndProcess(ctx context.Context, in *ApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*ApplyGroupsAndProcessResponse, error)
 	GetTripReview(ctx context.Context, in *GetTripReviewRequest, opts ...grpc.CallOption) (*GetTripReviewResponse, error)
 	FinalizeTrip(ctx context.Context, in *FinalizeTripRequest, opts ...grpc.CallOption) (*FinalizeTripResponse, error)
-	AddMediaStart(ctx context.Context, in *AddMediaStartRequest, opts ...grpc.CallOption) (*AddMediaStartResponse, error)
-	AddMediaProcessGrouping(ctx context.Context, in *AddMediaProcessGroupingRequest, opts ...grpc.CallOption) (*AddMediaProcessGroupingResponse, error)
-	AddMediaApplyGroupsAndProcess(ctx context.Context, in *AddMediaApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*AddMediaApplyGroupsAndProcessResponse, error)
+	// Публикация в ленту (PINZ-105, ТЗ 3.3): вся поездка целиком или выбранные пины
 	PublishTrip(ctx context.Context, in *PublishTripRequest, opts ...grpc.CallOption) (*PublishTripResponse, error)
+	// PINZ-98: лента, лайки, избранное, настройки уведомлений
 	UpdateTripSettings(ctx context.Context, in *UpdateTripSettingsRequest, opts ...grpc.CallOption) (*UpdateTripSettingsResponse, error)
 	ListFeed(ctx context.Context, in *ListFeedRequest, opts ...grpc.CallOption) (*ListFeedResponse, error)
 	LikeTrip(ctx context.Context, in *LikeTripRequest, opts ...grpc.CallOption) (*LikeTripResponse, error)
 	DislikeTrip(ctx context.Context, in *DislikeTripRequest, opts ...grpc.CallOption) (*DislikeTripResponse, error)
 	AddToFavourites(ctx context.Context, in *AddToFavouritesRequest, opts ...grpc.CallOption) (*AddToFavouritesResponse, error)
 	RemoveFromFavourites(ctx context.Context, in *RemoveFromFavouritesRequest, opts ...grpc.CallOption) (*RemoveFromFavouritesResponse, error)
-	UpdateTripPrivacy(ctx context.Context, in *UpdateTripPrivacyRequest, opts ...grpc.CallOption) (*UpdateTripPrivacyResponse, error)
-	UpdatePinPrivacy(ctx context.Context, in *UpdatePinPrivacyRequest, opts ...grpc.CallOption) (*UpdatePinPrivacyResponse, error)
-	UpdateMediaPrivacy(ctx context.Context, in *UpdateMediaPrivacyRequest, opts ...grpc.CallOption) (*UpdateMediaPrivacyResponse, error)
-	SearchPins(ctx context.Context, in *SearchPinsRequest, opts ...grpc.CallOption) (*SearchPinsResponse, error)
-	CreatePin(ctx context.Context, in *CreatePinRequest, opts ...grpc.CallOption) (*CreatePinResponse, error)
-	UpdatePin(ctx context.Context, in *UpdatePinRequest, opts ...grpc.CallOption) (*UpdatePinResponse, error)
-	DeletePin(ctx context.Context, in *DeletePinRequest, opts ...grpc.CallOption) (*DeletePinResponse, error)
-	AddPinTags(ctx context.Context, in *AddPinTagsRequest, opts ...grpc.CallOption) (*AddPinTagsResponse, error)
-	RemovePinTags(ctx context.Context, in *RemovePinTagsRequest, opts ...grpc.CallOption) (*RemovePinTagsResponse, error)
+	ListFavourites(ctx context.Context, in *ListFavouritesRequest, opts ...grpc.CallOption) (*ListFavouritesResponse, error)
 }
 
 type tripServiceClient struct {
@@ -241,36 +223,6 @@ func (c *tripServiceClient) FinalizeTrip(ctx context.Context, in *FinalizeTripRe
 	return out, nil
 }
 
-func (c *tripServiceClient) AddMediaStart(ctx context.Context, in *AddMediaStartRequest, opts ...grpc.CallOption) (*AddMediaStartResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddMediaStartResponse)
-	err := c.cc.Invoke(ctx, TripService_AddMediaStart_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) AddMediaProcessGrouping(ctx context.Context, in *AddMediaProcessGroupingRequest, opts ...grpc.CallOption) (*AddMediaProcessGroupingResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddMediaProcessGroupingResponse)
-	err := c.cc.Invoke(ctx, TripService_AddMediaProcessGrouping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) AddMediaApplyGroupsAndProcess(ctx context.Context, in *AddMediaApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*AddMediaApplyGroupsAndProcessResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddMediaApplyGroupsAndProcessResponse)
-	err := c.cc.Invoke(ctx, TripService_AddMediaApplyGroupsAndProcess_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *tripServiceClient) PublishTrip(ctx context.Context, in *PublishTripRequest, opts ...grpc.CallOption) (*PublishTripResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PublishTripResponse)
@@ -341,90 +293,10 @@ func (c *tripServiceClient) RemoveFromFavourites(ctx context.Context, in *Remove
 	return out, nil
 }
 
-func (c *tripServiceClient) UpdateTripPrivacy(ctx context.Context, in *UpdateTripPrivacyRequest, opts ...grpc.CallOption) (*UpdateTripPrivacyResponse, error) {
+func (c *tripServiceClient) ListFavourites(ctx context.Context, in *ListFavouritesRequest, opts ...grpc.CallOption) (*ListFavouritesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateTripPrivacyResponse)
-	err := c.cc.Invoke(ctx, TripService_UpdateTripPrivacy_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) UpdatePinPrivacy(ctx context.Context, in *UpdatePinPrivacyRequest, opts ...grpc.CallOption) (*UpdatePinPrivacyResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdatePinPrivacyResponse)
-	err := c.cc.Invoke(ctx, TripService_UpdatePinPrivacy_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) UpdateMediaPrivacy(ctx context.Context, in *UpdateMediaPrivacyRequest, opts ...grpc.CallOption) (*UpdateMediaPrivacyResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateMediaPrivacyResponse)
-	err := c.cc.Invoke(ctx, TripService_UpdateMediaPrivacy_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) SearchPins(ctx context.Context, in *SearchPinsRequest, opts ...grpc.CallOption) (*SearchPinsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SearchPinsResponse)
-	err := c.cc.Invoke(ctx, TripService_SearchPins_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) CreatePin(ctx context.Context, in *CreatePinRequest, opts ...grpc.CallOption) (*CreatePinResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreatePinResponse)
-	err := c.cc.Invoke(ctx, TripService_CreatePin_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) UpdatePin(ctx context.Context, in *UpdatePinRequest, opts ...grpc.CallOption) (*UpdatePinResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdatePinResponse)
-	err := c.cc.Invoke(ctx, TripService_UpdatePin_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) DeletePin(ctx context.Context, in *DeletePinRequest, opts ...grpc.CallOption) (*DeletePinResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeletePinResponse)
-	err := c.cc.Invoke(ctx, TripService_DeletePin_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) AddPinTags(ctx context.Context, in *AddPinTagsRequest, opts ...grpc.CallOption) (*AddPinTagsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddPinTagsResponse)
-	err := c.cc.Invoke(ctx, TripService_AddPinTags_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) RemovePinTags(ctx context.Context, in *RemovePinTagsRequest, opts ...grpc.CallOption) (*RemovePinTagsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemovePinTagsResponse)
-	err := c.cc.Invoke(ctx, TripService_RemovePinTags_FullMethodName, in, out, cOpts...)
+	out := new(ListFavouritesResponse)
+	err := c.cc.Invoke(ctx, TripService_ListFavourites_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -440,34 +312,27 @@ type TripServiceServer interface {
 	ListUserTrips(context.Context, *ListUserTripsRequest) (*ListUserTripsResponse, error)
 	UpdateTrip(context.Context, *UpdateTripRequest) (*UpdateTripResponse, error)
 	DeleteTrip(context.Context, *DeleteTripRequest) (*DeleteTripResponse, error)
+	// Участники и инвайты (Фаза 2)
 	GenerateInviteLink(context.Context, *GenerateInviteLinkRequest) (*GenerateInviteLinkResponse, error)
 	JoinTripByToken(context.Context, *JoinTripByTokenRequest) (*JoinTripByTokenResponse, error)
 	RemoveParticipant(context.Context, *RemoveParticipantRequest) (*RemoveParticipantResponse, error)
 	LeaveTrip(context.Context, *LeaveTripRequest) (*LeaveTripResponse, error)
 	TransferAdmin(context.Context, *TransferAdminRequest) (*TransferAdminResponse, error)
+	// Поток создания (tripCreationFlow.md), Фаза 3/5:
 	ProcessMediaGrouping(context.Context, *ProcessMediaGroupingRequest) (*ProcessMediaGroupingResponse, error)
 	ApplyGroupsAndProcess(context.Context, *ApplyGroupsAndProcessRequest) (*ApplyGroupsAndProcessResponse, error)
 	GetTripReview(context.Context, *GetTripReviewRequest) (*GetTripReviewResponse, error)
 	FinalizeTrip(context.Context, *FinalizeTripRequest) (*FinalizeTripResponse, error)
-	AddMediaStart(context.Context, *AddMediaStartRequest) (*AddMediaStartResponse, error)
-	AddMediaProcessGrouping(context.Context, *AddMediaProcessGroupingRequest) (*AddMediaProcessGroupingResponse, error)
-	AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error)
+	// Публикация в ленту (PINZ-105, ТЗ 3.3): вся поездка целиком или выбранные пины
 	PublishTrip(context.Context, *PublishTripRequest) (*PublishTripResponse, error)
+	// PINZ-98: лента, лайки, избранное, настройки уведомлений
 	UpdateTripSettings(context.Context, *UpdateTripSettingsRequest) (*UpdateTripSettingsResponse, error)
 	ListFeed(context.Context, *ListFeedRequest) (*ListFeedResponse, error)
 	LikeTrip(context.Context, *LikeTripRequest) (*LikeTripResponse, error)
 	DislikeTrip(context.Context, *DislikeTripRequest) (*DislikeTripResponse, error)
 	AddToFavourites(context.Context, *AddToFavouritesRequest) (*AddToFavouritesResponse, error)
 	RemoveFromFavourites(context.Context, *RemoveFromFavouritesRequest) (*RemoveFromFavouritesResponse, error)
-	UpdateTripPrivacy(context.Context, *UpdateTripPrivacyRequest) (*UpdateTripPrivacyResponse, error)
-	UpdatePinPrivacy(context.Context, *UpdatePinPrivacyRequest) (*UpdatePinPrivacyResponse, error)
-	UpdateMediaPrivacy(context.Context, *UpdateMediaPrivacyRequest) (*UpdateMediaPrivacyResponse, error)
-	SearchPins(context.Context, *SearchPinsRequest) (*SearchPinsResponse, error)
-	CreatePin(context.Context, *CreatePinRequest) (*CreatePinResponse, error)
-	UpdatePin(context.Context, *UpdatePinRequest) (*UpdatePinResponse, error)
-	DeletePin(context.Context, *DeletePinRequest) (*DeletePinResponse, error)
-	AddPinTags(context.Context, *AddPinTagsRequest) (*AddPinTagsResponse, error)
-	RemovePinTags(context.Context, *RemovePinTagsRequest) (*RemovePinTagsResponse, error)
+	ListFavourites(context.Context, *ListFavouritesRequest) (*ListFavouritesResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
 
@@ -520,15 +385,6 @@ func (UnimplementedTripServiceServer) GetTripReview(context.Context, *GetTripRev
 func (UnimplementedTripServiceServer) FinalizeTrip(context.Context, *FinalizeTripRequest) (*FinalizeTripResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeTrip not implemented")
 }
-func (UnimplementedTripServiceServer) AddMediaStart(context.Context, *AddMediaStartRequest) (*AddMediaStartResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddMediaStart not implemented")
-}
-func (UnimplementedTripServiceServer) AddMediaProcessGrouping(context.Context, *AddMediaProcessGroupingRequest) (*AddMediaProcessGroupingResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddMediaProcessGrouping not implemented")
-}
-func (UnimplementedTripServiceServer) AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddMediaApplyGroupsAndProcess not implemented")
-}
 func (UnimplementedTripServiceServer) PublishTrip(context.Context, *PublishTripRequest) (*PublishTripResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PublishTrip not implemented")
 }
@@ -550,32 +406,8 @@ func (UnimplementedTripServiceServer) AddToFavourites(context.Context, *AddToFav
 func (UnimplementedTripServiceServer) RemoveFromFavourites(context.Context, *RemoveFromFavouritesRequest) (*RemoveFromFavouritesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromFavourites not implemented")
 }
-func (UnimplementedTripServiceServer) UpdateTripPrivacy(context.Context, *UpdateTripPrivacyRequest) (*UpdateTripPrivacyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateTripPrivacy not implemented")
-}
-func (UnimplementedTripServiceServer) UpdatePinPrivacy(context.Context, *UpdatePinPrivacyRequest) (*UpdatePinPrivacyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdatePinPrivacy not implemented")
-}
-func (UnimplementedTripServiceServer) UpdateMediaPrivacy(context.Context, *UpdateMediaPrivacyRequest) (*UpdateMediaPrivacyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateMediaPrivacy not implemented")
-}
-func (UnimplementedTripServiceServer) SearchPins(context.Context, *SearchPinsRequest) (*SearchPinsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SearchPins not implemented")
-}
-func (UnimplementedTripServiceServer) CreatePin(context.Context, *CreatePinRequest) (*CreatePinResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePin not implemented")
-}
-func (UnimplementedTripServiceServer) UpdatePin(context.Context, *UpdatePinRequest) (*UpdatePinResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdatePin not implemented")
-}
-func (UnimplementedTripServiceServer) DeletePin(context.Context, *DeletePinRequest) (*DeletePinResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeletePin not implemented")
-}
-func (UnimplementedTripServiceServer) AddPinTags(context.Context, *AddPinTagsRequest) (*AddPinTagsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddPinTags not implemented")
-}
-func (UnimplementedTripServiceServer) RemovePinTags(context.Context, *RemovePinTagsRequest) (*RemovePinTagsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemovePinTags not implemented")
+func (UnimplementedTripServiceServer) ListFavourites(context.Context, *ListFavouritesRequest) (*ListFavouritesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFavourites not implemented")
 }
 func (UnimplementedTripServiceServer) mustEmbedUnimplementedTripServiceServer() {}
 func (UnimplementedTripServiceServer) testEmbeddedByValue()                     {}
@@ -850,60 +682,6 @@ func _TripService_FinalizeTrip_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_AddMediaStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddMediaStartRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).AddMediaStart(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_AddMediaStart_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).AddMediaStart(ctx, req.(*AddMediaStartRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_AddMediaProcessGrouping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddMediaProcessGroupingRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).AddMediaProcessGrouping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_AddMediaProcessGrouping_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).AddMediaProcessGrouping(ctx, req.(*AddMediaProcessGroupingRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_AddMediaApplyGroupsAndProcess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddMediaApplyGroupsAndProcessRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).AddMediaApplyGroupsAndProcess(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_AddMediaApplyGroupsAndProcess_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).AddMediaApplyGroupsAndProcess(ctx, req.(*AddMediaApplyGroupsAndProcessRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _TripService_PublishTrip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PublishTripRequest)
 	if err := dec(in); err != nil {
@@ -1030,164 +808,20 @@ func _TripService_RemoveFromFavourites_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_UpdateTripPrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateTripPrivacyRequest)
+func _TripService_ListFavourites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFavouritesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TripServiceServer).UpdateTripPrivacy(ctx, in)
+		return srv.(TripServiceServer).ListFavourites(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TripService_UpdateTripPrivacy_FullMethodName,
+		FullMethod: TripService_ListFavourites_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).UpdateTripPrivacy(ctx, req.(*UpdateTripPrivacyRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_UpdatePinPrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdatePinPrivacyRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).UpdatePinPrivacy(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_UpdatePinPrivacy_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).UpdatePinPrivacy(ctx, req.(*UpdatePinPrivacyRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_UpdateMediaPrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateMediaPrivacyRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).UpdateMediaPrivacy(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_UpdateMediaPrivacy_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).UpdateMediaPrivacy(ctx, req.(*UpdateMediaPrivacyRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_SearchPins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchPinsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).SearchPins(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_SearchPins_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).SearchPins(ctx, req.(*SearchPinsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_CreatePin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreatePinRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).CreatePin(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_CreatePin_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).CreatePin(ctx, req.(*CreatePinRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_UpdatePin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdatePinRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).UpdatePin(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_UpdatePin_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).UpdatePin(ctx, req.(*UpdatePinRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_DeletePin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeletePinRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).DeletePin(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_DeletePin_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).DeletePin(ctx, req.(*DeletePinRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_AddPinTags_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddPinTagsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).AddPinTags(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_AddPinTags_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).AddPinTags(ctx, req.(*AddPinTagsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_RemovePinTags_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemovePinTagsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).RemovePinTags(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_RemovePinTags_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).RemovePinTags(ctx, req.(*RemovePinTagsRequest))
+		return srv.(TripServiceServer).ListFavourites(ctx, req.(*ListFavouritesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1256,18 +890,6 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TripService_FinalizeTrip_Handler,
 		},
 		{
-			MethodName: "AddMediaStart",
-			Handler:    _TripService_AddMediaStart_Handler,
-		},
-		{
-			MethodName: "AddMediaProcessGrouping",
-			Handler:    _TripService_AddMediaProcessGrouping_Handler,
-		},
-		{
-			MethodName: "AddMediaApplyGroupsAndProcess",
-			Handler:    _TripService_AddMediaApplyGroupsAndProcess_Handler,
-		},
-		{
 			MethodName: "PublishTrip",
 			Handler:    _TripService_PublishTrip_Handler,
 		},
@@ -1296,40 +918,8 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TripService_RemoveFromFavourites_Handler,
 		},
 		{
-			MethodName: "UpdateTripPrivacy",
-			Handler:    _TripService_UpdateTripPrivacy_Handler,
-		},
-		{
-			MethodName: "UpdatePinPrivacy",
-			Handler:    _TripService_UpdatePinPrivacy_Handler,
-		},
-		{
-			MethodName: "UpdateMediaPrivacy",
-			Handler:    _TripService_UpdateMediaPrivacy_Handler,
-		},
-		{
-			MethodName: "SearchPins",
-			Handler:    _TripService_SearchPins_Handler,
-		},
-		{
-			MethodName: "CreatePin",
-			Handler:    _TripService_CreatePin_Handler,
-		},
-		{
-			MethodName: "UpdatePin",
-			Handler:    _TripService_UpdatePin_Handler,
-		},
-		{
-			MethodName: "DeletePin",
-			Handler:    _TripService_DeletePin_Handler,
-		},
-		{
-			MethodName: "AddPinTags",
-			Handler:    _TripService_AddPinTags_Handler,
-		},
-		{
-			MethodName: "RemovePinTags",
-			Handler:    _TripService_RemovePinTags_Handler,
+			MethodName: "ListFavourites",
+			Handler:    _TripService_ListFavourites_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -86,10 +86,6 @@ func (c *Client) LeaveTrip(ctx context.Context, req *pb.LeaveTripRequest) (*pb.L
 	return c.client.LeaveTrip(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) TransferAdmin(ctx context.Context, req *pb.TransferAdminRequest) (*pb.TransferAdminResponse, error) {
-	return c.client.TransferAdmin(withUserIDMetadata(ctx), req)
-}
-
 func (c *Client) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessMediaGroupingRequest) (*pb.ProcessMediaGroupingResponse, error) {
 	return c.client.ProcessMediaGrouping(withUserIDMetadata(ctx), req)
 }
@@ -104,18 +100,6 @@ func (c *Client) GetTripReview(ctx context.Context, req *pb.GetTripReviewRequest
 
 func (c *Client) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequest) (*pb.FinalizeTripResponse, error) {
 	return c.client.FinalizeTrip(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRequest) (*pb.AddMediaStartResponse, error) {
-	return c.client.AddMediaStart(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMediaProcessGroupingRequest) (*pb.AddMediaProcessGroupingResponse, error) {
-	return c.client.AddMediaProcessGrouping(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb.AddMediaApplyGroupsAndProcessRequest) (*pb.AddMediaApplyGroupsAndProcessResponse, error) {
-	return c.client.AddMediaApplyGroupsAndProcess(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) PublishTrip(ctx context.Context, req *pb.PublishTripRequest) (*pb.PublishTripResponse, error) {
@@ -146,40 +130,8 @@ func (c *Client) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFromFav
 	return c.client.RemoveFromFavourites(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) UpdateTripPrivacy(ctx context.Context, req *pb.UpdateTripPrivacyRequest) (*pb.UpdateTripPrivacyResponse, error) {
-	return c.client.UpdateTripPrivacy(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) UpdatePinPrivacy(ctx context.Context, req *pb.UpdatePinPrivacyRequest) (*pb.UpdatePinPrivacyResponse, error) {
-	return c.client.UpdatePinPrivacy(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) UpdateMediaPrivacy(ctx context.Context, req *pb.UpdateMediaPrivacyRequest) (*pb.UpdateMediaPrivacyResponse, error) {
-	return c.client.UpdateMediaPrivacy(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) SearchPins(ctx context.Context, req *pb.SearchPinsRequest) (*pb.SearchPinsResponse, error) {
-	return c.client.SearchPins(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) CreatePin(ctx context.Context, req *pb.CreatePinRequest) (*pb.CreatePinResponse, error) {
-	return c.client.CreatePin(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (*pb.UpdatePinResponse, error) {
-	return c.client.UpdatePin(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (*pb.DeletePinResponse, error) {
-	return c.client.DeletePin(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) AddPinTags(ctx context.Context, req *pb.AddPinTagsRequest) (*pb.AddPinTagsResponse, error) {
-	return c.client.AddPinTags(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) RemovePinTags(ctx context.Context, req *pb.RemovePinTagsRequest) (*pb.RemovePinTagsResponse, error) {
-	return c.client.RemovePinTags(withUserIDMetadata(ctx), req)
+func (c *Client) ListFavourites(ctx context.Context, req *pb.ListFavouritesRequest) (*pb.ListFavouritesResponse, error) {
+	return c.client.ListFavourites(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) Close() error {

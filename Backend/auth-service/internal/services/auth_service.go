@@ -22,7 +22,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"pinz/backend/auth-service/internal/models"
-	"pinz/backend/auth-service/internal/repositories"
 	"pinz/backend/auth-service/internal/utils"
 	pb "pinz/backend/auth-service/pkg/proto"
 )
@@ -68,9 +67,9 @@ type loginSession struct {
 
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
-	userRepo  *repositories.UserRepository
-	credRepo  *repositories.CredentialRepository
-	redisRepo *repositories.RedisRepository
+	userRepo  UserRepositoryInterface
+	credRepo  CredentialRepositoryInterface
+	redisRepo RedisRepositoryInterface
 	validator *validator.Validate
 	wa        *webauthn.WebAuthn
 
@@ -81,9 +80,9 @@ type AuthService struct {
 }
 
 func NewAuthService(
-	userRepo *repositories.UserRepository,
-	credRepo *repositories.CredentialRepository,
-	redisRepo *repositories.RedisRepository,
+	userRepo UserRepositoryInterface,
+	credRepo CredentialRepositoryInterface,
+	redisRepo RedisRepositoryInterface,
 	validator *validator.Validate,
 	wa *webauthn.WebAuthn,
 ) *AuthService {
@@ -137,7 +136,7 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 
 	span.SetAttributes(attribute.Bool("auth.user_exists", false))
 	registrationID := uuid.New().String()
-  
+
 	code := "1111" // TODO: replace with utils.GenerateVerificationCode() when email sending is ready
 	slog.InfoContext(ctx, "verification code generated", "registration_id", registrationID, "code", code)
 

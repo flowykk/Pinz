@@ -47,11 +47,15 @@ jobs:
         run: golangci-lint run --path-prefix=Backend/auth-service
         working-directory: Backend/auth-service
 
+      - name: Lint trip-service
+        run: golangci-lint run --path-prefix=Backend/trip-service
+        working-directory: Backend/trip-service
+
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [api-gateway-service, auth-service]
+        service: [api-gateway-service, auth-service, trip-service]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -72,7 +76,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Run tests
-        run: go test ./...
+        run: go test -short ./...
         working-directory: Backend/${{ matrix.service }}
         env:
           JWT_SECRET_KEY: test-secret
@@ -91,3 +95,6 @@ jobs:
 
       - name: Build auth-service
         run: docker build -t auth-service:v${{ github.sha }} -f Backend/auth-service/Dockerfile Backend
+
+      - name: Build trip-service
+        run: docker build -t trip-service:v${{ github.sha }} -f Backend/trip-service/Dockerfile Backend

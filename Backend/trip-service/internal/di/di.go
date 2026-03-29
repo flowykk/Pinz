@@ -20,24 +20,17 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 	participantRepo := repositories.NewTripParticipantRepository(db)
 	inviteRepo := repositories.NewInvitationLinkRepository(db)
 	settingsRepo := repositories.NewTripSettingsRepository(db)
-	geoRepo := repositories.NewGeoRegistryRepository(db)
-	addMediaSessionRepo := repositories.NewAddMediaSessionRepository(db)
 	mediaRepo := repositories.NewMediaRepository(db)
 	pinRepo := repositories.NewPinRepository(db)
 	tagRepo := repositories.NewTagRepository(db)
-	tripPrivacyRepo := repositories.NewTripPrivacyRepository(db)
-	pinPrivacyRepo := repositories.NewPinPrivacyRepository(db)
-	mediaPrivacyRepo := repositories.NewMediaPrivacyRepository(db)
 	socialRepo := repositories.NewSocialRepository(db)
 	favouriteRepo := repositories.NewFavouriteRepository(db)
-	pinHiddenRepo := repositories.NewPinHiddenRepository(db)
-	var eventRepo *repositories.RedisRepository
+	var eventPub repositories.TripEventPublisher
 	if redisClient != nil {
-		eventRepo = repositories.NewRedisRepository(redisClient)
+		eventPub = repositories.NewRedisRepository(redisClient)
 	} else {
 		slog.Warn("trip-service: Redis not configured, trip events will not be published")
 	}
-	geocodingClient := services.NewGeocodingClientFromEnv()
-	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventRepo, mediaRepo, pinRepo, tagRepo, socialRepo, favouriteRepo, geoRepo, geocodingClient, addMediaSessionRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo, pinHiddenRepo)
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, pinRepo, tagRepo, socialRepo, favouriteRepo)
 	return &Dependencies{TripService: tripSvc}, nil
 }

@@ -10,34 +10,27 @@ service TripService {
   rpc ListUserTrips(ListUserTripsRequest) returns (ListUserTripsResponse);
   rpc UpdateTrip(UpdateTripRequest) returns (UpdateTripResponse);
   rpc DeleteTrip(DeleteTripRequest) returns (DeleteTripResponse);
+  // Участники и инвайты (Фаза 2)
   rpc GenerateInviteLink(GenerateInviteLinkRequest) returns (GenerateInviteLinkResponse);
   rpc JoinTripByToken(JoinTripByTokenRequest) returns (JoinTripByTokenResponse);
   rpc RemoveParticipant(RemoveParticipantRequest) returns (RemoveParticipantResponse);
   rpc LeaveTrip(LeaveTripRequest) returns (LeaveTripResponse);
   rpc TransferAdmin(TransferAdminRequest) returns (TransferAdminResponse);
+  // Поток создания (tripCreationFlow.md), Фаза 3/5:
   rpc ProcessMediaGrouping(ProcessMediaGroupingRequest) returns (ProcessMediaGroupingResponse);
   rpc ApplyGroupsAndProcess(ApplyGroupsAndProcessRequest) returns (ApplyGroupsAndProcessResponse);
   rpc GetTripReview(GetTripReviewRequest) returns (GetTripReviewResponse);
   rpc FinalizeTrip(FinalizeTripRequest) returns (FinalizeTripResponse);
-  rpc AddMediaStart(AddMediaStartRequest) returns (AddMediaStartResponse);
-  rpc AddMediaProcessGrouping(AddMediaProcessGroupingRequest) returns (AddMediaProcessGroupingResponse);
-  rpc AddMediaApplyGroupsAndProcess(AddMediaApplyGroupsAndProcessRequest) returns (AddMediaApplyGroupsAndProcessResponse);
+  // Публикация в ленту (PINZ-105, ТЗ 3.3): вся поездка целиком или выбранные пины
   rpc PublishTrip(PublishTripRequest) returns (PublishTripResponse);
+  // PINZ-98: лента, лайки, избранное, настройки уведомлений
   rpc UpdateTripSettings(UpdateTripSettingsRequest) returns (UpdateTripSettingsResponse);
   rpc ListFeed(ListFeedRequest) returns (ListFeedResponse);
   rpc LikeTrip(LikeTripRequest) returns (LikeTripResponse);
   rpc DislikeTrip(DislikeTripRequest) returns (DislikeTripResponse);
   rpc AddToFavourites(AddToFavouritesRequest) returns (AddToFavouritesResponse);
   rpc RemoveFromFavourites(RemoveFromFavouritesRequest) returns (RemoveFromFavouritesResponse);
-  rpc UpdateTripPrivacy(UpdateTripPrivacyRequest) returns (UpdateTripPrivacyResponse);
-  rpc UpdatePinPrivacy(UpdatePinPrivacyRequest) returns (UpdatePinPrivacyResponse);
-  rpc UpdateMediaPrivacy(UpdateMediaPrivacyRequest) returns (UpdateMediaPrivacyResponse);
-  rpc SearchPins(SearchPinsRequest) returns (SearchPinsResponse);
-  rpc CreatePin(CreatePinRequest) returns (CreatePinResponse);
-  rpc UpdatePin(UpdatePinRequest) returns (UpdatePinResponse);
-  rpc DeletePin(DeletePinRequest) returns (DeletePinResponse);
-  rpc AddPinTags(AddPinTagsRequest) returns (AddPinTagsResponse);
-  rpc RemovePinTags(RemovePinTagsRequest) returns (RemovePinTagsResponse);
+  rpc ListFavourites(ListFavouritesRequest) returns (ListFavouritesResponse);
 }
 
 message Trip {
@@ -66,6 +59,7 @@ message CreateTripRequest {
   string description = 3;
   string category = 4;
   string season = 5;
+  string privacy_level = 6;
   repeated FileToUpload files_to_upload = 7;
 }
 
@@ -91,33 +85,31 @@ message GetTripRequest {
   string user_id = 2;
 }
 
-message TripParticipantRef {
-  string user_id = 1;
-  bool is_admin = 2;
-}
-
-message GetTripResponse {
-  Trip trip = 1;
-  repeated TripDetailPin pins = 2;
-  repeated TripParticipantRef participants = 3;
-}
-message TripDetailPin {
+// TripPin is a pin with media for GetTrip response (map view).
+message TripPin {
   string id = 1;
   string name = 2;
   string description = 3;
   string category = 4;
-  string privacy_level = 5;
-  optional double latitude = 6;
-  optional double longitude = 7;
-  int64 start_time_unix = 8;
-  int64 end_time_unix = 9;
-  repeated TripDetailMedia media = 10;
+  optional double latitude = 5;
+  optional double longitude = 6;
+  int64 start_time_unix = 7;
+  int64 end_time_unix = 8;
+  string privacy_level = 9;
+  repeated string tags = 10;
+  repeated TripPinMedia media = 11;
 }
-message TripDetailMedia {
-  string id = 1;
-  string s3_key = 2;
-  string media_type = 3;
-  string privacy_level = 4;
+message TripPinMedia {
+  string media_id = 1;
+  string url = 2;           // presigned or CDN URL; may be empty if resolved elsewhere
+  string media_type = 3;    // photo, video
+  int64 captured_at_unix = 4;
+  string privacy_level = 5;
+}
+
+message GetTripResponse {
+  Trip trip = 1;
+  repeated TripPin pins = 2;
 }
 
 message ListUserTripsRequest {
@@ -156,6 +148,8 @@ message DeleteTripResponse {
   bool success = 1;
 }
 
+// PublishTrip: отдельный флоу публикации в общую ленту (ТЗ 3.3, PINZ-105).
+// publish_whole=true публикует всю поездку; иначе публикуются только выбранные пины (pin_ids).
 message PublishTripRequest {
   string trip_id = 1;
   bool publish_whole = 2;
@@ -166,6 +160,7 @@ message PublishTripResponse {
   Trip trip = 1;
 }
 
+// ProcessMediaGrouping: save media, cluster by geo/time, return draft_pins (tripCreationFlow.md stage 2)
 message ProcessMediaGroupingRequest {
   string trip_id = 1;
   repeated MediaMeta media = 2;
@@ -176,7 +171,6 @@ message MediaMeta {
   int64 captured_at_unix = 3;
   optional double latitude = 4;
   optional double longitude = 5;
-  optional string content_hash = 6;
 }
 message ProcessMediaGroupingResponse {
   string trip_id = 1;
@@ -193,50 +187,7 @@ message DraftPinMedia {
   string type = 3;  // image, video
 }
 
-message GroupedPin {
-  string pin_id = 1;
-  bool read_only = 2;
-  repeated GroupedMedia media = 3;
-}
-message GroupedMedia {
-  string media_id = 1;
-  bool read_only = 2;
-  string url = 3;
-  string type = 4; // image, video
-}
-
-message AddMediaStartRequest {
-  string trip_id = 1;
-  repeated FileToUpload files_to_upload = 2;
-}
-message AddMediaStartResponse {
-  string trip_id = 1;
-  string session_id = 2;
-  repeated UploadUrl upload_urls = 3;
-}
-
-message AddMediaProcessGroupingRequest {
-  string trip_id = 1;
-  string session_id = 2;
-  repeated MediaMeta media = 3;
-}
-message AddMediaProcessGroupingResponse {
-  string trip_id = 1;
-  string session_id = 2;
-  repeated GroupedPin pins = 3;
-}
-
-message AddMediaApplyGroupsAndProcessRequest {
-  string trip_id = 1;
-  string session_id = 2;
-  repeated DraftPinInput draft_pins = 3;
-  repeated string deleted_media_ids = 4;
-}
-message AddMediaApplyGroupsAndProcessResponse {
-  string message = 1;
-  string status = 2;
-}
-
+// ApplyGroupsAndProcess: apply user grouping, create pins, push to Redis Streams, return 202
 message ApplyGroupsAndProcessRequest {
   string trip_id = 1;
   repeated DraftPinInput draft_pins = 2;
@@ -251,6 +202,7 @@ message ApplyGroupsAndProcessResponse {
   string status = 2;
 }
 
+// GetTripReview: pins with tags, geo, issues, similar (tripCreationFlow.md stage 4)
 message GetTripReviewRequest {
   string trip_id = 1;
 }
@@ -282,6 +234,7 @@ message ReviewPinMedia {
   string privacy_level = 4;
 }
 
+// FinalizeTrip: apply pin_updates, delete media, reverse geocoding, aggregate trip, READY, TRIP_READY
 message FinalizeTripRequest {
   string trip_id = 1;
   repeated PinUpdate pin_updates = 2;
@@ -292,10 +245,6 @@ message PinUpdate {
   optional string name = 2;
   optional double latitude = 3;
   optional double longitude = 4;
-  optional string description = 5;
-  optional string category = 6;
-  optional string privacy_level = 7;
-  repeated string tags = 8;
 }
 message FinalizeTripResponse {
   string trip_id = 1;
@@ -303,6 +252,7 @@ message FinalizeTripResponse {
   string message = 3;
 }
 
+// Участники и инвайты
 message GenerateInviteLinkRequest {
   string trip_id = 1;
   int64 expires_in_seconds = 2;  // TTL ссылки, например 86400 = 24 часа
@@ -346,6 +296,7 @@ message TransferAdminResponse {
   bool success = 1;
 }
 
+// PINZ-98: настройки уведомлений по трипу (ТЗ 12.4.1)
 message UpdateTripSettingsRequest {
   string trip_id = 1;
   bool notifications_enabled = 2;
@@ -354,33 +305,17 @@ message UpdateTripSettingsResponse {
   bool success = 1;
 }
 
+// PINZ-98: лента опубликованных трипов
 message ListFeedRequest {
   int32 limit = 1;
   int32 offset = 2;
-  string category = 3;
-  string season = 4;
-  int32 location_id = 5;
-  string location_name = 7;  // filter by country or city name (resolved via geo_registry)
-  string sort_by = 6;
-}
-message FeedCardPin {
-  string id = 1;
-  double latitude = 2;
-  double longitude = 3;
-}
-message FeedCardMedia {
-  string id = 1;
-  string s3_key = 2;
-  string media_type = 3;
-}
-message FeedCard {
-  Trip trip = 1;
-  repeated FeedCardPin pins = 2;
-  repeated FeedCardMedia media = 3;
+  string category = 3;   // optional filter
+  string season = 4;     // optional filter
+  repeated int32 location_ids = 5; // optional filter (geo_registry ids)
+  string sort_by = 6;   // "date" or "rating"
 }
 message ListFeedResponse {
   repeated Trip trips = 1;
-  repeated FeedCard cards = 2;
 }
 
 message LikeTripRequest {
@@ -411,89 +346,10 @@ message RemoveFromFavouritesResponse {
   bool success = 1;
 }
 
-message UpdateTripPrivacyRequest {
-  string trip_id = 1;
-  string privacy_level = 2;  // Public or Private only (Restricted forbidden)
+message ListFavouritesRequest {
+  int32 limit = 1;
+  int32 offset = 2;
 }
-message UpdateTripPrivacyResponse {
-  bool success = 1;
-}
-
-message UpdatePinPrivacyRequest {
-  string pin_id = 1;
-  string privacy_level = 2;
-}
-message UpdatePinPrivacyResponse {
-  bool success = 1;
-}
-
-message UpdateMediaPrivacyRequest {
-  string media_id = 1;
-  string privacy_level = 2;
-}
-message UpdateMediaPrivacyResponse {
-  bool success = 1;
-}
-
-message SearchPinsRequest {
-  string query = 1;
-  int32 limit = 2;
-  int32 offset = 3;
-}
-message SearchPinsResponse {
-  repeated SearchPinItem pins = 1;
-}
-message SearchPinItem {
-  string pin_id = 1;
-  string trip_id = 2;
-  string name = 3;
-  string description = 4;
-  string category = 5;
-  repeated string tags = 6;
-}
-
-message CreatePinRequest {
-  string trip_id = 1;
-  repeated string media_ids = 2;
-}
-message CreatePinResponse {
-  string pin_id = 1;
-}
-
-message UpdatePinRequest {
-  string pin_id = 1;
-  optional string name = 2;
-  optional string description = 3;
-  optional string category = 4;
-  optional string privacy_level = 5;
-  optional double latitude = 6;
-  optional double longitude = 7;
-  optional int64 start_time_unix = 8;
-  optional int64 end_time_unix = 9;
-}
-message UpdatePinResponse {
-  bool success = 1;
-}
-
-message DeletePinRequest {
-  string pin_id = 1;
-}
-message DeletePinResponse {
-  bool success = 1;
-}
-
-message AddPinTagsRequest {
-  string pin_id = 1;
-  repeated string tags = 2;
-}
-message AddPinTagsResponse {
-  bool success = 1;
-}
-
-message RemovePinTagsRequest {
-  string pin_id = 1;
-  repeated string tags = 2;
-}
-message RemovePinTagsResponse {
-  bool success = 1;
+message ListFavouritesResponse {
+  repeated Trip trips = 1;
 }

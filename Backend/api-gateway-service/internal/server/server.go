@@ -59,7 +59,7 @@ func NewServer(deps *di.Dependencies) *Server {
 	r.Get("/health", handlers.HealthCheck)
 	r.Get("/.well-known/apple-app-site-association", handlers.AppleAppSiteAssociation)
 
-	// WebSocket endpoint for real-time trip events.
+	// WebSocket endpoint for real-time trip events (PINZ-99).
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RequireJWT)
 		r.Get("/v1/ws", deps.WSHandler.ServeWS)
@@ -76,52 +76,32 @@ func NewServer(deps *di.Dependencies) *Server {
 		r.Post("/auth/logout", deps.AuthHandler.Logout)
 		r.Post("/auth/dev-login", deps.AuthHandler.DevLogin)
 
+		// Основные операции над путешествиями.
 		r.Route("/trips", func(r chi.Router) {
 			r.Use(middleware.RequireJWT)
 			r.Get("/", deps.TripHandler.ListTrips)
+			r.Get("/favourites", deps.TripHandler.ListFavourites)
 			r.Post("/", deps.TripHandler.CreateTrip)
 			r.Post("/join", deps.TripHandler.JoinTripByToken)
-			r.Post("/{id}/media/add/start", deps.TripHandler.AddMediaStart)
-			r.Post("/{id}/media/add/process-grouping", deps.TripHandler.AddMediaProcessGrouping)
-			r.Post("/{id}/media/add/apply-groups-and-process", deps.TripHandler.AddMediaApplyGroupsAndProcess)
+			r.Post("/creation/start", deps.TripHandler.CreateTrip)
+			r.Post("/creation/{id}/media/process-grouping", deps.TripHandler.ProcessMediaGrouping)
+			r.Post("/creation/{id}/apply-groups-and-process", deps.TripHandler.ApplyGroupsAndProcess)
+			r.Get("/creation/{id}/review", deps.TripHandler.GetTripReview)
+			r.Post("/creation/{id}/finalize", deps.TripHandler.FinalizeTrip)
 			r.Get("/{id}", deps.TripHandler.GetTrip)
 			r.Patch("/{id}", deps.TripHandler.UpdateTrip)
 			r.Delete("/{id}", deps.TripHandler.DeleteTrip)
 			r.Patch("/{id}/settings", deps.TripHandler.UpdateTripSettings)
 			r.Post("/{id}/invite", deps.TripHandler.GenerateInviteLink)
 			r.Post("/{id}/leave", deps.TripHandler.LeaveTrip)
-			r.Post("/{id}/transfer-admin", deps.TripHandler.TransferAdmin)
+			r.Post("/{id}/publish", deps.TripHandler.PublishTrip)
 			r.Post("/{id}/like", deps.TripHandler.LikeTrip)
 			r.Post("/{id}/dislike", deps.TripHandler.DislikeTrip)
 			r.Post("/{id}/favourite", deps.TripHandler.AddToFavourites)
 			r.Delete("/{id}/favourite", deps.TripHandler.RemoveFromFavourites)
 			r.Delete("/{id}/participants/{user_id}", deps.TripHandler.RemoveParticipant)
-			r.Patch("/{id}/privacy", deps.TripHandler.UpdateTripPrivacy)
-			r.Post("/{id}/publish", deps.TripHandler.PublishTrip)
-		})
-		r.Route("/pins", func(r chi.Router) {
-			r.Use(middleware.RequireJWT)
-			r.Get("/search", deps.TripHandler.SearchPins)
-			r.Post("/", deps.TripHandler.CreatePin)
-			r.Patch("/{id}/privacy", deps.TripHandler.UpdatePinPrivacy)
-			r.Patch("/{id}", deps.TripHandler.UpdatePin)
-			r.Delete("/{id}", deps.TripHandler.DeletePin)
-			r.Post("/{id}/tags", deps.TripHandler.AddPinTags)
-			r.Delete("/{id}/tags", deps.TripHandler.RemovePinTags)
-		})
-		r.Route("/media", func(r chi.Router) {
-			r.Use(middleware.RequireJWT)
-			r.Patch("/{id}/privacy", deps.TripHandler.UpdateMediaPrivacy)
 		})
 
-		r.Route("/trip/creation", func(r chi.Router) {
-			r.Use(middleware.RequireJWT)
-			r.Post("/start", deps.TripHandler.CreateTrip)
-			r.Post("/{id}/media/process-grouping", deps.TripHandler.ProcessMediaGrouping)
-			r.Post("/{id}/apply-groups-and-process", deps.TripHandler.ApplyGroupsAndProcess)
-			r.Get("/{id}/review", deps.TripHandler.GetTripReview)
-			r.Post("/{id}/finalize", deps.TripHandler.FinalizeTrip)
-		})
 		r.Route("/feed", func(r chi.Router) {
 			r.Use(middleware.RequireJWT)
 			r.Get("/", deps.TripHandler.ListFeed)

@@ -30,14 +30,10 @@ type TripClient interface {
 	JoinTripByToken(ctx context.Context, req *proto.JoinTripByTokenRequest) (*proto.JoinTripByTokenResponse, error)
 	RemoveParticipant(ctx context.Context, req *proto.RemoveParticipantRequest) (*proto.RemoveParticipantResponse, error)
 	LeaveTrip(ctx context.Context, req *proto.LeaveTripRequest) (*proto.LeaveTripResponse, error)
-	TransferAdmin(ctx context.Context, req *proto.TransferAdminRequest) (*proto.TransferAdminResponse, error)
 	ProcessMediaGrouping(ctx context.Context, req *proto.ProcessMediaGroupingRequest) (*proto.ProcessMediaGroupingResponse, error)
 	ApplyGroupsAndProcess(ctx context.Context, req *proto.ApplyGroupsAndProcessRequest) (*proto.ApplyGroupsAndProcessResponse, error)
 	GetTripReview(ctx context.Context, req *proto.GetTripReviewRequest) (*proto.GetTripReviewResponse, error)
 	FinalizeTrip(ctx context.Context, req *proto.FinalizeTripRequest) (*proto.FinalizeTripResponse, error)
-	AddMediaStart(ctx context.Context, req *proto.AddMediaStartRequest) (*proto.AddMediaStartResponse, error)
-	AddMediaProcessGrouping(ctx context.Context, req *proto.AddMediaProcessGroupingRequest) (*proto.AddMediaProcessGroupingResponse, error)
-	AddMediaApplyGroupsAndProcess(ctx context.Context, req *proto.AddMediaApplyGroupsAndProcessRequest) (*proto.AddMediaApplyGroupsAndProcessResponse, error)
 	PublishTrip(ctx context.Context, req *proto.PublishTripRequest) (*proto.PublishTripResponse, error)
 	UpdateTripSettings(ctx context.Context, req *proto.UpdateTripSettingsRequest) (*proto.UpdateTripSettingsResponse, error)
 	ListFeed(ctx context.Context, req *proto.ListFeedRequest) (*proto.ListFeedResponse, error)
@@ -45,15 +41,7 @@ type TripClient interface {
 	DislikeTrip(ctx context.Context, req *proto.DislikeTripRequest) (*proto.DislikeTripResponse, error)
 	AddToFavourites(ctx context.Context, req *proto.AddToFavouritesRequest) (*proto.AddToFavouritesResponse, error)
 	RemoveFromFavourites(ctx context.Context, req *proto.RemoveFromFavouritesRequest) (*proto.RemoveFromFavouritesResponse, error)
-	UpdateTripPrivacy(ctx context.Context, req *proto.UpdateTripPrivacyRequest) (*proto.UpdateTripPrivacyResponse, error)
-	UpdatePinPrivacy(ctx context.Context, req *proto.UpdatePinPrivacyRequest) (*proto.UpdatePinPrivacyResponse, error)
-	UpdateMediaPrivacy(ctx context.Context, req *proto.UpdateMediaPrivacyRequest) (*proto.UpdateMediaPrivacyResponse, error)
-	SearchPins(ctx context.Context, req *proto.SearchPinsRequest) (*proto.SearchPinsResponse, error)
-	CreatePin(ctx context.Context, req *proto.CreatePinRequest) (*proto.CreatePinResponse, error)
-	UpdatePin(ctx context.Context, req *proto.UpdatePinRequest) (*proto.UpdatePinResponse, error)
-	DeletePin(ctx context.Context, req *proto.DeletePinRequest) (*proto.DeletePinResponse, error)
-	AddPinTags(ctx context.Context, req *proto.AddPinTagsRequest) (*proto.AddPinTagsResponse, error)
-	RemovePinTags(ctx context.Context, req *proto.RemovePinTagsRequest) (*proto.RemovePinTagsResponse, error)
+	ListFavourites(ctx context.Context, req *proto.ListFavouritesRequest) (*proto.ListFavouritesResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient) *TripHandler {
@@ -109,7 +97,7 @@ func (h *TripHandler) ListTrips(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} responses.ErrorResponse
 // @Failure 401 {object} responses.ErrorResponse
 // @Failure 500 {object} responses.ErrorResponse
-// @Router /api/v1/trip/creation/start [post]
+// @Router /api/v1/trips/creation/start [post]
 func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -149,15 +137,15 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetTrip returns a single trip by ID.
+// GetTrip returns a single trip by ID with pins and media.
 // @Summary Get trip by ID
-// @Description Returns a single trip by ID. Requires JWT. User must be a participant.
+// @Description Returns a single trip by ID with pins and media in each pin. Requires JWT. User must be a participant.
 // @Tags trips
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Trip ID"
-// @Success 200 {object} responses.Trip
+// @Success 200 {object} responses.GetTripResponse
 // @Failure 401 {object} responses.ErrorResponse
 // @Failure 403 {object} responses.ErrorResponse
 // @Failure 404 {object} responses.ErrorResponse
@@ -175,53 +163,12 @@ func (h *TripHandler) GetTrip(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "trip id required")
 		return
 	}
-	if !validUUID(tripID) {
-		respondError(w, http.StatusBadRequest, "invalid trip id")
-		return
-	}
 	resp, err := h.tripClient.GetTrip(ctx, &proto.GetTripRequest{TripId: tripID, UserId: userID})
 	if err != nil {
 		handleServiceError(w, r, err, "GetTrip")
 		return
 	}
-	pins := make([]responses.TripDetailPinItem, 0, len(resp.GetPins()))
-	for _, p := range resp.GetPins() {
-		media := make([]responses.TripDetailMediaItem, 0, len(p.GetMedia()))
-		for _, m := range p.GetMedia() {
-			media = append(media, responses.TripDetailMediaItem{
-				ID:           m.GetId(),
-				S3Key:        m.GetS3Key(),
-				MediaType:    m.GetMediaType(),
-				PrivacyLevel: m.GetPrivacyLevel(),
-			})
-		}
-		item := responses.TripDetailPinItem{
-			ID:            p.GetId(),
-			Name:          p.GetName(),
-			Description:   p.GetDescription(),
-			Category:      p.GetCategory(),
-			PrivacyLevel:  p.GetPrivacyLevel(),
-			StartTimeUnix: p.GetStartTimeUnix(),
-			EndTimeUnix:   p.GetEndTimeUnix(),
-			Media:         media,
-		}
-		if p.Latitude != nil {
-			item.Latitude = p.Latitude
-		}
-		if p.Longitude != nil {
-			item.Longitude = p.Longitude
-		}
-		pins = append(pins, item)
-	}
-	participants := make([]responses.TripParticipantRef, 0, len(resp.GetParticipants()))
-	for _, p := range resp.GetParticipants() {
-		participants = append(participants, responses.TripParticipantRef{UserID: p.GetUserId(), IsAdmin: p.GetIsAdmin()})
-	}
-	respondJSON(w, http.StatusOK, responses.GetTripResponse{
-		Trip:         tripProtoToResponse(resp.GetTrip()),
-		Pins:         pins,
-		Participants: participants,
-	})
+	respondJSON(w, http.StatusOK, getTripResponseToREST(resp))
 }
 
 // UpdateTrip updates trip metadata.
@@ -250,10 +197,6 @@ func (h *TripHandler) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 	tripID := chi.URLParam(r, "id")
 	if tripID == "" {
 		respondError(w, http.StatusBadRequest, "trip id required")
-		return
-	}
-	if !validUUID(tripID) {
-		respondError(w, http.StatusBadRequest, "invalid trip id")
 		return
 	}
 	var req requests.UpdateTripRequest
@@ -318,10 +261,6 @@ func (h *TripHandler) DeleteTrip(w http.ResponseWriter, r *http.Request) {
 	tripID := chi.URLParam(r, "id")
 	if tripID == "" {
 		respondError(w, http.StatusBadRequest, "trip id required")
-		return
-	}
-	if !validUUID(tripID) {
-		respondError(w, http.StatusBadRequest, "invalid trip id")
 		return
 	}
 	_, err := h.tripClient.DeleteTrip(ctx, &proto.DeleteTripRequest{TripId: tripID, UserId: userID})
@@ -490,51 +429,7 @@ func (h *TripHandler) LeaveTrip(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// TransferAdmin transfers admin rights to another participant.
-// @Summary Transfer admin
-// @Description Transfers trip admin to another participant. Only current admin can transfer. Requires JWT.
-// @Tags trips
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Trip ID"
-// @Param body body requests.TransferAdminRequest true "New admin user ID"
-// @Success 200 {object} responses.TransferAdminResponse
-// @Failure 400 {object} responses.ErrorResponse
-// @Failure 401 {object} responses.ErrorResponse
-// @Failure 403 {object} responses.ErrorResponse
-// @Failure 500 {object} responses.ErrorResponse
-// @Router /api/v1/trips/{id}/transfer-admin [post]
-func (h *TripHandler) TransferAdmin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := middleware.UserIDFromContext(ctx)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tripID := chi.URLParam(r, "id")
-	if tripID == "" {
-		respondError(w, http.StatusBadRequest, "trip id required")
-		return
-	}
-	var req requests.TransferAdminRequest
-	if err := decodeJSONBody(r, &req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
-		return
-	}
-	if req.NewAdminUserID == "" {
-		respondError(w, http.StatusBadRequest, "new_admin_user_id required")
-		return
-	}
-	_, err := h.tripClient.TransferAdmin(ctx, &proto.TransferAdminRequest{TripId: tripID, NewAdminUserId: req.NewAdminUserID})
-	if err != nil {
-		handleServiceError(w, r, err, "TransferAdmin")
-		return
-	}
-	respondJSON(w, http.StatusOK, responses.TransferAdminResponse{Success: true})
-}
-
-// ProcessMediaGrouping saves media metadata and returns draft pins.
+// ProcessMediaGrouping saves media metadata and returns draft pins (tripCreationFlow stage 2).
 // @Summary [2] Process media grouping
 // @Tags trip-creation
 // @Accept json
@@ -543,7 +438,7 @@ func (h *TripHandler) TransferAdmin(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Trip ID"
 // @Param body body requests.ProcessMediaGroupingRequest true "Media metadata"
 // @Success 200 {object} responses.ProcessMediaGroupingResponse
-// @Router /api/v1/trip/creation/{id}/media/process-grouping [post]
+// @Router /api/v1/trips/creation/{id}/media/process-grouping [post]
 func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -574,9 +469,6 @@ func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Reques
 		}
 		if m.Longitude != nil {
 			mm.Longitude = m.Longitude
-		}
-		if m.ContentHash != nil {
-			mm.ContentHash = m.ContentHash
 		}
 		media = append(media, mm)
 	}
@@ -609,7 +501,7 @@ func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Reques
 // @Param id path string true "Trip ID"
 // @Param body body requests.ApplyGroupsAndProcessRequest true "Draft pins and deleted media"
 // @Success 202 {object} responses.ApplyGroupsAndProcessResponse
-// @Router /api/v1/trip/creation/{id}/apply-groups-and-process [post]
+// @Router /api/v1/trips/creation/{id}/apply-groups-and-process [post]
 func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -646,14 +538,14 @@ func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Reque
 	})
 }
 
-// GetTripReview returns pins with tags, issues, similar for review.
+// GetTripReview returns pins with tags, issues, similar for review (tripCreationFlow stage 4).
 // @Summary [4] Get trip review
 // @Tags trip-creation
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Trip ID"
 // @Success 200 {object} responses.GetTripReviewResponse
-// @Router /api/v1/trip/creation/{id}/review [get]
+// @Router /api/v1/trips/creation/{id}/review [get]
 func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -664,10 +556,6 @@ func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
 	tripID := chi.URLParam(r, "id")
 	if tripID == "" {
 		respondError(w, http.StatusBadRequest, "trip id required")
-		return
-	}
-	if !validUUID(tripID) {
-		respondError(w, http.StatusBadRequest, "invalid trip id")
 		return
 	}
 	resp, err := h.tripClient.GetTripReview(ctx, &proto.GetTripReviewRequest{TripId: tripID})
@@ -705,7 +593,7 @@ func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// FinalizeTrip applies pin updates, deletes media, sets trip READY.
+// FinalizeTrip applies pin updates, deletes media, sets trip READY (tripCreationFlow stage 5).
 // @Summary [5] Finalize trip
 // @Tags trip-creation
 // @Accept json
@@ -714,7 +602,7 @@ func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Trip ID"
 // @Param body body requests.FinalizeTripRequest true "Pin updates and media to delete"
 // @Success 200 {object} responses.FinalizeTripResponse
-// @Router /api/v1/trip/creation/{id}/finalize [post]
+// @Router /api/v1/trips/creation/{id}/finalize [post]
 func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
@@ -732,14 +620,7 @@ func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
 	pinUpdates := make([]*proto.PinUpdate, 0, len(req.PinUpdates))
 	for _, pu := range req.PinUpdates {
 		pinUpdates = append(pinUpdates, &proto.PinUpdate{
-			PinId:        pu.PinID,
-			Name:         pu.Name,
-			Latitude:     pu.Latitude,
-			Longitude:    pu.Longitude,
-			Description:  pu.Description,
-			Category:     pu.Category,
-			PrivacyLevel: pu.PrivacyLevel,
-			Tags:         pu.Tags,
+			PinId: pu.PinID, Name: pu.Name, Latitude: pu.Latitude, Longitude: pu.Longitude,
 		})
 	}
 	resp, err := h.tripClient.FinalizeTrip(ctx, &proto.FinalizeTripRequest{
@@ -754,184 +635,7 @@ func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// AddMediaStart creates upload URLs for adding media to an existing trip.
-// @Summary Start add-media flow (presigned URLs)
-// @Tags trips
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Trip ID"
-// @Param body body requests.AddMediaStartRequest true "Files to upload"
-// @Success 201 {object} responses.CreateTripResponse
-// @Router /api/v1/trips/{id}/media/add/start [post]
-func (h *TripHandler) AddMediaStart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := middleware.UserIDFromContext(ctx)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	_ = userID
-	tripID := chi.URLParam(r, "id")
-	if tripID == "" {
-		respondError(w, http.StatusBadRequest, "trip id required")
-		return
-	}
-	var req requests.AddMediaStartRequest
-	if err := decodeJSONBody(r, &req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
-		return
-	}
-	protoFiles := make([]*proto.FileToUpload, 0, len(req.FilesToUpload))
-	for _, f := range req.FilesToUpload {
-		protoFiles = append(protoFiles, &proto.FileToUpload{ClientId: f.ClientID, ContentType: f.ContentType})
-	}
-	resp, err := h.tripClient.AddMediaStart(ctx, &proto.AddMediaStartRequest{
-		TripId:        tripID,
-		FilesToUpload: protoFiles,
-	})
-	if err != nil {
-		handleServiceError(w, r, err, "AddMediaStart")
-		return
-	}
-	urls := make([]responses.UploadURL, len(resp.GetUploadUrls()))
-	for i, u := range resp.GetUploadUrls() {
-		urls[i] = responses.UploadURL{ClientID: u.GetClientId(), S3Key: u.GetS3Key(), URL: u.GetUrl()}
-	}
-	respondJSON(w, http.StatusCreated, responses.AddMediaStartResponse{
-		TripID:     resp.GetTripId(),
-		SessionID:  resp.GetSessionId(),
-		UploadURLs: urls,
-	})
-}
-
-// AddMediaProcessGrouping saves new media metadata and returns draft pins for existing trip.
-// @Summary Add-media: process grouping
-// @Tags trips
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Trip ID"
-// @Param body body requests.AddMediaProcessGroupingRequest true "Media metadata"
-// @Success 200 {object} responses.ProcessMediaGroupingResponse
-// @Router /api/v1/trips/{id}/media/add/process-grouping [post]
-func (h *TripHandler) AddMediaProcessGrouping(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := middleware.UserIDFromContext(ctx)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tripID := chi.URLParam(r, "id")
-	if tripID == "" {
-		respondError(w, http.StatusBadRequest, "trip id required")
-		return
-	}
-	var req requests.AddMediaProcessGroupingRequest
-	if err := decodeJSONBody(r, &req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
-		return
-	}
-	media := make([]*proto.MediaMeta, 0, len(req.Media))
-	for _, m := range req.Media {
-		mm := &proto.MediaMeta{S3Key: m.S3Key, MediaType: m.MediaType}
-		if m.CapturedAt != "" {
-			if t, err := time.Parse(time.RFC3339, m.CapturedAt); err == nil {
-				mm.CapturedAtUnix = t.Unix()
-			}
-		}
-		if m.Latitude != nil {
-			mm.Latitude = m.Latitude
-		}
-		if m.Longitude != nil {
-			mm.Longitude = m.Longitude
-		}
-		if m.ContentHash != nil {
-			mm.ContentHash = m.ContentHash
-		}
-		media = append(media, mm)
-	}
-	resp, err := h.tripClient.AddMediaProcessGrouping(ctx, &proto.AddMediaProcessGroupingRequest{
-		TripId:    tripID,
-		SessionId: req.SessionID,
-		Media:     media,
-	})
-	if err != nil {
-		handleServiceError(w, r, err, "AddMediaProcessGrouping")
-		return
-	}
-	pins := make([]responses.AddMediaGroupedPin, 0, len(resp.GetPins()))
-	for _, p := range resp.GetPins() {
-		mediaList := make([]responses.AddMediaGroupedMedia, 0, len(p.GetMedia()))
-		for _, m := range p.GetMedia() {
-			mediaList = append(mediaList, responses.AddMediaGroupedMedia{
-				MediaID:  m.GetMediaId(),
-				ReadOnly: m.GetReadOnly(),
-				URL:      m.GetUrl(),
-				Type:     m.GetType(),
-			})
-		}
-		pins = append(pins, responses.AddMediaGroupedPin{
-			PinID:    p.GetPinId(),
-			ReadOnly: p.GetReadOnly(),
-			Media:    mediaList,
-		})
-	}
-	respondJSON(w, http.StatusOK, responses.AddMediaProcessGroupingResponse{
-		TripID:    resp.GetTripId(),
-		SessionID: resp.GetSessionId(),
-		Pins:      pins,
-	})
-}
-
-// AddMediaApplyGroupsAndProcess applies groups for new media in an existing trip and starts processing.
-// @Summary Add-media: apply groups and process
-// @Tags trips
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Trip ID"
-// @Param body body requests.AddMediaApplyGroupsAndProcessRequest true "Draft pins and deleted media"
-// @Success 202 {object} responses.ApplyGroupsAndProcessResponse
-// @Router /api/v1/trips/{id}/media/add/apply-groups-and-process [post]
-func (h *TripHandler) AddMediaApplyGroupsAndProcess(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := middleware.UserIDFromContext(ctx)
-	if userID == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tripID := chi.URLParam(r, "id")
-	if tripID == "" {
-		respondError(w, http.StatusBadRequest, "trip id required")
-		return
-	}
-	var req requests.AddMediaApplyGroupsAndProcessRequest
-	if err := decodeJSONBody(r, &req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
-		return
-	}
-	draftPins := make([]*proto.DraftPinInput, 0, len(req.DraftPins))
-	for _, dp := range req.DraftPins {
-		draftPins = append(draftPins, &proto.DraftPinInput{DraftPinId: dp.DraftPinID, MediaIds: dp.MediaIDs})
-	}
-	resp, err := h.tripClient.AddMediaApplyGroupsAndProcess(ctx, &proto.AddMediaApplyGroupsAndProcessRequest{
-		TripId:          tripID,
-		SessionId:       req.SessionID,
-		DraftPins:       draftPins,
-		DeletedMediaIds: req.DeletedMediaIDs,
-	})
-	if err != nil {
-		handleServiceError(w, r, err, "AddMediaApplyGroupsAndProcess")
-		return
-	}
-	respondJSON(w, http.StatusAccepted, responses.ApplyGroupsAndProcessResponse{
-		Message: resp.GetMessage(),
-		Status:  resp.GetStatus(),
-	})
-}
-
-// PublishTrip publishes the trip to the feed.
+// PublishTrip публикует трип в общую ленту (PINZ-105, ТЗ 3.3).
 // @Summary Publish trip to feed
 // @Tags trips
 // @Accept json
@@ -955,10 +659,6 @@ func (h *TripHandler) PublishTrip(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "trip id required")
 		return
 	}
-	if !validUUID(tripID) {
-		respondError(w, http.StatusBadRequest, "invalid trip id")
-		return
-	}
 	var req requests.PublishTripRequest
 	if err := decodeJSONBody(r, &req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
@@ -977,7 +677,7 @@ func (h *TripHandler) PublishTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
 }
 
-// UpdateTripSettings updates notifications for the trip.
+// UpdateTripSettings updates notifications for the trip (PINZ-98, ТЗ 12.4.1).
 // @Summary Update trip notification settings
 // @Tags trips
 // @Accept json
@@ -1015,7 +715,7 @@ func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, responses.TripSettingsResponse{Success: true})
 }
 
-// ListFeed returns published trips for the feed.
+// ListFeed returns published trips for the feed (PINZ-98).
 // @Summary List feed
 // @Tags feed
 // @Produce json
@@ -1025,7 +725,6 @@ func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request)
 // @Param category query string false "category"
 // @Param season query string false "season"
 // @Param location_id query int false "location_id"
-// @Param location_name query string false "location name (country or city)"
 // @Param sort_by query string false "date|rating"
 // @Success 200 {array} responses.Trip
 // @Router /api/v1/feed [get]
@@ -1054,49 +753,37 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	if sortBy == "" {
 		sortBy = "date"
 	}
-	var locationID int32
+	locationIDs := make([]int32, 0, 4)
 	if lid := r.URL.Query().Get("location_id"); lid != "" {
 		if n, err := parseInt(lid); err == nil {
-			locationID = int32(n)
+			locationIDs = append(locationIDs, int32(n))
 		}
 	}
-	locationName := r.URL.Query().Get("location_name")
+	for _, raw := range r.URL.Query()["location_ids"] {
+		if n, err := parseInt(raw); err == nil {
+			locationIDs = append(locationIDs, int32(n))
+		}
+	}
 	resp, err := h.tripClient.ListFeed(ctx, &proto.ListFeedRequest{
-		Limit:        limit,
-		Offset:       offset,
-		Category:     category,
-		Season:       season,
-		LocationId:   locationID,
-		LocationName: locationName,
-		SortBy:       sortBy,
+		Limit:       limit,
+		Offset:      offset,
+		Category:    category,
+		Season:      season,
+		LocationIds: locationIDs,
+		SortBy:      sortBy,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "ListFeed")
 		return
 	}
-	tripsOut := make([]responses.Trip, len(resp.GetTrips()))
-	cardsOut := make([]responses.FeedCard, len(resp.GetCards()))
+	out := make([]responses.Trip, len(resp.GetTrips()))
 	for i, t := range resp.GetTrips() {
-		tripsOut[i] = tripProtoToResponse(t)
+		out[i] = tripProtoToResponse(t)
 	}
-	for i, c := range resp.GetCards() {
-		card := responses.FeedCard{
-			Trip:  tripProtoToResponse(c.GetTrip()),
-			Pins:  make([]responses.FeedCardPin, 0, len(c.GetPins())),
-			Media: make([]responses.FeedCardMedia, 0, len(c.GetMedia())),
-		}
-		for _, p := range c.GetPins() {
-			card.Pins = append(card.Pins, responses.FeedCardPin{ID: p.GetId(), Latitude: p.GetLatitude(), Longitude: p.GetLongitude()})
-		}
-		for _, m := range c.GetMedia() {
-			card.Media = append(card.Media, responses.FeedCardMedia{ID: m.GetId(), S3Key: m.GetS3Key(), MediaType: m.GetMediaType()})
-		}
-		cardsOut[i] = card
-	}
-	respondJSON(w, http.StatusOK, responses.ListFeedResponse{Trips: tripsOut, Cards: cardsOut})
+	respondJSON(w, http.StatusOK, out)
 }
 
-// LikeTrip adds a like to the trip.
+// LikeTrip adds a like to the trip (PINZ-98).
 // @Summary Like trip
 // @Tags trips
 // @Security BearerAuth
@@ -1123,7 +810,7 @@ func (h *TripHandler) LikeTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
 }
 
-// DislikeTrip adds a dislike to the trip.
+// DislikeTrip adds a dislike to the trip (PINZ-98).
 // @Summary Dislike trip
 // @Tags trips
 // @Security BearerAuth
@@ -1150,7 +837,7 @@ func (h *TripHandler) DislikeTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
 }
 
-// AddToFavourites adds the trip to user's favourites.
+// AddToFavourites adds the trip to user's favourites (PINZ-98).
 // @Summary Add trip to favourites
 // @Tags trips
 // @Security BearerAuth
@@ -1177,7 +864,7 @@ func (h *TripHandler) AddToFavourites(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
 }
 
-// RemoveFromFavourites removes the trip from user's favourites.
+// RemoveFromFavourites removes the trip from user's favourites (PINZ-98).
 // @Summary Remove trip from favourites
 // @Tags trips
 // @Security BearerAuth
@@ -1204,287 +891,46 @@ func (h *TripHandler) RemoveFromFavourites(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// UpdateTripPrivacy updates the current user's privacy choice for the trip. Body: { "privacy_level": "Public"|"Private" }.
-func (h *TripHandler) UpdateTripPrivacy(w http.ResponseWriter, r *http.Request) {
+// ListFavourites returns the current user's favourite trips (PINZ-98).
+// @Summary List favourite trips
+// @Description Returns trips the user has added to favourites. Supports limit and offset query params.
+// @Tags trips
+// @Security BearerAuth
+// @Param limit query int false "Limit (default 20, max 100)"
+// @Param offset query int false "Offset (default 0)"
+// @Success 200 {array} responses.Trip
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/favourites [get]
+func (h *TripHandler) ListFavourites(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
 	if userID == "" {
 		respondError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	tripID := chi.URLParam(r, "id")
-	if tripID == "" {
-		respondError(w, http.StatusBadRequest, "trip id required")
-		return
-	}
-	var body struct {
-		PrivacyLevel string `json:"privacy_level"`
-	}
-	if err := decodeJSONBody(r, &body); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid body: "+err.Error())
-		return
-	}
-	if body.PrivacyLevel == "" {
-		respondError(w, http.StatusBadRequest, "privacy_level required")
-		return
-	}
-	_, err := h.tripClient.UpdateTripPrivacy(ctx, &proto.UpdateTripPrivacyRequest{TripId: tripID, PrivacyLevel: body.PrivacyLevel})
-	if err != nil {
-		handleServiceError(w, r, err, "UpdateTripPrivacy")
-		return
-	}
-	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
-}
-
-// UpdatePinPrivacy updates the current user's privacy choice for the pin. Body: { "privacy_level": "Public"|"Private" }.
-func (h *TripHandler) UpdatePinPrivacy(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if middleware.UserIDFromContext(ctx) == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	pinID := chi.URLParam(r, "id")
-	if pinID == "" {
-		respondError(w, http.StatusBadRequest, "pin id required")
-		return
-	}
-	var body struct {
-		PrivacyLevel string `json:"privacy_level"`
-	}
-	if err := decodeJSONBody(r, &body); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid body: "+err.Error())
-		return
-	}
-	if body.PrivacyLevel == "" {
-		respondError(w, http.StatusBadRequest, "privacy_level required")
-		return
-	}
-	_, err := h.tripClient.UpdatePinPrivacy(ctx, &proto.UpdatePinPrivacyRequest{PinId: pinID, PrivacyLevel: body.PrivacyLevel})
-	if err != nil {
-		handleServiceError(w, r, err, "UpdatePinPrivacy")
-		return
-	}
-	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
-}
-
-func (h *TripHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if middleware.UserIDFromContext(ctx) == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	pinID := chi.URLParam(r, "id")
-	if pinID == "" {
-		respondError(w, http.StatusBadRequest, "pin id required")
-		return
-	}
-	var body requests.UpdatePinRequest
-	if err := decodeJSONBody(r, &body); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid body: "+err.Error())
-		return
-	}
-	protoReq := &proto.UpdatePinRequest{PinId: pinID}
-	if body.Name != nil {
-		protoReq.Name = body.Name
-	}
-	if body.Description != nil {
-		protoReq.Description = body.Description
-	}
-	if body.Category != nil {
-		protoReq.Category = body.Category
-	}
-	if body.PrivacyLevel != nil {
-		protoReq.PrivacyLevel = body.PrivacyLevel
-	}
-	if body.Latitude != nil {
-		protoReq.Latitude = body.Latitude
-	}
-	if body.Longitude != nil {
-		protoReq.Longitude = body.Longitude
-	}
-	if body.StartTimeUnix != nil {
-		protoReq.StartTimeUnix = body.StartTimeUnix
-	}
-	if body.EndTimeUnix != nil {
-		protoReq.EndTimeUnix = body.EndTimeUnix
-	}
-	_, err := h.tripClient.UpdatePin(ctx, protoReq)
-	if err != nil {
-		handleServiceError(w, r, err, "UpdatePin")
-		return
-	}
-	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
-}
-
-// UpdateMediaPrivacy updates the current user's privacy choice for the media. Body: { "privacy_level": "Public"|"Private" }.
-func (h *TripHandler) UpdateMediaPrivacy(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if middleware.UserIDFromContext(ctx) == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	mediaID := chi.URLParam(r, "id")
-	if mediaID == "" {
-		respondError(w, http.StatusBadRequest, "media id required")
-		return
-	}
-	var body struct {
-		PrivacyLevel string `json:"privacy_level"`
-	}
-	if err := decodeJSONBody(r, &body); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid body: "+err.Error())
-		return
-	}
-	if body.PrivacyLevel == "" {
-		respondError(w, http.StatusBadRequest, "privacy_level required")
-		return
-	}
-	_, err := h.tripClient.UpdateMediaPrivacy(ctx, &proto.UpdateMediaPrivacyRequest{MediaId: mediaID, PrivacyLevel: body.PrivacyLevel})
-	if err != nil {
-		handleServiceError(w, r, err, "UpdateMediaPrivacy")
-		return
-	}
-	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
-}
-
-// SearchPins returns pins from user's trips matching query (name, description, tag).
-func (h *TripHandler) SearchPins(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if middleware.UserIDFromContext(ctx) == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	q := r.URL.Query().Get("q")
 	limit := int32(20)
-	if l := r.URL.Query().Get("limit"); l != "" {
-		if n, err := parseInt32(l); err == nil && n > 0 && n <= 100 {
-			limit = n
-		}
-	}
 	offset := int32(0)
-	if o := r.URL.Query().Get("offset"); o != "" {
-		if n, err := parseInt32(o); err == nil && n >= 0 {
-			offset = n
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if n, err := parseInt(l); err == nil && n > 0 && n <= 100 {
+			limit = int32(n)
 		}
 	}
-	resp, err := h.tripClient.SearchPins(ctx, &proto.SearchPinsRequest{Query: q, Limit: limit, Offset: offset})
+	if o := r.URL.Query().Get("offset"); o != "" {
+		if n, err := parseInt(o); err == nil && n >= 0 {
+			offset = int32(n)
+		}
+	}
+	resp, err := h.tripClient.ListFavourites(ctx, &proto.ListFavouritesRequest{Limit: limit, Offset: offset})
 	if err != nil {
-		handleServiceError(w, r, err, "SearchPins")
+		handleServiceError(w, r, err, "ListFavourites")
 		return
 	}
-	items := make([]responses.SearchPinItem, 0, len(resp.GetPins()))
-	for _, p := range resp.GetPins() {
-		items = append(items, responses.SearchPinItem{
-			PinID:       p.GetPinId(),
-			TripID:      p.GetTripId(),
-			Name:        p.GetName(),
-			Description: p.GetDescription(),
-			Category:    p.GetCategory(),
-			Tags:        p.GetTags(),
-		})
+	out := make([]responses.Trip, len(resp.GetTrips()))
+	for i, t := range resp.GetTrips() {
+		out[i] = tripProtoToResponse(t)
 	}
-	respondJSON(w, http.StatusOK, responses.SearchPinsResponse{Pins: items})
-}
-
-// CreatePin creates a pin and assigns media to it.
-func (h *TripHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if middleware.UserIDFromContext(ctx) == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	var body struct {
-		TripID   string   `json:"trip_id"`
-		MediaIDs []string `json:"media_ids"`
-	}
-	if err := decodeJSONBody(r, &body); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid body: "+err.Error())
-		return
-	}
-	if body.TripID == "" || len(body.MediaIDs) == 0 {
-		respondError(w, http.StatusBadRequest, "trip_id and media_ids required")
-		return
-	}
-	resp, err := h.tripClient.CreatePin(ctx, &proto.CreatePinRequest{TripId: body.TripID, MediaIds: body.MediaIDs})
-	if err != nil {
-		handleServiceError(w, r, err, "CreatePin")
-		return
-	}
-	respondJSON(w, http.StatusCreated, responses.CreatePinResponse{PinID: resp.GetPinId()})
-}
-
-// DeletePin deletes a pin (participant only).
-func (h *TripHandler) DeletePin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if middleware.UserIDFromContext(ctx) == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	pinID := chi.URLParam(r, "id")
-	if pinID == "" {
-		respondError(w, http.StatusBadRequest, "pin id required")
-		return
-	}
-	_, err := h.tripClient.DeletePin(ctx, &proto.DeletePinRequest{PinId: pinID})
-	if err != nil {
-		handleServiceError(w, r, err, "DeletePin")
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}
-
-// AddPinTags adds tags to a pin (merge with existing, limits applied).
-func (h *TripHandler) AddPinTags(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if middleware.UserIDFromContext(ctx) == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	pinID := chi.URLParam(r, "id")
-	if pinID == "" {
-		respondError(w, http.StatusBadRequest, "pin id required")
-		return
-	}
-	var body struct {
-		Tags []string `json:"tags"`
-	}
-	if err := decodeJSONBody(r, &body); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid body: "+err.Error())
-		return
-	}
-	_, err := h.tripClient.AddPinTags(ctx, &proto.AddPinTagsRequest{PinId: pinID, Tags: body.Tags})
-	if err != nil {
-		handleServiceError(w, r, err, "AddPinTags")
-		return
-	}
-	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
-}
-
-// RemovePinTags removes given tags from a pin.
-func (h *TripHandler) RemovePinTags(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if middleware.UserIDFromContext(ctx) == "" {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	pinID := chi.URLParam(r, "id")
-	if pinID == "" {
-		respondError(w, http.StatusBadRequest, "pin id required")
-		return
-	}
-	var body struct {
-		Tags []string `json:"tags"`
-	}
-	if err := decodeJSONBody(r, &body); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid body: "+err.Error())
-		return
-	}
-	_, err := h.tripClient.RemovePinTags(ctx, &proto.RemovePinTagsRequest{PinId: pinID, Tags: body.Tags})
-	if err != nil {
-		handleServiceError(w, r, err, "RemovePinTags")
-		return
-	}
-	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
+	respondJSON(w, http.StatusOK, out)
 }
 
 func tripProtoToResponse(t *proto.Trip) responses.Trip {
@@ -1510,4 +956,43 @@ func tripProtoToResponse(t *proto.Trip) responses.Trip {
 		CreatedAtUnix: t.GetCreatedAtUnix(),
 		UpdatedAtUnix: t.GetUpdatedAtUnix(),
 	}
+}
+
+func getTripResponseToREST(resp *proto.GetTripResponse) responses.GetTripResponse {
+	out := responses.GetTripResponse{
+		Trip: tripProtoToResponse(resp.GetTrip()),
+		Pins: make([]responses.TripPin, 0, len(resp.GetPins())),
+	}
+	for _, p := range resp.GetPins() {
+		if p == nil {
+			continue
+		}
+		pin := responses.TripPin{
+			ID:            p.GetId(),
+			Name:          p.GetName(),
+			Description:   p.GetDescription(),
+			Category:      p.GetCategory(),
+			Latitude:      p.Latitude,
+			Longitude:     p.Longitude,
+			StartTimeUnix: p.GetStartTimeUnix(),
+			EndTimeUnix:   p.GetEndTimeUnix(),
+			PrivacyLevel:  p.GetPrivacyLevel(),
+			Tags:          p.GetTags(),
+			Media:         make([]responses.TripPinMedia, 0, len(p.GetMedia())),
+		}
+		for _, m := range p.GetMedia() {
+			if m == nil {
+				continue
+			}
+			pin.Media = append(pin.Media, responses.TripPinMedia{
+				MediaID:        m.GetMediaId(),
+				URL:            m.GetUrl(),
+				MediaType:      m.GetMediaType(),
+				CapturedAtUnix: m.GetCapturedAtUnix(),
+				PrivacyLevel:   m.GetPrivacyLevel(),
+			})
+		}
+		out.Pins = append(out.Pins, pin)
+	}
+	return out
 }
