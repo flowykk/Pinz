@@ -20,9 +20,11 @@ public struct PostPreviewView: View {
         ZStack {
             CollapsibleHeader(needsBlur: true) {
                 Header(leftView: {
-                    PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                        viewModel.dispatch(.navigate(.back()))
-                    }
+                    PinzButton(
+                        type: .icon(.chevronLeft),
+                        tint: PinzUIAsset.textPrimary.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.navigate(.back())) }
+                    )
                 }, centerView: {
                     HeaderTitle("Так будет выглядеть пост")
                 })
@@ -41,10 +43,9 @@ public struct PostPreviewView: View {
             BottomGradientWithButtons {
                 PinzButton(
                     type: .slot(style: .primary, title: "Опубликовать путешествие"),
-                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-                ) {
-                    router?.pop(by: 2)
-                }
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                    action: .plain { router?.pop(by: 2) }
+                )
             }
         }
         .onAppear { viewModel.setRouter(router) }

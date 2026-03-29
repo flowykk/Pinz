@@ -16,9 +16,11 @@ public struct TripPinsListView: View {
         ZStack {
             CollapsibleHeader(needsBlur: true) {
                 Header(leftView: {
-                    PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                        viewModel.dispatch(.navigate(.back))
-                    }
+                    PinzButton(
+                        type: .icon(.chevronLeft),
+                        tint: PinzUIAsset.textPrimary.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.navigate(.back)) }
+                    )
                 }, centerView: {
                     HeaderTitle("Пины путешествия")
                 })
@@ -46,15 +48,15 @@ public struct TripPinsListView: View {
             HStack(spacing: 6) {
                 PinzButton(
                     type: .slot(style: .secondary(needBorder: true), title: "Добавить медиа"),
-                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-                ) {}
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                    action: .plain { }
+                )
 
                 PinzButton(
                     type: .slot(style: .primary, title: "Добавить пин"),
-                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-                ) {
-                    viewModel.dispatch(.navigate(.pinCreation))
-                }
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.navigate(.pinCreation)) }
+                )
             }
         }
     }

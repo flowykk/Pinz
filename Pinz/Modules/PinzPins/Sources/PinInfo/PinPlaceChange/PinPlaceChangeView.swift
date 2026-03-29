@@ -39,14 +39,16 @@ public struct PinPlaceChangeView: View {
 
                 HStack(spacing: 12) {
                     if viewModel.hasChanges {
-                        PinzButton(type: .slot(style: .secondary(needBorder: true), title: "Сбросить")) {
-                            viewModel.dispatch(.reset)
-                        }
+                        PinzButton(
+                            type: .slot(style: .secondary(needBorder: true), title: "Сбросить"),
+                            action: .plain { viewModel.dispatch(.reset) }
+                        )
                     }
 
-                    PinzButton(type: .slot(style: .primary, title: "Готово")) {
-                        viewModel.dispatch(.save)
-                    }
+                    PinzButton(
+                        type: .slot(style: .primary, title: "Готово"),
+                        action: .plain { viewModel.dispatch(.save) }
+                    )
                 }
                 .padding(.horizontal, 12)
                 .background {
@@ -64,9 +66,11 @@ public struct PinPlaceChangeView: View {
             Header(
                 backgroundColor: .clear,
                 leftView: {
-                    PinzButton(type: .icon(.chevronLeft), tint: .white) {
-                        viewModel.dispatch(.back)
-                    }
+                    PinzButton(
+                        type: .icon(.chevronLeft),
+                        tint: .white,
+                        action: .plain { viewModel.dispatch(.back) }
+                    )
                 },
                 centerView: {
                     Text("Перемещай карту, чтобы\n изменить местоположение пина")

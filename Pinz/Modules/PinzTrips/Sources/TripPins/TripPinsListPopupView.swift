@@ -61,15 +61,15 @@ struct TripPinsListPopupView: View {
             HStack(spacing: 6) {
                 PinzButton(
                     type: .slot(style: .secondary(needBorder: true), title: "Добавить медиа"),
-                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-                ) {}
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                    action: .plain { }
+                )
 
                 PinzButton(
                     type: .slot(style: .primary, title: "Добавить пин"),
-                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-                ) {
-                    createPinTapped()
-                }
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                    action: .plain { createPinTapped() }
+                )
             }
         }
     }

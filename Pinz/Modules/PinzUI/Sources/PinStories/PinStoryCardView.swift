@@ -149,9 +149,16 @@ struct PinStoryCardView: View {
 
             Spacer()
 
-            PinzButton(type: .icon(.ellipsis), tint: .white) { detailsDialogShown = true }
-            PinzButton(type: .icon(.xmark), tint: .white) { dismiss() }
-                .padding(.trailing, -10)
+            PinzButton(
+                type: .icon(.ellipsis),
+                tint: .white,
+                action: .plain { detailsDialogShown = true }
+            )
+            PinzButton(
+                type: .icon(.xmark),
+                tint: .white,
+                action: .plain { dismiss() }
+            ).padding(.trailing, -10)
         }
         .padding()
     }

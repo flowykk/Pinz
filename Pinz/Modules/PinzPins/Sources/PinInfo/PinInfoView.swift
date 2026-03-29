@@ -101,31 +101,39 @@ public struct PinInfoView: View {
         switch viewModel.state {
         case .info, .gallery:
             Header(leftView: {
-                PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.navigate(.back))
-                }
+                PinzButton(
+                    type: .icon(.chevronLeft),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.navigate(.back)) }
+                )
             }, centerView: {
                 HeaderTitle(viewModel.pin.name, subtitle: viewModel.pin.category.value)
             }, rightView: {
-                PinzButton(type: .icon(.stories), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    isStoriesPresented = true
-                }
+                PinzButton(
+                    type: .icon(.stories),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { isStoriesPresented = true }
+                )
 //                PinzButton(type: .icon(.warning), tint: PinzUIAsset.accentOrange.swiftUIColor) {
 //
 //                }
-                PinzButton(type: .icon(.pencil), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.edit)
-                }
+                PinzButton(
+                    type: .icon(.pencil),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.edit) }
+                )
             })
         case .editing:
             Header {
-                PinzButton(type: .text("Отмена")) {
-                    viewModel.dispatch(.endEdit)
-                }
+                PinzButton(
+                    type: .text("Отмена"),
+                    action: .plain { viewModel.dispatch(.endEdit) }
+                )
             } rightView: {
-                PinzButton(type: .text("Готово")) {
-                    viewModel.dispatch(.endEdit)
-                }
+                PinzButton(
+                    type: .text("Готово"),
+                    action: .plain { viewModel.dispatch(.endEdit) }
+                )
             }
         }
     }

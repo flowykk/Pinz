@@ -48,25 +48,43 @@ public struct PinzButton: View {
         case crop = "crop"
     }
 
+    public enum Action {
+        case plain(() -> Void)
+        case async(() async throws -> Void)
+    }
+
     private let type: ButtonType
     private let tint: Color
-    private let action: () -> Void
+    private let action: Action
     private let disabled: Bool?
+
+    @State private var isLoading: Bool = false
 
     public init(
         type: ButtonType,
         tint: Color = .black,
         disabled: Bool? = false,
-        action: @escaping () -> Void = {},
+        action: Action
     ) {
         self.type = type
         self.tint = tint
-        self.action = action
         self.disabled = disabled
+        self.action = action
     }
 
     public var body: some View {
-        Button(action: action) {
+        Button {
+            switch action {
+            case let .plain(action):
+                action()
+            case let .async(action):
+                isLoading = true
+                Task {
+                    try await action()
+                    isLoading = false
+                }
+            }
+        } label: {
             Group {
                 switch type {
                 case let .icon(icon):
@@ -81,11 +99,16 @@ public struct PinzButton: View {
                 case let .slot(style, title):
                     HStack {
                         Spacer()
-                        Text(title)
-                            .roundedFount(size: 16, foregroundColor: style.textColor)
-                            .frame(height: 52)
+                        if isLoading {
+                            ProgressView()
+                                .tint(style.textColor)
+                        } else {
+                            Text(title)
+                                .roundedFount(size: 16, foregroundColor: style.textColor)
+                        }
                         Spacer()
                     }
+                    .frame(height: 52)
                     .background(style.backgroundColor)
                     .background(.ultraThinMaterial)
                     .cornerRadius(26)
