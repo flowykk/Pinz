@@ -8,15 +8,24 @@ public struct RawPins {
     }
 }
 
-public struct RawPin {
+public struct RawPin: Identifiable {
+    public let id: UUID
     public var medias: [RawPinMedia]
 
     public init(medias: [RawPinMedia]) {
+        self.id = UUID()
         self.medias = medias
     }
 }
 
-public struct RawPinMedia {
+public struct RawPinMedia: Identifiable {
+    public let id: UUID
     public var url: String
     public var type: MediaType
+
+    public init(url: String, type: MediaType) {
+        self.id = UUID()
+        self.url = url
+        self.type = type
+    }
 }

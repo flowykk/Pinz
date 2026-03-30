@@ -35,7 +35,7 @@ public struct MediasPinShortInfo: View {
         ScrollView(.horizontal) {
             HStack(spacing: 4) {
                 ForEach(medias.prefix(maxMedias)) { media in
-                    MediaThumbnailView(
+                    MediaItemThumbnailView(
                         mediaItem: media,
                         contentMode: .fit,
                         cornerRadius: 14,

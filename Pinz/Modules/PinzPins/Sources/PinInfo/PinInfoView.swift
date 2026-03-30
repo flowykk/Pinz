@@ -141,7 +141,7 @@ public struct PinInfoView: View {
     var gallery: some View {
         ScrollView {
             PinzGrid($viewModel.pin.medias, columns: galleryColumns, spacing: gallerySpacing) { media, index in
-                MediaThumbnailView(
+                MediaItemThumbnailView(
                     mediaItem: media,
                     contentMode: .fit,
                     cornerRadius: 14

@@ -4,39 +4,32 @@ import PinzDomain
 
 public struct MediaThumbnailView: View {
 
-    private let mediaItem: MediaItem
+    private let url: URL?
+    private let type: MediaType
     private let contentMode: ContentMode
     private let cornerRadius: CGFloat
-    private let hideBadges: Bool
-    private let dismissBeforeMediaInfo: Bool
-
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.appRouter) private var router
+    private let square: Bool
 
     public init(
-        mediaItem: MediaItem,
+        url: URL?,
+        type: MediaType,
         contentMode: ContentMode,
         cornerRadius: CGFloat,
-        hideBadges: Bool = false,
-        dismissBeforeMediaInfo: Bool = false,
+        square: Bool = false
     ) {
-        self.mediaItem = mediaItem
+        self.url = url
+        self.type = type
         self.contentMode = contentMode
         self.cornerRadius = cornerRadius
-        self.hideBadges = hideBadges
-        self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
+        self.square = square
     }
 
     public var body: some View {
-        Group {
-            switch mediaItem.type {
-            case .image:
-                LoadableImageThumbnail(url: mediaItem.mediaURL, content: contentBuilder)
-            case .video:
-                LoadableVideoThumbnail(url: mediaItem.mediaURL, content: contentBuilder)
-            }
-        }.if(!hideBadges) { view in
-            view.overlay { PrivateVideoMediaBadgesView(media: mediaItem).padding(4) }
+        switch type {
+        case .image:
+            LoadableImageThumbnail(url: url, content: contentBuilder)
+        case .video:
+            LoadableVideoThumbnail(url: url, content: contentBuilder)
         }
     }
 
@@ -47,25 +40,9 @@ public struct MediaThumbnailView: View {
             case .empty:
                 loaderView
             case let .ready(image):
-                let imageView = Image(uiImage: image)
+                Image(uiImage: image)
                     .resizable()
-                    .aspectRatio(contentMode: contentMode)
-                imageView
-                    .contextMenu {
-                        Button {
-                            if dismissBeforeMediaInfo { dismiss() }
-                            router?.navigateToMediaInfo(media: mediaItem)
-                        } label: {
-                            Label("Детали", systemImage: "eye.fill")
-                        }
-
-                        Divider()
-                        Button(role: .destructive) {
-
-                        } label: {
-                            Label("Удалить", systemImage: "trash")
-                        }
-                    } preview: { imageView }
+                    .aspectRatio(square ? 1 : nil, contentMode: contentMode)
             case .failure:
                 failureView
             }

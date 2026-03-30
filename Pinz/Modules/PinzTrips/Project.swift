@@ -12,6 +12,7 @@ let project = Project(
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
+                .project(target: "PinzPins", path: "../PinzPins"),
                 .project(target: "PinzBase", path: "../PinzBase"),
                 .project(target: "PinzDomain", path: "../PinzDomain"),
                 .project(target: "PinzNetworking", path: "../PinzNetworking"),
