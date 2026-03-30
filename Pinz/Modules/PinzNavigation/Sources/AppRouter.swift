@@ -81,6 +81,10 @@ extension AppRouter {
     public func navigateToTripCreationPreprocessedPins() {
         navigate(to: .tripCreation(.preprocessed))
     }
+
+    public func navigateToTripCreationReview() {
+        navigate(to: .tripCreation(.final))
+    }
 }
 
 // MARK: Media Routing

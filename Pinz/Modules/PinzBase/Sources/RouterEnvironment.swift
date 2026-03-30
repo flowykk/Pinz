@@ -13,6 +13,7 @@ public protocol AppRouting {
 
     func navigateToTripCreationInitial()
     func navigateToTripCreationPreprocessedPins()
+    func navigateToTripCreationReview()
 
     func navigateToPinsList(trip: Trip)
     func navigateToSelectablePinsList(trip: Trip)

@@ -64,7 +64,7 @@ public struct RootView<Content: View>: View {
             case .preprocessed:
                 PreprocessedRawPinsView()
             case .final:
-                EmptyView()
+                ReviewTripCreationView()
             }
         case let .profile(profileRoute):
             switch profileRoute {

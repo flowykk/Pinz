@@ -46,29 +46,16 @@ public struct PreprocessedRawPinsView: View {
             CollapsibleHeader(needsBlur: true) {
                 header
             } content: {
-                VStack {
-                    let pins = viewModel.pins.pins
-                    ForEach(pins.indices, id: \.self) { index in
-                        RawPinView(
-                            pin: pins[index],
-                            index: index,
-                            allPins: pins,
-                            onDeleteMedia: { media in
-                                viewModel.dispatch(.deleteMedia(media, fromPin: pins[index].id))
-                            },
-                            onMoveMedia: { media, targetIndex in
-                                viewModel.dispatch(.moveMedia(media, fromPin: index, toPin: targetIndex))
-                            }
-                        )
-                        .padding(.horizontal, 12)
-                        if index != pins.count - 1 {
-                            Divider().padding(.leading, 12)
-                        }
-                    }
-                }.padding(.bottom, 170)
+                if !viewModel.isLoading {
+                    content
+                }
             }
 
-            gradientWithButtons
+            if viewModel.isLoading {
+                LoadingView()
+            } else {
+                gradientWithButtons
+            }
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
@@ -86,6 +73,29 @@ public struct PreprocessedRawPinsView: View {
                 action: .plain { viewModel.dispatch(.navigate(.back)) }
             )
         })
+    }
+
+    private var content: some View {
+        VStack {
+            let pins = viewModel.pins.pins
+            ForEach(pins.indices, id: \.self) { index in
+                RawPinView(
+                    pin: pins[index],
+                    index: index,
+                    allPins: pins,
+                    onDeleteMedia: { media in
+                        viewModel.dispatch(.deleteMedia(media, fromPin: pins[index].id))
+                    },
+                    onMoveMedia: { media, targetIndex in
+                        viewModel.dispatch(.moveMedia(media, fromPin: index, toPin: targetIndex))
+                    }
+                )
+                .padding(.horizontal, 12)
+                if index != pins.count - 1 {
+                    Divider().padding(.leading, 12)
+                }
+            }
+        }.padding(.bottom, 170)
     }
 
     private var gradientWithButtons: some View {
@@ -111,7 +121,7 @@ public struct PreprocessedRawPinsView: View {
                 type: .slot(style: .primary, title: "Далее"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 disabled: false,
-                action: .async { }
+                action: .async { try await viewModel.asyncDispatch(.continue) }
             )
         }
     }

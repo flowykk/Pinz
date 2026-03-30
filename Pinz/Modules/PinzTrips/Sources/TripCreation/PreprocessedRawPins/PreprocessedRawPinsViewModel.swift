@@ -8,6 +8,7 @@ final class PreprocessedRawPinsViewModel {
 
     enum Route {
         case back
+        case review
     }
 
     enum Intent {
@@ -18,7 +19,12 @@ final class PreprocessedRawPinsViewModel {
         case moveMedia(RawPinMedia, fromPin: Int, toPin: Int)
     }
 
+    enum AsyncIntent {
+        case `continue`
+    }
+
     var pins: RawPins
+    private(set) var isLoading = false
 
     private let networkService = NetworkService()
     private var router: AppRouting?
@@ -33,6 +39,8 @@ final class PreprocessedRawPinsViewModel {
             switch route {
             case .back:
                 router?.pop()
+            case .review:
+                router?.navigateToTripCreationReview()
             }
         case let .deleteMedia(media, pinID):
             if let pinIndex = pins.pins.firstIndex(where: { $0.id == pinID }) {
@@ -61,7 +69,23 @@ final class PreprocessedRawPinsViewModel {
         }
     }
 
+    func asyncDispatch(_ intent: AsyncIntent) async throws {
+        switch intent {
+        case .continue:
+            changeLoading(to: true)
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+            dispatch(.navigate(.review))
+            changeLoading(to: false)
+        }
+    }
+
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+    }
+
+    private func changeLoading(to isLoading: Bool) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            self.isLoading = isLoading
+        }
     }
 }
