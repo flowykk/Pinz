@@ -24,12 +24,15 @@ struct AddTagView: View {
                 ]
             )
 
-            PinzButton(type: .slot(style: .primary, title: "Готово")) {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    onTagAdd?(MediaTag(tag: tag))
+            PinzButton(
+                type: .slot(style: .primary, title: "Готово"),
+                action: .plain {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        onTagAdd?(MediaTag(tag: tag))
+                    }
+                    dismiss()
                 }
-                dismiss()
-            }
+            )
 
             Spacer(minLength: 8)
         }

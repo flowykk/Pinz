@@ -24,9 +24,11 @@ public struct EmailChangeView: View {
     public var body: some View {
         VStack(spacing: 0) {
             Header(leftView: {
-                PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                    viewModel.dispatch(.navigate(.back))
-                }
+                PinzButton(
+                    type: .icon(.chevronLeft),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.navigate(.back)) }
+                )
             }, centerView: {
                 HeaderTitle("Смена почты")
             })
@@ -50,10 +52,9 @@ public struct EmailChangeView: View {
                         VStack {
                             Spacer()
                             PinzButton(
-                                type: .slot(style: .primary, title: "Далее")
-                            ) {
-                                viewModel.dispatch(.continue)
-                            }
+                                type: .slot(style: .primary, title: "Далее"),
+                                action: .plain { viewModel.dispatch(.continue) }
+                            )
                         }
                     }
                 }.padding(.horizontal, 12)

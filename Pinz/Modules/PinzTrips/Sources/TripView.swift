@@ -99,9 +99,10 @@ public struct TripView: View {
                     viewModel.dispatch(.unselectPin)
                 })
 
-                PinzButton(type: .slot(style: .primary, title: "Посмотреть детали")) {
-                    viewModel.dispatch(.unselectPin)
-                }
+                PinzButton(
+                    type: .slot(style: .primary, title: "Посмотреть детали"),
+                    action: .plain { viewModel.dispatch(.unselectPin) }
+                )
                 .padding(.horizontal, 12)
             }
             .pinzSheet()

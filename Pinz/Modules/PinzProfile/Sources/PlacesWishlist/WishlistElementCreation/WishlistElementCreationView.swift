@@ -25,9 +25,11 @@ public struct WishlistElementCreationView: View {
         ZStack {
             VStack {
                 Header(leftView: {
-                    PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                        viewModel.dispatch(.navigate(.back))
-                    }
+                    PinzButton(
+                        type: .icon(.chevronLeft),
+                        tint: PinzUIAsset.textPrimary.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.navigate(.back)) }
+                    )
                 })
                 Spacer()
                 gradientWithButtons
@@ -123,10 +125,9 @@ public struct WishlistElementCreationView: View {
             PinzButton(
                 type: .slot(style: .primary, title: viewModel.state == .photo ? "Готово" : "Далее"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
-                disabled: false
-            ) {
-                viewModel.dispatch(.continue)
-            }
+                disabled: false,
+                action: .plain { viewModel.dispatch(.continue) }
+            )
             .disabledWithOpacity(viewModel.isCompleteButtonDisabled)
             .animation(.easeInOut(duration: 0.3), value: viewModel.isCompleteButtonDisabled)
         }

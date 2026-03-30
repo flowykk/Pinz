@@ -16,9 +16,11 @@ public struct SelectablePinsListView: View {
         ZStack {
             CollapsibleHeader(needsBlur: true) {
                 Header(leftView: {
-                    PinzButton(type: .icon(.chevronLeft), tint: PinzUIAsset.textPrimary.swiftUIColor) {
-                        viewModel.dispatch(.navigate(.back))
-                    }
+                    PinzButton(
+                        type: .icon(.chevronLeft),
+                        tint: PinzUIAsset.textPrimary.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.navigate(.back)) }
+                    )
                 }, centerView: {
                     HeaderTitle("Выберите пины для публикации")
                 })
@@ -60,17 +62,15 @@ public struct SelectablePinsListView: View {
                         style: .secondary(needBorder: true),
                         title: viewModel.allSelected ? "Сбросить всё" : "Выбрать всё"
                     ),
-                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-                ) {
-                    viewModel.dispatch(.selectAll)
-                }
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.selectAll) }
+                )
 
                 PinzButton(
                     type: .slot(style: .primary, title: "Готово"),
-                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor
-                ) {
-                    viewModel.dispatch(.navigate(.postPreview))
-                }.disabledWithOpacity(viewModel.selectedPins.isEmpty)
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.navigate(.postPreview)) }
+                ).disabledWithOpacity(viewModel.selectedPins.isEmpty)
             }
         }
     }

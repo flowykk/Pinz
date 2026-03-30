@@ -1,15 +1,13 @@
 import SwiftUI
 import PinzUI
 
-public struct TripMembersView: View {
+public struct ReviewTripCreationView: View {
 
-    @State private var viewModel: TripMembersViewModel
+    @State private var viewModel = ReviewTripCreationViewModel()
 
     @Environment(\.appRouter) private var router
 
-    public init() {
-        viewModel = TripMembersViewModel()
-    }
+    public init() {}
 
     public var body: some View {
         VStack(spacing: 0) {
@@ -19,8 +17,6 @@ public struct TripMembersView: View {
                     tint: PinzUIAsset.textPrimary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
-            }, centerView: {
-                HeaderTitle("Участники путешествия")
             })
 
             Spacer()
