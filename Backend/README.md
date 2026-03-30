@@ -29,11 +29,16 @@
 | **tempo** | Хранение распределённых трейсов |
 | **prometheus** | Метрики (RED + бизнес + Go runtime) |
 | **loki** | Структурированные логи |
+| **promtail** | Логи контейнеров с нод → Loki |
 | **grafana** | Дашборды, корреляция трейс↔лог↔метрика |
 
 ## Стек
 
 Go 1.25 · chi · gRPC · Protobuf · PostgreSQL · Redis · JWT · OpenTelemetry · Istio · Helm · Helmfile
+
+## Схема БД
+
+Миграции [goose](https://github.com/pressly/goose) — SQL в `auth-service/internal/db/migrations/` и `trip-service/internal/db/migrations/`, применяются при старте. Запросы к БД — [sqlc](https://docs.sqlc.dev/): `queries/` и сгенерированный код в `internal/db/sqlcdb/` (схема из тех же миграций). Из каталога `Backend`: `make sqlc`, в CI — `make sqlc-check`.
 
 ## Эндпоинты (REST)
 
@@ -110,7 +115,7 @@ kubectl label namespace default istio-injection=enabled
 # Инфраструктура (PostgreSQL, Redis) — Docker Compose
 make infra-up
 
-# Observability (OTel Collector, Tempo, Prometheus, Loki, Grafana) — k8s
+# Observability — k8s (см. k8s/k8s-observability.yaml)
 make obs-up
 
 # Сборка образов внутри Minikube и деплой приложения
@@ -164,7 +169,7 @@ make infra-down     # Остановка инфраструктуры
 ### Observability
 
 ```bash
-make obs-up         # Запустить стек (OTel Collector, Tempo, Prometheus, Loki, Grafana)
+make obs-up         # Observability-стек в k8s
 make obs-down       # Удалить из k8s
 make obs-status     # Статус obs-подов
 make grafana        # port-forward → http://localhost:3000
@@ -183,6 +188,8 @@ make k8s-deploy     # Деплой через helmfile + rollout restart
 ```bash
 make proto          # Генерация protobuf (Backend/proto/*.proto)
 make swagger        # Генерация swagger (api-gateway-service)
+make sqlc           # sqlc (auth-service, trip-service)
+make sqlc-check     # sqlc + проверка артефактов (как в CI)
 make lint           # Запустить golangci-lint для обоих сервисов
 make lint-api       # Только api-gateway-service
 make lint-auth      # Только auth-service
@@ -260,7 +267,7 @@ GitHub Secrets:
 
 ## Observability
 
-Весь стек работает в k8s (namespace `default`). Приложения отправляют телеметрию на `otel-collector:4317` (OTLP gRPC). На VPS стек observability (OTel Collector, Tempo, Prometheus, Loki, Grafana) поднимается автоматически при деплое (`deploy.sh`).
+Весь стек работает в k8s (namespace `default`). Приложения отправляют телеметрию на `otel-collector:4317` (OTLP gRPC). На VPS observability поднимается при деплое (`deploy.sh`).
 
 **Что собирается:**
 
@@ -268,7 +275,7 @@ GitHub Secrets:
 |---|---|---|
 | Трейсы | HTTP-запросы, gRPC-вызовы, SQL, Redis | Tempo |
 | Метрики | RED (rate/errors/duration), auth counters, Go runtime | Prometheus |
-| Логи | `slog` → OTLP bridge | Loki |
+| Логи | `slog` → OTLP; логи контейнеров с нод → Promtail | Loki |
 
 **Grafana:**
 

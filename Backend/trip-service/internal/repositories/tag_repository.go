@@ -1,15 +1,17 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 
-	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 
+	"pinz/backend/trip-service/internal/db/sqlcdb"
 	"pinz/backend/trip-service/internal/models"
 )
 
 type TagRepository struct {
-	db *sql.DB
+	q *sqlcdb.Queries
 }
 
 const (
@@ -18,14 +20,32 @@ const (
 )
 
 func NewTagRepository(db *sql.DB) *TagRepository {
-	return &TagRepository{db: db}
+	return &TagRepository{q: sqlcdb.New(db)}
+}
+
+func pinNullUUID(pinID string) uuid.NullUUID {
+	if pinID == "" {
+		return uuid.NullUUID{}
+	}
+	id, err := uuid.Parse(pinID)
+	if err != nil {
+		return uuid.NullUUID{}
+	}
+	return uuid.NullUUID{UUID: id, Valid: true}
 }
 
 func (r *TagRepository) SetForPin(tripID, pinID string, tags []string) error {
 	if len(tags) > maxTagsPerPin {
 		tags = tags[:maxTagsPerPin]
 	}
-	if _, err := psq.Delete("tags").Where(sq.Eq{"trip_id": tripID, "pin_id": pinID}).RunWith(r.db).Exec(); err != nil {
+	tid, err := uuid.Parse(tripID)
+	if err != nil {
+		return err
+	}
+	if err := r.q.TagDeleteForPin(context.Background(), sqlcdb.TagDeleteForPinParams{
+		TripID: tid,
+		PinID:  pinNullUUID(pinID),
+	}); err != nil {
 		return err
 	}
 	for _, tag := range tags {
@@ -50,49 +70,54 @@ func (r *TagRepository) Add(t *models.Tag) error {
 	if len(t.Tag) > maxTagLength {
 		t.Tag = t.Tag[:maxTagLength]
 	}
-	q := psq.Insert("tags").Columns("trip_id", "pin_id", "tag").Values(t.TripID, t.PinID, t.Tag).Suffix("RETURNING id")
-	sqlStr, args, err := q.ToSql()
+	tid, err := uuid.Parse(t.TripID)
 	if err != nil {
 		return err
 	}
-	return r.db.QueryRow(sqlStr, args...).Scan(&t.ID)
+	id, err := r.q.TagInsert(context.Background(), sqlcdb.TagInsertParams{
+		TripID: tid,
+		PinID:  pinNullUUID(t.PinID),
+		Tag:    t.Tag,
+	})
+	if err != nil {
+		return err
+	}
+	t.ID = id.String()
+	return nil
 }
 
 func (r *TagRepository) GetByPinID(pinID string) ([]string, error) {
-	rows, err := psq.Select("tag").From("tags").Where(sq.Eq{"pin_id": pinID}).RunWith(r.db).Query()
+	pid, err := uuid.Parse(pinID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var tags []string
-	for rows.Next() {
-		var tag string
-		if err := rows.Scan(&tag); err != nil {
-			return nil, err
-		}
-		tags = append(tags, tag)
-	}
-	return tags, rows.Err()
+	return r.q.TagListByPin(context.Background(), uuid.NullUUID{UUID: pid, Valid: true})
 }
 
 func (r *TagRepository) GetByTripID(tripID string) (map[string][]string, error) {
-	rows, err := psq.Select("pin_id", "tag").From("tags").Where(sq.Eq{"trip_id": tripID}).RunWith(r.db).Query()
+	tid, err := uuid.Parse(tripID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	out := make(map[string][]string)
-	for rows.Next() {
-		var pinID, tag string
-		if err := rows.Scan(&pinID, &tag); err != nil {
-			return nil, err
-		}
-		out[pinID] = append(out[pinID], tag)
+	rows, err := r.q.TagListByTrip(context.Background(), tid)
+	if err != nil {
+		return nil, err
 	}
-	return out, rows.Err()
+	out := make(map[string][]string)
+	for _, row := range rows {
+		pinKey := ""
+		if row.PinID.Valid {
+			pinKey = row.PinID.UUID.String()
+		}
+		out[pinKey] = append(out[pinKey], row.Tag)
+	}
+	return out, nil
 }
 
 func (r *TagRepository) DeleteForPin(pinID string) error {
-	_, err := psq.Delete("tags").Where(sq.Eq{"pin_id": pinID}).RunWith(r.db).Exec()
-	return err
+	pid, err := uuid.Parse(pinID)
+	if err != nil {
+		return err
+	}
+	return r.q.TagDeleteAllForPin(context.Background(), uuid.NullUUID{UUID: pid, Valid: true})
 }

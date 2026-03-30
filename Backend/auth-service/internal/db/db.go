@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
 	"log/slog"
 	"os"
@@ -9,34 +10,12 @@ import (
 
 	"github.com/XSAM/otelsql"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
-const (
-	usersDDL = `
-CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email TEXT NOT NULL UNIQUE,
-    username TEXT NOT NULL,
-    avatar_url TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);`
-	refreshTokensDDL = `
-CREATE TABLE IF NOT EXISTS refresh_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token TEXT NOT NULL UNIQUE,
-    expires_at TIMESTAMPTZ NOT NULL
-);`
-	passkeyCredentialsDDL = `
-CREATE TABLE IF NOT EXISTS passkey_credentials (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    credential_id BYTEA NOT NULL UNIQUE,
-    credential_json JSONB NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);`
-)
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
 
 func InitDB() (*sql.DB, error) {
 	db, err := otelsql.Open("pgx", dsn(),
@@ -66,12 +45,18 @@ func InitDB() (*sql.DB, error) {
 		slog.Warn("failed to register db stats metrics", "error", err)
 	}
 
-	for _, ddl := range []string{usersDDL, refreshTokensDDL, passkeyCredentialsDDL} {
-		if _, err := db.Exec(ddl); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("migration: %w", err)
-		}
+	goose.SetBaseFS(migrationsFS)
+	defer goose.SetBaseFS(nil)
+	if err := goose.SetDialect("postgres"); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("goose dialect: %w", err)
 	}
+	if err := goose.Up(db, "migrations"); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("migrations: %w", err)
+	}
+	slog.Info("database migrations applied")
+
 	return db, nil
 }
 

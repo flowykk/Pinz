@@ -1,40 +1,57 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 
-	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
+
+	"pinz/backend/trip-service/internal/db/sqlcdb"
 )
 
 type TripSettingsRepository struct {
-	db *sql.DB
+	q *sqlcdb.Queries
 }
 
 func NewTripSettingsRepository(db *sql.DB) *TripSettingsRepository {
-	return &TripSettingsRepository{db: db}
+	return &TripSettingsRepository{q: sqlcdb.New(db)}
 }
 
 // EnsureDefaultSettings creates a trip_settings row with notifications_enabled=true.
 // Idempotent: safe to call when joining a trip (duplicate key is ignored).
 func (r *TripSettingsRepository) EnsureDefaultSettings(tripID, userID string) error {
-	_, err := psq.Insert("trip_settings").
-		Columns("user_id", "trip_id", "notifications_enabled").
-		Values(userID, tripID, true).
-		Suffix("ON CONFLICT (user_id, trip_id) DO NOTHING").
-		RunWith(r.db).Exec()
-	return err
+	tid, err := uuid.Parse(tripID)
+	if err != nil {
+		return err
+	}
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	return r.q.TripSettingsEnsureDefault(context.Background(), sqlcdb.TripSettingsEnsureDefaultParams{
+		UserID: uid,
+		TripID: tid,
+	})
 }
 
 // UpdateNotifications updates notifications_enabled for the user's trip settings.
 func (r *TripSettingsRepository) UpdateNotifications(tripID, userID string, enabled bool) error {
-	res, err := psq.Update("trip_settings").
-		Set("notifications_enabled", enabled).
-		Where(sq.Eq{"trip_id": tripID, "user_id": userID}).
-		RunWith(r.db).Exec()
+	tid, err := uuid.Parse(tripID)
 	if err != nil {
 		return err
 	}
-	n, _ := res.RowsAffected()
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	n, err := r.q.TripSettingsUpdateNotifications(context.Background(), sqlcdb.TripSettingsUpdateNotificationsParams{
+		NotificationsEnabled: enabled,
+		TripID:               tid,
+		UserID:               uid,
+	})
+	if err != nil {
+		return err
+	}
 	if n == 0 {
 		return sql.ErrNoRows
 	}

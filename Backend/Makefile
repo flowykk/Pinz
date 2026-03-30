@@ -1,8 +1,6 @@
-# Proxy-friendly env for go mod tidy / go get (override in env or .env).
 GOPROXY ?= https://proxy.golang.org,direct
 export GOPROXY
 
-# Единая точка генерации proto: Backend/proto -> auth-service/pkg/proto, api-gateway-service/pkg/proto, trip-service/pkg/proto
 .PHONY: proto
 proto:
 	mkdir -p auth-service/pkg/proto api-gateway-service/pkg/proto trip-service/pkg/proto
@@ -23,7 +21,6 @@ proto:
 		--go-grpc_out=api-gateway-service --go-grpc_opt=module=pinz/backend/api-gateway-service --go-grpc_opt=Mtrip.proto=pinz/backend/api-gateway-service/pkg/proto \
 		proto/trip.proto
 
-# Автогенерация gomock (internal/mocks в auth, api-gateway, trip-service).
 .PHONY: mocks
 mocks:
 	cd auth-service && go generate ./internal/mocks/...
@@ -34,6 +31,26 @@ mocks:
 swagger:
 	$(MAKE) -C api-gateway-service swagger
 
+SQLC_DOCKER_IMAGE ?= sqlc/sqlc:1.28.0
+.PHONY: sqlc sqlc-check
+sqlc:
+	@if command -v sqlc >/dev/null 2>&1; then \
+		(cd auth-service && sqlc generate) && (cd trip-service && sqlc generate); \
+	elif command -v docker >/dev/null 2>&1; then \
+		docker run --rm -v "$(PWD)/auth-service:/src" -w /src $(SQLC_DOCKER_IMAGE) generate && \
+		docker run --rm -v "$(PWD)/trip-service:/src" -w /src $(SQLC_DOCKER_IMAGE) generate; \
+	else \
+		echo "Install sqlc (https://docs.sqlc.dev) or Docker to run $(SQLC_DOCKER_IMAGE)"; exit 1; \
+	fi
+
+sqlc-check: sqlc
+	@if [ -n "$$(git -C .. status --porcelain -- Backend/auth-service/internal/db/sqlcdb Backend/auth-service/queries Backend/auth-service/sqlc.yaml Backend/trip-service/internal/db/sqlcdb Backend/trip-service/queries Backend/trip-service/sqlc.yaml 2>/dev/null)" ]; then \
+		echo "sqlc drift: run 'make sqlc' from Backend and commit"; \
+		git -C .. status --porcelain -- Backend/auth-service/internal/db/sqlcdb Backend/auth-service/queries Backend/trip-service/internal/db/sqlcdb Backend/trip-service/queries || true; \
+		exit 1; \
+	fi
+	@echo "sqlc artifacts up to date ✓"
+
 .PHONY: tidy
 tidy:
 	cd pkg/otel && go mod tidy
@@ -42,8 +59,7 @@ tidy:
 	cd api-gateway-service && go mod tidy
 	cd e2e && go mod tidy
 
-# Local linting
-.PHONY: lint lint-api lint-auth check-lint
+.PHONY: lint lint-api lint-auth lint-trip
 lint: lint-api lint-auth lint-trip
 
 lint-api:
@@ -55,14 +71,9 @@ lint-auth:
 lint-trip:
 	cd trip-service && golangci-lint run ./...
 
-# Tests (unit/integration/e2e) + coverage
-# test-unit: -short skips DB/Docker integration tests (auth/trip integration use testing.Short()).
-# test-integration: full tests; requires Docker for integration packages.
-# For Lima/Colima: DOCKER_HOST is auto-set when default socket is missing (testcontainers)
 .PHONY: test test-unit test-unit-only test-integration test-e2e test-all
 test: test-unit
 
-# Export DOCKER_HOST for testcontainers when using Lima/Colima (socket not at /var/run/docker.sock)
 DOCKER_HOST ?= $(shell [ -S /var/run/docker.sock ] || docker context inspect --format '{{.Endpoints.docker.Host}}' 2>/dev/null)
 export DOCKER_HOST
 export TESTCONTAINERS_RYUK_DISABLED ?= true
@@ -72,7 +83,6 @@ test-unit:
 	cd trip-service && go test -short ./...
 	cd api-gateway-service && go test -short ./...
 
-# Alias: same as test-unit (integration tests skipped via -short).
 test-unit-only: test-unit
 
 test-integration:
@@ -88,7 +98,6 @@ test-all: test-unit test-e2e
 .PHONY: coverage coverage-auth coverage-trip coverage-gateway
 coverage: coverage-auth coverage-trip coverage-gateway
 
-# Проверка покрытия только по internal/services (auth, trip) и internal/handlers (api-gateway).
 .PHONY: coverage-check
 MIN_COVER ?= 80
 coverage-check:
@@ -112,7 +121,6 @@ coverage-gateway:
 	cd api-gateway-service && go test -short ./internal/handlers/... -coverprofile=coverage.out
 	cd api-gateway-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
 
-# Infra: Postgres + Redis (Docker Compose, accessible via host.docker.internal from k8s)
 .PHONY: infra-up infra-down
 infra-up:
 	docker compose -f docker-compose.infra.yml up -d
@@ -120,7 +128,6 @@ infra-up:
 infra-down:
 	docker compose -f docker-compose.infra.yml down
 
-# Observability stack: OTel Collector, Tempo, Prometheus, Loki, Grafana — all in k8s
 .PHONY: obs-up obs-down obs-status grafana
 obs-up:
 	kubectl apply -f k8s/k8s-observability.yaml
@@ -135,19 +142,15 @@ obs-down:
 obs-status:
 	kubectl get pods -l component=observability
 
-# Open Grafana via port-forward (runs in foreground, Ctrl+C to stop)
 grafana:
 	@echo "Grafana → http://localhost:3000"
 	kubectl port-forward svc/grafana 3000:3000
 
-# Direct port-forward to api-gateway (bypasses Lima conflicts on :80/:443)
-# Access: http://localhost:8080
 dev:
 	@echo "API    → http://localhost:8080"
 	@echo "Swagger → http://localhost:8080/swagger/index.html"
 	kubectl port-forward svc/api-gateway 8080:8080
 
-# k8s: build images inside Minikube, apply Istio, deploy via helmfile
 .PHONY: k8s-build k8s-deploy k8s-istio
 k8s-build:
 	eval $$(minikube docker-env) && \
@@ -162,7 +165,6 @@ k8s-deploy:
 k8s-istio:
 	kubectl apply -f k8s-istio/
 
-# Full local stack: infra (docker) + observability (k8s) + app (k8s)
 .PHONY: all-up all-down
 all-up: infra-up obs-up k8s-build k8s-istio k8s-deploy
 

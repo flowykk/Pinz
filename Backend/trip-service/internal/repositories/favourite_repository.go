@@ -1,39 +1,50 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
-	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
+
+	"pinz/backend/trip-service/internal/db/sqlcdb"
 )
 
 type FavouriteRepository struct {
-	db *sql.DB
+	q *sqlcdb.Queries
 }
 
 func NewFavouriteRepository(db *sql.DB) *FavouriteRepository {
-	return &FavouriteRepository{db: db}
+	return &FavouriteRepository{q: sqlcdb.New(db)}
 }
 
 // Add adds a trip to user's favourites. Idempotent.
 func (r *FavouriteRepository) Add(userID, tripID string) error {
-	_, err := psq.Insert("favourite").
-		Columns("user_id", "trip_id").
-		Values(userID, tripID).
-		Suffix("ON CONFLICT (user_id, trip_id) DO NOTHING").
-		RunWith(r.db).Exec()
-	return err
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	tid, err := uuid.Parse(tripID)
+	if err != nil {
+		return err
+	}
+	return r.q.FavouriteAdd(context.Background(), sqlcdb.FavouriteAddParams{UserID: uid, TripID: tid})
 }
 
 // Remove removes a trip from user's favourites.
 func (r *FavouriteRepository) Remove(userID, tripID string) error {
-	res, err := psq.Delete("favourite").
-		Where(sq.Eq{"user_id": userID, "trip_id": tripID}).
-		RunWith(r.db).Exec()
+	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return err
 	}
-	n, _ := res.RowsAffected()
+	tid, err := uuid.Parse(tripID)
+	if err != nil {
+		return err
+	}
+	n, err := r.q.FavouriteRemove(context.Background(), sqlcdb.FavouriteRemoveParams{UserID: uid, TripID: tid})
+	if err != nil {
+		return err
+	}
 	if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -42,8 +53,15 @@ func (r *FavouriteRepository) Remove(userID, tripID string) error {
 
 // HasFavourite returns true if user has the trip in favourites.
 func (r *FavouriteRepository) HasFavourite(userID, tripID string) (bool, error) {
-	var d int
-	err := r.db.QueryRow("SELECT 1 FROM favourite WHERE user_id = $1 AND trip_id = $2 LIMIT 1", userID, tripID).Scan(&d)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return false, err
+	}
+	tid, err := uuid.Parse(tripID)
+	if err != nil {
+		return false, err
+	}
+	_, err = r.q.FavouriteHas(context.Background(), sqlcdb.FavouriteHasParams{UserID: uid, TripID: tid})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
@@ -55,11 +73,15 @@ func (r *FavouriteRepository) HasFavourite(userID, tripID string) (bool, error) 
 
 // HasFavouritesByOtherUsers returns true if any user other than excludeUserID has this trip in favourites.
 func (r *FavouriteRepository) HasFavouritesByOtherUsers(tripID, excludeUserID string) (bool, error) {
-	var d int
-	err := r.db.QueryRow(
-		"SELECT 1 FROM favourite WHERE trip_id = $1 AND user_id != $2 LIMIT 1",
-		tripID, excludeUserID,
-	).Scan(&d)
+	tid, err := uuid.Parse(tripID)
+	if err != nil {
+		return false, err
+	}
+	ex, err := uuid.Parse(excludeUserID)
+	if err != nil {
+		return false, err
+	}
+	_, err = r.q.FavouriteHasByOtherUsers(context.Background(), sqlcdb.FavouriteHasByOtherUsersParams{TripID: tid, UserID: ex})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
@@ -77,24 +99,21 @@ func (r *FavouriteRepository) ListTripIDsByUserID(userID string, limit, offset i
 	if offset < 0 {
 		offset = 0
 	}
-	rows, err := psq.Select("trip_id").
-		From("favourite").
-		Where(sq.Eq{"user_id": userID}).
-		OrderBy("created_at DESC").
-		Limit(uint64(limit)).
-		Offset(uint64(offset)).
-		RunWith(r.db).Query()
+	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var ids []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
+	uuids, err := r.q.FavouriteListTripIDsByUser(context.Background(), sqlcdb.FavouriteListTripIDsByUserParams{
+		UserID: uid,
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return nil, err
 	}
-	return ids, rows.Err()
+	out := make([]string, 0, len(uuids))
+	for _, id := range uuids {
+		out = append(out, id.String())
+	}
+	return out, nil
 }

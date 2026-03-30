@@ -1,46 +1,54 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
-	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 
+	"pinz/backend/trip-service/internal/db/sqlcdb"
 	"pinz/backend/trip-service/internal/models"
 )
 
 type InvitationLinkRepository struct {
-	db *sql.DB
+	q *sqlcdb.Queries
 }
 
 func NewInvitationLinkRepository(db *sql.DB) *InvitationLinkRepository {
-	return &InvitationLinkRepository{db: db}
+	return &InvitationLinkRepository{q: sqlcdb.New(db)}
 }
 
 func (r *InvitationLinkRepository) Create(link *models.InvitationLink) error {
-	_, err := psq.Insert("invitation_links").
-		Columns("id", "trip_id", "token", "expires_at").
-		Values(link.ID, link.TripID, link.Token, link.ExpiresAt).
-		RunWith(r.db).Exec()
-	return err
+	id, err := uuid.Parse(link.ID)
+	if err != nil {
+		return err
+	}
+	tid, err := uuid.Parse(link.TripID)
+	if err != nil {
+		return err
+	}
+	return r.q.InvitationLinkInsert(context.Background(), sqlcdb.InvitationLinkInsertParams{
+		ID:        id,
+		TripID:    tid,
+		Token:     link.Token,
+		ExpiresAt: link.ExpiresAt,
+	})
 }
 
 func (r *InvitationLinkRepository) GetByToken(token string) (*models.InvitationLink, error) {
-	q := psq.Select("id", "trip_id", "token", "expires_at", "created_at").
-		From("invitation_links").
-		Where(sq.Eq{"token": token})
-	sqlStr, args, err := q.ToSql()
-	if err != nil {
-		return nil, err
-	}
-	row := r.db.QueryRow(sqlStr, args...)
-	var link models.InvitationLink
-	err = row.Scan(&link.ID, &link.TripID, &link.Token, &link.ExpiresAt, &link.CreatedAt)
+	row, err := r.q.InvitationLinkByToken(context.Background(), token)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
 		return nil, err
 	}
-	return &link, nil
+	return &models.InvitationLink{
+		ID:        row.ID.String(),
+		TripID:    row.TripID.String(),
+		Token:     row.Token,
+		ExpiresAt: row.ExpiresAt,
+		CreatedAt: row.CreatedAt,
+	}, nil
 }

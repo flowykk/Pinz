@@ -1,64 +1,74 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
-	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 
+	"pinz/backend/trip-service/internal/db/sqlcdb"
 	"pinz/backend/trip-service/internal/models"
 )
 
 type TripParticipantRepository struct {
-	db *sql.DB
+	q *sqlcdb.Queries
 }
 
 func NewTripParticipantRepository(db *sql.DB) *TripParticipantRepository {
-	return &TripParticipantRepository{db: db}
+	return &TripParticipantRepository{q: sqlcdb.New(db)}
 }
 
 func (r *TripParticipantRepository) Add(p *models.TripParticipant) error {
-	_, err := psq.Insert("trip_participants").
-		Columns("trip_id", "user_id", "is_admin").
-		Values(p.TripID, p.UserID, p.IsAdmin).
-		RunWith(r.db).Exec()
-	return err
+	tid, err := uuid.Parse(p.TripID)
+	if err != nil {
+		return err
+	}
+	uid, err := uuid.Parse(p.UserID)
+	if err != nil {
+		return err
+	}
+	return r.q.TripParticipantAdd(context.Background(), sqlcdb.TripParticipantAddParams{
+		TripID:  tid,
+		UserID:  uid,
+		IsAdmin: p.IsAdmin,
+	})
 }
 
 func (r *TripParticipantRepository) GetByTripID(tripID string) ([]*models.TripParticipant, error) {
-	sqlStr, args, err := psq.Select("trip_id", "user_id", "is_admin", "joined_at").
-		From("trip_participants").
-		Where(sq.Eq{"trip_id": tripID}).
-		ToSql()
+	tid, err := uuid.Parse(tripID)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := r.db.Query(sqlStr, args...)
+	rows, err := r.q.TripParticipantListByTrip(context.Background(), tid)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var list []*models.TripParticipant
-	for rows.Next() {
-		var p models.TripParticipant
-		if err := rows.Scan(&p.TripID, &p.UserID, &p.IsAdmin, &p.JoinedAt); err != nil {
-			return nil, err
-		}
-		list = append(list, &p)
+	list := make([]*models.TripParticipant, 0, len(rows))
+	for _, row := range rows {
+		list = append(list, &models.TripParticipant{
+			TripID:   row.TripID.String(),
+			UserID:   row.UserID.String(),
+			IsAdmin:  row.IsAdmin,
+			JoinedAt: row.JoinedAt,
+		})
 	}
-	return list, rows.Err()
+	return list, nil
 }
 
 func (r *TripParticipantRepository) IsParticipant(tripID, userID string) (bool, error) {
-	sqlStr, args, err := psq.Select("1").
-		From("trip_participants").
-		Where(sq.Eq{"trip_id": tripID, "user_id": userID}).
-		Limit(1).ToSql()
+	tid, err := uuid.Parse(tripID)
 	if err != nil {
 		return false, err
 	}
-	var d int
-	err = r.db.QueryRow(sqlStr, args...).Scan(&d)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return false, err
+	}
+	_, err = r.q.TripParticipantIsParticipant(context.Background(), sqlcdb.TripParticipantIsParticipantParams{
+		TripID: tid,
+		UserID: uid,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
@@ -69,15 +79,18 @@ func (r *TripParticipantRepository) IsParticipant(tripID, userID string) (bool, 
 }
 
 func (r *TripParticipantRepository) IsAdmin(tripID, userID string) (bool, error) {
-	sqlStr, args, err := psq.Select("is_admin").
-		From("trip_participants").
-		Where(sq.Eq{"trip_id": tripID, "user_id": userID}).
-		ToSql()
+	tid, err := uuid.Parse(tripID)
 	if err != nil {
 		return false, err
 	}
-	var isAdmin bool
-	err = r.db.QueryRow(sqlStr, args...).Scan(&isAdmin)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return false, err
+	}
+	isAdmin, err := r.q.TripParticipantIsAdmin(context.Background(), sqlcdb.TripParticipantIsAdminParams{
+		TripID: tid,
+		UserID: uid,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
@@ -88,13 +101,18 @@ func (r *TripParticipantRepository) IsAdmin(tripID, userID string) (bool, error)
 }
 
 func (r *TripParticipantRepository) Remove(tripID, userID string) error {
-	res, err := psq.Delete("trip_participants").
-		Where(sq.Eq{"trip_id": tripID, "user_id": userID}).
-		RunWith(r.db).Exec()
+	tid, err := uuid.Parse(tripID)
 	if err != nil {
 		return err
 	}
-	n, _ := res.RowsAffected()
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	n, err := r.q.TripParticipantRemove(context.Background(), sqlcdb.TripParticipantRemoveParams{TripID: tid, UserID: uid})
+	if err != nil {
+		return err
+	}
 	if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -103,22 +121,28 @@ func (r *TripParticipantRepository) Remove(tripID, userID string) error {
 
 // RemoveAllByTripID removes all participants from the trip.
 func (r *TripParticipantRepository) RemoveAllByTripID(tripID string) error {
-	_, err := psq.Delete("trip_participants").Where(sq.Eq{"trip_id": tripID}).RunWith(r.db).Exec()
-	return err
+	tid, err := uuid.Parse(tripID)
+	if err != nil {
+		return err
+	}
+	return r.q.TripParticipantRemoveAllByTrip(context.Background(), tid)
 }
 
 // SetAdmin sets the given user as the only admin for the trip (is_admin=true for userID, false for others).
 func (r *TripParticipantRepository) SetAdmin(tripID, userID string) error {
-	_, err := psq.Update("trip_participants").
-		Set("is_admin", false).
-		Where(sq.Eq{"trip_id": tripID}).
-		RunWith(r.db).Exec()
+	tid, err := uuid.Parse(tripID)
 	if err != nil {
 		return err
 	}
-	_, err = psq.Update("trip_participants").
-		Set("is_admin", true).
-		Where(sq.Eq{"trip_id": tripID, "user_id": userID}).
-		RunWith(r.db).Exec()
-	return err
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	if err := r.q.TripParticipantClearAdmin(context.Background(), tid); err != nil {
+		return err
+	}
+	return r.q.TripParticipantSetAdmin(context.Background(), sqlcdb.TripParticipantSetAdminParams{
+		TripID: tid,
+		UserID: uid,
+	})
 }

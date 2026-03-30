@@ -2,9 +2,13 @@ package testinfra
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"os/exec"
 	"testing"
+	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func WithTripPostGIS(t *testing.T) *PostgresContainer {
@@ -62,5 +66,28 @@ func WithTripPostGIS(t *testing.T) *PostgresContainer {
 	_ = os.Setenv("DB_PASSWORD", pg.Password)
 	_ = os.Setenv("DB_NAME", pg.DBName)
 
+	waitForPostgres(t, pg.DSN(), 60*time.Second)
+
 	return pg
+}
+
+// waitForPostgres retries until the DB accepts connections (PostGIS стартует дольше обычного postgres).
+func waitForPostgres(t *testing.T, dsn string, timeout time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		db, err := sql.Open("pgx", dsn)
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		if err := db.Ping(); err != nil {
+			_ = db.Close()
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		_ = db.Close()
+		return
+	}
+	t.Fatalf("postgres did not become ready within %v", timeout)
 }

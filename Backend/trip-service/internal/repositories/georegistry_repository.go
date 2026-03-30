@@ -5,16 +5,18 @@ import (
 	"database/sql"
 	"errors"
 
-	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
+
+	"pinz/backend/trip-service/internal/db/sqlcdb"
 )
 
 // GeoRegistryRepository работает с локальной репликой GEO_REGISTRY и связью TRIP_LOCATIONS.
 type GeoRegistryRepository struct {
-	db *sql.DB
+	q *sqlcdb.Queries
 }
 
 func NewGeoRegistryRepository(db *sql.DB) *GeoRegistryRepository {
-	return &GeoRegistryRepository{db: db}
+	return &GeoRegistryRepository{q: sqlcdb.New(db)}
 }
 
 func (r *GeoRegistryRepository) EnsureLocationByName(ctx context.Context, countryName, cityName string) (countryID, cityID *int, displayName string, err error) {
@@ -22,39 +24,38 @@ func (r *GeoRegistryRepository) EnsureLocationByName(ctx context.Context, countr
 		return nil, nil, "", nil
 	}
 
-	// Country
 	var cID *int
 	if countryName != "" {
-		q := psq.Select("id").From("geo_registry").Where(sq.Eq{"name": countryName, "type": "Country"}).Limit(1)
-		sqlStr, args, err := q.ToSql()
+		id, err := r.q.GeoRegistryFindCountryByName(ctx, countryName)
 		if err != nil {
-			return nil, nil, "", err
-		}
-		var id int
-		if err := r.db.QueryRowContext(ctx, sqlStr, args...).Scan(&id); err == nil {
-			cID = &id
-		} else if !errors.Is(err, sql.ErrNoRows) {
-			return nil, nil, "", err
+			if !errors.Is(err, sql.ErrNoRows) {
+				return nil, nil, "", err
+			}
+		} else {
+			v := int(id)
+			cID = &v
 		}
 	}
 
-	// City
 	var cityIDPtr *int
 	if cityName != "" {
-		builder := psq.Select("id").From("geo_registry").Where(sq.Eq{"name": cityName, "type": "City"})
+		var id int32
+		var err error
 		if cID != nil {
-			builder = builder.Where(sq.Eq{"parent_id": *cID})
+			id, err = r.q.GeoRegistryFindCityByNameAndParent(ctx, sqlcdb.GeoRegistryFindCityByNameAndParentParams{
+				Name:     cityName,
+				ParentID: sql.NullInt32{Int32: int32(*cID), Valid: true},
+			})
+		} else {
+			id, err = r.q.GeoRegistryFindCityByNameNoParent(ctx, cityName)
 		}
-		builder = builder.Limit(1)
-		sqlStr, args, err := builder.ToSql()
 		if err != nil {
-			return nil, nil, "", err
-		}
-		var id int
-		if err := r.db.QueryRowContext(ctx, sqlStr, args...).Scan(&id); err == nil {
-			cityIDPtr = &id
-		} else if !errors.Is(err, sql.ErrNoRows) {
-			return nil, nil, "", err
+			if !errors.Is(err, sql.ErrNoRows) {
+				return nil, nil, "", err
+			}
+		} else {
+			v := int(id)
+			cityIDPtr = &v
 		}
 	}
 
@@ -76,27 +77,16 @@ func (r *GeoRegistryRepository) FindLocationIDsByName(ctx context.Context, name 
 	if name == "" {
 		return nil, nil
 	}
-	q := psq.Select("id").From("geo_registry").
-		Where(sq.ILike{"name": "%" + name + "%"}).
-		Where(sq.Or{sq.Eq{"type": "Country"}, sq.Eq{"type": "City"}})
-	sqlStr, args, err := q.ToSql()
+	pattern := "%" + name + "%"
+	ids32, err := r.q.GeoRegistryFindIDsByNamePattern(ctx, pattern)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := r.db.QueryContext(ctx, sqlStr, args...)
-	if err != nil {
-		return nil, err
+	ids := make([]int, 0, len(ids32))
+	for _, id := range ids32 {
+		ids = append(ids, int(id))
 	}
-	defer rows.Close()
-	var ids []int
-	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	return ids, rows.Err()
+	return ids, nil
 }
 
 // UpsertTripLocations заполняет TRIP_LOCATIONS для трипа по списку locationID (страна/город).
@@ -104,17 +94,15 @@ func (r *GeoRegistryRepository) UpsertTripLocations(ctx context.Context, tripID 
 	if tripID == "" || len(locationIDs) == 0 {
 		return nil
 	}
+	tid, err := uuid.Parse(tripID)
+	if err != nil {
+		return err
+	}
 	for _, id := range locationIDs {
-		// ON CONFLICT DO NOTHING эквивалент через INSERT ... ON CONFLICT в pgx, здесь — простой UPSERT через игнор ошибки уникальности.
-		q := psq.Insert("trip_locations").
-			Columns("trip_id", "location_id").
-			Values(tripID, id).
-			Suffix("ON CONFLICT DO NOTHING")
-		sqlStr, args, err := q.ToSql()
-		if err != nil {
-			return err
-		}
-		if _, err := r.db.ExecContext(ctx, sqlStr, args...); err != nil {
+		if err := r.q.TripLocationInsert(ctx, sqlcdb.TripLocationInsertParams{
+			TripID:     tid,
+			LocationID: int32(id),
+		}); err != nil {
 			return err
 		}
 	}

@@ -1,114 +1,127 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"time"
 
-	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 
+	"pinz/backend/auth-service/internal/db/sqlcdb"
 	"pinz/backend/auth-service/internal/models"
 )
 
-var (
-	psq = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-)
-
 type UserRepository struct {
-	db *sql.DB
+	q *sqlcdb.Queries
 }
 
 func NewUserRepository(db *sql.DB) *UserRepository {
-	return &UserRepository{db: db}
+	return &UserRepository{q: sqlcdb.New(db)}
 }
 
 func (r *UserRepository) GetUserByEmail(email string) (*models.User, error) {
-	q := psq.Select("id", "email", "username", "avatar_url", "created_at").
-		From("users").
-		Where(sq.Eq{"email": email})
-	row := q.RunWith(r.db).QueryRow()
-	var u models.User
-	var avatarURL sql.NullString
-	err := row.Scan(&u.ID, &u.Email, &u.Username, &avatarURL, &u.CreatedAt)
+	u, err := r.q.GetUserByEmail(context.Background(), email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
 		return nil, err
 	}
-	if avatarURL.Valid {
-		u.AvatarURL = avatarURL.String
-	}
-	return &u, nil
+	return userFromSQLC(u), nil
 }
 
 func (r *UserRepository) CreateUser(u *models.User) error {
-	q := psq.Insert("users").
-		Columns("id", "email", "username", "avatar_url").
-		Values(u.ID, u.Email, u.Username, u.AvatarURL).
-		Suffix("RETURNING created_at")
-	sqlStr, args, err := q.ToSql()
+	id, err := uuid.Parse(u.ID)
 	if err != nil {
 		return err
 	}
-	row := r.db.QueryRow(sqlStr, args...)
-	if err := row.Scan(&u.CreatedAt); err != nil {
+	avatar := sql.NullString{String: u.AvatarURL, Valid: u.AvatarURL != ""}
+	createdAt, err := r.q.CreateUser(context.Background(), sqlcdb.CreateUserParams{
+		ID:        id,
+		Email:     u.Email,
+		Username:  u.Username,
+		AvatarUrl: avatar,
+	})
+	if err != nil {
 		return err
 	}
+	u.CreatedAt = createdAt
 	return nil
 }
 
 func (r *UserRepository) AddSession(userID, token string, expiresAt interface{}) error {
-	q := psq.Insert("refresh_tokens").
-		Columns("user_id", "token", "expires_at").
-		Values(userID, token, expiresAt)
-	_, err := q.RunWith(r.db).Exec()
-	return err
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	t, ok := expiresAt.(time.Time)
+	if !ok {
+		return errors.New("expiresAt must be time.Time")
+	}
+	return r.q.AddSession(context.Background(), sqlcdb.AddSessionParams{
+		UserID:    uid,
+		Token:     token,
+		ExpiresAt: t,
+	})
 }
 
 func (r *UserRepository) GetRefreshToken(token string) (*models.RefreshToken, error) {
-	q := psq.Select("id", "user_id", "token", "expires_at").
-		From("refresh_tokens").
-		Where(sq.Eq{"token": token})
-	row := q.RunWith(r.db).QueryRow()
-	var rt models.RefreshToken
-	err := row.Scan(&rt.ID, &rt.UserID, &rt.Token, &rt.ExpiresAt)
+	rt, err := r.q.GetRefreshToken(context.Background(), token)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
 		return nil, err
 	}
-	return &rt, nil
+	return &models.RefreshToken{
+		ID:        rt.ID.String(),
+		UserID:    rt.UserID.String(),
+		Token:     rt.Token,
+		ExpiresAt: rt.ExpiresAt,
+	}, nil
 }
 
 func (r *UserRepository) GetUserByID(userID string) (*models.User, error) {
-	q := psq.Select("id", "email", "username", "avatar_url", "created_at").
-		From("users").
-		Where(sq.Eq{"id": userID})
-	row := q.RunWith(r.db).QueryRow()
-	var u models.User
-	var avatarURL sql.NullString
-	err := row.Scan(&u.ID, &u.Email, &u.Username, &avatarURL, &u.CreatedAt)
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
+	u, err := r.q.GetUserByID(context.Background(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
 		return nil, err
 	}
-	if avatarURL.Valid {
-		u.AvatarURL = avatarURL.String
-	}
-	return &u, nil
+	return userFromSQLC(u), nil
 }
 
 func (r *UserRepository) DeleteRefreshToken(id string) error {
-	q := psq.Delete("refresh_tokens").Where(sq.Eq{"id": id})
-	_, err := q.RunWith(r.db).Exec()
-	return err
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+	return r.q.DeleteRefreshToken(context.Background(), uid)
 }
 
 func (r *UserRepository) DeleteUserRefreshTokens(userID string) error {
-	q := psq.Delete("refresh_tokens").Where(sq.Eq{"user_id": userID})
-	_, err := q.RunWith(r.db).Exec()
-	return err
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	return r.q.DeleteUserRefreshTokens(context.Background(), uid)
+}
+
+func userFromSQLC(u sqlcdb.User) *models.User {
+	out := &models.User{
+		ID:        u.ID.String(),
+		Email:     u.Email,
+		Username:  u.Username,
+		CreatedAt: u.CreatedAt,
+	}
+	if u.AvatarUrl.Valid {
+		out.AvatarURL = u.AvatarUrl.String
+	}
+	return out
 }

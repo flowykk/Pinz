@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
 	"log/slog"
 	"os"
@@ -9,154 +10,12 @@ import (
 
 	"github.com/XSAM/otelsql"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
-const (
-	postgisDDL = `CREATE EXTENSION IF NOT EXISTS postgis;`
-	tripsDDL   = `
-CREATE TABLE IF NOT EXISTS trips (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_user_id UUID NOT NULL,
-  name TEXT NOT NULL,
-  description TEXT,
-  category TEXT NOT NULL,
-  season TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'Created',
-  privacy_level TEXT NOT NULL DEFAULT 'Private',
-  start_date TIMESTAMPTZ,
-  end_date TIMESTAMPTZ,
-  likes_count INT NOT NULL DEFAULT 0,
-  dislikes_count INT NOT NULL DEFAULT 0,
-  cover_url TEXT,
-  is_published BOOLEAN NOT NULL DEFAULT false,
-  is_generated BOOLEAN NOT NULL DEFAULT false,
-  is_soft_deleted BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);`
-	tripParticipantsDDL = `
-CREATE TABLE IF NOT EXISTS trip_participants (
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL,
-  is_admin BOOLEAN NOT NULL DEFAULT false,
-  joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (trip_id, user_id)
-);`
-	invitationLinksDDL = `
-CREATE TABLE IF NOT EXISTS invitation_links (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  token TEXT NOT NULL UNIQUE,
-  expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);`
-	tripSettingsDDL = `
-CREATE TABLE IF NOT EXISTS trip_settings (
-  user_id UUID NOT NULL,
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  notifications_enabled BOOLEAN NOT NULL DEFAULT true,
-  PRIMARY KEY (user_id, trip_id)
-);`
-	tripPrivacyDDL = `
-CREATE TABLE IF NOT EXISTS trip_privacy (
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL,
-  privacy_level TEXT NOT NULL,
-  PRIMARY KEY (trip_id, user_id)
-);`
-	pinsDDL = `
-CREATE TABLE IF NOT EXISTS pins (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  description TEXT,
-  location GEOMETRY(Point, 4326),
-  category TEXT NOT NULL,
-  privacy_level TEXT NOT NULL DEFAULT 'Private',
-  media_count INT NOT NULL DEFAULT 0,
-  start_time TIMESTAMPTZ,
-  end_time TIMESTAMPTZ,
-  is_published_in_feed BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);`
-	mediaDDL = `
-CREATE TABLE IF NOT EXISTS media (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  pin_id UUID REFERENCES pins(id) ON DELETE SET NULL,
-  s3_key TEXT NOT NULL,
-  media_type TEXT NOT NULL,
-  location GEOMETRY(Point, 4326),
-  captured_at TIMESTAMPTZ,
-  battle_rating INT NOT NULL DEFAULT 0,
-  privacy_level TEXT NOT NULL DEFAULT 'Private',
-  similar_group_id UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);`
-	tagsDDL = `
-CREATE TABLE IF NOT EXISTS tags (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  pin_id UUID REFERENCES pins(id) ON DELETE CASCADE,
-  tag TEXT NOT NULL,
-  UNIQUE(trip_id, pin_id, tag)
-);`
-	pinPrivacyDDL = `
-CREATE TABLE IF NOT EXISTS pin_privacy (
-  pin_id UUID NOT NULL REFERENCES pins(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL,
-  privacy_level TEXT NOT NULL,
-  PRIMARY KEY (pin_id, user_id)
-);`
-	mediaPrivacyDDL = `
-CREATE TABLE IF NOT EXISTS media_privacy (
-  media_id UUID NOT NULL REFERENCES media(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL,
-  privacy_level TEXT NOT NULL,
-  PRIMARY KEY (media_id, user_id)
-);`
-	socialDDL = `
-CREATE TABLE IF NOT EXISTS social (
-  user_id UUID NOT NULL,
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  reaction TEXT NOT NULL,
-  PRIMARY KEY (user_id, trip_id)
-);`
-	favouriteDDL = `
-CREATE TABLE IF NOT EXISTS favourite (
-  user_id UUID NOT NULL,
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (user_id, trip_id)
-);`
-	geoRegistryDDL = `
-CREATE TABLE IF NOT EXISTS geo_registry (
-  id INT PRIMARY KEY,
-  parent_id INT REFERENCES geo_registry(id),
-  name TEXT NOT NULL,
-  type TEXT NOT NULL
-);`
-	tripLocationsDDL = `
-CREATE TABLE IF NOT EXISTS trip_locations (
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  location_id INT NOT NULL REFERENCES geo_registry(id),
-  PRIMARY KEY (trip_id, location_id)
-);`
-	addMediaSessionsDDL = `
-CREATE TABLE IF NOT EXISTS add_media_sessions (
-  session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  existing_media_ids JSONB NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);`
-	pinHiddenByUserDDL = `
-CREATE TABLE IF NOT EXISTS pin_hidden_by_user (
-  pin_id UUID NOT NULL REFERENCES pins(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL,
-  PRIMARY KEY (pin_id, user_id)
-);`
-)
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
 
 func InitDB() (*sql.DB, error) {
 	dsnStr := dsn()
@@ -204,35 +63,17 @@ func InitDB() (*sql.DB, error) {
 		slog.Warn("db: failed to register metrics", "error", err)
 	}
 
-	slog.Info("db: running migrations (postgis, trips, ..., add_media_sessions, pin_hidden_by_user)")
-	for i, ddl := range []string{postgisDDL, tripsDDL, tripParticipantsDDL, invitationLinksDDL, tripSettingsDDL, tripPrivacyDDL, pinsDDL, mediaDDL, tagsDDL, pinPrivacyDDL, mediaPrivacyDDL, socialDDL, favouriteDDL, geoRegistryDDL, tripLocationsDDL, addMediaSessionsDDL, pinHiddenByUserDDL} {
-		name := []string{"postgis", "trips", "trip_participants", "invitation_links", "trip_settings", "trip_privacy", "pins", "media", "tags", "pin_privacy", "media_privacy", "social", "favourite", "geo_registry", "trip_locations", "add_media_sessions", "pin_hidden_by_user"}[i]
-		if _, err := db.Exec(ddl); err != nil {
-			db.Close()
-			slog.Error("db: migration failed", "object", name, "error", err)
-			return nil, fmt.Errorf("migration %s: %w", name, err)
-		}
-		slog.Info("db: migration ok", "object", name)
-	}
-	if _, err := db.Exec("ALTER TABLE media ADD COLUMN IF NOT EXISTS similar_group_id UUID"); err != nil {
+	goose.SetBaseFS(migrationsFS)
+	defer goose.SetBaseFS(nil)
+	if err := goose.SetDialect("postgres"); err != nil {
 		db.Close()
-		slog.Error("db: migration media.similar_group_id failed", "error", err)
-		return nil, fmt.Errorf("migration media.similar_group_id: %w", err)
+		return nil, fmt.Errorf("goose dialect: %w", err)
 	}
-	if _, err := db.Exec("ALTER TABLE trips ADD COLUMN IF NOT EXISTS is_soft_deleted BOOLEAN NOT NULL DEFAULT false"); err != nil {
+	slog.Info("db: running migrations")
+	if err := goose.Up(db, "migrations"); err != nil {
 		db.Close()
-		slog.Error("db: migration trips.is_soft_deleted failed", "error", err)
-		return nil, fmt.Errorf("migration trips.is_soft_deleted: %w", err)
-	}
-	if _, err := db.Exec("ALTER TABLE pins ADD COLUMN IF NOT EXISTS is_published_in_feed BOOLEAN NOT NULL DEFAULT false"); err != nil {
-		db.Close()
-		slog.Error("db: migration pins.is_published_in_feed failed", "error", err)
-		return nil, fmt.Errorf("migration pins.is_published_in_feed: %w", err)
-	}
-	if _, err := db.Exec("ALTER TABLE media ADD COLUMN IF NOT EXISTS content_hash TEXT"); err != nil {
-		db.Close()
-		slog.Error("db: migration media.content_hash failed", "error", err)
-		return nil, fmt.Errorf("migration media.content_hash: %w", err)
+		slog.Error("db: migrations failed", "error", err)
+		return nil, fmt.Errorf("migrations: %w", err)
 	}
 	slog.Info("db: init complete")
 	return db, nil

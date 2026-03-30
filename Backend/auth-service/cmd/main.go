@@ -18,6 +18,7 @@ import (
 )
 
 func main() {
+	slog.Info("auth-service starting")
 	_ = godotenv.Load()
 
 	ctx := context.Background()

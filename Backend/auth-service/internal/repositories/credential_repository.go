@@ -1,76 +1,73 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 
 	"github.com/go-webauthn/webauthn/webauthn"
+	"github.com/google/uuid"
+
+	"pinz/backend/auth-service/internal/db/sqlcdb"
 )
 
 type CredentialRepository struct {
-	db *sql.DB
+	q *sqlcdb.Queries
 }
 
 func NewCredentialRepository(db *sql.DB) *CredentialRepository {
-	return &CredentialRepository{db: db}
+	return &CredentialRepository{q: sqlcdb.New(db)}
 }
 
 // CreateCredential persists a new WebAuthn credential for the given user.
-// The full credential is serialised to JSON and stored alongside its raw ID.
 func (r *CredentialRepository) CreateCredential(userID string, cred *webauthn.Credential) error {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
 	data, err := json.Marshal(cred)
 	if err != nil {
 		return err
 	}
-	q := psq.Insert("passkey_credentials").
-		Columns("user_id", "credential_id", "credential_json").
-		Values(userID, cred.ID, data)
-	_, err = q.RunWith(r.db).Exec()
-	return err
+	return r.q.CreateCredential(context.Background(), sqlcdb.CreateCredentialParams{
+		UserID:         uid,
+		CredentialID:   cred.ID,
+		CredentialJson: data,
+	})
 }
 
 // GetCredentialsByUserID returns all WebAuthn credentials registered for a user.
 func (r *CredentialRepository) GetCredentialsByUserID(userID string) ([]webauthn.Credential, error) {
-	rows, err := r.db.Query(
-		`SELECT credential_json FROM passkey_credentials WHERE user_id = $1`,
-		userID,
-	)
+	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
+	raws, err := r.q.GetCredentialJSONByUserID(context.Background(), uid)
+	if err != nil {
+		return nil, err
+	}
 	var creds []webauthn.Credential
-	for rows.Next() {
-		var data []byte
-		if err := rows.Scan(&data); err != nil {
-			return nil, err
-		}
+	for _, data := range raws {
 		var c webauthn.Credential
 		if err := json.Unmarshal(data, &c); err != nil {
 			return nil, err
 		}
 		creds = append(creds, c)
 	}
-	return creds, rows.Err()
+	return creds, nil
 }
 
 // UpdateCredential updates the stored credential data (e.g. updated sign counter).
-// It matches on the raw credential ID.
 func (r *CredentialRepository) UpdateCredential(cred *webauthn.Credential) error {
 	data, err := json.Marshal(cred)
 	if err != nil {
 		return err
 	}
-	res, err := r.db.Exec(
-		`UPDATE passkey_credentials SET credential_json = $1 WHERE credential_id = $2`,
-		data, cred.ID,
-	)
-	if err != nil {
-		return err
-	}
-	n, err := res.RowsAffected()
+	n, err := r.q.UpdateCredentialJSON(context.Background(), sqlcdb.UpdateCredentialJSONParams{
+		CredentialJson: data,
+		CredentialID:   cred.ID,
+	})
 	if err != nil {
 		return err
 	}
