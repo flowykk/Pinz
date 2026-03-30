@@ -81,7 +81,7 @@ final class TripViewModel {
                     router?.navigateToTripInfo(trip: trip)
                 }
             case .tripCreation:
-                router?.navigateToTripCreation()
+                router?.navigateToTripCreationInitial()
             case .profile(let user):
                 router?.navigateToProfile(user: user)
             case .feed:

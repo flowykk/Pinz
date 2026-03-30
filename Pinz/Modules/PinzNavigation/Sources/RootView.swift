@@ -37,8 +37,6 @@ public struct RootView<Content: View>: View {
             switch tripRoute {
             case let .info(trip):
                 TripInfoView(trip: trip)
-            case .creation:
-                InitialTripSetupView()
             case let .profile(user):
                 ProfileView(user: user)
             case let .pinInfo(pin):
@@ -58,6 +56,15 @@ public struct RootView<Content: View>: View {
                 SelectablePinsListView(trip: trip)
             case let .postPreview(trip, selectedPins):
                 PostPreviewView(trip: trip, selectedPins: selectedPins)
+            }
+        case let .tripCreation(tripCreationRoute):
+            switch tripCreationRoute {
+            case .initial:
+                InitialTripSetupView()
+            case .preprocessed:
+                PreprocessedRawPinsView()
+            case .final:
+                ReviewTripCreationView()
             }
         case let .profile(profileRoute):
             switch profileRoute {

@@ -3,7 +3,6 @@ import PinzDomain
 
 public enum TripRoute: Hashable {
     case info(trip: Trip)
-    case creation
     case profile(user: User)
     case pinInfo(pin: Pin)
     case pinCreation
@@ -15,6 +14,12 @@ public enum TripInfoRoute: Hashable {
     case pinsList(trip: Trip)
     case selectablePinsList(trip: Trip)
     case postPreview(trip: Trip, selectedPins: [Pin])
+}
+
+public enum TripCreationRoute: Hashable {
+    case initial
+    case preprocessed
+    case final
 }
 
 public enum ProfileRoute: Hashable {
@@ -48,6 +53,7 @@ public enum Route: Hashable {
     case main
     case trip(TripRoute)
     case tripInfo(TripInfoRoute)
+    case tripCreation(TripCreationRoute)
     case profile(ProfileRoute)
     case pinInfo(PinInfoRoute)
     case media(MediaRoute)

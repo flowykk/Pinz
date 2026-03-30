@@ -27,26 +27,21 @@ public struct InitialTripSetupView: View {
             CollapsibleHeader(needsBlur: viewModel.state == .gallery) {
                 header
             } stickyHeader: {
-                SegmentedPicker(selection: $viewModel.state, items: [.info, .gallery])
-                    .padding(.horizontal, 12)
+                if !viewModel.isLoading {
+                    SegmentedPicker(selection: $viewModel.state, items: [.info, .gallery])
+                        .padding(.horizontal, 12)
+                }
             } content: {
-                Group {
-                    if viewModel.state == .info {
-                        ScrollView {
-                            VStack(spacing: 12) {
-                                nameInput
-                                general
-                                descriptionInput
-                            }.padding(.horizontal, 12)
-                        }.scrollIndicators(.hidden)
-                    } else {
-                        gallery
-                            .padding(.horizontal, gallerySpacing)
-                    }
-                }.padding(.bottom, 60)
+                if !viewModel.isLoading {
+                    content
+                }
             }
 
-            gradientWithButtons
+            if viewModel.isLoading {
+                LoadingView()
+            } else {
+                gradientWithButtons
+            }
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
@@ -94,6 +89,23 @@ public struct InitialTripSetupView: View {
                 )
             }
         })
+    }
+
+    private var content: some View {
+        Group {
+            if viewModel.state == .info {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        nameInput
+                        general
+                        descriptionInput
+                    }.padding(.horizontal, 12)
+                }.scrollIndicators(.hidden)
+            } else {
+                gallery
+                    .padding(.horizontal, gallerySpacing)
+            }
+        }.padding(.bottom, 60)
     }
 
     @ViewBuilder
@@ -169,16 +181,17 @@ public struct InitialTripSetupView: View {
                 type: .slot(style: .primary, title: "Сформировать пины"),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 disabled: false,
-                action: .plain {
-//                viewModel.dispatch(.navigate(.pinCreation))
+                action: .async {
+                    try await viewModel.asyncDispatch(.continue)
                 }
-            ).disabledWithOpacity(
-                viewModel.name.isEmpty
-                || viewModel.description?.isEmpty == true
-                || viewModel.category == .none
-                || viewModel.season == .none
-                || viewModel.medias.isEmpty
             )
+//            .disabledWithOpacity(
+//                viewModel.name.isEmpty
+//                || viewModel.description?.isEmpty == true
+//                || viewModel.category == .none
+//                || viewModel.season == .none
+//                || viewModel.medias.isEmpty
+//            )
         }
     }
 }
