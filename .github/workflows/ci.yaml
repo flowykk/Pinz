@@ -103,7 +103,7 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     needs: [lint, test, build]
-    if: always() && github.event_name == 'push' && (needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.build.result == 'failure') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/PINZ-112')
+    if: always() && github.event_name == 'push' && (needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.build.result == 'failure') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     steps:
       - name: Optional Telegram notification on CI failure
         env:
