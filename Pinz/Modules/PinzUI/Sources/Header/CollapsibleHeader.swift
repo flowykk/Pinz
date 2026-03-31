@@ -101,7 +101,9 @@ public struct CollapsibleHeader<
                 Divider()
             }
             .overlay(
-                Rectangle().fill(.white).ignoresSafeArea()
+                Rectangle()
+                    .fill(PinzUIAsset.background.swiftUIColor)
+                    .ignoresSafeArea()
                     .if(needsBlur) { $0.opacity(overlayOpacity) }
             )
             .ignoresSafeArea()
