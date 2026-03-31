@@ -78,6 +78,9 @@ public protocol NetworkServiceProtocol {
     // S3 upload
     func uploadToS3(url: String, data: Data, contentType: String) async throws
 
+    // S3 upload
+    func uploadToS3(url: String, data: Data, contentType: String) async throws
+
     // Trip creation flow
     func createTrip(
         name: String,
@@ -492,6 +495,35 @@ public final class NetworkService: NetworkServiceProtocol {
         do {
             return try await perform()
         } catch let httpError as HTTPError where httpError == .unauthorized {
+            guard let storedRefreshToken = TokenStorage.shared.refreshToken else { throw httpError }
+            let newAccessToken = try await refreshToken(refreshToken: storedRefreshToken).accessToken
+            TokenStorage.shared.save(accessToken: newAccessToken, refreshToken: storedRefreshToken)
+            return try await perform()
+        }
+    }
+
+    // MARK: S3 Upload
+
+    public func uploadToS3(url: String, data: Data, contentType: String) async throws {
+        guard let uploadURL = URL(string: url) else { throw URLError(.badURL) }
+        var request = URLRequest(url: uploadURL)
+        request.httpMethod = "PUT"
+        request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        let (_, response) = try await URLSession.shared.upload(for: request, from: data)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
+    // MARK: Retry on Unauthorized
+
+    private func retryOnUnauthorized<T>(
+        _ perform: @escaping () async throws -> T
+    ) async throws -> T {
+        do {
+            return try await perform()
+        } catch let httpError as HTTPError where httpError == .unauthorized {
+            print("CURRENT REFRESH TOKEN = \(TokenStorage.shared.refreshToken)")
             guard let storedRefreshToken = TokenStorage.shared.refreshToken else { throw httpError }
             let newAccessToken = try await refreshToken(refreshToken: storedRefreshToken).accessToken
             TokenStorage.shared.save(accessToken: newAccessToken, refreshToken: storedRefreshToken)
