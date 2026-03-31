@@ -255,10 +255,10 @@ public struct TripView: View {
 
                 VStack(spacing: 2) {
                     Text(pins.isEmpty ? "" : pins[viewModel.routePinIndex].name)
-                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.background.swiftUIColor)
+                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                         .lineLimit(1)
                     Text("\(viewModel.routePinIndex + 1) / \(pins.count)")
-                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.background.swiftUIColor)
+                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                 }
 
                 Spacer()

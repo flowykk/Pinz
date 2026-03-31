@@ -75,7 +75,7 @@ public struct PinPlaceChangeView: View {
                 centerView: {
                     Text("Перемещай карту, чтобы\n изменить местоположение пина")
                         .multilineTextAlignment(.center)
-                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.background.swiftUIColor)
+                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                 }
             ).background {
                 GradientView(style: .top, color: .black, height: 200)

@@ -45,6 +45,7 @@ public struct MediaInfoView: View {
             .scrollIndicators(.hidden)
             .padding(.horizontal, 12)
         }
+        .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { setupPlayer() }
         .onDisappear {
             playerController?.stop()
