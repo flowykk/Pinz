@@ -78,8 +78,8 @@ extension AppRouter {
         navigate(to: .tripCreation(.initial))
     }
 
-    public func navigateToTripCreationPreprocessedPins() {
-        navigate(to: .tripCreation(.preprocessed))
+    public func navigateToTripCreationPreprocessedPins(tripId: String, pins: RawPins) {
+        navigate(to: .tripCreation(.preprocessed(tripId: tripId, pins: pins)))
     }
 
     public func navigateToTripCreationReview() {

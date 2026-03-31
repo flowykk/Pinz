@@ -95,11 +95,11 @@ extension PinzAPI: TargetType {
         case .addMediaStart(let tripId, _): return "/trips/\(tripId)/media/add/start"
         case .addMediaProcessGrouping(let tripId, _, _): return "/trips/\(tripId)/media/add/process-grouping"
         case .addMediaApplyGroupsAndProcess(let tripId, _, _, _): return "/trips/\(tripId)/media/add/apply-groups-and-process"
-        case .createTrip: return "/trip/creation/start"
-        case .processMediaGrouping(let tripId, _): return "/trip/creation/\(tripId)/media/process-grouping"
-        case .applyGroupsAndProcess(let tripId, _, _): return "/trip/creation/\(tripId)/apply-groups-and-process"
-        case .getTripReview(let tripId): return "/trip/creation/\(tripId)/review"
-        case .finalizeTrip(let tripId, _, _): return "/trip/creation/\(tripId)/finalize"
+        case .createTrip: return "/trips/creation/start"
+        case .processMediaGrouping(let tripId, _): return "/trips/creation/\(tripId)/media/process-grouping"
+        case .applyGroupsAndProcess(let tripId, _, _): return "/trips/creation/\(tripId)/apply-groups-and-process"
+        case .getTripReview(let tripId): return "/trips/creation/\(tripId)/review"
+        case .finalizeTrip(let tripId, _, _): return "/trips/creation/\(tripId)/finalize"
         }
     }
 
@@ -257,9 +257,55 @@ extension PinzAPI {
         case .updateTripSettings, .transferAdmin, .likeTrip, .dislikeTrip, .addTripToFavourites:
             json = #"{"success":true}"#
         case .createTrip, .addMediaStart:
-            json = #"{"trip_id":"trip-001","status":"created","upload_urls":[{"client_id":"photo1","s3_key":"trips/trip-001/photo1.jpg","url":"https://s3.example.com/stub"}]}"#
+            json = #"""
+            {
+              "trip_id": "trip-001",
+              "status": "created",
+              "upload_urls": [
+                {"client_id": "video1", "s3_key": "trips/trip-001/video1.mp4", "url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4"},
+                {"client_id": "photo1", "s3_key": "trips/trip-001/photo1.jpg", "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"},
+                {"client_id": "photo2", "s3_key": "trips/trip-001/photo2.jpg", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg"},
+                {"client_id": "photo3", "s3_key": "trips/trip-001/photo3.jpg", "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg"},
+                {"client_id": "photo4", "s3_key": "trips/trip-001/photo4.jpg", "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg"},
+                {"client_id": "photo5", "s3_key": "trips/trip-001/photo5.jpg", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}
+              ]
+            }
+            """#
         case .processMediaGrouping, .addMediaProcessGrouping:
-            json = #"{"trip_id":"trip-001","status":"processed","draft_pins":[{"draft_pin_id":"draft-001","media":[{"media_id":"media-001","type":"photo","url":"https://s3.example.com/media-001"}]}]}"#
+            json = #"""
+            {
+              "trip_id": "trip-001",
+              "status": "processed",
+              "draft_pins": [
+                {
+                  "draft_pin_id": "draft-001",
+                  "media": [
+                    {"media_id": "media-001", "type": "photo", "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"},
+                    {"media_id": "media-002", "type": "photo", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg"}
+                  ]
+                },
+                {
+                  "draft_pin_id": "draft-002",
+                  "media": [
+                    {"media_id": "media-003", "type": "video", "url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4"}
+                  ]
+                },
+                {
+                  "draft_pin_id": "draft-003",
+                  "media": [
+                    {"media_id": "media-004", "type": "photo", "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg"},
+                    {"media_id": "media-005", "type": "photo", "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg"}
+                  ]
+                },
+                {
+                  "draft_pin_id": "draft-004",
+                  "media": [
+                    {"media_id": "media-006", "type": "photo", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}
+                  ]
+                }
+              ]
+            }
+            """#
         case .applyGroupsAndProcess, .addMediaApplyGroupsAndProcess:
             json = #"{"status":"processing","message":"Groups applied, processing started"}"#
         case .getTripReview:

@@ -53,6 +53,10 @@ public struct TripView: View {
         .onAppear { 
             viewModel.setRouter(router)
             viewModel.dispatch(.checkAndUpdateTrip(availableTrips))
+            TokenStorage.shared.save(
+                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Nzc1Mjk5OTksImlhdCI6MTc3NDkzNzk5OSwidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoidXNlciJ9.hhE9dSMOkata-Zw14hii9OBAybfwLapTOSzNIFobKMI",
+                refreshToken: "AVdEMNK7JAYPqE8qkWLVjJHnoVQcLu447hP3PCyilxQ="
+            )
         }
         .onChange(of: isTripsListPresented, { _, newValue in
             withAnimation {

@@ -26,6 +26,7 @@ public final class TokenStorage {
     public func save(accessToken: String, refreshToken: String) {
         write(key: Key.accessToken, value: accessToken)
         write(key: Key.refreshToken, value: refreshToken)
+        print("shared.refreshToken \(TokenStorage.shared.refreshToken)")
     }
 
     public func clear() {
@@ -33,7 +34,7 @@ public final class TokenStorage {
         delete(key: Key.refreshToken)
     }
 
-    // MARK: - Keychain
+    // MARK: - Storage
 
     private func write(key: String, value: String) {
         let data = Data(value.utf8)
