@@ -13,6 +13,7 @@ enum ProfileIcon: String, Setting.Icon {
 
     case bell = "bell.badge"
     case paintbrush = "paintbrush"
+    case opticaldiscdrive = "opticaldiscdrive"
 
     case trash = "trash"
     case door = "door.right.hand.open"
@@ -21,6 +22,9 @@ enum ProfileIcon: String, Setting.Icon {
 public struct ProfileView: View {
 
     @State var viewModel: ProfileViewModel
+    
+    @State var cacheSize = ""
+    @State var showClearCacheAlert = false
 
     @State var imageEditingDialogShown = false
     @State var photoPickerShown = false
@@ -61,7 +65,10 @@ public struct ProfileView: View {
 
             Spacer()
         }
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear { 
+            viewModel.setRouter(router)
+            cacheSize = FileManagerImageStorage.shared.getCacheSize()
+        }
         .background(PinzUIAsset.background.swiftUIColor)
         .transition(.opacity)
         .confirmationDialog(
@@ -82,8 +89,16 @@ public struct ProfileView: View {
         .fullScreenCover(isPresented: $isAddPersonPresented) {
             AddPersonView()
         }
+        .alert("Очистить данные", isPresented: $showClearCacheAlert) {
+            Button("Отмена", role: .cancel) { }
+            Button("Очистить", role: .destructive) {
+                FileManagerImageStorage.shared.clear()
+                cacheSize = FileManagerImageStorage.shared.getCacheSize()
+            }
+        } message: {
+            Text("Вы уверены? Это удалит все сохранённые изображения.")
+        }
     }
-    
     @ViewBuilder
     private var header: some View {
         switch viewModel.state {
@@ -204,6 +219,17 @@ public struct ProfileView: View {
                     action: .plain { viewModel.dispatch(.navigate(.appearance)) }
                 )),
             ],
+        )
+
+        SettingsGroup(
+            settings: [
+                .default(Setting.DefaultSetting(
+                    id: "profileClearCache",
+                    leading: .iconTitle(ProfileIcon.opticaldiscdrive, "Очистить данные"),
+                    trailing: .valuesIcon([.text(cacheSize)], ProfileIcon.chevronRight),
+                    action: .plain { showClearCacheAlert = true }
+                )),
+            ]
         )
 
         SettingsGroup(
