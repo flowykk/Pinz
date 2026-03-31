@@ -25,7 +25,7 @@ final class InitialTripSetupViewModel {
     }
 
     enum Route {
-        case preprocessedPins
+        case preprocessedPins(tripId: String, pins: RawPins)
         case back
     }
 
@@ -39,13 +39,19 @@ final class InitialTripSetupViewModel {
         case `continue`
     }
 
+    enum LoadingStatus: String {
+        case uploadingMedia = "Загрузка медиафайлов в хранилище"
+        case formingPins = "Формирование пинов"
+    }
+
     var state: State = .info
     private(set) var isLoading: Bool = false
+    private(set) var loadingStatus: LoadingStatus?
 
-    var name: String = ""
-    var description: String?
-    var category: TripCategory = .none
-    var season: TripSeason = .none
+    var name: String = "name"
+    var description: String? = "descr"
+    var category: TripCategory = .active //.none
+    var season: TripSeason = .spring // .none
     var medias: [LoadedMedia] = []
 
     private let networkService = NetworkService()
@@ -55,8 +61,8 @@ final class InitialTripSetupViewModel {
         switch intent {
         case let .navigate(route):
             switch route {
-            case .preprocessedPins:
-                router?.navigateToTripCreationPreprocessedPins()
+            case .preprocessedPins(let tripId, let pins):
+                router?.navigateToTripCreationPreprocessedPins(tripId: tripId, pins: pins)
             case .back:
                 router?.pop()
             }
@@ -93,10 +99,67 @@ final class InitialTripSetupViewModel {
     func asyncDispatch(_ intent: AsyncIntent) async throws {
         switch intent {
         case .continue:
-            changeLoading(to: true)
-            try await Task.sleep(nanoseconds: 1_000_000_000)
-            dispatch(.navigate(.preprocessedPins))
-            changeLoading(to: false)
+            changeLoading(to: true, status: .uploadingMedia)
+
+            let response = try await networkService.createTrip(
+                name: name,
+                description: description,
+                category: category == .none ? nil : category.value,
+                season: season == .none ? nil : season.value,
+                filesToUpload: buildFilesToUpload()
+            )
+
+            try await uploadMedia(response: response)
+
+            changeLoadingStatus(to: .formingPins)
+
+            let groupingResponse = try await networkService.processMediaGrouping(
+                tripId: response.tripId,
+                media: buildMediaEntries(from: response)
+            )
+
+            let pins = RawPins(pins: groupingResponse.draftPins.map { $0.toRawPin() })
+            dispatch(.navigate(.preprocessedPins(tripId: response.tripId, pins: pins)))
+            changeLoading(to: false, status: nil)
+        }
+    }
+
+    private func buildFilesToUpload() -> [FileToUploadDTO] {
+        medias.compactMap { media -> FileToUploadDTO? in
+            guard case .loading = media.content else {
+                return FileToUploadDTO(clientId: media.id.uuidString, contentType: media.mediaType.contentType)
+            }
+            return nil
+        }
+    }
+
+    private func uploadMedia(response: CreateTripDTO) async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for uploadURL in response.uploadUrls {
+                guard let media = medias.first(where: { $0.id.uuidString == uploadURL.clientId }),
+                      let data = await media.uploadData() else { continue }
+                let contentType = media.mediaType.contentType
+                let url = "\(uploadURL.url)/\(uploadURL.s3Key)"
+                group.addTask { [weak self] in
+                    guard let self else { return }
+                    try await networkService.uploadToS3(url: url, data: data, contentType: contentType)
+                }
+            }
+            try await group.waitForAll()
+        }
+    }
+
+    private func buildMediaEntries(from response: CreateTripDTO) -> [MediaMetaEntryDTO] {
+        response.uploadUrls.compactMap { uploadURL -> MediaMetaEntryDTO? in
+            guard let media = medias.first(where: { $0.id.uuidString == uploadURL.clientId }) else { return nil }
+            return MediaMetaEntryDTO(
+                s3Key: uploadURL.s3Key,
+                capturedAt: nil,
+                latitude: media.coordinates?.latitude,
+                longitude: media.coordinates?.longitude,
+                mediaType: media.mediaType.rawValue,
+                contentHash: nil
+            )
         }
     }
 
@@ -104,9 +167,16 @@ final class InitialTripSetupViewModel {
         self.router = router
     }
 
-    private func changeLoading(to isLoading: Bool) {
+    private func changeLoading(to isLoading: Bool, status: LoadingStatus?) {
         withAnimation(.easeInOut(duration: 0.3)) {
             self.isLoading = isLoading
+            self.loadingStatus = status
+        }
+    }
+
+    private func changeLoadingStatus(to status: LoadingStatus) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            self.loadingStatus = status
         }
     }
 

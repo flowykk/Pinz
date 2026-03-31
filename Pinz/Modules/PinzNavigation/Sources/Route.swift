@@ -18,7 +18,7 @@ public enum TripInfoRoute: Hashable {
 
 public enum TripCreationRoute: Hashable {
     case initial
-    case preprocessed
+    case preprocessed(tripId: String, pins: RawPins)
     case final
 }
 

@@ -23,13 +23,15 @@ final class PreprocessedRawPinsViewModel {
         case `continue`
     }
 
+    let tripId: String
     var pins: RawPins
     private(set) var isLoading = false
 
     private let networkService = NetworkService()
     private var router: AppRouting?
 
-    init(pins: RawPins) {
+    init(tripId: String, pins: RawPins) {
+        self.tripId = tripId
         self.pins = pins
     }
 
@@ -43,8 +45,10 @@ final class PreprocessedRawPinsViewModel {
                 router?.navigateToTripCreationReview()
             }
         case let .deleteMedia(media, pinID):
-            if let pinIndex = pins.pins.firstIndex(where: { $0.id == pinID }) {
-                pins.pins[pinIndex].medias.removeAll { $0.id == media.id }
+            withAnimation(.easeInOut(duration: 0.3)) {
+                if let pinIndex = pins.pins.firstIndex(where: { $0.id == pinID }) {
+                    pins.pins[pinIndex].medias.removeAll { $0.id == media.id }
+                }
             }
         case let .mergePins(firstIndex, secondIndex):
             guard firstIndex != secondIndex,

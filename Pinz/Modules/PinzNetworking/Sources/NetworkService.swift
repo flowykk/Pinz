@@ -45,6 +45,9 @@ public protocol NetworkServiceProtocol {
     func addMediaProcessGrouping(tripId: String, sessionId: String, media: [MediaMetaEntryDTO]) async throws -> ProcessMediaGroupingDTO
     func addMediaApplyGroupsAndProcess(tripId: String, sessionId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String]) async throws -> ApplyGroupsAndProcessDTO
 
+    // S3 upload
+    func uploadToS3(url: String, data: Data, contentType: String) async throws
+
     // Trip creation flow
     func createTrip(name: String, description: String?, category: String?, season: String?, filesToUpload: [FileToUploadDTO]) async throws -> CreateTripDTO
     func processMediaGrouping(tripId: String, media: [MediaMetaEntryDTO]) async throws -> ProcessMediaGroupingDTO
@@ -56,9 +59,12 @@ public protocol NetworkServiceProtocol {
 // MARK: - Implementation
 
 public final class NetworkService: NetworkServiceProtocol {
-    private let provider = NetworkProvider<PinzAPI>()
+    private let provider: NetworkProvider<PinzAPI>
 
-    public init() {}
+    public init() {
+        let stub: Bool = true
+        self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: 0.5)
+    }
 
     // MARK: Auth
 
@@ -182,14 +188,62 @@ public final class NetworkService: NetworkServiceProtocol {
         try await provider.request(.addMediaApplyGroupsAndProcess(tripId: tripId, sessionId: sessionId, draftPins: draftPins, deletedMediaIds: deletedMediaIds), type: ApplyGroupsAndProcessDTO.self)
     }
 
+    // MARK: Retry on Unauthorized
+
+    private func retryOnUnauthorized<T>(
+        _ perform: @escaping () async throws -> T
+    ) async throws -> T {
+        do {
+            return try await perform()
+        } catch let httpError as HTTPError where httpError == .unauthorized {
+            print("CURRENT REFRESH TOKEN = \(TokenStorage.shared.refreshToken)")
+            guard let storedRefreshToken = TokenStorage.shared.refreshToken else { throw httpError }
+            let newAccessToken = try await refreshToken(refreshToken: storedRefreshToken).accessToken
+            TokenStorage.shared.save(accessToken: newAccessToken, refreshToken: storedRefreshToken)
+            return try await perform()
+        }
+    }
+
+    // MARK: S3 Upload
+
+    public func uploadToS3(url: String, data: Data, contentType: String) async throws {
+        guard let uploadURL = URL(string: url) else { throw URLError(.badURL) }
+        var request = URLRequest(url: uploadURL)
+        request.httpMethod = "PUT"
+        request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        let (_, response) = try await URLSession.shared.upload(for: request, from: data)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
     // MARK: Trip creation flow
 
-    public func createTrip(name: String, description: String? = nil, category: String? = nil, season: String? = nil, filesToUpload: [FileToUploadDTO]) async throws -> CreateTripDTO {
-        try await provider.request(.createTrip(name: name, description: description, category: category, season: season, filesToUpload: filesToUpload), type: CreateTripDTO.self)
+    public func createTrip(
+        name: String,
+        description: String? = nil,
+        category: String? = nil,
+        season: String? = nil,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> CreateTripDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .createTrip(
+                    name: name,
+                    description: description,
+                    category: category,
+                    season: season,
+                    filesToUpload: filesToUpload
+                ),
+                type: CreateTripDTO.self
+            )
+        }
     }
 
     public func processMediaGrouping(tripId: String, media: [MediaMetaEntryDTO]) async throws -> ProcessMediaGroupingDTO {
-        try await provider.request(.processMediaGrouping(tripId: tripId, media: media), type: ProcessMediaGroupingDTO.self)
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(.processMediaGrouping(tripId: tripId, media: media), type: ProcessMediaGroupingDTO.self)
+        }
     }
 
     public func applyGroupsAndProcess(tripId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String]) async throws -> ApplyGroupsAndProcessDTO {

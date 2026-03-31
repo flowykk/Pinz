@@ -2,11 +2,22 @@ import SwiftUI
 
 public struct LoadingView: View {
 
-    public init() {}
+    private let status: String?
+
+    public init(status: String? = nil) {
+        self.status = status
+    }
 
     public var body: some View {
-        Spacer(minLength: 0)
-        ProgressView()
-        Spacer(minLength: 0)
+        VStack(spacing: 12) {
+            ProgressView()
+            if let status {
+                Text(status)
+                    .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                    .id(status)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: status)
     }
 }

@@ -106,11 +106,10 @@ public struct PinCreationView: View {
                 action: .plain { viewModel.dispatch(.navigate(.back)) }
             )
         }, centerView: {
-            let defaultTitle = "Создание пина"
-            HeaderTitle(
-                viewModel.name.isEmpty ? defaultTitle : viewModel.name,
-                subtitle: viewModel.name.isEmpty ? nil : defaultTitle
-            ).animation(.default, value: viewModel.name)
+            AnimatableHeaderTitle(
+                animatableTitle: "Создание пина",
+                title: $viewModel.name
+            )
         }, rightView: {
             if viewModel.state == .gallery {
                 PinzButton(
@@ -122,7 +121,7 @@ public struct PinCreationView: View {
         })
     }
 
-    var gallery: some View {
+    private var gallery: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: gallerySpacing) {
                 PinzGrid($viewModel.medias, columns: galleryColumns, spacing: gallerySpacing) { media, _ in
@@ -147,7 +146,7 @@ public struct PinCreationView: View {
     }
 
     @ViewBuilder
-    var general: some View {
+    private var general: some View {
         SettingsGroup(
             title: "Общая информация",
             settings: [

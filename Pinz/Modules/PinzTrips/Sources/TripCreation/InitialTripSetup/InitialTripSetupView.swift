@@ -38,7 +38,7 @@ public struct InitialTripSetupView: View {
             }
 
             if viewModel.isLoading {
-                LoadingView()
+                LoadingView(status: viewModel.loadingStatus?.rawValue)
             } else {
                 gradientWithButtons
             }
@@ -79,6 +79,11 @@ public struct InitialTripSetupView: View {
                 type: .icon(.chevronLeft),
                 tint: PinzUIAsset.textPrimary.swiftUIColor,
                 action: .plain { viewModel.dispatch(.navigate(.back)) }
+            )
+        }, centerView: {
+            AnimatableHeaderTitle(
+                animatableTitle: "Создание путешествия",
+                title: $viewModel.name
             )
         }, rightView: {
             if viewModel.state == .gallery {

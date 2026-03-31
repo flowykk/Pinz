@@ -12,7 +12,7 @@ public protocol AppRouting {
     func navigateToFeed()
 
     func navigateToTripCreationInitial()
-    func navigateToTripCreationPreprocessedPins()
+    func navigateToTripCreationPreprocessedPins(tripId: String, pins: RawPins)
     func navigateToTripCreationReview()
 
     func navigateToPinsList(trip: Trip)
