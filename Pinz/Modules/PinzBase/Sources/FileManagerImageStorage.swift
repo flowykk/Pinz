@@ -85,10 +85,41 @@ public final class FileManagerImageStorage: LocalFileManagerProtocol {
             for url in fileURLs {
                 try FileManager.default.removeItem(at: url)
             }
+            memoryCache.removeAllObjects()
             print("Storage cleared.")
         } catch {
             print("Error clearing storage: \(error)")
         }
+    }
+
+    public func getCacheSize() -> String {
+        guard let folderURL = getURLForFolder(folderName: folderName) else { return "0 B" }
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: folderURL.path) else { return "0 B" }
+
+        do {
+            let fileURLs = try fileManager.contentsOfDirectory(at: folderURL, includingPropertiesForKeys: [.fileSizeKey])
+            let size: Int64 = try fileURLs.reduce(0) { sum, url in
+                let attributes = try fileManager.attributesOfItem(atPath: url.path)
+                return sum + (attributes[.size] as? Int64 ?? 0)
+            }
+            return formatBytes(size)
+        } catch {
+            return "0 B"
+        }
+    }
+
+    private func formatBytes(_ bytes: Int64) -> String {
+        let units = ["B", "KB", "MB", "GB"]
+        var size = Double(bytes)
+        var unitIndex = 0
+
+        while size >= 1024 && unitIndex < units.count - 1 {
+            size /= 1024
+            unitIndex += 1
+        }
+
+        return String(format: "%.1f %@", size, units[unitIndex])
     }
 }
 
