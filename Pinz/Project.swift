@@ -22,6 +22,9 @@ let project = Project(
             entitlements: .dictionary([
                 "com.apple.developer.associated-domains": .array([
                     .string("webcredentials:pinz.website")
+                ]),
+                "keychain-access-groups": .array([
+                    .string("$(AppIdentifierPrefix)io.tuist.Pinz")
                 ])
             ]),
             dependencies: [

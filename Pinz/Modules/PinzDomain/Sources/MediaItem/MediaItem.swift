@@ -1,8 +1,22 @@
 import SwiftUI
 
-public enum MediaType: Codable {
+public enum MediaType: Codable, Hashable {
     case image
     case video
+
+    public var contentType: String {
+        switch self {
+        case .image: return "image/jpeg"
+        case .video: return "video/quicktime"
+        }
+    }
+
+    public var rawValue: String {
+        switch self {
+        case .image: return "image"
+        case .video: return "video"
+        }
+    }
 }
 
 public struct MediaItem: Identifiable, Codable, Hashable {

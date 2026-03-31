@@ -29,6 +29,27 @@ public struct LoadedMedia: Hashable, Identifiable {
     }
 }
 
+extension LoadedMedia {
+    public func uploadData() async -> Data? {
+        switch content {
+        case .image(let image):
+            return image.jpegData(compressionQuality: 0.85)
+        case .video(let url, _):
+            return await Task.detached { try? Data(contentsOf: url) }.value
+        case .loading:
+            return nil
+        }
+    }
+
+    public var mediaType: MediaType {
+        switch content {
+        case .image: return .image
+        case .video: return .video
+        case .loading: return .image
+        }
+    }
+}
+
 public struct MediaCoordinates: Hashable {
     public let latitude: Double
     public let longitude: Double

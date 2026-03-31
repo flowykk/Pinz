@@ -61,8 +61,8 @@ public struct RootView<Content: View>: View {
             switch tripCreationRoute {
             case .initial:
                 InitialTripSetupView()
-            case .preprocessed:
-                PreprocessedRawPinsView()
+            case .preprocessed(let tripId, let pins):
+                PreprocessedRawPinsView(tripId: tripId, pins: pins)
             case .final:
                 ReviewTripCreationView()
             }
