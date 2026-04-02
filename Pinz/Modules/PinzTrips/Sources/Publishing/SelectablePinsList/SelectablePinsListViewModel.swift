@@ -45,7 +45,7 @@ final class SelectablePinsListViewModel {
                     selectedPins: pins.filter { selectedPins.contains($0.id) }
                 )
             case let .pinInfo(pin):
-                router?.navigateToPinInfo(pin: pin)
+                router?.navigateToPinInfo(pin: pin, updateAction: nil)
             case .back:
                 router?.pop()
             }

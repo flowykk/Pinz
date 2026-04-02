@@ -57,3 +57,22 @@ public enum PinCategory: PickerItem {
         }
     }
 }
+
+extension String {
+    public func toPinCategory() -> PinCategory {
+        switch self {
+        case "sight": return .sight
+        case "nature": return .nature
+        case "leisure": return .leisure
+        case "housing": return .housing
+        case "food": return .food
+        case "shopping": return .shopping
+        case "transport": return .transport
+        case "entertainment": return .entertainment
+        case "event": return .event
+        case "sport": return .sport
+        case "work": return .work
+        default: return .custom(self)
+        }
+    }
+}

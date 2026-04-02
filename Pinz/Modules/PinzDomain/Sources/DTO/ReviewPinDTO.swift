@@ -12,15 +12,29 @@ public struct ReviewPinDTO: Codable {
     public let media: [ReviewPinMediaDTO]
 
     public init(
-        pinId: String, name: String?, category: String?, latitude: Double?,
-        longitude: Double?, locationName: String?, startTimeUnix: Int?,
-        endTimeUnix: Int?, tags: [String], issues: [String], media: [ReviewPinMediaDTO]
+        pinId: String,
+        name: String?,
+        category: String?,
+        latitude: Double?,
+        longitude: Double?,
+        locationName: String?,
+        startTimeUnix: Int?,
+        endTimeUnix: Int?,
+        tags: [String],
+        issues: [String],
+        media: [ReviewPinMediaDTO]
     ) {
-        self.pinId = pinId; self.name = name; self.category = category
-        self.latitude = latitude; self.longitude = longitude
-        self.locationName = locationName; self.startTimeUnix = startTimeUnix
-        self.endTimeUnix = endTimeUnix; self.tags = tags
-        self.issues = issues; self.media = media
+        self.pinId = pinId
+        self.name = name
+        self.category = category
+        self.latitude = latitude
+        self.longitude = longitude
+        self.locationName = locationName
+        self.startTimeUnix = startTimeUnix
+        self.endTimeUnix = endTimeUnix
+        self.tags = tags
+        self.issues = issues
+        self.media = media
     }
 
     enum CodingKeys: String, CodingKey {

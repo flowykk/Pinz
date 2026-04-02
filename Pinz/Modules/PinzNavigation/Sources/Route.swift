@@ -4,7 +4,7 @@ import PinzDomain
 public enum TripRoute: Hashable {
     case info(trip: Trip)
     case profile(user: User)
-    case pinInfo(pin: Pin)
+    case pinInfo(pin: Pin, updateAction: PinUpdateAction?)
     case pinCreation
     case members
     case feed
@@ -19,7 +19,7 @@ public enum TripInfoRoute: Hashable {
 public enum TripCreationRoute: Hashable {
     case initial
     case preprocessed(tripId: String, pins: RawPins)
-    case final
+    case final(tripId: String, pins: [Pin])
 }
 
 public enum ProfileRoute: Hashable {

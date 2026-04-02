@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzBase
+import PinzDomain
 
 @Observable
 final class ReviewTripCreationViewModel {
@@ -12,7 +13,15 @@ final class ReviewTripCreationViewModel {
         case navigate(Route)
     }
 
+    let tripId: String
+    var pins: [Pin]
+
     private var router: AppRouting?
+
+    init(tripId: String, pins: [Pin]) {
+        self.tripId = tripId
+        self.pins = pins
+    }
 
     func dispatch(_ intent: Intent) {
         switch intent {
@@ -22,6 +31,16 @@ final class ReviewTripCreationViewModel {
                 router?.pop()
             }
         }
+    }
+
+    func navigateToPinInfo(at index: Int, router: AppRouting?) {
+        let pin = pins[index]
+        router?.navigateToPinInfo(
+            pin: pin,
+            updateAction: PinUpdateAction { [weak self] updatedPin in
+                self?.pins[index] = updatedPin
+            }
+        )
     }
 
     func setRouter(_ router: AppRouting?) {

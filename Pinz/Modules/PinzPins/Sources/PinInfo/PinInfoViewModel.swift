@@ -46,6 +46,7 @@ public class PinInfoViewModel {
     var previousState: State = .info
 
     var pin: Pin
+    private let updateAction: PinUpdateAction?
     private let networkService = NetworkService()
     private var router: AppRouting?
 
@@ -53,8 +54,13 @@ public class PinInfoViewModel {
         state == .editing
     }
 
-    public init(pin: Pin) {
+    public init(pin: Pin, updateAction: PinUpdateAction? = nil) {
         self.pin = pin
+        self.updateAction = updateAction
+    }
+
+    public func onDisappear() {
+        updateAction?.action(pin)
     }
 
     public func dispatch(_ intent: Intent) {

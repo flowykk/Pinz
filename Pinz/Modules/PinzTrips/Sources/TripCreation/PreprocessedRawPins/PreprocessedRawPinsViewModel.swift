@@ -8,7 +8,7 @@ final class PreprocessedRawPinsViewModel {
 
     enum Route {
         case back
-        case review
+        case review(tripId: String, pins: [Pin])
     }
 
     enum Intent {
@@ -29,6 +29,7 @@ final class PreprocessedRawPinsViewModel {
 
     private let networkService = NetworkService()
     private var router: AppRouting?
+    private var deletedMediaIds: [String] = []
 
     init(tripId: String, pins: RawPins) {
         self.tripId = tripId
@@ -41,13 +42,14 @@ final class PreprocessedRawPinsViewModel {
             switch route {
             case .back:
                 router?.pop()
-            case .review:
-                router?.navigateToTripCreationReview()
+            case .review(let tripId, let pins):
+                router?.navigateToTripCreationReview(tripId: tripId, pins: pins)
             }
         case let .deleteMedia(media, pinID):
             withAnimation(.easeInOut(duration: 0.3)) {
                 if let pinIndex = pins.pins.firstIndex(where: { $0.id == pinID }) {
                     pins.pins[pinIndex].medias.removeAll { $0.id == media.id }
+                    deletedMediaIds.append(media.id)
                 }
             }
         case let .mergePins(firstIndex, secondIndex):
@@ -78,8 +80,15 @@ final class PreprocessedRawPinsViewModel {
         switch intent {
         case .continue:
             changeLoading(to: true)
-            try await Task.sleep(nanoseconds: 1_000_000_000)
-            dispatch(.navigate(.review))
+            let draftPins = pins.pins.map { DraftPinInputDTO(draftPinId: $0.id, mediaIds: $0.medias.map(\.id)) }
+            try await networkService.applyGroupsAndProcess(
+                tripId: tripId,
+                draftPins: draftPins,
+                deletedMediaIds: deletedMediaIds
+            )
+            let reviewResponse = try await networkService.getTripReview(tripId: tripId)
+            let pins = reviewResponse.pins.enumerated().map { index, dto in dto.toPin(index: index) }
+            dispatch(.navigate(.review(tripId: tripId, pins: pins)))
             changeLoading(to: false)
         }
     }
