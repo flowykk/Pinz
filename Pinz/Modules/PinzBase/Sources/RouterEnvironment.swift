@@ -6,14 +6,14 @@ public protocol AppRouting {
 
     func navigateToTripInfo(trip: Trip)
     func navigateToProfile(user: User)
-    func navigateToPinInfo(pin: Pin)
+    func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction?)
     func navigateToPinCreation()
     func navigateToTripMembers()
     func navigateToFeed()
 
     func navigateToTripCreationInitial()
     func navigateToTripCreationPreprocessedPins(tripId: String, pins: RawPins)
-    func navigateToTripCreationReview()
+    func navigateToTripCreationReview(tripId: String, pins: [Pin])
 
     func navigateToPinsList(trip: Trip)
     func navigateToSelectablePinsList(trip: Trip)

@@ -549,7 +549,8 @@ public final class NetworkService: NetworkServiceProtocol {
             )
         }
     }
-    
+
+    @discardableResult
     public func applyGroupsAndProcess(
         tripId: String,
         draftPins: [DraftPinInputDTO],
@@ -568,12 +569,9 @@ public final class NetworkService: NetworkServiceProtocol {
     public func getTripReview(
         tripId: String
     ) async throws -> GetTripReviewDTO {
-        try await provider.request(
-            .getTripReview(
-                tripId: tripId
-            ),
-            type: GetTripReviewDTO.self
-        )
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(.getTripReview(tripId: tripId), type: GetTripReviewDTO.self)
+        }
     }
     
     public func finalizeTrip(

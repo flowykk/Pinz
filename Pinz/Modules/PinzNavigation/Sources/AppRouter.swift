@@ -39,8 +39,8 @@ extension AppRouter {
         navigate(to: .trip(.profile(user: user)))
     }
 
-    public func navigateToPinInfo(pin: Pin) {
-        navigate(to: .trip(.pinInfo(pin: pin)))
+    public func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction? = nil) {
+        navigate(to: .trip(.pinInfo(pin: pin, updateAction: updateAction)))
     }
 
     public func navigateToPinCreation() {
@@ -82,8 +82,8 @@ extension AppRouter {
         navigate(to: .tripCreation(.preprocessed(tripId: tripId, pins: pins)))
     }
 
-    public func navigateToTripCreationReview() {
-        navigate(to: .tripCreation(.final))
+    public func navigateToTripCreationReview(tripId: String, pins: [Pin]) {
+        navigate(to: .tripCreation(.final(tripId: tripId, pins: pins)))
     }
 }
 

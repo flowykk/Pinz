@@ -40,8 +40,8 @@ public struct PinInfoView: View {
         }
     }
 
-    public init(pin: Pin) {
-        viewModel = PinInfoViewModel(pin: pin)
+    public init(pin: Pin, updateAction: PinUpdateAction? = nil) {
+        viewModel = PinInfoViewModel(pin: pin, updateAction: updateAction)
     }
 
     public var body: some View {
@@ -71,6 +71,7 @@ public struct PinInfoView: View {
             }
         }
         .onAppear { viewModel.setRouter(router) }
+        .onDisappear { viewModel.onDisappear() }
         .background(PinzUIAsset.background.swiftUIColor)
         .itemsPickerSheet(
             isPresented: $isCategoryPickerPresented,

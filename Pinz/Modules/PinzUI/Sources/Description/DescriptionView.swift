@@ -30,7 +30,7 @@ public struct DescriptionView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 0) {
                 SettingTitle(title)
-                if description != nil {
+                if let description, !description.isEmpty {
                     Spacer()
                     Button {
                         withAnimation(.easeInOut(duration: 0.3)) {
@@ -50,7 +50,7 @@ public struct DescriptionView: View {
             .padding(.leading, 12)
             .padding(.trailing, 16)
             
-            if let description = description {
+            if let description, !description.isEmpty {
                 VStack(spacing: 0) {
                     Text(description)
                         .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)

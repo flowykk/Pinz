@@ -87,7 +87,7 @@ final class TripViewModel {
             case .feed:
                 router?.navigateToFeed()
             case .pinInfo(let pin):
-                router?.navigateToPinInfo(pin: pin)
+                router?.navigateToPinInfo(pin: pin, updateAction: nil)
             case .pinCreation:
                 router?.navigateToPinCreation()
             case .members:

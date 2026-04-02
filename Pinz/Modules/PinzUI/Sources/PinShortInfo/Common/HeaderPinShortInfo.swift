@@ -8,25 +8,28 @@
 import SwiftUI
 import PinzDomain
 
-struct HeaderPinShortInfo: View {
+public struct HeaderPinShortInfo: View {
     let pin: Pin
     let selectable: Bool
     let isSelected: Bool
+    let isPrivacyShown: Bool
     let onSelect: (() -> Void)?
     
-    init(
+    public init(
         pin: Pin,
         selectable: Bool = false,
         isSelected: Bool = false,
+        isPrivacyShown: Bool = true,
         onSelect: (() -> Void)? = nil
     ) {
         self.pin = pin
         self.selectable = selectable
         self.isSelected = isSelected
+        self.isPrivacyShown = isPrivacyShown
         self.onSelect = onSelect
     }
     
-    var body: some View {
+    public var body: some View {
         HStack {
             if selectable {
                 VStack {
@@ -62,7 +65,7 @@ struct HeaderPinShortInfo: View {
                 Spacer(minLength: 0)
                 HStack(spacing: 10) {
                     StatisticView(icon: "photo.stack.fill", text: String(pin.medias.count))
-                    if !selectable {
+                    if !selectable && isPrivacyShown {
                         StatisticView(
                             icon: pin.isPrivate == true ? "lock.fill" : "lock.open.fill",
                             iconColor: pin.isPrivate == true ? PinzUIAsset.accentRed : PinzUIAsset.accentGreen

@@ -1,27 +1,64 @@
 import SwiftUI
 import PinzUI
+import PinzDomain
 
 public struct ReviewTripCreationView: View {
 
-    @State private var viewModel = ReviewTripCreationViewModel()
+    @State private var viewModel: ReviewTripCreationViewModel
 
     @Environment(\.appRouter) private var router
 
-    public init() {}
+    public init(tripId: String, pins: [Pin]) {
+        viewModel = ReviewTripCreationViewModel(tripId: tripId, pins: pins)
+    }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            Header(leftView: {
-                PinzButton(
-                    type: .icon(.chevronLeft),
-                    tint: PinzUIAsset.textPrimary.swiftUIColor,
-                    action: .plain { viewModel.dispatch(.navigate(.back)) }
-                )
-            })
+        ZStack {
+            CollapsibleHeader(needsBlur: true) {
+                header
+            } content: {
+                VStack(spacing: 8) {
+                    let pins = viewModel.pins
+                    ForEach(pins.indices, id: \.self) { index in
+                        ReviewPinView(pin: pins[index], index: index) {
+                            viewModel.navigateToPinInfo(at: index, router: router)
+                        }
 
-            Spacer()
+                        if index != pins.count - 1 {
+                            Divider().padding(.leading, 12)
+                        }
+                    }
+                }
+                .padding(.bottom, 100)
+                .animation(.default, value: viewModel.pins)
+            }
+
+            gradientWithButtons
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
+    }
+
+    @ViewBuilder
+    private var header: some View {
+        Header(leftView: {
+            PinzButton(
+                type: .icon(.chevronLeft),
+                tint: PinzUIAsset.textPrimary.swiftUIColor,
+                action: .plain { viewModel.dispatch(.navigate(.back)) }
+            )
+        }, centerView: {
+            HeaderTitle("Проверка пинов")
+        })
+    }
+
+    private var gradientWithButtons: some View {
+        BottomGradientWithButtons {
+            PinzButton(
+                type: .slot(style: .primary, title: "Далее"),
+                tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                action: .async { }
+            )
+        }
     }
 }

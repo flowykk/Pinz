@@ -309,7 +309,63 @@ extension PinzAPI {
         case .applyGroupsAndProcess, .addMediaApplyGroupsAndProcess:
             json = #"{"status":"processing","message":"Groups applied, processing started"}"#
         case .getTripReview:
-            json = #"{"trip_id":"trip-001","status":"ready","similar":[],"pins":[{"pin_id":"pin-001","name":"Eiffel Tower","category":"landmark","latitude":48.8584,"longitude":2.2945,"location_name":"Paris, France","start_time_unix":1700000000,"end_time_unix":1700003600,"tags":["iconic"],"issues":[],"media":[{"media_id":"media-001","url":"https://s3.example.com/media-001","privacy_level":"public"}]}]}"#
+            json = #"""
+            {
+              "trip_id": "trip-001",
+              "status": "review",
+              "similar": [],
+              "pins": [
+                {
+                  "pin_id": "pin-001",
+                  "name": "Храм Христа Спасителя",
+                  "category": "entertainment",
+                  "latitude": 55.7447,
+                  "longitude": 37.6055,
+                  "location_name": "Москва",
+                  "tags": ["история", "архитектура", "религия"],
+                  "issues": [],
+                  "media": [
+                    {"media_id": "m-001", "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg", "privacy_level": "public"},
+                    {"media_id": "m-002", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg", "privacy_level": "public"},
+                    {"media_id": "m-003", "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg", "privacy_level": "public"},
+                    {"media_id": "m-004", "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg", "privacy_level": "public"},
+                    {"media_id": "m-005", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg", "privacy_level": "public"}
+                  ]
+                },
+                {
+                  "pin_id": "pin-002",
+                  "name": "Красная площадь",
+                  "category": "entertainment",
+                  "latitude": 55.7539,
+                  "longitude": 37.6208,
+                  "location_name": "Москва",
+                  "tags": ["достопримечательность"],
+                  "issues": [],
+                  "media": [
+                    {"media_id": "m-006", "url": "https://i.pinimg.com/736x/34/cb/93/34cb93114fb0cca8f020cb9c26928394.jpg", "privacy_level": "public"},
+                    {"media_id": "m-007", "url": "https://i.pinimg.com/736x/cb/f7/9b/cbf79b6388c70e03982a519436942256.jpg", "privacy_level": "public"},
+                    {"media_id": "m-008", "url": "https://i.pinimg.com/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg", "privacy_level": "public"},
+                    {"media_id": "m-009", "url": "https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg", "privacy_level": "public"}
+                  ]
+                },
+                {
+                  "pin_id": "pin-003",
+                  "name": "Парк Горького",
+                  "category": "nature",
+                  "latitude": 55.7312,
+                  "longitude": 37.6014,
+                  "location_name": "Москва",
+                  "tags": ["парк", "природа"],
+                  "issues": [],
+                  "media": [
+                    {"media_id": "m-010", "url": "https://i.pinimg.com/1200x/cd/47/23/cd4723e7bac0a34506e84b9c378d9eaf.jpg", "privacy_level": "public"},
+                    {"media_id": "m-011", "url": "https://i.pinimg.com/1200x/a9/e8/67/a9e867ac241af016ee06bea2cd5b5abb.jpg", "privacy_level": "public"},
+                    {"media_id": "m-012", "url": "https://i.pinimg.com/1200x/66/a0/94/66a094638921cfd9e7a3ce009bc43409.jpg", "privacy_level": "public"}
+                  ]
+                }
+              ]
+            }
+            """#
         case .finalizeTrip:
             json = #"{"trip_id":"trip-001","status":"finalized","message":"Trip finalized successfully"}"#
         }

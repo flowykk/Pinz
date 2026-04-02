@@ -30,7 +30,7 @@ final class TripPinsListViewModel {
         case let .navigate(route):
             switch route {
             case let .pinInfo(pin):
-                router?.navigateToPinInfo(pin: pin)
+                router?.navigateToPinInfo(pin: pin, updateAction: nil)
             case .pinCreation:
                 router?.navigateToPinCreation()
             case .back:
