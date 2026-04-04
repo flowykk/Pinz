@@ -22,6 +22,14 @@ public struct TripShortInfoView: View {
         self.onTripTapped = onTripTapped
     }
 
+    private var daysText: String {
+        guard let startDate = trip.startDate, let endDate = trip.endDate else {
+            return "? дней"
+        }
+        let days = Calendar.current.dateComponents([.day], from: startDate, to: endDate).day ?? 0
+        return "\(days) \(days.pluralizeDays())"
+    }
+
     public var body: some View {
         Button {
             onTripTapped(trip)
@@ -41,7 +49,7 @@ public struct TripShortInfoView: View {
                     HStack(spacing: 10) {
                         StatisticView(icon: "person.2.fill", text: String(trip.members.count))
                         StatisticView(icon: "photo.stack.fill", text: "100")
-                        StatisticView(icon: "calendar", text: "12 days")
+                        StatisticView(icon: "calendar", text: daysText)
                     }
                     if let description = trip.description {
                         Text(description)

@@ -30,7 +30,11 @@ public struct TripView: View {
 
     public var body: some View {
         ZStack {
-            if let selectedTrip = viewModel.trip {
+            let hasSavedTrip = SelectedTripStorage.shared.selectedTripID != nil
+
+            if viewModel.isLoading || (hasSavedTrip && viewModel.trip == nil) {
+                LoadingView()
+            } else if let selectedTrip = viewModel.trip {
                 TripMapView(
                     position: $viewModel.position,
                     pins: selectedTrip.pins,
@@ -50,13 +54,19 @@ public struct TripView: View {
                 footer
             }
         }
-        .onAppear { 
+        .onAppear {
             viewModel.setRouter(router)
             viewModel.dispatch(.checkAndUpdateTrip(availableTrips))
+            Task {
+                try? await viewModel.asyncDispatch(.loadSavedTrip)
+            }
             TokenStorage.shared.save(
                 accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Nzc1Mjk5OTksImlhdCI6MTc3NDkzNzk5OSwidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoidXNlciJ9.hhE9dSMOkata-Zw14hii9OBAybfwLapTOSzNIFobKMI",
                 refreshToken: "AVdEMNK7JAYPqE8qkWLVjJHnoVQcLu447hP3PCyilxQ="
             )
+        }
+        .onChange(of: viewModel.trip?.id) { _, _ in
+            Task { try? await viewModel.asyncDispatch(.loadSavedTrip) }
         }
         .onChange(of: isTripsListPresented, { _, newValue in
             withAnimation {
@@ -77,13 +87,7 @@ public struct TripView: View {
             }
         }
         .sheet(isPresented: $isTripsListPresented) {
-            let otherTrips = availableTrips.filter { trip in
-                if let selectedTrip = viewModel.trip {
-                    return trip.id != selectedTrip.id
-                }
-                return true
-            }
-            TripsListPopupView(trips: otherTrips, onTripTapped: { selectedTrip in
+            TripsListPopupView(selectedTripId: viewModel.trip?.id, onTripTapped: { selectedTrip in
                 isTripsListPresented = false
                 withAnimation(.easeInOut(duration: 0.3)) {
                     viewModel.dispatch(.selectTrip(selectedTrip))
@@ -139,7 +143,7 @@ public struct TripView: View {
                             invertColors: true
                         ) {
                             viewModel.dispatch(.toggleRouteState)
-                        }
+                        }.disabledWithOpacity(viewModel.trip?.pins.isEmpty == true)
                     }
                 }
 
@@ -273,13 +277,15 @@ public struct TripView: View {
         }.padding(.bottom, 36)
     }
 
+    @ViewBuilder
     private var gradient: some View {
+        let gradientColor = PinzUIAsset.backgroundSecondary.swiftUIColor
         VStack {
-            GradientView(style: .top, color: .black, height: 150)
+            GradientView(style: .top, color: gradientColor, height: 150)
             Spacer()
             GradientView(
                 style: .bottom,
-                color: .black,
+                color: gradientColor,
                 height: viewModel.state == .default ? 200 : 300
             ).padding(.bottom, -130)
         }

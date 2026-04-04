@@ -12,6 +12,16 @@ public struct Trip: Hashable, Identifiable {
     public var endDate: Date?
     public var category: TripCategory
     public var members: [TripMember]
+    public var coverUrl: String?
+    public var ownerUserId: String
+    public var privacyLevel: String?
+    public var status: String?
+    public var isPublished: Bool
+    public var isGenerated: Bool
+    public var likesCount: Int
+    public var dislikesCount: Int
+    public var createdAt: Date
+    public var updatedAt: Date
 
     public init(
         id: String = UUID().uuidString,
@@ -23,7 +33,17 @@ public struct Trip: Hashable, Identifiable {
         startDate: Date? = nil,
         endDate: Date? = nil,
         category: TripCategory,
-        members: [TripMember] = []
+        members: [TripMember] = [],
+        coverUrl: String? = nil,
+        ownerUserId: String = "",
+        privacyLevel: String? = nil,
+        status: String? = nil,
+        isPublished: Bool = false,
+        isGenerated: Bool = false,
+        likesCount: Int = 0,
+        dislikesCount: Int = 0,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
     ) {
         self.id = id
         self.name = name
@@ -35,6 +55,16 @@ public struct Trip: Hashable, Identifiable {
         self.endDate = endDate
         self.category = category
         self.members = members
+        self.coverUrl = coverUrl
+        self.ownerUserId = ownerUserId
+        self.privacyLevel = privacyLevel
+        self.status = status
+        self.isPublished = isPublished
+        self.isGenerated = isGenerated
+        self.likesCount = likesCount
+        self.dislikesCount = dislikesCount
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 }
 

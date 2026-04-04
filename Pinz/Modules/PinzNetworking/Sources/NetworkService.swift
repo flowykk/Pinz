@@ -31,7 +31,8 @@ public protocol NetworkServiceProtocol {
 
     // Trips CRUD
     func getTrips() async throws -> [TripDTO]
-    func getTrip(id: String) async throws -> TripDTO
+    func getFavouriteTrips(limit: Int?, offset: Int?) async throws -> [TripDTO]
+    func getTrip(id: String) async throws -> GetTripResponseDTO
     func updateTrip(
         id: String,
         name: String?,
@@ -256,14 +257,26 @@ public final class NetworkService: NetworkServiceProtocol {
         )
     }
 
+    public func getFavouriteTrips(
+        limit: Int? = nil,
+        offset: Int? = nil
+    ) async throws -> [TripDTO] {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .getFavouriteTrips(limit: limit, offset: offset),
+                type: [TripDTO].self
+            )
+        }
+    }
+
     public func getTrip(
         id: String
-    ) async throws -> TripDTO {
+    ) async throws -> GetTripResponseDTO {
         try await provider.request(
             .getTrip(
                 id: id
             ),
-            type: TripDTO.self
+            type: GetTripResponseDTO.self
         )
     }
 

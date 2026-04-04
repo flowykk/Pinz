@@ -2,8 +2,9 @@ import SwiftUI
 import MapKit
 import PinzDomain
 import PinzBase
+import PinzNetworking
 
-@Observable
+@MainActor @Observable
 final class TripViewModel {
 
     public enum Route {
@@ -40,13 +41,21 @@ final class TripViewModel {
         case previousPin
     }
 
+    enum AsyncIntent {
+        case loadSavedTrip
+    }
+
     var state: State = .default
     var routePinIndex: Int = 0
+    var isLoading: Bool = false
+    private var hasLoaded: Bool = false
+    private var lastFetchedTripId: String? = nil
 
     var trip: Trip?
     var _position: MapCameraPosition?
     var selectedPin: Pin?
     private var router: AppRouting?
+    private let networkService = NetworkService()
 
     var sortedPins: [Pin] {
         (trip?.pins ?? []).sorted { ($0.startDate ?? .distantPast) < ($1.startDate ?? .distantPast) }
@@ -146,6 +155,26 @@ final class TripViewModel {
                 centerCoordinate: pins[index].coordinates,
                 distance: 5000
             ))
+        }
+    }
+
+    func asyncDispatch(_ intent: AsyncIntent) async throws {
+        switch intent {
+        case .loadSavedTrip:
+            guard let tripId = SelectedTripStorage.shared.selectedTripID else {
+                return
+            }
+            guard lastFetchedTripId != tripId else { return }
+            if !hasLoaded {
+                withAnimation { isLoading = true }
+            }
+            let response = try await networkService.getTrip(id: tripId)
+            var trip = response.trip.toTrip()
+            trip.pins = response.pins.enumerated().map { index, dto in dto.toPin(index: index) }
+            lastFetchedTripId = tripId
+            dispatch(.selectTrip(trip))
+            hasLoaded = true
+            withAnimation { isLoading = false }
         }
     }
 }
