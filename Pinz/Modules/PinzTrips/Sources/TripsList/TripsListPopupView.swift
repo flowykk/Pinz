@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 struct TripsListPopupView: View {
 
@@ -59,7 +60,7 @@ struct TripsListPopupView: View {
         }
 
         VStack {
-            Text("Твои путешествия")
+            Text(PinzBaseStrings.TripsListPopup.Title.myTrips)
                 .roundedFount(size: 20, weight: .semibold)
                 .padding(.top, 16)
             Spacer()
@@ -69,7 +70,7 @@ struct TripsListPopupView: View {
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             PinzButton(
-                type: .slot(style: .primary, title: "Создать путешествия"),
+                type: .slot(style: .primary, title: PinzBaseStrings.TripsListPopup.Button.createTrip),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 action: .plain { onTripCreationTapped() }
             )

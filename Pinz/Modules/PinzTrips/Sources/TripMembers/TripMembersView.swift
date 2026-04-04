@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzUI
+import PinzBase
 
 public struct TripMembersView: View {
 
@@ -20,7 +21,7 @@ public struct TripMembersView: View {
                     .textField(Setting.TextFieldSetting(
                         id: "memberSearch",
                         text: $viewModel.searchText,
-                        placeholder: "Поиск по участникам"
+                        placeholder: PinzBaseStrings.TripMembers.Placeholder.search
                     ))
                 ])
 
@@ -52,7 +53,7 @@ public struct TripMembersView: View {
                 action: .plain { viewModel.dispatch(.navigate(.back)) }
             )
         }, centerView: {
-            HeaderTitle("Участники путешествия")
+            HeaderTitle(PinzBaseStrings.TripMembers.Title.main)
         })
     }
 }

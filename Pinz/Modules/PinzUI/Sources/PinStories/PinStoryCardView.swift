@@ -80,14 +80,14 @@ struct PinStoryCardView: View {
                 )
                 .ignoresSafeArea(edges: .bottom)
                 .confirmationDialog(
-                    "Выберите действие",
+                    PinzBaseStrings.Common.Alert.Title.selectAction,
                     isPresented: $detailsDialogShown,
                     titleVisibility: .visible
                 ) {
                     if pins.count > 1 {
-                        Button("Детали пина") { navigateToPinInfo(pin: pin) }
+                        Button(PinzBaseStrings.PinStory.Button.pinDetails) { navigateToPinInfo(pin: pin) }
                     }
-                    Button("Детали медиа") { navigateToMediaInfo(media: pin.medias[index]) }
+                    Button(PinzBaseStrings.PinStory.Button.mediaDetails) { navigateToMediaInfo(media: pin.medias[index]) }
                 }
             }
         }

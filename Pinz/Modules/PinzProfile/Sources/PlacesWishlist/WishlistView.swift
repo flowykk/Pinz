@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzUI
+import PinzBase
 
 public struct WishlistView: View {
 
@@ -39,7 +40,7 @@ public struct WishlistView: View {
                 action: .plain { viewModel.dispatch(.navigate(.back)) }
             )
         }, centerView: {
-            HeaderTitle("Желанные места")
+            HeaderTitle(PinzBaseStrings.Wishlist.Title.main)
         }, rightView: {
             PinzButton(
                 type: .icon(.plus),

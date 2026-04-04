@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 enum WishlistElementIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -67,12 +68,12 @@ public struct WishlistElementView: View {
         case .editing:
             Header {
                 PinzButton(
-                    type: .text("Отмена"),
+                    type: .text(PinzBaseStrings.Common.Button.cancel),
                     action: .plain { viewModel.dispatch(.endEdit) }
                 )
             } rightView: {
                 PinzButton(
-                    type: .text("Готово"),
+                    type: .text(PinzBaseStrings.Common.Button.done),
                     action: .plain { viewModel.dispatch(.endEdit) }
                 )
             }
@@ -106,7 +107,7 @@ public struct WishlistElementView: View {
             .buttonStyle(.plain)
 
             if viewModel.state == .editing {
-                SettingSubtitle("Нажмите на фото, чтобы поменять его")
+                SettingSubtitle(PinzBaseStrings.WishlistElement.Hint.changePhoto)
                     .padding(.leading, 12)
             }
         }
@@ -118,10 +119,10 @@ public struct WishlistElementView: View {
                 .textField(Setting.TextFieldSetting(
                     id: "wishlistElementNameTextField",
                     text: $viewModel.element.title,
-                    placeholder: "Название пина"
+                    placeholder: PinzBaseStrings.WishlistElement.Label.title
                 )),
             ],
-            subtitle: "Название пина должно состоять из букв, цифр, точки и подчеркивания"
+            subtitle: PinzBaseStrings.WishlistElement.Hint.titleRules
         )
     }
 
@@ -136,13 +137,13 @@ public struct WishlistElementView: View {
 
     private var descriptionEditing: some View {
         DescriptionEditingView(
-            title: "Описание",
+            title: PinzBaseStrings.WishlistElement.Label.description,
             text: Binding(get: {
                 viewModel.element.description
             }, set: { value in
                 viewModel.element.description = value
             }),
-            placeholder: "Описание путешествия"
+            placeholder: PinzBaseStrings.WishlistElement.Placeholder.description
         )
     }
 
@@ -150,7 +151,7 @@ public struct WishlistElementView: View {
         SettingsGroup(settings: [
             .default(Setting.DefaultSetting(
                 id: "wishlistElementDelete",
-                leading: .iconTitle(WishlistElementIcon.trash, "Удалить место"),
+                leading: .iconTitle(WishlistElementIcon.trash, PinzBaseStrings.WishlistElement.Button.delete),
                 trailing: .icon(WishlistElementIcon.chevronRight),
                 style: .destructive,
                 action: .plain { }

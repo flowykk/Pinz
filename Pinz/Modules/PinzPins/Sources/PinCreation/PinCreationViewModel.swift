@@ -19,9 +19,9 @@ final class PinCreationViewModel {
         public var content: SegmentedItemContent {
             switch self {
             case .info:
-                .text("Информация")
+                .text(PinzBaseStrings.Common.Label.info)
             case .gallery:
-                .text("Гелерея")
+                .text(PinzBaseStrings.Common.Label.gallery)
             }
         }
     }

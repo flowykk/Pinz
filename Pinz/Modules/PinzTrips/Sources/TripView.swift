@@ -108,7 +108,7 @@ public struct TripView: View {
                 })
 
                 PinzButton(
-                    type: .slot(style: .primary, title: "Посмотреть детали"),
+                    type: .slot(style: .primary, title: PinzBaseStrings.Trips.Button.viewDetails),
                     action: .plain { viewModel.dispatch(.unselectPin) }
                 )
                 .padding(.horizontal, 12)

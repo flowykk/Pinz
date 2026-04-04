@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzBase
 import PinzDomain
 
 public struct DatePickerView: View {
@@ -34,7 +35,7 @@ public struct DatePickerView: View {
             .measureHeight(for: pickerHeight)
 
             PinzButton(
-                type: .slot(style: .primary, title: "Готово"),
+                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.done),
                 action: .plain { isPresented = false }
             )
             .padding(.horizontal, 12)

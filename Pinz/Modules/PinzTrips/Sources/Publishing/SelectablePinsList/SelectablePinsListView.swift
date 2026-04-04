@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 public struct SelectablePinsListView: View {
 
@@ -22,7 +23,7 @@ public struct SelectablePinsListView: View {
                         action: .plain { viewModel.dispatch(.navigate(.back)) }
                     )
                 }, centerView: {
-                    HeaderTitle("Выберите пины для публикации")
+                    HeaderTitle(PinzBaseStrings.SelectablePins.Title.main)
                 })
             } content: {
                 content
@@ -60,14 +61,14 @@ public struct SelectablePinsListView: View {
                 PinzButton(
                     type: .slot(
                         style: .secondary(needBorder: true),
-                        title: viewModel.allSelected ? "Сбросить всё" : "Выбрать всё"
+                        title: viewModel.allSelected ? PinzBaseStrings.SelectablePins.Button.deselectAll : PinzBaseStrings.SelectablePins.Button.selectAll
                     ),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.selectAll) }
                 )
 
                 PinzButton(
-                    type: .slot(style: .primary, title: "Готово"),
+                    type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.done),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.navigate(.postPreview)) }
                 ).disabledWithOpacity(viewModel.selectedPins.isEmpty)

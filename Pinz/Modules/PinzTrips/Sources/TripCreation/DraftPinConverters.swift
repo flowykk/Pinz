@@ -1,5 +1,6 @@
 import CoreLocation
 import PinzDomain
+import PinzBase
 
 extension DraftPinDTO {
     func toRawPin() -> RawPin {
@@ -23,7 +24,7 @@ extension DraftPinMediaDTO {
 extension ReviewPinDTO {
     func toPin(index: Int) -> Pin {
         Pin(
-            name: name ?? "Пин \(index + 1)",
+            name: name ?? PinzBaseStrings.Common.Label.pinNumber(index + 1),
             category: category?.toPinCategory() ?? .custom(nil),
             medias: media.enumerated().map { offset, m in
                 MediaItem(

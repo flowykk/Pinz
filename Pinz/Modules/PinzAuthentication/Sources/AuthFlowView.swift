@@ -110,8 +110,8 @@ extension AuthFlowView {
 
     private var emailInputOverlay: some View {
         PinzTextField(
-            label: "email:",
-            style: .default(placeholder: "your@email.com"),
+            label: PinzBaseStrings.Auth.Label.email,
+            style: .default(placeholder: PinzBaseStrings.Auth.Placeholder.email),
             text: $viewModel.text,
             keyboardType: .emailAddress,
             action: .async {
@@ -131,7 +131,7 @@ extension AuthFlowView {
             ProgressView()
                 .tint(.white)
                 .scaleEffect(1.2)
-            Text("Подтвердите при помощи Face ID")
+            Text(PinzBaseStrings.Auth.Message.passkeyPrompt)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(.white)
         }
@@ -145,7 +145,7 @@ extension AuthFlowView {
 extension AuthFlowView {
     private var registerCodeOverlay: some View {
         PinzTextField(
-            label: "verification code:",
+            label: PinzBaseStrings.Auth.Label.verificationCode,
             style: .segmented(4),
             text: $viewModel.text,
             keyboardType: .numberPad,
@@ -157,8 +157,8 @@ extension AuthFlowView {
 
     private var registerNicknameOverlay: some View {
         PinzTextField(
-            label: "nickname:",
-            style: .default(placeholder: "cool guy"),
+            label: PinzBaseStrings.Auth.Label.nickname,
+            style: .default(placeholder: PinzBaseStrings.Auth.Placeholder.nickname),
             text: $viewModel.text,
             keyboardType: .default,
             action: .async {

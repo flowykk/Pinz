@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzUI
+import PinzBase
 
 public struct NotificationsView: View {
 
@@ -20,7 +21,7 @@ public struct NotificationsView: View {
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
             }, centerView: {
-                HeaderTitle("Уведомления")
+                HeaderTitle(PinzBaseStrings.Notifications.Title.main)
             })
 
             Spacer()

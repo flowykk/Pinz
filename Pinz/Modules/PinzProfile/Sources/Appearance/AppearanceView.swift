@@ -1,6 +1,7 @@
 import SwiftUI
-import PinzUI
 import MapKit
+import PinzUI
+import PinzBase
 
 public struct AppearanceView: View {
 
@@ -28,7 +29,7 @@ public struct AppearanceView: View {
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
             }, centerView: {
-                HeaderTitle("Оформление")
+                HeaderTitle(PinzBaseStrings.Appearance.Title.main)
             })
 
             VStack(spacing: 12) {
@@ -45,7 +46,7 @@ public struct AppearanceView: View {
 
     private var appIconSettings: some View {
         VStack(alignment: .leading, spacing: 6) {
-            SettingTitle("Иконка приложения")
+            SettingTitle(PinzBaseStrings.Appearance.Header.appIcon)
                 .padding(.leading, 12)
 
             AppIconsGridView()
@@ -54,7 +55,7 @@ public struct AppearanceView: View {
 
     private var mapSettings: some View {
         VStack(alignment: .leading, spacing: 6) {
-            SettingTitle("Вид карты")
+            SettingTitle(PinzBaseStrings.Appearance.Header.mapStyle)
                 .roundedFount(size: 16, weight: .medium)
                 .padding(.leading, 12)
 

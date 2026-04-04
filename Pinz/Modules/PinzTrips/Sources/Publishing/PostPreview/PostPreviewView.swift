@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 public struct PostPreviewView: View {
 
@@ -26,7 +27,7 @@ public struct PostPreviewView: View {
                         action: .plain { viewModel.dispatch(.navigate(.back())) }
                     )
                 }, centerView: {
-                    HeaderTitle("Так будет выглядеть пост")
+                    HeaderTitle(PinzBaseStrings.PostPreview.Title.main)
                 })
             } content: {
                 VStack(spacing: 16) {
@@ -42,7 +43,7 @@ public struct PostPreviewView: View {
 
             BottomGradientWithButtons {
                 PinzButton(
-                    type: .slot(style: .primary, title: "Опубликовать путешествие"),
+                    type: .slot(style: .primary, title: PinzBaseStrings.PostPreview.Button.publish),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { router?.pop(by: 2) }
                 )

@@ -2,6 +2,7 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 import PinzPins
+import PinzBase
 
 public struct PreprocessedRawPinsView: View {
 
@@ -76,14 +77,14 @@ public struct PreprocessedRawPinsView: View {
             VStack(spacing: 6) {
                 HStack(spacing: 6) {
                     PinzButton(
-                        type: .slot(style: .secondary(needBorder: true), title: "Объединить пины"),
+                        type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.PreprocessedPins.Button.mergePins),
                         tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                         disabled: viewModel.pins.pins.count < 2,
                         action: .plain { isMergePickerPresented = true }
                     )
 
                     PinzButton(
-                        type: .slot(style: .secondary(needBorder: true), title: "Добавить пин"),
+                        type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.TripPins.Button.addPin),
                         tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                         action: .plain { viewModel.dispatch(.addPin) }
                     )
@@ -91,7 +92,7 @@ public struct PreprocessedRawPinsView: View {
             }
 
             PinzButton(
-                type: .slot(style: .primary, title: "Далее"),
+                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 disabled: false,
                 action: .async { try await viewModel.asyncDispatch(.continue) }

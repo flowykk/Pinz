@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 struct TripPinsListPopupView: View {
     @Environment(\.dismiss) var dismiss
@@ -49,7 +50,7 @@ struct TripPinsListPopupView: View {
         }
 
         VStack {
-            Text("Пины путешествия")
+            Text(PinzBaseStrings.TripPins.title)
                 .roundedFount(size: 20, weight: .semibold)
                 .padding(.top, 16)
             Spacer()
@@ -60,13 +61,13 @@ struct TripPinsListPopupView: View {
         BottomGradientWithButtons {
             HStack(spacing: 6) {
                 PinzButton(
-                    type: .slot(style: .secondary(needBorder: true), title: "Добавить медиа"),
+                    type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.TripPins.Button.addMedia),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { }
                 )
 
                 PinzButton(
-                    type: .slot(style: .primary, title: "Добавить пин"),
+                    type: .slot(style: .primary, title: PinzBaseStrings.TripPins.Button.addPin),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { createPinTapped() }
                 )

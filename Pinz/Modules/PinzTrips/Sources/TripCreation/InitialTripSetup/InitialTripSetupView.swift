@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 public struct InitialTripSetupView: View {
 
@@ -38,7 +39,7 @@ public struct InitialTripSetupView: View {
             }
 
             if viewModel.isLoading {
-                LoadingView(status: viewModel.loadingStatus?.rawValue)
+                LoadingView(status: viewModel.loadingStatus?.localizedValue)
             } else {
                 gradientWithButtons
             }
@@ -82,7 +83,7 @@ public struct InitialTripSetupView: View {
             )
         }, centerView: {
             AnimatableHeaderTitle(
-                animatableTitle: "Создание путешествия",
+                animatableTitle: PinzBaseStrings.TripCreation.Title.main,
                 title: $viewModel.name
             )
         }, rightView: {
@@ -120,10 +121,10 @@ public struct InitialTripSetupView: View {
                 .textField(Setting.TextFieldSetting(
                     id: "tripNameTextField",
                     text: $viewModel.name,
-                    placeholder: "Название места"
+                    placeholder: PinzBaseStrings.TripCreation.Placeholder.name
                 ))
             ],
-            subtitle: "Название путешествия должно состоять из букв, цифр, точки и подчеркивания"
+            subtitle: PinzBaseStrings.TripCreation.Hint.tripNameRules
         )
     }
 
@@ -152,7 +153,7 @@ public struct InitialTripSetupView: View {
             }, set: { value in
                 viewModel.description = value
             }),
-            placeholder: "Описание путешествия"
+            placeholder: PinzBaseStrings.TripCreation.Placeholder.description
         )
     }
 
@@ -183,7 +184,7 @@ public struct InitialTripSetupView: View {
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             PinzButton(
-                type: .slot(style: .primary, title: "Сформировать пины"),
+                type: .slot(style: .primary, title: PinzBaseStrings.TripCreation.Button.generatePins),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 disabled: false,
                 action: .async {

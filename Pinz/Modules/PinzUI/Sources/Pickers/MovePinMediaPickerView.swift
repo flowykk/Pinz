@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzBase
 import PinzDomain
 
 struct MovePinMediaPickerView: View {
@@ -11,7 +12,7 @@ struct MovePinMediaPickerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("Выбери пин, в который\nхочешь переместить медиа")
+            Text(PinzBaseStrings.MoveMedia.Label.instructions)
                 .multilineTextAlignment(.center)
                 .roundedFount(size: 16)
                 .padding(.top, 12)
@@ -19,7 +20,7 @@ struct MovePinMediaPickerView: View {
 
             Picker("", selection: $selectedIndex) {
                 ForEach(movablePins.indices, id: \.self) { i in
-                    Text("Пин \(movablePins[i].globalIndex + 1)").tag(i)
+                    Text(PinzBaseStrings.Common.Label.pinNumber(movablePins[i].globalIndex + 1)).tag(i)
                 }
             }
             .pickerStyle(.wheel)
@@ -27,7 +28,7 @@ struct MovePinMediaPickerView: View {
             .animation(.easeInOut(duration: 0.25), value: selectedIndex)
 
             PinzButton(
-                type: .slot(style: .primary, title: "Переместить в Пин \(movablePins[safe: selectedIndex].map { $0.globalIndex + 1 } ?? 0)"),
+                type: .slot(style: .primary, title: PinzBaseStrings.MoveMedia.Button.moveToPinNumber(movablePins[safe: selectedIndex].map { $0.globalIndex + 1 } ?? 0)),
                 disabled: movablePins.isEmpty,
                 action: .plain {
                     if let target = movablePins[safe: selectedIndex] {

@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzBase
 import PinzDomain
 
 enum PrivacyIcon: String, Setting.Icon, SegmentedItem {
@@ -27,7 +28,7 @@ public struct PrivacySection: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            SettingTitle("Участники и приватность")
+            SettingTitle(PinzBaseStrings.Trips.Header.membersAndPrivacy)
                 .padding(.leading, 12)
 
             SegmentedPicker(selection: $privacySelection, items: [.lockOpened, .lockClosed])
@@ -50,8 +51,8 @@ public struct PrivacySection: View {
 
             SettingSubtitle(
                 privacySelection == .lockClosed
-                    ? "Путешествие не будет отображаться в общей ленте"
-                    : "Путешествие будет отображаться в общей ленте"
+                    ? PinzBaseStrings.Trips.Hint.privateMode
+                    : PinzBaseStrings.Trips.Hint.publicMode
             )
             .padding(.top, -2)
             .padding(.leading, 12)

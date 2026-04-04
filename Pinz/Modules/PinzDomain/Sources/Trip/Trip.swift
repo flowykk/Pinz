@@ -79,8 +79,8 @@ extension Trip {
             description: description,
             pins: Pin.stubs(),
             season: .summer,
-            startDate: Date(fromDateString: "03.01.2026"),
-            endDate: Date(fromDateString: "09.01.2026"),
+//            startDate: Date(fromDateString: "03.01.2026"),
+//            endDate: Date(fromDateString: "09.01.2026"),
             category: .vacation,
             members: TripMember.stubs()
         )
@@ -94,32 +94,12 @@ extension Trip {
             description: "Летний отдых на море с посещением всех главных достопримечательностей города",
             pins: Array(Pin.stubs().prefix(3)),
             season: .summer,
-            startDate: Date(fromDateString: "15.06.2026"),
-            endDate: Date(fromDateString: "25.06.2026"),
+//            startDate: Date(fromDateString: "15.06.2026"),
+//            endDate: Date(fromDateString: "25.06.2026"),
             category: .vacation,
             members: Array(TripMember.stubs().prefix(2))
         )
         
         return [stub(), sochi]
-    }
-}
-
-extension Date {
-    public init?(fromDateString string: String) {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU_POSIX")
-        formatter.dateFormat = "dd.MM.yyyy"
-        if let date = formatter.date(from: string) {
-            self = date
-        } else {
-            return nil
-        }
-    }
-
-    public var formattedToDayMonthYear: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU_POSIX")
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter.string(from: self)
     }
 }

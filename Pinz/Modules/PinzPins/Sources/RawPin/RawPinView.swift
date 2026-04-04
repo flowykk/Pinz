@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzDomain
 import PinzUI
+import PinzBase
 
 public struct RawPinView: View {
 
@@ -55,7 +56,7 @@ public struct RawPinView: View {
             VStack(alignment: .leading) {
                 HStack(spacing: 4) {
                     Image(systemName: "location.fill")
-                    Text("Пин \(index + 1)")
+                    Text(PinzBaseStrings.Common.Label.pinNumber(index + 1))
                 }.roundedFount(size: 16)
             }
 
@@ -101,10 +102,10 @@ private struct MediaThumbnailCell: View {
             Button {
                 isMovePickerPresented = true
             } label: {
-                Label("Переместить", systemImage: "arrow.left.arrow.right")
+                Label(PinzBaseStrings.RawPin.Button.move, systemImage: "arrow.left.arrow.right")
             }
             Button(role: .destructive) { onDeleteMedia?(media) } label: {
-                Label("Удалить", systemImage: "trash")
+                Label(PinzBaseStrings.Common.Button.delete, systemImage: "trash")
             }
         } preview: {
             RawPinMediaThumbnailView(

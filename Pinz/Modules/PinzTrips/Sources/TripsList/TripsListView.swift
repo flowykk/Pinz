@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 public struct TripsListView: View {
 
@@ -22,7 +23,7 @@ public struct TripsListView: View {
                         action: .plain { viewModel.dispatch(.navigate(.back)) }
                     )
                 }, centerView: {
-                    HeaderTitle("Путешествия")
+                    HeaderTitle(PinzBaseStrings.Trips.Title.list)
                 })
             } content: {
                 if !viewModel.isLoading {

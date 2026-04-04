@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 public struct ReviewTripCreationView: View {
 
@@ -48,14 +49,14 @@ public struct ReviewTripCreationView: View {
                 action: .plain { viewModel.dispatch(.navigate(.back)) }
             )
         }, centerView: {
-            HeaderTitle("Проверка пинов")
+            HeaderTitle(PinzBaseStrings.ReviewTripCreation.Title.main)
         })
     }
 
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             PinzButton(
-                type: .slot(style: .primary, title: "Далее"),
+                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 action: .async { }
             )

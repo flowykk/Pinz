@@ -42,14 +42,14 @@ public struct MediaItemThumbnailView: View {
                 if dismissBeforeMediaInfo { dismiss() }
                 router?.navigateToMediaInfo(media: mediaItem)
             } label: {
-                Label("Детали", systemImage: "eye.fill")
+                Label(PinzBaseStrings.Common.Button.details, systemImage: "eye.fill")
             }
 
             Divider()
             Button(role: .destructive) {
 
             } label: {
-                Label("Удалить", systemImage: "trash")
+                Label(PinzBaseStrings.Common.Button.delete, systemImage: "trash")
             }
         }
     }

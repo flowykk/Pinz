@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import PinzDomain
+import PinzBase
 import PinzUI
 
 public struct PinPlaceSectionView: View {
@@ -28,7 +29,7 @@ public struct PinPlaceSectionView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            SettingTitle("Местоположение")
+            SettingTitle(PinzBaseStrings.PinInfo.Label.location)
                 .padding(.leading, 12)
 
             Map(position: $position) {
@@ -53,7 +54,7 @@ public struct PinPlaceSectionView: View {
             .frame(height: 200)
             .allowsHitTesting(false)
 
-            SettingSubtitle("Нажмите, чтобы изменить местоположение пина")
+            SettingSubtitle(PinzBaseStrings.PinInfo.Hint.changeLocation)
                 .padding(.top, -2)
                 .padding(.leading, 12)
         }

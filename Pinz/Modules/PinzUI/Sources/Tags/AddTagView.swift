@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzBase
 import PinzDomain
 
 struct AddTagView: View {
@@ -18,14 +19,14 @@ struct AddTagView: View {
                     .textField(Setting.TextFieldSetting(
                         id: "newTagTextField",
                         text: $tag,
-                        placeholder: "Тег",
+                        placeholder: PinzBaseStrings.Tags.Placeholder.tag,
                         focused: $focused,
                     )),
                 ]
             )
 
             PinzButton(
-                type: .slot(style: .primary, title: "Готово"),
+                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.done),
                 action: .plain {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         onTagAdd?(MediaTag(tag: tag))
