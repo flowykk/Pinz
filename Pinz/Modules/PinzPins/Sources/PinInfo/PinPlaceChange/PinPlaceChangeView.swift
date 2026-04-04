@@ -2,6 +2,7 @@ import SwiftUI
 import MapKit
 import PinzUI
 import PinzDomain
+import PinzBase
 
 public struct PinPlaceChangeView: View {
 
@@ -40,13 +41,13 @@ public struct PinPlaceChangeView: View {
                 HStack(spacing: 12) {
                     if viewModel.hasChanges {
                         PinzButton(
-                            type: .slot(style: .secondary(needBorder: true), title: "Сбросить"),
+                            type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.Common.Button.reset),
                             action: .plain { viewModel.dispatch(.reset) }
                         )
                     }
 
                     PinzButton(
-                        type: .slot(style: .primary, title: "Готово"),
+                        type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.done),
                         action: .plain { viewModel.dispatch(.save) }
                     )
                 }
@@ -73,7 +74,7 @@ public struct PinPlaceChangeView: View {
                     )
                 },
                 centerView: {
-                    Text("Перемещай карту, чтобы\n изменить местоположение пина")
+                    Text(PinzBaseStrings.PinPlaceChange.Label.instructions)
                         .multilineTextAlignment(.center)
                         .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                 }

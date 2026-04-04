@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzBase
 import PinzDomain
 
 public struct ItemsPickerView<Item: PickerItem>: View {
@@ -43,14 +44,14 @@ public struct ItemsPickerView<Item: PickerItem>: View {
                         .textField(Setting.TextFieldSetting(
                             id: "customTextField",
                             text: $textFieldText,
-                            placeholder: "Введите нужное значение"
+                            placeholder: PinzBaseStrings.ItemsPicker.Placeholder.customValue
                         ))
                     ]
                 ).padding(.horizontal, 12)
             }
 
             PinzButton(
-                type: .slot(style: .primary, title: "Готово"),
+                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.done),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 disabled: textFieldVisible && textFieldText.isEmpty,
                 action: .plain {

@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzUI
+import PinzBase
 
 public struct EmailChangeView: View {
 
@@ -30,7 +31,7 @@ public struct EmailChangeView: View {
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
             }, centerView: {
-                HeaderTitle("Смена почты")
+                HeaderTitle(PinzBaseStrings.EmailChange.Title.main)
             })
 
             Spacer()
@@ -52,7 +53,7 @@ public struct EmailChangeView: View {
                         VStack {
                             Spacer()
                             PinzButton(
-                                type: .slot(style: .primary, title: "Далее"),
+                                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
                                 action: .plain { viewModel.dispatch(.continue) }
                             )
                         }
@@ -77,7 +78,7 @@ public struct EmailChangeView: View {
                     foregroundColor: PinzUIAsset.accentRed.swiftUIColor
                 )
 
-            Text("Здесь Вы можете сменить почту. Все данные Вашего аккаунта будут сохранены. Для начала введите код, который пришёл на привязанный email")
+            Text(PinzBaseStrings.EmailChange.Description.instructions)
                 .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 64)
@@ -88,7 +89,7 @@ public struct EmailChangeView: View {
 
     private var emailInputView: some View {
         VStack(spacing: 12) {
-            Text("Введите новый email")
+            Text(PinzBaseStrings.EmailChange.Label.newEmail)
                 .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 .multilineTextAlignment(.center)
 
@@ -97,7 +98,7 @@ public struct EmailChangeView: View {
                     .textField(Setting.TextFieldSetting(
                         id: "emailTextField",
                         text: $viewModel.email,
-                        placeholder: "example@example.com",
+                        placeholder: PinzBaseStrings.EmailChange.Placeholder.email,
                         focused: $emailFocused,
                         style: .default
                     ))
@@ -108,7 +109,7 @@ public struct EmailChangeView: View {
 
     private var secondCodeInputView: some View {
         VStack(spacing: 12) {
-            Text("Теперь введите код, который пришёл на новый email")
+            Text(PinzBaseStrings.EmailChange.Description.verificationCode)
                 .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 64)

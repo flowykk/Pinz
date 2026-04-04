@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 enum PinInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -34,9 +35,9 @@ public struct PinInfoView: View {
 
     var datesSettingValue: String {
         if let startDate = viewModel.pin.startDate, let endDate = viewModel.pin.endDate {
-            "\(startDate.formattedToDayMonthYear) — \(endDate.formattedToDayMonthYear)"
+            return "\(startDate.formattedToDayMonthYear) — \(endDate.formattedToDayMonthYear)"
         } else {
-            "Не выбрано"
+            return PinzBaseStrings.Common.Label.notSelected
         }
     }
 
@@ -127,12 +128,12 @@ public struct PinInfoView: View {
         case .editing:
             Header {
                 PinzButton(
-                    type: .text("Отмена"),
+                    type: .text(PinzBaseStrings.Common.Button.cancel),
                     action: .plain { viewModel.dispatch(.endEdit) }
                 )
             } rightView: {
                 PinzButton(
-                    type: .text("Готово"),
+                    type: .text(PinzBaseStrings.Common.Button.done),
                     action: .plain { viewModel.dispatch(.endEdit) }
                 )
             }

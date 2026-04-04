@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzBase
 
 enum DescriptionIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -15,9 +16,12 @@ public struct DescriptionView: View {
     @State private var isCollapsed: Bool = true
     
     public init(
-        title: String = "Описание",
+        title: String = PinzBaseStrings.Common.Label.description,
         description: String?,
-        collapseButtonText: (collapsed: String, expanded: String) = ("Раскрыть", "Скрыть"),
+        collapseButtonText: (collapsed: String, expanded: String) = (
+            PinzBaseStrings.Common.Button.expand,
+            PinzBaseStrings.Common.Button.collapse
+        ),
         onAddAction: (() -> Void)? = nil
     ) {
         self.title = title
@@ -66,7 +70,7 @@ public struct DescriptionView: View {
                 SettingsGroup(settings: [
                     .default(Setting.DefaultSetting(
                         id: "tripDescription",
-                        leading: .iconTitle(DescriptionIcon.text, "Добавить описание"),
+                        leading: .iconTitle(DescriptionIcon.text, PinzBaseStrings.Common.Button.addDescription),
                         trailing: .icon(DescriptionIcon.chevronRight),
                         action: onTapAction.flatMap {
                             action in .plain { action() }

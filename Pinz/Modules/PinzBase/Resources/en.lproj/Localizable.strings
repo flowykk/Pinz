@@ -1,0 +1,198 @@
+// MARK: - Common
+"common.button.ok" = "OK";
+"common.button.delete" = "Delete";
+"common.button.reset" = "Reset";
+"common.button.details" = "Details";
+"common.label.info" = "Info";
+"common.label.gallery" = "Gallery";
+"common.label.media" = "media";
+"common.label.pinNumber" = "Pin %d";
+"common.button.cancel" = "Cancel";
+"common.button.done" = "Done";
+"common.button.next" = "Next";
+"common.button.save" = "Save";
+"common.button.close" = "Close";
+"common.button.retry" = "Try Again";
+"common.button.expand" = "Show More";
+"common.button.collapse" = "Show Less";
+"common.button.selectFromGallery" = "Select from Gallery";
+"common.button.deletePhoto" = "Delete Photo";
+"common.button.editPhoto" = "Edit Photo";
+"common.button.addDescription" = "Add Description";
+"common.label.notSelected" = "Not selected";
+"common.label.description" = "Description";
+"common.label.startDate" = "Start Date";
+"common.label.endDate" = "End Date";
+"common.alert.title.selectAction" = "Select Action";
+
+// MARK: - Auth
+"auth.label.email" = "Email:";
+"auth.placeholder.email" = "your@email.com";
+"auth.label.verificationCode" = "Verification Code:";
+"auth.label.nickname" = "Nickname:";
+"auth.placeholder.nickname" = "cool guy";
+"auth.message.passkeyPrompt" = "Confirm with Face ID";
+
+// MARK: - Profile
+"profile.title.editProfile" = "Edit Profile";
+"profile.button.deleteAccount" = "Delete Account";
+"profile.button.logout" = "Log Out";
+"profile.label.statistics" = "Statistics";
+"profile.label.trips" = "Trips";
+"profile.label.wishlist" = "Wishlist";
+"profile.label.savedMaps" = "Saved Maps";
+"profile.label.notifications" = "Notifications";
+"profile.label.appearance" = "Appearance";
+"profile.label.clearCache" = "Clear Data";
+"profile.label.changeEmail" = "Change Email";
+"profile.placeholder.name" = "Name";
+"profile.hint.nicknameRules" = "Username must contain only letters, digits, dots and underscores";
+
+// MARK: - Appearance
+"appearance.title.main" = "Appearance";
+"appearance.header.appIcon" = "App Icon";
+"appearance.header.mapStyle" = "Map Style";
+
+// MARK: - Notifications
+"notifications.title.main" = "Notifications";
+
+// MARK: - Statistics
+"statistics.title.main" = "Statistics";
+
+// MARK: - Email Change
+"emailChange.title.main" = "Change Email";
+"emailChange.description.instructions" = "Here you can change your email. All your account data will be saved. First, enter the code sent to your linked email";
+"emailChange.label.newEmail" = "Enter New Email";
+"emailChange.placeholder.email" = "example@example.com";
+"emailChange.description.verificationCode" = "Now enter the code sent to the new email";
+
+// MARK: - Saved Maps
+"savedMaps.title.main" = "Saved Maps";
+
+// MARK: - Wishlist
+"wishlist.title.main" = "Wishlist";
+"wishlist.placeholder.placeName" = "Place Name";
+"wishlist.hint.placeNameRules" = "Place name must contain only letters, digits, dots and underscores";
+"wishlist.placeholder.placeDescription" = "Place Description";
+"wishlist.label.uploadPhoto" = "Upload Place Photo";
+"wishlist.hint.changePhoto" = "Tap the photo to change it";
+"wishlistElement.label.title" = "Place Name";
+"wishlistElement.hint.titleRules" = "Place name must contain only letters, digits, dots and underscores";
+"wishlistElement.label.description" = "Description";
+"wishlistElement.placeholder.description" = "Place Description";
+"wishlistElement.hint.changePhoto" = "Tap the photo to change it";
+"wishlistElement.button.delete" = "Delete Place";
+
+// MARK: - Feed
+"feed.title.main" = "Feed";
+
+// MARK: - Trips
+"trips.title.list" = "Trips";
+"trips.empty.noSelection" = "You haven't selected a trip yet";
+"trips.empty.noSelectionHint" = "Tap [chevron.down] to select from existing or create a new one";
+"trips.button.viewDetails" = "View Details";
+"trips.header.membersAndPrivacy" = "Members and Privacy";
+"trips.hint.privateMode" = "Trip won't appear in the general feed";
+"trips.hint.publicMode" = "Trip will appear in the general feed";
+
+// MARK: - Trip Creation
+"tripCreation.title.main" = "Create Trip";
+"tripCreation.loading.uploadingMedia" = "Uploading media files";
+"tripCreation.loading.formingPins" = "Generating pins";
+"tripCreation.placeholder.name" = "Trip Name";
+"tripCreation.placeholder.description" = "Trip Description";
+"tripCreation.hint.tripNameRules" = "Trip name must contain only letters, digits, dots and underscores";
+"tripCreation.button.generatePins" = "Generate Pins";
+
+// MARK: - Trip Info
+"tripInfo.header.general" = "General Information";
+"tripInfo.label.season" = "Season";
+"tripInfo.label.category" = "Category";
+"tripInfo.label.dates" = "Dates";
+"tripInfo.header.public" = "Public Information";
+"tripInfo.label.publishTrip" = "Publish Trip";
+"tripInfo.placeholder.name" = "Trip Name";
+"tripInfo.hint.tripNameRules" = "Trip name must contain only letters, digits, dots and underscores";
+"tripInfo.placeholder.description" = "Trip Description";
+"tripInfo.button.delete" = "Delete Trip";
+"tripInfo.label.pins" = "Trip Pins";
+
+// MARK: - Review Trip Creation
+"reviewTripCreation.title.main" = "Review Pins";
+
+// MARK: - Preprocessed Pins
+"preprocessedPins.button.mergePins" = "Merge Pins";
+
+// MARK: - Trip Pins
+"tripPins.title" = "Trip Pins";
+"tripPins.button.addMedia" = "Add Media";
+"tripPins.button.addPin" = "Add Pin";
+
+// MARK: - Trips List Popup
+"tripsListPopup.title.myTrips" = "My Trips";
+"tripsListPopup.button.createTrip" = "Create Trip";
+
+// MARK: - Trip Members
+"tripMembers.title.main" = "Trip Members";
+"tripMembers.placeholder.search" = "Search Members";
+
+// MARK: - Pin Creation
+"pinCreation.title.main" = "Create Pin";
+"pinCreation.header.general" = "General Information";
+"pinCreation.placeholder.name" = "Pin Name";
+"pinCreation.hint.pinNameRules" = "Pin name must contain only letters, digits, dots and underscores";
+"pinCreation.header.tags" = "Tags";
+"pinCreation.placeholder.description" = "Pin Description";
+
+// MARK: - Pin Info
+"pinInfo.button.delete" = "Delete Pin";
+"pinInfo.label.location" = "Location";
+"pinInfo.label.category" = "Category";
+"pinInfo.label.dates" = "Dates";
+"pinInfo.hint.changeLocation" = "Tap to change pin location";
+
+// MARK: - Raw Pin
+"rawPin.button.move" = "Move";
+
+// MARK: - Pin Place Change
+"pinPlaceChange.label.instructions" = "Move the map to\nchange pin location";
+
+// MARK: - Pin Story
+"pinStory.button.pinDetails" = "Pin Details";
+"pinStory.button.mediaDetails" = "Media Details";
+
+// MARK: - Media Info
+"mediaInfo.button.delete" = "Delete Media";
+
+// MARK: - Items Picker
+"itemsPicker.placeholder.customValue" = "Enter a custom value";
+
+// MARK: - Map Style
+"mapStyle.label.standard" = "Standard";
+"mapStyle.label.satellite" = "Satellite";
+"mapStyle.label.hybrid" = "Hybrid";
+
+// MARK: - Selectable Pins
+"selectablePins.title.main" = "Select Pins to Publish";
+"selectablePins.button.deselectAll" = "Deselect All";
+"selectablePins.button.selectAll" = "Select All";
+
+// MARK: - Post Preview
+"postPreview.title.main" = "Post Preview";
+"postPreview.button.publish" = "Publish Trip";
+
+// MARK: - Move Media
+"moveMedia.label.instructions" = "Choose a pin to\nmove the media to";
+"moveMedia.button.moveToPinNumber" = "Move to Pin %d";
+
+// MARK: - Merge Pins
+"mergePins.label.instructions" = "Choose pins to merge";
+"mergePins.button.merge" = "Merge Pins %d and %d";
+
+// MARK: - Tags
+"tags.placeholder.tag" = "Tag";
+
+// MARK: - Alerts
+"alert.clearCache.title" = "Clear Data";
+"alert.clearCache.message" = "Are you sure? This will delete all saved images.";
+"alert.clearCache.confirm" = "Clear";

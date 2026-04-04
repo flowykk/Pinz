@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzBase
 import MapKit
 import Foundation
 
@@ -12,9 +13,9 @@ public enum PinzMapStyle: String, SegmentedItem {
 
     public var content: SegmentedItemContent {
         switch self {
-        case .scheme: .text("Схема")
-        case .satelight: .text("Спутник")
-        case .hybrid: .text("Гибрид")
+        case .scheme: .text(PinzBaseStrings.MapStyle.Label.standard)
+        case .satelight: .text(PinzBaseStrings.MapStyle.Label.satellite)
+        case .hybrid: .text(PinzBaseStrings.MapStyle.Label.hybrid)
         }
     }
 

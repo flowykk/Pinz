@@ -186,7 +186,7 @@ public struct MediaInfoView: View {
         SettingsGroup(settings: [
             .default(Setting.DefaultSetting(
                 id: "mediaDelete",
-                leading: .iconTitle(MediaInfoIcon.trash, "Удалить медиа"),
+                leading: .iconTitle(MediaInfoIcon.trash, PinzBaseStrings.MediaInfo.Button.delete),
                 trailing: .icon(MediaInfoIcon.chevronRight),
                 style: .destructive,
                 action: .plain { }

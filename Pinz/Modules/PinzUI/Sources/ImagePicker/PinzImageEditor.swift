@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzBase
 import PhotosUI
 
 public enum CropType {
@@ -51,12 +52,12 @@ public struct PinzImageEditor: View {
     var header: some View {
         Header {
             PinzButton(
-                type: .text("Отмена"),
+                type: .text(PinzBaseStrings.Common.Button.cancel),
                 action: .plain { dismiss() }
             )
         } rightView: {
             PinzButton(
-                type: .text("Готово"),
+                type: .text(PinzBaseStrings.Common.Button.done),
                 action: .plain {
                     let renderer = ImageRenderer(content: imageView)
                     renderer.scale = UIScreen.main.scale

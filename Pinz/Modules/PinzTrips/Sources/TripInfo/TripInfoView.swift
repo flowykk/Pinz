@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 enum TripInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -40,7 +41,7 @@ public struct TripInfoView: View {
         if let startDate = viewModel.trip.startDate, let endDate = viewModel.trip.endDate {
             "\(startDate.formattedToDayMonthYear) — \(endDate.formattedToDayMonthYear)"
         } else {
-            "Не выбрано"
+            PinzBaseStrings.Common.Label.notSelected
         }
     }
 
@@ -102,14 +103,14 @@ public struct TripInfoView: View {
             PinStoryView(pins: viewModel.trip.pins)
         }
         .confirmationDialog(
-            "Выберите действие",
+            PinzBaseStrings.Common.Alert.Title.selectAction,
             isPresented: $imageEditingDialogShown,
             titleVisibility: .visible
         ) {
-            Button("Выбрать из галереи") {
+            Button(PinzBaseStrings.Common.Button.selectFromGallery) {
                 photoPickerShown = true
             }
-            Button("Удалить фотографию", role: .destructive) { }
+            Button(PinzBaseStrings.Common.Button.deletePhoto, role: .destructive) { }
         }
         .customImagePicker(show: $photoPickerShown, croppedImage: Binding {
             return viewModel.trip.image
@@ -148,12 +149,12 @@ public struct TripInfoView: View {
         case .editing:
             Header {
                 PinzButton(
-                    type: .text("Отмена"),
+                    type: .text(PinzBaseStrings.Common.Button.cancel),
                     action: .plain { viewModel.dispatch(.changeState) }
                 )
             } rightView: {
                 PinzButton(
-                    type: .text("Готово"),
+                    type: .text(PinzBaseStrings.Common.Button.done),
                     action: .plain { viewModel.dispatch(.changeState) }
                 )
             }
@@ -173,7 +174,7 @@ public struct TripInfoView: View {
                 Button {
                     imageEditingDialogShown = true
                 } label: {
-                    Text("Изменить фотографию")
+                    Text(PinzBaseStrings.Common.Button.editPhoto)
                         .roundedFount(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 }
             }
@@ -207,7 +208,7 @@ public struct TripInfoView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "tripPins",
-                    leading: .iconTitle(TripInfoIcon.pins, "Пины путешествия"),
+                    leading: .iconTitle(TripInfoIcon.pins, PinzBaseStrings.TripInfo.Label.pins),
                     trailing: .icon(TripInfoIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.pinsList)) }
                 )),
@@ -220,19 +221,19 @@ public struct TripInfoView: View {
         let defaultSettings: [Setting] = [
             .default(Setting.DefaultSetting(
                 id: "tripSeason",
-                leading: .iconTitle(TripSeason.icon(for: viewModel.trip.season), "Сезон"),
+                leading: .iconTitle(TripSeason.icon(for: viewModel.trip.season), PinzBaseStrings.TripInfo.Label.season),
                 trailing: .valuesIcon([.text(viewModel.trip.season.value)], TripInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.changeState) }
             )),
             .default(Setting.DefaultSetting(
                 id: "tripCategory",
-                leading: .iconTitle(TripInfoIcon.info, "Категория"),
+                leading: .iconTitle(TripInfoIcon.info, PinzBaseStrings.TripInfo.Label.category),
                 trailing: .valuesIcon([.text(viewModel.trip.category.value)], TripInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.changeState) }
             )),
             .default(Setting.DefaultSetting(
                 id: "tripDates",
-                leading: .iconTitle(TripInfoIcon.calendar, "Даты"),
+                leading: .iconTitle(TripInfoIcon.calendar, PinzBaseStrings.TripInfo.Label.dates),
                 trailing: .valuesIcon([.text(datesSettingValue)], TripInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.changeState) }
             )),
@@ -251,36 +252,36 @@ public struct TripInfoView: View {
             )),
             .picker(Setting.PickerSetting(
                 id: "tripStartDatePicker",
-                leading: .iconTitle(TripInfoIcon.calendar, "Дата начала"),
-                value: .text(viewModel.trip.startDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                leading: .iconTitle(TripInfoIcon.calendar, PinzBaseStrings.Common.Label.startDate),
+                value: .text(viewModel.trip.startDate?.formattedToDayMonthYear ?? PinzBaseStrings.Common.Label.notSelected),
                 isPickerPresented: $isStartDatePickerPresented
             )),
             .picker(Setting.PickerSetting(
                 id: "tripEndDatePicker",
-                leading: .iconTitle(TripInfoIcon.calendar, "Дата конца"),
-                value: .text(viewModel.trip.endDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                leading: .iconTitle(TripInfoIcon.calendar, PinzBaseStrings.Common.Label.endDate),
+                value: .text(viewModel.trip.endDate?.formattedToDayMonthYear ?? PinzBaseStrings.Common.Label.notSelected),
                 isPickerPresented: $isEndDatePickerPresented
             )),
         ]
 
         SettingsGroup(
-            title: "Общая информация",
+            title: PinzBaseStrings.TripInfo.Header.general,
             settings: viewModel.state == .default ? defaultSettings : editingSettings
         ).animation(.default, value: viewModel.trip)
     }
 
     private var publishing: some View {
         SettingsGroup(
-            title: "Публичная информация",
+            title: PinzBaseStrings.TripInfo.Header.public,
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "tripPublishing",
-                    leading: .iconTitle(TripInfoIcon.paperplane, "Опубликовать путешествие"),
+                    leading: .iconTitle(TripInfoIcon.paperplane, PinzBaseStrings.TripInfo.Label.publishTrip),
                     trailing: .icon(TripInfoIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.selectPins)) }
                 )),
             ],
-            subtitle: "Когда нельзя публиковать, можно в сабтайтле это писать"
+            subtitle: nil
         )
     }
 
@@ -290,22 +291,22 @@ public struct TripInfoView: View {
                 .textField(Setting.TextFieldSetting(
                     id: "nicknameTextField",
                     text: $viewModel.trip.name,
-                    placeholder: "Название путешествия"
+                    placeholder: PinzBaseStrings.TripInfo.Placeholder.name
                 )),
             ],
-            subtitle: "Название путешествия должно состоять из букв, цифр, точки и подчеркивания"
+            subtitle: PinzBaseStrings.TripInfo.Hint.tripNameRules
         )
     }
 
     private var descriptionEditing: some View {
         DescriptionEditingView(
-            title: "Описание",
+            title: PinzBaseStrings.Common.Label.description,
             text: Binding(get: {
                 viewModel.trip.description ?? ""
             }, set: { value in
                 viewModel.trip.description = value
             }),
-            placeholder: "Описание путешествия"
+            placeholder: PinzBaseStrings.TripInfo.Placeholder.description
         )
     }
 
@@ -313,7 +314,7 @@ public struct TripInfoView: View {
         SettingsGroup(settings: [
             .default(Setting.DefaultSetting(
                 id: "tripDelete",
-                leading: .iconTitle(TripInfoIcon.trash, "Удалить путешествие"),
+                leading: .iconTitle(TripInfoIcon.trash, PinzBaseStrings.TripInfo.Button.delete),
                 trailing: .icon(TripInfoIcon.chevronRight),
                 style: .destructive,
                 action: .plain { }

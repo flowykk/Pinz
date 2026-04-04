@@ -34,7 +34,7 @@ public struct ProfileView: View {
     var accountDeleteSetting: Setting {
         .default(Setting.DefaultSetting(
             id: "profileDelete",
-            leading: .iconTitle(ProfileIcon.trash, "Удалить аккаунт"),
+            leading: .iconTitle(ProfileIcon.trash, PinzBaseStrings.Profile.Button.deleteAccount),
             trailing: .icon(ProfileIcon.chevronRight),
             style: .destructive,
             action: .plain { }
@@ -72,14 +72,14 @@ public struct ProfileView: View {
         .background(PinzUIAsset.background.swiftUIColor)
         .transition(.opacity)
         .confirmationDialog(
-            "Выберите действие",
+            PinzBaseStrings.Common.Alert.Title.selectAction,
             isPresented: $imageEditingDialogShown,
             titleVisibility: .visible
         ) {
-            Button("Выбрать из галереи") {
+            Button(PinzBaseStrings.Common.Button.selectFromGallery) {
                 photoPickerShown = true
             }
-            Button("Удалить фотографию", role: .destructive) { }
+            Button(PinzBaseStrings.Common.Button.deletePhoto, role: .destructive) { }
         }
         .customImagePicker(show: $photoPickerShown, croppedImage: Binding {
             return viewModel.userImage
@@ -89,14 +89,14 @@ public struct ProfileView: View {
         .fullScreenCover(isPresented: $isAddPersonPresented) {
             AddPersonView()
         }
-        .alert("Очистить данные", isPresented: $showClearCacheAlert) {
-            Button("Отмена", role: .cancel) { }
-            Button("Очистить", role: .destructive) {
+        .alert(PinzBaseStrings.Alert.ClearCache.title, isPresented: $showClearCacheAlert) {
+            Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) { }
+            Button(PinzBaseStrings.Alert.ClearCache.confirm, role: .destructive) {
                 FileManagerImageStorage.shared.clear()
                 cacheSize = FileManagerImageStorage.shared.getCacheSize()
             }
         } message: {
-            Text("Вы уверены? Это удалит все сохранённые изображения.")
+            Text(PinzBaseStrings.Alert.ClearCache.message)
         }
     }
     @ViewBuilder
@@ -129,14 +129,14 @@ public struct ProfileView: View {
         case .editing:
             Header {
                 PinzButton(
-                    type: .text("Отмена"),
+                    type: .text(PinzBaseStrings.Common.Button.cancel),
                     action: .plain { viewModel.dispatch(.changeState) }
                 )
             } centerView: {
-                HeaderTitle("Редактирование профиля")
+                HeaderTitle(PinzBaseStrings.Profile.Title.editProfile)
             } rightView: {
                 PinzButton(
-                    type: .text("Готово"),
+                    type: .text(PinzBaseStrings.Common.Button.done),
                     action: .plain { viewModel.dispatch(.changeState) }
                 )
             }
@@ -160,7 +160,7 @@ public struct ProfileView: View {
                     Button {
                         imageEditingDialogShown = true
                     } label: {
-                        Text("Изменить фотографию")
+                        Text(PinzBaseStrings.Common.Button.editPhoto)
                     }
                 }
             }
@@ -174,7 +174,7 @@ public struct ProfileView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "profileStats",
-                    leading: .iconTitle(ProfileIcon.chart, "Статистика"),
+                    leading: .iconTitle(ProfileIcon.chart, PinzBaseStrings.Profile.Label.statistics),
                     trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.statistics)) }
                 )),
@@ -185,19 +185,19 @@ public struct ProfileView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "profileTrips",
-                    leading: .iconTitle(ProfileIcon.map, "Путешествия"),
+                    leading: .iconTitle(ProfileIcon.map, PinzBaseStrings.Profile.Label.trips),
                     trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.trips)) }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profileWishlist",
-                    leading: .iconTitle(ProfileIcon.heart, "Желанные места"),
+                    leading: .iconTitle(ProfileIcon.heart, PinzBaseStrings.Profile.Label.wishlist),
                     trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.wishlist)) }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profileSavedMaps",
-                    leading: .iconTitle(ProfileIcon.bookmark, "Сохранённые карты"),
+                    leading: .iconTitle(ProfileIcon.bookmark, PinzBaseStrings.Profile.Label.savedMaps),
                     trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.saved)) }
                 )),
@@ -208,13 +208,13 @@ public struct ProfileView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "profileNotifications",
-                    leading: .iconTitle(ProfileIcon.bell, "Уведомления"),
+                    leading: .iconTitle(ProfileIcon.bell, PinzBaseStrings.Profile.Label.notifications),
                     trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.notifications)) }
                 )),
                 .default(Setting.DefaultSetting(
                     id: "profileAppearance",
-                    leading: .iconTitle(ProfileIcon.paintbrush, "Оформление"),
+                    leading: .iconTitle(ProfileIcon.paintbrush, PinzBaseStrings.Profile.Label.appearance),
                     trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.appearance)) }
                 )),
@@ -225,7 +225,7 @@ public struct ProfileView: View {
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "profileClearCache",
-                    leading: .iconTitle(ProfileIcon.opticaldiscdrive, "Очистить данные"),
+                    leading: .iconTitle(ProfileIcon.opticaldiscdrive, PinzBaseStrings.Profile.Label.clearCache),
                     trailing: .valuesIcon([.text(cacheSize)], ProfileIcon.chevronRight),
                     action: .plain { showClearCacheAlert = true }
                 )),
@@ -237,7 +237,7 @@ public struct ProfileView: View {
                 accountDeleteSetting,
                 .default(Setting.DefaultSetting(
                     id: "profileLeave",
-                    leading: .iconTitle(ProfileIcon.door, "Выйти"),
+                    leading: .iconTitle(ProfileIcon.door, PinzBaseStrings.Profile.Button.logout),
                     trailing: .icon(ProfileIcon.chevronRight),
                     style: .destructive,
                     action: .plain { }
@@ -253,18 +253,18 @@ public struct ProfileView: View {
                 .textField(Setting.TextFieldSetting(
                     id: "nicknameTextField",
                     text: $viewModel.user.nickname,
-                    placeholder: "Имя",
+                    placeholder: PinzBaseStrings.Profile.Placeholder.name,
                     style: .default
                 )),
             ],
-            subtitle: "Имя пользователя должно состоять из букв, цифр, точки и подчеркивания"
+            subtitle: PinzBaseStrings.Profile.Hint.nicknameRules
         ).padding(.bottom, 8)
 
         SettingsGroup(
             settings: [
                 .default(Setting.DefaultSetting(
                     id: "profileEmailChanging",
-                    leading: .title("Сменить почту"),
+                    leading: .title(PinzBaseStrings.Profile.Label.changeEmail),
                     trailing: .valuesIcon([.text(viewModel.user.email)], ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.emailChange)) }
                 )),

@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 public struct TripPinsListView: View {
 
@@ -22,7 +23,7 @@ public struct TripPinsListView: View {
                         action: .plain { viewModel.dispatch(.navigate(.back)) }
                     )
                 }, centerView: {
-                    HeaderTitle("Пины путешествия")
+                    HeaderTitle(PinzBaseStrings.TripPins.title)
                 })
             } content: {
                 pinsList.padding(.bottom, 90)
@@ -47,13 +48,13 @@ public struct TripPinsListView: View {
         BottomGradientWithButtons {
             HStack(spacing: 6) {
                 PinzButton(
-                    type: .slot(style: .secondary(needBorder: true), title: "Добавить медиа"),
+                    type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.TripPins.Button.addMedia),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { }
                 )
 
                 PinzButton(
-                    type: .slot(style: .primary, title: "Добавить пин"),
+                    type: .slot(style: .primary, title: PinzBaseStrings.TripPins.Button.addPin),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.navigate(.pinCreation)) }
                 )

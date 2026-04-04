@@ -1,0 +1,198 @@
+// MARK: - Common
+"common.button.ok" = "ОК";
+"common.button.delete" = "Удалить";
+"common.button.reset" = "Сбросить";
+"common.button.details" = "Детали";
+"common.label.info" = "Информация";
+"common.label.gallery" = "Галерея";
+"common.label.media" = "медиа";
+"common.label.pinNumber" = "Пин %d";
+"common.button.cancel" = "Отмена";
+"common.button.done" = "Готово";
+"common.button.next" = "Далее";
+"common.button.save" = "Сохранить";
+"common.button.close" = "Закрыть";
+"common.button.retry" = "Повторить";
+"common.button.expand" = "Раскрыть";
+"common.button.collapse" = "Скрыть";
+"common.button.selectFromGallery" = "Выбрать из галереи";
+"common.button.deletePhoto" = "Удалить фотографию";
+"common.button.editPhoto" = "Изменить фотографию";
+"common.button.addDescription" = "Добавить описание";
+"common.label.notSelected" = "Не выбрано";
+"common.label.description" = "Описание";
+"common.label.startDate" = "Дата начала";
+"common.label.endDate" = "Дата конца";
+"common.alert.title.selectAction" = "Выберите действие";
+
+// MARK: - Auth
+"auth.label.email" = "email:";
+"auth.placeholder.email" = "your@email.com";
+"auth.label.verificationCode" = "verification code:";
+"auth.label.nickname" = "nickname:";
+"auth.placeholder.nickname" = "cool guy";
+"auth.message.passkeyPrompt" = "Подтверди при помощи Face ID";
+
+// MARK: - Profile
+"profile.title.editProfile" = "Редактирование профиля";
+"profile.button.deleteAccount" = "Удалить аккаунт";
+"profile.button.logout" = "Выйти";
+"profile.label.statistics" = "Статистика";
+"profile.label.trips" = "Путешествия";
+"profile.label.wishlist" = "Желанные места";
+"profile.label.savedMaps" = "Сохранённые карты";
+"profile.label.notifications" = "Уведомления";
+"profile.label.appearance" = "Оформление";
+"profile.label.clearCache" = "Очистить данные";
+"profile.label.changeEmail" = "Сменить почту";
+"profile.placeholder.name" = "Имя";
+"profile.hint.nicknameRules" = "Имя пользователя должно состоять из букв, цифр, точки и подчёркивания";
+
+// MARK: - Appearance
+"appearance.title.main" = "Оформление";
+"appearance.header.appIcon" = "Иконка приложения";
+"appearance.header.mapStyle" = "Вид карты";
+
+// MARK: - Notifications
+"notifications.title.main" = "Уведомления";
+
+// MARK: - Statistics
+"statistics.title.main" = "Статистика";
+
+// MARK: - Email Change
+"emailChange.title.main" = "Смена почты";
+"emailChange.description.instructions" = "Здесь ты можешь сменить почту. Все данные твоего аккаунта будут сохранены. Для начала введи код, который пришёл на привязанный email";
+"emailChange.label.newEmail" = "Введи новый email";
+"emailChange.placeholder.email" = "example@example.com";
+"emailChange.description.verificationCode" = "Теперь введи код, который пришёл на новый email";
+
+// MARK: - Saved Maps
+"savedMaps.title.main" = "Сохранённые карты";
+
+// MARK: - Wishlist
+"wishlist.title.main" = "Желанные места";
+"wishlist.placeholder.placeName" = "Название места";
+"wishlist.hint.placeNameRules" = "Название места должно состоять из букв, цифр, точки и подчёркивания";
+"wishlist.placeholder.placeDescription" = "Описание места";
+"wishlist.label.uploadPhoto" = "Загрузи фотографию места";
+"wishlist.hint.changePhoto" = "Нажми на фото, чтобы поменять его";
+"wishlistElement.label.title" = "Название места";
+"wishlistElement.hint.titleRules" = "Название места должно состоять из букв, цифр, точки и подчёркивания";
+"wishlistElement.label.description" = "Описание";
+"wishlistElement.placeholder.description" = "Описание места";
+"wishlistElement.hint.changePhoto" = "Нажми на фото, чтобы поменять его";
+"wishlistElement.button.delete" = "Удалить место";
+
+// MARK: - Feed
+"feed.title.main" = "Лента";
+
+// MARK: - Trips
+"trips.title.list" = "Путешествия";
+"trips.empty.noSelection" = "Ты ещё не выбрал путешествие";
+"trips.empty.noSelectionHint" = "Нажми на [chevron.down], чтобы выбрать из существующих или создать новое";
+"trips.button.viewDetails" = "Посмотреть детали";
+"trips.header.membersAndPrivacy" = "Участники и приватность";
+"trips.hint.privateMode" = "Путешествие не будет отображаться в общей ленте";
+"trips.hint.publicMode" = "Путешествие будет отображаться в общей ленте";
+
+// MARK: - Trip Creation
+"tripCreation.title.main" = "Создание путешествия";
+"tripCreation.loading.uploadingMedia" = "Загрузка медиафайлов в хранилище";
+"tripCreation.loading.formingPins" = "Формирование пинов";
+"tripCreation.placeholder.name" = "Название путешествия";
+"tripCreation.placeholder.description" = "Описание путешествия";
+"tripCreation.hint.tripNameRules" = "Название путешествия должно состоять из букв, цифр, точки и подчёркивания";
+"tripCreation.button.generatePins" = "Сформировать пины";
+
+// MARK: - Trip Info
+"tripInfo.header.general" = "Общая информация";
+"tripInfo.label.season" = "Сезон";
+"tripInfo.label.category" = "Категория";
+"tripInfo.label.dates" = "Даты";
+"tripInfo.header.public" = "Публичная информация";
+"tripInfo.label.publishTrip" = "Опубликовать путешествие";
+"tripInfo.placeholder.name" = "Название путешествия";
+"tripInfo.hint.tripNameRules" = "Название путешествия должно состоять из букв, цифр, точки и подчёркивания";
+"tripInfo.placeholder.description" = "Описание путешествия";
+"tripInfo.button.delete" = "Удалить путешествие";
+"tripInfo.label.pins" = "Пины путешествия";
+
+// MARK: - Review Trip Creation
+"reviewTripCreation.title.main" = "Проверка пинов";
+
+// MARK: - Preprocessed Pins
+"preprocessedPins.button.mergePins" = "Объединить пины";
+
+// MARK: - Trip Pins
+"tripPins.title" = "Пины путешествия";
+"tripPins.button.addMedia" = "Добавить медиа";
+"tripPins.button.addPin" = "Добавить пин";
+
+// MARK: - Trips List Popup
+"tripsListPopup.title.myTrips" = "Твои путешествия";
+"tripsListPopup.button.createTrip" = "Создать путешествие";
+
+// MARK: - Trip Members
+"tripMembers.title.main" = "Участники путешествия";
+"tripMembers.placeholder.search" = "Поиск по участникам";
+
+// MARK: - Pin Creation
+"pinCreation.title.main" = "Создание пина";
+"pinCreation.header.general" = "Общая информация";
+"pinCreation.placeholder.name" = "Название пина";
+"pinCreation.hint.pinNameRules" = "Название пина должно состоять из букв, цифр, точки и подчёркивания";
+"pinCreation.header.tags" = "Теги";
+"pinCreation.placeholder.description" = "Описание пина";
+
+// MARK: - Pin Info
+"pinInfo.button.delete" = "Удалить пин";
+"pinInfo.label.location" = "Местоположение";
+"pinInfo.label.category" = "Категория";
+"pinInfo.label.dates" = "Даты";
+"pinInfo.hint.changeLocation" = "Нажми, чтобы изменить местоположение пина";
+
+// MARK: - Raw Pin
+"rawPin.button.move" = "Переместить";
+
+// MARK: - Pin Place Change
+"pinPlaceChange.label.instructions" = "Перемещай карту, чтобы\nизменить местоположение пина";
+
+// MARK: - Pin Story
+"pinStory.button.pinDetails" = "Детали пина";
+"pinStory.button.mediaDetails" = "Детали медиа";
+
+// MARK: - Media Info
+"mediaInfo.button.delete" = "Удалить медиа";
+
+// MARK: - Items Picker
+"itemsPicker.placeholder.customValue" = "Введи нужное значение";
+
+// MARK: - Map Style
+"mapStyle.label.standard" = "Схема";
+"mapStyle.label.satellite" = "Спутник";
+"mapStyle.label.hybrid" = "Гибрид";
+
+// MARK: - Selectable Pins
+"selectablePins.title.main" = "Выберите пины для публикации";
+"selectablePins.button.deselectAll" = "Сбросить всё";
+"selectablePins.button.selectAll" = "Выбрать всё";
+
+// MARK: - Post Preview
+"postPreview.title.main" = "Так будет выглядеть пост";
+"postPreview.button.publish" = "Опубликовать путешествие";
+
+// MARK: - Move Media
+"moveMedia.label.instructions" = "Выбери пин, в который\nхочешь переместить медиа";
+"moveMedia.button.moveToPinNumber" = "Переместить в Пин %d";
+
+// MARK: - Merge Pins
+"mergePins.label.instructions" = "Выбери пины, которые хочешь объединить";
+"mergePins.button.merge" = "Объединить пины %d и %d";
+
+// MARK: - Tags
+"tags.placeholder.tag" = "Тег";
+
+// MARK: - Alerts
+"alert.clearCache.title" = "Очистить данные";
+"alert.clearCache.message" = "Ты уверен? Это удалит все сохранённые изображения.";
+"alert.clearCache.confirm" = "Очистить";

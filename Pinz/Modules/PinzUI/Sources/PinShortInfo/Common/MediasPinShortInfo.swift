@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PinzDomain
+import PinzBase
 
 public struct MediasPinShortInfo: View {
     let pin: Pin
@@ -55,7 +56,7 @@ public struct MediasPinShortInfo: View {
                     VStack {
                         Text("+\(medias.count - maxMedias)")
                             .roundedFount(size: 24, weight: .semibold, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
-                        Text("медиа")
+                        Text(PinzBaseStrings.Common.Label.media)
                             .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                     }.frame(76)
                 }

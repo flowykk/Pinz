@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 fileprivate enum PinCreationIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -107,7 +108,7 @@ public struct PinCreationView: View {
             )
         }, centerView: {
             AnimatableHeaderTitle(
-                animatableTitle: "Создание пина",
+                animatableTitle: PinzBaseStrings.PinCreation.Title.main,
                 title: $viewModel.name
             )
         }, rightView: {
@@ -148,15 +149,15 @@ public struct PinCreationView: View {
     @ViewBuilder
     private var general: some View {
         SettingsGroup(
-            title: "Общая информация",
+            title: PinzBaseStrings.PinCreation.Header.general,
             settings: [
                 .textField(Setting.TextFieldSetting(
                     id: "pinNameTextField",
                     text: $viewModel.name,
-                    placeholder: "Название пина"
+                    placeholder: PinzBaseStrings.PinCreation.Placeholder.name
                 )),
             ],
-            subtitle: "Название пина должно состоять из букв, цифр, точки и подчеркивания"
+            subtitle: PinzBaseStrings.PinCreation.Hint.pinNameRules
         )
 
         SettingsGroup(
@@ -168,14 +169,14 @@ public struct PinCreationView: View {
                 )),
                 .picker(Setting.PickerSetting(
                     id: "pinStartDatePicker",
-                    leading: .iconTitle(PinCreationIcon.calendar, "Дата начала"),
-                    value: .text(viewModel.startDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                    leading: .iconTitle(PinCreationIcon.calendar, PinzBaseStrings.Common.Label.startDate),
+                    value: .text(viewModel.startDate?.formattedToDayMonthYear ?? PinzBaseStrings.Common.Label.notSelected),
                     isPickerPresented: $isStartDatePickerPresented
                 )),
                 .picker(Setting.PickerSetting(
                     id: "pinEndDatePicker",
-                    leading: .iconTitle(PinCreationIcon.calendar, "Дата конца"),
-                    value: .text(viewModel.endDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                    leading: .iconTitle(PinCreationIcon.calendar, PinzBaseStrings.Common.Label.endDate),
+                    value: .text(viewModel.endDate?.formattedToDayMonthYear ?? PinzBaseStrings.Common.Label.notSelected),
                     isPickerPresented: $isEndDatePickerPresented
                 )),
             ]
@@ -184,7 +185,7 @@ public struct PinCreationView: View {
 
     private var tags: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SettingTitle("Теги")
+            SettingTitle(PinzBaseStrings.PinCreation.Header.tags)
                 .padding(.leading, 12)
             TagsView(
                 tags: viewModel.tags,
@@ -201,20 +202,20 @@ public struct PinCreationView: View {
 
     private var descriptionEditing: some View {
         DescriptionEditingView(
-            title: "Описание",
+            title: PinzBaseStrings.Common.Label.description,
             text: Binding(get: {
                 viewModel.description ?? ""
             }, set: { value in
                 viewModel.description = value
             }),
-            placeholder: "Описание пина"
+            placeholder: PinzBaseStrings.PinCreation.Placeholder.description
         )
     }
 
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             PinzButton(
-                type: .slot(style: .primary, title: "Далее"),
+                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 disabled: false,
                 action: .async { }

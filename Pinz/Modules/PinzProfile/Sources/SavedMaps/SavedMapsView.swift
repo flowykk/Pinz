@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzUI
+import PinzBase
 
 public struct SavedMapsView: View {
 
@@ -20,7 +21,7 @@ public struct SavedMapsView: View {
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
             }, centerView: {
-                HeaderTitle("Сохранённые карты")
+                HeaderTitle(PinzBaseStrings.SavedMaps.Title.main)
             })
 
             Spacer()

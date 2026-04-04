@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzUI
+import PinzBase
 
 public struct StatisticsView: View {
 
@@ -20,7 +21,7 @@ public struct StatisticsView: View {
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
             }, centerView: {
-                HeaderTitle("Статистика")
+                HeaderTitle(PinzBaseStrings.Statistics.Title.main)
             })
 
             Spacer()

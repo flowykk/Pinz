@@ -1,5 +1,6 @@
 import SwiftUI
 import PinzUI
+import PinzBase
 
 public struct FeedView: View {
 
@@ -20,7 +21,7 @@ public struct FeedView: View {
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
             }, centerView: {
-                HeaderTitle("Лента")
+                HeaderTitle(PinzBaseStrings.Feed.Title.main)
             })
 
             Spacer()

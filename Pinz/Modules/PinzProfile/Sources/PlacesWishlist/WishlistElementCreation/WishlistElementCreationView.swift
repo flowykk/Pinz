@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 enum WishlistCreationIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -70,10 +71,10 @@ public struct WishlistElementCreationView: View {
                 .textField(Setting.TextFieldSetting(
                     id: "wishlistElementNameTextField",
                     text: $viewModel.name,
-                    placeholder: "Название места"
+                    placeholder: PinzBaseStrings.Wishlist.Placeholder.placeName
                 ))
             ],
-            subtitle: "Название места должно состоять из букв, цифр, точки и подчеркивания"
+            subtitle: PinzBaseStrings.Wishlist.Hint.placeNameRules
         )
     }
 
@@ -85,7 +86,7 @@ public struct WishlistElementCreationView: View {
             }, set: { value in
                 viewModel.description = value
             }),
-            placeholder: "Описание места"
+            placeholder: PinzBaseStrings.Wishlist.Placeholder.placeDescription
         )
     }
 
@@ -103,7 +104,7 @@ public struct WishlistElementCreationView: View {
                         .cornerRadius(24)
                 }.buttonStyle(.plain)
 
-                SettingSubtitle("Нажмите на фото, чтобы поменять его")
+                SettingSubtitle(PinzBaseStrings.Wishlist.Hint.changePhoto)
                     .padding(.leading, 12)
             }
         } else {
@@ -111,7 +112,7 @@ public struct WishlistElementCreationView: View {
                 settings: [
                     .default(Setting.DefaultSetting(
                         id: "wishlistElementPhoto",
-                        leading: .iconTitle(WishlistCreationIcon.camera, "Загрузите фотографию места"),
+                        leading: .iconTitle(WishlistCreationIcon.camera, PinzBaseStrings.Wishlist.Label.uploadPhoto),
                         trailing: .icon(WishlistCreationIcon.chevronRight),
                         action: .plain { isPhotoPickerPresented = true }
                     ))
@@ -123,7 +124,7 @@ public struct WishlistElementCreationView: View {
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             PinzButton(
-                type: .slot(style: .primary, title: viewModel.state == .photo ? "Готово" : "Далее"),
+                type: .slot(style: .primary, title: viewModel.state == .photo ? PinzBaseStrings.Common.Button.done : PinzBaseStrings.Common.Button.next),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 disabled: false,
                 action: .plain { viewModel.dispatch(.continue) }

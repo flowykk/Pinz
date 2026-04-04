@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 extension PinInfoView {
     var settings: some View {
@@ -20,16 +21,19 @@ extension PinInfoView {
 
     @ViewBuilder
     var general: some View {
+        let startDateValue: String = viewModel.pin.startDate?.formattedToDayMonthYear ?? PinzBaseStrings.Common.Label.notSelected
+        let endDateValue: String = viewModel.pin.endDate?.formattedToDayMonthYear ?? PinzBaseStrings.Common.Label.notSelected
+
         let defaultSettings: [Setting] = [
             .default(Setting.DefaultSetting(
                 id: "pinCategory",
-                leading: .iconTitle(PinInfoIcon.info, "Категория"),
+                leading: .iconTitle(PinInfoIcon.info, PinzBaseStrings.PinInfo.Label.category),
                 trailing: .valuesIcon([.text(viewModel.pin.category.value)], PinInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.edit) }
             )),
             .default(Setting.DefaultSetting(
                 id: "pinDates",
-                leading: .iconTitle(PinInfoIcon.calendar, "Даты"),
+                leading: .iconTitle(PinInfoIcon.calendar, PinzBaseStrings.PinInfo.Label.dates),
                 trailing: .valuesIcon([.text(datesSettingValue)], PinInfoIcon.chevronRight),
                 action: .plain { viewModel.dispatch(.edit) }
             )),
@@ -43,20 +47,20 @@ extension PinInfoView {
             )),
             .picker(Setting.PickerSetting(
                 id: "pinStartDatePicker",
-                leading: .iconTitle(PinInfoIcon.calendar, "Дата начала"),
-                value: .text(viewModel.pin.startDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                leading: .iconTitle(PinInfoIcon.calendar, PinzBaseStrings.Common.Label.startDate),
+                value: .text(startDateValue),
                 isPickerPresented: $isStartDatePickerPresented
             )),
             .picker(Setting.PickerSetting(
                 id: "pinEndDatePicker",
-                leading: .iconTitle(PinInfoIcon.calendar, "Дата конца"),
-                value: .text(viewModel.pin.endDate?.formattedToDayMonthYear ?? "Не выбрано"),
+                leading: .iconTitle(PinInfoIcon.calendar, PinzBaseStrings.Common.Label.endDate),
+                value: .text(endDateValue),
                 isPickerPresented: $isEndDatePickerPresented
             )),
         ]
 
         SettingsGroup(
-            title: "Общая информация",
+            title: PinzBaseStrings.PinCreation.Header.general,
             settings: viewModel.isEditing ? editingSettings : defaultSettings
         )
     }
@@ -67,16 +71,16 @@ extension PinInfoView {
                 .textField(Setting.TextFieldSetting(
                     id: "pinNameTextField",
                     text: $viewModel.pin.name,
-                    placeholder: "Название пина"
+                    placeholder: PinzBaseStrings.PinCreation.Placeholder.name
                 )),
             ],
-            subtitle: "Название пина должно состоять из букв, цифр, точки и подчеркивания"
+            subtitle: PinzBaseStrings.PinCreation.Hint.pinNameRules
         )
     }
 
     private var tags: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SettingTitle("Теги")
+            SettingTitle(PinzBaseStrings.PinCreation.Header.tags)
                 .padding(.leading, 12)
             TagsView(
                 tags: viewModel.pin.tags,
@@ -102,13 +106,13 @@ extension PinInfoView {
 
     private var descriptionEditing: some View {
         DescriptionEditingView(
-            title: "Описание",
+            title: PinzBaseStrings.Common.Label.description,
             text: Binding(get: {
                 viewModel.pin.description ?? ""
             }, set: { value in
                 viewModel.pin.description = value
             }),
-            placeholder: "Описание путешествия"
+            placeholder: PinzBaseStrings.PinCreation.Placeholder.description
         )
     }
 
@@ -128,7 +132,7 @@ extension PinInfoView {
         SettingsGroup(settings: [
             .default(Setting.DefaultSetting(
                 id: "pinDelete",
-                leading: .iconTitle(PinInfoIcon.trash, "Удалить пин"),
+                leading: .iconTitle(PinInfoIcon.trash, PinzBaseStrings.PinInfo.Button.delete),
                 trailing: .icon(PinInfoIcon.chevronRight),
                 style: .destructive,
                 action: .plain { }

@@ -17,9 +17,9 @@ final class InitialTripSetupViewModel {
         public var content: SegmentedItemContent {
             switch self {
             case .info:
-                .text("Информация")
+                .text(PinzBaseStrings.Common.Label.info)
             case .gallery:
-                .text("Гелерея")
+                .text(PinzBaseStrings.Common.Label.gallery)
             }
         }
     }
@@ -39,9 +39,16 @@ final class InitialTripSetupViewModel {
         case `continue`
     }
 
-    enum LoadingStatus: String {
-        case uploadingMedia = "Загрузка медиафайлов в хранилище"
-        case formingPins = "Формирование пинов"
+    enum LoadingStatus {
+        case uploadingMedia
+        case formingPins
+
+        var localizedValue: String {
+            switch self {
+            case .uploadingMedia: PinzBaseStrings.TripCreation.Loading.uploadingMedia
+            case .formingPins: PinzBaseStrings.TripCreation.Loading.formingPins
+            }
+        }
     }
 
     var state: State = .info

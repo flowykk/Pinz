@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzBase
 import PinzDomain
 
 struct MergePinsPickerView: View {
@@ -12,7 +13,7 @@ struct MergePinsPickerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("Выбери пины, которые хочешь объединить")
+            Text(PinzBaseStrings.MergePins.Label.instructions)
                 .roundedFount(size: 16)
                 .padding(.top, 12)
                 .padding(.bottom, 8)
@@ -21,7 +22,7 @@ struct MergePinsPickerView: View {
                 VStack(spacing: 0) {
                     Picker("", selection: $firstIndex) {
                         ForEach(pins.indices, id: \.self) { i in
-                            Text("Пин \(i + 1)").tag(i)
+                            Text(PinzBaseStrings.Common.Label.pinNumber(i + 1)).tag(i)
                         }
                     }
                     .pickerStyle(.wheel)
@@ -31,7 +32,7 @@ struct MergePinsPickerView: View {
                 VStack(spacing: 0) {
                     Picker("", selection: $secondIndex) {
                         ForEach(pins.indices, id: \.self) { i in
-                            Text("Пин \(i + 1)").tag(i)
+                            Text(PinzBaseStrings.Common.Label.pinNumber(i + 1)).tag(i)
                         }
                     }
                     .pickerStyle(.wheel)
@@ -40,7 +41,7 @@ struct MergePinsPickerView: View {
             }
 
             PinzButton(
-                type: .slot(style: .primary, title: "Объединить пины \(firstIndex + 1) и \(secondIndex + 1)"),
+                type: .slot(style: .primary, title: PinzBaseStrings.MergePins.Button.merge(firstIndex + 1, secondIndex + 1)),
                 disabled: firstIndex == secondIndex,
                 action: .plain {
                     onMerge(firstIndex, secondIndex)
