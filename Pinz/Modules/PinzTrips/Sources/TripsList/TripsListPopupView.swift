@@ -4,7 +4,9 @@ import PinzDomain
 
 struct TripsListPopupView: View {
 
-    private let trips: [Trip]
+    @State private var viewModel: TripsListPopupViewModel
+
+    private let selectedTripId: String?
     private let onTripTapped: (Trip) -> Void
     private let onTripCreationTapped: () -> Void
     private let onDismiss: (() -> Void)?
@@ -12,12 +14,13 @@ struct TripsListPopupView: View {
     @Environment(\.dismiss) private var dismiss
 
     public init(
-        trips: [Trip],
+        selectedTripId: String? = nil,
         onTripTapped: @escaping (Trip) -> Void,
         onTripCreationTapped: @escaping () -> Void,
         onDismiss: (() -> Void)? = nil
     ) {
-        self.trips = trips
+        viewModel = TripsListPopupViewModel()
+        self.selectedTripId = selectedTripId
         self.onTripTapped = onTripTapped
         self.onTripCreationTapped = onTripCreationTapped
         self.onDismiss = onDismiss
@@ -26,14 +29,26 @@ struct TripsListPopupView: View {
     var body: some View {
         ZStack {
             ScrollView {
-                DefaultTripsListView(trips: trips, onTripTapped: onTripTapped)
-                    .padding(.top, 70).padding(.bottom, 90)
+                if !viewModel.isLoading {
+                    DefaultTripsListView(trips: viewModel.trips, onTripTapped: onTripTapped)
+                        .padding(.top, 70).padding(.bottom, 90)
+                }
             }
 
             header
 
             gradientWithButtons
-        }.background(PinzUIAsset.background.swiftUIColor)
+
+            if viewModel.isLoading {
+                LoadingView()
+            }
+        }
+        .background(PinzUIAsset.background.swiftUIColor)
+        .onAppear {
+            Task {
+                try await viewModel.asyncDispatch(.fetchTrips(selectedTripId: selectedTripId ?? ""))
+            }
+        }
     }
 
     @ViewBuilder

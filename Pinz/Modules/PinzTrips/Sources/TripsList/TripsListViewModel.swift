@@ -3,7 +3,7 @@ import PinzNetworking
 import PinzBase
 import PinzDomain
 
-@Observable
+@MainActor @Observable
 final class TripsListViewModel {
 
     enum Route {
@@ -15,16 +15,17 @@ final class TripsListViewModel {
         case selectTrip(Trip)
     }
 
-    var trips: [Trip]
+    enum AsyncIntent {
+        case fetchTrips
+    }
+
+    var trips: [Trip] = []
+    private(set) var isLoading = false
 
     private let networkService = NetworkService()
     private var router: AppRouting?
 
-    init(trips: [Trip], router: AppRouting? = nil) {
-        // Фильтруем уже выбранное путешествие
-        let selectedTripID = SelectedTripStorage.shared.selectedTripID
-        self.trips = trips.filter { $0.id != selectedTripID }
-        self.router = router
+    init() {
     }
 
     func dispatch(_ intent: Intent) {
@@ -40,7 +41,26 @@ final class TripsListViewModel {
         }
     }
 
+    func asyncDispatch(_ intent: AsyncIntent) async throws {
+        switch intent {
+        case .fetchTrips:
+            changeLoading(to: true)
+            let dtos = try await networkService.getTrips()
+            let selectedTripID = SelectedTripStorage.shared.selectedTripID
+            trips = dtos
+                .map { $0.toTrip() }
+                .filter { $0.id != selectedTripID }
+            changeLoading(to: false)
+        }
+    }
+
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+    }
+
+    private func changeLoading(to isLoading: Bool) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            self.isLoading = isLoading
+        }
     }
 }

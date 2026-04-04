@@ -21,6 +21,7 @@ enum PinzAPI {
 
     // Trips CRUD
     case getTrips
+    case getFavouriteTrips(limit: Int?, offset: Int?)
     case getTrip(id: String)
     case updateTrip(
         id: String, name: String?, description: String?, category: String?,
@@ -78,6 +79,7 @@ extension PinzAPI: TargetType {
         case .logout: return "/auth/logout"
         case .getFeed: return "/feed"
         case .getTrips: return "/trips"
+        case .getFavouriteTrips: return "/trips/favourites"
         case .getTrip(let id): return "/trips/\(id)"
         case .updateTrip(let id, _, _, _, _, _, _, _, _): return "/trips/\(id)"
         case .deleteTrip(let id): return "/trips/\(id)"
@@ -105,7 +107,7 @@ extension PinzAPI: TargetType {
 
     var method: Moya.Method {
         switch self {
-        case .getFeed, .getTrips, .getTrip, .getTripReview:
+        case .getFeed, .getTrips, .getFavouriteTrips, .getTrip, .getTripReview:
             return .get
         case .updateTrip, .updateTripSettings:
             return .patch
@@ -132,6 +134,12 @@ extension PinzAPI: TargetType {
             if let locationId { params["location_id"] = locationId }
             if let locationName { params["location_name"] = locationName }
             if let sortBy { params["sort_by"] = sortBy }
+            return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
+
+        case let .getFavouriteTrips(limit, offset):
+            var params: [String: Any] = [:]
+            if let limit { params["limit"] = limit }
+            if let offset { params["offset"] = offset }
             return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
 
         case let .submitEmail(email): return jsonParams(["email": email])
@@ -238,13 +246,26 @@ extension PinzAPI {
             json = #"{"access_token": "stub_new_access_token"}"#
         case .logout:
             json = #"{"success": true}"#
-        case .getFeed, .getTrips:
+        case .getFeed, .getTrips, .getFavouriteTrips:
             json = #"""
-            [{"id":"trip-001","name":"Paris Trip","description":"A lovely trip","category":"city","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":12,"dislikes_count":0,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}]
+            [
+              {"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000},
+              {"id":"trip-002","name":"Горнолыжный тур в Альпы","description":"Захватывающие спуски и потрясающие горные пейзажи в сердце Европы","category":"active","season":"winter","cover_url":null,"owner_user_id":"user-002","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":38,"dislikes_count":1,"start_date_unix":1698000000,"end_date_unix":1698400000,"created_at_unix":1697900000,"updated_at_unix":1697950000},
+              {"id":"trip-003","name":"Пляжный отпуск на Бали","description":"Тропические пляжи, рисовые террасы и древние храмы Индонезии","category":"vacation","season":"summer","cover_url":null,"owner_user_id":"user-003","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":156,"dislikes_count":5,"start_date_unix":1720000000,"end_date_unix":1720400000,"created_at_unix":1719900000,"updated_at_unix":1719950000},
+              {"id":"trip-004","name":"Культурный тур по Италии","description":"Искусство, история и изысканная кухня в Риме, Флоренции и Венеции","category":"education","season":"autumn","cover_url":null,"owner_user_id":"user-004","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":97,"dislikes_count":3,"start_date_unix":1727000000,"end_date_unix":1727400000,"created_at_unix":1726900000,"updated_at_unix":1726950000},
+              {"id":"trip-005","name":"Деловая поездка в Токио","description":"Современные небоскребы, традиционные святилища и безумный темп мегаполиса","category":"business","season":"spring","cover_url":null,"owner_user_id":"user-005","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":28,"dislikes_count":0,"start_date_unix":1710000000,"end_date_unix":1710200000,"created_at_unix":1709900000,"updated_at_unix":1709950000},
+              {"id":"trip-006","name":"Северное сияние в Норвегии","description":"Магическое северное сияние и суровая природа Арктики","category":"vacation","season":"winter","cover_url":null,"owner_user_id":"user-006","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":203,"dislikes_count":4,"start_date_unix":1704000000,"end_date_unix":1704300000,"created_at_unix":1703900000,"updated_at_unix":1703950000},
+              {"id":"trip-007","name":"Сафари в Кении","description":"Большая пятёрка, национальные парки и встреча с дикой природой","category":"active","season":"summer","cover_url":null,"owner_user_id":"user-007","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":124,"dislikes_count":2,"start_date_unix":1721000000,"end_date_unix":1721300000,"created_at_unix":1720900000,"updated_at_unix":1720950000},
+              {"id":"trip-008","name":"Морской круиз по Средиземному морю","description":"Греческие острова, итальянское побережье и кристально чистая вода","category":"vacation","season":"summer","cover_url":null,"owner_user_id":"user-008","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":91,"dislikes_count":1,"start_date_unix":1722000000,"end_date_unix":1722400000,"created_at_unix":1721900000,"updated_at_unix":1721950000}
+            ]
             """#
-        case .getTrip, .updateTrip, .publishTrip:
+        case .getTrip:
             json = #"""
-            {"id":"trip-001","name":"Paris Trip","description":"A lovely trip","category":"city","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":12,"dislikes_count":0,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}
+            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"pins":[{"pin_id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"}]},{"pin_id":"pin-002","name":"Лувр","category":"entertainment","latitude":48.8606,"longitude":2.3352,"location_name":"Париж","tags":["музей","искусство"],"issues":[],"media":[{"media_id":"m-003","url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","privacy_level":"public"}]},{"pin_id":"pin-003","name":"Собор Парижской Богоматери","category":"entertainment","latitude":48.8530,"longitude":2.3499,"location_name":"Париж","tags":["готика","история"],"issues":[],"media":[{"media_id":"m-004","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"}]}]}
+            """#
+        case .updateTrip, .publishTrip:
+            json = #"""
+            {"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000}
             """#
         case .deleteTrip, .removeParticipant, .removeTripFromFavourites:
             json = ""

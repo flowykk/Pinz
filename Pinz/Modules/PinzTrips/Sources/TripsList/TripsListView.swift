@@ -8,30 +8,41 @@ public struct TripsListView: View {
 
     @Environment(\.appRouter) private var router
 
-    public init(trips: [Trip]) {
-        viewModel = TripsListViewModel(trips: trips)
+    public init() {
+        viewModel = TripsListViewModel()
     }
 
     public var body: some View {
-        CollapsibleHeader {
-            Header(leftView: {
-                PinzButton(
-                    type: .icon(.chevronLeft),
-                    tint: PinzUIAsset.textPrimary.swiftUIColor,
-                    action: .plain { viewModel.dispatch(.navigate(.back)) }
-                )
-            }, centerView: {
-                HeaderTitle("Путешествия")
-            })
-        } content: {
-            DefaultTripsListView(trips: viewModel.trips) { trip in
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    viewModel.dispatch(.selectTrip(trip))
+        ZStack {
+            CollapsibleHeader {
+                Header(leftView: {
+                    PinzButton(
+                        type: .icon(.chevronLeft),
+                        tint: PinzUIAsset.textPrimary.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.navigate(.back)) }
+                    )
+                }, centerView: {
+                    HeaderTitle("Путешествия")
+                })
+            } content: {
+                if !viewModel.isLoading {
+                    DefaultTripsListView(trips: viewModel.trips) { trip in
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            viewModel.dispatch(.selectTrip(trip))
+                        }
+                    }
+                    .padding(.bottom, 90)
                 }
             }
-            .padding(.bottom, 90)
+            .background(PinzUIAsset.background.swiftUIColor)
+
+            if viewModel.isLoading {
+                LoadingView()
+            }
         }
-        .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            Task { try await viewModel.asyncDispatch(.fetchTrips) }
+        }
     }
 }
