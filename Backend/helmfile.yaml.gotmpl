@@ -43,8 +43,14 @@ releases:
           otelServiceName: "trip-service"
           otelTracesSampler: "parentbased_always_on"
           otelTracesSamplerArg: "1.0"
+          s3Endpoint: "{{ env "S3_ENDPOINT" | default "https://storage.yandexcloud.net" }}"
+          s3Region: "{{ env "S3_REGION" | default "ru-central1" }}"
+          s3Bucket: "{{ env "S3_BUCKET" | default "" }}"
+          s3PresignTTL: "{{ env "S3_PRESIGN_TTL" | default "15m" }}"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
+          s3AccessKey: "{{ env "S3_ACCESS_KEY" | default "" }}"
+          s3SecretKey: "{{ env "S3_SECRET_KEY" | default "" }}"
 
   - name: api-gateway
     namespace: default

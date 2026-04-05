@@ -59,7 +59,7 @@ func main() {
 	}
 
 	slog.Info("building dependencies")
-	deps, err := di.BuildDependencies(sqlDB, redisClient)
+	deps, err := di.BuildDependencies(ctx, sqlDB, redisClient)
 	if err != nil {
 		slog.Error("failed to build dependencies", "error", err)
 		os.Exit(1)

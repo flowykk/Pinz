@@ -57,11 +57,13 @@ Go 1.25 · chi · gRPC · Protobuf · PostgreSQL · Redis · JWT · OpenTelemetr
 
 | Шаг | Метод | Путь | Описание |
 |---|---|---|---|
-| 1 | POST | `/api/v1/trips/creation/start` | Создание путешествия + выдача `files_to_upload` → S3 presigned URLs (пока URL заглушка) |
+| 1 | POST | `/api/v1/trips/creation/start` | Создание путешествия + выдача presigned PUT URL для загрузки в Object Storage (S3‑совместимый API) |
 | 2 | POST | `/api/v1/trips/creation/{trip_id}/media/process-grouping` | Передача метаданных медиа, первичная группировка по гео/времени, статус `DRAFT_GROUPING_REVIEW` |
 | 3 | POST | `/api/v1/trips/creation/{trip_id}/apply-groups-and-process` | Применение ручных групп, создание пинов, статус `PROCESSING`, задача в Redis Streams `pinz:trip:ml:tasks` |
 | 4 | GET | `/api/v1/trips/creation/{trip_id}/review` | Результат фоновой обработки: пины, теги, `issues`, массив `similar` (похожие медиа) |
 | 5 | POST | `/api/v1/trips/creation/{trip_id}/finalize` | Финальное ревью, ручные правки, удаление медиа, агрегация трипа, статус `READY` |
+
+**Object Storage (trip-service):** используется Yandex Cloud Object Storage (или любой S3‑совместимый endpoint). Переменные окружения: `S3_ENDPOINT` (по умолчанию `https://storage.yandexcloud.net`), `S3_REGION` (`ru-central1`), `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, опционально `S3_PRESIGN_TTL` (например `15m`). Если `S3_BUCKET` не задан, presigned URL не выдаются (`url` в ответе пустой). В консоли YC: сервисный аккаунт с ролью `storage.editor`, статический ключ доступа, бакет; для прямой загрузки с клиента настройте CORS на бакете (методы `GET`, `PUT`, `HEAD`).
 
 Real‑time уведомление о завершении шага 3–4 идёт через WebSocket:
 

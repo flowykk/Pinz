@@ -10,4 +10,5 @@
 //go:generate go run go.uber.org/mock/mockgen@latest -destination=tag_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories TagRepositoryInterface
 //go:generate go run go.uber.org/mock/mockgen@latest -destination=social_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories SocialRepositoryInterface
 //go:generate go run go.uber.org/mock/mockgen@latest -destination=favourite_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories FavouriteRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=media_url_resolver_mock.go -package=mocks pinz/backend/trip-service/internal/services MediaURLResolver
 package mocks

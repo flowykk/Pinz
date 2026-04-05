@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,6 +28,7 @@ type TripService struct {
 	settingsRepo    repositories.TripSettingsRepositoryInterface
 	eventRepo       repositories.TripEventPublisher
 	mediaRepo       repositories.MediaRepositoryInterface
+	mediaURLs       MediaURLResolver
 	pinRepo         repositories.PinRepositoryInterface
 	tagRepo         repositories.TagRepositoryInterface
 	socialRepo      repositories.SocialRepositoryInterface
@@ -39,6 +42,7 @@ func NewTripService(
 	settingsRepo repositories.TripSettingsRepositoryInterface,
 	eventRepo repositories.TripEventPublisher,
 	mediaRepo repositories.MediaRepositoryInterface,
+	mediaURLs MediaURLResolver,
 	pinRepo repositories.PinRepositoryInterface,
 	tagRepo repositories.TagRepositoryInterface,
 	socialRepo repositories.SocialRepositoryInterface,
@@ -51,6 +55,7 @@ func NewTripService(
 		settingsRepo:    settingsRepo,
 		eventRepo:       eventRepo,
 		mediaRepo:       mediaRepo,
+		mediaURLs:       mediaURLs,
 		pinRepo:         pinRepo,
 		tagRepo:         tagRepo,
 		socialRepo:      socialRepo,
@@ -118,10 +123,19 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	for _, f := range req.GetFilesToUpload() {
 		ext := contentTypeToExt(f.GetContentType())
 		s3Key := "trips/" + trip.ID + "/" + f.GetClientId() + ext
+		url := ""
+		if s.mediaURLs != nil {
+			var err error
+			url, err = s.mediaURLs.PresignedUploadURL(ctx, s3Key, f.GetContentType())
+			if err != nil {
+				slog.Error("trip_service: S3 presign upload failed", "trip_id", trip.ID, "client_id", f.GetClientId(), "s3_key", s3Key, "err", err)
+				return nil, status.Error(codes.Internal, "failed to presign upload url")
+			}
+		}
 		uploadUrls = append(uploadUrls, &pb.UploadUrl{
 			ClientId: f.GetClientId(),
 			S3Key:    s3Key,
-			Url:      "", // Media Service will provide presigned URL; stub for now
+			Url:      url,
 		})
 	}
 	return &pb.CreateTripResponse{
@@ -152,7 +166,7 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 		return nil, status.Error(codes.Internal, "failed to check participant")
 	}
 	if ok {
-		resp, err := s.getTripResponseWithPins(trip)
+		resp, err := s.getTripResponseWithPins(ctx, trip)
 		if err != nil {
 			return nil, err
 		}
@@ -164,7 +178,7 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 		return nil, status.Error(codes.Internal, "failed to check favourite")
 	}
 	if hasFav {
-		resp, err := s.getTripResponseWithPins(trip)
+		resp, err := s.getTripResponseWithPins(ctx, trip)
 		if err != nil {
 			return nil, err
 		}
@@ -174,7 +188,7 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 }
 
 // getTripResponseWithPins builds GetTripResponse with trip and pins (each pin with its media).
-func (s *TripService) getTripResponseWithPins(trip *models.Trip) (*pb.GetTripResponse, error) {
+func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.Trip) (*pb.GetTripResponse, error) {
 	pins, err := s.pinRepo.ListByTripID(trip.ID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list pins")
@@ -193,7 +207,7 @@ func (s *TripService) getTripResponseWithPins(trip *models.Trip) (*pb.GetTripRes
 		if tags == nil {
 			tags = []string{}
 		}
-		outPins = append(outPins, pinWithMediaToProto(pin, mediaList, tags))
+		outPins = append(outPins, s.pinWithMediaToProto(ctx, pin, mediaList, tags))
 	}
 	return &pb.GetTripResponse{
 		Trip: tripToProto(trip),
@@ -201,7 +215,7 @@ func (s *TripService) getTripResponseWithPins(trip *models.Trip) (*pb.GetTripRes
 	}, nil
 }
 
-func pinWithMediaToProto(pin *models.Pin, mediaList []*models.Media, tags []string) *pb.TripPin {
+func (s *TripService) pinWithMediaToProto(ctx context.Context, pin *models.Pin, mediaList []*models.Media, tags []string) *pb.TripPin {
 	out := &pb.TripPin{
 		Id:           pin.ID,
 		Name:         pin.Name,
@@ -225,7 +239,7 @@ func pinWithMediaToProto(pin *models.Pin, mediaList []*models.Media, tags []stri
 	for _, m := range mediaList {
 		pm := &pb.TripPinMedia{
 			MediaId:      m.ID,
-			Url:          "", // Media service or gateway may resolve presigned URL
+			Url:          s.presignedReadURL(ctx, m.S3Key),
 			MediaType:    m.MediaType,
 			PrivacyLevel: m.PrivacyLevel,
 		}
@@ -685,7 +699,7 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 			}
 			dp.Media = append(dp.Media, &pb.DraftPinMedia{
 				MediaId: m.ID,
-				Url:     "", // Media Service read URL; stub
+				Url:     s.presignedReadURL(ctx, m.S3Key),
 				Type:    m.MediaType,
 			})
 		}
@@ -721,10 +735,19 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 	if trip.Status != "DRAFT_GROUPING_REVIEW" {
 		return nil, status.Error(codes.FailedPrecondition, "trip must be in DRAFT_GROUPING_REVIEW")
 	}
-	// Delete rejected media
+	// Delete rejected media (DB then best-effort S3)
 	if len(req.GetDeletedMediaIds()) > 0 {
-		if err := s.mediaRepo.DeleteByIDs(req.GetDeletedMediaIds()); err != nil {
+		allowedIDs, s3Keys, err := s.resolveMediaDeletionsForTrip(tripID, req.GetDeletedMediaIds())
+		if err != nil {
+			return nil, err
+		}
+		if err := s.mediaRepo.DeleteByIDs(allowedIDs); err != nil {
 			return nil, status.Error(codes.Internal, "failed to delete media")
+		}
+		if s.mediaURLs != nil {
+			for _, key := range s3Keys {
+				_ = s.mediaURLs.DeleteObject(ctx, key)
+			}
 		}
 	}
 	// Create one pin per draft_pin and assign media
@@ -827,7 +850,7 @@ func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRe
 		for _, m := range pinMedia {
 			reviewMedia = append(reviewMedia, &pb.ReviewPinMedia{
 				MediaId:      m.ID,
-				Url:          "",
+				Url:          s.presignedReadURL(ctx, m.S3Key),
 				PrivacyLevel: m.PrivacyLevel,
 			})
 		}
@@ -907,9 +930,20 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 		}
 		_ = s.pinRepo.Update(pin)
 	}
-	// Delete media (DB only; S3 via Media Service later)
+	// Delete media from DB, then best-effort remove from object storage
 	if len(req.GetMediaToDelete()) > 0 {
-		_ = s.mediaRepo.DeleteByIDs(req.GetMediaToDelete())
+		allowedIDs, s3Keys, err := s.resolveMediaDeletionsForTrip(tripID, req.GetMediaToDelete())
+		if err != nil {
+			return nil, err
+		}
+		if err := s.mediaRepo.DeleteByIDs(allowedIDs); err != nil {
+			return nil, status.Error(codes.Internal, "failed to delete media")
+		}
+		if s.mediaURLs != nil {
+			for _, key := range s3Keys {
+				_ = s.mediaURLs.DeleteObject(ctx, key)
+			}
+		}
 	}
 	// Aggregate trip: cover_url (first media), start_date, end_date from pins
 	pins, _ := s.pinRepo.ListByTripID(tripID)
@@ -920,8 +954,8 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 		if m.PinID == nil {
 			continue
 		}
-		if coverURL == "" && m.MediaType == "image" {
-			coverURL = "" // would be Media Service URL from s3_key
+		if m.MediaType == "image" {
+			coverURL = s.presignedReadURL(ctx, m.S3Key)
 		}
 		break
 	}
@@ -1224,6 +1258,37 @@ func (s *TripService) ListFavourites(ctx context.Context, req *pb.ListFavourites
 		out = append(out, tripToProto(trip))
 	}
 	return &pb.ListFavouritesResponse{Trips: out}, nil
+}
+
+func (s *TripService) presignedReadURL(ctx context.Context, s3Key string) string {
+	if s.mediaURLs == nil || s3Key == "" {
+		return ""
+	}
+	u, err := s.mediaURLs.ReadURL(ctx, s3Key)
+	if err != nil {
+		return ""
+	}
+	return u
+}
+
+func (s *TripService) resolveMediaDeletionsForTrip(tripID string, ids []string) (allowedIDs []string, s3Keys []string, err error) {
+	for _, id := range ids {
+		m, err := s.mediaRepo.GetByID(id)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil, status.Error(codes.InvalidArgument, "unknown media id")
+			}
+			return nil, nil, status.Error(codes.Internal, "failed to get media")
+		}
+		if m.TripID != tripID {
+			return nil, nil, status.Error(codes.PermissionDenied, "media does not belong to this trip")
+		}
+		allowedIDs = append(allowedIDs, id)
+		if m.S3Key != "" {
+			s3Keys = append(s3Keys, m.S3Key)
+		}
+	}
+	return allowedIDs, s3Keys, nil
 }
 
 func tripToProto(t *models.Trip) *pb.Trip {
