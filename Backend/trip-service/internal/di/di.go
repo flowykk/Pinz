@@ -40,6 +40,8 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	var mediaURLs services.MediaURLResolver
 	if s3Client != nil {
 		mediaURLs = s3Client
+	} else {
+		slog.Info("trip-service: S3 not configured (S3_BUCKET unset); presigned upload URLs will be empty")
 	}
 	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo)
 	return &Dependencies{TripService: tripSvc}, nil

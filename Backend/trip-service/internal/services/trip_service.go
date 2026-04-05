@@ -128,6 +128,7 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 			var err error
 			url, err = s.mediaURLs.PresignedUploadURL(ctx, s3Key, f.GetContentType())
 			if err != nil {
+				slog.Error("trip_service: S3 presign upload failed", "trip_id", trip.ID, "client_id", f.GetClientId(), "s3_key", s3Key, "err", err)
 				return nil, status.Error(codes.Internal, "failed to presign upload url")
 			}
 		}
@@ -745,9 +746,7 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 		}
 		if s.mediaURLs != nil {
 			for _, key := range s3Keys {
-				if err := s.mediaURLs.DeleteObject(ctx, key); err != nil {
-					slog.Warn("trip_service: s3 delete object failed", "op", "delete_object", "s3_key", key, "err", err)
-				}
+				_ = s.mediaURLs.DeleteObject(ctx, key)
 			}
 		}
 	}
@@ -942,9 +941,7 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 		}
 		if s.mediaURLs != nil {
 			for _, key := range s3Keys {
-				if err := s.mediaURLs.DeleteObject(ctx, key); err != nil {
-					slog.Warn("trip_service: s3 delete object failed", "op", "delete_object", "s3_key", key, "err", err)
-				}
+				_ = s.mediaURLs.DeleteObject(ctx, key)
 			}
 		}
 	}
@@ -1269,7 +1266,6 @@ func (s *TripService) presignedReadURL(ctx context.Context, s3Key string) string
 	}
 	u, err := s.mediaURLs.ReadURL(ctx, s3Key)
 	if err != nil {
-		slog.Warn("trip_service: presigned read url failed", "op", "presign_get", "s3_key", s3Key, "err", err)
 		return ""
 	}
 	return u
