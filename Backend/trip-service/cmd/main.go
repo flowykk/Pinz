@@ -33,7 +33,8 @@ func main() {
 			defer cancel()
 			otelProviders.Shutdown(shutCtx)
 		}()
-		slog.SetDefault(slog.New(otelslog.NewHandler("trip-service")))
+		otelLog := otelslog.NewHandler("trip-service")
+		slog.SetDefault(slog.New(pinzotel.NewConsoleAndOTelSlogHandler(os.Stderr, otelLog)))
 		if err := runtimemetrics.Start(
 			runtimemetrics.WithMinimumReadMemStatsInterval(15 * time.Second),
 		); err != nil {

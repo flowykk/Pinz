@@ -32,7 +32,8 @@ func main() {
 			defer cancel()
 			otelProviders.Shutdown(shutCtx)
 		}()
-		slog.SetDefault(slog.New(otelslog.NewHandler("auth-service")))
+		otelLog := otelslog.NewHandler("auth-service")
+		slog.SetDefault(slog.New(pinzotel.NewConsoleAndOTelSlogHandler(os.Stderr, otelLog)))
 		if err := runtimemetrics.Start(
 			runtimemetrics.WithMinimumReadMemStatsInterval(15 * time.Second),
 		); err != nil {
