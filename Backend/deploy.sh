@@ -195,12 +195,20 @@ deploy_app() {
     log_info "Starting deployment..."
 
     # Export env vars so helmfile.yaml.gotmpl can read them via env().
+    # Values come from load_env (.env) or the caller's environment.
     export DOCKER_REGISTRY="$DOCKER_REGISTRY"
     export DOCKER_REPO="$DOCKER_REPO"
     export IMAGE_TAG="$IMAGE_TAG"
     export SERVER_IP="${SERVER_IP:-host.docker.internal}"
     export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
     export JWT_SECRET_KEY="${JWT_SECRET_KEY}"
+    # trip-service object storage (optional; empty bucket disables presigned URLs)
+    export S3_ENDPOINT="${S3_ENDPOINT:-}"
+    export S3_REGION="${S3_REGION:-}"
+    export S3_BUCKET="${S3_BUCKET:-}"
+    export S3_ACCESS_KEY="${S3_ACCESS_KEY:-}"
+    export S3_SECRET_KEY="${S3_SECRET_KEY:-}"
+    export S3_PRESIGN_TTL="${S3_PRESIGN_TTL:-}"
 
     cd "$PROJECT_DIR"
     helmfile -f "$HELMFILE_CONFIG" apply
@@ -574,6 +582,12 @@ while [[ $# -gt 0 ]]; do
             echo "  SERVER_IP                Server IP address for database access"
             echo "  POSTGRES_PASSWORD        Database password"
             echo "  JWT_SECRET_KEY           JWT secret key"
+            echo "  S3_ENDPOINT              Trip service: S3 API endpoint (optional)"
+            echo "  S3_REGION                Trip service: region (optional)"
+            echo "  S3_BUCKET                Trip service: bucket (optional; empty = no presign URLs)"
+            echo "  S3_ACCESS_KEY            Trip service: access key (optional)"
+            echo "  S3_SECRET_KEY            Trip service: secret key (optional)"
+            echo "  S3_PRESIGN_TTL           Trip service: presign TTL, e.g. 15m (optional)"
             echo "  SKIP_PULL=true           Skip docker auth/pull (k3s pulls via containerd)"
             echo ""
             echo "Examples:"
