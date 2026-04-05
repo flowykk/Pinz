@@ -44,8 +44,7 @@ func main() {
 			defer cancel()
 			otelProviders.Shutdown(shutCtx)
 		}()
-		otelLog := otelslog.NewHandler("api-gateway-service")
-		slog.SetDefault(slog.New(pinzotel.NewConsoleAndOTelSlogHandler(os.Stderr, otelLog)))
+		slog.SetDefault(slog.New(otelslog.NewHandler("api-gateway-service")))
 		if err := runtimemetrics.Start(
 			runtimemetrics.WithMinimumReadMemStatsInterval(15 * time.Second),
 		); err != nil {
