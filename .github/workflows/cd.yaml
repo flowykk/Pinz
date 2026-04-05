@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [main, develop, 'PINZ-*']
+    branches: [main, develop, PINZ-115, 'PINZ-*']
     paths:
       - 'Backend/**'
       - 'proto/**'

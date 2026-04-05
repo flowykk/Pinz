@@ -20,9 +20,15 @@ env:
   otelServiceName: "trip-service"
   otelTracesSampler: "parentbased_always_on"
   otelTracesSamplerArg: "1.0"
+  s3Endpoint: "https://storage.yandexcloud.net"
+  s3Region: "ru-central1"
+  s3Bucket: ""
+  s3PresignTTL: "15m"
 
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"
+  s3AccessKey: ""
+  s3SecretKey: ""
 
 resources:
   requests:
