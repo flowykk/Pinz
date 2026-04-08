@@ -51,7 +51,7 @@ struct TripPinsListPopupView: View {
 
         VStack {
             Text(PinzBaseStrings.TripPins.title)
-                .roundedFount(size: 20, weight: .semibold)
+                .roundedFont(size: 20, weight: .semibold)
                 .padding(.top, 16)
             Spacer()
         }

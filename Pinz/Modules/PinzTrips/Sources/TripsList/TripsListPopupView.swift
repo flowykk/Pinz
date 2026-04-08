@@ -61,7 +61,7 @@ struct TripsListPopupView: View {
 
         VStack {
             Text(PinzBaseStrings.TripsListPopup.Title.myTrips)
-                .roundedFount(size: 20, weight: .semibold)
+                .roundedFont(size: 20, weight: .semibold)
                 .padding(.top, 16)
             Spacer()
         }

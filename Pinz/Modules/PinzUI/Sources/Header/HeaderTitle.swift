@@ -13,10 +13,10 @@ public struct HeaderTitle: View {
     public var body: some View {
         VStack(spacing: 0) {
             Text(title)
-                .roundedFount(size: 16, weight: .semibold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                .roundedFont(size: 16, weight: .semibold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
             if let subtitle {
                 Text(subtitle)
-                    .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                    .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
             }
         }
     }

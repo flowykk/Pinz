@@ -58,7 +58,7 @@ public struct PinAnnotationView: View {
             }.overlay {
                 if pin.medias.count > 1 {
                     Text("\(pin.medias.count)")
-                        .roundedFount(size: 12, weight: .semibold, foregroundColor: .black)
+                        .roundedFont(size: 12, weight: .semibold, foregroundColor: .black)
                         .frame(minWidth: 24, minHeight: 24)
                         .background(Circle().fill(Color.white))
                         .offset(x: 25, y: -25)

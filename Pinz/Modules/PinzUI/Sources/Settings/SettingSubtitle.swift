@@ -10,6 +10,6 @@ public struct SettingSubtitle: View {
 
     public var body: some View {
         Text(text)
-            .roundedFount(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+            .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
     }
 }
