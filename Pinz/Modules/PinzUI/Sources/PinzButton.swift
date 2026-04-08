@@ -89,12 +89,12 @@ public struct PinzButton: View {
                 switch type {
                 case let .icon(icon):
                     Image(systemName: icon.rawValue)
-                        .roundedFount(size: 20, weight: .semibold, foregroundColor: tint)
+                        .roundedFont(size: 20, weight: .semibold, foregroundColor: tint)
                         .frame(width: 40, height: 40)
                         .contentShape(Rectangle())
                 case let .text(text):
                     Text(text)
-                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFont(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                         .padding(.horizontal, 6)
                 case let .slot(style, title):
                     HStack {
@@ -104,7 +104,7 @@ public struct PinzButton: View {
                                 .tint(style.textColor)
                         } else {
                             Text(title)
-                                .roundedFount(size: 16, foregroundColor: style.textColor)
+                                .roundedFont(size: 16, foregroundColor: style.textColor)
                         }
                         Spacer()
                     }

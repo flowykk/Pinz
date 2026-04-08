@@ -29,7 +29,7 @@ public struct LoadableVideoThumbnail<Content: View>: View {
             animateState(to: .failure)
             return
         }
-        
+
         if let thumbnail = await ImageProvider.loadOrGetVideoThumbnail(for: url.absoluteString) {
             animateState(to: .ready(thumbnail))
         } else {

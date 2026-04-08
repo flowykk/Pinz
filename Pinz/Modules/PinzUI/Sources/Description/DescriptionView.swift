@@ -46,7 +46,7 @@ public struct DescriptionView: View {
                             Image(systemName: "chevron.down")
                                 .rotationEffect(.degrees(isCollapsed ? 0 : 180))
                         }
-                        .roundedFount(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                        .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                     }
                 }
             }
@@ -57,7 +57,7 @@ public struct DescriptionView: View {
             if let description, !description.isEmpty {
                 VStack(spacing: 0) {
                     Text(description)
-                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFont(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                         .lineLimit(isCollapsed ? 5 : nil)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 16)

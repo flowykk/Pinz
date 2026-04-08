@@ -61,7 +61,7 @@ public struct BadgeView: View {
             .frame(badgeSize)
             .overlay {
                 Image(systemName: icon.rawValue)
-                    .roundedFount(size: iconSize, foregroundColor: color)
+                    .roundedFont(size: iconSize, foregroundColor: color)
             }
     }
 }

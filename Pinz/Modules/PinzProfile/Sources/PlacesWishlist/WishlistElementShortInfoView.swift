@@ -25,9 +25,9 @@ struct WishlistElementShortInfoView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(element.title)
-                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFont(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                     Text(element.description)
-                        .roundedFount(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                        .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                         .lineLimit(5)
                     Spacer(minLength: 0)
                 }
@@ -35,7 +35,7 @@ struct WishlistElementShortInfoView: View {
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
-                    .roundedFount(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                    .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
             }
         }
         .buttonStyle(.plain)

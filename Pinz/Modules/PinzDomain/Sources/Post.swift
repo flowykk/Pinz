@@ -1,0 +1,49 @@
+import Foundation
+
+public struct Post: Equatable, Identifiable {
+    public var id: UUID
+    public var name: String
+    public var description: String?
+    public var participants: Int
+    public var likes: Int
+    public var favorites: Int
+    public var views: Int
+    public var pins: [Pin]
+
+    public init(
+        id: UUID,
+        name: String,
+        description: String? = nil,
+        participants: Int,
+        likes: Int,
+        favorites: Int,
+        views: Int,
+        pins: [Pin]
+    ) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.participants = participants
+        self.likes = likes
+        self.favorites = favorites
+        self.views = views
+        self.pins = pins
+    }
+}
+
+extension Post {
+    public static var stub: Post {
+        Post(
+            id: UUID(),
+            name: "Paris Trip",
+            description: "Amazing week in Paris",
+            participants: 12,
+            likes: 234,
+            favorites: 45,
+            views: 1200,
+            pins: Pin.stubs()
+        )
+    }
+}
+
+

@@ -57,9 +57,9 @@ public struct SegmentedPicker<Item: SegmentedItem>: View {
             Spacer(minLength: 0)
             switch item.content {
             case let .text(text):
-                Text(text).roundedFount(size: 16)
+                Text(text).roundedFont(size: 16)
             case let .icon(icon, color):
-                Image(systemName: icon).roundedFount(size: 16, foregroundColor: color)
+                Image(systemName: icon).roundedFont(size: 16, foregroundColor: color)
             }
             Spacer(minLength: 0)
         }

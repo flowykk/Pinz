@@ -110,7 +110,7 @@ public final class NetworkService: NetworkServiceProtocol {
     private let provider: NetworkProvider<PinzAPI>
 
     public init() {
-        let stub: Bool = true
+        let stub: Bool = false
         self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: 0.5)
     }
 
