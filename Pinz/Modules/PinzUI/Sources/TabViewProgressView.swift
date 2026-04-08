@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct TabViewProgressView: View {
+public struct TabViewProgressView: View {
 
     let numberOfPages: Int
     let currentIndex: Int
@@ -13,7 +13,12 @@ struct TabViewProgressView: View {
 
     private let smallScale: CGFloat = 0.6
 
-    var body: some View {
+    public init(numberOfPages: Int, currentIndex: Int) {
+        self.numberOfPages = numberOfPages
+        self.currentIndex = currentIndex
+    }
+
+    public var body: some View {
         HStack(spacing: circleSpacing) {
             ForEach(0..<numberOfPages) { index in
                 if shouldShowIndex(index) {
