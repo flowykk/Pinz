@@ -3,7 +3,7 @@ import SwiftUI
 extension Setting.TextFieldSetting {
     public var view: some View {
         textField
-            .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+            .roundedFont(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
     }
 
     @ViewBuilder

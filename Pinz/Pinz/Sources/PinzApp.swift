@@ -7,6 +7,7 @@ import CoreLocation
 import PinzBase
 import PinzDomain
 import PinzUI
+import PinzFeed
 import PinzPins
 
 @main
@@ -18,6 +19,7 @@ struct PinzApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
+//                FeedView()
                 RootView(router: router) {
                     AuthFlowView()
                 }

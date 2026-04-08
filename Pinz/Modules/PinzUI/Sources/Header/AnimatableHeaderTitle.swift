@@ -21,14 +21,14 @@ public struct AnimatableHeaderTitle: View {
         VStack(spacing: 0) {
             if !isTitleEmpty {
                 Text(title)
-                    .roundedFount(
+                    .roundedFont(
                         size: 16,
                         weight: .semibold,
                         foregroundColor: PinzUIAsset.textPrimary.swiftUIColor
                     )
             }
             Text(animatableTitle)
-                .roundedFount(
+                .roundedFont(
                     size: isTitleEmpty ? 16 : 14,
                     weight: isTitleEmpty ? .semibold : .medium,
                     foregroundColor: isTitleEmpty ? primaryColor : secondaryColor

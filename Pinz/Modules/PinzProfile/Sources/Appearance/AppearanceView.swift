@@ -56,7 +56,7 @@ public struct AppearanceView: View {
     private var mapSettings: some View {
         VStack(alignment: .leading, spacing: 6) {
             SettingTitle(PinzBaseStrings.Appearance.Header.mapStyle)
-                .roundedFount(size: 16, weight: .medium)
+                .roundedFont(size: 16, weight: .medium)
                 .padding(.leading, 12)
 
             SegmentedPicker(

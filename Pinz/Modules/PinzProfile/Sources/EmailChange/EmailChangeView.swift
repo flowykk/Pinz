@@ -72,14 +72,14 @@ public struct EmailChangeView: View {
     private var firstCodeInputView: some View {
         VStack(spacing: 16) {
             Text("cristgames123@gmail.com")
-                .roundedFount(
+                .roundedFont(
                     size: 16,
                     weight: .semibold,
                     foregroundColor: PinzUIAsset.accentRed.swiftUIColor
                 )
 
             Text(PinzBaseStrings.EmailChange.Description.instructions)
-                .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 64)
 
@@ -90,7 +90,7 @@ public struct EmailChangeView: View {
     private var emailInputView: some View {
         VStack(spacing: 12) {
             Text(PinzBaseStrings.EmailChange.Label.newEmail)
-                .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 .multilineTextAlignment(.center)
 
             SettingsGroup(
@@ -110,7 +110,7 @@ public struct EmailChangeView: View {
     private var secondCodeInputView: some View {
         VStack(spacing: 12) {
             Text(PinzBaseStrings.EmailChange.Description.verificationCode)
-                .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 64)
 

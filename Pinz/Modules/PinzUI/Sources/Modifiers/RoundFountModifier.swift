@@ -23,7 +23,7 @@ public struct RoundFontModifier: ViewModifier {
 }
 
 extension View {
-    public func roundedFount(
+    public func roundedFont(
         size: CGFloat,
         weight: Font.Weight = .medium,
         foregroundColor: Color = PinzUIAsset.textPrimary.swiftUIColor

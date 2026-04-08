@@ -55,9 +55,9 @@ public struct MediasPinShortInfo: View {
                 if medias.count > maxMedias {
                     VStack {
                         Text("+\(medias.count - maxMedias)")
-                            .roundedFount(size: 24, weight: .semibold, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                            .roundedFont(size: 24, weight: .semibold, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                         Text(PinzBaseStrings.Common.Label.media)
-                            .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                            .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                     }.frame(76)
                 }
             }.padding(.horizontal, 12)

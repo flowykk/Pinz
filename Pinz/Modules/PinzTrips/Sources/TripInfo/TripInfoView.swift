@@ -175,7 +175,7 @@ public struct TripInfoView: View {
                     imageEditingDialogShown = true
                 } label: {
                     Text(PinzBaseStrings.Common.Button.editPhoto)
-                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                        .roundedFont(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 }
             }
         }

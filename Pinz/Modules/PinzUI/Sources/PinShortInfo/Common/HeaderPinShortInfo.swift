@@ -46,17 +46,17 @@ public struct HeaderPinShortInfo: View {
                         .transaction { $0.animation = .easeInOut(duration: 0.15) }
                     }
                     Spacer(minLength: 0)
-                }.roundedFount(size: 34, weight: .light)
+                }.roundedFont(size: 34, weight: .light)
             }
 
             VStack(alignment: .leading) {
                 HStack(spacing: 4) {
                     Image(systemName: "location.fill")
                     Text(pin.name)
-                }.roundedFount(size: 16)
+                }.roundedFont(size: 16)
 
                 Text(pin.category.value)
-                    .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                    .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
             }
 
             Spacer()

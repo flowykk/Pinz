@@ -57,7 +57,7 @@ public struct RawPinView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "location.fill")
                     Text(PinzBaseStrings.Common.Label.pinNumber(index + 1))
-                }.roundedFount(size: 16)
+                }.roundedFont(size: 16)
             }
 
             Spacer()

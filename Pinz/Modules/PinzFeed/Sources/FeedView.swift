@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzBase
+import PinzDomain
 
 public struct FeedView: View {
 
@@ -13,20 +14,26 @@ public struct FeedView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            Header(leftView: {
-                PinzButton(
-                    type: .icon(.chevronLeft),
-                    tint: PinzUIAsset.textPrimary.swiftUIColor,
-                    action: .plain { viewModel.dispatch(.navigate(.back)) }
-                )
-            }, centerView: {
-                HeaderTitle(PinzBaseStrings.Feed.Title.main)
-            })
-
-            Spacer()
+        CollapsibleHeader(needsBlur: true) {
+            header
+        } content: {
+            VStack {
+                PostView(post: Post.stub)
+            }
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
+    }
+
+    public var header: some View {
+        Header(leftView: {
+            PinzButton(
+                type: .icon(.chevronLeft),
+                tint: PinzUIAsset.textPrimary.swiftUIColor,
+                action: .plain { viewModel.dispatch(.navigate(.back)) }
+            )
+        }, centerView: {
+            HeaderTitle(PinzBaseStrings.Feed.Title.main)
+        })
     }
 }

@@ -82,7 +82,7 @@ extension Setting.DefaultSetting {
                 switch value {
                 case let .text(text):
                     Text(text)
-                        .roundedFount(size: 12, foregroundColor: trailColor)
+                        .roundedFont(size: 12, foregroundColor: trailColor)
                 case let .icon(icon, color):
                     trailingIconView(for: icon, with: color)
                 }
@@ -95,7 +95,7 @@ extension Setting.DefaultSetting {
         with color: Color? = nil
     ) -> some View {
         Image(systemName: icon.rawValue)
-            .roundedFount(size: 12, foregroundColor: color ?? trailColor)
+            .roundedFont(size: 12, foregroundColor: color ?? trailColor)
     }
 }
 
@@ -127,7 +127,7 @@ extension Setting.DefaultSetting {
 
     private func titleView(for title: String) -> some View {
         Text(title)
-            .roundedFount(size: 16, foregroundColor: titleColor)
+            .roundedFont(size: 16, foregroundColor: titleColor)
     }
 
     private func imageView(for image: UIImage) -> some View {
@@ -143,7 +143,7 @@ extension Setting.DefaultSetting {
         with color: Color? = nil
     ) -> some View {
         Image(systemName: icon.rawValue)
-            .roundedFount(size: 18, foregroundColor: color ?? titleColor)
+            .roundedFont(size: 18, foregroundColor: color ?? titleColor)
             .frame(16)
     }
 }

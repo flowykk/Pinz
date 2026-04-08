@@ -76,7 +76,7 @@ public struct PinPlaceChangeView: View {
                 centerView: {
                     Text(PinzBaseStrings.PinPlaceChange.Label.instructions)
                         .multilineTextAlignment(.center)
-                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFont(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                 }
             ).background {
                 GradientView(style: .top, color: .black, height: 200)

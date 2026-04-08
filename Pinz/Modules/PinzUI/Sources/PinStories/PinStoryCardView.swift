@@ -144,7 +144,7 @@ struct PinStoryCardView: View {
                 }
             } label: {
                 Text(pin.name)
-                    .roundedFount(size: 17, weight: .semibold, foregroundColor: .white)
+                    .roundedFont(size: 17, weight: .semibold, foregroundColor: .white)
             }
 
             Spacer()

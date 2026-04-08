@@ -13,7 +13,7 @@ public struct LoadingView: View {
             ProgressView()
             if let status {
                 Text(status)
-                    .roundedFount(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                    .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                     .id(status)
                     .transition(.opacity)
             }

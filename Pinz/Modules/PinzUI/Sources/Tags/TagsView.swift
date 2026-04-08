@@ -82,7 +82,7 @@ public struct TagsView: View {
                 } label: {
                     Image(systemName: "plus")
                         .frame(32)
-                        .roundedFount(size: 14, weight: .bold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFont(size: 14, weight: .bold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                         .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
                         .clipShape(Circle())
                         .padding([.vertical, .trailing], 4)
@@ -117,7 +117,7 @@ public struct TagsView: View {
     private func item(for text: String) -> some View {
         HStack(spacing: 0) {
             Text(text)
-                .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                .roundedFont(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                 .padding(.leading, 8)
                 .padding(.trailing, style == .editable ? 4 : 8)
 
@@ -129,7 +129,7 @@ public struct TagsView: View {
                 } label: {
                     Image(systemName: "minus")
                         .frame(24)
-                        .roundedFount(size: 12, weight: .bold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFont(size: 12, weight: .bold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                         .background(PinzUIAsset.background.swiftUIColor)
                         .clipShape(Circle())
                 }

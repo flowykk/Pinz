@@ -14,7 +14,7 @@ struct MergePinsPickerView: View {
     var body: some View {
         VStack(spacing: 0) {
             Text(PinzBaseStrings.MergePins.Label.instructions)
-                .roundedFount(size: 16)
+                .roundedFont(size: 16)
                 .padding(.top, 12)
                 .padding(.bottom, 8)
 

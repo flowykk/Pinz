@@ -14,7 +14,7 @@ struct MovePinMediaPickerView: View {
         VStack(spacing: 0) {
             Text(PinzBaseStrings.MoveMedia.Label.instructions)
                 .multilineTextAlignment(.center)
-                .roundedFount(size: 16)
+                .roundedFont(size: 16)
                 .padding(.top, 12)
                 .padding(.bottom, 8)
 

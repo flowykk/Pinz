@@ -183,7 +183,7 @@ public struct TripView: View {
                     .clipped()
 
                 Text(trip.name)
-                    .roundedFount(size: 16)
+                    .roundedFont(size: 16)
             }
             .padding(.leading, 6)
             .padding(.trailing, 10)
@@ -235,7 +235,7 @@ public struct TripView: View {
                                 .clipped()
                         }
                     }
-                    .roundedFount(size: 20)
+                    .roundedFont(size: 20)
                     .ifLet(isRotated) { view, isRotated in
                         view.rotationEffect(.degrees(isRotated ? 0 : 180))
                     }
@@ -259,10 +259,10 @@ public struct TripView: View {
 
                 VStack(spacing: 2) {
                     Text(pins.isEmpty ? "" : pins[viewModel.routePinIndex].name)
-                        .roundedFount(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFont(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                         .lineLimit(1)
                     Text("\(viewModel.routePinIndex + 1) / \(pins.count)")
-                        .roundedFount(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFont(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                 }
 
                 Spacer()

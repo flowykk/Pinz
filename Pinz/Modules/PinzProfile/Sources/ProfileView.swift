@@ -164,7 +164,7 @@ public struct ProfileView: View {
                     }
                 }
             }
-            .roundedFount(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+            .roundedFont(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
         }
     }
 
