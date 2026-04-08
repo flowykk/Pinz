@@ -520,8 +520,18 @@ public final class NetworkService: NetworkServiceProtocol {
         request.httpMethod = "PUT"
         request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         let (_, response) = try await URLSession.shared.upload(for: request, from: data)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
+        }
+        guard (200...299).contains(http.statusCode) else {
+            #if DEBUG
+            print("S3 upload failed: HTTP \(http.statusCode) for \(url)")
+            #endif
+            throw NSError(
+                domain: "PinzS3Upload",
+                code: http.statusCode,
+                userInfo: [NSLocalizedDescriptionKey: "S3 upload failed (HTTP \(http.statusCode))"]
+            )
         }
     }
 

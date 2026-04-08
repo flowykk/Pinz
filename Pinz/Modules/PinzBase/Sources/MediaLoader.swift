@@ -12,11 +12,22 @@ public final class MediaLoader {
         if isVideoItem(item) {
             guard let transfer = try? await item.loadTransferable(type: VideoFileTransferable.self),
                   let frame = await firstFrame(from: transfer.url) else { return nil }
-            return LoadedMedia(id: id, content: .video(url: transfer.url, firstFrame: frame), photosPickerItem: item)
+            return LoadedMedia(
+                id: id,
+                content: .video(url: transfer.url, firstFrame: frame),
+                contentType: Self.pickerMIMEType(for: item, fallback: "video/quicktime"),
+                photosPickerItem: item
+            )
         } else {
             guard let data = try? await item.loadTransferable(type: Data.self),
                   let image = UIImage(data: data) else { return nil }
-            return LoadedMedia(id: id, content: .image(image), photosPickerItem: item)
+            return LoadedMedia(
+                id: id,
+                content: .image(image),
+                imageFileData: data,
+                contentType: Self.pickerMIMEType(for: item, fallback: "image/jpeg"),
+                photosPickerItem: item
+            )
         }
     }
 
@@ -30,6 +41,10 @@ public final class MediaLoader {
 
     private func isVideoItem(_ item: PhotosPickerItem) -> Bool {
         item.supportedContentTypes.contains { $0.conforms(to: .audiovisualContent) }
+    }
+
+    private static func pickerMIMEType(for item: PhotosPickerItem, fallback: String) -> String {
+        item.supportedContentTypes.compactMap(\.preferredMIMEType).first ?? fallback
     }
 }
 

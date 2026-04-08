@@ -134,7 +134,7 @@ final class InitialTripSetupViewModel {
     private func buildFilesToUpload() -> [FileToUploadDTO] {
         medias.compactMap { media -> FileToUploadDTO? in
             guard case .loading = media.content else {
-                return FileToUploadDTO(clientId: media.id.uuidString, contentType: media.mediaType.contentType)
+                return FileToUploadDTO(clientId: media.id.uuidString, contentType: media.uploadContentType)
             }
             return nil
         }
@@ -145,11 +145,10 @@ final class InitialTripSetupViewModel {
             for uploadURL in response.uploadUrls {
                 guard let media = medias.first(where: { $0.id.uuidString == uploadURL.clientId }),
                       let data = await media.uploadData() else { continue }
-                let contentType = media.mediaType.contentType
-                let url = "\(uploadURL.url)/\(uploadURL.s3Key)"
+                let contentType = media.uploadContentType
                 group.addTask { [weak self] in
                     guard let self else { return }
-                    try await networkService.uploadToS3(url: url, data: data, contentType: contentType)
+                    try await networkService.uploadToS3(url: uploadURL.url, data: data, contentType: contentType)
                 }
             }
             try await group.waitForAll()

@@ -62,6 +62,7 @@ final class MockNetworkService: NetworkServiceProtocol {
     var addMediaApplyGroupsResult: Result<ApplyGroupsAndProcessDTO, Error> = .success(
         ApplyGroupsAndProcessDTO(message: "processing", status: "ok")
     )
+    var uploadToS3Error: Error?
 
     // MARK: - Auth implementations
 
@@ -115,6 +116,10 @@ final class MockNetworkService: NetworkServiceProtocol {
     func addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO]) async throws -> CreateTripDTO { try addMediaStartResult.get() }
     func addMediaProcessGrouping(tripId: String, sessionId: String, media: [MediaMetaEntryDTO]) async throws -> ProcessMediaGroupingDTO { try addMediaProcessGroupingResult.get() }
     func addMediaApplyGroupsAndProcess(tripId: String, sessionId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String]) async throws -> ApplyGroupsAndProcessDTO { try addMediaApplyGroupsResult.get() }
+
+    func uploadToS3(url: String, data: Data, contentType: String) async throws {
+        if let uploadToS3Error { throw uploadToS3Error }
+    }
 
     // MARK: - Trip creation flow
 
