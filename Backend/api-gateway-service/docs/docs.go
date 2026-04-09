@@ -2196,11 +2196,17 @@ const docTemplate = `{
                 "likes_count": {
                     "type": "integer"
                 },
+                "media_count": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 },
                 "owner_user_id": {
                     "type": "string"
+                },
+                "participants_count": {
+                    "type": "integer"
                 },
                 "privacy_level": {
                     "type": "string"

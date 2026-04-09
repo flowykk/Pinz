@@ -52,6 +52,8 @@ func (r *TripRepository) GetByID(id string) (*models.Trip, error) {
 		"status", "privacy_level", "start_date", "end_date",
 		"likes_count", "dislikes_count", "cover_url", "is_published", "is_generated", "is_soft_deleted",
 		"created_at", "updated_at",
+		"(SELECT COUNT(*) FROM media m WHERE m.trip_id = trips.id)",
+		"(SELECT COUNT(*) FROM trip_participants tp WHERE tp.trip_id = trips.id)",
 	).From("trips").Where(sq.Eq{"id": id})
 	sqlStr, args, err := q.ToSql()
 	if err != nil {
@@ -66,6 +68,7 @@ func (r *TripRepository) GetByID(id string) (*models.Trip, error) {
 		&t.Status, &t.PrivacyLevel, &startDate, &endDate,
 		&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
 		&t.CreatedAt, &t.UpdatedAt,
+		&t.MediaCount, &t.ParticipantsCount,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -95,6 +98,8 @@ func (r *TripRepository) ListByUserID(userID string, limit, offset int32) ([]*mo
 		"t.status", "t.privacy_level", "t.start_date", "t.end_date",
 		"t.likes_count", "t.dislikes_count", "t.cover_url", "t.is_published", "t.is_generated", "t.is_soft_deleted",
 		"t.created_at", "t.updated_at",
+		"(SELECT COUNT(*) FROM media m WHERE m.trip_id = t.id)",
+		"(SELECT COUNT(*) FROM trip_participants tp2 WHERE tp2.trip_id = t.id)",
 	).From("trips t").
 		InnerJoin("trip_participants tp ON tp.trip_id = t.id").
 		Where(sq.Eq{"tp.user_id": userID}).
@@ -120,6 +125,7 @@ func (r *TripRepository) ListByUserID(userID string, limit, offset int32) ([]*mo
 			&t.Status, &t.PrivacyLevel, &startDate, &endDate,
 			&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
 			&t.CreatedAt, &t.UpdatedAt,
+			&t.MediaCount, &t.ParticipantsCount,
 		); err != nil {
 			return nil, err
 		}

@@ -1306,8 +1306,10 @@ func tripToProto(t *models.Trip) *pb.Trip {
 		CoverUrl:      t.CoverURL,
 		IsPublished:   t.IsPublished,
 		IsGenerated:   t.IsGenerated,
-		CreatedAtUnix: t.CreatedAt.Unix(),
-		UpdatedAtUnix: t.UpdatedAt.Unix(),
+		CreatedAtUnix:     t.CreatedAt.Unix(),
+		UpdatedAtUnix:     t.UpdatedAt.Unix(),
+		MediaCount:        t.MediaCount,
+		ParticipantsCount: t.ParticipantsCount,
 	}
 	if t.StartDate != nil {
 		out.StartDateUnix = t.StartDate.Unix()

@@ -13,8 +13,10 @@ type Trip struct {
 	StartDateUnix int64  `json:"start_date_unix,omitempty"`
 	EndDateUnix   int64  `json:"end_date_unix,omitempty"`
 	LikesCount    int32  `json:"likes_count"`
-	DislikesCount int32  `json:"dislikes_count"`
-	CoverURL      string `json:"cover_url,omitempty"`
+	DislikesCount     int32  `json:"dislikes_count"`
+	MediaCount        int32  `json:"media_count"`
+	ParticipantsCount int32  `json:"participants_count"`
+	CoverURL          string `json:"cover_url,omitempty"`
 	IsPublished   bool   `json:"is_published"`
 	IsGenerated   bool   `json:"is_generated"`
 	CreatedAtUnix int64  `json:"created_at_unix"`

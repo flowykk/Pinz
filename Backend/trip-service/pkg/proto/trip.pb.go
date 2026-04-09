@@ -22,26 +22,28 @@ const (
 )
 
 type Trip struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	OwnerUserId   string                 `protobuf:"bytes,2,opt,name=owner_user_id,json=ownerUserId,proto3" json:"owner_user_id,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	Category      string                 `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
-	Season        string                 `protobuf:"bytes,6,opt,name=season,proto3" json:"season,omitempty"`
-	Status        string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
-	PrivacyLevel  string                 `protobuf:"bytes,8,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
-	StartDateUnix int64                  `protobuf:"varint,9,opt,name=start_date_unix,json=startDateUnix,proto3" json:"start_date_unix,omitempty"`
-	EndDateUnix   int64                  `protobuf:"varint,10,opt,name=end_date_unix,json=endDateUnix,proto3" json:"end_date_unix,omitempty"`
-	LikesCount    int32                  `protobuf:"varint,11,opt,name=likes_count,json=likesCount,proto3" json:"likes_count,omitempty"`
-	DislikesCount int32                  `protobuf:"varint,12,opt,name=dislikes_count,json=dislikesCount,proto3" json:"dislikes_count,omitempty"`
-	CoverUrl      string                 `protobuf:"bytes,13,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`
-	IsPublished   bool                   `protobuf:"varint,14,opt,name=is_published,json=isPublished,proto3" json:"is_published,omitempty"`
-	IsGenerated   bool                   `protobuf:"varint,15,opt,name=is_generated,json=isGenerated,proto3" json:"is_generated,omitempty"`
-	CreatedAtUnix int64                  `protobuf:"varint,16,opt,name=created_at_unix,json=createdAtUnix,proto3" json:"created_at_unix,omitempty"`
-	UpdatedAtUnix int64                  `protobuf:"varint,17,opt,name=updated_at_unix,json=updatedAtUnix,proto3" json:"updated_at_unix,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	OwnerUserId       string                 `protobuf:"bytes,2,opt,name=owner_user_id,json=ownerUserId,proto3" json:"owner_user_id,omitempty"`
+	Name              string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Description       string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Category          string                 `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
+	Season            string                 `protobuf:"bytes,6,opt,name=season,proto3" json:"season,omitempty"`
+	Status            string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	PrivacyLevel      string                 `protobuf:"bytes,8,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
+	StartDateUnix     int64                  `protobuf:"varint,9,opt,name=start_date_unix,json=startDateUnix,proto3" json:"start_date_unix,omitempty"`
+	EndDateUnix       int64                  `protobuf:"varint,10,opt,name=end_date_unix,json=endDateUnix,proto3" json:"end_date_unix,omitempty"`
+	LikesCount        int32                  `protobuf:"varint,11,opt,name=likes_count,json=likesCount,proto3" json:"likes_count,omitempty"`
+	DislikesCount     int32                  `protobuf:"varint,12,opt,name=dislikes_count,json=dislikesCount,proto3" json:"dislikes_count,omitempty"`
+	CoverUrl          string                 `protobuf:"bytes,13,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`
+	IsPublished       bool                   `protobuf:"varint,14,opt,name=is_published,json=isPublished,proto3" json:"is_published,omitempty"`
+	IsGenerated       bool                   `protobuf:"varint,15,opt,name=is_generated,json=isGenerated,proto3" json:"is_generated,omitempty"`
+	CreatedAtUnix     int64                  `protobuf:"varint,16,opt,name=created_at_unix,json=createdAtUnix,proto3" json:"created_at_unix,omitempty"`
+	UpdatedAtUnix     int64                  `protobuf:"varint,17,opt,name=updated_at_unix,json=updatedAtUnix,proto3" json:"updated_at_unix,omitempty"`
+	MediaCount        int32                  `protobuf:"varint,18,opt,name=media_count,json=mediaCount,proto3" json:"media_count,omitempty"`
+	ParticipantsCount int32                  `protobuf:"varint,19,opt,name=participants_count,json=participantsCount,proto3" json:"participants_count,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Trip) Reset() {
@@ -189,6 +191,20 @@ func (x *Trip) GetCreatedAtUnix() int64 {
 func (x *Trip) GetUpdatedAtUnix() int64 {
 	if x != nil {
 		return x.UpdatedAtUnix
+	}
+	return 0
+}
+
+func (x *Trip) GetMediaCount() int32 {
+	if x != nil {
+		return x.MediaCount
+	}
+	return 0
+}
+
+func (x *Trip) GetParticipantsCount() int32 {
+	if x != nil {
+		return x.ParticipantsCount
 	}
 	return 0
 }
@@ -3408,7 +3424,7 @@ var File_trip_proto protoreflect.FileDescriptor
 const file_trip_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"trip.proto\x12\x04trip\"\xa8\x04\n" +
+	"trip.proto\x12\x04trip\"\xf8\x04\n" +
 	"\x04Trip\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\"\n" +
 	"\rowner_user_id\x18\x02 \x01(\tR\vownerUserId\x12\x12\n" +
@@ -3428,7 +3444,10 @@ const file_trip_proto_rawDesc = "" +
 	"\fis_published\x18\x0e \x01(\bR\visPublished\x12!\n" +
 	"\fis_generated\x18\x0f \x01(\bR\visGenerated\x12&\n" +
 	"\x0fcreated_at_unix\x18\x10 \x01(\x03R\rcreatedAtUnix\x12&\n" +
-	"\x0fupdated_at_unix\x18\x11 \x01(\x03R\rupdatedAtUnix\"\x82\x02\n" +
+	"\x0fupdated_at_unix\x18\x11 \x01(\x03R\rupdatedAtUnix\x12\x1f\n" +
+	"\vmedia_count\x18\x12 \x01(\x05R\n" +
+	"mediaCount\x12-\n" +
+	"\x12participants_count\x18\x13 \x01(\x05R\x11participantsCount\"\x82\x02\n" +
 	"\x11CreateTripRequest\x12\"\n" +
 	"\rowner_user_id\x18\x01 \x01(\tR\vownerUserId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
