@@ -15,8 +15,10 @@ type Trip struct {
 	StartDate     *time.Time
 	EndDate       *time.Time
 	LikesCount    int32
-	DislikesCount int32
-	CoverURL      string
+	DislikesCount     int32
+	MediaCount        int32
+	ParticipantsCount int32
+	CoverURL          string
 	IsPublished   bool
 	IsGenerated   bool
 	IsSoftDeleted bool
