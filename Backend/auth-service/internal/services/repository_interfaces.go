@@ -30,6 +30,7 @@ type RedisRepositoryInterface interface {
 	Del(ctx context.Context, keys ...string) error
 	Get(ctx context.Context, key string) (string, error)
 	SetEX(ctx context.Context, key string, value interface{}, ttl time.Duration) error
+	XAdd(ctx context.Context, stream string, values map[string]interface{}) error
 }
 
 // CredentialRepositoryInterface is used by AuthService for WebAuthn credentials.

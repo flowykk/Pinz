@@ -81,6 +81,22 @@ spec:
               value: {{ .Values.env.otelTracesSampler | quote }}
             - name: OTEL_TRACES_SAMPLER_ARG
               value: {{ .Values.env.otelTracesSamplerArg | quote }}
+            - name: SMTP_HOST
+              value: {{ .Values.env.smtpHost | quote }}
+            - name: SMTP_PORT
+              value: {{ .Values.env.smtpPort | quote }}
+            - name: SMTP_FROM
+              value: {{ .Values.env.smtpFrom | quote }}
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: smtp-username
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: smtp-password
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}

@@ -234,10 +234,29 @@ cd /opt/pinz/Backend
 ### Переменные окружения
 
 ```bash
-export IMAGE_TAG=v1.0.0
+# Обязательные
 export SERVER_IP=pinz.website
 export POSTGRES_PASSWORD=your-db-password
 export JWT_SECRET_KEY=your-jwt-secret
+
+# Деплой
+export IMAGE_TAG=v1.0.0
+export SKIP_PULL=true              # пропустить docker pull (k3s)
+
+# SMTP (auth-service, отправка кодов верификации)
+export SMTP_HOST=smtp.example.com
+export SMTP_PORT=587
+export SMTP_USERNAME=noreply@pinz.website
+export SMTP_PASSWORD=your-smtp-password
+export SMTP_FROM=noreply@pinz.website
+
+# S3 (trip-service, медиа)
+export S3_ENDPOINT=https://storage.yandexcloud.net
+export S3_REGION=ru-central1
+export S3_BUCKET=pinz-media
+export S3_ACCESS_KEY=your-access-key
+export S3_SECRET_KEY=your-secret-key
+export S3_PRESIGN_TTL=15m
 ```
 
 ### SSL/TLS (Let's Encrypt)
@@ -266,6 +285,11 @@ GitHub Secrets:
 | `VPS_SSH_KEY` | Приватный SSH ключ |
 | `POSTGRES_PASSWORD` | Пароль БД |
 | `JWT_SECRET_KEY` | Секрет JWT |
+| `DOCKER_REGISTRY` | Docker registry (e.g. ghcr.io) |
+| `DOCKER_REPO` | Docker repository |
+| `DOCKER_USERNAME` | Docker registry логин |
+| `DOCKER_PASSWORD` | Docker registry пароль |
+| `SERVER_IP` | IP сервера |
 
 ## Observability
 
