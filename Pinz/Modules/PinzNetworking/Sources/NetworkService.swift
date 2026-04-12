@@ -25,7 +25,6 @@ public protocol NetworkServiceProtocol {
         category: String?,
         season: String?,
         locationId: Int?,
-        locationName: String?,
         sortBy: String?
     ) async throws -> [TripDTO]
 
@@ -53,28 +52,10 @@ public protocol NetworkServiceProtocol {
     func removeParticipant(tripId: String, userId: String) async throws
     func publishTrip(id: String, publishWhole: Bool, pinIds: [String]) async throws -> TripDTO
     func updateTripSettings(id: String, notificationsEnabled: Bool) async throws -> SuccessDTO
-    func transferAdmin(id: String, newAdminUserId: String) async throws -> SuccessDTO
     func likeTrip(id: String) async throws -> SuccessDTO
     func dislikeTrip(id: String) async throws -> SuccessDTO
     func addTripToFavourites(id: String) async throws -> SuccessDTO
     func removeTripFromFavourites(id: String) async throws
-
-    // Add-media flow
-    func addMediaStart(
-        tripId: String,
-        filesToUpload: [FileToUploadDTO]
-    ) async throws -> CreateTripDTO
-    func addMediaProcessGrouping(
-        tripId: String,
-        sessionId: String,
-        media: [MediaMetaEntryDTO]
-    ) async throws -> ProcessMediaGroupingDTO
-    func addMediaApplyGroupsAndProcess(
-        tripId: String,
-        sessionId: String,
-        draftPins: [DraftPinInputDTO],
-        deletedMediaIds: [String]
-    ) async throws -> ApplyGroupsAndProcessDTO
 
     // S3 upload
     func uploadToS3(url: String, data: Data, contentType: String) async throws
@@ -231,7 +212,6 @@ public final class NetworkService: NetworkServiceProtocol {
         category: String? = nil,
         season: String? = nil,
         locationId: Int? = nil,
-        locationName: String? = nil,
         sortBy: String? = nil
     ) async throws -> [TripDTO] {
         try await provider.request(
@@ -241,7 +221,6 @@ public final class NetworkService: NetworkServiceProtocol {
                 category: category,
                 season: season,
                 locationId: locationId,
-                locationName: locationName,
                 sortBy: sortBy
             ),
             type: [TripDTO].self
@@ -394,19 +373,6 @@ public final class NetworkService: NetworkServiceProtocol {
         )
     }
 
-    public func transferAdmin(
-        id: String,
-        newAdminUserId: String
-    ) async throws -> SuccessDTO {
-        try await provider.request(
-            .transferAdmin(
-                id: id,
-                newAdminUserId: newAdminUserId
-            ),
-            type: SuccessDTO.self
-        )
-    }
-
     public func likeTrip(
         id: String
     ) async throws -> SuccessDTO {
@@ -447,53 +413,6 @@ public final class NetworkService: NetworkServiceProtocol {
             .removeTripFromFavourites(
                 id: id
             )
-        )
-    }
-
-    // MARK: Add-media flow
-
-    public func addMediaStart(
-        tripId: String,
-        filesToUpload: [FileToUploadDTO]
-    ) async throws -> CreateTripDTO {
-        try await provider.request(
-            .addMediaStart(
-                tripId: tripId,
-                filesToUpload: filesToUpload
-            ),
-            type: CreateTripDTO.self
-        )
-    }
-
-    public func addMediaProcessGrouping(
-        tripId: String,
-        sessionId: String,
-        media: [MediaMetaEntryDTO]
-    ) async throws -> ProcessMediaGroupingDTO {
-        try await provider.request(
-            .addMediaProcessGrouping(
-                tripId: tripId,
-                sessionId: sessionId,
-                media: media
-            ),
-            type: ProcessMediaGroupingDTO.self
-        )
-    }
-
-    public func addMediaApplyGroupsAndProcess(
-        tripId: String,
-        sessionId: String,
-        draftPins: [DraftPinInputDTO],
-        deletedMediaIds: [String]
-    ) async throws -> ApplyGroupsAndProcessDTO {
-        try await provider.request(
-            .addMediaApplyGroupsAndProcess(
-                tripId: tripId,
-                sessionId: sessionId,
-                draftPins: draftPins,
-                deletedMediaIds: deletedMediaIds
-            ),
-            type: ApplyGroupsAndProcessDTO.self
         )
     }
 

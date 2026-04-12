@@ -191,7 +191,8 @@ public struct TripInfoView: View {
     }
 
     private var privacy: some View {
-        PrivacySection(members: viewModel.trip.members)
+        EmptyView()
+//        PrivacySection(members: viewModel.trip.members)
     }
 
     private var description: some View {

@@ -12,6 +12,8 @@ public struct TripDTO: Codable {
     public let isGenerated: Bool
     public let likesCount: Int
     public let dislikesCount: Int
+    public let participantsCount: Int?
+    public let mediaCount: Int?
     public let startDateUnix: Int?
     public let endDateUnix: Int?
     public let createdAtUnix: Int
@@ -21,7 +23,8 @@ public struct TripDTO: Codable {
         id: String, name: String, description: String?, category: String?,
         season: String?, coverUrl: String?, ownerUserId: String, privacyLevel: String?,
         status: String?, isPublished: Bool, isGenerated: Bool, likesCount: Int,
-        dislikesCount: Int, startDateUnix: Int?, endDateUnix: Int?,
+        dislikesCount: Int, participantsCount: Int? = nil, mediaCount: Int? = nil,
+        startDateUnix: Int?, endDateUnix: Int?,
         createdAtUnix: Int, updatedAtUnix: Int
     ) {
         self.id = id; self.name = name; self.description = description
@@ -29,7 +32,10 @@ public struct TripDTO: Codable {
         self.ownerUserId = ownerUserId; self.privacyLevel = privacyLevel
         self.status = status; self.isPublished = isPublished
         self.isGenerated = isGenerated; self.likesCount = likesCount
-        self.dislikesCount = dislikesCount; self.startDateUnix = startDateUnix
+        self.dislikesCount = dislikesCount
+        self.participantsCount = participantsCount
+        self.mediaCount = mediaCount
+        self.startDateUnix = startDateUnix
         self.endDateUnix = endDateUnix; self.createdAtUnix = createdAtUnix
         self.updatedAtUnix = updatedAtUnix
     }
@@ -43,6 +49,8 @@ public struct TripDTO: Codable {
         case isGenerated = "is_generated"
         case likesCount = "likes_count"
         case dislikesCount = "dislikes_count"
+        case participantsCount = "participants_count"
+        case mediaCount = "media_count"
         case startDateUnix = "start_date_unix"
         case endDateUnix = "end_date_unix"
         case createdAtUnix = "created_at_unix"
