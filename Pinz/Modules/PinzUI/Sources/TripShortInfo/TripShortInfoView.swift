@@ -47,8 +47,8 @@ public struct TripShortInfoView: View {
                     Text("\(trip.category.value) / \(trip.season.value)")
                         .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                     HStack(spacing: 10) {
-                        StatisticView(icon: "person.2.fill", text: String(trip.members.count))
-                        StatisticView(icon: "photo.stack.fill", text: "100")
+                        StatisticView(icon: "person.2.fill", text: String(trip.participantsCount))
+                        StatisticView(icon: "photo.stack.fill", text: String(trip.mediaCount))
                         StatisticView(icon: "calendar", text: daysText)
                     }
                     if let description = trip.description {

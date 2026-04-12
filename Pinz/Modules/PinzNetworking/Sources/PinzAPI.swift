@@ -17,7 +17,7 @@ enum PinzAPI {
     case logout(refreshToken: String)
 
     // Feed
-    case getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, locationName: String?, sortBy: String?)
+    case getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, sortBy: String?)
 
     // Trips CRUD
     case getTrips
@@ -37,16 +37,10 @@ enum PinzAPI {
     case removeParticipant(tripId: String, userId: String)
     case publishTrip(id: String, publishWhole: Bool, pinIds: [String])
     case updateTripSettings(id: String, notificationsEnabled: Bool)
-    case transferAdmin(id: String, newAdminUserId: String)
     case likeTrip(id: String)
     case dislikeTrip(id: String)
     case addTripToFavourites(id: String)
     case removeTripFromFavourites(id: String)
-
-    // Add-media flow
-    case addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO])
-    case addMediaProcessGrouping(tripId: String, sessionId: String, media: [MediaMetaEntryDTO])
-    case addMediaApplyGroupsAndProcess(tripId: String, sessionId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String])
 
     // Trip creation flow
     case createTrip(name: String, description: String?, category: String?, season: String?, filesToUpload: [FileToUploadDTO])
@@ -63,46 +57,44 @@ extension PinzAPI: TargetType {
         if CommandLine.arguments.contains("-useLocalhost") {
             return URL(string: "http://localhost:8080")!
         }
-        return URL(string: "https://pinz.website/api/v1")!
+        return URL(string: "https://pinz.website")!
     }
 
     var path: String {
+        let endpointPath: String
         switch self {
-        case .devLogin: return "/auth/dev-login"
-        case .submitEmail: return "/auth/email"
-        case .verifyEmail: return "/auth/verify-email"
-        case .passkeyLoginBegin: return "/auth/passkey/login/begin"
-        case .passkeyLoginFinish: return "/auth/passkey/login/finish"
-        case .passkeyRegisterBegin: return "/auth/passkey/register/begin"
-        case .passkeyRegisterFinish: return "/auth/passkey/register/finish"
-        case .refreshToken: return "/auth/refresh"
-        case .logout: return "/auth/logout"
-        case .getFeed: return "/feed"
-        case .getTrips: return "/trips"
-        case .getFavouriteTrips: return "/trips/favourites"
-        case .getTrip(let id): return "/trips/\(id)"
-        case .updateTrip(let id, _, _, _, _, _, _, _, _): return "/trips/\(id)"
-        case .deleteTrip(let id): return "/trips/\(id)"
-        case .joinTripByToken: return "/trips/join"
-        case .generateInviteLink(let tripId, _): return "/trips/\(tripId)/invite"
-        case .leaveTrip(let id): return "/trips/\(id)/leave"
-        case .removeParticipant(let tripId, let userId): return "/trips/\(tripId)/participants/\(userId)"
-        case .publishTrip(let id, _, _): return "/trips/\(id)/publish"
-        case .updateTripSettings(let id, _): return "/trips/\(id)/settings"
-        case .transferAdmin(let id, _): return "/trips/\(id)/transfer-admin"
-        case .likeTrip(let id): return "/trips/\(id)/like"
-        case .dislikeTrip(let id): return "/trips/\(id)/dislike"
-        case .addTripToFavourites(let id): return "/trips/\(id)/favourite"
-        case .removeTripFromFavourites(let id): return "/trips/\(id)/favourite"
-        case .addMediaStart(let tripId, _): return "/trips/\(tripId)/media/add/start"
-        case .addMediaProcessGrouping(let tripId, _, _): return "/trips/\(tripId)/media/add/process-grouping"
-        case .addMediaApplyGroupsAndProcess(let tripId, _, _, _): return "/trips/\(tripId)/media/add/apply-groups-and-process"
-        case .createTrip: return "/trips/creation/start"
-        case .processMediaGrouping(let tripId, _): return "/trips/creation/\(tripId)/media/process-grouping"
-        case .applyGroupsAndProcess(let tripId, _, _): return "/trips/creation/\(tripId)/apply-groups-and-process"
-        case .getTripReview(let tripId): return "/trips/creation/\(tripId)/review"
-        case .finalizeTrip(let tripId, _, _): return "/trips/creation/\(tripId)/finalize"
+        case .devLogin: endpointPath = "/auth/dev-login"
+        case .submitEmail: endpointPath = "/auth/email"
+        case .verifyEmail: endpointPath = "/auth/verify-email"
+        case .passkeyLoginBegin: endpointPath = "/auth/passkey/login/begin"
+        case .passkeyLoginFinish: endpointPath = "/auth/passkey/login/finish"
+        case .passkeyRegisterBegin: endpointPath = "/auth/passkey/register/begin"
+        case .passkeyRegisterFinish: endpointPath = "/auth/passkey/register/finish"
+        case .refreshToken: endpointPath = "/auth/refresh"
+        case .logout: endpointPath = "/auth/logout"
+        case .getFeed: endpointPath = "/feed"
+        case .getTrips: endpointPath = "/trips"
+        case .getFavouriteTrips: endpointPath = "/trips/favourites"
+        case .getTrip(let id): endpointPath = "/trips/\(id)"
+        case .updateTrip(let id, _, _, _, _, _, _, _, _): endpointPath = "/trips/\(id)"
+        case .deleteTrip(let id): endpointPath = "/trips/\(id)"
+        case .joinTripByToken: endpointPath = "/trips/join"
+        case .generateInviteLink(let tripId, _): endpointPath = "/trips/\(tripId)/invite"
+        case .leaveTrip(let id): endpointPath = "/trips/\(id)/leave"
+        case .removeParticipant(let tripId, let userId): endpointPath = "/trips/\(tripId)/participants/\(userId)"
+        case .publishTrip(let id, _, _): endpointPath = "/trips/\(id)/publish"
+        case .updateTripSettings(let id, _): endpointPath = "/trips/\(id)/settings"
+        case .likeTrip(let id): endpointPath = "/trips/\(id)/like"
+        case .dislikeTrip(let id): endpointPath = "/trips/\(id)/dislike"
+        case .addTripToFavourites(let id): endpointPath = "/trips/\(id)/favourite"
+        case .removeTripFromFavourites(let id): endpointPath = "/trips/\(id)/favourite"
+        case .createTrip: endpointPath = "/trips/creation/start"
+        case .processMediaGrouping(let tripId, _): endpointPath = "/trips/creation/\(tripId)/media/process-grouping"
+        case .applyGroupsAndProcess(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/apply-groups-and-process"
+        case .getTripReview(let tripId): endpointPath = "/trips/creation/\(tripId)/review"
+        case .finalizeTrip(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/finalize"
         }
+        return "/api/v1\(endpointPath)"
     }
 
     var method: Moya.Method {
@@ -125,14 +117,13 @@ extension PinzAPI: TargetType {
              .leaveTrip, .likeTrip, .dislikeTrip, .addTripToFavourites, .removeTripFromFavourites:
             return .requestPlain
 
-        case let .getFeed(limit, offset, category, season, locationId, locationName, sortBy):
+        case let .getFeed(limit, offset, category, season, locationId, sortBy):
             var params: [String: Any] = [:]
             if let limit { params["limit"] = limit }
             if let offset { params["offset"] = offset }
             if let category { params["category"] = category }
             if let season { params["season"] = season }
             if let locationId { params["location_id"] = locationId }
-            if let locationName { params["location_name"] = locationName }
             if let sortBy { params["sort_by"] = sortBy }
             return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
 
@@ -159,7 +150,6 @@ extension PinzAPI: TargetType {
             return jsonParams(params)
         case let .publishTrip(_, whole, pinIds): return jsonParams(["publish_whole": whole, "pin_ids": pinIds])
         case let .updateTripSettings(_, enabled): return jsonParams(["notifications_enabled": enabled])
-        case let .transferAdmin(_, userId): return jsonParams(["new_admin_user_id": userId])
 
         case let .updateTrip(_, name, desc, cat, season, privacy, cover, start, end):
             var params: [String: Any] = [:]
@@ -192,17 +182,6 @@ extension PinzAPI: TargetType {
             struct Body: Encodable { let pin_updates: [PinUpdateInputJSON]; let media_to_delete: [String] }
             return .requestJSONEncodable(Body(pin_updates: updates.map(PinUpdateInputJSON.init), media_to_delete: toDelete))
 
-        case let .addMediaStart(_, files):
-            struct Body: Encodable { let files_to_upload: [FileToUploadJSON] }
-            return .requestJSONEncodable(Body(files_to_upload: files.map(FileToUploadJSON.init)))
-
-        case let .addMediaProcessGrouping(_, sessionId, media):
-            struct Body: Encodable { let session_id: String; let media: [MediaMetaEntryJSON] }
-            return .requestJSONEncodable(Body(session_id: sessionId, media: media.map(MediaMetaEntryJSON.init)))
-
-        case let .addMediaApplyGroupsAndProcess(_, sessionId, pins, deleted):
-            struct Body: Encodable { let session_id: String; let draft_pins: [DraftPinInputJSON]; let deleted_media_ids: [String] }
-            return .requestJSONEncodable(Body(session_id: sessionId, draft_pins: pins.map(DraftPinInputJSON.init), deleted_media_ids: deleted))
         }
     }
 
@@ -275,9 +254,9 @@ extension PinzAPI {
             json = #"{"invite_link_id":"link-001","invite_url":"https://pinz.website/join/stub_token","token":"stub_token","expires_at_unix":1700300000}"#
         case .leaveTrip:
             json = #"{"success":true,"trip_deleted":false}"#
-        case .updateTripSettings, .transferAdmin, .likeTrip, .dislikeTrip, .addTripToFavourites:
+        case .updateTripSettings, .likeTrip, .dislikeTrip, .addTripToFavourites:
             json = #"{"success":true}"#
-        case .createTrip, .addMediaStart:
+        case .createTrip:
             json = #"""
             {
               "trip_id": "trip-001",
@@ -292,7 +271,7 @@ extension PinzAPI {
               ]
             }
             """#
-        case .processMediaGrouping, .addMediaProcessGrouping:
+        case .processMediaGrouping:
             json = #"""
             {
               "trip_id": "trip-001",
@@ -327,7 +306,7 @@ extension PinzAPI {
               ]
             }
             """#
-        case .applyGroupsAndProcess, .addMediaApplyGroupsAndProcess:
+        case .applyGroupsAndProcess:
             json = #"{"status":"processing","message":"Groups applied, processing started"}"#
         case .getTripReview:
             json = #"""

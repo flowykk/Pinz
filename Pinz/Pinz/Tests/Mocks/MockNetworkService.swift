@@ -34,7 +34,6 @@ final class MockNetworkService: NetworkServiceProtocol {
     var removeParticipantError: Error?
     var publishTripResult: Result<TripDTO, Error> = .success(MockNetworkService.stubTrip)
     var updateTripSettingsResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
-    var transferAdminResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var likeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var dislikeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var addTripToFavouritesResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
@@ -55,13 +54,6 @@ final class MockNetworkService: NetworkServiceProtocol {
     var finalizeTripResult: Result<FinalizeTripDTO, Error> = .success(
         FinalizeTripDTO(tripId: "trip-001", status: "finalized", message: "done")
     )
-    var addMediaStartResult: Result<CreateTripDTO, Error> = .success(CreateTripDTO(tripId: "trip-001", status: "created", uploadUrls: []))
-    var addMediaProcessGroupingResult: Result<ProcessMediaGroupingDTO, Error> = .success(
-        ProcessMediaGroupingDTO(tripId: "trip-001", status: "processed", draftPins: [])
-    )
-    var addMediaApplyGroupsResult: Result<ApplyGroupsAndProcessDTO, Error> = .success(
-        ApplyGroupsAndProcessDTO(message: "processing", status: "ok")
-    )
     var uploadToS3Error: Error?
 
     // MARK: - Auth implementations
@@ -78,7 +70,7 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     // MARK: - Feed
 
-    func getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, locationName: String?, sortBy: String?) async throws -> [TripDTO] {
+    func getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, sortBy: String?) async throws -> [TripDTO] {
         try getFeedResult.get()
     }
 
@@ -103,19 +95,12 @@ final class MockNetworkService: NetworkServiceProtocol {
     }
     func publishTrip(id: String, publishWhole: Bool, pinIds: [String]) async throws -> TripDTO { try publishTripResult.get() }
     func updateTripSettings(id: String, notificationsEnabled: Bool) async throws -> SuccessDTO { try updateTripSettingsResult.get() }
-    func transferAdmin(id: String, newAdminUserId: String) async throws -> SuccessDTO { try transferAdminResult.get() }
     func likeTrip(id: String) async throws -> SuccessDTO { try likeTripResult.get() }
     func dislikeTrip(id: String) async throws -> SuccessDTO { try dislikeTripResult.get() }
     func addTripToFavourites(id: String) async throws -> SuccessDTO { try addTripToFavouritesResult.get() }
     func removeTripFromFavourites(id: String) async throws {
         if let error = removeTripFromFavouritesError { throw error }
     }
-
-    // MARK: - Add-media flow
-
-    func addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO]) async throws -> CreateTripDTO { try addMediaStartResult.get() }
-    func addMediaProcessGrouping(tripId: String, sessionId: String, media: [MediaMetaEntryDTO]) async throws -> ProcessMediaGroupingDTO { try addMediaProcessGroupingResult.get() }
-    func addMediaApplyGroupsAndProcess(tripId: String, sessionId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String]) async throws -> ApplyGroupsAndProcessDTO { try addMediaApplyGroupsResult.get() }
 
     func uploadToS3(url: String, data: Data, contentType: String) async throws {
         if let uploadToS3Error { throw uploadToS3Error }

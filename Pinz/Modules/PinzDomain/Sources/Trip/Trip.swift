@@ -11,7 +11,8 @@ public struct Trip: Hashable, Identifiable {
     public var startDate: Date?
     public var endDate: Date?
     public var category: TripCategory
-    public var members: [TripMember]
+    public var participantsCount: Int
+    public var mediaCount: Int
     public var coverUrl: String?
     public var ownerUserId: String
     public var privacyLevel: String?
@@ -33,7 +34,8 @@ public struct Trip: Hashable, Identifiable {
         startDate: Date? = nil,
         endDate: Date? = nil,
         category: TripCategory,
-        members: [TripMember] = [],
+        participantsCount: Int = 0,
+        mediaCount: Int = 0,
         coverUrl: String? = nil,
         ownerUserId: String = "",
         privacyLevel: String? = nil,
@@ -54,7 +56,8 @@ public struct Trip: Hashable, Identifiable {
         self.startDate = startDate
         self.endDate = endDate
         self.category = category
-        self.members = members
+        self.participantsCount = participantsCount
+        self.mediaCount = mediaCount
         self.coverUrl = coverUrl
         self.ownerUserId = ownerUserId
         self.privacyLevel = privacyLevel
@@ -82,7 +85,7 @@ extension Trip {
 //            startDate: Date(fromDateString: "03.01.2026"),
 //            endDate: Date(fromDateString: "09.01.2026"),
             category: .vacation,
-            members: TripMember.stubs()
+            participantsCount: 4,
         )
     }
     
@@ -97,7 +100,7 @@ extension Trip {
 //            startDate: Date(fromDateString: "15.06.2026"),
 //            endDate: Date(fromDateString: "25.06.2026"),
             category: .vacation,
-            members: Array(TripMember.stubs().prefix(2))
+            participantsCount: 2,
         )
         
         return [stub(), sochi]
