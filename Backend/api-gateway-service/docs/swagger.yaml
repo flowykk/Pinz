@@ -11,6 +11,22 @@ definitions:
           $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.DraftPinInput'
         type: array
     type: object
+  pinz_backend_api-gateway-service_internal_requests.ChangeEmailRequest:
+    properties:
+      new_email:
+        example: new@example.com
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.ConfirmAvatarUploadRequest:
+    properties:
+      s3_key:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.ConfirmEmailChangeRequest:
+    properties:
+      verification_code:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.CreateTripRequest:
     properties:
       category:
@@ -167,6 +183,15 @@ definitions:
       refresh_token:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.RequestAvatarUploadRequest:
+    properties:
+      content_type:
+        example: image/jpeg
+        type: string
+      filename:
+        example: avatar.jpg
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.SubmitEmailRequest:
     properties:
       email:
@@ -177,6 +202,12 @@ definitions:
     properties:
       notifications_enabled:
         type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.UpdateProfileRequest:
+    properties:
+      username:
+        example: johndoe
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest:
     properties:
@@ -211,6 +242,18 @@ definitions:
       status:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.AvatarUploadResponse:
+    properties:
+      s3_key:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ChangeEmailResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
   pinz_backend_api-gateway-service_internal_responses.CreateTripResponse:
     properties:
       status:
@@ -221,6 +264,11 @@ definitions:
         items:
           $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
         type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DeleteAccountResponse:
+    properties:
+      success:
+        type: boolean
     type: object
   pinz_backend_api-gateway-service_internal_responses.DevLoginResponse:
     properties:
@@ -353,6 +401,19 @@ definitions:
       status:
         type: string
       trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ProfileResponse:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: integer
+      email:
+        type: string
+      id:
+        type: string
+      username:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.RefreshTokenResponse:
@@ -871,6 +932,217 @@ paths:
       summary: List feed
       tags:
       - feed
+  /api/v1/profile:
+    delete:
+      description: Permanently deletes the user account. Pins and media in trips are
+        preserved.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DeleteAccountResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete account
+      tags:
+      - profile
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - profile
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: New username
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update profile (change username)
+      tags:
+      - profile
+  /api/v1/profile/avatar/confirm:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: S3 key
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ConfirmAvatarUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm avatar upload after uploading to S3
+      tags:
+      - profile
+  /api/v1/profile/avatar/upload:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filename and content type
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestAvatarUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AvatarUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request presigned URL for avatar upload
+      tags:
+      - profile
+  /api/v1/profile/change-email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: New email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ChangeEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ChangeEmailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Initiate email change (sends verification code to new email)
+      tags:
+      - profile
+  /api/v1/profile/confirm-email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verification code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ConfirmEmailChangeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm email change with verification code
+      tags:
+      - profile
   /api/v1/trips:
     get:
       consumes:
