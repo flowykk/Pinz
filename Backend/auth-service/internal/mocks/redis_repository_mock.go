@@ -136,3 +136,17 @@ func (mr *MockRedisRepositoryInterfaceMockRecorder) SetEX(ctx, key, value, ttl a
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEX", reflect.TypeOf((*MockRedisRepositoryInterface)(nil).SetEX), ctx, key, value, ttl)
 }
+
+// XAdd mocks base method.
+func (m *MockRedisRepositoryInterface) XAdd(ctx context.Context, stream string, values map[string]any) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "XAdd", ctx, stream, values)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// XAdd indicates an expected call of XAdd.
+func (mr *MockRedisRepositoryInterfaceMockRecorder) XAdd(ctx, stream, values any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XAdd", reflect.TypeOf((*MockRedisRepositoryInterface)(nil).XAdd), ctx, stream, values)
+}

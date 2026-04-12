@@ -20,9 +20,15 @@ releases:
           otelServiceName: "auth-service"
           otelTracesSampler: "parentbased_always_on"
           otelTracesSamplerArg: "1.0"
+      - env:
+          smtpHost: "{{ env "SMTP_HOST" | default "" }}"
+          smtpPort: "{{ env "SMTP_PORT" | default "587" }}"
+          smtpFrom: "{{ env "SMTP_FROM" | default "" }}"
       - secret:
           dbPassword: "pinz_password"
           jwtSecretKey: "change-me-in-production"
+          smtpUsername: "{{ env "SMTP_USERNAME" | default "" }}"
+          smtpPassword: "{{ env "SMTP_PASSWORD" | default "" }}"
 
   - name: trip-service
     namespace: default

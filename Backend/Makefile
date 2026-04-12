@@ -159,6 +159,7 @@ k8s-build:
 	docker build -t backend-api-gateway-service:latest -f api-gateway-service/Dockerfile .
 
 k8s-deploy:
+	set -a && [ -f .env ] && . ./.env; set +a && \
 	helmfile -f helmfile.local.yaml.gotmpl apply && \
 	kubectl rollout restart deployment/api-gateway deployment/auth-service deployment/trip-service
 

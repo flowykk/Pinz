@@ -137,8 +137,8 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 	span.SetAttributes(attribute.Bool("auth.user_exists", false))
 	registrationID := uuid.New().String()
 
-	code := "1111" // TODO: replace with utils.GenerateVerificationCode() when email sending is ready
-	slog.InfoContext(ctx, "verification code generated", "registration_id", registrationID, "code", code)
+	code := utils.GenerateVerificationCode()
+	slog.InfoContext(ctx, "verification code generated", "registration_id", registrationID)
 
 	redisKey := "registration:" + registrationID
 	if err := s.redisRepo.HSet(ctx, redisKey, "email", email, "code", code); err != nil {
@@ -147,6 +147,14 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 	}
 	if err := s.redisRepo.Expire(ctx, redisKey, 15*time.Minute); err != nil {
 		slog.WarnContext(ctx, "SubmitEmail: redis Expire", "key", redisKey, "error", err)
+	}
+
+	if err := s.redisRepo.XAdd(ctx, "pinz:auth:email:tasks", map[string]interface{}{
+		"email":           email,
+		"code":            code,
+		"registration_id": registrationID,
+	}); err != nil {
+		slog.ErrorContext(ctx, "SubmitEmail: failed to enqueue email task", "registration_id", registrationID, "error", err)
 	}
 
 	return &pb.SubmitEmailResponse{IsRegistered: false, RegistrationKey: registrationID}, nil

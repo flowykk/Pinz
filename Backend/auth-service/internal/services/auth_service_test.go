@@ -326,8 +326,26 @@ func TestSubmitEmail_new_user_returns_registration_key(t *testing.T) {
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 	redisRepo := mocks.NewMockRedisRepositoryInterface(ctrl)
 	userRepo.EXPECT().GetUserByEmail("new@example.com").Return(nil, sql.ErrNoRows)
-	redisRepo.EXPECT().HSet(gomock.Any(), gomock.Any(), "email", "new@example.com", "code", "1111").Return(nil)
+	redisRepo.EXPECT().HSet(gomock.Any(), gomock.Any(), "email", "new@example.com", "code", gomock.Any()).Return(nil)
 	redisRepo.EXPECT().Expire(gomock.Any(), gomock.Any(), 15*time.Minute).Return(nil)
+	redisRepo.EXPECT().XAdd(gomock.Any(), "pinz:auth:email:tasks", gomock.Any()).Return(nil)
+
+	svc := NewAuthService(userRepo, nil, redisRepo, validator.New(), nil)
+	ctx := context.Background()
+	resp, err := svc.SubmitEmail(ctx, &pb.SubmitEmailRequest{Email: "new@example.com"})
+	require.NoError(t, err)
+	require.False(t, resp.GetIsRegistered())
+	require.NotEmpty(t, resp.GetRegistrationKey())
+}
+
+func TestSubmitEmail_email_enqueue_failure_still_succeeds(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	redisRepo := mocks.NewMockRedisRepositoryInterface(ctrl)
+	userRepo.EXPECT().GetUserByEmail("new@example.com").Return(nil, sql.ErrNoRows)
+	redisRepo.EXPECT().HSet(gomock.Any(), gomock.Any(), "email", "new@example.com", "code", gomock.Any()).Return(nil)
+	redisRepo.EXPECT().Expire(gomock.Any(), gomock.Any(), 15*time.Minute).Return(nil)
+	redisRepo.EXPECT().XAdd(gomock.Any(), "pinz:auth:email:tasks", gomock.Any()).Return(errors.New("redis connection refused"))
 
 	svc := NewAuthService(userRepo, nil, redisRepo, validator.New(), nil)
 	ctx := context.Background()

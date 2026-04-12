@@ -75,3 +75,7 @@ func (r *RedisRepository) Get(ctx context.Context, key string) (string, error) {
 func (r *RedisRepository) SetEX(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
 	return r.client.Set(ctx, key, value, ttl).Err()
 }
+
+func (r *RedisRepository) XAdd(ctx context.Context, stream string, values map[string]interface{}) error {
+	return r.client.XAdd(ctx, &redis.XAddArgs{Stream: stream, Values: values}).Err()
+}

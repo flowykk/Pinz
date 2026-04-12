@@ -20,10 +20,15 @@ env:
   otelServiceName: "auth-service"
   otelTracesSampler: "parentbased_traceidratio"
   otelTracesSamplerArg: "1.0"
+  smtpHost: ""
+  smtpPort: "587"
+  smtpFrom: ""
 
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"
   jwtSecretKey: "REPLACE_IN_PRODUCTION"
+  smtpUsername: ""
+  smtpPassword: ""
 
 resources:
   requests:
