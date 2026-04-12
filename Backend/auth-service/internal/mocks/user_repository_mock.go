@@ -82,6 +82,20 @@ func (mr *MockUserRepositoryInterfaceMockRecorder) DeleteRefreshToken(id any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRefreshToken", reflect.TypeOf((*MockUserRepositoryInterface)(nil).DeleteRefreshToken), id)
 }
 
+// DeleteUser mocks base method.
+func (m *MockUserRepositoryInterface) DeleteUser(userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteUser", userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteUser indicates an expected call of DeleteUser.
+func (mr *MockUserRepositoryInterfaceMockRecorder) DeleteUser(userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockUserRepositoryInterface)(nil).DeleteUser), userID)
+}
+
 // DeleteUserRefreshTokens mocks base method.
 func (m *MockUserRepositoryInterface) DeleteUserRefreshTokens(userID string) error {
 	m.ctrl.T.Helper()
@@ -139,4 +153,49 @@ func (m *MockUserRepositoryInterface) GetUserByID(userID string) (*models.User, 
 func (mr *MockUserRepositoryInterfaceMockRecorder) GetUserByID(userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockUserRepositoryInterface)(nil).GetUserByID), userID)
+}
+
+// UpdateAvatarURL mocks base method.
+func (m *MockUserRepositoryInterface) UpdateAvatarURL(userID, avatarURL string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAvatarURL", userID, avatarURL)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateAvatarURL indicates an expected call of UpdateAvatarURL.
+func (mr *MockUserRepositoryInterfaceMockRecorder) UpdateAvatarURL(userID, avatarURL any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAvatarURL", reflect.TypeOf((*MockUserRepositoryInterface)(nil).UpdateAvatarURL), userID, avatarURL)
+}
+
+// UpdateEmail mocks base method.
+func (m *MockUserRepositoryInterface) UpdateEmail(userID, email string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEmail", userID, email)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateEmail indicates an expected call of UpdateEmail.
+func (mr *MockUserRepositoryInterfaceMockRecorder) UpdateEmail(userID, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockUserRepositoryInterface)(nil).UpdateEmail), userID, email)
+}
+
+// UpdateUsername mocks base method.
+func (m *MockUserRepositoryInterface) UpdateUsername(userID, username string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUsername", userID, username)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateUsername indicates an expected call of UpdateUsername.
+func (mr *MockUserRepositoryInterfaceMockRecorder) UpdateUsername(userID, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUsername", reflect.TypeOf((*MockUserRepositoryInterface)(nil).UpdateUsername), userID, username)
 }

@@ -41,3 +41,24 @@ type DevLoginResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
+
+type ProfileResponse struct {
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	AvatarURL string `json:"avatar_url,omitempty"`
+	CreatedAt int64  `json:"created_at"`
+}
+
+type ChangeEmailResponse struct {
+	Success bool `json:"success"`
+}
+
+type AvatarUploadResponse struct {
+	UploadURL string `json:"upload_url"`
+	S3Key     string `json:"s3_key"`
+}
+
+type DeleteAccountResponse struct {
+	Success bool `json:"success"`
+}

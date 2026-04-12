@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -65,6 +68,10 @@ type loginSession struct {
 	SessionData webauthn.SessionData `json:"session_data"`
 }
 
+type S3Uploader interface {
+	PresignedUploadURL(ctx context.Context, s3Key, contentType string) (string, error)
+}
+
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 	userRepo  UserRepositoryInterface
@@ -72,6 +79,7 @@ type AuthService struct {
 	redisRepo RedisRepositoryInterface
 	validator *validator.Validate
 	wa        *webauthn.WebAuthn
+	s3        S3Uploader
 
 	tracer              trace.Tracer
 	loginCounter        metric.Int64Counter
@@ -85,6 +93,7 @@ func NewAuthService(
 	redisRepo RedisRepositoryInterface,
 	validator *validator.Validate,
 	wa *webauthn.WebAuthn,
+	s3 S3Uploader,
 ) *AuthService {
 	tracer := otel.Tracer("auth-service")
 	meter := otel.Meter("auth-service")
@@ -105,6 +114,7 @@ func NewAuthService(
 		redisRepo:           redisRepo,
 		validator:           validator,
 		wa:                  wa,
+		s3:                  s3,
 		tracer:              tracer,
 		loginCounter:        loginCounter,
 		registrationCounter: registrationCounter,
@@ -602,6 +612,208 @@ func (s *AuthService) DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*p
 		AccessToken:  resp.AccessToken,
 		RefreshToken: resp.RefreshToken,
 	}, nil
+}
+
+func userToProto(u *models.User) *pb.User {
+	return &pb.User{
+		Id:           u.ID,
+		Username:     u.Username,
+		Email:        u.Email,
+		AvatarUrl:    u.AvatarURL,
+		CreatedAtUnix: u.CreatedAt.Unix(),
+	}
+}
+
+func (s *AuthService) GetProfile(ctx context.Context, req *pb.GetProfileRequest) (*pb.GetProfileResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.GetProfile")
+	defer span.End()
+
+	userID := req.GetUserId()
+	if userID == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	u, err := s.userRepo.GetUserByID(userID)
+	if err == sql.ErrNoRows {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+	if err != nil {
+		slog.ErrorContext(ctx, "GetProfile: get user", "error", err)
+		return nil, status.Error(codes.Internal, "failed to get user")
+	}
+
+	return &pb.GetProfileResponse{User: userToProto(u)}, nil
+}
+
+func (s *AuthService) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.UpdateProfile")
+	defer span.End()
+
+	userID := req.GetUserId()
+	username := req.GetUsername()
+	if userID == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+	if err := s.validator.Var(username, "required,min=4,max=20"); err != nil {
+		return nil, status.Error(codes.InvalidArgument, "username must be 4–20 characters")
+	}
+
+	u, err := s.userRepo.UpdateUsername(userID, username)
+	if err != nil {
+		if isUniqueViolation(err) {
+			return nil, status.Error(codes.AlreadyExists, "username already taken")
+		}
+		slog.ErrorContext(ctx, "UpdateProfile: update username", "error", err)
+		return nil, status.Error(codes.Internal, "failed to update username")
+	}
+
+	return &pb.UpdateProfileResponse{User: userToProto(u)}, nil
+}
+
+func (s *AuthService) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*pb.ChangeEmailResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.ChangeEmail")
+	defer span.End()
+
+	userID := req.GetUserId()
+	newEmail := req.GetNewEmail()
+	if userID == "" || newEmail == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id and new_email are required")
+	}
+	if err := s.validator.Var(newEmail, "required,email"); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid email: %v", err)
+	}
+
+	existing, err := s.userRepo.GetUserByEmail(newEmail)
+	if err == nil && existing.ID != userID {
+		return nil, status.Error(codes.AlreadyExists, "email already in use")
+	}
+	if err != nil && err != sql.ErrNoRows {
+		slog.ErrorContext(ctx, "ChangeEmail: check existing email", "error", err)
+		return nil, status.Error(codes.Internal, "failed to check email")
+	}
+
+	code := utils.GenerateVerificationCode()
+	redisKey := "email_change:" + userID
+	if err := s.redisRepo.HSet(ctx, redisKey, "email", newEmail, "code", code); err != nil {
+		slog.ErrorContext(ctx, "ChangeEmail: redis HSet", "error", err)
+		return nil, status.Error(codes.Internal, "failed to store email change data")
+	}
+	if err := s.redisRepo.Expire(ctx, redisKey, 15*time.Minute); err != nil {
+		slog.WarnContext(ctx, "ChangeEmail: redis Expire", "error", err)
+	}
+
+	if err := s.redisRepo.XAdd(ctx, "pinz:auth:email:tasks", map[string]interface{}{
+		"email":   newEmail,
+		"code":    code,
+		"user_id": userID,
+	}); err != nil {
+		slog.ErrorContext(ctx, "ChangeEmail: failed to enqueue email task", "error", err)
+	}
+
+	slog.InfoContext(ctx, "email change initiated", "user_id", userID)
+	return &pb.ChangeEmailResponse{Success: true}, nil
+}
+
+func (s *AuthService) ConfirmEmailChange(ctx context.Context, req *pb.ConfirmEmailChangeRequest) (*pb.ConfirmEmailChangeResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.ConfirmEmailChange")
+	defer span.End()
+
+	userID := req.GetUserId()
+	code := req.GetVerificationCode()
+	if userID == "" || code == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id and verification_code are required")
+	}
+
+	redisKey := "email_change:" + userID
+	data, err := s.redisRepo.HGetAll(ctx, redisKey)
+	if err != nil || len(data) == 0 {
+		return nil, status.Error(codes.NotFound, "no pending email change or expired")
+	}
+	if data["code"] != code {
+		return nil, status.Error(codes.InvalidArgument, "invalid verification code")
+	}
+
+	u, err := s.userRepo.UpdateEmail(userID, data["email"])
+	if err != nil {
+		if isUniqueViolation(err) {
+			return nil, status.Error(codes.AlreadyExists, "email already in use")
+		}
+		slog.ErrorContext(ctx, "ConfirmEmailChange: update email", "error", err)
+		return nil, status.Error(codes.Internal, "failed to update email")
+	}
+
+	_ = s.redisRepo.Del(ctx, redisKey)
+	slog.InfoContext(ctx, "email changed", "user_id", userID, "new_email", data["email"])
+	return &pb.ConfirmEmailChangeResponse{User: userToProto(u)}, nil
+}
+
+func (s *AuthService) RequestAvatarUpload(ctx context.Context, req *pb.RequestAvatarUploadRequest) (*pb.RequestAvatarUploadResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.RequestAvatarUpload")
+	defer span.End()
+
+	userID := req.GetUserId()
+	filename := req.GetFilename()
+	contentType := req.GetContentType()
+	if userID == "" || filename == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id and filename are required")
+	}
+	if s.s3 == nil {
+		return nil, status.Error(codes.Unavailable, "avatar upload is not configured")
+	}
+
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext == "" {
+		ext = ".jpg"
+	}
+	s3Key := fmt.Sprintf("avatars/%s/avatar%s", userID, ext)
+
+	uploadURL, err := s.s3.PresignedUploadURL(ctx, s3Key, contentType)
+	if err != nil {
+		slog.ErrorContext(ctx, "RequestAvatarUpload: presign", "error", err)
+		return nil, status.Error(codes.Internal, "failed to generate upload URL")
+	}
+
+	return &pb.RequestAvatarUploadResponse{
+		UploadUrl: uploadURL,
+		S3Key:     s3Key,
+	}, nil
+}
+
+func (s *AuthService) ConfirmAvatarUpload(ctx context.Context, req *pb.ConfirmAvatarUploadRequest) (*pb.ConfirmAvatarUploadResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.ConfirmAvatarUpload")
+	defer span.End()
+
+	userID := req.GetUserId()
+	s3Key := req.GetS3Key()
+	if userID == "" || s3Key == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id and s3_key are required")
+	}
+
+	u, err := s.userRepo.UpdateAvatarURL(userID, s3Key)
+	if err != nil {
+		slog.ErrorContext(ctx, "ConfirmAvatarUpload: update avatar", "error", err)
+		return nil, status.Error(codes.Internal, "failed to update avatar")
+	}
+
+	return &pb.ConfirmAvatarUploadResponse{User: userToProto(u)}, nil
+}
+
+func (s *AuthService) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.DeleteAccount")
+	defer span.End()
+
+	userID := req.GetUserId()
+	if userID == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	if err := s.userRepo.DeleteUser(userID); err != nil {
+		slog.ErrorContext(ctx, "DeleteAccount: delete user", "error", err)
+		return nil, status.Error(codes.Internal, "failed to delete account")
+	}
+
+	slog.InfoContext(ctx, "account deleted", "user_id", userID)
+	return &pb.DeleteAccountResponse{Success: true}, nil
 }
 
 func isUniqueViolation(err error) bool {

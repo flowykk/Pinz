@@ -16,6 +16,13 @@ type AuthServiceInterface interface {
 	RefreshToken(ctx context.Context, refreshToken string) (*pb.RefreshTokenResponse, error)
 	Logout(ctx context.Context, refreshToken string) (*pb.LogoutResponse, error)
 	DevLogin(ctx context.Context, email string) (*pb.DevLoginResponse, error)
+	GetProfile(ctx context.Context, userID string) (*pb.GetProfileResponse, error)
+	UpdateProfile(ctx context.Context, userID, username string) (*pb.UpdateProfileResponse, error)
+	ChangeEmail(ctx context.Context, userID, newEmail string) (*pb.ChangeEmailResponse, error)
+	ConfirmEmailChange(ctx context.Context, userID, code string) (*pb.ConfirmEmailChangeResponse, error)
+	RequestAvatarUpload(ctx context.Context, userID, filename, contentType string) (*pb.RequestAvatarUploadResponse, error)
+	ConfirmAvatarUpload(ctx context.Context, userID, s3Key string) (*pb.ConfirmAvatarUploadResponse, error)
+	DeleteAccount(ctx context.Context, userID string) (*pb.DeleteAccountResponse, error)
 }
 
 type AuthClient interface {
@@ -28,6 +35,13 @@ type AuthClient interface {
 	RefreshToken(ctx context.Context, req *pb.RefreshTokenRequest) (*pb.RefreshTokenResponse, error)
 	Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error)
 	DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*pb.DevLoginResponse, error)
+	GetProfile(ctx context.Context, req *pb.GetProfileRequest) (*pb.GetProfileResponse, error)
+	UpdateProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error)
+	ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*pb.ChangeEmailResponse, error)
+	ConfirmEmailChange(ctx context.Context, req *pb.ConfirmEmailChangeRequest) (*pb.ConfirmEmailChangeResponse, error)
+	RequestAvatarUpload(ctx context.Context, req *pb.RequestAvatarUploadRequest) (*pb.RequestAvatarUploadResponse, error)
+	ConfirmAvatarUpload(ctx context.Context, req *pb.ConfirmAvatarUploadRequest) (*pb.ConfirmAvatarUploadResponse, error)
+	DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error)
 }
 
 type AuthService struct {
@@ -84,4 +98,36 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) (*pb.Logo
 
 func (s *AuthService) DevLogin(ctx context.Context, email string) (*pb.DevLoginResponse, error) {
 	return s.authClient.DevLogin(ctx, &pb.DevLoginRequest{Email: email})
+}
+
+func (s *AuthService) GetProfile(ctx context.Context, userID string) (*pb.GetProfileResponse, error) {
+	return s.authClient.GetProfile(ctx, &pb.GetProfileRequest{UserId: userID})
+}
+
+func (s *AuthService) UpdateProfile(ctx context.Context, userID, username string) (*pb.UpdateProfileResponse, error) {
+	return s.authClient.UpdateProfile(ctx, &pb.UpdateProfileRequest{UserId: userID, Username: username})
+}
+
+func (s *AuthService) ChangeEmail(ctx context.Context, userID, newEmail string) (*pb.ChangeEmailResponse, error) {
+	return s.authClient.ChangeEmail(ctx, &pb.ChangeEmailRequest{UserId: userID, NewEmail: newEmail})
+}
+
+func (s *AuthService) ConfirmEmailChange(ctx context.Context, userID, code string) (*pb.ConfirmEmailChangeResponse, error) {
+	return s.authClient.ConfirmEmailChange(ctx, &pb.ConfirmEmailChangeRequest{UserId: userID, VerificationCode: code})
+}
+
+func (s *AuthService) RequestAvatarUpload(ctx context.Context, userID, filename, contentType string) (*pb.RequestAvatarUploadResponse, error) {
+	return s.authClient.RequestAvatarUpload(ctx, &pb.RequestAvatarUploadRequest{
+		UserId:      userID,
+		Filename:    filename,
+		ContentType: contentType,
+	})
+}
+
+func (s *AuthService) ConfirmAvatarUpload(ctx context.Context, userID, s3Key string) (*pb.ConfirmAvatarUploadResponse, error) {
+	return s.authClient.ConfirmAvatarUpload(ctx, &pb.ConfirmAvatarUploadRequest{UserId: userID, S3Key: s3Key})
+}
+
+func (s *AuthService) DeleteAccount(ctx context.Context, userID string) (*pb.DeleteAccountResponse, error) {
+	return s.authClient.DeleteAccount(ctx, &pb.DeleteAccountRequest{UserId: userID})
 }

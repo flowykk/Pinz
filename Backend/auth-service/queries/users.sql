@@ -27,3 +27,18 @@ DELETE FROM refresh_tokens WHERE id = $1;
 
 -- name: DeleteUserRefreshTokens :exec
 DELETE FROM refresh_tokens WHERE user_id = $1;
+
+-- name: UpdateUsername :one
+UPDATE users SET username = $2 WHERE id = $1
+RETURNING id, email, username, avatar_url, created_at;
+
+-- name: UpdateEmail :one
+UPDATE users SET email = $2 WHERE id = $1
+RETURNING id, email, username, avatar_url, created_at;
+
+-- name: UpdateAvatarURL :one
+UPDATE users SET avatar_url = $2 WHERE id = $1
+RETURNING id, email, username, avatar_url, created_at;
+
+-- name: DeleteUser :exec
+DELETE FROM users WHERE id = $1;

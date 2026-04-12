@@ -14,6 +14,14 @@ service AuthService {
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
   rpc DevLogin(DevLoginRequest) returns (DevLoginResponse) {}
+
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse) {}
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse) {}
+  rpc ChangeEmail(ChangeEmailRequest) returns (ChangeEmailResponse) {}
+  rpc ConfirmEmailChange(ConfirmEmailChangeRequest) returns (ConfirmEmailChangeResponse) {}
+  rpc RequestAvatarUpload(RequestAvatarUploadRequest) returns (RequestAvatarUploadResponse) {}
+  rpc ConfirmAvatarUpload(ConfirmAvatarUploadRequest) returns (ConfirmAvatarUploadResponse) {}
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
 }
 
 message User {
@@ -103,4 +111,67 @@ message DevLoginRequest {
 message DevLoginResponse {
   string access_token = 1;
   string refresh_token = 2;
+}
+
+message GetProfileRequest {
+  string user_id = 1;
+}
+
+message GetProfileResponse {
+  User user = 1;
+}
+
+message UpdateProfileRequest {
+  string user_id = 1;
+  string username = 2;
+}
+
+message UpdateProfileResponse {
+  User user = 1;
+}
+
+message ChangeEmailRequest {
+  string user_id = 1;
+  string new_email = 2;
+}
+
+message ChangeEmailResponse {
+  bool success = 1;
+}
+
+message ConfirmEmailChangeRequest {
+  string user_id = 1;
+  string verification_code = 2;
+}
+
+message ConfirmEmailChangeResponse {
+  User user = 1;
+}
+
+message RequestAvatarUploadRequest {
+  string user_id = 1;
+  string filename = 2;
+  string content_type = 3;
+}
+
+message RequestAvatarUploadResponse {
+  string upload_url = 1;
+  string s3_key = 2;
+}
+
+message ConfirmAvatarUploadRequest {
+  string user_id = 1;
+  string s3_key = 2;
+}
+
+message ConfirmAvatarUploadResponse {
+  User user = 1;
+}
+
+message DeleteAccountRequest {
+  string user_id = 1;
+}
+
+message DeleteAccountResponse {
+  bool success = 1;
 }

@@ -113,6 +113,60 @@ func (r *UserRepository) DeleteUserRefreshTokens(userID string) error {
 	return r.q.DeleteUserRefreshTokens(context.Background(), uid)
 }
 
+func (r *UserRepository) UpdateUsername(userID, username string) (*models.User, error) {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
+	u, err := r.q.UpdateUsername(context.Background(), sqlcdb.UpdateUsernameParams{
+		ID:       id,
+		Username: username,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return userFromSQLC(u), nil
+}
+
+func (r *UserRepository) UpdateEmail(userID, email string) (*models.User, error) {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
+	u, err := r.q.UpdateEmail(context.Background(), sqlcdb.UpdateEmailParams{
+		ID:    id,
+		Email: email,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return userFromSQLC(u), nil
+}
+
+func (r *UserRepository) UpdateAvatarURL(userID, avatarURL string) (*models.User, error) {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
+	avatar := sql.NullString{String: avatarURL, Valid: avatarURL != ""}
+	u, err := r.q.UpdateAvatarURL(context.Background(), sqlcdb.UpdateAvatarURLParams{
+		ID:        id,
+		AvatarUrl: avatar,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return userFromSQLC(u), nil
+}
+
+func (r *UserRepository) DeleteUser(userID string) error {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	return r.q.DeleteUser(context.Background(), id)
+}
+
 func userFromSQLC(u sqlcdb.User) *models.User {
 	out := &models.User{
 		ID:        u.ID.String(),

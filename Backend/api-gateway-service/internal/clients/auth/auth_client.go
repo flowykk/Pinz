@@ -73,6 +73,34 @@ func (c *Client) DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*pb.Dev
 	return c.client.DevLogin(ctx, req)
 }
 
+func (c *Client) GetProfile(ctx context.Context, req *pb.GetProfileRequest) (*pb.GetProfileResponse, error) {
+	return c.client.GetProfile(ctx, req)
+}
+
+func (c *Client) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
+	return c.client.UpdateProfile(ctx, req)
+}
+
+func (c *Client) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*pb.ChangeEmailResponse, error) {
+	return c.client.ChangeEmail(ctx, req)
+}
+
+func (c *Client) ConfirmEmailChange(ctx context.Context, req *pb.ConfirmEmailChangeRequest) (*pb.ConfirmEmailChangeResponse, error) {
+	return c.client.ConfirmEmailChange(ctx, req)
+}
+
+func (c *Client) RequestAvatarUpload(ctx context.Context, req *pb.RequestAvatarUploadRequest) (*pb.RequestAvatarUploadResponse, error) {
+	return c.client.RequestAvatarUpload(ctx, req)
+}
+
+func (c *Client) ConfirmAvatarUpload(ctx context.Context, req *pb.ConfirmAvatarUploadRequest) (*pb.ConfirmAvatarUploadResponse, error) {
+	return c.client.ConfirmAvatarUpload(ctx, req)
+}
+
+func (c *Client) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
+	return c.client.DeleteAccount(ctx, req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }
