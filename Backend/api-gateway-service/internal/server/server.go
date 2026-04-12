@@ -76,6 +76,17 @@ func NewServer(deps *di.Dependencies) *Server {
 		r.Post("/auth/logout", deps.AuthHandler.Logout)
 		r.Post("/auth/dev-login", deps.AuthHandler.DevLogin)
 
+		r.Route("/profile", func(r chi.Router) {
+			r.Use(middleware.RequireJWT)
+			r.Get("/", deps.AuthHandler.GetProfile)
+			r.Patch("/", deps.AuthHandler.UpdateProfile)
+			r.Delete("/", deps.AuthHandler.DeleteAccount)
+			r.Post("/change-email", deps.AuthHandler.ChangeEmail)
+			r.Post("/confirm-email", deps.AuthHandler.ConfirmEmailChange)
+			r.Post("/avatar/upload", deps.AuthHandler.RequestAvatarUpload)
+			r.Post("/avatar/confirm", deps.AuthHandler.ConfirmAvatarUpload)
+		})
+
 		// Основные операции над путешествиями.
 		r.Route("/trips", func(r chi.Router) {
 			r.Use(middleware.RequireJWT)

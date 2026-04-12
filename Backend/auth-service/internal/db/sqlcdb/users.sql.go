@@ -63,6 +63,15 @@ func (q *Queries) DeleteRefreshToken(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM users WHERE id = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteUser, id)
+	return err
+}
+
 const deleteUserRefreshTokens = `-- name: DeleteUserRefreshTokens :exec
 DELETE FROM refresh_tokens WHERE user_id = $1
 `
@@ -117,6 +126,75 @@ WHERE id = $1
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Username,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateAvatarURL = `-- name: UpdateAvatarURL :one
+UPDATE users SET avatar_url = $2 WHERE id = $1
+RETURNING id, email, username, avatar_url, created_at
+`
+
+type UpdateAvatarURLParams struct {
+	ID        uuid.UUID
+	AvatarUrl sql.NullString
+}
+
+func (q *Queries) UpdateAvatarURL(ctx context.Context, arg UpdateAvatarURLParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateAvatarURL, arg.ID, arg.AvatarUrl)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Username,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateEmail = `-- name: UpdateEmail :one
+UPDATE users SET email = $2 WHERE id = $1
+RETURNING id, email, username, avatar_url, created_at
+`
+
+type UpdateEmailParams struct {
+	ID    uuid.UUID
+	Email string
+}
+
+func (q *Queries) UpdateEmail(ctx context.Context, arg UpdateEmailParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateEmail, arg.ID, arg.Email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Username,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateUsername = `-- name: UpdateUsername :one
+UPDATE users SET username = $2 WHERE id = $1
+RETURNING id, email, username, avatar_url, created_at
+`
+
+type UpdateUsernameParams struct {
+	ID       uuid.UUID
+	Username string
+}
+
+func (q *Queries) UpdateUsername(ctx context.Context, arg UpdateUsernameParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUsername, arg.ID, arg.Username)
 	var i User
 	err := row.Scan(
 		&i.ID,

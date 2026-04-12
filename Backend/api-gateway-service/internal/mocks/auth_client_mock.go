@@ -41,6 +41,66 @@ func (m *MockAuthClient) EXPECT() *MockAuthClientMockRecorder {
 	return m.recorder
 }
 
+// ChangeEmail mocks base method.
+func (m *MockAuthClient) ChangeEmail(ctx context.Context, req *proto.ChangeEmailRequest) (*proto.ChangeEmailResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeEmail", ctx, req)
+	ret0, _ := ret[0].(*proto.ChangeEmailResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ChangeEmail indicates an expected call of ChangeEmail.
+func (mr *MockAuthClientMockRecorder) ChangeEmail(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeEmail", reflect.TypeOf((*MockAuthClient)(nil).ChangeEmail), ctx, req)
+}
+
+// ConfirmAvatarUpload mocks base method.
+func (m *MockAuthClient) ConfirmAvatarUpload(ctx context.Context, req *proto.ConfirmAvatarUploadRequest) (*proto.ConfirmAvatarUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfirmAvatarUpload", ctx, req)
+	ret0, _ := ret[0].(*proto.ConfirmAvatarUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConfirmAvatarUpload indicates an expected call of ConfirmAvatarUpload.
+func (mr *MockAuthClientMockRecorder) ConfirmAvatarUpload(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmAvatarUpload", reflect.TypeOf((*MockAuthClient)(nil).ConfirmAvatarUpload), ctx, req)
+}
+
+// ConfirmEmailChange mocks base method.
+func (m *MockAuthClient) ConfirmEmailChange(ctx context.Context, req *proto.ConfirmEmailChangeRequest) (*proto.ConfirmEmailChangeResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfirmEmailChange", ctx, req)
+	ret0, _ := ret[0].(*proto.ConfirmEmailChangeResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConfirmEmailChange indicates an expected call of ConfirmEmailChange.
+func (mr *MockAuthClientMockRecorder) ConfirmEmailChange(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmEmailChange", reflect.TypeOf((*MockAuthClient)(nil).ConfirmEmailChange), ctx, req)
+}
+
+// DeleteAccount mocks base method.
+func (m *MockAuthClient) DeleteAccount(ctx context.Context, req *proto.DeleteAccountRequest) (*proto.DeleteAccountResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAccount", ctx, req)
+	ret0, _ := ret[0].(*proto.DeleteAccountResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteAccount indicates an expected call of DeleteAccount.
+func (mr *MockAuthClientMockRecorder) DeleteAccount(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccount", reflect.TypeOf((*MockAuthClient)(nil).DeleteAccount), ctx, req)
+}
+
 // DevLogin mocks base method.
 func (m *MockAuthClient) DevLogin(ctx context.Context, req *proto.DevLoginRequest) (*proto.DevLoginResponse, error) {
 	m.ctrl.T.Helper()
@@ -54,6 +114,21 @@ func (m *MockAuthClient) DevLogin(ctx context.Context, req *proto.DevLoginReques
 func (mr *MockAuthClientMockRecorder) DevLogin(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DevLogin", reflect.TypeOf((*MockAuthClient)(nil).DevLogin), ctx, req)
+}
+
+// GetProfile mocks base method.
+func (m *MockAuthClient) GetProfile(ctx context.Context, req *proto.GetProfileRequest) (*proto.GetProfileResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProfile", ctx, req)
+	ret0, _ := ret[0].(*proto.GetProfileResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfile indicates an expected call of GetProfile.
+func (mr *MockAuthClientMockRecorder) GetProfile(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfile", reflect.TypeOf((*MockAuthClient)(nil).GetProfile), ctx, req)
 }
 
 // Logout mocks base method.
@@ -146,6 +221,21 @@ func (mr *MockAuthClientMockRecorder) RefreshToken(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockAuthClient)(nil).RefreshToken), ctx, req)
 }
 
+// RequestAvatarUpload mocks base method.
+func (m *MockAuthClient) RequestAvatarUpload(ctx context.Context, req *proto.RequestAvatarUploadRequest) (*proto.RequestAvatarUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestAvatarUpload", ctx, req)
+	ret0, _ := ret[0].(*proto.RequestAvatarUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestAvatarUpload indicates an expected call of RequestAvatarUpload.
+func (mr *MockAuthClientMockRecorder) RequestAvatarUpload(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestAvatarUpload", reflect.TypeOf((*MockAuthClient)(nil).RequestAvatarUpload), ctx, req)
+}
+
 // SubmitEmail mocks base method.
 func (m *MockAuthClient) SubmitEmail(ctx context.Context, req *proto.SubmitEmailRequest) (*proto.SubmitEmailResponse, error) {
 	m.ctrl.T.Helper()
@@ -159,6 +249,21 @@ func (m *MockAuthClient) SubmitEmail(ctx context.Context, req *proto.SubmitEmail
 func (mr *MockAuthClientMockRecorder) SubmitEmail(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitEmail", reflect.TypeOf((*MockAuthClient)(nil).SubmitEmail), ctx, req)
+}
+
+// UpdateProfile mocks base method.
+func (m *MockAuthClient) UpdateProfile(ctx context.Context, req *proto.UpdateProfileRequest) (*proto.UpdateProfileResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateProfile", ctx, req)
+	ret0, _ := ret[0].(*proto.UpdateProfileResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateProfile indicates an expected call of UpdateProfile.
+func (mr *MockAuthClientMockRecorder) UpdateProfile(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockAuthClient)(nil).UpdateProfile), ctx, req)
 }
 
 // VerifyEmailCode mocks base method.

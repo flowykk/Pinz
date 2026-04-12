@@ -43,3 +43,24 @@ type LogoutRequest struct {
 type DevLoginRequest struct {
 	Email string `json:"email" example:"user@example.com"`
 }
+
+type UpdateProfileRequest struct {
+	Username string `json:"username" example:"johndoe"`
+}
+
+type ChangeEmailRequest struct {
+	NewEmail string `json:"new_email" example:"new@example.com"`
+}
+
+type ConfirmEmailChangeRequest struct {
+	VerificationCode string `json:"verification_code"`
+}
+
+type RequestAvatarUploadRequest struct {
+	Filename    string `json:"filename" example:"avatar.jpg"`
+	ContentType string `json:"content_type" example:"image/jpeg"`
+}
+
+type ConfirmAvatarUploadRequest struct {
+	S3Key string `json:"s3_key"`
+}

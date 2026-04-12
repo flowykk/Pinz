@@ -1,8 +1,10 @@
 package di
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/go-playground/validator/v10"
@@ -10,6 +12,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"pinz/backend/auth-service/internal/repositories"
+	"pinz/backend/auth-service/internal/s3"
 	"pinz/backend/auth-service/internal/services"
 	pb "pinz/backend/auth-service/pkg/proto"
 )
@@ -46,6 +49,17 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 	redisRepo := repositories.NewRedisRepository(redisClient)
 	v := validator.New()
 
-	authSvc := services.NewAuthService(userRepo, credRepo, redisRepo, v, wa)
+	s3Client, err := s3.NewFromEnv(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("s3 init: %w", err)
+	}
+	var s3Uploader services.S3Uploader
+	if s3Client != nil {
+		s3Uploader = s3Client
+	} else {
+		slog.Warn("S3 not configured — avatar upload will be unavailable")
+	}
+
+	authSvc := services.NewAuthService(userRepo, credRepo, redisRepo, v, wa, s3Uploader)
 	return &Dependencies{AuthService: authSvc}, nil
 }

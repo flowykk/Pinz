@@ -23,12 +23,18 @@ env:
   smtpHost: ""
   smtpPort: "587"
   smtpFrom: ""
+  s3Endpoint: "https://storage.yandexcloud.net"
+  s3Region: "ru-central1"
+  s3Bucket: ""
+  s3PresignTTL: "15m"
 
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"
   jwtSecretKey: "REPLACE_IN_PRODUCTION"
   smtpUsername: ""
   smtpPassword: ""
+  s3AccessKey: ""
+  s3SecretKey: ""
 
 resources:
   requests:

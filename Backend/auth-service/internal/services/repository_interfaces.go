@@ -19,6 +19,10 @@ type UserRepositoryInterface interface {
 	GetUserByID(userID string) (*models.User, error)
 	DeleteRefreshToken(id string) error
 	DeleteUserRefreshTokens(userID string) error
+	UpdateUsername(userID, username string) (*models.User, error)
+	UpdateEmail(userID, email string) (*models.User, error)
+	UpdateAvatarURL(userID, avatarURL string) (*models.User, error)
+	DeleteUser(userID string) error
 }
 
 // RedisRepositoryInterface is used by AuthService for registration and session cache.

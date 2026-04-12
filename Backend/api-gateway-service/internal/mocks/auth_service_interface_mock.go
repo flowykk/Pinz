@@ -41,6 +41,66 @@ func (m *MockAuthServiceInterface) EXPECT() *MockAuthServiceInterfaceMockRecorde
 	return m.recorder
 }
 
+// ChangeEmail mocks base method.
+func (m *MockAuthServiceInterface) ChangeEmail(ctx context.Context, userID, newEmail string) (*proto.ChangeEmailResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeEmail", ctx, userID, newEmail)
+	ret0, _ := ret[0].(*proto.ChangeEmailResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ChangeEmail indicates an expected call of ChangeEmail.
+func (mr *MockAuthServiceInterfaceMockRecorder) ChangeEmail(ctx, userID, newEmail any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeEmail", reflect.TypeOf((*MockAuthServiceInterface)(nil).ChangeEmail), ctx, userID, newEmail)
+}
+
+// ConfirmAvatarUpload mocks base method.
+func (m *MockAuthServiceInterface) ConfirmAvatarUpload(ctx context.Context, userID, s3Key string) (*proto.ConfirmAvatarUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfirmAvatarUpload", ctx, userID, s3Key)
+	ret0, _ := ret[0].(*proto.ConfirmAvatarUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConfirmAvatarUpload indicates an expected call of ConfirmAvatarUpload.
+func (mr *MockAuthServiceInterfaceMockRecorder) ConfirmAvatarUpload(ctx, userID, s3Key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmAvatarUpload", reflect.TypeOf((*MockAuthServiceInterface)(nil).ConfirmAvatarUpload), ctx, userID, s3Key)
+}
+
+// ConfirmEmailChange mocks base method.
+func (m *MockAuthServiceInterface) ConfirmEmailChange(ctx context.Context, userID, code string) (*proto.ConfirmEmailChangeResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfirmEmailChange", ctx, userID, code)
+	ret0, _ := ret[0].(*proto.ConfirmEmailChangeResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConfirmEmailChange indicates an expected call of ConfirmEmailChange.
+func (mr *MockAuthServiceInterfaceMockRecorder) ConfirmEmailChange(ctx, userID, code any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmEmailChange", reflect.TypeOf((*MockAuthServiceInterface)(nil).ConfirmEmailChange), ctx, userID, code)
+}
+
+// DeleteAccount mocks base method.
+func (m *MockAuthServiceInterface) DeleteAccount(ctx context.Context, userID string) (*proto.DeleteAccountResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAccount", ctx, userID)
+	ret0, _ := ret[0].(*proto.DeleteAccountResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteAccount indicates an expected call of DeleteAccount.
+func (mr *MockAuthServiceInterfaceMockRecorder) DeleteAccount(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccount", reflect.TypeOf((*MockAuthServiceInterface)(nil).DeleteAccount), ctx, userID)
+}
+
 // DevLogin mocks base method.
 func (m *MockAuthServiceInterface) DevLogin(ctx context.Context, email string) (*proto.DevLoginResponse, error) {
 	m.ctrl.T.Helper()
@@ -54,6 +114,21 @@ func (m *MockAuthServiceInterface) DevLogin(ctx context.Context, email string) (
 func (mr *MockAuthServiceInterfaceMockRecorder) DevLogin(ctx, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DevLogin", reflect.TypeOf((*MockAuthServiceInterface)(nil).DevLogin), ctx, email)
+}
+
+// GetProfile mocks base method.
+func (m *MockAuthServiceInterface) GetProfile(ctx context.Context, userID string) (*proto.GetProfileResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProfile", ctx, userID)
+	ret0, _ := ret[0].(*proto.GetProfileResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfile indicates an expected call of GetProfile.
+func (mr *MockAuthServiceInterfaceMockRecorder) GetProfile(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfile", reflect.TypeOf((*MockAuthServiceInterface)(nil).GetProfile), ctx, userID)
 }
 
 // Logout mocks base method.
@@ -146,6 +221,21 @@ func (mr *MockAuthServiceInterfaceMockRecorder) RefreshToken(ctx, refreshToken a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockAuthServiceInterface)(nil).RefreshToken), ctx, refreshToken)
 }
 
+// RequestAvatarUpload mocks base method.
+func (m *MockAuthServiceInterface) RequestAvatarUpload(ctx context.Context, userID, filename, contentType string) (*proto.RequestAvatarUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestAvatarUpload", ctx, userID, filename, contentType)
+	ret0, _ := ret[0].(*proto.RequestAvatarUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestAvatarUpload indicates an expected call of RequestAvatarUpload.
+func (mr *MockAuthServiceInterfaceMockRecorder) RequestAvatarUpload(ctx, userID, filename, contentType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestAvatarUpload", reflect.TypeOf((*MockAuthServiceInterface)(nil).RequestAvatarUpload), ctx, userID, filename, contentType)
+}
+
 // SubmitEmail mocks base method.
 func (m *MockAuthServiceInterface) SubmitEmail(ctx context.Context, email string) (*proto.SubmitEmailResponse, error) {
 	m.ctrl.T.Helper()
@@ -159,6 +249,21 @@ func (m *MockAuthServiceInterface) SubmitEmail(ctx context.Context, email string
 func (mr *MockAuthServiceInterfaceMockRecorder) SubmitEmail(ctx, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitEmail", reflect.TypeOf((*MockAuthServiceInterface)(nil).SubmitEmail), ctx, email)
+}
+
+// UpdateProfile mocks base method.
+func (m *MockAuthServiceInterface) UpdateProfile(ctx context.Context, userID, username string) (*proto.UpdateProfileResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateProfile", ctx, userID, username)
+	ret0, _ := ret[0].(*proto.UpdateProfileResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateProfile indicates an expected call of UpdateProfile.
+func (mr *MockAuthServiceInterfaceMockRecorder) UpdateProfile(ctx, userID, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockAuthServiceInterface)(nil).UpdateProfile), ctx, userID, username)
 }
 
 // VerifyEmailCode mocks base method.
