@@ -240,7 +240,7 @@ extension PinzAPI {
             """#
         case .getTrip:
             json = #"""
-            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"pins":[{"pin_id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"}]},{"pin_id":"pin-002","name":"Лувр","category":"entertainment","latitude":48.8606,"longitude":2.3352,"location_name":"Париж","tags":["музей","искусство"],"issues":[],"media":[{"media_id":"m-003","url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","privacy_level":"public"}]},{"pin_id":"pin-003","name":"Собор Парижской Богоматери","category":"entertainment","latitude":48.8530,"longitude":2.3499,"location_name":"Париж","tags":["готика","история"],"issues":[],"media":[{"media_id":"m-004","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"}]}]}
+            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"pins":[{"id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"}]},{"id":"pin-002","name":"Лувр","category":"entertainment","latitude":48.8606,"longitude":2.3352,"location_name":"Париж","tags":["музей","искусство"],"issues":[],"media":[{"media_id":"m-003","url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","privacy_level":"public"}]},{"id":"pin-003","name":"Собор Парижской Богоматери","category":"entertainment","latitude":48.8530,"longitude":2.3499,"location_name":"Париж","tags":["готика","история"],"issues":[],"media":[{"media_id":"m-004","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"}]}]}
             """#
         case .updateTrip, .publishTrip:
             json = #"""
@@ -316,7 +316,7 @@ extension PinzAPI {
               "similar": [],
               "pins": [
                 {
-                  "pin_id": "pin-001",
+                  "id": "pin-001",
                   "name": "Храм Христа Спасителя",
                   "category": "entertainment",
                   "latitude": 55.7447,
@@ -333,7 +333,7 @@ extension PinzAPI {
                   ]
                 },
                 {
-                  "pin_id": "pin-002",
+                  "id": "pin-002",
                   "name": "Красная площадь",
                   "category": "entertainment",
                   "latitude": 55.7539,
@@ -349,7 +349,7 @@ extension PinzAPI {
                   ]
                 },
                 {
-                  "pin_id": "pin-003",
+                  "id": "pin-003",
                   "name": "Парк Горького",
                   "category": "nature",
                   "latitude": 55.7312,

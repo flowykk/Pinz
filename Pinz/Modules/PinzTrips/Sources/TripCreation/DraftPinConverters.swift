@@ -26,7 +26,7 @@ extension ReviewPinDTO {
         Pin(
             name: name ?? PinzBaseStrings.Common.Label.pinNumber(index + 1),
             category: category?.toPinCategory() ?? .custom(nil),
-            medias: media.enumerated().map { offset, m in
+            medias: (media ?? []).enumerated().map { offset, m in
                 MediaItem(
                     id: offset + 1,
                     isPrivate: m.privacyLevel != nil && m.privacyLevel != "public",
@@ -35,7 +35,7 @@ extension ReviewPinDTO {
                 )
             },
             isPrivate: false,
-            tags: tags.map { MediaTag(tag: $0) },
+            tags: (tags ?? []).map { MediaTag(tag: $0) },
             coordinates: CLLocationCoordinate2D(
                 latitude: latitude ?? 0,
                 longitude: longitude ?? 0

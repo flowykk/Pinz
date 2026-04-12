@@ -55,6 +55,7 @@ public struct TripView: View {
             }
         }
         .onAppear {
+            print("[TripLoader] onAppear: hasSavedTrip=\(SelectedTripStorage.shared.selectedTripID != nil), selectedTripId=\(SelectedTripStorage.shared.selectedTripID ?? "nil"), tripId=\(viewModel.trip?.id ?? "nil"), isLoading=\(viewModel.isLoading)")
             viewModel.setRouter(router)
             viewModel.dispatch(.checkAndUpdateTrip(availableTrips))
             Task {
@@ -66,7 +67,11 @@ public struct TripView: View {
             )
         }
         .onChange(of: viewModel.trip?.id) { _, _ in
+            print("[TripLoader] onChange viewModel.trip?.id -> \(viewModel.trip?.id ?? "nil"), isLoading=\(viewModel.isLoading)")
             Task { try? await viewModel.asyncDispatch(.loadSavedTrip) }
+        }
+        .onChange(of: viewModel.isLoading) { _, newValue in
+            print("[TripLoader] onChange viewModel.isLoading -> \(newValue)")
         }
         .onChange(of: isTripsListPresented, { _, newValue in
             withAnimation {
