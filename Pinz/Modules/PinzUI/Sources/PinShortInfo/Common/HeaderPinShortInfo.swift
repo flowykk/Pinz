@@ -34,7 +34,7 @@ public struct HeaderPinShortInfo: View {
             if selectable {
                 VStack {
                     Spacer(minLength: 0)
-                    if pin.isPrivate {
+                    if pin.isPrivate || pin.medias.allSatisfy({ $0.isPrivate }) {
                         Image(systemName: "lock.fill").foregroundStyle(PinzUIAsset.accentRed.swiftUIColor)
                     } else {
                         Button {

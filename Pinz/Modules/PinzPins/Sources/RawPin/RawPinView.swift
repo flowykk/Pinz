@@ -99,10 +99,12 @@ private struct MediaThumbnailCell: View {
             ).padding(4)
         }
         .contextMenu {
-            Button {
-                isMovePickerPresented = true
-            } label: {
-                Label(PinzBaseStrings.RawPin.Button.move, systemImage: "arrow.left.arrow.right")
+            if movablePins.count > 0 {
+                Button {
+                    isMovePickerPresented = true
+                } label: {
+                    Label(PinzBaseStrings.RawPin.Button.move, systemImage: "arrow.left.arrow.right")
+                }
             }
             Button(role: .destructive) { onDeleteMedia?(media) } label: {
                 Label(PinzBaseStrings.Common.Button.delete, systemImage: "trash")

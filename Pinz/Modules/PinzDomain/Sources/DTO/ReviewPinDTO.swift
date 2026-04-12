@@ -1,5 +1,5 @@
 public struct ReviewPinDTO: Codable {
-    public let pinId: String
+    public let id: String
     public let name: String?
     public let category: String?
     public let latitude: Double?
@@ -7,12 +7,12 @@ public struct ReviewPinDTO: Codable {
     public let locationName: String?
     public let startTimeUnix: Int?
     public let endTimeUnix: Int?
-    public let tags: [String]
-    public let issues: [String]
-    public let media: [ReviewPinMediaDTO]
+    public let tags: [String]?
+    public let issues: [String]?
+    public let media: [ReviewPinMediaDTO]?
 
     public init(
-        pinId: String,
+        id: String,
         name: String?,
         category: String?,
         latitude: Double?,
@@ -20,11 +20,11 @@ public struct ReviewPinDTO: Codable {
         locationName: String?,
         startTimeUnix: Int?,
         endTimeUnix: Int?,
-        tags: [String],
-        issues: [String],
-        media: [ReviewPinMediaDTO]
+        tags: [String]?,
+        issues: [String]?,
+        media: [ReviewPinMediaDTO]?
     ) {
-        self.pinId = pinId
+        self.id = id
         self.name = name
         self.category = category
         self.latitude = latitude
@@ -38,7 +38,7 @@ public struct ReviewPinDTO: Codable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case pinId = "pin_id"
+        case id
         case name, category, latitude, longitude, tags, issues, media
         case locationName = "location_name"
         case startTimeUnix = "start_time_unix"

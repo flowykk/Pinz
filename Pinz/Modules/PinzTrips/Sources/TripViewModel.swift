@@ -159,22 +159,43 @@ final class TripViewModel {
     }
 
     func asyncDispatch(_ intent: AsyncIntent) async throws {
+        let logPrefix = "[TripLoader]"
         switch intent {
         case .loadSavedTrip:
+            print("\(logPrefix) loadSavedTrip.start")
             guard let tripId = SelectedTripStorage.shared.selectedTripID else {
+                print("\(logPrefix) loadSavedTrip.abort: no selectedTripID")
                 return
             }
-            guard lastFetchedTripId != tripId else { return }
+            print("\(logPrefix) selectedTripID=\(tripId), lastFetchedTripId=\(lastFetchedTripId ?? "nil"), hasLoaded=\(hasLoaded), isLoading=\(isLoading)")
+            guard lastFetchedTripId != tripId else {
+                print("\(logPrefix) skip: lastFetchedTripId already equals selectedTripId")
+                return
+            }
+            print("\(logPrefix) willFetch tripId=\(tripId)")
             if !hasLoaded {
                 withAnimation { isLoading = true }
+                print("\(logPrefix) isLoading set true")
             }
-            let response = try await networkService.getTrip(id: tripId)
-            var trip = response.trip.toTrip()
-            trip.pins = response.pins.enumerated().map { index, dto in dto.toPin(index: index) }
-            lastFetchedTripId = tripId
-            dispatch(.selectTrip(trip))
-            hasLoaded = true
-            withAnimation { isLoading = false }
+            defer {
+                if isLoading {
+                    withAnimation { isLoading = false }
+                    print("\(logPrefix) isLoading set false (defer)")
+                }
+            }
+            do {
+                let response = try await networkService.getTrip(id: tripId)
+                print("\(logPrefix) response received for tripId=\(tripId), pins=\(response.pins.count)")
+                var trip = response.trip.toTrip()
+                trip.pins = response.pins.enumerated().map { index, dto in dto.toPin(index: index) }
+                print("\(logPrefix) mapped tripId=\(trip.id), pinsMapped=\(trip.pins.count)")
+                lastFetchedTripId = tripId
+                dispatch(.selectTrip(trip))
+                hasLoaded = true
+            } catch {
+                print("\(logPrefix) loadSavedTrip.error for tripId=\(tripId): \(error)")
+                throw error
+            }
         }
     }
 }
