@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: smtp-external
+  namespace: default
+spec:
+  hosts:
+    - smtp.maileroo.com
+  ports:
+    - number: 587
+      name: smtp
+      protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: DNS
