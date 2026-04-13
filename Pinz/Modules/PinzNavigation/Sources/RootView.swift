@@ -36,7 +36,7 @@ public struct RootView<Content: View>: View {
         case let .trip(tripRoute):
             switch tripRoute {
             case let .info(trip):
-                TripInfoView(trip: trip)
+                TripInfoView(trip: trip, onTripUpdated: consumeTripInfoUpdateHandler())
             case let .profile(user):
                 ProfileView(user: user)
             case let .pinInfo(pin, updateAction):
@@ -103,5 +103,9 @@ public struct RootView<Content: View>: View {
                 WishlistElementCreationView(onCreated: action.action)
             }
         }
+    }
+
+    private func consumeTripInfoUpdateHandler() -> (() -> Void)? {
+        router.consumeTripInfoUpdateHandler()
     }
 }

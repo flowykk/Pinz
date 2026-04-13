@@ -33,6 +33,7 @@ public struct TripInfoView: View {
     @State private var imageEditingDialogShown = false
     @State private var photoPickerShown = false
 
+    @State private var showDeleteTripAlert = false
     @State private var isStoriesPresented = false
 
     @Environment(\.appRouter) private var router
@@ -45,8 +46,8 @@ public struct TripInfoView: View {
         }
     }
 
-    public init(trip: Trip) {
-        viewModel = TripInfoViewModel(trip: trip)
+    public init(trip: Trip, onTripUpdated: (() -> Void)? = nil) {
+        viewModel = TripInfoViewModel(trip: trip, onTripUpdated: onTripUpdated)
     }
 
     public var body: some View {
@@ -117,6 +118,23 @@ public struct TripInfoView: View {
         } set: { newImage in
             viewModel.dispatch(.setImage(newImage))
         })
+        .alert(PinzBaseStrings.TripInfo.Alert.DeleteTrip.title, isPresented: $showDeleteTripAlert) {
+            Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) {
+                showDeleteTripAlert = false
+            }
+            Button(PinzBaseStrings.TripInfo.Alert.DeleteTrip.confirm, role: .destructive) {
+                Task {
+                    do {
+                        try await viewModel.deleteTrip()
+                        viewModel.dispatch(.navigate(.back))
+                    } catch {
+                        print("[TripInfo] failed to delete trip with id=\(viewModel.trip.id): \(error)")
+                    }
+                }
+            }
+        } message: {
+            Text(PinzBaseStrings.TripInfo.Alert.DeleteTrip.message)
+        }
     }
 
     @ViewBuilder
@@ -155,7 +173,13 @@ public struct TripInfoView: View {
             } rightView: {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.done),
-                    action: .plain { viewModel.dispatch(.changeState) }
+                    action: .async {
+                        do {
+                            try await viewModel.asyncDispatch(.editTrip)
+                        } catch {
+                            print("[TripInfo] failed to update trip with id=\(viewModel.trip.id): \(error)")
+                        }
+                    }
                 )
             }
         }
@@ -318,7 +342,9 @@ public struct TripInfoView: View {
                 leading: .iconTitle(TripInfoIcon.trash, PinzBaseStrings.TripInfo.Button.delete),
                 trailing: .icon(TripInfoIcon.chevronRight),
                 style: .destructive,
-                action: .plain { }
+                action: .plain {
+                    showDeleteTripAlert = true
+                }
             ))
         ])
     }

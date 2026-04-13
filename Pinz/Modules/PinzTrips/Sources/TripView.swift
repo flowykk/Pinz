@@ -34,7 +34,7 @@ public struct TripView: View {
 
             if viewModel.isLoading || (hasSavedTrip && viewModel.trip == nil) {
                 LoadingView()
-            } else if let selectedTrip = viewModel.trip {
+            } else if hasSavedTrip, let selectedTrip = viewModel.trip {
                 TripMapView(
                     position: $viewModel.position,
                     pins: selectedTrip.pins,
@@ -55,23 +55,21 @@ public struct TripView: View {
             }
         }
         .onAppear {
-            print("[TripLoader] onAppear: hasSavedTrip=\(SelectedTripStorage.shared.selectedTripID != nil), selectedTripId=\(SelectedTripStorage.shared.selectedTripID ?? "nil"), tripId=\(viewModel.trip?.id ?? "nil"), isLoading=\(viewModel.isLoading)")
             viewModel.setRouter(router)
+            if SelectedTripStorage.shared.selectedTripID == nil {
+                viewModel.dispatch(.clearSelection)
+            }
             viewModel.dispatch(.checkAndUpdateTrip(availableTrips))
             Task {
                 try? await viewModel.asyncDispatch(.loadSavedTrip)
             }
-            TokenStorage.shared.save(
-                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Nzc1Mjk5OTksImlhdCI6MTc3NDkzNzk5OSwidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoidXNlciJ9.hhE9dSMOkata-Zw14hii9OBAybfwLapTOSzNIFobKMI",
-                refreshToken: "AVdEMNK7JAYPqE8qkWLVjJHnoVQcLu447hP3PCyilxQ="
-            )
+//            TokenStorage.shared.save(
+//                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Nzc1Mjk5OTksImlhdCI6MTc3NDkzNzk5OSwidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoidXNlciJ9.hhE9dSMOkata-Zw14hii9OBAybfwLapTOSzNIFobKMI",
+//                refreshToken: "AVdEMNK7JAYPqE8qkWLVjJHnoVQcLu447hP3PCyilxQ="
+//            )
         }
         .onChange(of: viewModel.trip?.id) { _, _ in
-            print("[TripLoader] onChange viewModel.trip?.id -> \(viewModel.trip?.id ?? "nil"), isLoading=\(viewModel.isLoading)")
             Task { try? await viewModel.asyncDispatch(.loadSavedTrip) }
-        }
-        .onChange(of: viewModel.isLoading) { _, newValue in
-            print("[TripLoader] onChange viewModel.isLoading -> \(newValue)")
         }
         .onChange(of: isTripsListPresented, { _, newValue in
             withAnimation {
@@ -123,12 +121,16 @@ public struct TripView: View {
         }
     }
 
+    @ViewBuilder
     private var header: some View {
+        let hasSavedTrip = SelectedTripStorage.shared.selectedTripID != nil
+        let selectedTrip = hasSavedTrip ? viewModel.trip : nil
+
         VStack {
             HStack(alignment: .top, spacing: 6) {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
-                        if let selectedTrip = viewModel.trip {
+                        if let selectedTrip {
                             tripHeader(for: selectedTrip)
                         }
                         button(.icon("chevron.up"), isRotated: isTripsListButtonRotated) {
@@ -138,7 +140,7 @@ public struct TripView: View {
                     button(.icon("square.grid.2x2.fill")) {
                         viewModel.dispatch(.navigate(.feed))
                     }
-                    if let _ = viewModel.trip {
+                    if selectedTrip != nil {
                         button(
                             .icon(
                                 viewModel.state == .default
@@ -148,7 +150,7 @@ public struct TripView: View {
                             invertColors: true
                         ) {
                             viewModel.dispatch(.toggleRouteState)
-                        }.disabledWithOpacity(viewModel.trip?.pins.isEmpty == true)
+                        }.disabledWithOpacity(selectedTrip?.pins.isEmpty == true)
                     }
                 }
 
@@ -158,7 +160,7 @@ public struct TripView: View {
                     button(.image(PinzUIAsset.avatar.image)) {
                         viewModel.dispatch(.navigate(.profile(User(nickname: "flowykk", email: "cristgames123@gmail.com"))))
                     }
-                    if let selectedTrip = viewModel.trip {
+                    if let selectedTrip {
                         button(.icon("list.bullet")) {
                             if !selectedTrip.pins.isEmpty {
                                 isPinsListPresented = true
