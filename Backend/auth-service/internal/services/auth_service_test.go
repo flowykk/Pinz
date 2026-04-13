@@ -71,8 +71,9 @@ func TestSubmitEmail_ValidationErrors(t *testing.T) {
 		req  *pb.SubmitEmailRequest
 		code codes.Code
 	}{
-		"empty_email":   {req: &pb.SubmitEmailRequest{Email: ""}, code: codes.InvalidArgument},
-		"invalid_email": {req: &pb.SubmitEmailRequest{Email: "not-an-email"}, code: codes.InvalidArgument},
+		"empty_email":       {req: &pb.SubmitEmailRequest{Email: ""}, code: codes.InvalidArgument},
+		"invalid_email":     {req: &pb.SubmitEmailRequest{Email: "not-an-email"}, code: codes.InvalidArgument},
+		"whitespace_only":   {req: &pb.SubmitEmailRequest{Email: "   "}, code: codes.InvalidArgument},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -173,6 +174,18 @@ func TestPasskeyRegisterBegin_ValidationErrors(t *testing.T) {
 		},
 		"username_too_long": {
 			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: string(make([]byte, 21))},
+			code: codes.InvalidArgument,
+		},
+		"username_invalid_chars": {
+			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "user@name"},
+			code: codes.InvalidArgument,
+		},
+		"username_spaces": {
+			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "user name"},
+			code: codes.InvalidArgument,
+		},
+		"username_cyrillic": {
+			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "Пользователь"},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -398,4 +411,52 @@ func TestDevLogin_user_not_found(t *testing.T) {
 	st, ok := status.FromError(err)
 	require.True(t, ok)
 	require.Equal(t, codes.NotFound, st.Code())
+}
+
+func TestUpdateProfile_ValidationErrors(t *testing.T) {
+	svc := authServiceForValidation(t)
+	ctx := context.Background()
+	cases := map[string]struct {
+		req  *pb.UpdateProfileRequest
+		code codes.Code
+	}{
+		"empty_user_id": {
+			req:  &pb.UpdateProfileRequest{UserId: "", Username: "valid"},
+			code: codes.InvalidArgument,
+		},
+		"username_too_short": {
+			req:  &pb.UpdateProfileRequest{UserId: "u1", Username: "abc"},
+			code: codes.InvalidArgument,
+		},
+		"username_invalid_chars": {
+			req:  &pb.UpdateProfileRequest{UserId: "u1", Username: "user@name"},
+			code: codes.InvalidArgument,
+		},
+		"username_cyrillic": {
+			req:  &pb.UpdateProfileRequest{UserId: "u1", Username: "Пользователь"},
+			code: codes.InvalidArgument,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := svc.UpdateProfile(ctx, tc.req)
+			require.Error(t, err)
+			st, ok := status.FromError(err)
+			require.True(t, ok)
+			require.Equal(t, tc.code, st.Code())
+		})
+	}
+}
+
+func TestRequestAvatarUpload_InvalidFormat(t *testing.T) {
+	svc := authServiceForValidation(t)
+	ctx := context.Background()
+	_, err := svc.RequestAvatarUpload(ctx, &pb.RequestAvatarUploadRequest{
+		UserId:   "u1",
+		Filename: "avatar.gif",
+	})
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, codes.InvalidArgument, st.Code())
 }
