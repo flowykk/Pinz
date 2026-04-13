@@ -116,6 +116,9 @@
 "tripInfo.placeholder.description" = "Trip Description";
 "tripInfo.button.delete" = "Delete Trip";
 "tripInfo.label.pins" = "Trip Pins";
+"tripInfo.alert.deleteTrip.title" = "Delete Trip?";
+"tripInfo.alert.deleteTrip.message" = "This action will permanently delete this trip and all its related data.";
+"tripInfo.alert.deleteTrip.confirm" = "Delete";
 
 // MARK: - Review Trip Creation
 "reviewTripCreation.title.main" = "Review Pins";

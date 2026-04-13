@@ -5,9 +5,15 @@ import PinzBase
 @MainActor @Observable
 public final class AppRouter: AppRouting {
     public var path: [Route]
+    private var tripInfoUpdateHandler: (() -> Void)?
 
     public init(initialPath: [Route] = []) {
         self.path = initialPath
+    }
+
+    public func consumeTripInfoUpdateHandler() -> (() -> Void)? {
+        defer { tripInfoUpdateHandler = nil }
+        return tripInfoUpdateHandler
     }
 
     public func navigateToMain() {
@@ -31,7 +37,8 @@ public final class AppRouter: AppRouting {
 // MARK: - Trip Routing
 
 extension AppRouter {
-    public func navigateToTripInfo(trip: Trip) {
+    public func navigateToTripInfo(trip: Trip, onTripUpdated: (() -> Void)?) {
+        tripInfoUpdateHandler = onTripUpdated
         navigate(to: .trip(.info(trip: trip)))
     }
 

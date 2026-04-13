@@ -22,8 +22,9 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     var getFeedResult: Result<[TripDTO], Error> = .success([])
     var getTripsResult: Result<[TripDTO], Error> = .success([])
-    var getTripResult: Result<TripDTO, Error> = .success(MockNetworkService.stubTrip)
+    var getTripResult: Result<GetTripResponseDTO, Error> = .success(MockNetworkService.stubTripResponse)
     var updateTripResult: Result<TripDTO, Error> = .success(MockNetworkService.stubTrip)
+    var updateTripCall: UpdateTripCall?
     var deleteTripError: Error?
 
     var joinTripByTokenResult: Result<JoinTripByTokenDTO, Error> = .success(JoinTripByTokenDTO(tripId: "trip-001", alreadyJoined: false))
@@ -77,8 +78,19 @@ final class MockNetworkService: NetworkServiceProtocol {
     // MARK: - Trips CRUD
 
     func getTrips() async throws -> [TripDTO] { try getTripsResult.get() }
-    func getTrip(id: String) async throws -> TripDTO { try getTripResult.get() }
+    func getTrip(id: String) async throws -> GetTripResponseDTO { try getTripResult.get() }
     func updateTrip(id: String, name: String?, description: String?, category: String?, season: String?, privacyLevel: String?, coverUrl: String?, startDateUnix: Int?, endDateUnix: Int?) async throws -> TripDTO {
+        updateTripCall = UpdateTripCall(
+            id: id,
+            name: name,
+            description: description,
+            category: category,
+            season: season,
+            privacyLevel: privacyLevel,
+            coverUrl: coverUrl,
+            startDateUnix: startDateUnix,
+            endDateUnix: endDateUnix
+        )
         try updateTripResult.get()
     }
     func deleteTrip(id: String) async throws {
@@ -116,11 +128,24 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     // MARK: - Stub data
 
+    struct UpdateTripCall: Equatable {
+        let id: String
+        let name: String?
+        let description: String?
+        let category: String?
+        let season: String?
+        let privacyLevel: String?
+        let coverUrl: String?
+        let startDateUnix: Int?
+        let endDateUnix: Int?
+    }
+
     private static let stubTrip = TripDTO(
         id: "trip-001", name: "Test Trip", description: nil, category: nil, season: nil,
         coverUrl: nil, ownerUserId: "user-001", privacyLevel: "public", status: "published",
         isPublished: true, isGenerated: false, likesCount: 0, dislikesCount: 0,
         startDateUnix: nil, endDateUnix: nil, createdAtUnix: 1_700_000_000, updatedAtUnix: 1_700_000_000
     )
+    private static let stubTripResponse = GetTripResponseDTO(trip: stubTrip, pins: [])
 }
 // swiftlint:enable file_length

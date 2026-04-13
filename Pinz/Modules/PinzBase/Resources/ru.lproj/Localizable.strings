@@ -116,6 +116,9 @@
 "tripInfo.placeholder.description" = "Описание путешествия";
 "tripInfo.button.delete" = "Удалить путешествие";
 "tripInfo.label.pins" = "Пины путешествия";
+"tripInfo.alert.deleteTrip.title" = "Удалить путешествие?";
+"tripInfo.alert.deleteTrip.message" = "Это действие необратимо. Путешествие и все его пины будут удалены.";
+"tripInfo.alert.deleteTrip.confirm" = "Удалить";
 
 // MARK: - Review Trip Creation
 "reviewTripCreation.title.main" = "Проверка пинов";

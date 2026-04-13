@@ -61,6 +61,23 @@ final class TripViewModelTests: XCTestCase {
         XCTAssertEqual(SelectedTripStorage.shared.selectedTripID, trip.id)
     }
 
+    // MARK: - clearSelection
+
+    func test_clearSelection_resetsState() {
+        let trip = Trip.stub()
+        sut.dispatch(.selectTrip(trip))
+        sut.dispatch(.toggleRouteState)
+        sut.dispatch(.selectPin(pin: trip.pins.first))
+        sut.dispatch(.clearSelection)
+
+        XCTAssertNil(sut.trip)
+        XCTAssertNil(sut.selectedPin)
+        XCTAssertFalse(sut.isLoading)
+        XCTAssertEqual(sut.routePinIndex, 0)
+        XCTAssertEqual(sut.state, .default)
+        XCTAssertNil(SelectedTripStorage.shared.selectedTripID)
+    }
+
     // MARK: - selectPin / unselectPin
 
     func test_selectPin_setsSelectedPin() {
@@ -157,6 +174,13 @@ final class TripViewModelTests: XCTestCase {
         sut.dispatch(.selectTrip(trip))
         sut.dispatch(.navigate(.tripInfo))
         XCTAssertEqual(mockRouter.navigatedTripInfo?.id, trip.id)
+    }
+
+    func test_navigate_tripInfo_setsUpdateHandler() {
+        let trip = Trip.stub()
+        sut.dispatch(.selectTrip(trip))
+        sut.dispatch(.navigate(.tripInfo))
+        XCTAssertNotNil(mockRouter.tripInfoUpdateHandler)
     }
 
     func test_navigate_feed_callsRouter() {

@@ -35,6 +35,8 @@ final class TripViewModel {
         case unselectPin
         case selectTrip(Trip)
         case checkAndUpdateTrip([Trip])
+        case clearSelection
+        case forceReloadSavedTrip
 
         case toggleRouteState
         case nextPin
@@ -50,6 +52,7 @@ final class TripViewModel {
     var isLoading: Bool = false
     private var hasLoaded: Bool = false
     private var lastFetchedTripId: String? = nil
+    private var shouldReloadSavedTrip: Bool = false
 
     var trip: Trip?
     var _position: MapCameraPosition?
@@ -87,7 +90,15 @@ final class TripViewModel {
             switch route {
             case .tripInfo:
                 if let trip {
-                    router?.navigateToTripInfo(trip: trip)
+                    router?.navigateToTripInfo(trip: trip) { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        self.dispatch(.forceReloadSavedTrip)
+                        Task {
+                            try? await self.asyncDispatch(.loadSavedTrip)
+                        }
+                    }
                 }
             case .tripCreation:
                 router?.navigateToTripCreationInitial()
@@ -123,7 +134,19 @@ final class TripViewModel {
                 return
             }
             dispatch(.selectTrip(newTrip))
+        case .clearSelection:
+            trip = nil
+            lastFetchedTripId = nil
+            hasLoaded = false
+            isLoading = false
+            routePinIndex = 0
+            state = .default
+            selectedPin = nil
+            _position = nil
+            shouldReloadSavedTrip = false
 
+        case .forceReloadSavedTrip:
+            shouldReloadSavedTrip = true
         case .toggleRouteState:
             withAnimation(.easeInOut(duration: 0.3)) {
                 state.toggle()
@@ -167,13 +190,14 @@ final class TripViewModel {
                 print("\(logPrefix) loadSavedTrip.abort: no selectedTripID")
                 return
             }
+            let shouldReload = shouldReloadSavedTrip
             print("\(logPrefix) selectedTripID=\(tripId), lastFetchedTripId=\(lastFetchedTripId ?? "nil"), hasLoaded=\(hasLoaded), isLoading=\(isLoading)")
-            guard lastFetchedTripId != tripId else {
+            guard shouldReload || lastFetchedTripId != tripId else {
                 print("\(logPrefix) skip: lastFetchedTripId already equals selectedTripId")
                 return
             }
             print("\(logPrefix) willFetch tripId=\(tripId)")
-            if !hasLoaded {
+            if shouldReload || !hasLoaded {
                 withAnimation { isLoading = true }
                 print("\(logPrefix) isLoading set true")
             }
@@ -191,6 +215,7 @@ final class TripViewModel {
                 print("\(logPrefix) mapped tripId=\(trip.id), pinsMapped=\(trip.pins.count)")
                 lastFetchedTripId = tripId
                 dispatch(.selectTrip(trip))
+                shouldReloadSavedTrip = false
                 hasLoaded = true
             } catch {
                 print("\(logPrefix) loadSavedTrip.error for tripId=\(tripId): \(error)")

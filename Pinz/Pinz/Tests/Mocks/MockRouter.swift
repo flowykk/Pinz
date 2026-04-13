@@ -27,9 +27,13 @@ final class MockRouter: AppRouting {
     var navigatedWishlistElementCreation: WishlistCreationAction?
     var popCallCount = 0
     var lastPopByCount = 0
+    var tripInfoUpdateHandler: (() -> Void)?
 
     func navigateToMain() { navigatedToMain = true }
-    func navigateToTripInfo(trip: Trip) { navigatedTripInfo = trip }
+    func navigateToTripInfo(trip: Trip, onTripUpdated: (() -> Void)?) {
+        navigatedTripInfo = trip
+        tripInfoUpdateHandler = onTripUpdated
+    }
     func navigateToProfile(user: User) { navigatedProfile = user }
     func navigateToPinInfo(pin: Pin) { navigatedPinInfo = pin }
     func navigateToPinCreation() { navigatedToPinCreation = true }
