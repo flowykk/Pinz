@@ -127,6 +127,14 @@ func TestCreateTrip_ValidationErrors(t *testing.T) {
 			req:  &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Invalid"},
 			code: codes.InvalidArgument,
 		},
+		"unsupported_content_type": {
+			ctx: ctxWithUser("u1"),
+			req: &pb.CreateTripRequest{
+				Name: "Trip", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Private",
+				FilesToUpload: []*pb.FileToUpload{{ClientId: "c1", ContentType: "image/gif"}},
+			},
+			code: codes.InvalidArgument,
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

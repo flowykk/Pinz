@@ -11,6 +11,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"pinz/backend/trip-service/internal/repositories"
+	"pinz/backend/trip-service/internal/services"
 )
 
 const (
@@ -201,11 +202,20 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 								continue
 							}
 							if pt.Category != "" {
-								pin.Category = pt.Category
+								pin.Category = services.ValidatePinCategory(pt.Category)
 							}
 							_ = pinRepo.Update(pin)
 							if len(pt.Tags) > 0 {
-								_ = tagRepo.SetForPin(pin.TripID, pin.ID, pt.Tags)
+								tags := pt.Tags
+								if len(tags) > 10 {
+									tags = tags[:10]
+								}
+								for i, t := range tags {
+									if len(t) > 15 {
+										tags[i] = t[:15]
+									}
+								}
+								_ = tagRepo.SetForPin(pin.TripID, pin.ID, tags)
 							}
 						}
 					}

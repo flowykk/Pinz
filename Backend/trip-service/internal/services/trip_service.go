@@ -94,6 +94,11 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	if !validatePrivacyLevel(privacyLevel) {
 		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: Public, Private, Restricted")
 	}
+	for _, f := range req.GetFilesToUpload() {
+		if !validateContentType(f.GetContentType()) {
+			return nil, status.Errorf(codes.InvalidArgument, "unsupported content type: %s", f.GetContentType())
+		}
+	}
 
 	tripStatus := "Created"
 	if len(req.GetFilesToUpload()) > 0 {

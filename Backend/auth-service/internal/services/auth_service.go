@@ -126,7 +126,7 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 	ctx, span := s.tracer.Start(ctx, "AuthService.SubmitEmail")
 	defer span.End()
 
-	email := req.GetEmail()
+	email := strings.TrimSpace(req.GetEmail())
 	if email == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
 	}
@@ -215,6 +215,9 @@ func (s *AuthService) PasskeyRegisterBegin(ctx context.Context, req *pb.PasskeyR
 	}
 	if err := s.validator.Var(username, "required,min=4,max=20"); err != nil {
 		return nil, status.Error(codes.InvalidArgument, "username must be 4–20 characters")
+	}
+	if !validateUsernameFormat(username) {
+		return nil, status.Error(codes.InvalidArgument, "username must contain only letters, digits, hyphens and underscores")
 	}
 
 	verifiedKey := "verified:" + rid
@@ -657,6 +660,9 @@ func (s *AuthService) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRe
 	if err := s.validator.Var(username, "required,min=4,max=20"); err != nil {
 		return nil, status.Error(codes.InvalidArgument, "username must be 4–20 characters")
 	}
+	if !validateUsernameFormat(username) {
+		return nil, status.Error(codes.InvalidArgument, "username must contain only letters, digits, hyphens and underscores")
+	}
 
 	u, err := s.userRepo.UpdateUsername(userID, username)
 	if err != nil {
@@ -675,7 +681,7 @@ func (s *AuthService) ChangeEmail(ctx context.Context, req *pb.ChangeEmailReques
 	defer span.End()
 
 	userID := req.GetUserId()
-	newEmail := req.GetNewEmail()
+	newEmail := strings.TrimSpace(req.GetNewEmail())
 	if userID == "" || newEmail == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id and new_email are required")
 	}
@@ -757,13 +763,20 @@ func (s *AuthService) RequestAvatarUpload(ctx context.Context, req *pb.RequestAv
 	if userID == "" || filename == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id and filename are required")
 	}
-	if s.s3 == nil {
-		return nil, status.Error(codes.Unavailable, "avatar upload is not configured")
-	}
 
 	ext := strings.ToLower(filepath.Ext(filename))
 	if ext == "" {
 		ext = ".jpg"
+	}
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".heic":
+		// allowed
+	default:
+		return nil, status.Error(codes.InvalidArgument, "avatar must be .jpg, .jpeg, .png or .heic")
+	}
+
+	if s.s3 == nil {
+		return nil, status.Error(codes.Unavailable, "avatar upload is not configured")
 	}
 	s3Key := fmt.Sprintf("avatars/%s/avatar%s", userID, ext)
 

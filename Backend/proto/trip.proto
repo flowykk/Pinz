@@ -247,6 +247,8 @@ message PinUpdate {
   optional string name = 2;
   optional double latitude = 3;
   optional double longitude = 4;
+  // TODO(PINZ-127): add optional string description = 5; with validation <= 5000 chars (ТЗ 4.2.8)
+  // TODO(PINZ-127): add repeated string tags = 6; with validation <= 10 tags, each <= 15 chars (ТЗ 4.2.4-4.2.5)
 }
 message FinalizeTripResponse {
   string trip_id = 1;
