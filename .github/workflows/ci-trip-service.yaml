@@ -1,0 +1,26 @@
+name: CI trip-service
+
+on:
+  push:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'Backend/trip-service/**'
+      - 'Backend/pkg/**'
+      - 'Backend/proto/**'
+      - '.github/workflows/ci-trip-service.yaml'
+      - '.github/workflows/ci-reusable.yaml'
+  pull_request:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'Backend/trip-service/**'
+      - 'Backend/pkg/**'
+      - 'Backend/proto/**'
+      - '.github/workflows/ci-trip-service.yaml'
+      - '.github/workflows/ci-reusable.yaml'
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yaml
+    with:
+      service: trip-service
+    secrets: inherit

@@ -1,0 +1,26 @@
+name: CI api-gateway-service
+
+on:
+  push:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'Backend/api-gateway-service/**'
+      - 'Backend/pkg/**'
+      - 'Backend/proto/**'
+      - '.github/workflows/ci-api-gateway.yaml'
+      - '.github/workflows/ci-reusable.yaml'
+  pull_request:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'Backend/api-gateway-service/**'
+      - 'Backend/pkg/**'
+      - 'Backend/proto/**'
+      - '.github/workflows/ci-api-gateway.yaml'
+      - '.github/workflows/ci-reusable.yaml'
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yaml
+    with:
+      service: api-gateway-service
+    secrets: inherit
