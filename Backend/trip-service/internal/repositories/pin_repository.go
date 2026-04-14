@@ -170,8 +170,13 @@ func (r *PinRepository) Update(p *models.Pin) error {
 }
 
 // SetPrivacyLevel updates only pin privacy_level (used by privacy aggregation worker).
+// SQL guard: never overwrite Restricted ("permanently private", ТЗ 6.3) with a lower level.
 func (r *PinRepository) SetPrivacyLevel(pinID, level string) error {
-	res, err := psq.Update("pins").Set("privacy_level", level).Where(sq.Eq{"id": pinID}).RunWith(r.db).Exec()
+	q := psq.Update("pins").Set("privacy_level", level).Where(sq.Eq{"id": pinID})
+	if level != "Restricted" {
+		q = q.Where(sq.NotEq{"privacy_level": "Restricted"})
+	}
+	res, err := q.RunWith(r.db).Exec()
 	if err != nil {
 		return err
 	}

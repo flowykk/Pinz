@@ -38,6 +38,11 @@ var (
 		"Private":    true,
 		"Restricted": true,
 	}
+	// userPrivacyLevels — уровни, доступные пользователю. Restricted (ТЗ 6.3 «постоянно приватный») ставит только система.
+	userPrivacyLevels = map[string]bool{
+		"Public":  true,
+		"Private": true,
+	}
 )
 
 // Pin categories per ТЗ 2.2.4.
@@ -76,7 +81,8 @@ var allowedContentTypes = map[string]bool{
 
 func validateCategory(c string) bool     { return categories[c] }
 func validateSeason(s string) bool       { return seasons[s] }
-func validatePrivacyLevel(p string) bool { return privacyLevels[p] }
+func validatePrivacyLevel(p string) bool     { return privacyLevels[p] }
+func validateUserPrivacyLevel(p string) bool { return userPrivacyLevels[p] }
 func validateContentType(ct string) bool { return allowedContentTypes[ct] }
 
 func validateTags(tags []string) error {

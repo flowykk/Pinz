@@ -195,8 +195,13 @@ func (r *TripRepository) Delete(id string) error {
 }
 
 // SetPrivacyLevel updates only trip privacy_level (used by privacy aggregation worker).
+// SQL guard: never overwrite Restricted ("permanently private", ТЗ 6.3) with a lower level.
 func (r *TripRepository) SetPrivacyLevel(tripID, level string) error {
-	res, err := psq.Update("trips").Set("privacy_level", level).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID}).RunWith(r.db).Exec()
+	q := psq.Update("trips").Set("privacy_level", level).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID})
+	if level != "Restricted" {
+		q = q.Where(sq.NotEq{"privacy_level": "Restricted"})
+	}
+	res, err := q.RunWith(r.db).Exec()
 	if err != nil {
 		return err
 	}
