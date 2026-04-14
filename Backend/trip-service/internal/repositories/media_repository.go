@@ -178,8 +178,13 @@ func (r *MediaRepository) MarkNSFW(mediaIDs []string) error {
 }
 
 // SetPrivacyLevel sets privacy_level on a single media (used by privacy aggregation worker).
+// SQL guard: never overwrite Restricted ("permanently private", ТЗ 6.3) with a lower level.
 func (r *MediaRepository) SetPrivacyLevel(mediaID, level string) error {
-	res, err := psq.Update("media").Set("privacy_level", level).Where(sq.Eq{"id": mediaID}).RunWith(r.db).Exec()
+	q := psq.Update("media").Set("privacy_level", level).Where(sq.Eq{"id": mediaID})
+	if level != "Restricted" {
+		q = q.Where(sq.NotEq{"privacy_level": "Restricted"})
+	}
+	res, err := q.RunWith(r.db).Exec()
 	if err != nil {
 		return err
 	}

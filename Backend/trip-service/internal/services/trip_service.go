@@ -102,8 +102,8 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	if privacyLevel == "" {
 		privacyLevel = "Private"
 	}
-	if !validatePrivacyLevel(privacyLevel) {
-		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: Public, Private, Restricted")
+	if !validateUserPrivacyLevel(privacyLevel) {
+		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: Public, Private")
 	}
 	for _, f := range req.GetFilesToUpload() {
 		if !validateContentType(f.GetContentType()) {
@@ -342,8 +342,11 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 		trip.Season = *req.Season
 	}
 	if req.PrivacyLevel != nil {
-		if !validatePrivacyLevel(*req.PrivacyLevel) {
-			return nil, status.Error(codes.InvalidArgument, "invalid privacy_level")
+		if !validateUserPrivacyLevel(*req.PrivacyLevel) {
+			return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: Public, Private")
+		}
+		if trip.PrivacyLevel == "Restricted" {
+			return nil, status.Error(codes.FailedPrecondition, "cannot change permanently private privacy level")
 		}
 		trip.PrivacyLevel = *req.PrivacyLevel
 	}
@@ -1059,6 +1062,11 @@ func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripReques
 
 	if trip.Status != "READY" {
 		return nil, status.Error(codes.FailedPrecondition, "trip must be READY to publish")
+	}
+
+	if trip.PrivacyLevel != "Public" {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"trip must have Public privacy level to publish, current level: %s", trip.PrivacyLevel)
 	}
 
 	publishWhole := req.GetPublishWhole()

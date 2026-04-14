@@ -127,6 +127,11 @@ func TestCreateTrip_ValidationErrors(t *testing.T) {
 			req:  &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Invalid"},
 			code: codes.InvalidArgument,
 		},
+		"restricted_privacy_not_allowed": {
+			ctx:  ctxWithUser("u1"),
+			req:  &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Restricted"},
+			code: codes.InvalidArgument,
+		},
 		"unsupported_content_type": {
 			ctx: ctxWithUser("u1"),
 			req: &pb.CreateTripRequest{
@@ -693,4 +698,82 @@ func TestFinalizeTrip_MediaToDeleteSuccess(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, "READY", resp.GetStatus())
+}
+
+// --- Privacy enforcement tests (PINZ-129) ---
+
+func TestPublishTrip_RejectsNonPublicPrivacy(t *testing.T) {
+	cases := map[string]struct {
+		privacyLevel string
+	}{
+		"private":    {privacyLevel: "Private"},
+		"restricted": {privacyLevel: "Restricted"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+			participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+
+			tripRepo.EXPECT().GetByID("trip-1").Return(&models.Trip{
+				ID: "trip-1", Status: "READY", PrivacyLevel: tc.privacyLevel,
+			}, nil)
+			participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
+
+			svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+			_, err := svc.PublishTrip(ctxWithUser("u1"), &pb.PublishTripRequest{
+				TripId: "trip-1", PublishWhole: true,
+			})
+			require.Error(t, err)
+			st, ok := status.FromError(err)
+			require.True(t, ok)
+			require.Equal(t, codes.FailedPrecondition, st.Code())
+			require.Contains(t, st.Message(), "Public privacy level")
+		})
+	}
+}
+
+func TestUpdateTrip_CannotSetRestricted(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+
+	tripRepo.EXPECT().GetByID("trip-1").Return(&models.Trip{
+		ID: "trip-1", Status: "READY", PrivacyLevel: "Public",
+	}, nil)
+	participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	restricted := "Restricted"
+	_, err := svc.UpdateTrip(ctxWithUser("u1"), &pb.UpdateTripRequest{
+		TripId:       "trip-1",
+		PrivacyLevel: &restricted,
+	})
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, codes.InvalidArgument, st.Code())
+}
+
+func TestUpdateTrip_CannotChangeFromRestricted(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+
+	tripRepo.EXPECT().GetByID("trip-1").Return(&models.Trip{
+		ID: "trip-1", Status: "READY", PrivacyLevel: "Restricted",
+	}, nil)
+	participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	pub := "Public"
+	_, err := svc.UpdateTrip(ctxWithUser("u1"), &pb.UpdateTripRequest{
+		TripId:       "trip-1",
+		PrivacyLevel: &pub,
+	})
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, codes.FailedPrecondition, st.Code())
+	require.Contains(t, st.Message(), "permanently private")
 }
