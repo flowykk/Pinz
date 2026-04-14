@@ -78,6 +78,41 @@ func (q *Queries) GeoRegistryFindIDsByNamePattern(ctx context.Context, name stri
 	return items, nil
 }
 
+const geoRegistryUpsertCity = `-- name: GeoRegistryUpsertCity :one
+INSERT INTO geo_registry (name, type, parent_id)
+VALUES ($1, 'City', $2)
+ON CONFLICT (name, type, parent_id) WHERE parent_id IS NOT NULL
+DO UPDATE SET name = EXCLUDED.name
+RETURNING id
+`
+
+type GeoRegistryUpsertCityParams struct {
+	Name     string
+	ParentID sql.NullInt32
+}
+
+func (q *Queries) GeoRegistryUpsertCity(ctx context.Context, arg GeoRegistryUpsertCityParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, geoRegistryUpsertCity, arg.Name, arg.ParentID)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const geoRegistryUpsertCountry = `-- name: GeoRegistryUpsertCountry :one
+INSERT INTO geo_registry (name, type)
+VALUES ($1, 'Country')
+ON CONFLICT (name, type) WHERE parent_id IS NULL
+DO UPDATE SET name = EXCLUDED.name
+RETURNING id
+`
+
+func (q *Queries) GeoRegistryUpsertCountry(ctx context.Context, name string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, geoRegistryUpsertCountry, name)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
 const tripLocationInsert = `-- name: TripLocationInsert :exec
 INSERT INTO trip_locations (trip_id, location_id) VALUES ($1, $2)
 ON CONFLICT DO NOTHING

@@ -20,6 +20,11 @@ import (
 
 const defaultInviteExpiresInSec = 86400 // 24 hours
 
+// LocationResolver выполняет reverse geocoding по координатам.
+type LocationResolver interface {
+	ResolveLocation(ctx context.Context, lat, lon float64) (countryName, cityName, displayName string, err error)
+}
+
 type TripService struct {
 	pb.UnimplementedTripServiceServer
 	tripRepo        repositories.TripRepositoryInterface
@@ -33,6 +38,8 @@ type TripService struct {
 	tagRepo         repositories.TagRepositoryInterface
 	socialRepo      repositories.SocialRepositoryInterface
 	favouriteRepo   repositories.FavouriteRepositoryInterface
+	geocoder        LocationResolver
+	geoRepo         repositories.GeoRegistryRepositoryInterface
 }
 
 func NewTripService(
@@ -47,6 +54,8 @@ func NewTripService(
 	tagRepo repositories.TagRepositoryInterface,
 	socialRepo repositories.SocialRepositoryInterface,
 	favouriteRepo repositories.FavouriteRepositoryInterface,
+	geocoder LocationResolver,
+	geoRepo repositories.GeoRegistryRepositoryInterface,
 ) *TripService {
 	return &TripService{
 		tripRepo:        tripRepo,
@@ -60,6 +69,8 @@ func NewTripService(
 		tagRepo:         tagRepo,
 		socialRepo:      socialRepo,
 		favouriteRepo:   favouriteRepo,
+		geocoder:        geocoder,
+		geoRepo:         geoRepo,
 	}
 }
 
@@ -870,7 +881,7 @@ func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRe
 			PinId:         pin.ID,
 			Name:          pin.Name,
 			Category:      pin.Category,
-			LocationName:  "",
+			LocationName:  pin.LocationName,
 			StartTimeUnix: startUnix,
 			EndTimeUnix:   endUnix,
 			Issues:        issues,
@@ -934,6 +945,32 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 			pin.Longitude = pu.Longitude
 		}
 		_ = s.pinRepo.Update(pin)
+
+		// Geocode pins where coordinates were manually set by user.
+		if pu.Latitude != nil && pu.Longitude != nil && s.geocoder != nil {
+			country, city, displayName, geoErr := s.geocoder.ResolveLocation(ctx, *pin.Latitude, *pin.Longitude)
+			if geoErr != nil {
+				slog.WarnContext(ctx, "geocoding failed for manually set pin", "pin_id", pin.ID, "error", geoErr)
+			} else if displayName != "" {
+				pin.LocationName = displayName
+				_ = s.pinRepo.Update(pin)
+				if s.geoRepo != nil {
+					countryID, cityID, _, ensureErr := s.geoRepo.EnsureLocationByName(ctx, country, city)
+					if ensureErr != nil {
+						slog.WarnContext(ctx, "geo registry ensure failed", "pin_id", pin.ID, "error", ensureErr)
+					} else {
+						var locIDs []int
+						if countryID != nil {
+							locIDs = append(locIDs, *countryID)
+						}
+						if cityID != nil {
+							locIDs = append(locIDs, *cityID)
+						}
+						_ = s.geoRepo.UpsertTripLocations(ctx, tripID, locIDs)
+					}
+				}
+			}
+		}
 	}
 	// Delete media from DB, then best-effort remove from object storage
 	if len(req.GetMediaToDelete()) > 0 {

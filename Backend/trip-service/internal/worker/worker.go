@@ -30,7 +30,7 @@ const (
 // Responsibilities:
 //   - Read tasks from pinz:trip:ml:tasks (created in ApplyGroupsAndProcess)
 //   - For each trip_id: mark trip status as DRAFT_FINAL_REVIEW, notify participants via Redis Pub/Sub.
-func Run(ctx context.Context, redisClient *redis.Client, tripRepo *repositories.TripRepository, participantRepo *repositories.TripParticipantRepository, geoRepo *repositories.GeoRegistryRepository, mediaRepo *repositories.MediaRepository, tagRepo *repositories.TagRepository, pinRepo *repositories.PinRepository, eventRepo *repositories.RedisRepository, tripPrivacyRepo *repositories.TripPrivacyRepository, pinPrivacyRepo *repositories.PinPrivacyRepository, mediaPrivacyRepo *repositories.MediaPrivacyRepository) error {
+func Run(ctx context.Context, redisClient *redis.Client, tripRepo *repositories.TripRepository, participantRepo *repositories.TripParticipantRepository, geoRepo *repositories.GeoRegistryRepository, mediaRepo *repositories.MediaRepository, tagRepo *repositories.TagRepository, pinRepo *repositories.PinRepository, eventRepo *repositories.RedisRepository, tripPrivacyRepo *repositories.TripPrivacyRepository, pinPrivacyRepo *repositories.PinPrivacyRepository, mediaPrivacyRepo *repositories.MediaPrivacyRepository, geocoder services.LocationResolver) error {
 	if redisClient == nil || eventRepo == nil {
 		slog.Warn("worker: redis not configured, background processing disabled")
 		<-ctx.Done()
@@ -74,7 +74,7 @@ func Run(ctx context.Context, redisClient *redis.Client, tripRepo *repositories.
 					continue
 				}
 
-				if err := processTrip(ctx, tripID, tripRepo, participantRepo, geoRepo, eventRepo); err != nil {
+				if err := processTrip(ctx, tripID, tripRepo, participantRepo, geoRepo, pinRepo, eventRepo, geocoder); err != nil {
 					slog.WarnContext(ctx, "worker: processTrip failed", "trip_id", tripID, "error", err)
 				}
 
@@ -304,7 +304,7 @@ func processPrivacyEvents(ctx context.Context, client *redis.Client, tripRepo *r
 	return nil
 }
 
-func processTrip(ctx context.Context, tripID string, tripRepo *repositories.TripRepository, participantRepo *repositories.TripParticipantRepository, geoRepo *repositories.GeoRegistryRepository, eventRepo *repositories.RedisRepository) error {
+func processTrip(ctx context.Context, tripID string, tripRepo *repositories.TripRepository, participantRepo *repositories.TripParticipantRepository, geoRepo *repositories.GeoRegistryRepository, pinRepo *repositories.PinRepository, eventRepo *repositories.RedisRepository, geocoder services.LocationResolver) error {
 	trip, err := tripRepo.GetByID(tripID)
 	if err != nil {
 		return err
@@ -315,6 +315,9 @@ func processTrip(ctx context.Context, tripID string, tripRepo *repositories.Trip
 			return err
 		}
 	}
+
+	// Geocode all pins with coordinates and populate geo_registry + trip_locations.
+	geocodePins(ctx, tripID, geocoder, geoRepo, pinRepo)
 
 	participants, err := participantRepo.GetByTripID(tripID)
 	if err != nil {
@@ -330,4 +333,57 @@ func processTrip(ctx context.Context, tripID string, tripRepo *repositories.Trip
 	}
 
 	return nil
+}
+
+func geocodePins(ctx context.Context, tripID string, geocoder services.LocationResolver, geoRepo *repositories.GeoRegistryRepository, pinRepo *repositories.PinRepository) {
+	if geocoder == nil || geoRepo == nil || pinRepo == nil {
+		return
+	}
+
+	pins, err := pinRepo.ListByTripID(tripID)
+	if err != nil {
+		slog.WarnContext(ctx, "worker: geocodePins: failed to list pins", "trip_id", tripID, "error", err)
+		return
+	}
+
+	allLocationIDs := make(map[int]struct{})
+	for _, pin := range pins {
+		if pin.Latitude == nil || pin.Longitude == nil {
+			continue
+		}
+
+		country, city, displayName, geoErr := geocoder.ResolveLocation(ctx, *pin.Latitude, *pin.Longitude)
+		if geoErr != nil {
+			slog.WarnContext(ctx, "worker: geocoding failed for pin", "pin_id", pin.ID, "error", geoErr)
+			continue
+		}
+		if displayName == "" {
+			continue
+		}
+
+		pin.LocationName = displayName
+		_ = pinRepo.Update(pin)
+
+		countryID, cityID, _, ensureErr := geoRepo.EnsureLocationByName(ctx, country, city)
+		if ensureErr != nil {
+			slog.WarnContext(ctx, "worker: geo registry ensure failed", "pin_id", pin.ID, "error", ensureErr)
+			continue
+		}
+		if countryID != nil {
+			allLocationIDs[*countryID] = struct{}{}
+		}
+		if cityID != nil {
+			allLocationIDs[*cityID] = struct{}{}
+		}
+	}
+
+	if len(allLocationIDs) > 0 {
+		ids := make([]int, 0, len(allLocationIDs))
+		for id := range allLocationIDs {
+			ids = append(ids, id)
+		}
+		if err := geoRepo.UpsertTripLocations(ctx, tripID, ids); err != nil {
+			slog.WarnContext(ctx, "worker: UpsertTripLocations failed", "trip_id", tripID, "error", err)
+		}
+	}
 }

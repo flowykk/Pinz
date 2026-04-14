@@ -59,8 +59,12 @@ tidy:
 	cd api-gateway-service && go mod tidy
 	cd e2e && go mod tidy
 
+.PHONY: check-env
+check-env:
+	@bash scripts/check-env.sh
+
 .PHONY: lint lint-api lint-auth lint-trip
-lint: lint-api lint-auth lint-trip
+lint: lint-api lint-auth lint-trip check-env
 
 lint-api:
 	cd api-gateway-service && golangci-lint run ./...

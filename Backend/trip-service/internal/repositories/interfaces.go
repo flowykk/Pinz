@@ -87,3 +87,8 @@ type FavouriteRepositoryInterface interface {
 	HasFavouritesByOtherUsers(tripID, excludeUserID string) (bool, error)
 	ListTripIDsByUserID(userID string, limit, offset int32) ([]string, error)
 }
+
+type GeoRegistryRepositoryInterface interface {
+	EnsureLocationByName(ctx context.Context, countryName, cityName string) (countryID, cityID *int, displayName string, err error)
+	UpsertTripLocations(ctx context.Context, tripID string, locationIDs []int) error
+}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -16,21 +18,23 @@ import (
 	"pinz/backend/trip-service/internal/di"
 	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/server"
+	"pinz/backend/trip-service/internal/worker"
 )
 
 func main() {
 	slog.Info("trip-service starting")
 	_ = godotenv.Load()
 
-	ctx := context.Background()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
 	otelProviders, err := pinzotel.Init(ctx, "trip-service", "1.0.0")
 	if err != nil {
 		slog.Warn("OTel init failed, running without telemetry", "error", err)
 	} else {
 		defer func() {
-			shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
+			shutCtx, shutCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer shutCancel()
 			otelProviders.Shutdown(shutCtx)
 		}()
 		slog.SetDefault(slog.New(otelslog.NewHandler("trip-service")))
@@ -64,6 +68,14 @@ func main() {
 		slog.Error("failed to build dependencies", "error", err)
 		os.Exit(1)
 	}
+
+	// Start worker as a background goroutine.
+	go func() {
+		if err := worker.Run(ctx, deps.RedisClient, deps.TripRepo, deps.ParticipantRepo, deps.GeoRepo, deps.MediaRepo, deps.TagRepo, deps.PinRepo, deps.EventRepo, deps.TripPrivacyRepo, deps.PinPrivacyRepo, deps.MediaPrivacyRepo, deps.Geocoder); err != nil {
+			slog.Error("worker stopped with error", "error", err)
+		}
+	}()
+
 	slog.Info("dependencies ready, starting gRPC server")
 	if err := server.RunGRPCServer(deps.TripService); err != nil {
 		slog.Error("gRPC server error", "error", err)

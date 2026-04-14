@@ -1,5 +1,12 @@
 package repositories
 
+// TODO: Trip Service временно владеет записью в geo_registry, т.к. Statistics Service ещё не реализован.
+// Целевое решение (vkr.txt 2.5.4): Statistics Service — единственный владелец GEO_REGISTRY,
+// Trip Service хранит read-only реплику. При реализации statistics-service:
+// 1. Перенести вызов BigDataCloud и INSERT в geo_registry в statistics-service.
+// 2. Настроить синхронизацию geo_registry из statistics-service → trip-service (CDC/events).
+// 3. Убрать Upsert-методы из trip-service, оставить только read-запросы.
+
 import (
 	"context"
 	"database/sql"
@@ -26,15 +33,20 @@ func (r *GeoRegistryRepository) EnsureLocationByName(ctx context.Context, countr
 
 	var cID *int
 	if countryName != "" {
+		// Сначала ищем существующую запись; если нет — вставляем (upsert).
 		id, err := r.q.GeoRegistryFindCountryByName(ctx, countryName)
 		if err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				return nil, nil, "", err
 			}
-		} else {
-			v := int(id)
-			cID = &v
+			// Не найдено — вставляем.
+			id, err = r.q.GeoRegistryUpsertCountry(ctx, countryName)
+			if err != nil {
+				return nil, nil, "", err
+			}
 		}
+		v := int(id)
+		cID = &v
 	}
 
 	var cityIDPtr *int
@@ -53,10 +65,21 @@ func (r *GeoRegistryRepository) EnsureLocationByName(ctx context.Context, countr
 			if !errors.Is(err, sql.ErrNoRows) {
 				return nil, nil, "", err
 			}
-		} else {
-			v := int(id)
-			cityIDPtr = &v
+			// Не найдено — вставляем.
+			parentID := sql.NullInt32{}
+			if cID != nil {
+				parentID = sql.NullInt32{Int32: int32(*cID), Valid: true}
+			}
+			id, err = r.q.GeoRegistryUpsertCity(ctx, sqlcdb.GeoRegistryUpsertCityParams{
+				Name:     cityName,
+				ParentID: parentID,
+			})
+			if err != nil {
+				return nil, nil, "", err
+			}
 		}
+		v := int(id)
+		cityIDPtr = &v
 	}
 
 	var name string

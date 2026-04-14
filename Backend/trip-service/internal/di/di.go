@@ -15,6 +15,20 @@ import (
 
 type Dependencies struct {
 	TripService pb.TripServiceServer
+
+	// Worker dependencies — used by worker.Run goroutine in main.
+	RedisClient      *redis.Client
+	TripRepo         *repositories.TripRepository
+	ParticipantRepo  *repositories.TripParticipantRepository
+	GeoRepo          *repositories.GeoRegistryRepository
+	MediaRepo        *repositories.MediaRepository
+	TagRepo          *repositories.TagRepository
+	PinRepo          *repositories.PinRepository
+	EventRepo        *repositories.RedisRepository
+	TripPrivacyRepo  *repositories.TripPrivacyRepository
+	PinPrivacyRepo   *repositories.PinPrivacyRepository
+	MediaPrivacyRepo *repositories.MediaPrivacyRepository
+	Geocoder         services.LocationResolver
 }
 
 func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Client) (*Dependencies, error) {
@@ -27,9 +41,14 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	tagRepo := repositories.NewTagRepository(db)
 	socialRepo := repositories.NewSocialRepository(db)
 	favouriteRepo := repositories.NewFavouriteRepository(db)
+	geoRepo := repositories.NewGeoRegistryRepository(db)
+	geocoder := services.NewGeocodingClientFromEnv()
+
 	var eventPub repositories.TripEventPublisher
+	var eventRepo *repositories.RedisRepository
 	if redisClient != nil {
-		eventPub = repositories.NewRedisRepository(redisClient)
+		eventRepo = repositories.NewRedisRepository(redisClient)
+		eventPub = eventRepo
 	} else {
 		slog.Warn("trip-service: Redis not configured, trip events will not be published")
 	}
@@ -43,6 +62,25 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	} else {
 		slog.Info("trip-service: S3 not configured (S3_BUCKET unset); presigned upload URLs will be empty")
 	}
-	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo)
-	return &Dependencies{TripService: tripSvc}, nil
+
+	tripPrivacyRepo := repositories.NewTripPrivacyRepository(db)
+	pinPrivacyRepo := repositories.NewPinPrivacyRepository(db)
+	mediaPrivacyRepo := repositories.NewMediaPrivacyRepository(db)
+
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geocoder, geoRepo)
+	return &Dependencies{
+		TripService:      tripSvc,
+		RedisClient:      redisClient,
+		TripRepo:         tripRepo,
+		ParticipantRepo:  participantRepo,
+		GeoRepo:          geoRepo,
+		MediaRepo:        mediaRepo,
+		TagRepo:          tagRepo,
+		PinRepo:          pinRepo,
+		EventRepo:        eventRepo,
+		TripPrivacyRepo:  tripPrivacyRepo,
+		PinPrivacyRepo:   pinPrivacyRepo,
+		MediaPrivacyRepo: mediaPrivacyRepo,
+		Geocoder:         geocoder,
+	}, nil
 }
