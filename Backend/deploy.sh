@@ -209,6 +209,9 @@ deploy_app() {
     export S3_ACCESS_KEY="${S3_ACCESS_KEY:-}"
     export S3_SECRET_KEY="${S3_SECRET_KEY:-}"
     export S3_PRESIGN_TTL="${S3_PRESIGN_TTL:-}"
+    # trip-service geocoding (optional; empty = use default BigDataCloud free endpoint)
+    export GEOCODING_BASE_URL="${GEOCODING_BASE_URL:-}"
+    export GEOCODING_API_KEY="${GEOCODING_API_KEY:-}"
 
     cd "$PROJECT_DIR"
     helmfile -f "$HELMFILE_CONFIG" apply
@@ -593,6 +596,8 @@ while [[ $# -gt 0 ]]; do
             echo "  S3_ACCESS_KEY            Trip service: access key (optional)"
             echo "  S3_SECRET_KEY            Trip service: secret key (optional)"
             echo "  S3_PRESIGN_TTL           Trip service: presign TTL, e.g. 15m (optional)"
+            echo "  GEOCODING_BASE_URL       Trip service: BigDataCloud API base URL (optional)"
+            echo "  GEOCODING_API_KEY        Trip service: BigDataCloud API key (optional)"
             echo "  SKIP_PULL=true           Skip docker auth/pull (k3s pulls via containerd)"
             echo ""
             echo "Examples:"

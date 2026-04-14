@@ -74,6 +74,7 @@ type Pin struct {
 	EndTime           sql.NullTime
 	IsPublishedInFeed bool
 	CreatedAt         time.Time
+	LocationName      string
 }
 
 type PinHiddenByUser struct {

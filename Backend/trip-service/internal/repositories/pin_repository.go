@@ -20,8 +20,8 @@ func NewPinRepository(db *sql.DB) *PinRepository {
 }
 
 func (r *PinRepository) Create(p *models.Pin) error {
-	cols := []string{"trip_id", "name", "description", "category", "privacy_level", "media_count", "is_published_in_feed"}
-	vals := []interface{}{p.TripID, p.Name, p.Description, p.Category, p.PrivacyLevel, p.MediaCount, p.IsPublishedInFeed}
+	cols := []string{"trip_id", "name", "description", "category", "privacy_level", "media_count", "is_published_in_feed", "location_name"}
+	vals := []interface{}{p.TripID, p.Name, p.Description, p.Category, p.PrivacyLevel, p.MediaCount, p.IsPublishedInFeed, p.LocationName}
 	if p.Latitude != nil && p.Longitude != nil {
 		cols = append(cols, "location")
 		vals = append(vals, sq.Expr("ST_SetSRID(ST_MakePoint(?, ?), 4326)", *p.Longitude, *p.Latitude))
@@ -48,8 +48,8 @@ func (r *PinRepository) Create(p *models.Pin) error {
 
 func (r *PinRepository) GetByID(id string) (*models.Pin, error) {
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
-		ST_X(location)::float as lat, ST_Y(location)::float as lon,
-		start_time, end_time, is_published_in_feed, created_at
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
+		start_time, end_time, is_published_in_feed, location_name, created_at
 		FROM pins WHERE id = $1`
 	var p models.Pin
 	var desc sql.NullString
@@ -57,7 +57,7 @@ func (r *PinRepository) GetByID(id string) (*models.Pin, error) {
 	var startTime, endTime sql.NullTime
 	var isPublished sql.NullBool
 	err := r.db.QueryRow(sqlStr, id).Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-		&lat, &lon, &startTime, &endTime, &isPublished, &p.CreatedAt)
+		&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
@@ -87,8 +87,8 @@ func (r *PinRepository) GetByID(id string) (*models.Pin, error) {
 
 func (r *PinRepository) ListByTripID(tripID string) ([]*models.Pin, error) {
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
-		ST_X(location)::float as lat, ST_Y(location)::float as lon,
-		start_time, end_time, is_published_in_feed, created_at
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
+		start_time, end_time, is_published_in_feed, location_name, created_at
 		FROM pins WHERE trip_id = $1 ORDER BY start_time ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
 	if err != nil {
@@ -103,7 +103,7 @@ func (r *PinRepository) ListByTripID(tripID string) ([]*models.Pin, error) {
 		var startTime, endTime sql.NullTime
 		var isPublished sql.NullBool
 		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-			&lat, &lon, &startTime, &endTime, &isPublished, &p.CreatedAt); err != nil {
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		if desc.Valid {
@@ -136,7 +136,8 @@ func (r *PinRepository) Update(p *models.Pin) error {
 		Set("category", p.Category).
 		Set("privacy_level", p.PrivacyLevel).
 		Set("media_count", p.MediaCount).
-		Set("is_published_in_feed", p.IsPublishedInFeed)
+		Set("is_published_in_feed", p.IsPublishedInFeed).
+		Set("location_name", p.LocationName)
 	if p.Latitude != nil && p.Longitude != nil {
 		u = u.Set("location", sq.Expr("ST_SetSRID(ST_MakePoint(?, ?), 4326)", *p.Longitude, *p.Latitude))
 	} else {
@@ -205,8 +206,8 @@ func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32
 	}
 	pattern := "%" + query + "%"
 	sqlStr := `SELECT DISTINCT ON (p.id) p.id, p.trip_id, p.name, p.description, p.category, p.privacy_level, p.media_count,
-		ST_X(p.location)::float as lat, ST_Y(p.location)::float as lon,
-		p.start_time, p.end_time, p.is_published_in_feed, p.created_at
+		ST_Y(p.location)::float as lat, ST_X(p.location)::float as lon,
+		p.start_time, p.end_time, p.is_published_in_feed, p.location_name, p.created_at
 		FROM pins p
 		INNER JOIN trip_participants tp ON tp.trip_id = p.trip_id AND tp.user_id = $1
 		LEFT JOIN tags t ON t.pin_id = p.id AND t.trip_id = p.trip_id
@@ -226,7 +227,7 @@ func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32
 		var startTime, endTime sql.NullTime
 		var isPublished sql.NullBool
 		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-			&lat, &lon, &startTime, &endTime, &isPublished, &p.CreatedAt); err != nil {
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		if desc.Valid {
@@ -268,7 +269,7 @@ func (r *PinRepository) ListPublishedPinsByTripIDs(tripIDs []string) (map[string
 		placeholders[i] = fmt.Sprintf("$%d", i+1)
 		args[i] = id
 	}
-	sqlStr := `SELECT id, trip_id, ST_X(location)::float as lat, ST_Y(location)::float as lon
+	sqlStr := `SELECT id, trip_id, ST_Y(location)::float as lat, ST_X(location)::float as lon
 		FROM pins WHERE trip_id IN (` + strings.Join(placeholders, ",") + `) AND is_published_in_feed = true AND location IS NOT NULL`
 	rows, err := r.db.Query(sqlStr, args...)
 	if err != nil {

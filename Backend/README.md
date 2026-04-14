@@ -257,6 +257,10 @@ export S3_BUCKET=pinz-media
 export S3_ACCESS_KEY=your-access-key
 export S3_SECRET_KEY=your-secret-key
 export S3_PRESIGN_TTL=15m
+
+# Geocoding (trip-service, BigDataCloud reverse geocode)
+export GEOCODING_BASE_URL=https://api.bigdatacloud.net/data/reverse-geocode-client  # optional, default shown
+export GEOCODING_API_KEY=                                                            # optional, free tier works without key
 ```
 
 ### SSL/TLS (Let's Encrypt)

@@ -15,6 +15,7 @@ type Pin struct {
 	MediaCount        int32
 	StartTime         *time.Time
 	EndTime           *time.Time
+	LocationName      string
 	IsPublishedInFeed bool
 	CreatedAt         time.Time
 }
