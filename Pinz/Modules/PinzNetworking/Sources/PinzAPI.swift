@@ -22,7 +22,7 @@ enum PinzAPI {
     case updateProfile(username: String)
     case requestAvatarUpload(filename: String, contentType: String)
     case confirmAvatarUpload(s3Key: String)
-    case changeEmail(email: String)
+    case changeEmail(userId: String?, newEmail: String)
     case confirmEmailChange(verificationCode: String)
 
     // Feed
@@ -166,7 +166,10 @@ extension PinzAPI: TargetType {
         case let .updateProfile(username): return jsonParams(["username": username])
         case let .requestAvatarUpload(filename, contentType): return jsonParams(["filename": filename, "content_type": contentType])
         case let .confirmAvatarUpload(s3Key): return jsonParams(["s3_key": s3Key])
-        case let .changeEmail(email): return jsonParams(["email": email])
+        case let .changeEmail(userId, newEmail):
+            var params: [String: Any] = ["new_email": newEmail]
+            if let userId { params["user_id"] = userId }
+            return jsonParams(params)
         case let .confirmEmailChange(code): return jsonParams(["verification_code": code])
 
         case let .joinTripByToken(token): return jsonParams(["token": token])
@@ -252,15 +255,15 @@ extension PinzAPI {
         case .logout:
             json = #"{"success": true}"#
         case .getProfile:
-            json = #"{"id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
+            json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
         case .deleteAccount:
             json = #"{"success": true}"#
         case .updateProfile:
-            json = #"{"id":"user-001","username":"new_username","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
+            json = #"{"user_id":"user-001","username":"new_username","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
         case .requestAvatarUpload:
             json = #"{"upload_url":"https://pinz.s3.example.com/upload","s3_key":"avatars/user-001/avatar.png","expires_at_unix":1700000000}"#
         case .confirmAvatarUpload:
-            json = #"{"id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
+            json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
         case .changeEmail:
             json = #"{"success":true,"message":"Verification code sent","email":"new@example.com","expires_at_unix":1700000000}"#
         case .confirmEmailChange:

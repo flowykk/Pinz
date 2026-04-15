@@ -24,7 +24,7 @@ public protocol NetworkServiceProtocol {
     func deleteAccount() async throws -> DeleteAccountResponseDTO
     func requestAvatarUpload(filename: String, contentType: String) async throws -> AvatarUploadResponseDTO
     func confirmAvatarUpload(s3Key: String) async throws -> ProfileResponseDTO
-    func changeEmail(email: String) async throws -> ChangeEmailResponseDTO
+    func changeEmail(userId: String?, newEmail: String) async throws -> ChangeEmailResponseDTO
     func confirmEmailChange(verificationCode: String) async throws -> ProfileResponseDTO
 
     // Feed
@@ -264,10 +264,11 @@ public final class NetworkService: NetworkServiceProtocol {
         )
     }
 
-    public func changeEmail(email: String) async throws -> ChangeEmailResponseDTO {
+    public func changeEmail(userId: String?, newEmail: String) async throws -> ChangeEmailResponseDTO {
         try await provider.request(
             .changeEmail(
-                email: email
+                userId: userId,
+                newEmail: newEmail
             ),
             type: ChangeEmailResponseDTO.self
         )

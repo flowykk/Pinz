@@ -65,6 +65,7 @@
 "emailChange.label.newEmail" = "Введи новый email";
 "emailChange.placeholder.email" = "example@example.com";
 "emailChange.description.verificationCode" = "Теперь введи код, который пришёл на новый email";
+"emailChange.button.receiveCode" = "Получить код";
 
 // MARK: - Saved Maps
 "savedMaps.title.main" = "Сохранённые карты";

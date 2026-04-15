@@ -18,8 +18,12 @@ public struct EmailChangeView: View {
         height: 64
     )
 
-    public init(email: String, onChangeSuccess: @escaping (String) -> Void) {
-        viewModel = EmailChangeViewModel(email: email, successAction: onChangeSuccess)
+    public init(
+        email: String,
+        userId: String? = nil,
+        onChangeSuccess: @escaping (String) -> Void
+    ) {
+        viewModel = EmailChangeViewModel(email: email, userId: userId, successAction: onChangeSuccess)
     }
 
     public var body: some View {
@@ -40,14 +44,15 @@ public struct EmailChangeView: View {
                 emailInputView
                     .padding(.horizontal, 12)
 
-                if viewModel.state == .secondCode {
+                if viewModel.state == .code {
                     secondCodeInputView
                 }
             }
             Spacer()
             PinzButton(
-                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
-                action: .plain { viewModel.dispatch(.continue) }
+                type: .slot(style: .primary, title: viewModel.nextButtonTitle),
+                disabled: viewModel.isNextButtonDisabled || viewModel.isLoading,
+                action: .async { await viewModel.continueTapped() }
             )
             .padding(.horizontal, 12)
             .padding(.bottom, 16)
@@ -89,9 +94,7 @@ public struct EmailChangeView: View {
             CodeInputTextField(
                 code: $viewModel.code,
                 style: codeTextFieldStyle,
-                onCodeFilled: {
-                    viewModel.dispatch(.continue)
-                }
+                onCodeFilled: {}
             )
         }
         .padding(.horizontal, 12)

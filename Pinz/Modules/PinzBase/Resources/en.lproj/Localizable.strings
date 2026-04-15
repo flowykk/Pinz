@@ -65,6 +65,7 @@
 "emailChange.label.newEmail" = "Enter New Email";
 "emailChange.placeholder.email" = "example@example.com";
 "emailChange.description.verificationCode" = "Now enter the code sent to the new email";
+"emailChange.button.receiveCode" = "Receive Code";
 
 // MARK: - Saved Maps
 "savedMaps.title.main" = "Saved Maps";

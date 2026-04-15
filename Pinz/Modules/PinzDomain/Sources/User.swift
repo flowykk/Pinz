@@ -2,12 +2,15 @@ import Foundation
 import SwiftUI
 
 public struct User: Hashable, Identifiable {
-    public let id: UUID = UUID()
     public let profileId: String?
     public var nickname: String
     public var email: String
     public var avatarUrl: String?
     public var username: String?
+
+    public var id: String {
+        profileId ?? ""
+    }
 
     public init(
         nickname: String,
@@ -24,7 +27,7 @@ public struct User: Hashable, Identifiable {
     }
 
     public init(profileDTO: ProfileResponseDTO) {
-        self.profileId = profileDTO.id
+        self.profileId = profileDTO.userId ?? profileDTO.id
         self.username = profileDTO.username
         self.nickname = profileDTO.nickname ?? profileDTO.username ?? ""
         self.email = profileDTO.email ?? ""

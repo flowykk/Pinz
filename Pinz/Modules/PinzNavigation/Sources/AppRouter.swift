@@ -110,8 +110,8 @@ extension AppRouter {
 // MARK: - Profile Routing
 
 extension AppRouter {
-    public func navigateToEmailChange(email: String, action: EmailChangeAction) {
-        navigate(to: .profile(.emailChange(email: email, action: action)))
+    public func navigateToEmailChange(email: String, userId: String?, action: EmailChangeAction) {
+        navigate(to: .profile(.emailChange(email: email, userId: userId, action: action)))
     }
 
     public func navigateToStatistics() {

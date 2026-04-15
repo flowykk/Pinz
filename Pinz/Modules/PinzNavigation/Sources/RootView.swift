@@ -68,8 +68,8 @@ public struct RootView<Content: View>: View {
             }
         case let .profile(profileRoute):
             switch profileRoute {
-            case let .emailChange(email, action):
-                EmailChangeView(email: email, onChangeSuccess: action.action)
+            case let .emailChange(email, userId, action):
+                EmailChangeView(email: email, userId: userId, onChangeSuccess: action.action)
             case .statistics:
                 StatisticsView()
             case .trips:

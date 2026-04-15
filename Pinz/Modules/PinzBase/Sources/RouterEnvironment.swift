@@ -22,7 +22,7 @@ public protocol AppRouting {
     func navigateToMediaInfo(media: MediaItem)
     func navigateToLocalMediaInfo(media: LoadedMedia)
 
-    func navigateToEmailChange(email: String, action: EmailChangeAction)
+    func navigateToEmailChange(email: String, userId: String?, action: EmailChangeAction)
     func navigateToStatistics()
     func navigateToTrips()
     func navigateToPlacesWishlist()

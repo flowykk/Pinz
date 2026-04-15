@@ -159,11 +159,11 @@ public struct TripView: View {
 
                 VStack(spacing: 6) {
                     button(.image(viewModel.currentUserAvatarImage ?? ImageProviderType.user.placeholder)) {
-                        viewModel.dispatch(.navigate(
-                            .profile(viewModel.currentUser ?? User(nickname: "user", email: ""))
-                        ))
+                        if let user = viewModel.currentUser {
+                            viewModel.dispatch(.navigate(.profile(user)))
+                        }
                     }
-                    .disabledWithOpacity(viewModel.isProfileLoading || viewModel.isLoading)
+                    .disabledWithOpacity(viewModel.isProfileLoading || viewModel.currentUser == nil)
                     if let selectedTrip {
                         button(.icon("list.bullet")) {
                             if !selectedTrip.pins.isEmpty {

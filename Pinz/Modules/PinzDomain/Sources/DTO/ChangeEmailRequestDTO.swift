@@ -1,13 +1,16 @@
 import Foundation
 
 public struct ChangeEmailRequestDTO: Codable {
-    public let email: String
+    public let userId: String?
+    public let newEmail: String
 
-    public init(email: String) {
-        self.email = email
+    public init(userId: String? = nil, newEmail: String) {
+        self.userId = userId
+        self.newEmail = newEmail
     }
 
     enum CodingKeys: String, CodingKey {
-        case email
+        case userId = "user_id"
+        case newEmail = "new_email"
     }
 }

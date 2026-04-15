@@ -97,7 +97,7 @@ public class ProfileViewModel {
                     self?.user.email = newEmail
                     self?.router?.pop()
                 }
-                router?.navigateToEmailChange(email: user.email, action: action)
+                router?.navigateToEmailChange(email: user.email, userId: user.profileId, action: action)
             case .statistics:
                 router?.navigateToStatistics()
             case .trips:
