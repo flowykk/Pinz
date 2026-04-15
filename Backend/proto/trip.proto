@@ -318,8 +318,30 @@ message ListFeedRequest {
   repeated int32 location_ids = 5; // optional filter (geo_registry ids)
   string sort_by = 6;   // "date" or "rating"
 }
+
+// PINZ-130: lightweight pin for feed card map.
+message FeedPin {
+  string id = 1;
+  double latitude = 2;
+  double longitude = 3;
+}
+
+// PINZ-130: lightweight media for feed card carousel (up to 8, sorted by battle_rating).
+message FeedMedia {
+  string media_id = 1;
+  string url = 2;        // presigned GET URL
+  string media_type = 3; // photo, video
+}
+
+// PINZ-130: a single feed card with trip, pins and media.
+message FeedItem {
+  Trip trip = 1;
+  repeated FeedPin pins = 2;
+  repeated FeedMedia media = 3;
+}
+
 message ListFeedResponse {
-  repeated Trip trips = 1;
+  repeated FeedItem items = 1;
 }
 
 message LikeTripRequest {

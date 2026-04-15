@@ -56,6 +56,7 @@ type MediaRepositoryInterface interface {
 	CountByTripID(tripID string) (total int, videos int, err error)
 	ClusterIDsByLocation(tripID string, radiusMeters float64) (map[string]int, error)
 	ListByPinID(pinID string) ([]*models.Media, error)
+	TopMediaByTripIDs(tripIDs []string, limitPerTrip int) (map[string][]*FeedMedia, error)
 }
 
 type PinRepositoryInterface interface {
@@ -65,6 +66,7 @@ type PinRepositoryInterface interface {
 	Update(p *models.Pin) error
 	Delete(id string) error
 	DeleteByTripID(tripID string) error
+	ListPublishedPinsByTripIDs(tripIDs []string) (map[string][]*FeedPin, error)
 }
 
 type TagRepositoryInterface interface {

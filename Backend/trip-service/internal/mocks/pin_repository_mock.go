@@ -11,6 +11,7 @@ package mocks
 
 import (
 	models "pinz/backend/trip-service/internal/models"
+	repositories "pinz/backend/trip-service/internal/repositories"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -110,6 +111,21 @@ func (m *MockPinRepositoryInterface) ListByTripID(tripID string) ([]*models.Pin,
 func (mr *MockPinRepositoryInterfaceMockRecorder) ListByTripID(tripID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByTripID", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ListByTripID), tripID)
+}
+
+// ListPublishedPinsByTripIDs mocks base method.
+func (m *MockPinRepositoryInterface) ListPublishedPinsByTripIDs(tripIDs []string) (map[string][]*repositories.FeedPin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPublishedPinsByTripIDs", tripIDs)
+	ret0, _ := ret[0].(map[string][]*repositories.FeedPin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListPublishedPinsByTripIDs indicates an expected call of ListPublishedPinsByTripIDs.
+func (mr *MockPinRepositoryInterfaceMockRecorder) ListPublishedPinsByTripIDs(tripIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPublishedPinsByTripIDs", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ListPublishedPinsByTripIDs), tripIDs)
 }
 
 // Update mocks base method.

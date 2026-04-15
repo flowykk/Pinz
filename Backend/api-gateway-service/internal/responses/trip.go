@@ -155,6 +155,27 @@ type TripSettingsResponse struct {
 	Success bool `json:"success"`
 }
 
+// FeedPin is a lightweight pin for the feed card map view (PINZ-130).
+type FeedPin struct {
+	ID        string  `json:"id"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+// FeedMedia is a lightweight media item for the feed card carousel (PINZ-130).
+type FeedMedia struct {
+	MediaID   string `json:"media_id"`
+	URL       string `json:"url"`
+	MediaType string `json:"media_type"`
+}
+
+// FeedItem is a single card in the feed: trip data + pins + media (PINZ-130).
+type FeedItem struct {
+	Trip  Trip        `json:"trip"`
+	Pins  []FeedPin   `json:"pins"`
+	Media []FeedMedia `json:"media"`
+}
+
 // SuccessResponse is a generic success response for like/dislike/favourite.
 type SuccessResponse struct {
 	Success bool `json:"success"`

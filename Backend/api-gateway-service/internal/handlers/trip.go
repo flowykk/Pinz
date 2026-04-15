@@ -726,7 +726,7 @@ func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request)
 // @Param season query string false "season"
 // @Param location_id query int false "location_id"
 // @Param sort_by query string false "date|rating"
-// @Success 200 {array} responses.Trip
+// @Success 200 {array} responses.FeedItem
 // @Router /api/v1/feed [get]
 func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -776,9 +776,30 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 		handleServiceError(w, r, err, "ListFeed")
 		return
 	}
-	out := make([]responses.Trip, len(resp.GetTrips()))
-	for i, t := range resp.GetTrips() {
-		out[i] = tripProtoToResponse(t)
+	items := resp.GetItems()
+	out := make([]responses.FeedItem, len(items))
+	for i, item := range items {
+		pins := make([]responses.FeedPin, len(item.GetPins()))
+		for j, p := range item.GetPins() {
+			pins[j] = responses.FeedPin{
+				ID:        p.GetId(),
+				Latitude:  p.GetLatitude(),
+				Longitude: p.GetLongitude(),
+			}
+		}
+		media := make([]responses.FeedMedia, len(item.GetMedia()))
+		for j, m := range item.GetMedia() {
+			media[j] = responses.FeedMedia{
+				MediaID:   m.GetMediaId(),
+				URL:       m.GetUrl(),
+				MediaType: m.GetMediaType(),
+			}
+		}
+		out[i] = responses.FeedItem{
+			Trip:  tripProtoToResponse(item.GetTrip()),
+			Pins:  pins,
+			Media: media,
+		}
 	}
 	respondJSON(w, http.StatusOK, out)
 }

@@ -11,6 +11,7 @@ package mocks
 
 import (
 	models "pinz/backend/trip-service/internal/models"
+	repositories "pinz/backend/trip-service/internal/repositories"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -156,6 +157,21 @@ func (m *MockMediaRepositoryInterface) SetSimilarGroupID(mediaIDs []string, grou
 func (mr *MockMediaRepositoryInterfaceMockRecorder) SetSimilarGroupID(mediaIDs, groupID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSimilarGroupID", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).SetSimilarGroupID), mediaIDs, groupID)
+}
+
+// TopMediaByTripIDs mocks base method.
+func (m *MockMediaRepositoryInterface) TopMediaByTripIDs(tripIDs []string, limitPerTrip int) (map[string][]*repositories.FeedMedia, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TopMediaByTripIDs", tripIDs, limitPerTrip)
+	ret0, _ := ret[0].(map[string][]*repositories.FeedMedia)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TopMediaByTripIDs indicates an expected call of TopMediaByTripIDs.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) TopMediaByTripIDs(tripIDs, limitPerTrip any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TopMediaByTripIDs", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).TopMediaByTripIDs), tripIDs, limitPerTrip)
 }
 
 // UpdatePinID mocks base method.
