@@ -166,9 +166,7 @@ public struct TripView: View {
                     .disabledWithOpacity(viewModel.isProfileLoading || viewModel.currentUser == nil)
                     if let selectedTrip {
                         button(.icon("list.bullet")) {
-                            if !selectedTrip.pins.isEmpty {
-                                isPinsListPresented = true
-                            }
+                            isPinsListPresented = true
                         }
                         button(.icon("person.2.fill")) {
                             viewModel.dispatch(.navigate(.members))

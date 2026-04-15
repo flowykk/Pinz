@@ -5,8 +5,9 @@ import PinzBase
 @MainActor @Observable
 public final class AppRouter: AppRouting {
     public var path: [Route]
-
+    
     @ObservationIgnored private var tripInfoUpdateHandler: (() -> Void)?
+    @ObservationIgnored private var currentProfileUpdateHandler: ((User) -> Void)?
 
     public init(initialPath: [Route] = []) {
         self.path = initialPath
@@ -32,6 +33,23 @@ public final class AppRouter: AppRouting {
     public func pop(by count: Int) {
         guard count > 0, count <= path.count else { return }
         path.removeLast(count)
+    }
+}
+
+// MARK: - Profile update callbacks
+
+extension AppRouter {
+    public func subscribeToCurrentProfileUpdates(_ action: @escaping (User) -> Void) {
+        currentProfileUpdateHandler = action
+    }
+
+    public func notifyCurrentProfileUpdated(_ user: User) {
+        currentProfileUpdateHandler?(user)
+        currentProfileUpdateHandler = nil
+    }
+
+    public func clearCurrentProfileUpdates() {
+        currentProfileUpdateHandler = nil
     }
 }
 

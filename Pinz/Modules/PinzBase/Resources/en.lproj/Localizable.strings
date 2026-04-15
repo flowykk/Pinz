@@ -131,6 +131,7 @@
 "tripPins.title" = "Trip Pins";
 "tripPins.button.addMedia" = "Add Media";
 "tripPins.button.addPin" = "Add Pin";
+"tripPins.empty.noPins" = "There are no pins in this trip yet";
 
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "My Trips";

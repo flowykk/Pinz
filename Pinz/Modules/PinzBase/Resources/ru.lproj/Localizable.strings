@@ -131,6 +131,7 @@
 "tripPins.title" = "Пины путешествия";
 "tripPins.button.addMedia" = "Добавить медиа";
 "tripPins.button.addPin" = "Добавить пин";
+"tripPins.empty.noPins" = "В этом путешествии пока нет пинов";
 
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "Твои путешествия";

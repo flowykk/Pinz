@@ -30,6 +30,10 @@ public protocol AppRouting {
     func navigateToNotifications()
     func navigateToAppearance()
 
+    func subscribeToCurrentProfileUpdates(_ action: @escaping (User) -> Void)
+    func notifyCurrentProfileUpdated(_ user: User)
+    func clearCurrentProfileUpdates()
+
     func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction)
 
     func navigateToWishlistElement(element: WishlistElement)

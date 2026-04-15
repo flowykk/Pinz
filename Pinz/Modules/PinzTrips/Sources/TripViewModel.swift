@@ -173,6 +173,12 @@ final class TripViewModel {
     
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+        router?.clearCurrentProfileUpdates()
+        router?.subscribeToCurrentProfileUpdates { [weak self] updatedUser in
+            Task { @MainActor in
+                await self?.applyProfileUpdateFromProfileScreen(updatedUser)
+            }
+        }
     }
 
     private func navigateToRoutePin(at index: Int) {
@@ -235,14 +241,28 @@ final class TripViewModel {
                 let response = try await networkService.getProfile()
                 let loadedUser = response.toUser()
                 currentUser = loadedUser
-                currentUserAvatarImage = await ImageProvider.loadOrGetImage(
-                    for: loadedUser.avatarUrl,
-                    .user
-                )
+                await loadCurrentUserAvatar(for: loadedUser)
                 hasLoadedProfile = true
             } catch {
                 print("[TripView] Failed to load profile: \(error)")
             }
         }
+    }
+
+    private func applyProfileUpdateFromProfileScreen(_ updatedUser: User) async {
+        currentUser = updatedUser
+        await refreshCurrentUserAvatar(for: updatedUser.avatarUrl)
+    }
+
+    private func refreshCurrentUserAvatar(for avatarUrl: String?) async {
+        if let avatarUrl, !avatarUrl.isEmpty {
+            FileManagerImageStorage.shared.deleteImage(url: avatarUrl)
+        }
+
+        currentUserAvatarImage = await ImageProvider.loadOrGetImage(for: avatarUrl, .user)
+    }
+
+    private func loadCurrentUserAvatar(for user: User) async {
+        await refreshCurrentUserAvatar(for: user.avatarUrl)
     }
 }

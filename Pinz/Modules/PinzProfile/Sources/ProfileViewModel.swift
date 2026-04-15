@@ -44,9 +44,16 @@ public class ProfileViewModel {
     var userImage: UIImage?
     private let networkService = NetworkService.shared
     private var router: AppRouting?
+    private var avatarUploadTask: Task<ProfileResponseDTO, Error>?
 
-    public init(user: User) {
+    private enum AvatarUploadFlowError: Error {
+        case missingImageData
+        case invalidUploadResponse
+    }
+
+    public init(user: User, networkService: NetworkServiceProtocol = NetworkService()) {
         self.user = user
+        self.networkService = networkService
     }
 
     public func dispatch(_ intent: Intent) {
@@ -59,6 +66,7 @@ public class ProfileViewModel {
         case let .setImage(newImage):
             if let newImage {
                 userImage = newImage
+                uploadAvatarTask(with: newImage)
             }
         case .getProfile:
             guard !isLoading else {
@@ -151,12 +159,74 @@ public class ProfileViewModel {
         }
 
         do {
+            if let uploadTask = avatarUploadTask {
+                do {
+                    _ = try await uploadTask.value
+                } catch is CancellationError {
+                    print("[Profile] Avatar upload canceled")
+                } catch {
+                    print("[Profile] Failed to upload avatar before save: \(error)")
+                }
+                avatarUploadTask = nil
+            }
+
             let trimmed = user.nickname.trimmingCharacters(in: .whitespacesAndNewlines)
             let response = try await networkService.updateProfile(username: trimmed)
             user = response.toUser()
+            userImage = nil
+            router?.notifyCurrentProfileUpdated(user)
         } catch {
             print("[Profile] Failed to update profile: \(error)")
         }
+    }
+
+    private func uploadAvatarTask(with image: UIImage) {
+        avatarUploadTask?.cancel()
+
+        avatarUploadTask = Task { @MainActor [weak self] in
+            guard let self else {
+                throw CancellationError()
+            }
+            defer {
+                self.avatarUploadTask = nil
+            }
+
+            let response = try await self.uploadAvatarFlow(image: image)
+
+            self.user = response.toUser()
+            self.userImage = nil
+            self.router?.notifyCurrentProfileUpdated(self.user)
+
+            return response
+        }
+    }
+
+    private func uploadAvatarFlow(image: UIImage) async throws -> ProfileResponseDTO {
+        let contentType: String
+        let data: Data
+
+        if let jpegData = image.jpegData(compressionQuality: 0.85) {
+            contentType = "image/jpeg"
+            data = jpegData
+        } else if let pngData = image.pngData() {
+            contentType = "image/png"
+            data = pngData
+        } else {
+            throw AvatarUploadFlowError.missingImageData
+        }
+
+        let filename = "avatar-\(UUID().uuidString).\(contentType == "image/png" ? "png" : "jpg")"
+        let request = try await networkService.requestAvatarUpload(filename: filename, contentType: contentType)
+
+        guard let uploadUrl = request.uploadUrl,
+              let s3Key = request.s3Key,
+              !uploadUrl.isEmpty,
+              !s3Key.isEmpty else {
+            throw AvatarUploadFlowError.invalidUploadResponse
+        }
+
+        try await networkService.uploadToS3(url: uploadUrl, data: data, contentType: contentType)
+        return try await networkService.confirmAvatarUpload(s3Key: s3Key)
     }
 
     private func deleteAccount() async {

@@ -11,7 +11,7 @@ struct UnselectedTripView: View {
                 Text(parts[0]) + Text(Image(systemName: "chevron.down")) + Text(parts.count > 1 ? parts[1] : "")
             }.multilineTextAlignment(.center)
         }
-        .roundedFont(size: 18)
+        .roundedFont(size: 18, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
         .padding(.horizontal, 12)
     }
 }
