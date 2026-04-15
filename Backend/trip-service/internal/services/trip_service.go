@@ -1180,11 +1180,52 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list feed")
 	}
-	out := make([]*pb.Trip, len(trips))
-	for i, t := range trips {
-		out[i] = tripToProto(t)
+	if len(trips) == 0 {
+		return &pb.ListFeedResponse{}, nil
 	}
-	return &pb.ListFeedResponse{Trips: out}, nil
+
+	tripIDs := make([]string, len(trips))
+	for i, t := range trips {
+		tripIDs[i] = t.ID
+	}
+
+	pinsByTrip, err := s.pinRepo.ListPublishedPinsByTripIDs(tripIDs)
+	if err != nil {
+		slog.WarnContext(ctx, "ListFeed: failed to fetch pins", "error", err)
+		pinsByTrip = make(map[string][]*repositories.FeedPin)
+	}
+
+	mediaByTrip, err := s.mediaRepo.TopMediaByTripIDs(tripIDs, 8)
+	if err != nil {
+		slog.WarnContext(ctx, "ListFeed: failed to fetch media", "error", err)
+		mediaByTrip = make(map[string][]*repositories.FeedMedia)
+	}
+
+	items := make([]*pb.FeedItem, len(trips))
+	for i, t := range trips {
+		feedPins := pinsByTrip[t.ID]
+		protoPins := make([]*pb.FeedPin, len(feedPins))
+		for j, fp := range feedPins {
+			protoPins[j] = &pb.FeedPin{Id: fp.ID, Latitude: fp.Latitude, Longitude: fp.Longitude}
+		}
+
+		feedMedia := mediaByTrip[t.ID]
+		protoMedia := make([]*pb.FeedMedia, len(feedMedia))
+		for j, fm := range feedMedia {
+			protoMedia[j] = &pb.FeedMedia{
+				MediaId:   fm.ID,
+				Url:       s.presignedReadURL(ctx, fm.S3Key),
+				MediaType: fm.MediaType,
+			}
+		}
+
+		items[i] = &pb.FeedItem{
+			Trip:  tripToProto(t),
+			Pins:  protoPins,
+			Media: protoMedia,
+		}
+	}
+	return &pb.ListFeedResponse{Items: items}, nil
 }
 
 // LikeTrip — поставить лайк трипу в ленте (PINZ-98).
