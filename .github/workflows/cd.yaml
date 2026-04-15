@@ -111,7 +111,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [detect-changes, build-and-push]
-    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/PINZ-146' }}
+    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
