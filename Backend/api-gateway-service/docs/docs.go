@@ -537,7 +537,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
+                                "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedItem"
                             }
                         }
                     }
@@ -2360,6 +2360,54 @@ const docTemplate = `{
             "properties": {
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.FeedItem": {
+            "type": "object",
+            "properties": {
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia"
+                    }
+                },
+                "pins": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedPin"
+                    }
+                },
+                "trip": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.FeedMedia": {
+            "type": "object",
+            "properties": {
+                "media_id": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.FeedPin": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
                 }
             }
         },

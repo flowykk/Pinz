@@ -300,6 +300,37 @@ definitions:
       error:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.FeedItem:
+    properties:
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'
+        type: array
+      pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedPin'
+        type: array
+      trip:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.FeedMedia:
+    properties:
+      media_id:
+        type: string
+      media_type:
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.FeedPin:
+    properties:
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
   pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse:
     properties:
       message:
@@ -925,7 +956,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedItem'
             type: array
       security:
       - BearerAuth: []
