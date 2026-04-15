@@ -45,14 +45,19 @@ final class TripViewModel {
 
     enum AsyncIntent {
         case loadSavedTrip
+        case loadCurrentProfile
     }
 
     var state: State = .default
     var routePinIndex: Int = 0
     var isLoading: Bool = false
+    var isProfileLoading: Bool = false
+    var currentUser: User?
+    var currentUserAvatarImage: UIImage?
     private var hasLoaded: Bool = false
     private var lastFetchedTripId: String? = nil
     private var shouldReloadSavedTrip: Bool = false
+    private var hasLoadedProfile: Bool = false
 
     var trip: Trip?
     var _position: MapCameraPosition?
@@ -182,44 +187,61 @@ final class TripViewModel {
     }
 
     func asyncDispatch(_ intent: AsyncIntent) async throws {
-        let logPrefix = "[TripLoader]"
         switch intent {
         case .loadSavedTrip:
-            print("\(logPrefix) loadSavedTrip.start")
             guard let tripId = SelectedTripStorage.shared.selectedTripID else {
-                print("\(logPrefix) loadSavedTrip.abort: no selectedTripID")
                 return
             }
             let shouldReload = shouldReloadSavedTrip
-            print("\(logPrefix) selectedTripID=\(tripId), lastFetchedTripId=\(lastFetchedTripId ?? "nil"), hasLoaded=\(hasLoaded), isLoading=\(isLoading)")
             guard shouldReload || lastFetchedTripId != tripId else {
-                print("\(logPrefix) skip: lastFetchedTripId already equals selectedTripId")
                 return
             }
-            print("\(logPrefix) willFetch tripId=\(tripId)")
             if shouldReload || !hasLoaded {
                 withAnimation { isLoading = true }
-                print("\(logPrefix) isLoading set true")
             }
             defer {
                 if isLoading {
                     withAnimation { isLoading = false }
-                    print("\(logPrefix) isLoading set false (defer)")
                 }
             }
             do {
                 let response = try await networkService.getTrip(id: tripId)
-                print("\(logPrefix) response received for tripId=\(tripId), pins=\(response.pins.count)")
                 var trip = response.trip.toTrip()
+                if let coverUrl = trip.coverUrl {
+                    trip.image = await ImageProvider.loadOrGetImage(
+                        for: coverUrl,
+                        .group
+                    )
+                }
                 trip.pins = response.pins.enumerated().map { index, dto in dto.toPin(index: index) }
-                print("\(logPrefix) mapped tripId=\(trip.id), pinsMapped=\(trip.pins.count)")
                 lastFetchedTripId = tripId
                 dispatch(.selectTrip(trip))
                 shouldReloadSavedTrip = false
                 hasLoaded = true
             } catch {
-                print("\(logPrefix) loadSavedTrip.error for tripId=\(tripId): \(error)")
                 throw error
+            }
+        case .loadCurrentProfile:
+            guard !hasLoadedProfile else {
+                return
+            }
+
+            isProfileLoading = true
+            defer {
+                isProfileLoading = false
+            }
+
+            do {
+                let response = try await networkService.getProfile()
+                let loadedUser = response.toUser()
+                currentUser = loadedUser
+                currentUserAvatarImage = await ImageProvider.loadOrGetImage(
+                    for: loadedUser.avatarUrl,
+                    .user
+                )
+                hasLoadedProfile = true
+            } catch {
+                print("[TripView] Failed to load profile: \(error)")
             }
         }
     }

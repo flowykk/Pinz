@@ -187,9 +187,7 @@ public struct TripInfoView: View {
 
     private var avatar: some View {
         VStack {
-            Image(uiImage: viewModel.trip.image ?? PinzUIAsset.avatar.image)
-                .resizable()
-                .scaledToFill()
+            tripImage
                 .frame(120)
                 .cornerRadius(60)
                 .clipped()
@@ -203,6 +201,45 @@ public struct TripInfoView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var tripImage: some View {
+        if let localImage = viewModel.trip.image {
+            image(for: localImage)
+        } else if let url = URL(string: viewModel.trip.coverUrl ?? "") {
+            LoadableImageThumbnail(url: url) { state in
+                remoteTripImage(for: state)
+            }
+        } else {
+            image(for: PinzDomainAsset.groupPlaceholder.image)
+        }
+    }
+
+    @ViewBuilder
+    private func remoteTripImage(for state: LoadableMediaState) -> some View {
+        switch state {
+        case .empty:
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .overlay {
+                    ProgressView()
+                        .tint(.white)
+                }
+        case .ready(let readyImage):
+            image(for: readyImage)
+        case .failure:
+            image(for: PinzDomainAsset.groupPlaceholder.image)
+        }
+    }
+
+    private func image(for uiImage: UIImage) -> some View {
+        Image(uiImage: uiImage)
+            .resizable()
+            .scaledToFill()
+            .frame(120)
+            .cornerRadius(60)
+            .clipped()
     }
 
     @ViewBuilder

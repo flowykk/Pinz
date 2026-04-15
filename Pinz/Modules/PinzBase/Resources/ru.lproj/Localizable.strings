@@ -199,3 +199,7 @@
 "alert.clearCache.title" = "Очистить данные";
 "alert.clearCache.message" = "Ты уверен? Это удалит все сохранённые изображения.";
 "alert.clearCache.confirm" = "Очистить";
+
+"alert.deleteAccount.title" = "Удалить аккаунт?";
+"alert.deleteAccount.message" = "Это действие необратимо. Аккаунт будет удалён без возможности восстановления.";
+"alert.deleteAccount.confirm" = "Удалить";

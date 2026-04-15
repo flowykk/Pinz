@@ -199,3 +199,7 @@
 "alert.clearCache.title" = "Clear Data";
 "alert.clearCache.message" = "Are you sure? This will delete all saved images.";
 "alert.clearCache.confirm" = "Clear";
+
+"alert.deleteAccount.title" = "Delete account?";
+"alert.deleteAccount.message" = "This action is irreversible. Your account will be permanently deleted.";
+"alert.deleteAccount.confirm" = "Delete";

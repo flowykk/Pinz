@@ -36,54 +36,26 @@ public struct EmailChangeView: View {
 
             Spacer()
 
-            switch viewModel.state {
-            case .firstCode:
-                firstCodeInputView
-            default:
-                ZStack {
-                    VStack(spacing: 28) {
-                        emailInputView
+            VStack(spacing: 16) {
+                emailInputView
+                    .padding(.horizontal, 12)
 
-                        if viewModel.state == .secondCode {
-                            secondCodeInputView
-                        }
-                    }
-
-                    if viewModel.state == .email {
-                        VStack {
-                            Spacer()
-                            PinzButton(
-                                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
-                                action: .plain { viewModel.dispatch(.continue) }
-                            )
-                        }
-                    }
-                }.padding(.horizontal, 12)
+                if viewModel.state == .secondCode {
+                    secondCodeInputView
+                }
             }
-
             Spacer()
+            PinzButton(
+                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
+                action: .plain { viewModel.dispatch(.continue) }
+            )
+            .padding(.horizontal, 12)
+            .padding(.bottom, 16)
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear {
             viewModel.setRouter(router)
-        }
-    }
-
-    private var firstCodeInputView: some View {
-        VStack(spacing: 16) {
-            Text("cristgames123@gmail.com")
-                .roundedFont(
-                    size: 16,
-                    weight: .semibold,
-                    foregroundColor: PinzUIAsset.accentRed.swiftUIColor
-                )
-
-            Text(PinzBaseStrings.EmailChange.Description.instructions)
-                .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 64)
-
-            codeInputView
+            emailFocused = true
         }
     }
 
@@ -114,18 +86,14 @@ public struct EmailChangeView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 64)
 
-            codeInputView
+            CodeInputTextField(
+                code: $viewModel.code,
+                style: codeTextFieldStyle,
+                onCodeFilled: {
+                    viewModel.dispatch(.continue)
+                }
+            )
         }
-    }
-
-    private var codeInputView: some View {
-        CodeInputTextField(
-            code: $viewModel.code,
-            style: codeTextFieldStyle,
-            onCodeFilled: {
-                emailFocused = true
-                viewModel.dispatch(.continue)
-            }
-        )
+        .padding(.horizontal, 12)
     }
 }

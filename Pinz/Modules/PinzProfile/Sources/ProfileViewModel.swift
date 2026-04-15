@@ -4,6 +4,7 @@ import PinzDomain
 import PinzUI
 import PinzBase
 
+@MainActor
 @Observable
 public class ProfileViewModel {
 
@@ -30,26 +31,19 @@ public class ProfileViewModel {
     public enum Intent {
         case changeState
         case setImage(UIImage?)
+        case getProfile
+        case saveProfile
+        case deleteAccount
         case navigate(Route)
     }
 
     var state: State = .default
+    var isLoading = false
 
     var user: User
-    var userImage: UIImage = PinzUIAsset.avatar.image
+    var userImage: UIImage?
     private let networkService = NetworkService.shared
     private var router: AppRouting?
-
-    var imageBinding: Binding<UIImage?> {
-        Binding {
-            self.userImage
-        } set: { newImage in
-            guard let newImage else {
-                return
-            }
-            self.userImage = newImage
-        }
-    }
 
     public init(user: User) {
         self.user = user
@@ -65,6 +59,36 @@ public class ProfileViewModel {
         case let .setImage(newImage):
             if let newImage {
                 userImage = newImage
+            }
+        case .getProfile:
+            guard !isLoading else {
+                return
+            }
+
+            isLoading = true
+
+            Task {
+                await loadProfile()
+            }
+        case .saveProfile:
+            guard !isLoading else {
+                return
+            }
+
+            isLoading = true
+
+            Task {
+                await saveProfile()
+            }
+        case .deleteAccount:
+            guard !isLoading else {
+                return
+            }
+
+            isLoading = true
+
+            Task {
+                await deleteAccount()
             }
         case let .navigate(route):
             switch route {
@@ -94,6 +118,60 @@ public class ProfileViewModel {
 
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+    }
+
+    private func loadProfile() async {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isLoading = true
+        }
+        defer {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isLoading = false
+            }
+        }
+
+        do {
+            let response = try await networkService.getProfile()
+            user = response.toUser()
+            userImage = nil
+        } catch {
+            print("[Profile] Failed to get profile: \(error)")
+        }
+    }
+
+    private func saveProfile() async {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isLoading = true
+        }
+        defer {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isLoading = false
+            }
+            changeState(to: .default)
+        }
+
+        do {
+            let trimmed = user.nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+            let response = try await networkService.updateProfile(username: trimmed)
+            user = response.toUser()
+        } catch {
+            print("[Profile] Failed to update profile: \(error)")
+        }
+    }
+
+    private func deleteAccount() async {
+        defer {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isLoading = false
+            }
+        }
+
+        do {
+            _ = try await networkService.deleteAccount()
+            router?.navigateToMain()
+        } catch {
+            print("[Profile] Failed to delete account: \(error)")
+        }
     }
 
     private func changeState(to state: State) {

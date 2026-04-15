@@ -18,6 +18,15 @@ public protocol NetworkServiceProtocol {
     func refreshToken(refreshToken: String) async throws -> RefreshTokenDTO
     func logout(refreshToken: String) async throws -> SuccessDTO
 
+    // Profile
+    func getProfile() async throws -> ProfileResponseDTO
+    func updateProfile(username: String) async throws -> ProfileResponseDTO
+    func deleteAccount() async throws -> DeleteAccountResponseDTO
+    func requestAvatarUpload(filename: String, contentType: String) async throws -> AvatarUploadResponseDTO
+    func confirmAvatarUpload(s3Key: String) async throws -> ProfileResponseDTO
+    func changeEmail(email: String) async throws -> ChangeEmailResponseDTO
+    func confirmEmailChange(verificationCode: String) async throws -> ProfileResponseDTO
+
     // Feed
     func getFeed(
         limit: Int?,
@@ -203,6 +212,73 @@ public final class NetworkService: NetworkServiceProtocol {
                 refreshToken: refreshToken
             ),
             type: SuccessDTO.self
+        )
+    }
+
+    // MARK: Profile
+
+    public func getProfile() async throws -> ProfileResponseDTO {
+        try await provider.request(
+            .getProfile,
+            type: ProfileResponseDTO.self
+        )
+    }
+
+    public func updateProfile(
+        username: String
+    ) async throws -> ProfileResponseDTO {
+        try await provider.request(
+            .updateProfile(
+                username: username
+            ),
+            type: ProfileResponseDTO.self
+        )
+    }
+
+    public func deleteAccount() async throws -> DeleteAccountResponseDTO {
+        try await provider.request(
+            .deleteAccount,
+            type: DeleteAccountResponseDTO.self
+        )
+    }
+
+    public func requestAvatarUpload(
+        filename: String,
+        contentType: String
+    ) async throws -> AvatarUploadResponseDTO {
+        try await provider.request(
+            .requestAvatarUpload(
+                filename: filename,
+                contentType: contentType
+            ),
+            type: AvatarUploadResponseDTO.self
+        )
+    }
+
+    public func confirmAvatarUpload(s3Key: String) async throws -> ProfileResponseDTO {
+        try await provider.request(
+            .confirmAvatarUpload(
+                s3Key: s3Key
+            ),
+            type: ProfileResponseDTO.self
+        )
+    }
+
+    public func changeEmail(email: String) async throws -> ChangeEmailResponseDTO {
+        try await provider.request(
+            .changeEmail(
+                email: email
+            ),
+            type: ChangeEmailResponseDTO.self
+        )
+    }
+
+    public func confirmEmailChange(verificationCode: String) async throws -> ProfileResponseDTO {
+        try await provider.request(
+            .confirmEmailChange(
+                verificationCode: verificationCode
+            ),
+            type: ProfileResponseDTO.self
         )
     }
 
