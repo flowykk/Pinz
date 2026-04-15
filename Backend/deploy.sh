@@ -226,12 +226,12 @@ deploy_app() {
     if [[ "${DEPLOY_SERVICES:-}" == "none" ]]; then
         log_info "DEPLOY_SERVICES=none — skipping helmfile apply (infra-only deploy)"
     elif [[ -n "${DEPLOY_SERVICES:-}" ]]; then
-        local selector=""
-        for svc in ${DEPLOY_SERVICES//,/ }; do
-            selector="${selector:+${selector}|}${svc}"
-        done
         log_info "Selective deploy: ${DEPLOY_SERVICES}"
-        helmfile -f "$HELMFILE_CONFIG" -l "name=~(${selector})" apply
+        local -a selector_args=()
+        for svc in ${DEPLOY_SERVICES//,/ }; do
+            selector_args+=(-l "name=${svc}")
+        done
+        helmfile -f "$HELMFILE_CONFIG" "${selector_args[@]}" apply
     else
         helmfile -f "$HELMFILE_CONFIG" apply
     fi
