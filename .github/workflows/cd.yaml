@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, PINZ-145]
     paths:
       - 'Backend/**'
       - 'proto/**'
@@ -110,11 +110,36 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build-and-push
-    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+    needs: [detect-changes, build-and-push]
+    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/PINZ-145' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set per-service image tags and deploy list
+        id: tags
+        run: |
+          TAG="${{ needs.build-and-push.outputs.image-tag }}"
+          DISPATCH="${{ github.event_name == 'workflow_dispatch' }}"
+          SERVICES=""
+
+          if [[ "${{ needs.detect-changes.outputs.api-gateway }}" == "true" ]] || [[ "$DISPATCH" == "true" ]]; then
+            echo "api-gateway=$TAG" >> $GITHUB_OUTPUT
+            SERVICES="${SERVICES:+$SERVICES,}api-gateway"
+          fi
+
+          if [[ "${{ needs.detect-changes.outputs.auth-service }}" == "true" ]] || [[ "$DISPATCH" == "true" ]]; then
+            echo "auth-service=$TAG" >> $GITHUB_OUTPUT
+            SERVICES="${SERVICES:+$SERVICES,}auth-service"
+          fi
+
+          if [[ "${{ needs.detect-changes.outputs.trip-service }}" == "true" ]] || [[ "$DISPATCH" == "true" ]]; then
+            echo "trip-service=$TAG" >> $GITHUB_OUTPUT
+            SERVICES="${SERVICES:+$SERVICES,}trip-service"
+          fi
+
+          # "none" tells deploy.sh to skip helmfile apply (infra-only deploy)
+          echo "services=${SERVICES:-none}" >> $GITHUB_OUTPUT
 
       - name: Deploy to VPS
         run: |
@@ -131,7 +156,10 @@ jobs:
 
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -i /tmp/ssh_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /opt/pinz/Backend &&
-            export IMAGE_TAG=${{ needs.build-and-push.outputs.image-tag }} &&
+            export DEPLOY_SERVICES='${{ steps.tags.outputs.services }}' &&
+            export API_GATEWAY_TAG=${{ steps.tags.outputs.api-gateway }} &&
+            export AUTH_SERVICE_TAG=${{ steps.tags.outputs.auth-service }} &&
+            export TRIP_SERVICE_TAG=${{ steps.tags.outputs.trip-service }} &&
             export DOCKER_REGISTRY=${{ secrets.DOCKER_REGISTRY }} &&
             export DOCKER_REPO=${{ secrets.DOCKER_REPO }} &&
             export GITHUB_TOKEN='${{ secrets.GITHUB_TOKEN }}' &&
@@ -140,7 +168,7 @@ jobs:
             export POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' &&
             export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}' &&
             export KUBECONFIG=/etc/rancher/k3s/k3s.yaml &&
-            echo 'Deploying with tag ${{ needs.build-and-push.outputs.image-tag }}' &&
+            echo 'Deploying: api-gateway=${{ steps.tags.outputs.api-gateway }} auth-service=${{ steps.tags.outputs.auth-service }} trip-service=${{ steps.tags.outputs.trip-service }}' &&
             ./deploy.sh
           "
 

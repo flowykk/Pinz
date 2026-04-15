@@ -7,7 +7,7 @@ releases:
     values:
       - image:
           repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-auth-service"
-          tag: "{{ env "IMAGE_TAG" | default "latest" }}"
+          tag: "{{ env "AUTH_SERVICE_TAG" | default (env "IMAGE_TAG") | default "latest" }}"
           pullPolicy: Always
       - env:
           dbHost: "db"
@@ -24,11 +24,17 @@ releases:
           smtpHost: "{{ env "SMTP_HOST" | default "" }}"
           smtpPort: "{{ env "SMTP_PORT" | default "587" }}"
           smtpFrom: "{{ env "SMTP_FROM" | default "" }}"
+          s3Endpoint: "{{ env "S3_ENDPOINT" | default "https://storage.yandexcloud.net" }}"
+          s3Region: "{{ env "S3_REGION" | default "ru-central1" }}"
+          s3Bucket: "{{ env "S3_BUCKET" | default "" }}"
+          s3PresignTTL: "{{ env "S3_PRESIGN_TTL" | default "15m" }}"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
           jwtSecretKey: "{{ env "JWT_SECRET_KEY" | default "change-me-in-production" }}"
           smtpUsername: "{{ env "SMTP_USERNAME" | default "" }}"
           smtpPassword: "{{ env "SMTP_PASSWORD" | default "" }}"
+          s3AccessKey: "{{ env "S3_ACCESS_KEY" | default "" }}"
+          s3SecretKey: "{{ env "S3_SECRET_KEY" | default "" }}"
 
   - name: trip-service
     namespace: default
@@ -36,7 +42,7 @@ releases:
     values:
       - image:
           repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-trip-service"
-          tag: "{{ env "IMAGE_TAG" | default "latest" }}"
+          tag: "{{ env "TRIP_SERVICE_TAG" | default (env "IMAGE_TAG") | default "latest" }}"
           pullPolicy: Always
       - env:
           dbHost: "db-trips"
@@ -69,7 +75,7 @@ releases:
     values:
       - image:
           repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-api-gateway"
-          tag: "{{ env "IMAGE_TAG" | default "latest" }}"
+          tag: "{{ env "API_GATEWAY_TAG" | default (env "IMAGE_TAG") | default "latest" }}"
           pullPolicy: Always
       - env:
           apiGatewayPort: "8080"

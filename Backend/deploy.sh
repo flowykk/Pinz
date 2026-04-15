@@ -199,10 +199,14 @@ deploy_app() {
     export DOCKER_REGISTRY="$DOCKER_REGISTRY"
     export DOCKER_REPO="$DOCKER_REPO"
     export IMAGE_TAG="$IMAGE_TAG"
+    # Per-service image tags (CD sets these individually; fall back to IMAGE_TAG)
+    export API_GATEWAY_TAG="${API_GATEWAY_TAG:-${IMAGE_TAG}}"
+    export AUTH_SERVICE_TAG="${AUTH_SERVICE_TAG:-${IMAGE_TAG}}"
+    export TRIP_SERVICE_TAG="${TRIP_SERVICE_TAG:-${IMAGE_TAG}}"
     export SERVER_IP="${SERVER_IP:-host.docker.internal}"
     export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
     export JWT_SECRET_KEY="${JWT_SECRET_KEY}"
-    # trip-service object storage (optional; empty bucket disables presigned URLs)
+    # S3 object storage for auth-service (avatars) and trip-service (media)
     export S3_ENDPOINT="${S3_ENDPOINT:-}"
     export S3_REGION="${S3_REGION:-}"
     export S3_BUCKET="${S3_BUCKET:-}"
@@ -214,7 +218,23 @@ deploy_app() {
     export GEOCODING_API_KEY="${GEOCODING_API_KEY:-}"
 
     cd "$PROJECT_DIR"
-    helmfile -f "$HELMFILE_CONFIG" apply
+
+    # DEPLOY_SERVICES controls which helm releases are applied:
+    #   unset/empty — deploy all releases (manual run, backward compat)
+    #   "none"      — skip helmfile entirely (only infra/istio/observability)
+    #   "a,b"       — deploy only listed releases
+    if [[ "${DEPLOY_SERVICES:-}" == "none" ]]; then
+        log_info "DEPLOY_SERVICES=none — skipping helmfile apply (infra-only deploy)"
+    elif [[ -n "${DEPLOY_SERVICES:-}" ]]; then
+        local selector=""
+        for svc in ${DEPLOY_SERVICES//,/ }; do
+            selector="${selector:+${selector}|}${svc}"
+        done
+        log_info "Selective deploy: ${DEPLOY_SERVICES}"
+        helmfile -f "$HELMFILE_CONFIG" -l "name=~(${selector})" apply
+    else
+        helmfile -f "$HELMFILE_CONFIG" apply
+    fi
 
     log_success "Application deployed successfully"
 }
@@ -395,7 +415,15 @@ wait_for_deployment_object() {
 wait_for_deployment() {
     log_info "Waiting for deployment to be ready..."
 
-    local deployments=("api-gateway" "auth-service" "trip-service")
+    local deployments
+    if [[ "${DEPLOY_SERVICES:-}" == "none" ]]; then
+        log_info "No service releases deployed — skipping rollout wait"
+        return 0
+    elif [[ -n "${DEPLOY_SERVICES:-}" ]]; then
+        IFS=',' read -ra deployments <<< "$DEPLOY_SERVICES"
+    else
+        deployments=("api-gateway" "auth-service" "trip-service")
+    fi
 
     for deploy in "${deployments[@]}"; do
         # Ensure the Deployment object itself exists before calling rollout status.
@@ -590,12 +618,12 @@ while [[ $# -gt 0 ]]; do
             echo "  SMTP_USERNAME            Auth service: SMTP username (optional)"
             echo "  SMTP_PASSWORD            Auth service: SMTP password (optional)"
             echo "  SMTP_FROM                Auth service: sender email address (optional)"
-            echo "  S3_ENDPOINT              Trip service: S3 API endpoint (optional)"
-            echo "  S3_REGION                Trip service: region (optional)"
-            echo "  S3_BUCKET                Trip service: bucket (optional; empty = no presign URLs)"
-            echo "  S3_ACCESS_KEY            Trip service: access key (optional)"
-            echo "  S3_SECRET_KEY            Trip service: secret key (optional)"
-            echo "  S3_PRESIGN_TTL           Trip service: presign TTL, e.g. 15m (optional)"
+            echo "  S3_ENDPOINT              S3 API endpoint (auth + trip, optional)"
+            echo "  S3_REGION                S3 region (auth + trip, optional)"
+            echo "  S3_BUCKET                S3 bucket (auth + trip; empty = disabled)"
+            echo "  S3_ACCESS_KEY            S3 access key (auth + trip, optional)"
+            echo "  S3_SECRET_KEY            S3 secret key (auth + trip, optional)"
+            echo "  S3_PRESIGN_TTL           S3 presign TTL, e.g. 15m (auth + trip, optional)"
             echo "  GEOCODING_BASE_URL       Trip service: BigDataCloud API base URL (optional)"
             echo "  GEOCODING_API_KEY        Trip service: BigDataCloud API key (optional)"
             echo "  SKIP_PULL=true           Skip docker auth/pull (k3s pulls via containerd)"
