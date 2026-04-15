@@ -34,6 +34,7 @@ const (
 	AuthService_ConfirmEmailChange_FullMethodName    = "/auth.AuthService/ConfirmEmailChange"
 	AuthService_RequestAvatarUpload_FullMethodName   = "/auth.AuthService/RequestAvatarUpload"
 	AuthService_ConfirmAvatarUpload_FullMethodName   = "/auth.AuthService/ConfirmAvatarUpload"
+	AuthService_DeleteAvatar_FullMethodName          = "/auth.AuthService/DeleteAvatar"
 	AuthService_DeleteAccount_FullMethodName         = "/auth.AuthService/DeleteAccount"
 )
 
@@ -56,6 +57,7 @@ type AuthServiceClient interface {
 	ConfirmEmailChange(ctx context.Context, in *ConfirmEmailChangeRequest, opts ...grpc.CallOption) (*ConfirmEmailChangeResponse, error)
 	RequestAvatarUpload(ctx context.Context, in *RequestAvatarUploadRequest, opts ...grpc.CallOption) (*RequestAvatarUploadResponse, error)
 	ConfirmAvatarUpload(ctx context.Context, in *ConfirmAvatarUploadRequest, opts ...grpc.CallOption) (*ConfirmAvatarUploadResponse, error)
+	DeleteAvatar(ctx context.Context, in *DeleteAvatarRequest, opts ...grpc.CallOption) (*DeleteAvatarResponse, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
 }
 
@@ -217,6 +219,16 @@ func (c *authServiceClient) ConfirmAvatarUpload(ctx context.Context, in *Confirm
 	return out, nil
 }
 
+func (c *authServiceClient) DeleteAvatar(ctx context.Context, in *DeleteAvatarRequest, opts ...grpc.CallOption) (*DeleteAvatarResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteAvatarResponse)
+	err := c.cc.Invoke(ctx, AuthService_DeleteAvatar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteAccountResponse)
@@ -246,6 +258,7 @@ type AuthServiceServer interface {
 	ConfirmEmailChange(context.Context, *ConfirmEmailChangeRequest) (*ConfirmEmailChangeResponse, error)
 	RequestAvatarUpload(context.Context, *RequestAvatarUploadRequest) (*RequestAvatarUploadResponse, error)
 	ConfirmAvatarUpload(context.Context, *ConfirmAvatarUploadRequest) (*ConfirmAvatarUploadResponse, error)
+	DeleteAvatar(context.Context, *DeleteAvatarRequest) (*DeleteAvatarResponse, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
@@ -301,6 +314,9 @@ func (UnimplementedAuthServiceServer) RequestAvatarUpload(context.Context, *Requ
 }
 func (UnimplementedAuthServiceServer) ConfirmAvatarUpload(context.Context, *ConfirmAvatarUploadRequest) (*ConfirmAvatarUploadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfirmAvatarUpload not implemented")
+}
+func (UnimplementedAuthServiceServer) DeleteAvatar(context.Context, *DeleteAvatarRequest) (*DeleteAvatarResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAvatar not implemented")
 }
 func (UnimplementedAuthServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
@@ -596,6 +612,24 @@ func _AuthService_ConfirmAvatarUpload_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_DeleteAvatar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAvatarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).DeleteAvatar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_DeleteAvatar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).DeleteAvatar(ctx, req.(*DeleteAvatarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteAccountRequest)
 	if err := dec(in); err != nil {
@@ -680,6 +714,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConfirmAvatarUpload",
 			Handler:    _AuthService_ConfirmAvatarUpload_Handler,
+		},
+		{
+			MethodName: "DeleteAvatar",
+			Handler:    _AuthService_DeleteAvatar_Handler,
 		},
 		{
 			MethodName: "DeleteAccount",

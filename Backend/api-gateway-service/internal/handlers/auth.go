@@ -457,6 +457,36 @@ func (h *AuthHandler) ConfirmAvatarUpload(w http.ResponseWriter, r *http.Request
 	})
 }
 
+// @Summary Delete avatar
+// @Description Removes the user's avatar. Deletes the file from S3 and clears avatar_url.
+// @Tags profile
+// @Produce json
+// @Success 200 {object} responses.ProfileResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Security BearerAuth
+// @Router /api/v1/profile/avatar [delete]
+func (h *AuthHandler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	resp, err := h.authSvc.DeleteAvatar(r.Context(), userID)
+	if err != nil {
+		handleServiceError(w, r, err, "DeleteAvatar")
+		return
+	}
+	u := resp.GetUser()
+	respondJSON(w, http.StatusOK, responses.ProfileResponse{
+		ID:        u.GetId(),
+		Username:  u.GetUsername(),
+		Email:     u.GetEmail(),
+		AvatarURL: u.GetAvatarUrl(),
+		CreatedAt: u.GetCreatedAtUnix(),
+	})
+}
+
 // @Summary Delete account
 // @Description Permanently deletes the user account. Pins and media in trips are preserved.
 // @Tags profile

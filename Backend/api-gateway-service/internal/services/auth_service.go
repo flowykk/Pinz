@@ -22,6 +22,7 @@ type AuthServiceInterface interface {
 	ConfirmEmailChange(ctx context.Context, userID, code string) (*pb.ConfirmEmailChangeResponse, error)
 	RequestAvatarUpload(ctx context.Context, userID, filename, contentType string) (*pb.RequestAvatarUploadResponse, error)
 	ConfirmAvatarUpload(ctx context.Context, userID, s3Key string) (*pb.ConfirmAvatarUploadResponse, error)
+	DeleteAvatar(ctx context.Context, userID string) (*pb.DeleteAvatarResponse, error)
 	DeleteAccount(ctx context.Context, userID string) (*pb.DeleteAccountResponse, error)
 }
 
@@ -41,6 +42,7 @@ type AuthClient interface {
 	ConfirmEmailChange(ctx context.Context, req *pb.ConfirmEmailChangeRequest) (*pb.ConfirmEmailChangeResponse, error)
 	RequestAvatarUpload(ctx context.Context, req *pb.RequestAvatarUploadRequest) (*pb.RequestAvatarUploadResponse, error)
 	ConfirmAvatarUpload(ctx context.Context, req *pb.ConfirmAvatarUploadRequest) (*pb.ConfirmAvatarUploadResponse, error)
+	DeleteAvatar(ctx context.Context, req *pb.DeleteAvatarRequest) (*pb.DeleteAvatarResponse, error)
 	DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error)
 }
 
@@ -126,6 +128,10 @@ func (s *AuthService) RequestAvatarUpload(ctx context.Context, userID, filename,
 
 func (s *AuthService) ConfirmAvatarUpload(ctx context.Context, userID, s3Key string) (*pb.ConfirmAvatarUploadResponse, error) {
 	return s.authClient.ConfirmAvatarUpload(ctx, &pb.ConfirmAvatarUploadRequest{UserId: userID, S3Key: s3Key})
+}
+
+func (s *AuthService) DeleteAvatar(ctx context.Context, userID string) (*pb.DeleteAvatarResponse, error) {
+	return s.authClient.DeleteAvatar(ctx, &pb.DeleteAvatarRequest{UserId: userID})
 }
 
 func (s *AuthService) DeleteAccount(ctx context.Context, userID string) (*pb.DeleteAccountResponse, error) {

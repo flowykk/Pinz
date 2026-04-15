@@ -21,6 +21,7 @@ service AuthService {
   rpc ConfirmEmailChange(ConfirmEmailChangeRequest) returns (ConfirmEmailChangeResponse) {}
   rpc RequestAvatarUpload(RequestAvatarUploadRequest) returns (RequestAvatarUploadResponse) {}
   rpc ConfirmAvatarUpload(ConfirmAvatarUploadRequest) returns (ConfirmAvatarUploadResponse) {}
+  rpc DeleteAvatar(DeleteAvatarRequest) returns (DeleteAvatarResponse) {}
   rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
 }
 
@@ -165,6 +166,14 @@ message ConfirmAvatarUploadRequest {
 }
 
 message ConfirmAvatarUploadResponse {
+  User user = 1;
+}
+
+message DeleteAvatarRequest {
+  string user_id = 1;
+}
+
+message DeleteAvatarResponse {
   User user = 1;
 }
 

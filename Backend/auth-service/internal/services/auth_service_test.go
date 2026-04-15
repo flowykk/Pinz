@@ -448,6 +448,87 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 	}
 }
 
+func TestDeleteAvatar_EmptyUserID(t *testing.T) {
+	svc := authServiceForValidation(t)
+	ctx := context.Background()
+	_, err := svc.DeleteAvatar(ctx, &pb.DeleteAvatarRequest{UserId: ""})
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, codes.InvalidArgument, st.Code())
+}
+
+func TestDeleteAvatar_WithAvatar(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	s3Mock := mocks.NewMockS3Uploader(ctrl)
+
+	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, s3Mock)
+	ctx := context.Background()
+
+	userWithAvatar := &models.User{
+		ID:        "user-1",
+		Email:     "test@example.com",
+		Username:  "test",
+		AvatarURL: "avatars/user-1/avatar.jpg",
+		CreatedAt: time.Now(),
+	}
+	userWithoutAvatar := &models.User{
+		ID:        "user-1",
+		Email:     "test@example.com",
+		Username:  "test",
+		AvatarURL: "",
+		CreatedAt: time.Now(),
+	}
+
+	userRepo.EXPECT().GetUserByID("user-1").Return(userWithAvatar, nil)
+	s3Mock.EXPECT().DeleteObject(gomock.Any(), "avatars/user-1/avatar.jpg").Return(nil)
+	userRepo.EXPECT().UpdateAvatarURL("user-1", "").Return(userWithoutAvatar, nil)
+
+	resp, err := svc.DeleteAvatar(ctx, &pb.DeleteAvatarRequest{UserId: "user-1"})
+	require.NoError(t, err)
+	require.Empty(t, resp.GetUser().GetAvatarUrl())
+}
+
+func TestDeleteAvatar_WithoutAvatar(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+
+	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	ctx := context.Background()
+
+	user := &models.User{
+		ID:        "user-1",
+		Email:     "test@example.com",
+		Username:  "test",
+		AvatarURL: "",
+		CreatedAt: time.Now(),
+	}
+
+	userRepo.EXPECT().GetUserByID("user-1").Return(user, nil)
+	userRepo.EXPECT().UpdateAvatarURL("user-1", "").Return(user, nil)
+
+	resp, err := svc.DeleteAvatar(ctx, &pb.DeleteAvatarRequest{UserId: "user-1"})
+	require.NoError(t, err)
+	require.Empty(t, resp.GetUser().GetAvatarUrl())
+}
+
+func TestDeleteAvatar_UserNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+
+	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	ctx := context.Background()
+
+	userRepo.EXPECT().GetUserByID("user-1").Return(nil, sql.ErrNoRows)
+
+	_, err := svc.DeleteAvatar(ctx, &pb.DeleteAvatarRequest{UserId: "user-1"})
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, codes.NotFound, st.Code())
+}
+
 func TestRequestAvatarUpload_InvalidFormat(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()

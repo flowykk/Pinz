@@ -85,6 +85,7 @@ func NewServer(deps *di.Dependencies) *Server {
 			r.Post("/confirm-email", deps.AuthHandler.ConfirmEmailChange)
 			r.Post("/avatar/upload", deps.AuthHandler.RequestAvatarUpload)
 			r.Post("/avatar/confirm", deps.AuthHandler.ConfirmAvatarUpload)
+			r.Delete("/avatar", deps.AuthHandler.DeleteAvatar)
 		})
 
 		// Основные операции над путешествиями.

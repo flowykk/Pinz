@@ -1545,6 +1545,94 @@ func (x *ConfirmAvatarUploadResponse) GetUser() *User {
 	return nil
 }
 
+type DeleteAvatarRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAvatarRequest) Reset() {
+	*x = DeleteAvatarRequest{}
+	mi := &file_auth_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAvatarRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAvatarRequest) ProtoMessage() {}
+
+func (x *DeleteAvatarRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAvatarRequest.ProtoReflect.Descriptor instead.
+func (*DeleteAvatarRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *DeleteAvatarRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type DeleteAvatarResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAvatarResponse) Reset() {
+	*x = DeleteAvatarResponse{}
+	mi := &file_auth_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAvatarResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAvatarResponse) ProtoMessage() {}
+
+func (x *DeleteAvatarResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAvatarResponse.ProtoReflect.Descriptor instead.
+func (*DeleteAvatarResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *DeleteAvatarResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
 type DeleteAccountRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -1554,7 +1642,7 @@ type DeleteAccountRequest struct {
 
 func (x *DeleteAccountRequest) Reset() {
 	*x = DeleteAccountRequest{}
-	mi := &file_auth_proto_msgTypes[31]
+	mi := &file_auth_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1566,7 +1654,7 @@ func (x *DeleteAccountRequest) String() string {
 func (*DeleteAccountRequest) ProtoMessage() {}
 
 func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_proto_msgTypes[31]
+	mi := &file_auth_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1579,7 +1667,7 @@ func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
-	return file_auth_proto_rawDescGZIP(), []int{31}
+	return file_auth_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *DeleteAccountRequest) GetUserId() string {
@@ -1598,7 +1686,7 @@ type DeleteAccountResponse struct {
 
 func (x *DeleteAccountResponse) Reset() {
 	*x = DeleteAccountResponse{}
-	mi := &file_auth_proto_msgTypes[32]
+	mi := &file_auth_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1610,7 +1698,7 @@ func (x *DeleteAccountResponse) String() string {
 func (*DeleteAccountResponse) ProtoMessage() {}
 
 func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_proto_msgTypes[32]
+	mi := &file_auth_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1623,7 +1711,7 @@ func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
-	return file_auth_proto_rawDescGZIP(), []int{32}
+	return file_auth_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *DeleteAccountResponse) GetSuccess() bool {
@@ -1726,11 +1814,16 @@ const file_auth_proto_rawDesc = "" +
 	"\x06s3_key\x18\x02 \x01(\tR\x05s3Key\"=\n" +
 	"\x1bConfirmAvatarUploadResponse\x12\x1e\n" +
 	"\x04user\x18\x01 \x01(\v2\n" +
+	".auth.UserR\x04user\".\n" +
+	"\x13DeleteAvatarRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"6\n" +
+	"\x14DeleteAvatarResponse\x12\x1e\n" +
+	"\x04user\x18\x01 \x01(\v2\n" +
 	".auth.UserR\x04user\"/\n" +
 	"\x14DeleteAccountRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"1\n" +
 	"\x15DeleteAccountResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\x92\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xdb\n" +
 	"\n" +
 	"\vAuthService\x12D\n" +
 	"\vSubmitEmail\x12\x18.auth.SubmitEmailRequest\x1a\x19.auth.SubmitEmailResponse\"\x00\x12P\n" +
@@ -1748,7 +1841,8 @@ const file_auth_proto_rawDesc = "" +
 	"\vChangeEmail\x12\x18.auth.ChangeEmailRequest\x1a\x19.auth.ChangeEmailResponse\"\x00\x12Y\n" +
 	"\x12ConfirmEmailChange\x12\x1f.auth.ConfirmEmailChangeRequest\x1a .auth.ConfirmEmailChangeResponse\"\x00\x12\\\n" +
 	"\x13RequestAvatarUpload\x12 .auth.RequestAvatarUploadRequest\x1a!.auth.RequestAvatarUploadResponse\"\x00\x12\\\n" +
-	"\x13ConfirmAvatarUpload\x12 .auth.ConfirmAvatarUploadRequest\x1a!.auth.ConfirmAvatarUploadResponse\"\x00\x12J\n" +
+	"\x13ConfirmAvatarUpload\x12 .auth.ConfirmAvatarUploadRequest\x1a!.auth.ConfirmAvatarUploadResponse\"\x00\x12G\n" +
+	"\fDeleteAvatar\x12\x19.auth.DeleteAvatarRequest\x1a\x1a.auth.DeleteAvatarResponse\"\x00\x12J\n" +
 	"\rDeleteAccount\x12\x1a.auth.DeleteAccountRequest\x1a\x1b.auth.DeleteAccountResponse\"\x00B%Z#pinz/backend/auth-service/pkg/protob\x06proto3"
 
 var (
@@ -1763,7 +1857,7 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_auth_proto_goTypes = []any{
 	(*User)(nil),                          // 0: auth.User
 	(*SubmitEmailRequest)(nil),            // 1: auth.SubmitEmailRequest
@@ -1796,51 +1890,56 @@ var file_auth_proto_goTypes = []any{
 	(*RequestAvatarUploadResponse)(nil),   // 28: auth.RequestAvatarUploadResponse
 	(*ConfirmAvatarUploadRequest)(nil),    // 29: auth.ConfirmAvatarUploadRequest
 	(*ConfirmAvatarUploadResponse)(nil),   // 30: auth.ConfirmAvatarUploadResponse
-	(*DeleteAccountRequest)(nil),          // 31: auth.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil),         // 32: auth.DeleteAccountResponse
+	(*DeleteAvatarRequest)(nil),           // 31: auth.DeleteAvatarRequest
+	(*DeleteAvatarResponse)(nil),          // 32: auth.DeleteAvatarResponse
+	(*DeleteAccountRequest)(nil),          // 33: auth.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),         // 34: auth.DeleteAccountResponse
 }
 var file_auth_proto_depIdxs = []int32{
 	0,  // 0: auth.GetProfileResponse.user:type_name -> auth.User
 	0,  // 1: auth.UpdateProfileResponse.user:type_name -> auth.User
 	0,  // 2: auth.ConfirmEmailChangeResponse.user:type_name -> auth.User
 	0,  // 3: auth.ConfirmAvatarUploadResponse.user:type_name -> auth.User
-	1,  // 4: auth.AuthService.SubmitEmail:input_type -> auth.SubmitEmailRequest
-	3,  // 5: auth.AuthService.VerifyEmailCode:input_type -> auth.VerifyEmailCodeRequest
-	5,  // 6: auth.AuthService.PasskeyRegisterBegin:input_type -> auth.PasskeyRegisterBeginRequest
-	7,  // 7: auth.AuthService.PasskeyRegisterFinish:input_type -> auth.PasskeyRegisterFinishRequest
-	9,  // 8: auth.AuthService.PasskeyLoginBegin:input_type -> auth.PasskeyLoginBeginRequest
-	11, // 9: auth.AuthService.PasskeyLoginFinish:input_type -> auth.PasskeyLoginFinishRequest
-	13, // 10: auth.AuthService.RefreshToken:input_type -> auth.RefreshTokenRequest
-	15, // 11: auth.AuthService.Logout:input_type -> auth.LogoutRequest
-	17, // 12: auth.AuthService.DevLogin:input_type -> auth.DevLoginRequest
-	19, // 13: auth.AuthService.GetProfile:input_type -> auth.GetProfileRequest
-	21, // 14: auth.AuthService.UpdateProfile:input_type -> auth.UpdateProfileRequest
-	23, // 15: auth.AuthService.ChangeEmail:input_type -> auth.ChangeEmailRequest
-	25, // 16: auth.AuthService.ConfirmEmailChange:input_type -> auth.ConfirmEmailChangeRequest
-	27, // 17: auth.AuthService.RequestAvatarUpload:input_type -> auth.RequestAvatarUploadRequest
-	29, // 18: auth.AuthService.ConfirmAvatarUpload:input_type -> auth.ConfirmAvatarUploadRequest
-	31, // 19: auth.AuthService.DeleteAccount:input_type -> auth.DeleteAccountRequest
-	2,  // 20: auth.AuthService.SubmitEmail:output_type -> auth.SubmitEmailResponse
-	4,  // 21: auth.AuthService.VerifyEmailCode:output_type -> auth.VerifyEmailCodeResponse
-	6,  // 22: auth.AuthService.PasskeyRegisterBegin:output_type -> auth.PasskeyRegisterBeginResponse
-	8,  // 23: auth.AuthService.PasskeyRegisterFinish:output_type -> auth.PasskeyRegisterFinishResponse
-	10, // 24: auth.AuthService.PasskeyLoginBegin:output_type -> auth.PasskeyLoginBeginResponse
-	12, // 25: auth.AuthService.PasskeyLoginFinish:output_type -> auth.PasskeyLoginFinishResponse
-	14, // 26: auth.AuthService.RefreshToken:output_type -> auth.RefreshTokenResponse
-	16, // 27: auth.AuthService.Logout:output_type -> auth.LogoutResponse
-	18, // 28: auth.AuthService.DevLogin:output_type -> auth.DevLoginResponse
-	20, // 29: auth.AuthService.GetProfile:output_type -> auth.GetProfileResponse
-	22, // 30: auth.AuthService.UpdateProfile:output_type -> auth.UpdateProfileResponse
-	24, // 31: auth.AuthService.ChangeEmail:output_type -> auth.ChangeEmailResponse
-	26, // 32: auth.AuthService.ConfirmEmailChange:output_type -> auth.ConfirmEmailChangeResponse
-	28, // 33: auth.AuthService.RequestAvatarUpload:output_type -> auth.RequestAvatarUploadResponse
-	30, // 34: auth.AuthService.ConfirmAvatarUpload:output_type -> auth.ConfirmAvatarUploadResponse
-	32, // 35: auth.AuthService.DeleteAccount:output_type -> auth.DeleteAccountResponse
-	20, // [20:36] is the sub-list for method output_type
-	4,  // [4:20] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	0,  // 4: auth.DeleteAvatarResponse.user:type_name -> auth.User
+	1,  // 5: auth.AuthService.SubmitEmail:input_type -> auth.SubmitEmailRequest
+	3,  // 6: auth.AuthService.VerifyEmailCode:input_type -> auth.VerifyEmailCodeRequest
+	5,  // 7: auth.AuthService.PasskeyRegisterBegin:input_type -> auth.PasskeyRegisterBeginRequest
+	7,  // 8: auth.AuthService.PasskeyRegisterFinish:input_type -> auth.PasskeyRegisterFinishRequest
+	9,  // 9: auth.AuthService.PasskeyLoginBegin:input_type -> auth.PasskeyLoginBeginRequest
+	11, // 10: auth.AuthService.PasskeyLoginFinish:input_type -> auth.PasskeyLoginFinishRequest
+	13, // 11: auth.AuthService.RefreshToken:input_type -> auth.RefreshTokenRequest
+	15, // 12: auth.AuthService.Logout:input_type -> auth.LogoutRequest
+	17, // 13: auth.AuthService.DevLogin:input_type -> auth.DevLoginRequest
+	19, // 14: auth.AuthService.GetProfile:input_type -> auth.GetProfileRequest
+	21, // 15: auth.AuthService.UpdateProfile:input_type -> auth.UpdateProfileRequest
+	23, // 16: auth.AuthService.ChangeEmail:input_type -> auth.ChangeEmailRequest
+	25, // 17: auth.AuthService.ConfirmEmailChange:input_type -> auth.ConfirmEmailChangeRequest
+	27, // 18: auth.AuthService.RequestAvatarUpload:input_type -> auth.RequestAvatarUploadRequest
+	29, // 19: auth.AuthService.ConfirmAvatarUpload:input_type -> auth.ConfirmAvatarUploadRequest
+	31, // 20: auth.AuthService.DeleteAvatar:input_type -> auth.DeleteAvatarRequest
+	33, // 21: auth.AuthService.DeleteAccount:input_type -> auth.DeleteAccountRequest
+	2,  // 22: auth.AuthService.SubmitEmail:output_type -> auth.SubmitEmailResponse
+	4,  // 23: auth.AuthService.VerifyEmailCode:output_type -> auth.VerifyEmailCodeResponse
+	6,  // 24: auth.AuthService.PasskeyRegisterBegin:output_type -> auth.PasskeyRegisterBeginResponse
+	8,  // 25: auth.AuthService.PasskeyRegisterFinish:output_type -> auth.PasskeyRegisterFinishResponse
+	10, // 26: auth.AuthService.PasskeyLoginBegin:output_type -> auth.PasskeyLoginBeginResponse
+	12, // 27: auth.AuthService.PasskeyLoginFinish:output_type -> auth.PasskeyLoginFinishResponse
+	14, // 28: auth.AuthService.RefreshToken:output_type -> auth.RefreshTokenResponse
+	16, // 29: auth.AuthService.Logout:output_type -> auth.LogoutResponse
+	18, // 30: auth.AuthService.DevLogin:output_type -> auth.DevLoginResponse
+	20, // 31: auth.AuthService.GetProfile:output_type -> auth.GetProfileResponse
+	22, // 32: auth.AuthService.UpdateProfile:output_type -> auth.UpdateProfileResponse
+	24, // 33: auth.AuthService.ChangeEmail:output_type -> auth.ChangeEmailResponse
+	26, // 34: auth.AuthService.ConfirmEmailChange:output_type -> auth.ConfirmEmailChangeResponse
+	28, // 35: auth.AuthService.RequestAvatarUpload:output_type -> auth.RequestAvatarUploadResponse
+	30, // 36: auth.AuthService.ConfirmAvatarUpload:output_type -> auth.ConfirmAvatarUploadResponse
+	32, // 37: auth.AuthService.DeleteAvatar:output_type -> auth.DeleteAvatarResponse
+	34, // 38: auth.AuthService.DeleteAccount:output_type -> auth.DeleteAccountResponse
+	22, // [22:39] is the sub-list for method output_type
+	5,  // [5:22] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_auth_proto_init() }
@@ -1854,7 +1953,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_proto_rawDesc), len(file_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   33,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
