@@ -101,6 +101,21 @@ func (mr *MockAuthClientMockRecorder) DeleteAccount(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccount", reflect.TypeOf((*MockAuthClient)(nil).DeleteAccount), ctx, req)
 }
 
+// DeleteAvatar mocks base method.
+func (m *MockAuthClient) DeleteAvatar(ctx context.Context, req *proto.DeleteAvatarRequest) (*proto.DeleteAvatarResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAvatar", ctx, req)
+	ret0, _ := ret[0].(*proto.DeleteAvatarResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteAvatar indicates an expected call of DeleteAvatar.
+func (mr *MockAuthClientMockRecorder) DeleteAvatar(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAvatar", reflect.TypeOf((*MockAuthClient)(nil).DeleteAvatar), ctx, req)
+}
+
 // DevLogin mocks base method.
 func (m *MockAuthClient) DevLogin(ctx context.Context, req *proto.DevLoginRequest) (*proto.DevLoginResponse, error) {
 	m.ctrl.T.Helper()

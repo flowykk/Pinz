@@ -97,6 +97,10 @@ func (c *Client) ConfirmAvatarUpload(ctx context.Context, req *pb.ConfirmAvatarU
 	return c.client.ConfirmAvatarUpload(ctx, req)
 }
 
+func (c *Client) DeleteAvatar(ctx context.Context, req *pb.DeleteAvatarRequest) (*pb.DeleteAvatarResponse, error) {
+	return c.client.DeleteAvatar(ctx, req)
+}
+
 func (c *Client) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
 	return c.client.DeleteAccount(ctx, req)
 }

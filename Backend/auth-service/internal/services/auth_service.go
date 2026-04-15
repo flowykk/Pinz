@@ -70,6 +70,7 @@ type loginSession struct {
 
 type S3Uploader interface {
 	PresignedUploadURL(ctx context.Context, s3Key, contentType string) (string, error)
+	DeleteObject(ctx context.Context, s3Key string) error
 }
 
 type AuthService struct {
@@ -778,7 +779,7 @@ func (s *AuthService) RequestAvatarUpload(ctx context.Context, req *pb.RequestAv
 	if s.s3 == nil {
 		return nil, status.Error(codes.Unavailable, "avatar upload is not configured")
 	}
-	s3Key := fmt.Sprintf("avatars/%s/avatar%s", userID, ext)
+	s3Key := fmt.Sprintf("avatars/%s/%s%s", userID, uuid.NewString(), ext)
 
 	uploadURL, err := s.s3.PresignedUploadURL(ctx, s3Key, contentType)
 	if err != nil {
@@ -802,6 +803,16 @@ func (s *AuthService) ConfirmAvatarUpload(ctx context.Context, req *pb.ConfirmAv
 		return nil, status.Error(codes.InvalidArgument, "user_id and s3_key are required")
 	}
 
+	oldUser, err := s.userRepo.GetUserByID(userID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		slog.ErrorContext(ctx, "ConfirmAvatarUpload: get user", "error", err)
+	}
+	if oldUser != nil && oldUser.AvatarURL != "" && oldUser.AvatarURL != s3Key && s.s3 != nil {
+		if err := s.s3.DeleteObject(ctx, oldUser.AvatarURL); err != nil {
+			slog.ErrorContext(ctx, "ConfirmAvatarUpload: delete old avatar (best-effort)", "key", oldUser.AvatarURL, "error", err)
+		}
+	}
+
 	u, err := s.userRepo.UpdateAvatarURL(userID, s3Key)
 	if err != nil {
 		slog.ErrorContext(ctx, "ConfirmAvatarUpload: update avatar", "error", err)
@@ -809,6 +820,39 @@ func (s *AuthService) ConfirmAvatarUpload(ctx context.Context, req *pb.ConfirmAv
 	}
 
 	return &pb.ConfirmAvatarUploadResponse{User: userToProto(u)}, nil
+}
+
+func (s *AuthService) DeleteAvatar(ctx context.Context, req *pb.DeleteAvatarRequest) (*pb.DeleteAvatarResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.DeleteAvatar")
+	defer span.End()
+
+	userID := req.GetUserId()
+	if userID == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	u, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		slog.ErrorContext(ctx, "DeleteAvatar: get user", "error", err)
+		return nil, status.Error(codes.Internal, "failed to get user")
+	}
+
+	if u.AvatarURL != "" && s.s3 != nil {
+		if err := s.s3.DeleteObject(ctx, u.AvatarURL); err != nil {
+			slog.ErrorContext(ctx, "DeleteAvatar: s3 delete (best-effort)", "key", u.AvatarURL, "error", err)
+		}
+	}
+
+	u, err = s.userRepo.UpdateAvatarURL(userID, "")
+	if err != nil {
+		slog.ErrorContext(ctx, "DeleteAvatar: clear avatar_url", "error", err)
+		return nil, status.Error(codes.Internal, "failed to delete avatar")
+	}
+
+	return &pb.DeleteAvatarResponse{User: userToProto(u)}, nil
 }
 
 func (s *AuthService) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
