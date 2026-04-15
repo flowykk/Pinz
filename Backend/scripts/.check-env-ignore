@@ -6,6 +6,7 @@
 *               REDIS_URL
 # SWAGGER_HOST — опциональный override для Swagger UI, не деплоится через Helm.
 api-gateway     SWAGGER_HOST
+api-gateway     swaggerHost
 # WEBAUTHN_* — конфигурация passkey, пока не вынесена в Helm (задаётся через .env).
 auth-service    WEBAUTHN_RP_ID
 auth-service    WEBAUTHN_RP_DISPLAY_NAME
