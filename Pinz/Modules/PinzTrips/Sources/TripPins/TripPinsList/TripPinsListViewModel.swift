@@ -18,7 +18,7 @@ final class TripPinsListViewModel {
 
     let trip: Trip
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     init(trip: Trip) {

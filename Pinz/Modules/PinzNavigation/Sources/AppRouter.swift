@@ -5,7 +5,8 @@ import PinzBase
 @MainActor @Observable
 public final class AppRouter: AppRouting {
     public var path: [Route]
-    private var tripInfoUpdateHandler: (() -> Void)?
+
+    @ObservationIgnored private var tripInfoUpdateHandler: (() -> Void)?
 
     public init(initialPath: [Route] = []) {
         self.path = initialPath

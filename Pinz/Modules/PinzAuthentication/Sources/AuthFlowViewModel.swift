@@ -73,7 +73,7 @@ final class AuthFlowViewModel {
         networkService: (any NetworkServiceProtocol)? = nil,
         passkeyService: (any PasskeyServiceProtocol)? = nil
     ) {
-        self.networkService = networkService ?? NetworkService()
+        self.networkService = networkService ?? NetworkService.shared
         self.passkeyService = passkeyService ?? PasskeyService()
     }
 

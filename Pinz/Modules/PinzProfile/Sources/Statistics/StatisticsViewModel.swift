@@ -13,7 +13,7 @@ final class StatisticsViewModel {
         case navigate(Route)
     }
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     func dispatch(_ intent: Intent) {

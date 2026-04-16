@@ -37,7 +37,7 @@ public class ProfileViewModel {
 
     var user: User
     var userImage: UIImage = PinzUIAsset.avatar.image
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     var imageBinding: Binding<UIImage?> {

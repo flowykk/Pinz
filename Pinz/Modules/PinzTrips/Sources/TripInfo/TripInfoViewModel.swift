@@ -37,7 +37,7 @@ final class TripInfoViewModel {
     private let networkService: any NetworkServiceProtocol
     private let onTripUpdated: (() -> Void)?
 
-    init(trip: Trip, networkService: NetworkServiceProtocol = NetworkService(), onTripUpdated: (() -> Void)? = nil) {
+    init(trip: Trip, networkService: NetworkServiceProtocol = NetworkService.shared, onTripUpdated: (() -> Void)? = nil) {
         self.trip = trip
         self.networkService = networkService
         self.onTripUpdated = onTripUpdated

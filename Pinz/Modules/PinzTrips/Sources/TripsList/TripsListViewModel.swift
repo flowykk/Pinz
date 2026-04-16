@@ -22,7 +22,7 @@ final class TripsListViewModel {
     var trips: [Trip] = []
     private(set) var isLoading = false
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     init() {

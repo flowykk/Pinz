@@ -9,7 +9,7 @@ final class TripsListPopupViewModel {
     var trips: [Trip] = []
     private(set) var isLoading = false
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
 
     enum AsyncIntent {
         case fetchTrips(selectedTripId: String)

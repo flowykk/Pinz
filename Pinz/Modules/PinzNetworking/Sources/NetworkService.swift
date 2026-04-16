@@ -88,6 +88,8 @@ public protocol NetworkServiceProtocol {
 // MARK: - Implementation
 
 public final class NetworkService: NetworkServiceProtocol {
+    public static let shared = NetworkService()
+
     private let provider: NetworkProvider<PinzAPI>
 
     public init() {

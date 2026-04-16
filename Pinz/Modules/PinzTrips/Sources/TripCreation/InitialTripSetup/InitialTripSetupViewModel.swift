@@ -61,7 +61,7 @@ final class InitialTripSetupViewModel {
     var season: TripSeason = .spring // .none
     var medias: [LoadedMedia] = []
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     func dispatch(_ intent: Intent) {

@@ -58,7 +58,7 @@ final class TripViewModel {
     var _position: MapCameraPosition?
     var selectedPin: Pin?
     private var router: AppRouting?
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
 
     var sortedPins: [Pin] {
         (trip?.pins ?? []).sorted { ($0.startDate ?? .distantPast) < ($1.startDate ?? .distantPast) }

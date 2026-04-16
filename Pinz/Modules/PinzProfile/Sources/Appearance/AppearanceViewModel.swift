@@ -23,7 +23,7 @@ final class AppearanceViewModel {
 
     var state = State()
     
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private let userDefaults = UserDefaults.standard
     private var router: AppRouting?
 
