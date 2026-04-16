@@ -27,7 +27,7 @@ final class WishlistElementViewModel {
     var element: WishlistElement
     var state: State = .default
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     init(element: WishlistElement) {

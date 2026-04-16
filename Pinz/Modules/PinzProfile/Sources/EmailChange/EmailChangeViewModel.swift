@@ -26,7 +26,7 @@ class EmailChangeViewModel {
     var code: [String] = Array(repeating: "", count: 4)
     var email: String
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     public init(

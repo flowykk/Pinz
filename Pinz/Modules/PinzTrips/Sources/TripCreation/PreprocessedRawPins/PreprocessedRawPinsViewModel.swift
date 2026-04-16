@@ -27,7 +27,7 @@ final class PreprocessedRawPinsViewModel {
     var pins: RawPins
     private(set) var isLoading = false
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
     private var deletedMediaIds: [String] = []
 

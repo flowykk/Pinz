@@ -47,7 +47,7 @@ public class PinInfoViewModel {
 
     var pin: Pin
     private let updateAction: PinUpdateAction?
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     var isEditing: Bool {

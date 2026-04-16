@@ -34,7 +34,7 @@ final class TripMembersViewModel {
         TripMember(id: "4", username: "julia_photo", avatar: UIImage(systemName: "person.circle.fill")!),
     ]
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     func dispatch(_ intent: Intent) {

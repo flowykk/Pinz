@@ -41,7 +41,7 @@ final class PostPreviewViewModel {
         self.position = self.selectedPins.calculateInitialMapPosition()
     }
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     func dispatch(_ intent: Intent) {

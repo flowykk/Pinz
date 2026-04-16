@@ -50,7 +50,7 @@ final class PinCreationViewModel {
     var medias: [LoadedMedia] = []
     var tags: [MediaTag] = []
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     func dispatch(_ intent: Intent) {

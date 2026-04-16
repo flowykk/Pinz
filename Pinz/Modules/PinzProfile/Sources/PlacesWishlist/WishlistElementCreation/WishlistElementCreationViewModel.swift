@@ -30,7 +30,7 @@ final class WishlistElementCreationViewModel {
     var description: String = ""
 
     private let onCreated: (WishlistElement) -> Void
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     var isCompleteButtonDisabled: Bool {

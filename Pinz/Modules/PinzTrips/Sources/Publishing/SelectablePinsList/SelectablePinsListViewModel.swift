@@ -32,7 +32,7 @@ final class SelectablePinsListViewModel {
         self.pins = trip.pins.sorted { !$0.isPrivate && $1.isPrivate }
     }
 
-    private let networkService = NetworkService()
+    private let networkService = NetworkService.shared
     private var router: AppRouting?
 
     func dispatch(_ intent: Intent) {
