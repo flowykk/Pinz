@@ -71,6 +71,21 @@ func (mr *MockTripClientMockRecorder) ApplyGroupsAndProcess(ctx, req any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyGroupsAndProcess", reflect.TypeOf((*MockTripClient)(nil).ApplyGroupsAndProcess), ctx, req)
 }
 
+// ConfirmTripCoverUpload mocks base method.
+func (m *MockTripClient) ConfirmTripCoverUpload(ctx context.Context, req *proto.ConfirmTripCoverUploadRequest) (*proto.ConfirmTripCoverUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfirmTripCoverUpload", ctx, req)
+	ret0, _ := ret[0].(*proto.ConfirmTripCoverUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConfirmTripCoverUpload indicates an expected call of ConfirmTripCoverUpload.
+func (mr *MockTripClientMockRecorder) ConfirmTripCoverUpload(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmTripCoverUpload", reflect.TypeOf((*MockTripClient)(nil).ConfirmTripCoverUpload), ctx, req)
+}
+
 // CreateTrip mocks base method.
 func (m *MockTripClient) CreateTrip(ctx context.Context, req *proto.CreateTripRequest) (*proto.CreateTripResponse, error) {
 	m.ctrl.T.Helper()
@@ -99,6 +114,21 @@ func (m *MockTripClient) DeleteTrip(ctx context.Context, req *proto.DeleteTripRe
 func (mr *MockTripClientMockRecorder) DeleteTrip(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTrip", reflect.TypeOf((*MockTripClient)(nil).DeleteTrip), ctx, req)
+}
+
+// DeleteTripCover mocks base method.
+func (m *MockTripClient) DeleteTripCover(ctx context.Context, req *proto.DeleteTripCoverRequest) (*proto.DeleteTripCoverResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTripCover", ctx, req)
+	ret0, _ := ret[0].(*proto.DeleteTripCoverResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteTripCover indicates an expected call of DeleteTripCover.
+func (mr *MockTripClientMockRecorder) DeleteTripCover(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTripCover", reflect.TypeOf((*MockTripClient)(nil).DeleteTripCover), ctx, req)
 }
 
 // DislikeTrip mocks base method.
@@ -324,6 +354,21 @@ func (m *MockTripClient) RemoveParticipant(ctx context.Context, req *proto.Remov
 func (mr *MockTripClientMockRecorder) RemoveParticipant(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveParticipant", reflect.TypeOf((*MockTripClient)(nil).RemoveParticipant), ctx, req)
+}
+
+// RequestTripCoverUpload mocks base method.
+func (m *MockTripClient) RequestTripCoverUpload(ctx context.Context, req *proto.RequestTripCoverUploadRequest) (*proto.RequestTripCoverUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestTripCoverUpload", ctx, req)
+	ret0, _ := ret[0].(*proto.RequestTripCoverUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestTripCoverUpload indicates an expected call of RequestTripCoverUpload.
+func (mr *MockTripClientMockRecorder) RequestTripCoverUpload(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestTripCoverUpload", reflect.TypeOf((*MockTripClient)(nil).RequestTripCoverUpload), ctx, req)
 }
 
 // UpdateTrip mocks base method.

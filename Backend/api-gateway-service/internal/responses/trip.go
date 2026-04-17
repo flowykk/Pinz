@@ -67,6 +67,12 @@ type UploadURL struct {
 	URL      string `json:"url"`
 }
 
+// TripCoverUploadResponse — ответ POST /api/v1/trips/:id/cover/upload: presigned PUT URL + ключ для последующего confirm.
+type TripCoverUploadResponse struct {
+	UploadURL string `json:"upload_url"`
+	S3Key     string `json:"s3_key"`
+}
+
 // GenerateInviteLinkResponse is the response for POST /api/v1/trips/:id/invite
 type GenerateInviteLinkResponse struct {
 	InviteLinkID  string `json:"invite_link_id"`

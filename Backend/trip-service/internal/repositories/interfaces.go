@@ -16,6 +16,7 @@ type TripRepositoryInterface interface {
 	Delete(id string) error
 	SetStatus(tripID, status string) error
 	SetSoftDeleted(tripID string) error
+	UpdateCoverURL(tripID, s3Key string) error
 	ListFeed(limit, offset int32, category, season string, locationIDs []int, sortBy string) ([]*models.Trip, error)
 }
 

@@ -778,3 +778,119 @@ func TestUpdateTrip_CannotChangeFromRestricted(t *testing.T) {
 	require.Equal(t, codes.FailedPrecondition, st.Code())
 	require.Contains(t, st.Message(), "permanently private")
 }
+
+func TestRequestTripCoverUpload_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+	urls := mocks.NewMockMediaURLResolver(ctrl)
+
+	tripRepo.EXPECT().GetByID("trip-1").Return(&models.Trip{ID: "trip-1"}, nil)
+	participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
+	urls.EXPECT().
+		PresignedUploadURL(gomock.Any(), gomock.Any(), "image/jpeg").
+		DoAndReturn(func(_ context.Context, key, _ string) (string, error) {
+			require.Contains(t, key, "trips/trip-1/cover/")
+			require.True(t, len(key) > len("trips/trip-1/cover/"))
+			require.Contains(t, key, ".jpg")
+			return "https://s3/put?sig=1", nil
+		})
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil)
+	resp, err := svc.RequestTripCoverUpload(ctxWithUser("u1"), &pb.RequestTripCoverUploadRequest{
+		TripId:      "trip-1",
+		Filename:    "cover.JPG",
+		ContentType: "image/jpeg",
+	})
+	require.NoError(t, err)
+	require.Equal(t, "https://s3/put?sig=1", resp.GetUploadUrl())
+	require.Contains(t, resp.GetS3Key(), "trips/trip-1/cover/")
+}
+
+func TestRequestTripCoverUpload_NotParticipant(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+
+	tripRepo.EXPECT().GetByID("trip-1").Return(&models.Trip{ID: "trip-1"}, nil)
+	participantRepo.EXPECT().IsParticipant("trip-1", "stranger").Return(false, nil)
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := svc.RequestTripCoverUpload(ctxWithUser("stranger"), &pb.RequestTripCoverUploadRequest{
+		TripId:   "trip-1",
+		Filename: "cover.jpg",
+	})
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, codes.PermissionDenied, st.Code())
+}
+
+func TestRequestTripCoverUpload_BadExtension(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+
+	tripRepo.EXPECT().GetByID("trip-1").Return(&models.Trip{ID: "trip-1"}, nil)
+	participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := svc.RequestTripCoverUpload(ctxWithUser("u1"), &pb.RequestTripCoverUploadRequest{
+		TripId:   "trip-1",
+		Filename: "cover.gif",
+	})
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, codes.InvalidArgument, st.Code())
+}
+
+func TestConfirmTripCoverUpload_DeletesOldAndUpdates(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+	urls := mocks.NewMockMediaURLResolver(ctrl)
+
+	old := &models.Trip{ID: "trip-1", CoverURL: "trips/trip-1/cover/old.jpg"}
+	updated := &models.Trip{ID: "trip-1", CoverURL: "trips/trip-1/cover/new.jpg"}
+
+	gomock.InOrder(
+		tripRepo.EXPECT().GetByID("trip-1").Return(old, nil),
+		participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil),
+		urls.EXPECT().DeleteObject(gomock.Any(), "trips/trip-1/cover/old.jpg").Return(nil),
+		tripRepo.EXPECT().UpdateCoverURL("trip-1", "trips/trip-1/cover/new.jpg").Return(nil),
+		tripRepo.EXPECT().GetByID("trip-1").Return(updated, nil),
+	)
+	urls.EXPECT().ReadURL(gomock.Any(), "trips/trip-1/cover/new.jpg").Return("https://s3/get?sig=1", nil)
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil)
+	resp, err := svc.ConfirmTripCoverUpload(ctxWithUser("u1"), &pb.ConfirmTripCoverUploadRequest{
+		TripId: "trip-1",
+		S3Key:  "trips/trip-1/cover/new.jpg",
+	})
+	require.NoError(t, err)
+	require.Equal(t, "https://s3/get?sig=1", resp.GetTrip().GetCoverUrl())
+}
+
+func TestDeleteTripCover_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+	urls := mocks.NewMockMediaURLResolver(ctrl)
+
+	trip := &models.Trip{ID: "trip-1", CoverURL: "trips/trip-1/cover/old.jpg"}
+	cleared := &models.Trip{ID: "trip-1", CoverURL: ""}
+
+	gomock.InOrder(
+		tripRepo.EXPECT().GetByID("trip-1").Return(trip, nil),
+		participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil),
+		urls.EXPECT().DeleteObject(gomock.Any(), "trips/trip-1/cover/old.jpg").Return(nil),
+		tripRepo.EXPECT().UpdateCoverURL("trip-1", "").Return(nil),
+		tripRepo.EXPECT().GetByID("trip-1").Return(cleared, nil),
+	)
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil)
+	resp, err := svc.DeleteTripCover(ctxWithUser("u1"), &pb.DeleteTripCoverRequest{TripId: "trip-1"})
+	require.NoError(t, err)
+	require.Equal(t, "", resp.GetTrip().GetCoverUrl())
+}

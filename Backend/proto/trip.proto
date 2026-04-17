@@ -10,6 +10,10 @@ service TripService {
   rpc ListUserTrips(ListUserTripsRequest) returns (ListUserTripsResponse);
   rpc UpdateTrip(UpdateTripRequest) returns (UpdateTripResponse);
   rpc DeleteTrip(DeleteTripRequest) returns (DeleteTripResponse);
+  // Обложка трипа (двухшаговый поток, аналогичный аватару пользователя)
+  rpc RequestTripCoverUpload(RequestTripCoverUploadRequest) returns (RequestTripCoverUploadResponse);
+  rpc ConfirmTripCoverUpload(ConfirmTripCoverUploadRequest) returns (ConfirmTripCoverUploadResponse);
+  rpc DeleteTripCover(DeleteTripCoverRequest) returns (DeleteTripCoverResponse);
   // Участники и инвайты (Фаза 2)
   rpc GenerateInviteLink(GenerateInviteLinkRequest) returns (GenerateInviteLinkResponse);
   rpc JoinTripByToken(JoinTripByTokenRequest) returns (JoinTripByTokenResponse);
@@ -134,7 +138,6 @@ message UpdateTripRequest {
   optional string privacy_level = 7;
   optional int64 start_date_unix = 8;
   optional int64 end_date_unix = 9;
-  optional string cover_s3_key = 10;
 }
 
 message UpdateTripResponse {
@@ -148,6 +151,37 @@ message DeleteTripRequest {
 
 message DeleteTripResponse {
   bool success = 1;
+}
+
+// Обложка трипа: запрос presigned PUT URL для загрузки в S3 (step 1)
+message RequestTripCoverUploadRequest {
+  string trip_id = 1;
+  string user_id = 2;
+  string filename = 3;
+  string content_type = 4;
+}
+message RequestTripCoverUploadResponse {
+  string upload_url = 1;
+  string s3_key = 2;
+}
+
+// Обложка трипа: подтверждение загрузки (step 2), обновление cover_url и best-effort удаление старого объекта
+message ConfirmTripCoverUploadRequest {
+  string trip_id = 1;
+  string user_id = 2;
+  string s3_key = 3;
+}
+message ConfirmTripCoverUploadResponse {
+  Trip trip = 1;
+}
+
+// Удаление обложки трипа: чистит cover_url и best-effort удаляет объект из S3
+message DeleteTripCoverRequest {
+  string trip_id = 1;
+  string user_id = 2;
+}
+message DeleteTripCoverResponse {
+  Trip trip = 1;
 }
 
 // PublishTrip: отдельный флоу публикации в общую ленту (ТЗ 3.3, PINZ-105).

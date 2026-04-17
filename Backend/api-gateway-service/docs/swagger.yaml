@@ -27,6 +27,11 @@ definitions:
       verification_code:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.ConfirmTripCoverUploadRequest:
+    properties:
+      s3_key:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.CreateTripRequest:
     properties:
       category:
@@ -192,6 +197,15 @@ definitions:
         example: avatar.jpg
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.RequestTripCoverUploadRequest:
+    properties:
+      content_type:
+        example: image/jpeg
+        type: string
+      filename:
+        example: cover.jpg
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.SubmitEmailRequest:
     properties:
       email:
@@ -212,8 +226,6 @@ definitions:
   pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest:
     properties:
       category:
-        type: string
-      cover_s3_key:
         type: string
       description:
         type: string
@@ -545,6 +557,13 @@ definitions:
         type: string
       updated_at_unix:
         type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TripCoverUploadResponse:
+    properties:
+      s3_key:
+        type: string
+      upload_url:
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.TripPin:
     properties:
@@ -1304,7 +1323,9 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates trip metadata. Requires JWT. Only admin can update.
+      description: Updates trip metadata (name, description, category, season, dates,
+        privacy_level). Requires JWT. Any trip participant can update (ТЗ 3.2). For
+        cover use the /cover/upload + /cover/confirm endpoints.
       parameters:
       - description: Trip ID
         in: path
@@ -1347,6 +1368,144 @@ paths:
       security:
       - BearerAuth: []
       summary: Update trip
+      tags:
+      - trips
+  /api/v1/trips/{id}/cover:
+    delete:
+      description: 'Removes the trip cover: deletes the file from S3 and clears cover_url.
+        Requires JWT. Any trip participant can perform this action.'
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete trip cover
+      tags:
+      - trips
+  /api/v1/trips/{id}/cover/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Step 2 of the cover upload flow. Requires JWT. Any trip participant
+        can perform this action.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: S3 key
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ConfirmTripCoverUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm trip cover upload after uploading to S3
+      tags:
+      - trips
+  /api/v1/trips/{id}/cover/upload:
+    post:
+      consumes:
+      - application/json
+      description: Step 1 of the cover upload flow (mirrors user avatar). Requires
+        JWT. Any trip participant can perform this action.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Filename and content type
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestTripCoverUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripCoverUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request presigned URL for trip cover upload
       tags:
       - trips
   /api/v1/trips/{id}/dislike:

@@ -194,6 +194,23 @@ func (r *TripRepository) Delete(id string) error {
 	return nil
 }
 
+// UpdateCoverURL sets cover_url (may be empty to clear) and bumps updated_at.
+func (r *TripRepository) UpdateCoverURL(tripID, s3Key string) error {
+	q := psq.Update("trips").
+		Set("updated_at", sq.Expr("NOW()")).
+		Set("cover_url", s3Key).
+		Where(sq.Eq{"id": tripID})
+	res, err := q.RunWith(r.db).Exec()
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 // SetPrivacyLevel updates only trip privacy_level (used by privacy aggregation worker).
 // SQL guard: never overwrite Restricted ("permanently private", ТЗ 6.3) with a lower level.
 func (r *TripRepository) SetPrivacyLevel(tripID, level string) error {

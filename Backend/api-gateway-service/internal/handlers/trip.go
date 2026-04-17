@@ -26,6 +26,9 @@ type TripClient interface {
 	ListUserTrips(ctx context.Context, req *proto.ListUserTripsRequest) (*proto.ListUserTripsResponse, error)
 	UpdateTrip(ctx context.Context, req *proto.UpdateTripRequest) (*proto.UpdateTripResponse, error)
 	DeleteTrip(ctx context.Context, req *proto.DeleteTripRequest) (*proto.DeleteTripResponse, error)
+	RequestTripCoverUpload(ctx context.Context, req *proto.RequestTripCoverUploadRequest) (*proto.RequestTripCoverUploadResponse, error)
+	ConfirmTripCoverUpload(ctx context.Context, req *proto.ConfirmTripCoverUploadRequest) (*proto.ConfirmTripCoverUploadResponse, error)
+	DeleteTripCover(ctx context.Context, req *proto.DeleteTripCoverRequest) (*proto.DeleteTripCoverResponse, error)
 	GenerateInviteLink(ctx context.Context, req *proto.GenerateInviteLinkRequest) (*proto.GenerateInviteLinkResponse, error)
 	JoinTripByToken(ctx context.Context, req *proto.JoinTripByTokenRequest) (*proto.JoinTripByTokenResponse, error)
 	RemoveParticipant(ctx context.Context, req *proto.RemoveParticipantRequest) (*proto.RemoveParticipantResponse, error)
@@ -173,7 +176,7 @@ func (h *TripHandler) GetTrip(w http.ResponseWriter, r *http.Request) {
 
 // UpdateTrip updates trip metadata.
 // @Summary Update trip
-// @Description Updates trip metadata. Requires JWT. Only admin can update.
+// @Description Updates trip metadata (name, description, category, season, dates, privacy_level). Requires JWT. Any trip participant can update (ТЗ 3.2). For cover use the /cover/upload + /cover/confirm endpoints.
 // @Tags trips
 // @Accept json
 // @Produce json
@@ -226,12 +229,139 @@ func (h *TripHandler) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 	if req.EndDateUnix != nil {
 		protoReq.EndDateUnix = req.EndDateUnix
 	}
-	if req.CoverS3Key != nil {
-		protoReq.CoverS3Key = req.CoverS3Key
-	}
 	resp, err := h.tripClient.UpdateTrip(ctx, protoReq)
 	if err != nil {
 		handleServiceError(w, r, err, "UpdateTrip")
+		return
+	}
+	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
+}
+
+// RequestTripCoverUpload returns a presigned PUT URL for uploading a new trip cover.
+// @Summary Request presigned URL for trip cover upload
+// @Description Step 1 of the cover upload flow (mirrors user avatar). Requires JWT. Any trip participant can perform this action.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.RequestTripCoverUploadRequest true "Filename and content type"
+// @Success 200 {object} responses.TripCoverUploadResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/cover/upload [post]
+func (h *TripHandler) RequestTripCoverUpload(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.RequestTripCoverUploadRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	resp, err := h.tripClient.RequestTripCoverUpload(ctx, &proto.RequestTripCoverUploadRequest{
+		TripId:      tripID,
+		UserId:      userID,
+		Filename:    req.Filename,
+		ContentType: req.ContentType,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "RequestTripCoverUpload")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.TripCoverUploadResponse{
+		UploadURL: resp.GetUploadUrl(),
+		S3Key:     resp.GetS3Key(),
+	})
+}
+
+// ConfirmTripCoverUpload persists the uploaded cover s3_key.
+// @Summary Confirm trip cover upload after uploading to S3
+// @Description Step 2 of the cover upload flow. Requires JWT. Any trip participant can perform this action.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.ConfirmTripCoverUploadRequest true "S3 key"
+// @Success 200 {object} responses.Trip
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/cover/confirm [post]
+func (h *TripHandler) ConfirmTripCoverUpload(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.ConfirmTripCoverUploadRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	resp, err := h.tripClient.ConfirmTripCoverUpload(ctx, &proto.ConfirmTripCoverUploadRequest{
+		TripId: tripID,
+		UserId: userID,
+		S3Key:  req.S3Key,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "ConfirmTripCoverUpload")
+		return
+	}
+	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
+}
+
+// DeleteTripCover clears the trip cover.
+// @Summary Delete trip cover
+// @Description Removes the trip cover: deletes the file from S3 and clears cover_url. Requires JWT. Any trip participant can perform this action.
+// @Tags trips
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Success 200 {object} responses.Trip
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/cover [delete]
+func (h *TripHandler) DeleteTripCover(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	resp, err := h.tripClient.DeleteTripCover(ctx, &proto.DeleteTripCoverRequest{
+		TripId: tripID,
+		UserId: userID,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "DeleteTripCover")
 		return
 	}
 	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
