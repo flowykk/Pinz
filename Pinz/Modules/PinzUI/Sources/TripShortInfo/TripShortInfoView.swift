@@ -35,9 +35,7 @@ public struct TripShortInfoView: View {
             onTripTapped(trip)
         } label: {
             HStack(spacing: 12) {
-                Image(uiImage: trip.image ?? PinzDomainAsset.groupPlaceholder.image)
-                    .resizable()
-                    .scaledToFill()
+                tripImage
                     .frame(width: Constants.imageWidth, height: Constants.elementHeight)
                     .cornerRadius(16)
 
@@ -67,5 +65,46 @@ public struct TripShortInfoView: View {
         }
         .buttonStyle(.plain)
         .frame(height: Constants.elementHeight)
+    }
+
+    @ViewBuilder
+    private var tripImage: some View {
+        if let coverUrl = trip.coverUrl, !coverUrl.isEmpty, let url = URL(string: coverUrl) {
+            LoadableImageThumbnail(url: url) { state in
+                remoteTripImage(for: state)
+            }
+        } else if let localImage = trip.image {
+            image(for: localImage)
+        } else {
+            image(for: PinzDomainAsset.groupPlaceholder.image)
+        }
+    }
+
+    @ViewBuilder
+    private func remoteTripImage(for state: LoadableMediaState) -> some View {
+        switch state {
+        case .empty:
+            Rectangle()
+                .fill(Color.gray.opacity(0.2))
+                .overlay {
+                    ProgressView().tint(.white)
+                }
+        case .ready(let loadedImage):
+            image(for: loadedImage)
+        case .failure:
+            if let localImage = trip.image {
+                image(for: localImage)
+            } else {
+                image(for: PinzDomainAsset.groupPlaceholder.image)
+            }
+        }
+    }
+
+    private func image(for uiImage: UIImage) -> some View {
+        Image(uiImage: uiImage)
+            .resizable()
+            .scaledToFill()
+            .frame(width: Constants.imageWidth, height: Constants.elementHeight)
+            .clipped()
     }
 }

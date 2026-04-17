@@ -23,9 +23,18 @@ final class MockNetworkService: NetworkServiceProtocol {
     var getFeedResult: Result<[TripDTO], Error> = .success([])
     var getTripsResult: Result<[TripDTO], Error> = .success([])
     var getTripResult: Result<GetTripResponseDTO, Error> = .success(MockNetworkService.stubTripResponse)
+    var requestTripCoverUploadResult: Result<TripCoverUploadResponseDTO, Error> = .success(
+        TripCoverUploadResponseDTO(
+            uploadUrl: "https://example.com/upload",
+            s3Key: "mock-trip-s3-key"
+        )
+    )
+    var confirmTripCoverUploadResult: Result<TripDTO, Error> = .success(MockNetworkService.stubTrip)
     var updateTripResult: Result<TripDTO, Error> = .success(MockNetworkService.stubTrip)
     var updateTripCall: UpdateTripCall?
     var deleteTripError: Error?
+    var requestTripCoverUploadCall: (id: String, filename: String, contentType: String)?
+    var confirmTripCoverUploadCall: (id: String, s3Key: String)?
 
     var joinTripByTokenResult: Result<JoinTripByTokenDTO, Error> = .success(JoinTripByTokenDTO(tripId: "trip-001", alreadyJoined: false))
     var generateInviteLinkResult: Result<GenerateInviteLinkDTO, Error> = .success(
@@ -97,6 +106,14 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     func getTrips() async throws -> [TripDTO] { try getTripsResult.get() }
     func getTrip(id: String) async throws -> GetTripResponseDTO { try getTripResult.get() }
+    func requestTripCoverUpload(id: String, filename: String, contentType: String) async throws -> TripCoverUploadResponseDTO {
+        requestTripCoverUploadCall = (id, filename, contentType)
+        return try requestTripCoverUploadResult.get()
+    }
+    func confirmTripCoverUpload(id: String, s3Key: String) async throws -> TripDTO {
+        confirmTripCoverUploadCall = (id, s3Key)
+        return try confirmTripCoverUploadResult.get()
+    }
     func updateTrip(id: String, name: String?, description: String?, category: String?, season: String?, privacyLevel: String?, coverUrl: String?, startDateUnix: Int?, endDateUnix: Int?) async throws -> TripDTO {
         updateTripCall = UpdateTripCall(
             id: id,

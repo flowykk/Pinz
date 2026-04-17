@@ -38,6 +38,12 @@ final class TripInfoViewModel {
     private var router: AppRouting?
     private let networkService: any NetworkServiceProtocol
     private let onTripUpdated: (() -> Void)?
+    private var tripCoverUploadTask: Task<TripDTO, Error>?
+
+    private enum TripCoverUploadFlowError: Error {
+        case missingImageData
+        case invalidUploadResponse
+    }
 
     init(trip: Trip, networkService: NetworkServiceProtocol = NetworkService.shared, onTripUpdated: (() -> Void)? = nil) {
         self.trip = trip
@@ -59,6 +65,7 @@ final class TripInfoViewModel {
         case let .setImage(newImage):
             if let newImage {
                 trip.image = newImage
+                uploadTripCoverTask(with: newImage)
             }
         case let .navigate(route):
             switch route {
@@ -104,6 +111,17 @@ final class TripInfoViewModel {
     }
 
     private func editTrip() async throws {
+        if let uploadTask = tripCoverUploadTask {
+            do {
+                _ = try await uploadTask.value
+            } catch is CancellationError {
+                print("[TripInfo] Trip cover upload canceled")
+            } catch {
+                print("[TripInfo] Failed to upload trip cover before save: \(error)")
+            }
+            tripCoverUploadTask = nil
+        }
+
         let updatedTrip = try await networkService.updateTrip(
             id: trip.id,
             name: trip.name,
@@ -124,6 +142,59 @@ final class TripInfoViewModel {
         onTripUpdated?()
         changeState(to: .default)
         editingSnapshot = nil
+    }
+
+    private func uploadTripCoverTask(with image: UIImage) {
+        tripCoverUploadTask?.cancel()
+
+        tripCoverUploadTask = Task { @MainActor [weak self] in
+            guard let self else {
+                throw CancellationError()
+            }
+            defer {
+                self.tripCoverUploadTask = nil
+            }
+
+            let response = try await self.uploadTripCoverFlow(image: image)
+            self.trip.coverUrl = response.coverUrl
+            self.trip.image = nil
+            return response
+        }
+    }
+
+    private func uploadTripCoverFlow(image: UIImage) async throws -> TripDTO {
+        let contentType: String
+        let data: Data
+
+        if let jpegData = image.jpegData(compressionQuality: 0.85) {
+            contentType = "image/jpeg"
+            data = jpegData
+        } else if let pngData = image.pngData() {
+            contentType = "image/png"
+            data = pngData
+        } else {
+            throw TripCoverUploadFlowError.missingImageData
+        }
+
+        let filename = "cover-\(UUID().uuidString).\(contentType == "image/png" ? "png" : "jpg")"
+        let request = try await networkService.requestTripCoverUpload(
+            id: trip.id,
+            filename: filename,
+            contentType: contentType
+        )
+
+        guard let uploadUrl = request.uploadUrl,
+              let s3Key = request.s3Key,
+              !uploadUrl.isEmpty,
+              !s3Key.isEmpty else {
+            throw TripCoverUploadFlowError.invalidUploadResponse
+        }
+
+        try await networkService.uploadToS3(url: uploadUrl, data: data, contentType: contentType)
+        return try await networkService.confirmTripCoverUpload(
+            id: trip.id,
+            s3Key: s3Key
+        )
     }
 
     private func updateNotifications(_ enabled: Bool) async throws {
