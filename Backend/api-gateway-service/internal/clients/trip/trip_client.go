@@ -146,6 +146,18 @@ func (c *Client) ListFavourites(ctx context.Context, req *pb.ListFavouritesReque
 	return c.client.ListFavourites(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRequest) (*pb.AddMediaStartResponse, error) {
+	return c.client.AddMediaStart(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMediaProcessGroupingRequest) (*pb.AddMediaProcessGroupingResponse, error) {
+	return c.client.AddMediaProcessGrouping(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb.AddMediaApplyGroupsAndProcessRequest) (*pb.AddMediaApplyGroupsAndProcessResponse, error) {
+	return c.client.AddMediaApplyGroupsAndProcess(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

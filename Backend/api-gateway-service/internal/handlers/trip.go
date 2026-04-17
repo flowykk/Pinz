@@ -45,6 +45,9 @@ type TripClient interface {
 	AddToFavourites(ctx context.Context, req *proto.AddToFavouritesRequest) (*proto.AddToFavouritesResponse, error)
 	RemoveFromFavourites(ctx context.Context, req *proto.RemoveFromFavouritesRequest) (*proto.RemoveFromFavouritesResponse, error)
 	ListFavourites(ctx context.Context, req *proto.ListFavouritesRequest) (*proto.ListFavouritesResponse, error)
+	AddMediaStart(ctx context.Context, req *proto.AddMediaStartRequest) (*proto.AddMediaStartResponse, error)
+	AddMediaProcessGrouping(ctx context.Context, req *proto.AddMediaProcessGroupingRequest) (*proto.AddMediaProcessGroupingResponse, error)
+	AddMediaApplyGroupsAndProcess(ctx context.Context, req *proto.AddMediaApplyGroupsAndProcessRequest) (*proto.AddMediaApplyGroupsAndProcessResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient) *TripHandler {
@@ -1148,4 +1151,174 @@ func getTripResponseToREST(resp *proto.GetTripResponse) responses.GetTripRespons
 		out.Pins = append(out.Pins, pin)
 	}
 	return out
+}
+
+// AddMediaStart starts a session for adding media to an existing READY trip (PINZ-131, ТЗ 5.3 → 3.8).
+// @Summary [1] Start add-media session
+// @Tags trip-add-media
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.AddMediaStartRequest true "Files to upload"
+// @Success 200 {object} responses.AddMediaStartResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/media/add/start [post]
+func (h *TripHandler) AddMediaStart(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.AddMediaStartRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	protoFiles := make([]*proto.FileToUpload, 0, len(req.FilesToUpload))
+	for _, f := range req.FilesToUpload {
+		protoFiles = append(protoFiles, &proto.FileToUpload{ClientId: f.ClientID, ContentType: f.ContentType})
+	}
+	resp, err := h.tripClient.AddMediaStart(ctx, &proto.AddMediaStartRequest{
+		TripId:        tripID,
+		FilesToUpload: protoFiles,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaStart")
+		return
+	}
+	urls := make([]responses.UploadURL, len(resp.GetUploadUrls()))
+	for i, u := range resp.GetUploadUrls() {
+		urls[i] = responses.UploadURL{ClientID: u.GetClientId(), S3Key: u.GetS3Key(), URL: u.GetUrl()}
+	}
+	respondJSON(w, http.StatusOK, responses.AddMediaStartResponse{
+		SessionID:  resp.GetSessionId(),
+		Status:     resp.GetStatus(),
+		UploadURLs: urls,
+	})
+}
+
+// AddMediaProcessGrouping clusters new media using existing pins as seeds (PINZ-131, ТЗ 5.3.1-5.3.2).
+// @Summary [2] Process grouping for add-media
+// @Tags trip-add-media
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.AddMediaProcessGroupingRequest true "Session id and media metadata"
+// @Success 200 {object} responses.AddMediaProcessGroupingResponse
+// @Router /api/v1/trips/{id}/media/add/process-grouping [post]
+func (h *TripHandler) AddMediaProcessGrouping(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.AddMediaProcessGroupingRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	media := make([]*proto.MediaMeta, 0, len(req.Media))
+	for _, m := range req.Media {
+		mm := &proto.MediaMeta{S3Key: m.S3Key, MediaType: m.MediaType}
+		if m.CapturedAt != "" {
+			if t, err := time.Parse(time.RFC3339, m.CapturedAt); err == nil {
+				mm.CapturedAtUnix = t.Unix()
+			}
+		}
+		if m.Latitude != nil {
+			mm.Latitude = m.Latitude
+		}
+		if m.Longitude != nil {
+			mm.Longitude = m.Longitude
+		}
+		media = append(media, mm)
+	}
+	resp, err := h.tripClient.AddMediaProcessGrouping(ctx, &proto.AddMediaProcessGroupingRequest{
+		TripId:    tripID,
+		SessionId: req.SessionID,
+		Media:     media,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaProcessGrouping")
+		return
+	}
+	draftPins := make([]responses.DraftPin, 0, len(resp.GetDraftPins()))
+	for _, dp := range resp.GetDraftPins() {
+		mediaList := make([]responses.DraftPinMedia, 0, len(dp.GetMedia()))
+		for _, m := range dp.GetMedia() {
+			mediaList = append(mediaList, responses.DraftPinMedia{MediaID: m.GetMediaId(), URL: m.GetUrl(), Type: m.GetType()})
+		}
+		draftPins = append(draftPins, responses.DraftPin{DraftPinID: dp.GetDraftPinId(), Media: mediaList})
+	}
+	respondJSON(w, http.StatusOK, responses.AddMediaProcessGroupingResponse{
+		TripID:           resp.GetTripId(),
+		SessionID:        resp.GetSessionId(),
+		Status:           resp.GetStatus(),
+		DraftPins:        draftPins,
+		ExistingMediaIDs: resp.GetExistingMediaIds(),
+	})
+}
+
+// AddMediaApplyGroupsAndProcess applies user grouping for add-media and starts ML processing (PINZ-131, ТЗ 5.3.3-5.3.4).
+// @Summary [3] Apply groups for add-media
+// @Tags trip-add-media
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.AddMediaApplyGroupsAndProcessRequest true "Draft pins, deleted media, session id"
+// @Success 202 {object} responses.AddMediaApplyGroupsAndProcessResponse
+// @Router /api/v1/trips/{id}/media/add/apply-groups-and-process [post]
+func (h *TripHandler) AddMediaApplyGroupsAndProcess(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.AddMediaApplyGroupsAndProcessRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	draftPins := make([]*proto.DraftPinInput, 0, len(req.DraftPins))
+	for _, dp := range req.DraftPins {
+		draftPins = append(draftPins, &proto.DraftPinInput{DraftPinId: dp.DraftPinID, MediaIds: dp.MediaIDs})
+	}
+	resp, err := h.tripClient.AddMediaApplyGroupsAndProcess(ctx, &proto.AddMediaApplyGroupsAndProcessRequest{
+		TripId:          tripID,
+		SessionId:       req.SessionID,
+		DraftPins:       draftPins,
+		DeletedMediaIds: req.DeletedMediaIDs,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaApplyGroupsAndProcess")
+		return
+	}
+	respondJSON(w, http.StatusAccepted, responses.AddMediaApplyGroupsAndProcessResponse{
+		Message: resp.GetMessage(),
+		Status:  resp.GetStatus(),
+	})
 }

@@ -17,18 +17,19 @@ type Dependencies struct {
 	TripService pb.TripServiceServer
 
 	// Worker dependencies — used by worker.Run goroutine in main.
-	RedisClient      *redis.Client
-	TripRepo         *repositories.TripRepository
-	ParticipantRepo  *repositories.TripParticipantRepository
-	GeoRepo          *repositories.GeoRegistryRepository
-	MediaRepo        *repositories.MediaRepository
-	TagRepo          *repositories.TagRepository
-	PinRepo          *repositories.PinRepository
-	EventRepo        *repositories.RedisRepository
-	TripPrivacyRepo  *repositories.TripPrivacyRepository
-	PinPrivacyRepo   *repositories.PinPrivacyRepository
-	MediaPrivacyRepo *repositories.MediaPrivacyRepository
-	Geocoder         services.LocationResolver
+	RedisClient         *redis.Client
+	TripRepo            *repositories.TripRepository
+	ParticipantRepo     *repositories.TripParticipantRepository
+	GeoRepo             *repositories.GeoRegistryRepository
+	MediaRepo           *repositories.MediaRepository
+	TagRepo             *repositories.TagRepository
+	PinRepo             *repositories.PinRepository
+	EventRepo           *repositories.RedisRepository
+	TripPrivacyRepo     *repositories.TripPrivacyRepository
+	PinPrivacyRepo      *repositories.PinPrivacyRepository
+	MediaPrivacyRepo    *repositories.MediaPrivacyRepository
+	AddMediaSessionRepo *repositories.AddMediaSessionRepository
+	Geocoder            services.LocationResolver
 }
 
 func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Client) (*Dependencies, error) {
@@ -66,21 +67,23 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	tripPrivacyRepo := repositories.NewTripPrivacyRepository(db)
 	pinPrivacyRepo := repositories.NewPinPrivacyRepository(db)
 	mediaPrivacyRepo := repositories.NewMediaPrivacyRepository(db)
+	addMediaSessionRepo := repositories.NewAddMediaSessionRepository(db)
 
-	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geocoder, geoRepo)
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geocoder, geoRepo, addMediaSessionRepo)
 	return &Dependencies{
-		TripService:      tripSvc,
-		RedisClient:      redisClient,
-		TripRepo:         tripRepo,
-		ParticipantRepo:  participantRepo,
-		GeoRepo:          geoRepo,
-		MediaRepo:        mediaRepo,
-		TagRepo:          tagRepo,
-		PinRepo:          pinRepo,
-		EventRepo:        eventRepo,
-		TripPrivacyRepo:  tripPrivacyRepo,
-		PinPrivacyRepo:   pinPrivacyRepo,
-		MediaPrivacyRepo: mediaPrivacyRepo,
-		Geocoder:         geocoder,
+		TripService:         tripSvc,
+		RedisClient:         redisClient,
+		TripRepo:            tripRepo,
+		ParticipantRepo:     participantRepo,
+		GeoRepo:             geoRepo,
+		MediaRepo:           mediaRepo,
+		TagRepo:             tagRepo,
+		PinRepo:             pinRepo,
+		EventRepo:           eventRepo,
+		TripPrivacyRepo:     tripPrivacyRepo,
+		PinPrivacyRepo:      pinPrivacyRepo,
+		MediaPrivacyRepo:    mediaPrivacyRepo,
+		AddMediaSessionRepo: addMediaSessionRepo,
+		Geocoder:            geocoder,
 	}, nil
 }

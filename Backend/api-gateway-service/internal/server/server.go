@@ -120,6 +120,10 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Post("/{id}/favourite", deps.TripHandler.AddToFavourites)
 				r.Delete("/{id}/favourite", deps.TripHandler.RemoveFromFavourites)
 				r.Delete("/{id}/participants/{user_id}", deps.TripHandler.RemoveParticipant)
+				// PINZ-131: добавление медиа в существующий READY-трип (ТЗ 5.1-5.3).
+				r.Post("/{id}/media/add/start", deps.TripHandler.AddMediaStart)
+				r.Post("/{id}/media/add/process-grouping", deps.TripHandler.AddMediaProcessGrouping)
+				r.Post("/{id}/media/add/apply-groups-and-process", deps.TripHandler.AddMediaApplyGroupsAndProcess)
 			})
 
 			r.Route("/feed", func(r chi.Router) {

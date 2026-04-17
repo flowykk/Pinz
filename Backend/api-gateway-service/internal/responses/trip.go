@@ -186,3 +186,26 @@ type FeedItem struct {
 type SuccessResponse struct {
 	Success bool `json:"success"`
 }
+
+// AddMediaStartResponse is the response for POST /api/v1/trips/:id/media/add/start (PINZ-131).
+type AddMediaStartResponse struct {
+	SessionID  string      `json:"session_id"`
+	Status     string      `json:"status"`
+	UploadURLs []UploadURL `json:"upload_urls"`
+}
+
+// AddMediaProcessGroupingResponse is the response for POST /api/v1/trips/:id/media/add/process-grouping (PINZ-131).
+// ExistingMediaIDs marks the original media as read-only per spec 5.3.3.
+type AddMediaProcessGroupingResponse struct {
+	TripID           string     `json:"trip_id"`
+	SessionID        string     `json:"session_id"`
+	Status           string     `json:"status"`
+	DraftPins        []DraftPin `json:"draft_pins"`
+	ExistingMediaIDs []string   `json:"existing_media_ids"`
+}
+
+// AddMediaApplyGroupsAndProcessResponse is the response for POST /api/v1/trips/:id/media/add/apply-groups-and-process (PINZ-131).
+type AddMediaApplyGroupsAndProcessResponse struct {
+	Message string `json:"message"`
+	Status  string `json:"status"`
+}
