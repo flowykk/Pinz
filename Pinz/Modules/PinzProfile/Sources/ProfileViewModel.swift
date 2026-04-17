@@ -51,9 +51,8 @@ public class ProfileViewModel {
         case invalidUploadResponse
     }
 
-    public init(user: User, networkService: NetworkServiceProtocol = NetworkService()) {
+    public init(user: User) {
         self.user = user
-        self.networkService = networkService
     }
 
     public func dispatch(_ intent: Intent) {

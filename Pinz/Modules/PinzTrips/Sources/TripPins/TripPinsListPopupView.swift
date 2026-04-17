@@ -33,16 +33,9 @@ struct TripPinsListPopupView: View {
     @ViewBuilder
     private var pinsView: some View {
         if pins.isEmpty {
-            VStack {
-                Spacer()
-                Text(PinzBaseStrings.TripPins.Empty.noPins)
-                    .roundedFont(size: 18, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 12)
-                Spacer()
-            }
-            .padding(.top, 60)
-            .padding(.bottom, 90)
+            Spacer()
+            NoPinsPlaceholderView()
+            Spacer()
         } else {
             ScrollView {
                 DefaultPinsListView(
