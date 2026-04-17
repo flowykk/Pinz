@@ -21,6 +21,9 @@ const (
 
 	userEventsChannelPrefix = "pinz:user:"
 	userEventsChannelSuffix = ":events"
+
+	tripEventsChannelPrefix = "pinz:trip:"
+	tripEventsChannelSuffix = ":events"
 )
 
 // RedisRepository provides Redis client and trip event streaming for Notification/Statistics
@@ -224,6 +227,44 @@ func (r *RedisRepository) PublishUserEvent(ctx context.Context, userID, eventTyp
 	if err := r.client.Publish(ctx, channel, data).Err(); err != nil {
 		slog.WarnContext(ctx, "PublishUserEvent failed", "channel", channel, "event", eventType, "error", err)
 		return err
+	}
+	return nil
+}
+
+// PublishTripEventWS fan-outs a WebSocket event to both the per-trip channel
+// (consumed by per-resource WS endpoints) and each participant's per-user channel
+// (consumed by the global /v1/ws endpoint). Payload is always wrapped into
+// {"event","payload"} with trip_id injected so downstream filters work uniformly.
+func (r *RedisRepository) PublishTripEventWS(ctx context.Context, tripID string, userIDs []string, eventType string, payload map[string]interface{}) error {
+	if r == nil || r.client == nil || tripID == "" {
+		return nil
+	}
+	if payload == nil {
+		payload = map[string]interface{}{}
+	}
+	if _, ok := payload["trip_id"]; !ok {
+		payload["trip_id"] = tripID
+	}
+	data, err := json.Marshal(map[string]interface{}{
+		"event":   eventType,
+		"payload": payload,
+	})
+	if err != nil {
+		slog.WarnContext(ctx, "PublishTripEventWS marshal failed", "trip_id", tripID, "event", eventType, "error", err)
+		return err
+	}
+	tripChannel := tripEventsChannelPrefix + tripID + tripEventsChannelSuffix
+	if err := r.client.Publish(ctx, tripChannel, data).Err(); err != nil {
+		slog.WarnContext(ctx, "PublishTripEventWS trip publish failed", "channel", tripChannel, "event", eventType, "error", err)
+	}
+	for _, uid := range userIDs {
+		if uid == "" {
+			continue
+		}
+		userChannel := userEventsChannelPrefix + uid + userEventsChannelSuffix
+		if err := r.client.Publish(ctx, userChannel, data).Err(); err != nil {
+			slog.WarnContext(ctx, "PublishTripEventWS user publish failed", "channel", userChannel, "event", eventType, "error", err)
+		}
 	}
 	return nil
 }
