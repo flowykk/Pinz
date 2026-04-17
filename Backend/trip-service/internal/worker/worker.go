@@ -324,13 +324,14 @@ func processTrip(ctx context.Context, tripID string, tripRepo *repositories.Trip
 		return err
 	}
 
+	userIDs := make([]string, 0, len(participants))
 	for _, p := range participants {
-		payload := map[string]interface{}{
-			"trip_id": tripID,
-			"status":  "DRAFT_FINAL_REVIEW",
-		}
-		_ = eventRepo.PublishUserEvent(ctx, p.UserID, "TRIP_PROCESSING_COMPLETED", payload)
+		userIDs = append(userIDs, p.UserID)
 	}
+	_ = eventRepo.PublishTripEventWS(ctx, tripID, userIDs, "TRIP_PROCESSING_COMPLETED", map[string]interface{}{
+		"trip_id": tripID,
+		"status":  "DRAFT_FINAL_REVIEW",
+	})
 
 	return nil
 }

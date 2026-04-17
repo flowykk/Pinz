@@ -13,6 +13,7 @@ env:
   apiGatewayPort: "8080"
   authServiceGrpcAddress: "auth-service:50051"
   tripServiceGrpcAddress: "trip-service:50052"
+  redisAddr: "redis:6379"
   swaggerHost: ""
   otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
   otelServiceName: "api-gateway-service"

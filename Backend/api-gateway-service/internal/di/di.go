@@ -38,7 +38,7 @@ func BuildDependencies() (*Dependencies, error) {
 		return nil, err
 	}
 	tripHandler := handlers.NewTripHandler(tripClient)
-	wsHandler := handlers.NewWSHandler(redisClient)
+	wsHandler := handlers.NewWSHandler(redisClient, tripClient)
 
 	return &Dependencies{
 		AuthHandler: authHandler,

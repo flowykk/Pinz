@@ -1,4 +1,4 @@
-# Pinz Backend
+[# Pinz Backend
 
 Микросервисный бэкенд приложения Pinz: авторизация, passkey, JWT, observability.
 
@@ -69,7 +69,11 @@ Real‑time уведомление о завершении шага 3–4 идё
 
 | Метод | Путь | Описание |
 |---|---|---|
-| GET | `/v1/ws` | WebSocket‑канал. Аутентификация по JWT; сервер подписывает подключение на Redis Pub/Sub `pinz:user:{user_id}:events`. Воркер trip-service публикует событие `TRIP_PROCESSING_COMPLETED` с payload `{ "trip_id", "status": "DRAFT_FINAL_REVIEW" }`. |
+| GET | `/api/v1/trips/creation/{trip_id}/review/ws` | WebSocket для стадии ревью флоу создания путешествия. JWT в `Authorization: Bearer <token>` handshake‑запроса. До апгрейда gateway вызывает `TripService.GetTrip` и отвечает `403` / `404`, если пользователь не участник или трипа нет. Сервер подписывается на `pinz:trip:{trip_id}:events` (изолированный канал на трип — параллельное создание нескольких путешествий не смешивается). Формат сообщения: `{"event":"TRIP_PROCESSING_COMPLETED","payload":{"trip_id":"...","status":"DRAFT_FINAL_REVIEW"}}`. Heartbeat: сервер шлёт `ping` каждые 30 с, клиент обязан отвечать `pong` (URLSession/браузеры делают автоматически). |
+| GET | `/api/v1/trips/{trip_id}/media/add/review/ws` | WebSocket для стадии ревью флоу добавления медиа в существующее путешествие (ТЗ 5.3). Контракт, авторизация и heartbeat — те же, что у `creation/{id}/review/ws`; подписка на тот же `pinz:trip:{trip_id}:events`. |
+| GET | `/v1/ws` | Общий per‑user канал (не trip‑specific). Используется для сквозных уведомлений, не привязанных к одному `trip_id`. JWT в `Authorization`. Подписка на `pinz:user:{user_id}:events`. Формат сообщений тот же (`{event, payload}`). |
+
+Воркер `trip-service` публикует WS‑события через `PublishTripEventWS`: одно и то же сообщение уходит в `pinz:trip:{trip_id}:events` (для per‑resource endpoint‑ов) и в `pinz:user:{user_id}:events` каждому участнику (для `/v1/ws`).
 
 ### Trip core / feed (trip-service через API Gateway)
 

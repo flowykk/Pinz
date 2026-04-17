@@ -62,6 +62,8 @@ spec:
               value: {{ .Values.env.authServiceGrpcAddress | quote }}
             - name: TRIP_SERVICE_GRPC_ADDRESS
               value: {{ .Values.env.tripServiceGrpcAddress | quote }}
+            - name: REDIS_ADDR
+              value: {{ .Values.env.redisAddr | quote }}
             - name: SWAGGER_HOST
               value: {{ .Values.env.swaggerHost | default "" | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
