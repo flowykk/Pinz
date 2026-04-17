@@ -17,11 +17,13 @@ final class TripInfoViewModelTests: XCTestCase {
         mockNetwork = MockNetworkService()
         sut = TripInfoViewModel(trip: trip, networkService: mockNetwork)
         sut.setRouter(mockRouter)
+        SelectedTripStorage.shared.clearSelection()
     }
 
     override func tearDown() {
         mockNetwork = nil
         sut = nil
+        SelectedTripStorage.shared.clearSelection()
         super.tearDown()
     }
 
@@ -231,5 +233,30 @@ final class TripInfoViewModelTests: XCTestCase {
         }
 
         XCTAssertTrue(didReceiveError)
+    }
+
+    func test_asyncDispatch_leaveTrip_callsLeaveTripAndClearsSelectionAndNavigatesBack() async {
+        SelectedTripStorage.shared.selectedTripID = trip.id
+
+        await sut.asyncDispatch(.leaveTrip)
+
+        XCTAssertEqual(mockNetwork.leaveTripCall, trip.id)
+        XCTAssertNil(SelectedTripStorage.shared.selectedTripID)
+        XCTAssertEqual(mockRouter.popCallCount, 1)
+    }
+
+    func test_asyncDispatch_leaveTrip_callsErrorCallbackOnFailure() async {
+        mockNetwork.leaveTripResult = .failure(URLError(.badServerResponse))
+        SelectedTripStorage.shared.selectedTripID = trip.id
+        var didReceiveError = false
+
+        await sut.asyncDispatch(.leaveTrip) { _ in
+            didReceiveError = true
+        }
+
+        XCTAssertTrue(didReceiveError)
+        XCTAssertEqual(mockNetwork.leaveTripCall, trip.id)
+        XCTAssertEqual(SelectedTripStorage.shared.selectedTripID, trip.id)
+        XCTAssertEqual(mockRouter.popCallCount, 0)
     }
 }

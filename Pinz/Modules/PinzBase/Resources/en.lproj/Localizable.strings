@@ -116,7 +116,12 @@
 "tripInfo.hint.tripNameRules" = "Trip name must contain only letters, digits, dots and underscores";
 "tripInfo.placeholder.description" = "Trip Description";
 "tripInfo.button.delete" = "Delete Trip";
+"tripInfo.button.leave" = "Leave trip";
 "tripInfo.label.pins" = "Trip Pins";
+"tripInfo.label.notifications" = "Notifications";
+"tripInfo.alert.leaveTrip.title" = "Leave trip?";
+"tripInfo.alert.leaveTrip.message" = "This action will remove you from the trip.";
+"tripInfo.alert.leaveTrip.confirm" = "Leave";
 "tripInfo.alert.deleteTrip.title" = "Delete Trip?";
 "tripInfo.alert.deleteTrip.message" = "This action will permanently delete this trip and all its related data.";
 "tripInfo.alert.deleteTrip.confirm" = "Delete";
