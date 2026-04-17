@@ -6,7 +6,7 @@ import PinzBase
 enum TripInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
 
-    case pins = "pin.fill"
+    case pins = "pin"
 
     case text = "text.alignleft"
 
@@ -14,9 +14,12 @@ enum TripInfoIcon: String, Setting.Icon {
     case calendar = "calendar"
     case info = "info.circle.fill"
 
+    case bell = "bell.badge"
+
     case paperplane = "paperplane"
 
     case trash = "trash"
+    case door = "door.right.hand.open"
 }
 
 public struct TripInfoView: View {
@@ -34,7 +37,10 @@ public struct TripInfoView: View {
     @State private var photoPickerShown = false
 
     @State private var showDeleteTripAlert = false
+    @State private var showLeaveTripAlert = false
     @State private var isStoriesPresented = false
+
+    @State private var areNotificationsEnabled = false
 
     @Environment(\.appRouter) private var router
 
@@ -63,13 +69,14 @@ public struct TripInfoView: View {
                     pins
                 }
                 general
+                notifications
                 if viewModel.state == .default {
                     description
                     privacy
                 } else {
                     descriptionEditing
                 }
-                delete
+                risky
             }
             .padding(.top, 8)
             .padding(.horizontal, 12)
@@ -77,6 +84,14 @@ public struct TripInfoView: View {
             Spacer()
         }
         .onAppear { viewModel.setRouter(router) }
+        .onChange(of: areNotificationsEnabled) { oldValue, newValue in
+            Task {
+                await viewModel.asyncDispatch(.updateNotifications(enabled: newValue)) { _ in
+                    areNotificationsEnabled = oldValue
+                    print("[TripInfo] failed to update notifications setting for trip id=\(viewModel.trip.id)")
+                }
+            }
+        }
         .background(PinzUIAsset.background.swiftUIColor)
         .itemsPickerSheet(
             isPresented: $isSeasonPickerPresented,
@@ -137,6 +152,20 @@ public struct TripInfoView: View {
         } message: {
             Text(PinzBaseStrings.TripInfo.Alert.DeleteTrip.message)
         }
+        .alert(PinzBaseStrings.TripInfo.Alert.LeaveTrip.title, isPresented: $showLeaveTripAlert) {
+            Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) {
+                showLeaveTripAlert = false
+            }
+            Button(PinzBaseStrings.TripInfo.Alert.LeaveTrip.confirm, role: .destructive) {
+                Task {
+                    await viewModel.asyncDispatch(.leaveTrip) { error in
+                        print("[TripInfo] failed to leave trip with id=\(viewModel.trip.id): \(error)")
+                    }
+                }
+            }
+        } message: {
+            Text(PinzBaseStrings.TripInfo.Alert.LeaveTrip.message)
+        }
     }
 
     @ViewBuilder
@@ -178,9 +207,7 @@ public struct TripInfoView: View {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.done),
                     action: .async {
-                        do {
-                            try await viewModel.asyncDispatch(.editTrip)
-                        } catch {
+                        await viewModel.asyncDispatch(.editTrip) { error in
                             print("[TripInfo] failed to update trip with id=\(viewModel.trip.id): \(error)")
                         }
                     }
@@ -336,6 +363,18 @@ public struct TripInfoView: View {
         ).animation(.default, value: viewModel.trip)
     }
 
+    private var notifications: some View {
+        SettingsGroup(
+            settings: [
+                .toggle(Setting.ToggleSetting(
+                    id: "tripNotifications",
+                    leading: .iconTitle(TripInfoIcon.bell, PinzBaseStrings.TripInfo.Label.notifications),
+                    value: $areNotificationsEnabled
+                )),
+            ],
+        )
+    }
+
     private var publishing: some View {
         SettingsGroup(
             title: PinzBaseStrings.TripInfo.Header.public,
@@ -376,8 +415,15 @@ public struct TripInfoView: View {
         )
     }
 
-    private var delete: some View {
+    private var risky: some View {
         SettingsGroup(settings: [
+            .default(Setting.DefaultSetting(
+                id: "tripLeave",
+                leading: .iconTitle(TripInfoIcon.door, PinzBaseStrings.TripInfo.Button.leave),
+                trailing: .icon(TripInfoIcon.chevronRight),
+                style: .destructive,
+                action: .plain { showLeaveTripAlert = true }
+            )),
             .default(Setting.DefaultSetting(
                 id: "tripDelete",
                 leading: .iconTitle(TripInfoIcon.trash, PinzBaseStrings.TripInfo.Button.delete),

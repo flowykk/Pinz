@@ -295,7 +295,6 @@ public struct ProfileView: View {
 
         SettingsGroup(
             settings: [
-                accountDeleteSetting,
                 .default(Setting.DefaultSetting(
                     id: "profileLeave",
                     leading: .iconTitle(ProfileIcon.door, PinzBaseStrings.Profile.Button.logout),
@@ -303,6 +302,7 @@ public struct ProfileView: View {
                     style: .destructive,
                     action: .plain { }
                 )),
+                accountDeleteSetting,
             ],
         )
     }

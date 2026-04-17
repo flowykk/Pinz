@@ -27,6 +27,8 @@ final class TripInfoViewModel {
 
     enum AsyncIntent {
         case editTrip
+        case updateNotifications(enabled: Bool)
+        case leaveTrip
     }
 
     var state: State = .default
@@ -70,10 +72,25 @@ final class TripInfoViewModel {
         }
     }
 
-    func asyncDispatch(_ intent: AsyncIntent) async throws {
+    func asyncDispatch(
+        _ intent: AsyncIntent,
+        onError: ((Error) -> Void)? = nil
+    ) async {
+        do {
+            try await executeAsyncIntent(intent)
+        } catch {
+            onError?(error)
+        }
+    }
+
+    private func executeAsyncIntent(_ intent: AsyncIntent) async throws {
         switch intent {
         case .editTrip:
             try await editTrip()
+        case let .updateNotifications(enabled):
+            try await updateNotifications(enabled)
+        case .leaveTrip:
+            try await leaveCurrentTrip()
         }
     }
 
@@ -107,6 +124,19 @@ final class TripInfoViewModel {
         onTripUpdated?()
         changeState(to: .default)
         editingSnapshot = nil
+    }
+
+    private func updateNotifications(_ enabled: Bool) async throws {
+        _ = try await networkService.updateTripSettings(
+            id: trip.id,
+            notificationsEnabled: enabled
+        )
+    }
+
+    private func leaveCurrentTrip() async throws {
+        _ = try await networkService.leaveTrip(id: trip.id)
+        SelectedTripStorage.shared.clearSelection()
+        dispatch(.navigate(.back))
     }
 
     private func mapCategory(_ category: TripCategory) -> String? {

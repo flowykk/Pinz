@@ -70,6 +70,8 @@ extension Setting.DefaultSetting {
                 valueView(for: values)
                     .padding(.trailing, 8)
                 trailingIconView(for: icon)
+            case let .toggle(value):
+                toggleView(with: value)
             }
         } else {
             EmptyView()
@@ -96,6 +98,10 @@ extension Setting.DefaultSetting {
     ) -> some View {
         Image(systemName: icon.rawValue)
             .roundedFont(size: 12, foregroundColor: color ?? trailColor)
+    }
+
+    private func toggleView(with value: Binding<Bool>) -> some View {
+        Toggle(isOn: value) {}
     }
 }
 

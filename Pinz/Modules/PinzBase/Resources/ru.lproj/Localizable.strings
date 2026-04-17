@@ -116,7 +116,12 @@
 "tripInfo.hint.tripNameRules" = "Название путешествия должно состоять из букв, цифр, точки и подчёркивания";
 "tripInfo.placeholder.description" = "Описание путешествия";
 "tripInfo.button.delete" = "Удалить путешествие";
+"tripInfo.button.leave" = "Выйти";
 "tripInfo.label.pins" = "Пины путешествия";
+"tripInfo.label.notifications" = "Уведомления";
+"tripInfo.alert.leaveTrip.title" = "Выйти из путешествия?";
+"tripInfo.alert.leaveTrip.message" = "Это действие удалит тебя из этого путешествия.";
+"tripInfo.alert.leaveTrip.confirm" = "Выйти";
 "tripInfo.alert.deleteTrip.title" = "Удалить путешествие?";
 "tripInfo.alert.deleteTrip.message" = "Это действие необратимо. Путешествие и все его пины будут удалены.";
 "tripInfo.alert.deleteTrip.confirm" = "Удалить";
