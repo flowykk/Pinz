@@ -41,6 +41,8 @@ public protocol NetworkServiceProtocol {
     func getTrips() async throws -> [TripDTO]
     func getFavouriteTrips(limit: Int?, offset: Int?) async throws -> [TripDTO]
     func getTrip(id: String) async throws -> GetTripResponseDTO
+    func requestTripCoverUpload(id: String, filename: String, contentType: String) async throws -> TripCoverUploadResponseDTO
+    func confirmTripCoverUpload(id: String, s3Key: String) async throws -> TripDTO
     func updateTrip(
         id: String,
         name: String?,
@@ -261,6 +263,31 @@ public final class NetworkService: NetworkServiceProtocol {
                 s3Key: s3Key
             ),
             type: ProfileResponseDTO.self
+        )
+    }
+
+    public func requestTripCoverUpload(
+        id: String,
+        filename: String,
+        contentType: String
+    ) async throws -> TripCoverUploadResponseDTO {
+        try await provider.request(
+            .requestTripCoverUpload(
+                id: id,
+                filename: filename,
+                contentType: contentType
+            ),
+            type: TripCoverUploadResponseDTO.self
+        )
+    }
+
+    public func confirmTripCoverUpload(id: String, s3Key: String) async throws -> TripDTO {
+        try await provider.request(
+            .confirmTripCoverUpload(
+                id: id,
+                s3Key: s3Key
+            ),
+            type: TripDTO.self
         )
     }
 

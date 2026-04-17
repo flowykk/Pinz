@@ -3,6 +3,7 @@ import Foundation
 @testable import PinzTrips
 import PinzBase
 import PinzDomain
+import UIKit
 
 final class TripInfoViewModelTests: XCTestCase {
 
@@ -70,6 +71,197 @@ final class TripInfoViewModelTests: XCTestCase {
         sut.trip.image = UIImage()
         sut.dispatch(.setImage(nil))
         XCTAssertNotNil(sut.trip.image)
+    }
+
+    @MainActor
+    func test_setImage_uploadsTripCoverAndConfirmsUpload() async throws {
+        mockNetwork.requestTripCoverUploadResult = .success(
+            TripCoverUploadResponseDTO(
+                uploadUrl: "https://storage.example.com/trip-cover-upload",
+                s3Key: "trip-cover-key"
+            )
+        )
+        mockNetwork.confirmTripCoverUploadResult = .success(
+            TripDTO(
+                id: trip.id,
+                name: "Updated trip cover",
+                description: nil,
+                category: "vacation",
+                season: "summer",
+                coverUrl: "https://cdn.example.com/trip-cover.jpg",
+                ownerUserId: "user-001",
+                privacyLevel: "public",
+                status: "published",
+                isPublished: true,
+                isGenerated: false,
+                likesCount: 0,
+                dislikesCount: 0,
+                startDateUnix: nil,
+                endDateUnix: nil,
+                createdAtUnix: 1_700_000_000,
+                updatedAtUnix: 1_700_000_000
+            )
+        )
+
+        sut.dispatch(.setImage(makeTestImage()))
+
+        for _ in 0..<60 {
+            if mockNetwork.requestTripCoverUploadCall != nil,
+               mockNetwork.confirmTripCoverUploadCall != nil {
+                break
+            }
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+
+        XCTAssertEqual(mockNetwork.requestTripCoverUploadCall?.id, trip.id)
+        XCTAssertFalse(mockNetwork.requestTripCoverUploadCall?.filename.isEmpty ?? true)
+        XCTAssertEqual(mockNetwork.confirmTripCoverUploadCall?.id, trip.id)
+        XCTAssertEqual(mockNetwork.confirmTripCoverUploadCall?.s3Key, "trip-cover-key")
+        XCTAssertEqual(mockNetwork.uploadToS3Call?.url, "https://storage.example.com/trip-cover-upload")
+        XCTAssertEqual(sut.trip.coverUrl, "https://cdn.example.com/trip-cover.jpg")
+        XCTAssertNil(sut.trip.image)
+    }
+
+    @MainActor
+    func test_editTrip_usesUploadedTripCoverUrl() async throws {
+        mockNetwork.requestTripCoverUploadResult = .success(
+            TripCoverUploadResponseDTO(
+                uploadUrl: "https://storage.example.com/trip-cover-upload",
+                s3Key: "trip-cover-key"
+            )
+        )
+        mockNetwork.confirmTripCoverUploadResult = .success(
+            TripDTO(
+                id: trip.id,
+                name: "Updated trip cover",
+                description: nil,
+                category: "vacation",
+                season: "summer",
+                coverUrl: "https://cdn.example.com/trip-cover-final.jpg",
+                ownerUserId: "user-001",
+                privacyLevel: "public",
+                status: "published",
+                isPublished: true,
+                isGenerated: false,
+                likesCount: 0,
+                dislikesCount: 0,
+                startDateUnix: nil,
+                endDateUnix: nil,
+                createdAtUnix: 1_700_000_000,
+                updatedAtUnix: 1_700_000_000
+            )
+        )
+        mockNetwork.updateTripResult = .success(
+            TripDTO(
+                id: trip.id,
+                name: "Updated trip",
+                description: nil,
+                category: "vacation",
+                season: "summer",
+                coverUrl: "https://cdn.example.com/update-trip-cover.jpg",
+                ownerUserId: "user-001",
+                privacyLevel: "public",
+                status: "published",
+                isPublished: true,
+                isGenerated: false,
+                likesCount: 0,
+                dislikesCount: 0,
+                startDateUnix: nil,
+                endDateUnix: nil,
+                createdAtUnix: 1_700_000_000,
+                updatedAtUnix: 1_700_000_000
+            )
+        )
+
+        sut.dispatch(.changeState)
+        sut.dispatch(.setImage(makeTestImage()))
+
+        await sut.asyncDispatch(.editTrip)
+
+        XCTAssertEqual(mockNetwork.requestTripCoverUploadCall?.id, trip.id)
+        XCTAssertEqual(mockNetwork.confirmTripCoverUploadCall?.id, trip.id)
+        XCTAssertEqual(mockNetwork.updateTripCall?.coverUrl, "https://cdn.example.com/trip-cover-final.jpg")
+        XCTAssertEqual(sut.trip.coverUrl, "https://cdn.example.com/update-trip-cover.jpg")
+    }
+
+    @MainActor
+    func test_editTrip_stillSavesTripIfUploadFlowFails() async {
+        mockNetwork.requestTripCoverUploadResult = .failure(URLError(.badServerResponse))
+        mockNetwork.updateTripResult = .success(
+            TripDTO(
+                id: trip.id,
+                name: "Updated trip",
+                description: nil,
+                category: "vacation",
+                season: "summer",
+                coverUrl: nil,
+                ownerUserId: "user-001",
+                privacyLevel: "public",
+                status: "published",
+                isPublished: true,
+                isGenerated: false,
+                likesCount: 0,
+                dislikesCount: 0,
+                startDateUnix: nil,
+                endDateUnix: nil,
+                createdAtUnix: 1_700_000_000,
+                updatedAtUnix: 1_700_000_000
+            )
+        )
+
+        sut.dispatch(.changeState)
+        sut.dispatch(.setImage(makeTestImage()))
+
+        await sut.asyncDispatch(.editTrip)
+
+        XCTAssertEqual(mockNetwork.requestTripCoverUploadCall?.id, trip.id)
+        XCTAssertNil(mockNetwork.confirmTripCoverUploadCall)
+        XCTAssertNotNil(mockNetwork.updateTripCall)
+        XCTAssertEqual(mockNetwork.updateTripCall?.coverUrl, nil)
+        XCTAssertEqual(sut.state, .default)
+    }
+
+    @MainActor
+    func test_editTrip_stillSavesTripIfUploadFlowConfirmFails() async {
+        mockNetwork.requestTripCoverUploadResult = .success(
+            TripCoverUploadResponseDTO(
+                uploadUrl: "https://storage.example.com/trip-cover-upload",
+                s3Key: "trip-cover-key"
+            )
+        )
+        mockNetwork.confirmTripCoverUploadResult = .failure(URLError(.badServerResponse))
+        mockNetwork.updateTripResult = .success(
+            TripDTO(
+                id: trip.id,
+                name: "Updated trip",
+                description: nil,
+                category: "vacation",
+                season: "summer",
+                coverUrl: nil,
+                ownerUserId: "user-001",
+                privacyLevel: "public",
+                status: "published",
+                isPublished: true,
+                isGenerated: false,
+                likesCount: 0,
+                dislikesCount: 0,
+                startDateUnix: nil,
+                endDateUnix: nil,
+                createdAtUnix: 1_700_000_000,
+                updatedAtUnix: 1_700_000_000
+            )
+        )
+
+        sut.dispatch(.changeState)
+        sut.dispatch(.setImage(makeTestImage()))
+
+        await sut.asyncDispatch(.editTrip)
+
+        XCTAssertEqual(mockNetwork.requestTripCoverUploadCall?.id, trip.id)
+        XCTAssertEqual(mockNetwork.confirmTripCoverUploadCall?.id, trip.id)
+        XCTAssertNotNil(mockNetwork.updateTripCall)
+        XCTAssertNil(mockNetwork.updateTripCall?.coverUrl)
+        XCTAssertEqual(sut.state, .default)
     }
 
     func test_navigate_back_callsPop() {
@@ -258,5 +450,14 @@ final class TripInfoViewModelTests: XCTestCase {
         XCTAssertEqual(mockNetwork.leaveTripCall, trip.id)
         XCTAssertEqual(SelectedTripStorage.shared.selectedTripID, trip.id)
         XCTAssertEqual(mockRouter.popCallCount, 0)
+    }
+
+    private func makeTestImage() -> UIImage {
+        let size = CGSize(width: 16, height: 16)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { context in
+            UIColor.systemBlue.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+        }
     }
 }

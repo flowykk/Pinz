@@ -32,6 +32,8 @@ enum PinzAPI {
     case getTrips
     case getFavouriteTrips(limit: Int?, offset: Int?)
     case getTrip(id: String)
+    case requestTripCoverUpload(id: String, filename: String, contentType: String)
+    case confirmTripCoverUpload(id: String, s3Key: String)
     case updateTrip(
         id: String, name: String?, description: String?, category: String?,
         season: String?, privacyLevel: String?, coverUrl: String?,
@@ -92,6 +94,8 @@ extension PinzAPI: TargetType {
         case .getTrips: endpointPath = "/trips"
         case .getFavouriteTrips: endpointPath = "/trips/favourites"
         case .getTrip(let id): endpointPath = "/trips/\(id)"
+        case .requestTripCoverUpload(let id, _, _): endpointPath = "/trips/\(id)/cover/upload"
+        case .confirmTripCoverUpload(let id, _): endpointPath = "/trips/\(id)/cover/confirm"
         case .updateTrip(let id, _, _, _, _, _, _, _, _): endpointPath = "/trips/\(id)"
         case .deleteTrip(let id): endpointPath = "/trips/\(id)"
         case .joinTripByToken: endpointPath = "/trips/join"
@@ -166,6 +170,8 @@ extension PinzAPI: TargetType {
         case let .updateProfile(username): return jsonParams(["username": username])
         case let .requestAvatarUpload(filename, contentType): return jsonParams(["filename": filename, "content_type": contentType])
         case let .confirmAvatarUpload(s3Key): return jsonParams(["s3_key": s3Key])
+        case let .requestTripCoverUpload(_, filename, contentType): return jsonParams(["filename": filename, "content_type": contentType])
+        case let .confirmTripCoverUpload(_, s3Key): return jsonParams(["s3_key": s3Key])
         case let .changeEmail(userId, newEmail):
             var params: [String: Any] = ["new_email": newEmail]
             if let userId { params["user_id"] = userId }
@@ -262,8 +268,12 @@ extension PinzAPI {
             json = #"{"user_id":"user-001","username":"new_username","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
         case .requestAvatarUpload:
             json = #"{"upload_url":"https://pinz.s3.example.com/upload","s3_key":"avatars/user-001/avatar.png","expires_at_unix":1700000000}"#
+        case .requestTripCoverUpload:
+            json = #"{"upload_url":"https://pinz.s3.example.com/upload","s3_key":"trips/trip-001/cover.png","expires_at_unix":1700000000}"#
         case .confirmAvatarUpload:
             json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
+        case .confirmTripCoverUpload:
+            json = #"{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу","category":"vacation","season":"spring","cover_url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}"#
         case .changeEmail:
             json = #"{"success":true,"message":"Verification code sent","email":"new@example.com","expires_at_unix":1700000000}"#
         case .confirmEmailChange:
