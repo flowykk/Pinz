@@ -226,7 +226,7 @@ func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.
 		outPins = append(outPins, s.pinWithMediaToProto(ctx, pin, mediaList, tags))
 	}
 	return &pb.GetTripResponse{
-		Trip: tripToProto(trip),
+		Trip: s.tripToProto(ctx, trip),
 		Pins: outPins,
 	}, nil
 }
@@ -286,7 +286,7 @@ func (s *TripService) ListUserTrips(ctx context.Context, req *pb.ListUserTripsRe
 	}
 	out := make([]*pb.Trip, len(trips))
 	for i, t := range trips {
-		out[i] = tripToProto(t)
+		out[i] = s.tripToProto(ctx, t)
 	}
 	return &pb.ListUserTripsResponse{Trips: out}, nil
 }
@@ -358,8 +358,8 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 		t := time.Unix(*req.EndDateUnix, 0)
 		trip.EndDate = &t
 	}
-	if req.CoverUrl != nil {
-		trip.CoverURL = *req.CoverUrl
+	if req.CoverS3Key != nil {
+		trip.CoverURL = *req.CoverS3Key
 	}
 	if err := s.tripRepo.Update(trip); err != nil {
 		if err == sql.ErrNoRows {
@@ -368,7 +368,7 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 		return nil, status.Error(codes.Internal, "failed to update trip")
 	}
 	updated, _ := s.tripRepo.GetByID(tripID)
-	return &pb.UpdateTripResponse{Trip: tripToProto(updated)}, nil
+	return &pb.UpdateTripResponse{Trip: s.tripToProto(ctx, updated)}, nil
 }
 
 // DeleteTrip — только админ. PINZ-98 (ТЗ 3.24.1/3.24.2): если трип в избранном у других — soft delete (удаление из списка участников); иначе — полное удаление.
@@ -990,7 +990,8 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 			}
 		}
 	}
-	// Aggregate trip: cover_url (first media), start_date, end_date from pins
+	// Aggregate trip: cover_url (S3 key of first image media), start_date, end_date from pins.
+	// Presigned URL resolves in tripToProto, so the column stores only the key.
 	pins, _ := s.pinRepo.ListByTripID(tripID)
 	var minStart, maxEnd *time.Time
 	var coverURL string
@@ -1000,7 +1001,7 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 			continue
 		}
 		if m.MediaType == "image" {
-			coverURL = s.presignedReadURL(ctx, m.S3Key)
+			coverURL = m.S3Key
 		}
 		break
 	}
@@ -1127,7 +1128,7 @@ func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripReques
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to reload trip")
 	}
-	return &pb.PublishTripResponse{Trip: tripToProto(updated)}, nil
+	return &pb.PublishTripResponse{Trip: s.tripToProto(ctx, updated)}, nil
 }
 
 // UpdateTripSettings — ТЗ 12.4.1: вкл/выкл уведомлений по трипу. Только участник, только свои настройки.
@@ -1220,7 +1221,7 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 		}
 
 		items[i] = &pb.FeedItem{
-			Trip:  tripToProto(t),
+			Trip:  s.tripToProto(ctx, t),
 			Pins:  protoPins,
 			Media: protoMedia,
 		}
@@ -1346,7 +1347,7 @@ func (s *TripService) ListFavourites(ctx context.Context, req *pb.ListFavourites
 		if trip.IsSoftDeleted {
 			continue
 		}
-		out = append(out, tripToProto(trip))
+		out = append(out, s.tripToProto(ctx, trip))
 	}
 	return &pb.ListFavouritesResponse{Trips: out}, nil
 }
@@ -1382,7 +1383,11 @@ func (s *TripService) resolveMediaDeletionsForTrip(tripID string, ids []string) 
 	return allowedIDs, s3Keys, nil
 }
 
-func tripToProto(t *models.Trip) *pb.Trip {
+func (s *TripService) tripToProto(ctx context.Context, t *models.Trip) *pb.Trip {
+	cover := ""
+	if t.CoverURL != "" {
+		cover = s.presignedReadURL(ctx, t.CoverURL)
+	}
 	out := &pb.Trip{
 		Id:            t.ID,
 		OwnerUserId:   t.OwnerUserID,
@@ -1394,7 +1399,7 @@ func tripToProto(t *models.Trip) *pb.Trip {
 		PrivacyLevel:  t.PrivacyLevel,
 		LikesCount:    t.LikesCount,
 		DislikesCount: t.DislikesCount,
-		CoverUrl:      t.CoverURL,
+		CoverUrl:      cover,
 		IsPublished:   t.IsPublished,
 		IsGenerated:   t.IsGenerated,
 		CreatedAtUnix:     t.CreatedAt.Unix(),

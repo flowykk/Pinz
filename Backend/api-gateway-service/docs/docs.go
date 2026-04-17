@@ -2227,7 +2227,7 @@ const docTemplate = `{
                 "category": {
                     "type": "string"
                 },
-                "cover_url": {
+                "cover_s3_key": {
                     "type": "string"
                 },
                 "description": {

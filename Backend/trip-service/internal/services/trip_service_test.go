@@ -69,9 +69,10 @@ func TestTripToProto(t *testing.T) {
 			},
 		},
 	}
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			out := tripToProto(tc.trip)
+			out := svc.tripToProto(context.Background(), tc.trip)
 			require.NotNil(t, out)
 			tc.check(t, out)
 		})

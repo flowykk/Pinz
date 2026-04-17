@@ -24,7 +24,7 @@ type UpdateTripRequest struct {
 	PrivacyLevel  *string `json:"privacy_level,omitempty"`
 	StartDateUnix *int64  `json:"start_date_unix,omitempty"`
 	EndDateUnix   *int64  `json:"end_date_unix,omitempty"`
-	CoverURL      *string `json:"cover_url,omitempty"`
+	CoverS3Key    *string `json:"cover_s3_key,omitempty"`
 }
 
 // GenerateInviteLinkRequest is the REST body for POST /api/v1/trips/:id/invite
