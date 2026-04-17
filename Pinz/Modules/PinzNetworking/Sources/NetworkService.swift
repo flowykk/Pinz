@@ -91,6 +91,7 @@ public protocol NetworkServiceProtocol {
         draftPins: [DraftPinInputDTO],
         deletedMediaIds: [String]
     ) async throws -> ApplyGroupsAndProcessDTO
+    func waitForTripProcessingCompleted(tripId: String, timeout: TimeInterval) async throws
     func getTripReview(tripId: String) async throws -> GetTripReviewDTO
     func finalizeTrip(
         tripId: String,
@@ -113,10 +114,12 @@ public final class NetworkService: NetworkServiceProtocol {
     public static let shared = NetworkService()
 
     private let provider: NetworkProvider<PinzAPI>
+    private let tripCreationWebSocketClient: TripCreationWebSocketClient
 
     public init() {
         let stub: Bool = false
         self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: 0.5)
+        self.tripCreationWebSocketClient = TripCreationWebSocketClient()
     }
 
     // MARK: Auth
@@ -643,6 +646,16 @@ public final class NetworkService: NetworkServiceProtocol {
                 deletedMediaIds: deletedMediaIds
             ),
             type: ApplyGroupsAndProcessDTO.self
+        )
+    }
+
+    public func waitForTripProcessingCompleted(
+        tripId: String,
+        timeout: TimeInterval
+    ) async throws {
+        try await tripCreationWebSocketClient.waitForTripProcessingCompleted(
+            tripId: tripId,
+            timeout: timeout
         )
     }
     

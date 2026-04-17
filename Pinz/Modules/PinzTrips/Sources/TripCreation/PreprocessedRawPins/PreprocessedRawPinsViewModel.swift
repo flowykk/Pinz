@@ -86,6 +86,10 @@ final class PreprocessedRawPinsViewModel {
                 draftPins: draftPins,
                 deletedMediaIds: deletedMediaIds
             )
+            try await networkService.waitForTripProcessingCompleted(
+                tripId: tripId,
+                timeout: 30
+            )
             let reviewResponse = try await networkService.getTripReview(tripId: tripId)
             let pins = reviewResponse.pins.enumerated().map { index, dto in dto.toPin(index: index) }
             dispatch(.navigate(.review(tripId: tripId, pins: pins)))

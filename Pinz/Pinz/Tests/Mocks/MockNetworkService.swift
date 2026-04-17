@@ -81,6 +81,7 @@ final class MockNetworkService: NetworkServiceProtocol {
     var applyGroupsAndProcessResult: Result<ApplyGroupsAndProcessDTO, Error> = .success(
         ApplyGroupsAndProcessDTO(message: "processing", status: "ok")
     )
+    var waitForTripProcessingCompletedResult: Result<Void, Error> = .success(())
     var getTripReviewResult: Result<GetTripReviewDTO, Error> = .success(
         GetTripReviewDTO(tripId: "trip-001", status: "ready", pins: [], similar: [])
     )
@@ -206,6 +207,9 @@ final class MockNetworkService: NetworkServiceProtocol {
     func createTrip(name: String, description: String?, category: String?, season: String?, filesToUpload: [FileToUploadDTO]) async throws -> CreateTripDTO { try createTripResult.get() }
     func processMediaGrouping(tripId: String, media: [MediaMetaEntryDTO]) async throws -> ProcessMediaGroupingDTO { try processMediaGroupingResult.get() }
     func applyGroupsAndProcess(tripId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String]) async throws -> ApplyGroupsAndProcessDTO { try applyGroupsAndProcessResult.get() }
+    func waitForTripProcessingCompleted(tripId: String, timeout: TimeInterval) async throws {
+        _ = try waitForTripProcessingCompletedResult.get()
+    }
     func getTripReview(tripId: String) async throws -> GetTripReviewDTO { try getTripReviewResult.get() }
     func finalizeTrip(tripId: String, pinUpdates: [PinUpdateInputDTO], mediaToDelete: [String]) async throws -> FinalizeTripDTO { try finalizeTripResult.get() }
     func startBattle(tripId: String) async throws -> StartBattleResponseDTO {
