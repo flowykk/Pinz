@@ -70,6 +70,18 @@ func (c *Client) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest) (*pb
 	return c.client.DeleteTrip(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) RequestTripCoverUpload(ctx context.Context, req *pb.RequestTripCoverUploadRequest) (*pb.RequestTripCoverUploadResponse, error) {
+	return c.client.RequestTripCoverUpload(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) ConfirmTripCoverUpload(ctx context.Context, req *pb.ConfirmTripCoverUploadRequest) (*pb.ConfirmTripCoverUploadResponse, error) {
+	return c.client.ConfirmTripCoverUpload(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) DeleteTripCover(ctx context.Context, req *pb.DeleteTripCoverRequest) (*pb.DeleteTripCoverResponse, error) {
+	return c.client.DeleteTripCover(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) GenerateInviteLink(ctx context.Context, req *pb.GenerateInviteLinkRequest) (*pb.GenerateInviteLinkResponse, error) {
 	return c.client.GenerateInviteLink(withUserIDMetadata(ctx), req)
 }

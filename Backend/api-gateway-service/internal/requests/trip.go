@@ -15,7 +15,8 @@ type FileToUploadEntry struct {
 	ContentType string `json:"content_type"`
 }
 
-// UpdateTripRequest is the REST body for PATCH /api/v1/trips/:id
+// UpdateTripRequest is the REST body for PATCH /api/v1/trips/:id.
+// Обложка редактируется отдельно: POST /cover/upload → PUT в S3 → POST /cover/confirm (DELETE /cover для очистки).
 type UpdateTripRequest struct {
 	Name          *string `json:"name,omitempty"`
 	Description   *string `json:"description,omitempty"`
@@ -24,7 +25,17 @@ type UpdateTripRequest struct {
 	PrivacyLevel  *string `json:"privacy_level,omitempty"`
 	StartDateUnix *int64  `json:"start_date_unix,omitempty"`
 	EndDateUnix   *int64  `json:"end_date_unix,omitempty"`
-	CoverS3Key    *string `json:"cover_s3_key,omitempty"`
+}
+
+// RequestTripCoverUploadRequest — тело POST /api/v1/trips/:id/cover/upload (step 1 двухшагового потока обложки).
+type RequestTripCoverUploadRequest struct {
+	Filename    string `json:"filename" example:"cover.jpg"`
+	ContentType string `json:"content_type" example:"image/jpeg"`
+}
+
+// ConfirmTripCoverUploadRequest — тело POST /api/v1/trips/:id/cover/confirm (step 2, s3_key из /cover/upload).
+type ConfirmTripCoverUploadRequest struct {
+	S3Key string `json:"s3_key"`
 }
 
 // GenerateInviteLinkRequest is the REST body for POST /api/v1/trips/:id/invite

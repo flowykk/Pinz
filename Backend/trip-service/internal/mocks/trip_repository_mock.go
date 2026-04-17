@@ -154,3 +154,17 @@ func (mr *MockTripRepositoryInterfaceMockRecorder) Update(t any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockTripRepositoryInterface)(nil).Update), t)
 }
+
+// UpdateCoverURL mocks base method.
+func (m *MockTripRepositoryInterface) UpdateCoverURL(tripID, s3Key string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateCoverURL", tripID, s3Key)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateCoverURL indicates an expected call of UpdateCoverURL.
+func (mr *MockTripRepositoryInterfaceMockRecorder) UpdateCoverURL(tripID, s3Key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCoverURL", reflect.TypeOf((*MockTripRepositoryInterface)(nil).UpdateCoverURL), tripID, s3Key)
+}

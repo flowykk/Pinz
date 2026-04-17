@@ -19,28 +19,31 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TripService_CreateTrip_FullMethodName            = "/trip.TripService/CreateTrip"
-	TripService_GetTrip_FullMethodName               = "/trip.TripService/GetTrip"
-	TripService_ListUserTrips_FullMethodName         = "/trip.TripService/ListUserTrips"
-	TripService_UpdateTrip_FullMethodName            = "/trip.TripService/UpdateTrip"
-	TripService_DeleteTrip_FullMethodName            = "/trip.TripService/DeleteTrip"
-	TripService_GenerateInviteLink_FullMethodName    = "/trip.TripService/GenerateInviteLink"
-	TripService_JoinTripByToken_FullMethodName       = "/trip.TripService/JoinTripByToken"
-	TripService_RemoveParticipant_FullMethodName     = "/trip.TripService/RemoveParticipant"
-	TripService_LeaveTrip_FullMethodName             = "/trip.TripService/LeaveTrip"
-	TripService_TransferAdmin_FullMethodName         = "/trip.TripService/TransferAdmin"
-	TripService_ProcessMediaGrouping_FullMethodName  = "/trip.TripService/ProcessMediaGrouping"
-	TripService_ApplyGroupsAndProcess_FullMethodName = "/trip.TripService/ApplyGroupsAndProcess"
-	TripService_GetTripReview_FullMethodName         = "/trip.TripService/GetTripReview"
-	TripService_FinalizeTrip_FullMethodName          = "/trip.TripService/FinalizeTrip"
-	TripService_PublishTrip_FullMethodName           = "/trip.TripService/PublishTrip"
-	TripService_UpdateTripSettings_FullMethodName    = "/trip.TripService/UpdateTripSettings"
-	TripService_ListFeed_FullMethodName              = "/trip.TripService/ListFeed"
-	TripService_LikeTrip_FullMethodName              = "/trip.TripService/LikeTrip"
-	TripService_DislikeTrip_FullMethodName           = "/trip.TripService/DislikeTrip"
-	TripService_AddToFavourites_FullMethodName       = "/trip.TripService/AddToFavourites"
-	TripService_RemoveFromFavourites_FullMethodName  = "/trip.TripService/RemoveFromFavourites"
-	TripService_ListFavourites_FullMethodName        = "/trip.TripService/ListFavourites"
+	TripService_CreateTrip_FullMethodName             = "/trip.TripService/CreateTrip"
+	TripService_GetTrip_FullMethodName                = "/trip.TripService/GetTrip"
+	TripService_ListUserTrips_FullMethodName          = "/trip.TripService/ListUserTrips"
+	TripService_UpdateTrip_FullMethodName             = "/trip.TripService/UpdateTrip"
+	TripService_DeleteTrip_FullMethodName             = "/trip.TripService/DeleteTrip"
+	TripService_RequestTripCoverUpload_FullMethodName = "/trip.TripService/RequestTripCoverUpload"
+	TripService_ConfirmTripCoverUpload_FullMethodName = "/trip.TripService/ConfirmTripCoverUpload"
+	TripService_DeleteTripCover_FullMethodName        = "/trip.TripService/DeleteTripCover"
+	TripService_GenerateInviteLink_FullMethodName     = "/trip.TripService/GenerateInviteLink"
+	TripService_JoinTripByToken_FullMethodName        = "/trip.TripService/JoinTripByToken"
+	TripService_RemoveParticipant_FullMethodName      = "/trip.TripService/RemoveParticipant"
+	TripService_LeaveTrip_FullMethodName              = "/trip.TripService/LeaveTrip"
+	TripService_TransferAdmin_FullMethodName          = "/trip.TripService/TransferAdmin"
+	TripService_ProcessMediaGrouping_FullMethodName   = "/trip.TripService/ProcessMediaGrouping"
+	TripService_ApplyGroupsAndProcess_FullMethodName  = "/trip.TripService/ApplyGroupsAndProcess"
+	TripService_GetTripReview_FullMethodName          = "/trip.TripService/GetTripReview"
+	TripService_FinalizeTrip_FullMethodName           = "/trip.TripService/FinalizeTrip"
+	TripService_PublishTrip_FullMethodName            = "/trip.TripService/PublishTrip"
+	TripService_UpdateTripSettings_FullMethodName     = "/trip.TripService/UpdateTripSettings"
+	TripService_ListFeed_FullMethodName               = "/trip.TripService/ListFeed"
+	TripService_LikeTrip_FullMethodName               = "/trip.TripService/LikeTrip"
+	TripService_DislikeTrip_FullMethodName            = "/trip.TripService/DislikeTrip"
+	TripService_AddToFavourites_FullMethodName        = "/trip.TripService/AddToFavourites"
+	TripService_RemoveFromFavourites_FullMethodName   = "/trip.TripService/RemoveFromFavourites"
+	TripService_ListFavourites_FullMethodName         = "/trip.TripService/ListFavourites"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -52,6 +55,10 @@ type TripServiceClient interface {
 	ListUserTrips(ctx context.Context, in *ListUserTripsRequest, opts ...grpc.CallOption) (*ListUserTripsResponse, error)
 	UpdateTrip(ctx context.Context, in *UpdateTripRequest, opts ...grpc.CallOption) (*UpdateTripResponse, error)
 	DeleteTrip(ctx context.Context, in *DeleteTripRequest, opts ...grpc.CallOption) (*DeleteTripResponse, error)
+	// Обложка трипа (двухшаговый поток, аналогичный аватару пользователя)
+	RequestTripCoverUpload(ctx context.Context, in *RequestTripCoverUploadRequest, opts ...grpc.CallOption) (*RequestTripCoverUploadResponse, error)
+	ConfirmTripCoverUpload(ctx context.Context, in *ConfirmTripCoverUploadRequest, opts ...grpc.CallOption) (*ConfirmTripCoverUploadResponse, error)
+	DeleteTripCover(ctx context.Context, in *DeleteTripCoverRequest, opts ...grpc.CallOption) (*DeleteTripCoverResponse, error)
 	// Участники и инвайты (Фаза 2)
 	GenerateInviteLink(ctx context.Context, in *GenerateInviteLinkRequest, opts ...grpc.CallOption) (*GenerateInviteLinkResponse, error)
 	JoinTripByToken(ctx context.Context, in *JoinTripByTokenRequest, opts ...grpc.CallOption) (*JoinTripByTokenResponse, error)
@@ -127,6 +134,36 @@ func (c *tripServiceClient) DeleteTrip(ctx context.Context, in *DeleteTripReques
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteTripResponse)
 	err := c.cc.Invoke(ctx, TripService_DeleteTrip_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) RequestTripCoverUpload(ctx context.Context, in *RequestTripCoverUploadRequest, opts ...grpc.CallOption) (*RequestTripCoverUploadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RequestTripCoverUploadResponse)
+	err := c.cc.Invoke(ctx, TripService_RequestTripCoverUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) ConfirmTripCoverUpload(ctx context.Context, in *ConfirmTripCoverUploadRequest, opts ...grpc.CallOption) (*ConfirmTripCoverUploadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConfirmTripCoverUploadResponse)
+	err := c.cc.Invoke(ctx, TripService_ConfirmTripCoverUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) DeleteTripCover(ctx context.Context, in *DeleteTripCoverRequest, opts ...grpc.CallOption) (*DeleteTripCoverResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteTripCoverResponse)
+	err := c.cc.Invoke(ctx, TripService_DeleteTripCover_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -312,6 +349,10 @@ type TripServiceServer interface {
 	ListUserTrips(context.Context, *ListUserTripsRequest) (*ListUserTripsResponse, error)
 	UpdateTrip(context.Context, *UpdateTripRequest) (*UpdateTripResponse, error)
 	DeleteTrip(context.Context, *DeleteTripRequest) (*DeleteTripResponse, error)
+	// Обложка трипа (двухшаговый поток, аналогичный аватару пользователя)
+	RequestTripCoverUpload(context.Context, *RequestTripCoverUploadRequest) (*RequestTripCoverUploadResponse, error)
+	ConfirmTripCoverUpload(context.Context, *ConfirmTripCoverUploadRequest) (*ConfirmTripCoverUploadResponse, error)
+	DeleteTripCover(context.Context, *DeleteTripCoverRequest) (*DeleteTripCoverResponse, error)
 	// Участники и инвайты (Фаза 2)
 	GenerateInviteLink(context.Context, *GenerateInviteLinkRequest) (*GenerateInviteLinkResponse, error)
 	JoinTripByToken(context.Context, *JoinTripByTokenRequest) (*JoinTripByTokenResponse, error)
@@ -357,6 +398,15 @@ func (UnimplementedTripServiceServer) UpdateTrip(context.Context, *UpdateTripReq
 }
 func (UnimplementedTripServiceServer) DeleteTrip(context.Context, *DeleteTripRequest) (*DeleteTripResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTrip not implemented")
+}
+func (UnimplementedTripServiceServer) RequestTripCoverUpload(context.Context, *RequestTripCoverUploadRequest) (*RequestTripCoverUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestTripCoverUpload not implemented")
+}
+func (UnimplementedTripServiceServer) ConfirmTripCoverUpload(context.Context, *ConfirmTripCoverUploadRequest) (*ConfirmTripCoverUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfirmTripCoverUpload not implemented")
+}
+func (UnimplementedTripServiceServer) DeleteTripCover(context.Context, *DeleteTripCoverRequest) (*DeleteTripCoverResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteTripCover not implemented")
 }
 func (UnimplementedTripServiceServer) GenerateInviteLink(context.Context, *GenerateInviteLinkRequest) (*GenerateInviteLinkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateInviteLink not implemented")
@@ -516,6 +566,60 @@ func _TripService_DeleteTrip_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TripServiceServer).DeleteTrip(ctx, req.(*DeleteTripRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_RequestTripCoverUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestTripCoverUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).RequestTripCoverUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_RequestTripCoverUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).RequestTripCoverUpload(ctx, req.(*RequestTripCoverUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_ConfirmTripCoverUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmTripCoverUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).ConfirmTripCoverUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_ConfirmTripCoverUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).ConfirmTripCoverUpload(ctx, req.(*ConfirmTripCoverUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_DeleteTripCover_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteTripCoverRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).DeleteTripCover(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_DeleteTripCover_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).DeleteTripCover(ctx, req.(*DeleteTripCoverRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -852,6 +956,18 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteTrip",
 			Handler:    _TripService_DeleteTrip_Handler,
+		},
+		{
+			MethodName: "RequestTripCoverUpload",
+			Handler:    _TripService_RequestTripCoverUpload_Handler,
+		},
+		{
+			MethodName: "ConfirmTripCoverUpload",
+			Handler:    _TripService_ConfirmTripCoverUpload_Handler,
+		},
+		{
+			MethodName: "DeleteTripCover",
+			Handler:    _TripService_DeleteTripCover_Handler,
 		},
 		{
 			MethodName: "GenerateInviteLink",

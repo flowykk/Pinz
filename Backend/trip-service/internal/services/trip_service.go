@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -358,9 +360,6 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 		t := time.Unix(*req.EndDateUnix, 0)
 		trip.EndDate = &t
 	}
-	if req.CoverS3Key != nil {
-		trip.CoverURL = *req.CoverS3Key
-	}
 	if err := s.tripRepo.Update(trip); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Error(codes.NotFound, "trip not found")
@@ -369,6 +368,144 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 	}
 	updated, _ := s.tripRepo.GetByID(tripID)
 	return &pb.UpdateTripResponse{Trip: s.tripToProto(ctx, updated)}, nil
+}
+
+// RequestTripCoverUpload выдаёт presigned PUT URL для загрузки обложки в S3 (step 1 двухшагового потока, аналог аватара пользователя).
+// ТЗ 3.2: обложка — редактируемый параметр; доступ — любому участнику.
+func (s *TripService) RequestTripCoverUpload(ctx context.Context, req *pb.RequestTripCoverUploadRequest) (*pb.RequestTripCoverUploadResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	filename := req.GetFilename()
+	if tripID == "" || filename == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id and filename are required")
+	}
+	if _, err := s.tripRepo.GetByID(tripID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check participant")
+	}
+	if !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext == "" {
+		ext = ".jpg"
+	}
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".heic":
+	default:
+		return nil, status.Error(codes.InvalidArgument, "cover must be .jpg, .jpeg, .png or .heic")
+	}
+
+	if s.mediaURLs == nil {
+		return nil, status.Error(codes.Unavailable, "cover upload is not configured")
+	}
+	s3Key := fmt.Sprintf("trips/%s/cover/%s%s", tripID, uuid.NewString(), ext)
+	uploadURL, err := s.mediaURLs.PresignedUploadURL(ctx, s3Key, req.GetContentType())
+	if err != nil {
+		slog.ErrorContext(ctx, "RequestTripCoverUpload: presign", "trip_id", tripID, "s3_key", s3Key, "error", err)
+		return nil, status.Error(codes.Internal, "failed to generate upload URL")
+	}
+	return &pb.RequestTripCoverUploadResponse{UploadUrl: uploadURL, S3Key: s3Key}, nil
+}
+
+// ConfirmTripCoverUpload сохраняет новый cover_url после успешной загрузки в S3 (step 2).
+// Старый объект в S3 удаляется best-effort, чтобы не оставлять мусор.
+func (s *TripService) ConfirmTripCoverUpload(ctx context.Context, req *pb.ConfirmTripCoverUploadRequest) (*pb.ConfirmTripCoverUploadResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	s3Key := req.GetS3Key()
+	if tripID == "" || s3Key == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id and s3_key are required")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check participant")
+	}
+	if !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+
+	if trip.CoverURL != "" && trip.CoverURL != s3Key && s.mediaURLs != nil {
+		if err := s.mediaURLs.DeleteObject(ctx, trip.CoverURL); err != nil {
+			slog.ErrorContext(ctx, "ConfirmTripCoverUpload: delete old cover (best-effort)", "trip_id", tripID, "key", trip.CoverURL, "error", err)
+		}
+	}
+	if err := s.tripRepo.UpdateCoverURL(tripID, s3Key); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		slog.ErrorContext(ctx, "ConfirmTripCoverUpload: update cover_url", "trip_id", tripID, "error", err)
+		return nil, status.Error(codes.Internal, "failed to update cover")
+	}
+	updated, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to reload trip")
+	}
+	return &pb.ConfirmTripCoverUploadResponse{Trip: s.tripToProto(ctx, updated)}, nil
+}
+
+// DeleteTripCover удаляет обложку: best-effort чистит объект в S3 и очищает cover_url.
+func (s *TripService) DeleteTripCover(ctx context.Context, req *pb.DeleteTripCoverRequest) (*pb.DeleteTripCoverResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check participant")
+	}
+	if !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+
+	if trip.CoverURL != "" && s.mediaURLs != nil {
+		if err := s.mediaURLs.DeleteObject(ctx, trip.CoverURL); err != nil {
+			slog.ErrorContext(ctx, "DeleteTripCover: s3 delete (best-effort)", "trip_id", tripID, "key", trip.CoverURL, "error", err)
+		}
+	}
+	if err := s.tripRepo.UpdateCoverURL(tripID, ""); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		slog.ErrorContext(ctx, "DeleteTripCover: clear cover_url", "trip_id", tripID, "error", err)
+		return nil, status.Error(codes.Internal, "failed to delete cover")
+	}
+	updated, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to reload trip")
+	}
+	return &pb.DeleteTripCoverResponse{Trip: s.tripToProto(ctx, updated)}, nil
 }
 
 // DeleteTrip — только админ. PINZ-98 (ТЗ 3.24.1/3.24.2): если трип в избранном у других — soft delete (удаление из списка участников); иначе — полное удаление.
