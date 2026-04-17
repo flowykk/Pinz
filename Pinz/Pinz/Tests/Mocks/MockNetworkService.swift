@@ -35,6 +35,7 @@ final class MockNetworkService: NetworkServiceProtocol {
     var removeParticipantError: Error?
     var publishTripResult: Result<TripDTO, Error> = .success(MockNetworkService.stubTrip)
     var updateTripSettingsResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
+    var updateTripSettingsCall: (id: String, notificationsEnabled: Bool)?
     var likeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var dislikeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var addTripToFavouritesResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
@@ -122,7 +123,10 @@ final class MockNetworkService: NetworkServiceProtocol {
         if let error = removeParticipantError { throw error }
     }
     func publishTrip(id: String, publishWhole: Bool, pinIds: [String]) async throws -> TripDTO { try publishTripResult.get() }
-    func updateTripSettings(id: String, notificationsEnabled: Bool) async throws -> SuccessDTO { try updateTripSettingsResult.get() }
+    func updateTripSettings(id: String, notificationsEnabled: Bool) async throws -> SuccessDTO {
+        updateTripSettingsCall = (id: id, notificationsEnabled: notificationsEnabled)
+        return try updateTripSettingsResult.get()
+    }
     func likeTrip(id: String) async throws -> SuccessDTO { try likeTripResult.get() }
     func dislikeTrip(id: String) async throws -> SuccessDTO { try dislikeTripResult.get() }
     func addTripToFavourites(id: String) async throws -> SuccessDTO { try addTripToFavouritesResult.get() }

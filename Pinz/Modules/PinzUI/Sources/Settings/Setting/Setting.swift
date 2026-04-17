@@ -35,6 +35,7 @@ public enum Setting {
         case values([Value])
         case icon(Icon, Color? = nil)
         case valuesIcon([Value], Icon)
+        case toggle(Binding<Bool>)
     }
 
     public struct DefaultSetting {
@@ -117,6 +118,23 @@ public enum Setting {
         case chevrons = "chevron.up.chevron.down"
     }
 
+    public struct ToggleSetting {
+
+        let id: String
+        let leading: Leading
+        var value: Binding<Bool>
+
+        public init(
+            id: String,
+            leading: Leading,
+            value: Binding<Bool>,
+        ) {
+            self.id = id
+            self.leading = leading
+            self.value = value
+        }
+    }
+
     case `default`(DefaultSetting)
     case textField(TextFieldSetting)
 
@@ -126,6 +144,14 @@ public enum Setting {
             leading: setting.leading,
             trailing: .valuesIcon(setting.value.flatMap { [$0] } ?? [], PickerIcon.chevrons),
             action: .plain { setting.isPickerPresented.wrappedValue = true }
+        ))
+    }
+
+    public static func toggle(_ setting: ToggleSetting) -> Self {
+        .default(DefaultSetting(
+            id: setting.id,
+            leading: setting.leading,
+            trailing: .toggle(setting.value),
         ))
     }
 }

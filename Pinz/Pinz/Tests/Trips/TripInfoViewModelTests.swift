@@ -118,7 +118,7 @@ final class TripInfoViewModelTests: XCTestCase {
         sut.trip.startDate = Date(timeIntervalSince1970: 1_700_000_100)
         sut.trip.endDate = Date(timeIntervalSince1970: 1_700_010_200)
 
-        try await sut.asyncDispatch(.editTrip)
+        await sut.asyncDispatch(.editTrip)
 
         let request = mockNetwork.updateTripCall
         XCTAssertEqual(request?.id, trip.id)
@@ -138,12 +138,12 @@ final class TripInfoViewModelTests: XCTestCase {
         sut.dispatch(.changeState)
         mockNetwork.updateTripResult = .failure(URLError(.badServerResponse))
 
-        do {
-            try await sut.asyncDispatch(.editTrip)
-            XCTFail("editTrip should fail")
-        } catch {
-            XCTAssertEqual(sut.state, .editing)
+        var didReceiveError = false
+        await sut.asyncDispatch(.editTrip) { _ in
+            didReceiveError = true
         }
+        XCTAssertTrue(didReceiveError)
+        XCTAssertEqual(sut.state, .editing)
     }
 
     func test_editTrip_callsUpdateCallback() async throws {
@@ -177,7 +177,7 @@ final class TripInfoViewModelTests: XCTestCase {
             )
         )
 
-        try await callbackTripInfoViewModel.asyncDispatch(.editTrip)
+        await callbackTripInfoViewModel.asyncDispatch(.editTrip)
         wait(for: [callbackExpectation], timeout: 1.0)
     }
 
@@ -208,10 +208,28 @@ final class TripInfoViewModelTests: XCTestCase {
         sut.trip.category = .custom("custom-category")
         sut.trip.season = .autumn
 
-        try await sut.asyncDispatch(.editTrip)
+        await sut.asyncDispatch(.editTrip)
 
         let request = mockNetwork.updateTripCall
         XCTAssertEqual(request?.category, "custom-category")
         XCTAssertEqual(request?.season, "autumn")
+    }
+
+    func test_asyncDispatch_updateNotifications_sendsSettingsRequest() async {
+        await sut.asyncDispatch(.updateNotifications(enabled: true))
+
+        XCTAssertEqual(mockNetwork.updateTripSettingsCall?.id, trip.id)
+        XCTAssertEqual(mockNetwork.updateTripSettingsCall?.notificationsEnabled, true)
+    }
+
+    func test_asyncDispatch_updateNotifications_callsErrorCallbackOnFailure() async {
+        mockNetwork.updateTripSettingsResult = .failure(URLError(.badServerResponse))
+        var didReceiveError = false
+
+        await sut.asyncDispatch(.updateNotifications(enabled: false)) { _ in
+            didReceiveError = true
+        }
+
+        XCTAssertTrue(didReceiveError)
     }
 }

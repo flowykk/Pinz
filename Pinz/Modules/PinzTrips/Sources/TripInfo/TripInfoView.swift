@@ -6,13 +6,15 @@ import PinzBase
 enum TripInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
 
-    case pins = "pin.fill"
+    case pins = "pin"
 
     case text = "text.alignleft"
 
     case sun = "sun.max.fill"
     case calendar = "calendar"
     case info = "info.circle.fill"
+
+    case bell = "bell.badge"
 
     case paperplane = "paperplane"
 
@@ -35,6 +37,8 @@ public struct TripInfoView: View {
 
     @State private var showDeleteTripAlert = false
     @State private var isStoriesPresented = false
+
+    @State private var areNotificationsEnabled = false
 
     @Environment(\.appRouter) private var router
 
@@ -63,6 +67,7 @@ public struct TripInfoView: View {
                     pins
                 }
                 general
+                notifications
                 if viewModel.state == .default {
                     description
                     privacy
@@ -77,6 +82,14 @@ public struct TripInfoView: View {
             Spacer()
         }
         .onAppear { viewModel.setRouter(router) }
+        .onChange(of: areNotificationsEnabled) { oldValue, newValue in
+            Task {
+                await viewModel.asyncDispatch(.updateNotifications(enabled: newValue)) { _ in
+                    areNotificationsEnabled = oldValue
+                    print("[TripInfo] failed to update notifications setting for trip id=\(viewModel.trip.id)")
+                }
+            }
+        }
         .background(PinzUIAsset.background.swiftUIColor)
         .itemsPickerSheet(
             isPresented: $isSeasonPickerPresented,
@@ -178,9 +191,7 @@ public struct TripInfoView: View {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.done),
                     action: .async {
-                        do {
-                            try await viewModel.asyncDispatch(.editTrip)
-                        } catch {
+                        await viewModel.asyncDispatch(.editTrip) { error in
                             print("[TripInfo] failed to update trip with id=\(viewModel.trip.id): \(error)")
                         }
                     }
@@ -334,6 +345,18 @@ public struct TripInfoView: View {
             title: PinzBaseStrings.TripInfo.Header.general,
             settings: viewModel.state == .default ? defaultSettings : editingSettings
         ).animation(.default, value: viewModel.trip)
+    }
+
+    private var notifications: some View {
+        SettingsGroup(
+            settings: [
+                .toggle(Setting.ToggleSetting(
+                    id: "tripNotifications",
+                    leading: .iconTitle(TripInfoIcon.bell, "Notifications"),
+                    value: $areNotificationsEnabled
+                )),
+            ],
+        )
     }
 
     private var publishing: some View {
