@@ -65,6 +65,7 @@
 "emailChange.label.newEmail" = "Введи новый email";
 "emailChange.placeholder.email" = "example@example.com";
 "emailChange.description.verificationCode" = "Теперь введи код, который пришёл на новый email";
+"emailChange.button.receiveCode" = "Получить код";
 
 // MARK: - Saved Maps
 "savedMaps.title.main" = "Сохранённые карты";
@@ -130,6 +131,7 @@
 "tripPins.title" = "Пины путешествия";
 "tripPins.button.addMedia" = "Добавить медиа";
 "tripPins.button.addPin" = "Добавить пин";
+"tripPins.empty.noPins" = "В этом путешествии пока нет пинов";
 
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "Твои путешествия";
@@ -199,3 +201,7 @@
 "alert.clearCache.title" = "Очистить данные";
 "alert.clearCache.message" = "Ты уверен? Это удалит все сохранённые изображения.";
 "alert.clearCache.confirm" = "Очистить";
+
+"alert.deleteAccount.title" = "Удалить аккаунт?";
+"alert.deleteAccount.message" = "Это действие необратимо. Аккаунт будет удалён без возможности восстановления.";
+"alert.deleteAccount.confirm" = "Удалить";

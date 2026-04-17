@@ -28,6 +28,9 @@ final class MockRouter: AppRouting {
     var popCallCount = 0
     var lastPopByCount = 0
     var tripInfoUpdateHandler: (() -> Void)?
+    var currentProfileUpdateUser: User?
+    var currentProfileUpdateCallCount: Int = 0
+    private var currentProfileUpdateAction: ((User) -> Void)?
 
     func navigateToMain() { navigatedToMain = true }
     func navigateToTripInfo(trip: Trip, onTripUpdated: (() -> Void)?) {
@@ -35,6 +38,19 @@ final class MockRouter: AppRouting {
         tripInfoUpdateHandler = onTripUpdated
     }
     func navigateToProfile(user: User) { navigatedProfile = user }
+    func subscribeToCurrentProfileUpdates(_ action: @escaping (User) -> Void) {
+        currentProfileUpdateAction = action
+    }
+    func notifyCurrentProfileUpdated(_ user: User) {
+        currentProfileUpdateUser = user
+        currentProfileUpdateCallCount += 1
+        currentProfileUpdateAction?(user)
+        currentProfileUpdateAction = nil
+    }
+    func clearCurrentProfileUpdates() {
+        currentProfileUpdateAction = nil
+        currentProfileUpdateUser = nil
+    }
     func navigateToPinInfo(pin: Pin) { navigatedPinInfo = pin }
     func navigateToPinCreation() { navigatedToPinCreation = true }
     func navigateToTripMembers() { navigatedToTripMembers = true }

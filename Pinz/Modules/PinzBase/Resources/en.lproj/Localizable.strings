@@ -65,6 +65,7 @@
 "emailChange.label.newEmail" = "Enter New Email";
 "emailChange.placeholder.email" = "example@example.com";
 "emailChange.description.verificationCode" = "Now enter the code sent to the new email";
+"emailChange.button.receiveCode" = "Receive Code";
 
 // MARK: - Saved Maps
 "savedMaps.title.main" = "Saved Maps";
@@ -130,6 +131,7 @@
 "tripPins.title" = "Trip Pins";
 "tripPins.button.addMedia" = "Add Media";
 "tripPins.button.addPin" = "Add Pin";
+"tripPins.empty.noPins" = "There are no pins in this trip yet";
 
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "My Trips";
@@ -199,3 +201,7 @@
 "alert.clearCache.title" = "Clear Data";
 "alert.clearCache.message" = "Are you sure? This will delete all saved images.";
 "alert.clearCache.confirm" = "Clear";
+
+"alert.deleteAccount.title" = "Delete account?";
+"alert.deleteAccount.message" = "This action is irreversible. Your account will be permanently deleted.";
+"alert.deleteAccount.confirm" = "Delete";

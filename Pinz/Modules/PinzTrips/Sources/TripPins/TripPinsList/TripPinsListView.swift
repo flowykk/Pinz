@@ -26,7 +26,11 @@ public struct TripPinsListView: View {
                     HeaderTitle(PinzBaseStrings.TripPins.title)
                 })
             } content: {
-                pinsList.padding(.bottom, 90)
+                pinsList
+            }
+
+            if viewModel.trip.pins.isEmpty {
+                NoPinsPlaceholderView()
             }
 
             gradientWithButtons
@@ -35,13 +39,18 @@ public struct TripPinsListView: View {
         .onAppear { viewModel.setRouter(router) }
     }
 
+    @ViewBuilder
     private var pinsList: some View {
-        DefaultPinsListView(
-            pins: viewModel.trip.pins,
-            pinTapped: { pin in
-                viewModel.dispatch(.navigate(.pinInfo(pin)))
-            },
-        )
+        if viewModel.trip.pins.isEmpty {
+            EmptyView()
+        } else {
+            DefaultPinsListView(
+                pins: viewModel.trip.pins,
+                pinTapped: { pin in
+                    viewModel.dispatch(.navigate(.pinInfo(pin)))
+                },
+            ).padding(.bottom, 90)
+        }
     }
 
     private var gradientWithButtons: some View {

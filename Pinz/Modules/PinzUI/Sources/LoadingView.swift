@@ -4,7 +4,9 @@ public struct LoadingView: View {
 
     private let status: String?
 
-    public init(status: String? = nil) {
+    public init(
+        status: String? = nil
+    ) {
         self.status = status
     }
 

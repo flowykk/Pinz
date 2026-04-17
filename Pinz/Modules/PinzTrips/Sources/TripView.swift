@@ -62,6 +62,7 @@ public struct TripView: View {
             viewModel.dispatch(.checkAndUpdateTrip(availableTrips))
             Task {
                 try? await viewModel.asyncDispatch(.loadSavedTrip)
+                try? await viewModel.asyncDispatch(.loadCurrentProfile)
             }
 //            TokenStorage.shared.save(
 //                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Nzc1Mjk5OTksImlhdCI6MTc3NDkzNzk5OSwidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoidXNlciJ9.hhE9dSMOkata-Zw14hii9OBAybfwLapTOSzNIFobKMI",
@@ -157,14 +158,15 @@ public struct TripView: View {
                 Spacer()
 
                 VStack(spacing: 6) {
-                    button(.image(PinzUIAsset.avatar.image)) {
-                        viewModel.dispatch(.navigate(.profile(User(nickname: "flowykk", email: "cristgames123@gmail.com"))))
+                    button(.image(viewModel.currentUserAvatarImage ?? ImageProviderType.user.placeholder)) {
+                        if let user = viewModel.currentUser {
+                            viewModel.dispatch(.navigate(.profile(user)))
+                        }
                     }
+                    .disabledWithOpacity(viewModel.isProfileLoading || viewModel.currentUser == nil)
                     if let selectedTrip {
                         button(.icon("list.bullet")) {
-                            if !selectedTrip.pins.isEmpty {
-                                isPinsListPresented = true
-                            }
+                            isPinsListPresented = true
                         }
                         button(.icon("person.2.fill")) {
                             viewModel.dispatch(.navigate(.members))
@@ -182,12 +184,7 @@ public struct TripView: View {
             viewModel.dispatch(.navigate(.tripInfo))
         } label: {
             HStack(spacing: 8) {
-                Image(uiImage: trip.image ?? PinzUIAsset.avatar.image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(38)
-                    .cornerRadius(12)
-                    .clipped()
+                tripImage(for: trip)
 
                 Text(trip.name)
                     .roundedFont(size: 16)
@@ -202,6 +199,48 @@ public struct TripView: View {
                     .cornerRadius(Constants.buttonsCornerRadius)
             )
         }.buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func tripImage(for trip: Trip) -> some View {
+        if let localImage = trip.image {
+            image(for: localImage)
+        } else if let url = URL(string: trip.coverUrl ?? "") {
+            LoadableImageThumbnail(url: url) { state in
+                remoteTripImage(for: state)
+            }
+        } else {
+            image(for: PinzDomainAsset.groupPlaceholder.image)
+        }
+    }
+
+    @ViewBuilder
+    private func remoteTripImage(for state: LoadableMediaState) -> some View {
+        switch state {
+        case .empty:
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .frame(38)
+                .cornerRadius(12)
+                .overlay {
+                    ProgressView()
+                        .tint(.white)
+                }
+                .clipped()
+        case .ready(let readyImage):
+            image(for: readyImage)
+        case .failure:
+            image(for: PinzDomainAsset.groupPlaceholder.image)
+        }
+    }
+
+    private func image(for uiImage: UIImage) -> some View {
+        Image(uiImage: uiImage)
+            .resizable()
+            .scaledToFill()
+            .frame(38)
+            .cornerRadius(12)
+            .clipped()
     }
 
     enum ButtonType {

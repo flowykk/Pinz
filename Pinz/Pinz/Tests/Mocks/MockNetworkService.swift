@@ -38,7 +38,23 @@ final class MockNetworkService: NetworkServiceProtocol {
     var likeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var dislikeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var addTripToFavouritesResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
+    var getFavouriteTripsResult: Result<[TripDTO], Error> = .success([])
     var removeTripFromFavouritesError: Error?
+
+    // MARK: - Profile
+
+    var getProfileResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
+    var updateProfileResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
+    var deleteAccountResult: Result<DeleteAccountResponseDTO, Error> = .success(DeleteAccountResponseDTO(success: true))
+    var requestAvatarUploadResult: Result<AvatarUploadResponseDTO, Error> = .success(
+        AvatarUploadResponseDTO(uploadUrl: "https://example.com/upload", s3Key: "mock-s3-key")
+    )
+    var confirmAvatarUploadResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
+    var changeEmailResult: Result<ChangeEmailResponseDTO, Error> = .success(ChangeEmailResponseDTO(success: true))
+    var confirmEmailChangeResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
+    var requestAvatarUploadCall: (filename: String, contentType: String)?
+    var confirmAvatarUploadCall: String?
+    var uploadToS3Call: (url: String, dataBytes: Int, contentType: String)?
 
     // MARK: - Trip creation / add-media
 
@@ -113,8 +129,29 @@ final class MockNetworkService: NetworkServiceProtocol {
     func removeTripFromFavourites(id: String) async throws {
         if let error = removeTripFromFavouritesError { throw error }
     }
+    func getProfile() async throws -> ProfileResponseDTO { try getProfileResult.get() }
+    func updateProfile(username: String) async throws -> ProfileResponseDTO {
+        try updateProfileResult.get()
+    }
+    func deleteAccount() async throws -> DeleteAccountResponseDTO { try deleteAccountResult.get() }
+    func requestAvatarUpload(filename: String, contentType: String) async throws -> AvatarUploadResponseDTO {
+        requestAvatarUploadCall = (filename, contentType)
+        return try requestAvatarUploadResult.get()
+    }
+    func confirmAvatarUpload(s3Key: String) async throws -> ProfileResponseDTO {
+        confirmAvatarUploadCall = s3Key
+        return try confirmAvatarUploadResult.get()
+    }
+    func changeEmail(userId: String?, newEmail: String) async throws -> ChangeEmailResponseDTO {
+        try changeEmailResult.get()
+    }
+    func confirmEmailChange(verificationCode: String) async throws -> ProfileResponseDTO { try confirmEmailChangeResult.get() }
+    func getFavouriteTrips(limit: Int?, offset: Int?) async throws -> [TripDTO] {
+        try getFavouriteTripsResult.get()
+    }
 
     func uploadToS3(url: String, data: Data, contentType: String) async throws {
+        uploadToS3Call = (url, data.count, contentType)
         if let uploadToS3Error { throw uploadToS3Error }
     }
 

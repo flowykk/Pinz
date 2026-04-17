@@ -22,9 +22,10 @@ enum ProfileIcon: String, Setting.Icon {
 public struct ProfileView: View {
 
     @State var viewModel: ProfileViewModel
-    
+
     @State var cacheSize = ""
     @State var showClearCacheAlert = false
+    @State var showDeleteAccountAlert = false
 
     @State var imageEditingDialogShown = false
     @State var photoPickerShown = false
@@ -37,7 +38,7 @@ public struct ProfileView: View {
             leading: .iconTitle(ProfileIcon.trash, PinzBaseStrings.Profile.Button.deleteAccount),
             trailing: .icon(ProfileIcon.chevronRight),
             style: .destructive,
-            action: .plain { }
+            action: .plain { showDeleteAccountAlert = true }
         ))
     }
 
@@ -46,26 +47,38 @@ public struct ProfileView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
+        CollapsibleHeader(needsBlur: true) {
             header
+        } content: {
+            if viewModel.isLoading && viewModel.state == .default {
+                GeometryReader { proxy in
+                    VStack {
+                        Spacer()
+                        LoadingView()
+                        Spacer()
+                    }
+                    .frame(height: max(1, proxy.size.height))
+                    .frame(maxWidth: .infinity)
+                }
+            } else {
+                VStack(spacing: 12) {
+                    avatar
+                        .padding(.top, 12)
 
-            avatar
-                .padding(.top, 12)
-
-            VStack(spacing: 12) {
-                switch viewModel.state {
-                case .default:
-                    defaultSettings
-                case .editing:
-                    editingSettings
+                    VStack(spacing: 12) {
+                        switch viewModel.state {
+                        case .default:
+                            defaultSettings
+                        case .editing:
+                            editingSettings
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 24)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
-
-            Spacer()
         }
-        .onAppear { 
+        .onAppear {
             viewModel.setRouter(router)
             cacheSize = FileManagerImageStorage.shared.getCacheSize()
         }
@@ -98,7 +111,16 @@ public struct ProfileView: View {
         } message: {
             Text(PinzBaseStrings.Alert.ClearCache.message)
         }
+        .alert(PinzBaseStrings.Alert.DeleteAccount.title, isPresented: $showDeleteAccountAlert) {
+            Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) { }
+            Button(PinzBaseStrings.Alert.DeleteAccount.confirm, role: .destructive) {
+                viewModel.dispatch(.deleteAccount)
+            }
+        } message: {
+            Text(PinzBaseStrings.Alert.DeleteAccount.message)
+        }
     }
+
     @ViewBuilder
     private var header: some View {
         switch viewModel.state {
@@ -118,11 +140,13 @@ public struct ProfileView: View {
                             tint: PinzUIAsset.textPrimary.swiftUIColor,
                             action: .plain { isAddPersonPresented = true }
                         )
+                        .disabledWithOpacity(viewModel.isLoading)
                         PinzButton(
                             type: .icon(.pencil),
                             tint: PinzUIAsset.textPrimary.swiftUIColor,
                             action: .plain { viewModel.dispatch(.changeState) }
                         )
+                        .disabledWithOpacity(viewModel.isLoading)
                     }
                 }
             )
@@ -137,20 +161,15 @@ public struct ProfileView: View {
             } rightView: {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.done),
-                    action: .plain { viewModel.dispatch(.changeState) }
-                )
+                    action: .plain { viewModel.dispatch(.saveProfile) }
+                ).disabledWithOpacity(viewModel.isLoading)
             }
         }
     }
 
     private var avatar: some View {
         VStack {
-            Image(uiImage: viewModel.userImage)
-                .resizable()
-                .scaledToFill()
-                .frame(120)
-                .cornerRadius(60)
-                .clipped()
+            avatarImage
 
             Group {
                 switch viewModel.state {
@@ -166,6 +185,48 @@ public struct ProfileView: View {
             }
             .roundedFont(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
         }
+    }
+
+    @ViewBuilder
+    private var avatarImage: some View {
+        if let localImage = viewModel.userImage {
+            avatarImage(for: localImage)
+        } else if let url = URL(string: viewModel.user.avatarUrl ?? "") {
+            LoadableImageThumbnail(url: url) { state in
+                remoteAvatarImage(for: state)
+            }
+        } else {
+            avatarImage(for: ImageProviderType.user.placeholder)
+        }
+    }
+
+    @ViewBuilder
+    private func remoteAvatarImage(for state: LoadableMediaState) -> some View {
+        switch state {
+        case .empty:
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .frame(120)
+                .cornerRadius(60)
+                .overlay {
+                    ProgressView()
+                        .tint(.white)
+                }
+                .clipped()
+        case .ready(let image):
+            avatarImage(for: image)
+        case .failure:
+            avatarImage(for: ImageProviderType.user.placeholder)
+        }
+    }
+
+    private func avatarImage(for image: UIImage) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(120)
+            .cornerRadius(60)
+            .clipped()
     }
 
     @ViewBuilder
@@ -258,17 +319,17 @@ public struct ProfileView: View {
                 )),
             ],
             subtitle: PinzBaseStrings.Profile.Hint.nicknameRules
-        ).padding(.bottom, 8)
+        )
 
         SettingsGroup(
             settings: [
                 .default(Setting.DefaultSetting(
-                    id: "profileEmailChanging",
+                    id: "profileEmail",
                     leading: .title(PinzBaseStrings.Profile.Label.changeEmail),
                     trailing: .valuesIcon([.text(viewModel.user.email)], ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.emailChange)) }
                 )),
-            ],
+            ]
         )
 
         SettingsGroup(settings: [accountDeleteSetting])

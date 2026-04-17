@@ -16,6 +16,15 @@ enum PinzAPI {
     case refreshToken(refreshToken: String)
     case logout(refreshToken: String)
 
+    // Profile
+    case getProfile
+    case deleteAccount
+    case updateProfile(username: String)
+    case requestAvatarUpload(filename: String, contentType: String)
+    case confirmAvatarUpload(s3Key: String)
+    case changeEmail(userId: String?, newEmail: String)
+    case confirmEmailChange(verificationCode: String)
+
     // Feed
     case getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, sortBy: String?)
 
@@ -72,6 +81,13 @@ extension PinzAPI: TargetType {
         case .passkeyRegisterFinish: endpointPath = "/auth/passkey/register/finish"
         case .refreshToken: endpointPath = "/auth/refresh"
         case .logout: endpointPath = "/auth/logout"
+        case .getProfile: endpointPath = "/profile"
+        case .deleteAccount: endpointPath = "/profile"
+        case .updateProfile: endpointPath = "/profile"
+        case .requestAvatarUpload: endpointPath = "/profile/avatar/upload"
+        case .confirmAvatarUpload: endpointPath = "/profile/avatar/confirm"
+        case .changeEmail: endpointPath = "/profile/change-email"
+        case .confirmEmailChange: endpointPath = "/profile/confirm-email"
         case .getFeed: endpointPath = "/feed"
         case .getTrips: endpointPath = "/trips"
         case .getFavouriteTrips: endpointPath = "/trips/favourites"
@@ -101,9 +117,11 @@ extension PinzAPI: TargetType {
         switch self {
         case .getFeed, .getTrips, .getFavouriteTrips, .getTrip, .getTripReview:
             return .get
-        case .updateTrip, .updateTripSettings:
+        case .getProfile:
+            return .get
+        case .updateTrip, .updateTripSettings, .updateProfile:
             return .patch
-        case .deleteTrip, .removeParticipant, .removeTripFromFavourites:
+        case .deleteTrip, .removeParticipant, .deleteAccount, .removeTripFromFavourites:
             return .delete
         default:
             return .post
@@ -142,6 +160,17 @@ extension PinzAPI: TargetType {
         case let .passkeyRegisterFinish(regId, cred): return jsonParams(["registration_id": regId, "credential_json": cred])
         case let .refreshToken(token): return jsonParams(["refresh_token": token])
         case let .logout(token): return jsonParams(["refresh_token": token])
+        case .getProfile, .deleteAccount:
+            return .requestPlain
+
+        case let .updateProfile(username): return jsonParams(["username": username])
+        case let .requestAvatarUpload(filename, contentType): return jsonParams(["filename": filename, "content_type": contentType])
+        case let .confirmAvatarUpload(s3Key): return jsonParams(["s3_key": s3Key])
+        case let .changeEmail(userId, newEmail):
+            var params: [String: Any] = ["new_email": newEmail]
+            if let userId { params["user_id"] = userId }
+            return jsonParams(params)
+        case let .confirmEmailChange(code): return jsonParams(["verification_code": code])
 
         case let .joinTripByToken(token): return jsonParams(["token": token])
         case let .generateInviteLink(_, secs):
@@ -225,6 +254,20 @@ extension PinzAPI {
             json = #"{"access_token": "stub_new_access_token"}"#
         case .logout:
             json = #"{"success": true}"#
+        case .getProfile:
+            json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
+        case .deleteAccount:
+            json = #"{"success": true}"#
+        case .updateProfile:
+            json = #"{"user_id":"user-001","username":"new_username","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
+        case .requestAvatarUpload:
+            json = #"{"upload_url":"https://pinz.s3.example.com/upload","s3_key":"avatars/user-001/avatar.png","expires_at_unix":1700000000}"#
+        case .confirmAvatarUpload:
+            json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
+        case .changeEmail:
+            json = #"{"success":true,"message":"Verification code sent","email":"new@example.com","expires_at_unix":1700000000}"#
+        case .confirmEmailChange:
+            json = #"{"success":true,"message":"Email changed","email":"new@example.com"}"#
         case .getFeed, .getTrips, .getFavouriteTrips:
             json = #"""
             [

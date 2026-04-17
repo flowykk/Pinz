@@ -23,7 +23,7 @@ public enum TripCreationRoute: Hashable {
 }
 
 public enum ProfileRoute: Hashable {
-    case emailChange(email: String, action: EmailChangeAction)
+    case emailChange(email: String, userId: String?, action: EmailChangeAction)
 
     case statistics
 

@@ -67,9 +67,10 @@ final class NetworkProvider<T: TargetType> {
     private static func logRequest(target: T) {
         var bodyString = "-"
         if case .requestParameters(let parameters, _) = target.task {
-            if let data = try? JSONSerialization.data(withJSONObject: parameters, options: .prettyPrinted),
-               let string = String(data: data, encoding: .utf8) {
+            if let string = Self.stringified(parameters) {
                 bodyString = string
+            } else {
+                bodyString = "Unserializable request parameters: \(String(describing: parameters))"
             }
         }
         print("""
@@ -78,6 +79,15 @@ final class NetworkProvider<T: TargetType> {
         \(bodyString.split(separator: "\n").map { "│  \($0)" }.joined(separator: "\n"))
         │
         """)
+    }
+
+    private static func stringified(_ parameters: [String: Any]) -> String? {
+        if JSONSerialization.isValidJSONObject(parameters),
+           let data = try? JSONSerialization.data(withJSONObject: parameters, options: .prettyPrinted),
+           let string = String(data: data, encoding: .utf8) {
+            return string
+        }
+        return nil
     }
 
     private static func logResponse(target: T, response: Moya.Response) {

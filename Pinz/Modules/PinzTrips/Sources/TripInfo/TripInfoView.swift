@@ -56,18 +56,20 @@ public struct TripInfoView: View {
         } content: {
             avatar.padding(.top, 4)
 
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 if viewModel.state == .editing { nameEditing }
-                if viewModel.state == .default { publishing }
+                if viewModel.state == .default {
+                    publishing
+                    pins
+                }
                 general
                 if viewModel.state == .default {
-                    pins
                     description
                     privacy
                 } else {
                     descriptionEditing
-                    delete
                 }
+                delete
             }
             .padding(.top, 8)
             .padding(.horizontal, 12)
@@ -153,11 +155,13 @@ public struct TripInfoView: View {
                     subtitle: "\(viewModel.trip.category.value), \(viewModel.trip.season.value)"
                 )
             }, rightView: {
-                PinzButton(
-                    type: .icon(.stories),
-                    tint: PinzUIAsset.textPrimary.swiftUIColor,
-                    action: .plain { isStoriesPresented = true }
-                )
+                if !viewModel.trip.pins.isEmpty {
+                    PinzButton(
+                        type: .icon(.stories),
+                        tint: PinzUIAsset.textPrimary.swiftUIColor,
+                        action: .plain { isStoriesPresented = true }
+                    )
+                }
                 PinzButton(
                     type: .icon(.pencil),
                     tint: PinzUIAsset.textPrimary.swiftUIColor,
@@ -187,9 +191,7 @@ public struct TripInfoView: View {
 
     private var avatar: some View {
         VStack {
-            Image(uiImage: viewModel.trip.image ?? PinzUIAsset.avatar.image)
-                .resizable()
-                .scaledToFill()
+            tripImage
                 .frame(120)
                 .cornerRadius(60)
                 .clipped()
@@ -203,6 +205,45 @@ public struct TripInfoView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var tripImage: some View {
+        if let localImage = viewModel.trip.image {
+            image(for: localImage)
+        } else if let url = URL(string: viewModel.trip.coverUrl ?? "") {
+            LoadableImageThumbnail(url: url) { state in
+                remoteTripImage(for: state)
+            }
+        } else {
+            image(for: PinzDomainAsset.groupPlaceholder.image)
+        }
+    }
+
+    @ViewBuilder
+    private func remoteTripImage(for state: LoadableMediaState) -> some View {
+        switch state {
+        case .empty:
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .overlay {
+                    ProgressView()
+                        .tint(.white)
+                }
+        case .ready(let readyImage):
+            image(for: readyImage)
+        case .failure:
+            image(for: PinzDomainAsset.groupPlaceholder.image)
+        }
+    }
+
+    private func image(for uiImage: UIImage) -> some View {
+        Image(uiImage: uiImage)
+            .resizable()
+            .scaledToFill()
+            .frame(120)
+            .cornerRadius(60)
+            .clipped()
     }
 
     @ViewBuilder

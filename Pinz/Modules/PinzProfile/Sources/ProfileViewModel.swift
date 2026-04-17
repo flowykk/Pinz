@@ -4,6 +4,7 @@ import PinzDomain
 import PinzUI
 import PinzBase
 
+@MainActor
 @Observable
 public class ProfileViewModel {
 
@@ -30,25 +31,24 @@ public class ProfileViewModel {
     public enum Intent {
         case changeState
         case setImage(UIImage?)
+        case getProfile
+        case saveProfile
+        case deleteAccount
         case navigate(Route)
     }
 
     var state: State = .default
+    var isLoading = false
 
     var user: User
-    var userImage: UIImage = PinzUIAsset.avatar.image
+    var userImage: UIImage?
     private let networkService = NetworkService.shared
     private var router: AppRouting?
+    private var avatarUploadTask: Task<ProfileResponseDTO, Error>?
 
-    var imageBinding: Binding<UIImage?> {
-        Binding {
-            self.userImage
-        } set: { newImage in
-            guard let newImage else {
-                return
-            }
-            self.userImage = newImage
-        }
+    private enum AvatarUploadFlowError: Error {
+        case missingImageData
+        case invalidUploadResponse
     }
 
     public init(user: User) {
@@ -65,6 +65,37 @@ public class ProfileViewModel {
         case let .setImage(newImage):
             if let newImage {
                 userImage = newImage
+                uploadAvatarTask(with: newImage)
+            }
+        case .getProfile:
+            guard !isLoading else {
+                return
+            }
+
+            isLoading = true
+
+            Task {
+                await loadProfile()
+            }
+        case .saveProfile:
+            guard !isLoading else {
+                return
+            }
+
+            isLoading = true
+
+            Task {
+                await saveProfile()
+            }
+        case .deleteAccount:
+            guard !isLoading else {
+                return
+            }
+
+            isLoading = true
+
+            Task {
+                await deleteAccount()
             }
         case let .navigate(route):
             switch route {
@@ -73,7 +104,7 @@ public class ProfileViewModel {
                     self?.user.email = newEmail
                     self?.router?.pop()
                 }
-                router?.navigateToEmailChange(email: user.email, action: action)
+                router?.navigateToEmailChange(email: user.email, userId: user.profileId, action: action)
             case .statistics:
                 router?.navigateToStatistics()
             case .trips:
@@ -94,6 +125,122 @@ public class ProfileViewModel {
 
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+    }
+
+    private func loadProfile() async {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isLoading = true
+        }
+        defer {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isLoading = false
+            }
+        }
+
+        do {
+            let response = try await networkService.getProfile()
+            user = response.toUser()
+            userImage = nil
+        } catch {
+            print("[Profile] Failed to get profile: \(error)")
+        }
+    }
+
+    private func saveProfile() async {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isLoading = true
+        }
+        defer {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isLoading = false
+            }
+            changeState(to: .default)
+        }
+
+        do {
+            if let uploadTask = avatarUploadTask {
+                do {
+                    _ = try await uploadTask.value
+                } catch is CancellationError {
+                    print("[Profile] Avatar upload canceled")
+                } catch {
+                    print("[Profile] Failed to upload avatar before save: \(error)")
+                }
+                avatarUploadTask = nil
+            }
+
+            let trimmed = user.nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+            let response = try await networkService.updateProfile(username: trimmed)
+            user = response.toUser()
+            userImage = nil
+            router?.notifyCurrentProfileUpdated(user)
+        } catch {
+            print("[Profile] Failed to update profile: \(error)")
+        }
+    }
+
+    private func uploadAvatarTask(with image: UIImage) {
+        avatarUploadTask?.cancel()
+
+        avatarUploadTask = Task { @MainActor [weak self] in
+            guard let self else {
+                throw CancellationError()
+            }
+            defer {
+                self.avatarUploadTask = nil
+            }
+
+            let response = try await self.uploadAvatarFlow(image: image)
+
+            self.user = response.toUser()
+            self.userImage = nil
+            self.router?.notifyCurrentProfileUpdated(self.user)
+
+            return response
+        }
+    }
+
+    private func uploadAvatarFlow(image: UIImage) async throws -> ProfileResponseDTO {
+        let contentType: String
+        let data: Data
+
+        if let jpegData = image.jpegData(compressionQuality: 0.85) {
+            contentType = "image/jpeg"
+            data = jpegData
+        } else if let pngData = image.pngData() {
+            contentType = "image/png"
+            data = pngData
+        } else {
+            throw AvatarUploadFlowError.missingImageData
+        }
+
+        let filename = "avatar-\(UUID().uuidString).\(contentType == "image/png" ? "png" : "jpg")"
+        let request = try await networkService.requestAvatarUpload(filename: filename, contentType: contentType)
+
+        guard let uploadUrl = request.uploadUrl,
+              let s3Key = request.s3Key,
+              !uploadUrl.isEmpty,
+              !s3Key.isEmpty else {
+            throw AvatarUploadFlowError.invalidUploadResponse
+        }
+
+        try await networkService.uploadToS3(url: uploadUrl, data: data, contentType: contentType)
+        return try await networkService.confirmAvatarUpload(s3Key: s3Key)
+    }
+
+    private func deleteAccount() async {
+        defer {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isLoading = false
+            }
+        }
+
+        do {
+            _ = try await networkService.deleteAccount()
+            router?.navigateToMain()
+        } catch {
+            print("[Profile] Failed to delete account: \(error)")
+        }
     }
 
     private func changeState(to state: State) {

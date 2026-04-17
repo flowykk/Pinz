@@ -2,10 +2,12 @@ import XCTest
 @testable import PinzProfile
 import PinzBase
 import PinzDomain
+import UIKit
 
 final class ProfileViewModelTests: XCTestCase {
 
     private var mockRouter: MockRouter!
+    private var mockNetwork: MockNetworkService!
     private var sut: ProfileViewModel!
 
     private let testUser = User(nickname: "tester", email: "test@example.com")
@@ -13,11 +15,13 @@ final class ProfileViewModelTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockRouter = MockRouter()
-        sut = ProfileViewModel(user: testUser)
+        mockNetwork = MockNetworkService()
+        sut = ProfileViewModel(user: testUser, networkService: mockNetwork)
         sut.setRouter(mockRouter)
     }
 
     override func tearDown() {
+        mockNetwork = nil
         sut = nil
         super.tearDown()
     }
@@ -76,5 +80,61 @@ final class ProfileViewModelTests: XCTestCase {
     func test_navigate_emailChange_callsRouterWithEmail() {
         sut.dispatch(.navigate(.emailChange))
         XCTAssertEqual(mockRouter.navigatedEmailChange?.email, testUser.email)
+    }
+
+    @MainActor
+    func test_setImage_andSaveProfile_updatesAvatarAndNotifiesProfileUpdate() async throws {
+        mockNetwork.requestAvatarUploadResult = .success(
+            AvatarUploadResponseDTO(
+                uploadUrl: "https://storage.example.com/avatar-upload",
+                s3Key: "avatar-key"
+            )
+        )
+        mockNetwork.confirmAvatarUploadResult = .success(
+            ProfileResponseDTO(
+                userId: "user-1",
+                nickname: "tester",
+                email: testUser.email,
+                avatarUrl: "https://cdn.example.com/avatar-v2.jpg"
+            )
+        )
+        mockNetwork.updateProfileResult = .success(
+            ProfileResponseDTO(
+                userId: "user-1",
+                nickname: "updated-name",
+                email: testUser.email,
+                avatarUrl: "https://cdn.example.com/avatar-v2.jpg"
+            )
+        )
+
+        sut.user.nickname = "updated-name"
+        sut.dispatch(.setImage(makeTestImage()))
+        sut.dispatch(.saveProfile)
+
+        for _ in 0..<60 {
+            if mockNetwork.requestAvatarUploadCall != nil,
+               mockNetwork.confirmAvatarUploadCall != nil,
+               mockRouter.currentProfileUpdateUser != nil {
+                break
+            }
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+
+        XCTAssertEqual(mockNetwork.requestAvatarUploadCall?.contentType, "image/jpeg")
+        XCTAssertEqual(mockNetwork.confirmAvatarUploadCall, "avatar-key")
+        XCTAssertEqual(mockNetwork.uploadToS3Call?.url, "https://storage.example.com/avatar-upload")
+        XCTAssertEqual(sut.user.nickname, "updated-name")
+        XCTAssertEqual(sut.user.avatarUrl, "https://cdn.example.com/avatar-v2.jpg")
+        XCTAssertEqual(mockRouter.currentProfileUpdateUser?.avatarUrl, "https://cdn.example.com/avatar-v2.jpg")
+        XCTAssertNil(sut.userImage)
+    }
+
+    private func makeTestImage() -> UIImage {
+        let size = CGSize(width: 16, height: 16)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { context in
+            UIColor.systemBlue.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+        }
     }
 }

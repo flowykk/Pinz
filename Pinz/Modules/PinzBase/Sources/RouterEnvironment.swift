@@ -22,13 +22,17 @@ public protocol AppRouting {
     func navigateToMediaInfo(media: MediaItem)
     func navigateToLocalMediaInfo(media: LoadedMedia)
 
-    func navigateToEmailChange(email: String, action: EmailChangeAction)
+    func navigateToEmailChange(email: String, userId: String?, action: EmailChangeAction)
     func navigateToStatistics()
     func navigateToTrips()
     func navigateToPlacesWishlist()
     func navigateToSavedMaps()
     func navigateToNotifications()
     func navigateToAppearance()
+
+    func subscribeToCurrentProfileUpdates(_ action: @escaping (User) -> Void)
+    func notifyCurrentProfileUpdated(_ user: User)
+    func clearCurrentProfileUpdates()
 
     func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction)
 

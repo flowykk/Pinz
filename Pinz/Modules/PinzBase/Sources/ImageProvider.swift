@@ -7,7 +7,7 @@ public enum ImageProviderType {
     case user
     case media
 
-    var placeholder: UIImage {
+    public var placeholder: UIImage {
         switch self {
         case .group:
             return PinzDomainAsset.groupPlaceholder.image

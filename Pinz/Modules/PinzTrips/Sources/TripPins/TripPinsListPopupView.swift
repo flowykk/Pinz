@@ -30,16 +30,23 @@ struct TripPinsListPopupView: View {
         }.background(PinzUIAsset.background.swiftUIColor)
     }
 
+    @ViewBuilder
     private var pinsView: some View {
-        ScrollView {
-            DefaultPinsListView(
-                pins: pins,
-                dismissBeforeMediaInfo: true,
-                pinTapped: pinTapped,
-            ).padding(.top, 60).padding(.bottom, 90)
+        if pins.isEmpty {
+            Spacer()
+            NoPinsPlaceholderView()
+            Spacer()
+        } else {
+            ScrollView {
+                DefaultPinsListView(
+                    pins: pins,
+                    dismissBeforeMediaInfo: true,
+                    pinTapped: pinTapped,
+                ).padding(.top, 60).padding(.bottom, 90)
+            }
+            .scrollIndicators(.hidden)
+            .animationsDisabled()
         }
-        .scrollIndicators(.hidden)
-        .animationsDisabled()
     }
 
     @ViewBuilder

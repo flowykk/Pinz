@@ -29,15 +29,20 @@ public struct SelectablePinsListView: View {
                 content
             }
 
+            if viewModel.trip.pins.isEmpty {
+                NoPinsPlaceholderView()
+            }
+
             gradientWithButtons
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
     }
 
+    @ViewBuilder
     private var content: some View {
         let pins = viewModel.pins
-        return VStack(spacing: 8) {
+        VStack(spacing: 8) {
             ForEach(pins.indices, id: \.self) { index in
                 SelectablePinShortInfoView(
                     pin: pins[index],
@@ -58,14 +63,16 @@ public struct SelectablePinsListView: View {
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             HStack(spacing: 6) {
-                PinzButton(
-                    type: .slot(
-                        style: .secondary(needBorder: true),
-                        title: viewModel.allSelected ? PinzBaseStrings.SelectablePins.Button.deselectAll : PinzBaseStrings.SelectablePins.Button.selectAll
-                    ),
-                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
-                    action: .plain { viewModel.dispatch(.selectAll) }
-                )
+                if viewModel.selectedPins.count > 1 {
+                    PinzButton(
+                        type: .slot(
+                            style: .secondary(needBorder: true),
+                            title: viewModel.allSelected ? PinzBaseStrings.SelectablePins.Button.deselectAll : PinzBaseStrings.SelectablePins.Button.selectAll
+                        ),
+                        tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.selectAll) }
+                    )
+                }
 
                 PinzButton(
                     type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.done),
