@@ -134,7 +134,7 @@ message UpdateTripRequest {
   optional string privacy_level = 7;
   optional int64 start_date_unix = 8;
   optional int64 end_date_unix = 9;
-  optional string cover_url = 10;
+  optional string cover_s3_key = 10;
 }
 
 message UpdateTripResponse {

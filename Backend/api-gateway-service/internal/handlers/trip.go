@@ -226,8 +226,8 @@ func (h *TripHandler) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 	if req.EndDateUnix != nil {
 		protoReq.EndDateUnix = req.EndDateUnix
 	}
-	if req.CoverURL != nil {
-		protoReq.CoverUrl = req.CoverURL
+	if req.CoverS3Key != nil {
+		protoReq.CoverS3Key = req.CoverS3Key
 	}
 	resp, err := h.tripClient.UpdateTrip(ctx, protoReq)
 	if err != nil {

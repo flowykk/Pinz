@@ -893,7 +893,7 @@ type UpdateTripRequest struct {
 	PrivacyLevel  *string                `protobuf:"bytes,7,opt,name=privacy_level,json=privacyLevel,proto3,oneof" json:"privacy_level,omitempty"`
 	StartDateUnix *int64                 `protobuf:"varint,8,opt,name=start_date_unix,json=startDateUnix,proto3,oneof" json:"start_date_unix,omitempty"`
 	EndDateUnix   *int64                 `protobuf:"varint,9,opt,name=end_date_unix,json=endDateUnix,proto3,oneof" json:"end_date_unix,omitempty"`
-	CoverUrl      *string                `protobuf:"bytes,10,opt,name=cover_url,json=coverUrl,proto3,oneof" json:"cover_url,omitempty"`
+	CoverS3Key    *string                `protobuf:"bytes,10,opt,name=cover_s3_key,json=coverS3Key,proto3,oneof" json:"cover_s3_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -991,9 +991,9 @@ func (x *UpdateTripRequest) GetEndDateUnix() int64 {
 	return 0
 }
 
-func (x *UpdateTripRequest) GetCoverUrl() string {
-	if x != nil && x.CoverUrl != nil {
-		return *x.CoverUrl
+func (x *UpdateTripRequest) GetCoverS3Key() string {
+	if x != nil && x.CoverS3Key != nil {
+		return *x.CoverS3Key
 	}
 	return ""
 }
@@ -3687,7 +3687,7 @@ const file_trip_proto_rawDesc = "" +
 	"\x06offset\x18\x03 \x01(\x05R\x06offset\"9\n" +
 	"\x15ListUserTripsResponse\x12 \n" +
 	"\x05trips\x18\x01 \x03(\v2\n" +
-	".trip.TripR\x05trips\"\xdc\x03\n" +
+	".trip.TripR\x05trips\"\xe4\x03\n" +
 	"\x11UpdateTripRequest\x12\x17\n" +
 	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x17\n" +
@@ -3697,18 +3697,18 @@ const file_trip_proto_rawDesc = "" +
 	"\x06season\x18\x06 \x01(\tH\x03R\x06season\x88\x01\x01\x12(\n" +
 	"\rprivacy_level\x18\a \x01(\tH\x04R\fprivacyLevel\x88\x01\x01\x12+\n" +
 	"\x0fstart_date_unix\x18\b \x01(\x03H\x05R\rstartDateUnix\x88\x01\x01\x12'\n" +
-	"\rend_date_unix\x18\t \x01(\x03H\x06R\vendDateUnix\x88\x01\x01\x12 \n" +
-	"\tcover_url\x18\n" +
-	" \x01(\tH\aR\bcoverUrl\x88\x01\x01B\a\n" +
+	"\rend_date_unix\x18\t \x01(\x03H\x06R\vendDateUnix\x88\x01\x01\x12%\n" +
+	"\fcover_s3_key\x18\n" +
+	" \x01(\tH\aR\n" +
+	"coverS3Key\x88\x01\x01B\a\n" +
 	"\x05_nameB\x0e\n" +
 	"\f_descriptionB\v\n" +
 	"\t_categoryB\t\n" +
 	"\a_seasonB\x10\n" +
 	"\x0e_privacy_levelB\x12\n" +
 	"\x10_start_date_unixB\x10\n" +
-	"\x0e_end_date_unixB\f\n" +
-	"\n" +
-	"_cover_url\"4\n" +
+	"\x0e_end_date_unixB\x0f\n" +
+	"\r_cover_s3_key\"4\n" +
 	"\x12UpdateTripResponse\x12\x1e\n" +
 	"\x04trip\x18\x01 \x01(\v2\n" +
 	".trip.TripR\x04trip\"E\n" +

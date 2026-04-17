@@ -70,6 +70,7 @@ type loginSession struct {
 
 type S3Uploader interface {
 	PresignedUploadURL(ctx context.Context, s3Key, contentType string) (string, error)
+	ReadURL(ctx context.Context, s3Key string) (string, error)
 	DeleteObject(ctx context.Context, s3Key string) error
 }
 
@@ -618,12 +619,21 @@ func (s *AuthService) DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*p
 	}, nil
 }
 
-func userToProto(u *models.User) *pb.User {
+func (s *AuthService) userToProto(ctx context.Context, u *models.User) *pb.User {
+	avatar := ""
+	if u.AvatarURL != "" && s.s3 != nil {
+		url, err := s.s3.ReadURL(ctx, u.AvatarURL)
+		if err != nil {
+			slog.WarnContext(ctx, "userToProto: presign avatar GET", "key", u.AvatarURL, "error", err)
+		} else {
+			avatar = url
+		}
+	}
 	return &pb.User{
-		Id:           u.ID,
-		Username:     u.Username,
-		Email:        u.Email,
-		AvatarUrl:    u.AvatarURL,
+		Id:            u.ID,
+		Username:      u.Username,
+		Email:         u.Email,
+		AvatarUrl:     avatar,
 		CreatedAtUnix: u.CreatedAt.Unix(),
 	}
 }
@@ -646,7 +656,7 @@ func (s *AuthService) GetProfile(ctx context.Context, req *pb.GetProfileRequest)
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
 
-	return &pb.GetProfileResponse{User: userToProto(u)}, nil
+	return &pb.GetProfileResponse{User: s.userToProto(ctx, u)}, nil
 }
 
 func (s *AuthService) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
@@ -674,7 +684,7 @@ func (s *AuthService) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRe
 		return nil, status.Error(codes.Internal, "failed to update username")
 	}
 
-	return &pb.UpdateProfileResponse{User: userToProto(u)}, nil
+	return &pb.UpdateProfileResponse{User: s.userToProto(ctx, u)}, nil
 }
 
 func (s *AuthService) ChangeEmail(ctx context.Context, req *pb.ChangeEmailRequest) (*pb.ChangeEmailResponse, error) {
@@ -751,7 +761,7 @@ func (s *AuthService) ConfirmEmailChange(ctx context.Context, req *pb.ConfirmEma
 
 	_ = s.redisRepo.Del(ctx, redisKey)
 	slog.InfoContext(ctx, "email changed", "user_id", userID, "new_email", data["email"])
-	return &pb.ConfirmEmailChangeResponse{User: userToProto(u)}, nil
+	return &pb.ConfirmEmailChangeResponse{User: s.userToProto(ctx, u)}, nil
 }
 
 func (s *AuthService) RequestAvatarUpload(ctx context.Context, req *pb.RequestAvatarUploadRequest) (*pb.RequestAvatarUploadResponse, error) {
@@ -819,7 +829,7 @@ func (s *AuthService) ConfirmAvatarUpload(ctx context.Context, req *pb.ConfirmAv
 		return nil, status.Error(codes.Internal, "failed to update avatar")
 	}
 
-	return &pb.ConfirmAvatarUploadResponse{User: userToProto(u)}, nil
+	return &pb.ConfirmAvatarUploadResponse{User: s.userToProto(ctx, u)}, nil
 }
 
 func (s *AuthService) DeleteAvatar(ctx context.Context, req *pb.DeleteAvatarRequest) (*pb.DeleteAvatarResponse, error) {
@@ -852,7 +862,7 @@ func (s *AuthService) DeleteAvatar(ctx context.Context, req *pb.DeleteAvatarRequ
 		return nil, status.Error(codes.Internal, "failed to delete avatar")
 	}
 
-	return &pb.DeleteAvatarResponse{User: userToProto(u)}, nil
+	return &pb.DeleteAvatarResponse{User: s.userToProto(ctx, u)}, nil
 }
 
 func (s *AuthService) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
