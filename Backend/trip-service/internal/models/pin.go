@@ -45,3 +45,14 @@ type Tag struct {
 	PinID  string
 	Tag    string
 }
+
+// MediaBattle — сессия фотобатла (ТЗ 8.1). MediaIDs — 8 случайных медиа, WinnerMediaID заполняется на SubmitBattleResult.
+type MediaBattle struct {
+	ID            string
+	TripID        string
+	UserID        string
+	MediaIDs      []string
+	WinnerMediaID *string
+	CreatedAt     time.Time
+	FinishedAt    *time.Time
+}

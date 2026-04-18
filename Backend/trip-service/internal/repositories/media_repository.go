@@ -195,6 +195,109 @@ func (r *MediaRepository) SetPrivacyLevel(mediaID, level string) error {
 	return nil
 }
 
+// PickRandomForBattle возвращает до limit случайных медиа трипа, исключая Restricted (NSFW, ТЗ 6.3). Для фотобатла (ТЗ 8.1).
+func (r *MediaRepository) PickRandomForBattle(tripID string, limit int) ([]*models.Media, error) {
+	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
+		FROM media WHERE trip_id = $1 AND privacy_level <> 'Restricted'
+		ORDER BY RANDOM() LIMIT $2`
+	rows, err := r.db.Query(sqlStr, tripID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []*models.Media
+	for rows.Next() {
+		var m models.Media
+		var pinID, similarGroupID, contentHash sql.NullString
+		var lat, lon sql.NullFloat64
+		var capturedAt sql.NullTime
+		if err := rows.Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &m.CreatedAt); err != nil {
+			return nil, err
+		}
+		if pinID.Valid {
+			m.PinID = &pinID.String
+		}
+		if lat.Valid {
+			m.Latitude = &lat.Float64
+		}
+		if lon.Valid {
+			m.Longitude = &lon.Float64
+		}
+		if capturedAt.Valid {
+			m.CapturedAt = &capturedAt.Time
+		}
+		if similarGroupID.Valid {
+			m.SimilarGroupID = &similarGroupID.String
+		}
+		if contentHash.Valid {
+			m.ContentHash = &contentHash.String
+		}
+		list = append(list, &m)
+	}
+	return list, rows.Err()
+}
+
+// IncrementBattleRating атомарно увеличивает battle_rating победителя батла на 1 и возвращает новое значение (ТЗ 8.1.8).
+func (r *MediaRepository) IncrementBattleRating(mediaID string) (int32, error) {
+	var rating int32
+	err := r.db.QueryRow(`UPDATE media SET battle_rating = battle_rating + 1 WHERE id = $1 RETURNING battle_rating`, mediaID).Scan(&rating)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, sql.ErrNoRows
+		}
+		return 0, err
+	}
+	return rating, nil
+}
+
+// ListWithPositiveBattleRating возвращает медиа трипа с battle_rating > 0, отсортированные по рейтингу DESC для "лучших воспоминаний" (ТЗ 8.2).
+func (r *MediaRepository) ListWithPositiveBattleRating(tripID string) ([]*models.Media, error) {
+	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
+		FROM media WHERE trip_id = $1 AND battle_rating > 0
+		ORDER BY battle_rating DESC, captured_at ASC NULLS LAST, created_at ASC`
+	rows, err := r.db.Query(sqlStr, tripID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []*models.Media
+	for rows.Next() {
+		var m models.Media
+		var pinID, similarGroupID, contentHash sql.NullString
+		var lat, lon sql.NullFloat64
+		var capturedAt sql.NullTime
+		if err := rows.Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &m.CreatedAt); err != nil {
+			return nil, err
+		}
+		if pinID.Valid {
+			m.PinID = &pinID.String
+		}
+		if lat.Valid {
+			m.Latitude = &lat.Float64
+		}
+		if lon.Valid {
+			m.Longitude = &lon.Float64
+		}
+		if capturedAt.Valid {
+			m.CapturedAt = &capturedAt.Time
+		}
+		if similarGroupID.Valid {
+			m.SimilarGroupID = &similarGroupID.String
+		}
+		if contentHash.Valid {
+			m.ContentHash = &contentHash.String
+		}
+		list = append(list, &m)
+	}
+	return list, rows.Err()
+}
+
 // CountByTripID returns total media count and video count for the trip (task limits: max 500 media, max 50 videos).
 func (r *MediaRepository) CountByTripID(tripID string) (total int, videos int, err error) {
 	err = r.db.QueryRow(`SELECT COUNT(*), COUNT(*) FILTER (WHERE media_type = 'video') FROM media WHERE trip_id = $1`, tripID).Scan(&total, &videos)
