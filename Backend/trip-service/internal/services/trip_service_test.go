@@ -894,3 +894,79 @@ func TestDeleteTripCover_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "", resp.GetTrip().GetCoverUrl())
 }
+
+func TestSearchPins_Unauthenticated(t *testing.T) {
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := svc.SearchPins(context.Background(), &pb.SearchPinsRequest{Query: "x"})
+	require.Error(t, err)
+	require.Equal(t, codes.Unauthenticated, status.Code(err))
+}
+
+func TestSearchPins_EmptyQuery(t *testing.T) {
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: "   "})
+	require.Error(t, err)
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestSearchPins_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+	tagRepo := mocks.NewMockTagRepositoryInterface(ctrl)
+
+	lat, lon := 55.75, 37.62
+	pins := []*models.Pin{
+		{
+			ID: "pin-1", TripID: "trip-1", Name: "Cafe Central", Description: "best cafe",
+			Category: "Food", PrivacyLevel: "Public", MediaCount: 1,
+			Latitude: &lat, Longitude: &lon,
+		},
+	}
+	pinRepo.EXPECT().SearchByUserID("u1", "cafe", int32(20), int32(0)).Return(pins, nil)
+	mediaRepo.EXPECT().ListByPinID("pin-1").Return([]*models.Media{
+		{ID: "m1", TripID: "trip-1", S3Key: "k", MediaType: "photo", PrivacyLevel: "Public"},
+	}, nil)
+	tagRepo.EXPECT().GetByPinID("pin-1").Return([]string{"cafe", "coffee"}, nil)
+
+	svc := NewTripService(nil, nil, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil)
+	resp, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: "cafe"})
+	require.NoError(t, err)
+	require.Len(t, resp.GetPins(), 1)
+	got := resp.GetPins()[0]
+	require.Equal(t, "pin-1", got.GetId())
+	require.Equal(t, "trip-1", got.GetTripId())
+	require.Equal(t, "Cafe Central", got.GetName())
+	require.Equal(t, []string{"cafe", "coffee"}, got.GetTags())
+	require.Len(t, got.GetMedia(), 1)
+	require.Equal(t, "m1", got.GetMedia()[0].GetMediaId())
+}
+
+func TestSearchPins_TruncatesLongQueryAndNormalizesLimits(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+
+	longQuery := ""
+	for i := 0; i < MaxSearchQueryLength+50; i++ {
+		longQuery += "a"
+	}
+	expected := longQuery[:MaxSearchQueryLength]
+	// limit=0 → default 20, offset=-5 → 0
+	pinRepo.EXPECT().SearchByUserID("u1", expected, int32(20), int32(0)).Return(nil, nil)
+
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil)
+	resp, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: longQuery, Limit: 0, Offset: -5})
+	require.NoError(t, err)
+	require.Empty(t, resp.GetPins())
+}
+
+func TestSearchPins_RepoError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+	pinRepo.EXPECT().SearchByUserID("u1", "cafe", int32(20), int32(0)).Return(nil, sql.ErrConnDone)
+
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil)
+	_, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: "cafe"})
+	require.Error(t, err)
+	require.Equal(t, codes.Internal, status.Code(err))
+}

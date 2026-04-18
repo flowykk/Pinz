@@ -431,6 +431,21 @@ func (mr *MockTripClientMockRecorder) RequestTripCoverUpload(ctx, req any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestTripCoverUpload", reflect.TypeOf((*MockTripClient)(nil).RequestTripCoverUpload), ctx, req)
 }
 
+// SearchPins mocks base method.
+func (m *MockTripClient) SearchPins(ctx context.Context, req *proto.SearchPinsRequest) (*proto.SearchPinsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchPins", ctx, req)
+	ret0, _ := ret[0].(*proto.SearchPinsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchPins indicates an expected call of SearchPins.
+func (mr *MockTripClientMockRecorder) SearchPins(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchPins", reflect.TypeOf((*MockTripClient)(nil).SearchPins), ctx, req)
+}
+
 // StartBattle mocks base method.
 func (m *MockTripClient) StartBattle(ctx context.Context, req *proto.StartBattleRequest) (*proto.StartBattleResponse, error) {
 	m.ctrl.T.Helper()

@@ -45,6 +45,8 @@ service TripService {
   rpc StartBattle(StartBattleRequest) returns (StartBattleResponse);
   rpc SubmitBattleResult(SubmitBattleResultRequest) returns (SubmitBattleResultResponse);
   rpc GetBestMemories(GetBestMemoriesRequest) returns (GetBestMemoriesResponse);
+  // PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
+  rpc SearchPins(SearchPinsRequest) returns (SearchPinsResponse);
 }
 
 message Trip {
@@ -115,6 +117,7 @@ message TripPin {
   string privacy_level = 9;
   repeated string tags = 10;
   repeated TripPinMedia media = 11;
+  string trip_id = 12;
 }
 message TripPinMedia {
   string media_id = 1;
@@ -511,4 +514,15 @@ message BestMemory {
 }
 message GetBestMemoriesResponse {
   repeated BestMemory media = 1;
+}
+
+// PINZ-135: поиск пинов по name/description/tags в трипах пользователя.
+// user_id берётся из gRPC metadata (x-user-id), не передаётся в request.
+message SearchPinsRequest {
+  string query = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+message SearchPinsResponse {
+  repeated TripPin pins = 1;
 }

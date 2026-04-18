@@ -136,6 +136,12 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Use(middleware.RequireJWT)
 				r.Get("/", deps.TripHandler.ListFeed)
 			})
+
+			// PINZ-135: текстовый поиск пинов в трипах авторизованного пользователя.
+			r.Route("/pins", func(r chi.Router) {
+				r.Use(middleware.RequireJWT)
+				r.Get("/search", deps.TripHandler.SearchPins)
+			})
 		})
 	})
 

@@ -705,6 +705,8 @@ definitions:
         items:
           type: string
         type: array
+      trip_id:
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.TripPinMedia:
     properties:
@@ -1133,6 +1135,50 @@ paths:
       summary: List feed
       tags:
       - feed
+  /api/v1/pins/search:
+    get:
+      description: Text search over pin name, description and tags within trips where
+        the user participates. Requires JWT.
+      parameters:
+      - description: search query (1..128 chars)
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: limit (1..100, default 20)
+        in: query
+        name: limit
+        type: integer
+      - description: offset (>=0, default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Search pins by query
+      tags:
+      - pins
   /api/v1/profile:
     delete:
       description: Permanently deletes the user account. Pins and media in trips are

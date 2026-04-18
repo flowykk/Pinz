@@ -174,6 +174,10 @@ func (c *Client) GetBestMemories(ctx context.Context, req *pb.GetBestMemoriesReq
 	return c.client.GetBestMemories(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) SearchPins(ctx context.Context, req *pb.SearchPinsRequest) (*pb.SearchPinsResponse, error) {
+	return c.client.SearchPins(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

@@ -544,6 +544,73 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/pins/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Text search over pin name, description and tags within trips where the user participates. Requires JWT.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pins"
+                ],
+                "summary": "Search pins by query",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "search query (1..128 chars)",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit (1..100, default 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset (\u003e=0, default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/profile": {
             "get": {
                 "security": [
@@ -3635,6 +3702,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "trip_id": {
+                    "type": "string"
                 }
             }
         },
