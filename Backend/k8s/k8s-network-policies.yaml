@@ -112,6 +112,29 @@ spec:
         - protocol: TCP
           port: 50052
 ---
+# Allow api-gateway pods to call statistics-service on its gRPC port.
+# Source is matched at the pod level; Istio AuthorizationPolicy adds
+# SPIFFE principal verification on top of this.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-to-statistics-service
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: statistics-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 50053
+---
 # Allow app pods to push telemetry to otel-collector.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -135,6 +158,9 @@ spec:
         - podSelector:
             matchLabels:
               app: trip-service
+        - podSelector:
+            matchLabels:
+              app: statistics-service
       ports:
         - protocol: TCP
           port: 4317   # OTLP gRPC
