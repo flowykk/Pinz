@@ -29,6 +29,7 @@ type Dependencies struct {
 	PinPrivacyRepo      *repositories.PinPrivacyRepository
 	MediaPrivacyRepo    *repositories.MediaPrivacyRepository
 	AddMediaSessionRepo *repositories.AddMediaSessionRepository
+	BattleRepo          *repositories.MediaBattleRepository
 	Geocoder            services.LocationResolver
 }
 
@@ -68,8 +69,9 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	pinPrivacyRepo := repositories.NewPinPrivacyRepository(db)
 	mediaPrivacyRepo := repositories.NewMediaPrivacyRepository(db)
 	addMediaSessionRepo := repositories.NewAddMediaSessionRepository(db)
+	battleRepo := repositories.NewMediaBattleRepository(db)
 
-	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geocoder, geoRepo, addMediaSessionRepo)
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geocoder, geoRepo, addMediaSessionRepo, battleRepo)
 	return &Dependencies{
 		TripService:         tripSvc,
 		RedisClient:         redisClient,
@@ -84,6 +86,7 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 		PinPrivacyRepo:      pinPrivacyRepo,
 		MediaPrivacyRepo:    mediaPrivacyRepo,
 		AddMediaSessionRepo: addMediaSessionRepo,
+		BattleRepo:          battleRepo,
 		Geocoder:            geocoder,
 	}, nil
 }

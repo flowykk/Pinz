@@ -40,6 +40,16 @@ type InvitationLink struct {
 	CreatedAt time.Time
 }
 
+type MediaBattle struct {
+	ID            uuid.UUID
+	TripID        uuid.UUID
+	UserID        uuid.UUID
+	MediaIds      json.RawMessage
+	WinnerMediaID uuid.NullUUID
+	CreatedAt     time.Time
+	FinishedAt    sql.NullTime
+}
+
 type MediaPrivacy struct {
 	MediaID      uuid.UUID
 	UserID       uuid.UUID

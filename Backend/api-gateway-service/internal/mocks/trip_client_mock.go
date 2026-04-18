@@ -221,6 +221,21 @@ func (mr *MockTripClientMockRecorder) GenerateInviteLink(ctx, req any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateInviteLink", reflect.TypeOf((*MockTripClient)(nil).GenerateInviteLink), ctx, req)
 }
 
+// GetBestMemories mocks base method.
+func (m *MockTripClient) GetBestMemories(ctx context.Context, req *proto.GetBestMemoriesRequest) (*proto.GetBestMemoriesResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBestMemories", ctx, req)
+	ret0, _ := ret[0].(*proto.GetBestMemoriesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBestMemories indicates an expected call of GetBestMemories.
+func (mr *MockTripClientMockRecorder) GetBestMemories(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBestMemories", reflect.TypeOf((*MockTripClient)(nil).GetBestMemories), ctx, req)
+}
+
 // GetTrip mocks base method.
 func (m *MockTripClient) GetTrip(ctx context.Context, req *proto.GetTripRequest) (*proto.GetTripResponse, error) {
 	m.ctrl.T.Helper()
@@ -414,6 +429,36 @@ func (m *MockTripClient) RequestTripCoverUpload(ctx context.Context, req *proto.
 func (mr *MockTripClientMockRecorder) RequestTripCoverUpload(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestTripCoverUpload", reflect.TypeOf((*MockTripClient)(nil).RequestTripCoverUpload), ctx, req)
+}
+
+// StartBattle mocks base method.
+func (m *MockTripClient) StartBattle(ctx context.Context, req *proto.StartBattleRequest) (*proto.StartBattleResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StartBattle", ctx, req)
+	ret0, _ := ret[0].(*proto.StartBattleResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StartBattle indicates an expected call of StartBattle.
+func (mr *MockTripClientMockRecorder) StartBattle(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartBattle", reflect.TypeOf((*MockTripClient)(nil).StartBattle), ctx, req)
+}
+
+// SubmitBattleResult mocks base method.
+func (m *MockTripClient) SubmitBattleResult(ctx context.Context, req *proto.SubmitBattleResultRequest) (*proto.SubmitBattleResultResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SubmitBattleResult", ctx, req)
+	ret0, _ := ret[0].(*proto.SubmitBattleResultResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SubmitBattleResult indicates an expected call of SubmitBattleResult.
+func (mr *MockTripClientMockRecorder) SubmitBattleResult(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitBattleResult", reflect.TypeOf((*MockTripClient)(nil).SubmitBattleResult), ctx, req)
 }
 
 // UpdateTrip mocks base method.

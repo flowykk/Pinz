@@ -1485,6 +1485,199 @@
                 }
             }
         },
+        "/api/v1/trips/{id}/battles": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Picks 8 random media from the trip and starts a battle session. Returns 412 if the trip has fewer than 8 available media (ТЗ 8.1.9).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-battles"
+                ],
+                "summary": "Start photo battle",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.StartBattleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Precondition Failed",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/battles/{battle_id}/result": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Records the final winner of a photo battle; increments media battle_rating by 1. Can be called once per battle.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-battles"
+                ],
+                "summary": "Submit battle winner",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Battle ID",
+                        "name": "battle_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Winner media id",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.SubmitBattleResultRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.SubmitBattleResultResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Precondition Failed",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/best-memories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns media of the trip with battle_rating \u003e 0, sorted by rating DESC. Empty array when the trip has no winners yet (ТЗ 8.2.3).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-battles"
+                ],
+                "summary": "Get best memories (story-mode)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.GetBestMemoriesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trips/{id}/cover": {
             "delete": {
                 "security": [
@@ -2624,6 +2817,14 @@
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_requests.SubmitBattleResultRequest": {
+            "type": "object",
+            "properties": {
+                "winner_media_id": {
+                    "type": "string"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_requests.SubmitEmailRequest": {
             "type": "object",
             "properties": {
@@ -2759,6 +2960,40 @@
                     "type": "string"
                 },
                 "upload_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.BattleMedia": {
+            "type": "object",
+            "properties": {
+                "media_id": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.BestMemory": {
+            "type": "object",
+            "properties": {
+                "battle_rating": {
+                    "type": "integer"
+                },
+                "captured_at_unix": {
+                    "type": "integer"
+                },
+                "media_id": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }
@@ -2919,6 +3154,17 @@
                 },
                 "token": {
                     "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.GetBestMemoriesResponse": {
+            "type": "object",
+            "properties": {
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.BestMemory"
+                    }
                 }
             }
         },
@@ -3136,6 +3382,28 @@
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.StartBattleResponse": {
+            "type": "object",
+            "properties": {
+                "battle_id": {
+                    "type": "string"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.BattleMedia"
+                    }
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.SubmitBattleResultResponse": {
+            "type": "object",
+            "properties": {
+                "new_battle_rating": {
+                    "type": "integer"
                 }
             }
         },

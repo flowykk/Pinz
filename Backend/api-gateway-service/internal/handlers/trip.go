@@ -48,6 +48,9 @@ type TripClient interface {
 	AddMediaStart(ctx context.Context, req *proto.AddMediaStartRequest) (*proto.AddMediaStartResponse, error)
 	AddMediaProcessGrouping(ctx context.Context, req *proto.AddMediaProcessGroupingRequest) (*proto.AddMediaProcessGroupingResponse, error)
 	AddMediaApplyGroupsAndProcess(ctx context.Context, req *proto.AddMediaApplyGroupsAndProcessRequest) (*proto.AddMediaApplyGroupsAndProcessResponse, error)
+	StartBattle(ctx context.Context, req *proto.StartBattleRequest) (*proto.StartBattleResponse, error)
+	SubmitBattleResult(ctx context.Context, req *proto.SubmitBattleResultRequest) (*proto.SubmitBattleResultResponse, error)
+	GetBestMemories(ctx context.Context, req *proto.GetBestMemoriesRequest) (*proto.GetBestMemoriesResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient) *TripHandler {
@@ -1321,4 +1324,141 @@ func (h *TripHandler) AddMediaApplyGroupsAndProcess(w http.ResponseWriter, r *ht
 		Message: resp.GetMessage(),
 		Status:  resp.GetStatus(),
 	})
+}
+
+// StartBattle starts a new photo battle for the trip (PINZ-132, ТЗ 8.1).
+// @Summary Start photo battle
+// @Description Picks 8 random media from the trip and starts a battle session. Returns 412 if the trip has fewer than 8 available media (ТЗ 8.1.9).
+// @Tags trip-battles
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Success 200 {object} responses.StartBattleResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 412 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/battles [post]
+func (h *TripHandler) StartBattle(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	resp, err := h.tripClient.StartBattle(ctx, &proto.StartBattleRequest{TripId: tripID})
+	if err != nil {
+		handleServiceError(w, r, err, "StartBattle")
+		return
+	}
+	media := make([]responses.BattleMedia, 0, len(resp.GetMedia()))
+	for _, m := range resp.GetMedia() {
+		media = append(media, responses.BattleMedia{
+			MediaID:   m.GetMediaId(),
+			URL:       m.GetUrl(),
+			MediaType: m.GetMediaType(),
+		})
+	}
+	respondJSON(w, http.StatusOK, responses.StartBattleResponse{
+		BattleID: resp.GetBattleId(),
+		Media:    media,
+	})
+}
+
+// SubmitBattleResult finalizes a battle with the chosen winner (PINZ-132, ТЗ 8.1.7-8.1.8).
+// @Summary Submit battle winner
+// @Description Records the final winner of a photo battle; increments media battle_rating by 1. Can be called once per battle.
+// @Tags trip-battles
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param battle_id path string true "Battle ID"
+// @Param body body requests.SubmitBattleResultRequest true "Winner media id"
+// @Success 200 {object} responses.SubmitBattleResultResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 412 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/battles/{battle_id}/result [post]
+func (h *TripHandler) SubmitBattleResult(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	battleID := chi.URLParam(r, "battle_id")
+	if battleID == "" {
+		respondError(w, http.StatusBadRequest, "battle_id required")
+		return
+	}
+	var req requests.SubmitBattleResultRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	if req.WinnerMediaID == "" {
+		respondError(w, http.StatusBadRequest, "winner_media_id required")
+		return
+	}
+	resp, err := h.tripClient.SubmitBattleResult(ctx, &proto.SubmitBattleResultRequest{
+		BattleId:      battleID,
+		WinnerMediaId: req.WinnerMediaID,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "SubmitBattleResult")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.SubmitBattleResultResponse{
+		NewBattleRating: resp.GetNewBattleRating(),
+	})
+}
+
+// GetBestMemories returns trip media with battle_rating > 0 for story-mode (PINZ-132, ТЗ 8.2).
+// @Summary Get best memories (story-mode)
+// @Description Returns media of the trip with battle_rating > 0, sorted by rating DESC. Empty array when the trip has no winners yet (ТЗ 8.2.3).
+// @Tags trip-battles
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Success 200 {object} responses.GetBestMemoriesResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/best-memories [get]
+func (h *TripHandler) GetBestMemories(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	resp, err := h.tripClient.GetBestMemories(ctx, &proto.GetBestMemoriesRequest{TripId: tripID})
+	if err != nil {
+		handleServiceError(w, r, err, "GetBestMemories")
+		return
+	}
+	media := make([]responses.BestMemory, 0, len(resp.GetMedia()))
+	for _, m := range resp.GetMedia() {
+		media = append(media, responses.BestMemory{
+			MediaID:        m.GetMediaId(),
+			URL:            m.GetUrl(),
+			MediaType:      m.GetMediaType(),
+			BattleRating:   m.GetBattleRating(),
+			CapturedAtUnix: m.GetCapturedAtUnix(),
+		})
+	}
+	respondJSON(w, http.StatusOK, responses.GetBestMemoriesResponse{Media: media})
 }

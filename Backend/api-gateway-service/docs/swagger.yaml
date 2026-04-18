@@ -235,6 +235,11 @@ definitions:
         example: cover.jpg
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.SubmitBattleResultRequest:
+    properties:
+      winner_media_id:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.SubmitEmailRequest:
     properties:
       email:
@@ -323,6 +328,28 @@ definitions:
       s3_key:
         type: string
       upload_url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.BattleMedia:
+    properties:
+      media_id:
+        type: string
+      media_type:
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.BestMemory:
+    properties:
+      battle_rating:
+        type: integer
+      captured_at_unix:
+        type: integer
+      media_id:
+        type: string
+      media_type:
+        type: string
+      url:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.ChangeEmailResponse:
@@ -426,6 +453,13 @@ definitions:
         type: string
       token:
         type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.GetBestMemoriesResponse:
+    properties:
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.BestMemory'
+        type: array
     type: object
   pinz_backend_api-gateway-service_internal_responses.GetTripResponse:
     properties:
@@ -567,6 +601,20 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.StartBattleResponse:
+    properties:
+      battle_id:
+        type: string
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.BattleMedia'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SubmitBattleResultResponse:
+    properties:
+      new_battle_rating:
+        type: integer
     type: object
   pinz_backend_api-gateway-service_internal_responses.SubmitEmailResponse:
     properties:
@@ -1434,6 +1482,133 @@ paths:
       summary: Update trip
       tags:
       - trips
+  /api/v1/trips/{id}/battles:
+    post:
+      description: Picks 8 random media from the trip and starts a battle session.
+        Returns 412 if the trip has fewer than 8 available media (ТЗ 8.1.9).
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.StartBattleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Start photo battle
+      tags:
+      - trip-battles
+  /api/v1/trips/{id}/battles/{battle_id}/result:
+    post:
+      consumes:
+      - application/json
+      description: Records the final winner of a photo battle; increments media battle_rating
+        by 1. Can be called once per battle.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Battle ID
+        in: path
+        name: battle_id
+        required: true
+        type: string
+      - description: Winner media id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.SubmitBattleResultRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SubmitBattleResultResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit battle winner
+      tags:
+      - trip-battles
+  /api/v1/trips/{id}/best-memories:
+    get:
+      description: Returns media of the trip with battle_rating > 0, sorted by rating
+        DESC. Empty array when the trip has no winners yet (ТЗ 8.2.3).
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetBestMemoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get best memories (story-mode)
+      tags:
+      - trip-battles
   /api/v1/trips/{id}/cover:
     delete:
       description: 'Removes the trip cover: deletes the file from S3 and clears cover_url.

@@ -132,3 +132,8 @@ type AddMediaApplyGroupsAndProcessRequest struct {
 type TripSettingsRequest struct {
 	NotificationsEnabled bool `json:"notifications_enabled"`
 }
+
+// SubmitBattleResultRequest — тело POST /api/v1/trips/:id/battles/:battle_id/result (PINZ-132, ТЗ 8.1.8).
+type SubmitBattleResultRequest struct {
+	WinnerMediaID string `json:"winner_media_id"`
+}

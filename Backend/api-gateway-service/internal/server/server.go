@@ -126,6 +126,10 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Post("/{id}/media/add/start", deps.TripHandler.AddMediaStart)
 				r.Post("/{id}/media/add/process-grouping", deps.TripHandler.AddMediaProcessGrouping)
 				r.Post("/{id}/media/add/apply-groups-and-process", deps.TripHandler.AddMediaApplyGroupsAndProcess)
+				// PINZ-132: фотобатлы и лучшие воспоминания (ТЗ 8).
+				r.Post("/{id}/battles", deps.TripHandler.StartBattle)
+				r.Post("/{id}/battles/{battle_id}/result", deps.TripHandler.SubmitBattleResult)
+				r.Get("/{id}/best-memories", deps.TripHandler.GetBestMemories)
 			})
 
 			r.Route("/feed", func(r chi.Router) {

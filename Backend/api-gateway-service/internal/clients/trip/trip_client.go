@@ -162,6 +162,18 @@ func (c *Client) ListUserTripSummaries(ctx context.Context, req *pb.ListUserTrip
 	return c.client.ListUserTripSummaries(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) StartBattle(ctx context.Context, req *pb.StartBattleRequest) (*pb.StartBattleResponse, error) {
+	return c.client.StartBattle(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) SubmitBattleResult(ctx context.Context, req *pb.SubmitBattleResultRequest) (*pb.SubmitBattleResultResponse, error) {
+	return c.client.SubmitBattleResult(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) GetBestMemories(ctx context.Context, req *pb.GetBestMemoriesRequest) (*pb.GetBestMemoriesResponse, error) {
+	return c.client.GetBestMemories(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

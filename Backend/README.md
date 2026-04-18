@@ -107,6 +107,16 @@ Real‑time уведомление о завершении шага 3–4 идё
 | GET | `/api/v1/profile/stats` | Счётчики текущего пользователя: трипы, пины, медиа, завершённые батлы |
 | GET | `/api/v1/profile/visited-locations` | Список посещённых стран/городов; опц. `?type=Country\|City` |
 
+### Photo battles (trip-service через API Gateway, PINZ-132, ТЗ 8)
+
+| Метод | Путь | Описание |
+|---|---|---|
+| POST | `/api/v1/trips/{id}/battles` | Старт фотобатла: сервер случайно выбирает 8 медиа трипа (исключая `Restricted`) и возвращает `battle_id` + массив из 8 `{media_id, url, media_type}`. `412/409 FailedPrecondition`, если доступных медиа < 8 (ТЗ 8.1.9). Пары 4→2→1 клиент формирует локально. |
+| POST | `/api/v1/trips/{id}/battles/{battle_id}/result` | Финал батла: `{"winner_media_id":"..."}`. Валидирует принадлежность победителя к выборке, атомарно закрывает сессию (`finished_at = NOW()`) и увеличивает `battle_rating` победителя на 1 (ТЗ 8.1.8). Повторный вызов — `409 FailedPrecondition: battle already finished`. |
+| GET | `/api/v1/trips/{id}/best-memories` | «Лучшие воспоминания» (story-mode, ТЗ 8.2): медиа трипа с `battle_rating > 0`, отсортированные по рейтингу DESC. Пустой массив, если победителей ещё нет (ТЗ 8.2.3 — решение скрыть режим принимает клиент). |
+
+Все три эндпоинта требуют JWT и участия в трипе (`PermissionDenied` → 403 для не-участников). Состояние батла хранится в таблице `media_battles` (`trip-service/internal/db/migrations/00003_photo_battles.sql`); `battle_rating` — колонка `media.battle_rating` и влияет на сортировку топ-медиа в ленте.
+
 Swagger UI: `http://pinz.example.com/swagger/index.html`
 
 ## Локальная разработка (Minikube + Istio)
