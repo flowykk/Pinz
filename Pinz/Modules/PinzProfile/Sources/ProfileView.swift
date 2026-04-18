@@ -92,7 +92,9 @@ public struct ProfileView: View {
             Button(PinzBaseStrings.Common.Button.selectFromGallery) {
                 photoPickerShown = true
             }
-            Button(PinzBaseStrings.Common.Button.deletePhoto, role: .destructive) { }
+            Button(PinzBaseStrings.Common.Button.deletePhoto, role: .destructive) {
+                viewModel.dispatch(.deleteAvatar)
+            }
         }
         .customImagePicker(show: $photoPickerShown, croppedImage: Binding {
             return viewModel.userImage

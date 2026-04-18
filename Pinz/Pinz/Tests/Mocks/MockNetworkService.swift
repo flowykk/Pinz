@@ -56,6 +56,7 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     var getProfileResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
     var updateProfileResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
+    var deleteAvatarResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
     var deleteAccountResult: Result<DeleteAccountResponseDTO, Error> = .success(DeleteAccountResponseDTO(success: true))
     var requestAvatarUploadResult: Result<AvatarUploadResponseDTO, Error> = .success(
         AvatarUploadResponseDTO(uploadUrl: "https://example.com/upload", s3Key: "mock-s3-key")
@@ -159,6 +160,7 @@ final class MockNetworkService: NetworkServiceProtocol {
         try updateProfileResult.get()
     }
     func deleteAccount() async throws -> DeleteAccountResponseDTO { try deleteAccountResult.get() }
+    func deleteAvatar() async throws -> ProfileResponseDTO { try deleteAvatarResult.get() }
     func requestAvatarUpload(filename: String, contentType: String) async throws -> AvatarUploadResponseDTO {
         requestAvatarUploadCall = (filename, contentType)
         return try requestAvatarUploadResult.get()
