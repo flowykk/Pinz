@@ -32,6 +32,18 @@ spec:
     tls:
       mode: DISABLE
 ---
+# Statistics Service DB (external Postgres on host:5434) — plain TCP, no mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: db-stats-external
+  namespace: default
+spec:
+  host: db-stats.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
