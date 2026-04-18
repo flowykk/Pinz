@@ -52,7 +52,7 @@ func (r *MediaRepository) Create(m *models.Media) error {
 
 func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
-		ST_X(location)::float as lat, ST_Y(location)::float as lon,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
 		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
 		FROM media WHERE id = $1`
 	var m models.Media
@@ -90,7 +90,7 @@ func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
 
 func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
-		ST_X(location)::float as lat, ST_Y(location)::float as lon,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
 		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
 		FROM media WHERE trip_id = $1 ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
@@ -243,7 +243,7 @@ func (r *MediaRepository) ClusterIDsByLocation(tripID string, radiusMeters float
 // ListByPinID returns media for a pin (for computing pin start/end time and location).
 func (r *MediaRepository) ListByPinID(pinID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
-		ST_X(location)::float as lat, ST_Y(location)::float as lon,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
 		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
 		FROM media WHERE pin_id = $1 ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, pinID)

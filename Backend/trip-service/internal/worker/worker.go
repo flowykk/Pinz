@@ -203,6 +203,8 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 							}
 							if pt.Category != "" {
 								pin.Category = services.ValidatePinCategory(pt.Category)
+								// ТЗ 3.12.2.f: название = категория пина. Existing-пины в add-media отфильтрованы выше.
+								pin.Name = pin.Category
 							}
 							_ = pinRepo.Update(pin)
 							if len(pt.Tags) > 0 {
