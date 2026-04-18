@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+	"log/slog"
 	"time"
 
 	"pinz/backend/trip-service/internal/models"
@@ -30,7 +32,8 @@ func clusterMediaToDraftPins(mediaRepo repositories.MediaRepositoryInterface, tr
 	// Run clustering in DB for withLoc
 	clusterIDs, err := mediaRepo.ClusterIDsByLocation(tripID, float64(ClusterRadiusMeters))
 	if err != nil {
-		// Fallback: each with-loc media its own cluster
+		slog.Warn("grouping: PostGIS clustering failed, falling back to per-media clusters",
+			"trip_id", tripID, "err", err)
 		clusterIDs = make(map[string]int)
 		for i, m := range withLoc {
 			clusterIDs[m.ID] = i
@@ -90,6 +93,172 @@ func clusterMediaToDraftPins(mediaRepo repositories.MediaRepositoryInterface, tr
 	}
 	if len(unassigned) > 0 {
 		result = append(result, unassigned)
+	}
+	return result
+}
+
+// DraftPinGroup is a media group with an assigned draft_pin_id identifier.
+// "existing-{pin_id}" — original pin seed-group (ТЗ 5.3.1).
+// "cluster-{N}" — new cluster from just-added media.
+// "draft-unassigned" — media without coordinates and time.
+type DraftPinGroup struct {
+	DraftPinID string
+	MediaIDs   []string
+}
+
+// clusterMediaWithExistingPinsAsSeeds groups trip media using existing pins as seed clusters (ТЗ 5.3.1).
+// It returns groups in deterministic order: existing pins first (by pin ID), then new clusters, then unassigned.
+func clusterMediaWithExistingPinsAsSeeds(mediaRepo repositories.MediaRepositoryInterface, pinRepo repositories.PinRepositoryInterface, tripID string) []DraftPinGroup {
+	mediaList, err := mediaRepo.ListByTripID(tripID)
+	if err != nil || len(mediaList) == 0 {
+		return nil
+	}
+	pins, _ := pinRepo.ListByTripID(tripID)
+
+	// 1) Media с pin_id — seed-группы по существующим пинам.
+	existingGroups := make(map[string][]string)
+	mediaByID := make(map[string]*models.Media, len(mediaList))
+	existingMediaSet := make(map[string]struct{})
+	for _, m := range mediaList {
+		mediaByID[m.ID] = m
+		if m.PinID != nil {
+			existingGroups[*m.PinID] = append(existingGroups[*m.PinID], m.ID)
+			existingMediaSet[m.ID] = struct{}{}
+		}
+	}
+
+	// 2) Кластеризация по геолокации среди всех медиа с координатами.
+	// Новое медиа с координатами, попавшее в кластер с existing-медиа, присоединяется к соответствующему пину.
+	clusterIDs, clusterErr := mediaRepo.ClusterIDsByLocation(tripID, float64(ClusterRadiusMeters))
+	if clusterErr != nil {
+		slog.Warn("grouping: PostGIS clustering failed during add-media",
+			"trip_id", tripID, "err", clusterErr)
+	}
+	clusterToExistingPin := make(map[int]string)
+	for mediaID, cid := range clusterIDs {
+		if m, ok := mediaByID[mediaID]; ok && m.PinID != nil {
+			clusterToExistingPin[cid] = *m.PinID
+		}
+	}
+
+	// Новые медиа с координатами: либо приклеиваются к существующему пину, либо формируют новые кластеры.
+	newClusters := make(map[int][]string) // cluster_id -> []media_id
+	newWithLocNoCluster := make([]*models.Media, 0)
+	noLocWithTime := make([]*models.Media, 0)
+	noLocNoTime := make([]*models.Media, 0)
+	for _, m := range mediaList {
+		if _, isExisting := existingMediaSet[m.ID]; isExisting {
+			continue
+		}
+		if m.Latitude != nil && m.Longitude != nil {
+			cid, ok := clusterIDs[m.ID]
+			if !ok {
+				newWithLocNoCluster = append(newWithLocNoCluster, m)
+				continue
+			}
+			if pinID, ok := clusterToExistingPin[cid]; ok {
+				existingGroups[pinID] = append(existingGroups[pinID], m.ID)
+			} else {
+				newClusters[cid] = append(newClusters[cid], m.ID)
+			}
+		} else if m.CapturedAt != nil {
+			noLocWithTime = append(noLocWithTime, m)
+		} else {
+			noLocNoTime = append(noLocNoTime, m)
+		}
+	}
+	// Фоллбэк: если ClusterIDsByLocation не сработал — каждое оставшееся медиа в отдельный кластер.
+	for i, m := range newWithLocNoCluster {
+		cid := -(i + 1)
+		newClusters[cid] = append(newClusters[cid], m.ID)
+	}
+
+	// 3) Медиа без координат, но со временем — приклеить к ближайшему кластеру по времени (< TimeClusterMinutes).
+	// Центроид времени кластера = время первого медиа в группе.
+	existingClusterTimes := make(map[string]time.Time)
+	for pinID, ids := range existingGroups {
+		for _, id := range ids {
+			if m := mediaByID[id]; m != nil && m.CapturedAt != nil {
+				existingClusterTimes[pinID] = *m.CapturedAt
+				break
+			}
+		}
+	}
+	newClusterTimes := make(map[int]time.Time)
+	for cid, ids := range newClusters {
+		for _, id := range ids {
+			if m := mediaByID[id]; m != nil && m.CapturedAt != nil {
+				newClusterTimes[cid] = *m.CapturedAt
+				break
+			}
+		}
+	}
+	for _, m := range noLocWithTime {
+		t := *m.CapturedAt
+		bestKind := ""      // "existing" / "new" / ""
+		bestID := ""        // pin_id для existing
+		bestCID := 0        // cluster id для new
+		bestDiff := time.Duration(TimeClusterMinutes) * time.Minute
+		for pinID, ct := range existingClusterTimes {
+			diff := t.Sub(ct)
+			if diff < 0 {
+				diff = -diff
+			}
+			if diff < bestDiff {
+				bestDiff = diff
+				bestKind = "existing"
+				bestID = pinID
+			}
+		}
+		for cid, ct := range newClusterTimes {
+			diff := t.Sub(ct)
+			if diff < 0 {
+				diff = -diff
+			}
+			if diff < bestDiff {
+				bestDiff = diff
+				bestKind = "new"
+				bestCID = cid
+			}
+		}
+		switch bestKind {
+		case "existing":
+			existingGroups[bestID] = append(existingGroups[bestID], m.ID)
+		case "new":
+			newClusters[bestCID] = append(newClusters[bestCID], m.ID)
+		default:
+			noLocNoTime = append(noLocNoTime, m)
+		}
+	}
+
+	// 4) Собрать результат: существующие пины (в порядке pinRepo.ListByTripID), затем новые кластеры, затем unassigned.
+	result := make([]DraftPinGroup, 0, len(existingGroups)+len(newClusters)+1)
+	seenPins := make(map[string]bool)
+	for _, p := range pins {
+		if ids, ok := existingGroups[p.ID]; ok {
+			result = append(result, DraftPinGroup{DraftPinID: "existing-" + p.ID, MediaIDs: ids})
+			seenPins[p.ID] = true
+		}
+	}
+	// Дополнительно добавить группы, чей пин не попал в pinRepo.ListByTripID (на всякий случай).
+	for pinID, ids := range existingGroups {
+		if !seenPins[pinID] {
+			result = append(result, DraftPinGroup{DraftPinID: "existing-" + pinID, MediaIDs: ids})
+		}
+	}
+	clusterIdx := 0
+	for _, ids := range newClusters {
+		if len(ids) > 0 {
+			result = append(result, DraftPinGroup{DraftPinID: fmt.Sprintf("cluster-%d", clusterIdx), MediaIDs: ids})
+			clusterIdx++
+		}
+	}
+	if len(noLocNoTime) > 0 {
+		unassigned := make([]string, 0, len(noLocNoTime))
+		for _, m := range noLocNoTime {
+			unassigned = append(unassigned, m.ID)
+		}
+		result = append(result, DraftPinGroup{DraftPinID: "draft-unassigned", MediaIDs: unassigned})
 	}
 	return result
 }

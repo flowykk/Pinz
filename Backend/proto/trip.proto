@@ -35,6 +35,10 @@ service TripService {
   rpc AddToFavourites(AddToFavouritesRequest) returns (AddToFavouritesResponse);
   rpc RemoveFromFavourites(RemoveFromFavouritesRequest) returns (RemoveFromFavouritesResponse);
   rpc ListFavourites(ListFavouritesRequest) returns (ListFavouritesResponse);
+  // PINZ-131: Добавление медиа в существующий трип (ТЗ 5.1-5.3)
+  rpc AddMediaStart(AddMediaStartRequest) returns (AddMediaStartResponse);
+  rpc AddMediaProcessGrouping(AddMediaProcessGroupingRequest) returns (AddMediaProcessGroupingResponse);
+  rpc AddMediaApplyGroupsAndProcess(AddMediaApplyGroupsAndProcessRequest) returns (AddMediaApplyGroupsAndProcessResponse);
 }
 
 message Trip {
@@ -412,4 +416,41 @@ message ListFavouritesRequest {
 }
 message ListFavouritesResponse {
   repeated Trip trips = 1;
+}
+
+// PINZ-131: старт сессии добавления медиа в READY-трип (ТЗ 5.3 → 3.8)
+message AddMediaStartRequest {
+  string trip_id = 1;
+  repeated FileToUpload files_to_upload = 2;
+}
+message AddMediaStartResponse {
+  string session_id = 1;
+  string status = 2;
+  repeated UploadUrl upload_urls = 3;
+}
+
+// PINZ-131: группировка добавленных медиа с использованием существующих пинов (ТЗ 5.3.1-5.3.2)
+message AddMediaProcessGroupingRequest {
+  string trip_id = 1;
+  string session_id = 2;
+  repeated MediaMeta media = 3;
+}
+message AddMediaProcessGroupingResponse {
+  string trip_id = 1;
+  string session_id = 2;
+  string status = 3;
+  repeated DraftPin draft_pins = 4;
+  repeated string existing_media_ids = 5; // read-only medi
+}
+
+// PINZ-131: применение групп и запуск ML (ТЗ 5.3.3-5.3.4)
+message AddMediaApplyGroupsAndProcessRequest {
+  string trip_id = 1;
+  string session_id = 2;
+  repeated DraftPinInput draft_pins = 3;
+  repeated string deleted_media_ids = 4;
+}
+message AddMediaApplyGroupsAndProcessResponse {
+  string message = 1;
+  string status = 2;
 }

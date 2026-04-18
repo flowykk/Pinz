@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"pinz/backend/trip-service/internal/models"
 )
@@ -44,6 +45,9 @@ type TripSettingsRepositoryInterface interface {
 type TripEventPublisher interface {
 	PublishTripEvent(ctx context.Context, eventType string, tripID, userID string) error
 	AddMLTask(ctx context.Context, tripID string) error
+	// PINZ-131: add-media flow: помечает контекст трипа, чтобы worker пропустил авто-теги для существующих пинов (ТЗ 5.3.4).
+	SetMLContext(ctx context.Context, tripID, flow string, newPinIDs []string, ttl time.Duration) error
+	AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error
 }
 
 type MediaRepositoryInterface interface {

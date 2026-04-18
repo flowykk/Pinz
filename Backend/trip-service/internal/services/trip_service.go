@@ -29,19 +29,20 @@ type LocationResolver interface {
 
 type TripService struct {
 	pb.UnimplementedTripServiceServer
-	tripRepo        repositories.TripRepositoryInterface
-	participantRepo repositories.TripParticipantRepositoryInterface
-	inviteRepo      repositories.InvitationLinkRepositoryInterface
-	settingsRepo    repositories.TripSettingsRepositoryInterface
-	eventRepo       repositories.TripEventPublisher
-	mediaRepo       repositories.MediaRepositoryInterface
-	mediaURLs       MediaURLResolver
-	pinRepo         repositories.PinRepositoryInterface
-	tagRepo         repositories.TagRepositoryInterface
-	socialRepo      repositories.SocialRepositoryInterface
-	favouriteRepo   repositories.FavouriteRepositoryInterface
-	geocoder        LocationResolver
-	geoRepo         repositories.GeoRegistryRepositoryInterface
+	tripRepo            repositories.TripRepositoryInterface
+	participantRepo     repositories.TripParticipantRepositoryInterface
+	inviteRepo          repositories.InvitationLinkRepositoryInterface
+	settingsRepo        repositories.TripSettingsRepositoryInterface
+	eventRepo           repositories.TripEventPublisher
+	mediaRepo           repositories.MediaRepositoryInterface
+	mediaURLs           MediaURLResolver
+	pinRepo             repositories.PinRepositoryInterface
+	tagRepo             repositories.TagRepositoryInterface
+	socialRepo          repositories.SocialRepositoryInterface
+	favouriteRepo       repositories.FavouriteRepositoryInterface
+	geocoder            LocationResolver
+	geoRepo             repositories.GeoRegistryRepositoryInterface
+	addMediaSessionRepo *repositories.AddMediaSessionRepository
 }
 
 func NewTripService(
@@ -58,21 +59,23 @@ func NewTripService(
 	favouriteRepo repositories.FavouriteRepositoryInterface,
 	geocoder LocationResolver,
 	geoRepo repositories.GeoRegistryRepositoryInterface,
+	addMediaSessionRepo *repositories.AddMediaSessionRepository,
 ) *TripService {
 	return &TripService{
-		tripRepo:        tripRepo,
-		participantRepo: participantRepo,
-		inviteRepo:      inviteRepo,
-		settingsRepo:    settingsRepo,
-		eventRepo:       eventRepo,
-		mediaRepo:       mediaRepo,
-		mediaURLs:       mediaURLs,
-		pinRepo:         pinRepo,
-		tagRepo:         tagRepo,
-		socialRepo:      socialRepo,
-		favouriteRepo:   favouriteRepo,
-		geocoder:        geocoder,
-		geoRepo:         geoRepo,
+		tripRepo:            tripRepo,
+		participantRepo:     participantRepo,
+		inviteRepo:          inviteRepo,
+		settingsRepo:        settingsRepo,
+		eventRepo:           eventRepo,
+		mediaRepo:           mediaRepo,
+		mediaURLs:           mediaURLs,
+		pinRepo:             pinRepo,
+		tagRepo:             tagRepo,
+		socialRepo:          socialRepo,
+		favouriteRepo:       favouriteRepo,
+		geocoder:            geocoder,
+		geoRepo:             geoRepo,
+		addMediaSessionRepo: addMediaSessionRepo,
 	}
 }
 
@@ -1165,6 +1168,340 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 		TripId:  tripID,
 		Status:  "READY",
 		Message: "Trip finalized",
+	}, nil
+}
+
+// AddMediaStart — PINZ-131, ТЗ 5.3 → 3.8: старт сессии добавления медиа в готовый трип.
+// Трип должен быть READY. Генерируются presigned URL и session_id.
+func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRequest) (*pb.AddMediaStartResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if trip.Status != "READY" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be READY to add media")
+	}
+	files := req.GetFilesToUpload()
+	if len(files) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "files_to_upload is required")
+	}
+	for _, f := range files {
+		if !validateContentType(f.GetContentType()) {
+			return nil, status.Errorf(codes.InvalidArgument, "unsupported content type: %s", f.GetContentType())
+		}
+	}
+	total, videos, _ := s.mediaRepo.CountByTripID(tripID)
+	newVideos := 0
+	for _, f := range files {
+		if ct := f.GetContentType(); ct == "video/mp4" || ct == "video/quicktime" {
+			newVideos++
+		}
+	}
+	if total+len(files) > MaxMediaPerTrip {
+		return nil, status.Errorf(codes.InvalidArgument, "trip may have at most %d media", MaxMediaPerTrip)
+	}
+	if videos+newVideos > MaxVideosPerTrip {
+		return nil, status.Errorf(codes.InvalidArgument, "trip may have at most %d videos", MaxVideosPerTrip)
+	}
+	existing, err := s.mediaRepo.ListByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list existing media")
+	}
+	existingIDs := make([]string, 0, len(existing))
+	for _, m := range existing {
+		existingIDs = append(existingIDs, m.ID)
+	}
+	sessionID, err := s.addMediaSessionRepo.Create(ctx, tripID, existingIDs)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to create add-media session")
+	}
+	uploadUrls := make([]*pb.UploadUrl, 0, len(files))
+	for _, f := range files {
+		ext := contentTypeToExt(f.GetContentType())
+		s3Key := "trips/" + tripID + "/" + f.GetClientId() + ext
+		url := ""
+		if s.mediaURLs != nil {
+			var perr error
+			url, perr = s.mediaURLs.PresignedUploadURL(ctx, s3Key, f.GetContentType())
+			if perr != nil {
+				slog.Error("trip_service: S3 presign upload failed (add-media)", "trip_id", tripID, "client_id", f.GetClientId(), "s3_key", s3Key, "err", perr)
+				return nil, status.Error(codes.Internal, "failed to presign upload url")
+			}
+		}
+		uploadUrls = append(uploadUrls, &pb.UploadUrl{
+			ClientId: f.GetClientId(),
+			S3Key:    s3Key,
+			Url:      url,
+		})
+	}
+	if err := s.tripRepo.SetStatus(tripID, "ADD_MEDIA_UPLOADING"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update trip status")
+	}
+	return &pb.AddMediaStartResponse{
+		SessionId:  sessionID,
+		Status:     "ADD_MEDIA_UPLOADING",
+		UploadUrls: uploadUrls,
+	}, nil
+}
+
+// AddMediaProcessGrouping — PINZ-131, ТЗ 5.3.1-5.3.2: кластеризация добавленных медиа с использованием существующих пинов как seed-групп.
+func (s *TripService) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMediaProcessGroupingRequest) (*pb.AddMediaProcessGroupingResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	sessionID := req.GetSessionId()
+	if tripID == "" || sessionID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id and session_id are required")
+	}
+	exists, err := s.addMediaSessionRepo.Exists(ctx, tripID, sessionID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to validate session")
+	}
+	if !exists {
+		return nil, status.Error(codes.NotFound, "add-media session not found")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if trip.Status != "ADD_MEDIA_UPLOADING" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be in ADD_MEDIA_UPLOADING")
+	}
+	total, videos, _ := s.mediaRepo.CountByTripID(tripID)
+	newVideos := 0
+	for _, m := range req.GetMedia() {
+		if m.GetMediaType() == "video" {
+			newVideos++
+		}
+	}
+	if total+len(req.GetMedia()) > MaxMediaPerTrip {
+		return nil, status.Errorf(codes.InvalidArgument, "trip may have at most %d media", MaxMediaPerTrip)
+	}
+	if videos+newVideos > MaxVideosPerTrip {
+		return nil, status.Errorf(codes.InvalidArgument, "trip may have at most %d videos", MaxVideosPerTrip)
+	}
+	for _, meta := range req.GetMedia() {
+		media := &models.Media{
+			TripID:       tripID,
+			S3Key:        meta.GetS3Key(),
+			MediaType:    meta.GetMediaType(),
+			BattleRating: 0,
+			PrivacyLevel: trip.PrivacyLevel,
+		}
+		if meta.CapturedAtUnix != 0 {
+			t := time.Unix(meta.GetCapturedAtUnix(), 0)
+			media.CapturedAt = &t
+		}
+		if meta.Latitude != nil && meta.Longitude != nil {
+			lat, lon := meta.GetLatitude(), meta.GetLongitude()
+			media.Latitude = &lat
+			media.Longitude = &lon
+		}
+		if err := s.mediaRepo.Create(media); err != nil {
+			return nil, status.Error(codes.Internal, "failed to save media")
+		}
+	}
+	groups := clusterMediaWithExistingPinsAsSeeds(s.mediaRepo, s.pinRepo, tripID)
+	mediaList, _ := s.mediaRepo.ListByTripID(tripID)
+	mediaByID := make(map[string]*models.Media, len(mediaList))
+	for _, m := range mediaList {
+		mediaByID[m.ID] = m
+	}
+	respPins := make([]*pb.DraftPin, 0, len(groups))
+	for _, g := range groups {
+		dp := &pb.DraftPin{DraftPinId: g.DraftPinID}
+		for _, mediaID := range g.MediaIDs {
+			m := mediaByID[mediaID]
+			if m == nil {
+				continue
+			}
+			dp.Media = append(dp.Media, &pb.DraftPinMedia{
+				MediaId: m.ID,
+				Url:     s.presignedReadURL(ctx, m.S3Key),
+				Type:    m.MediaType,
+			})
+		}
+		respPins = append(respPins, dp)
+	}
+	existingIDs, _, err := s.addMediaSessionRepo.GetExistingMediaIDs(ctx, sessionID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to load session")
+	}
+	if err := s.tripRepo.SetStatus(tripID, "ADD_MEDIA_GROUPING_REVIEW"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update trip status")
+	}
+	return &pb.AddMediaProcessGroupingResponse{
+		TripId:           tripID,
+		SessionId:        sessionID,
+		Status:           "ADD_MEDIA_GROUPING_REVIEW",
+		DraftPins:        respPins,
+		ExistingMediaIds: existingIDs,
+	}, nil
+}
+
+// AddMediaApplyGroupsAndProcess — PINZ-131, ТЗ 5.3.3-5.3.4: применение групп и запуск ML-обработки для добавленных медиа.
+// Существующие медиа защищены от удаления/перемещения; ML worker получает flow="add_media" + new_pin_ids для пропуска тегов/категорий у существующих пинов.
+func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb.AddMediaApplyGroupsAndProcessRequest) (*pb.AddMediaApplyGroupsAndProcessResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	tripID := req.GetTripId()
+	sessionID := req.GetSessionId()
+	if tripID == "" || sessionID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id and session_id are required")
+	}
+	exists, err := s.addMediaSessionRepo.Exists(ctx, tripID, sessionID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to validate session")
+	}
+	if !exists {
+		return nil, status.Error(codes.NotFound, "add-media session not found")
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	participant, err := s.participantRepo.IsParticipant(tripID, userID)
+	if err != nil || !participant {
+		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if trip.Status != "ADD_MEDIA_GROUPING_REVIEW" {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be in ADD_MEDIA_GROUPING_REVIEW")
+	}
+	existingIDs, _, err := s.addMediaSessionRepo.GetExistingMediaIDs(ctx, sessionID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to load session")
+	}
+	existingSet := make(map[string]struct{}, len(existingIDs))
+	for _, id := range existingIDs {
+		existingSet[id] = struct{}{}
+	}
+	// ТЗ 5.3.3: запрещено удалять исходные медиа — фильтруем deleted_media_ids.
+	if ids := req.GetDeletedMediaIds(); len(ids) > 0 {
+		filtered := make([]string, 0, len(ids))
+		for _, id := range ids {
+			if _, isExisting := existingSet[id]; !isExisting {
+				filtered = append(filtered, id)
+			}
+		}
+		if len(filtered) > 0 {
+			allowedIDs, s3Keys, err := s.resolveMediaDeletionsForTrip(tripID, filtered)
+			if err != nil {
+				return nil, err
+			}
+			if err := s.mediaRepo.DeleteByIDs(allowedIDs); err != nil {
+				return nil, status.Error(codes.Internal, "failed to delete media")
+			}
+			if s.mediaURLs != nil {
+				for _, key := range s3Keys {
+					_ = s.mediaURLs.DeleteObject(ctx, key)
+				}
+			}
+		}
+	}
+	// Применяем группы. Для "existing-{pin_id}" — только новые медиа добавляются к существующему пину (исходные не трогаем, ТЗ 5.3.3).
+	// Для остальных (cluster-N / draft-unassigned) — создаём новый пин.
+	newPinIDs := make([]string, 0)
+	touchedPinIDs := make(map[string]struct{})
+	for _, dp := range req.GetDraftPins() {
+		draftID := dp.GetDraftPinId()
+		mediaIDs := dp.GetMediaIds()
+		if len(mediaIDs) == 0 {
+			continue
+		}
+		if len(draftID) > len("existing-") && draftID[:len("existing-")] == "existing-" {
+			existingPinID := draftID[len("existing-"):]
+			pin, perr := s.pinRepo.GetByID(existingPinID)
+			if perr != nil {
+				continue
+			}
+			// Фильтруем исходные медиа из набора (они не должны переназначаться — ТЗ 5.3.3).
+			newOnly := make([]string, 0, len(mediaIDs))
+			for _, id := range mediaIDs {
+				if _, isExisting := existingSet[id]; !isExisting {
+					newOnly = append(newOnly, id)
+				}
+			}
+			if len(newOnly) == 0 {
+				continue
+			}
+			if err := s.mediaRepo.UpdatePinIDByIDs(newOnly, pin.ID); err != nil {
+				return nil, status.Error(codes.Internal, "failed to assign media to existing pin")
+			}
+			touchedPinIDs[pin.ID] = struct{}{}
+		} else {
+			// Новый пин — пропускаем исходные медиа из mediaIDs (они должны остаться в своих пинах).
+			newOnly := make([]string, 0, len(mediaIDs))
+			for _, id := range mediaIDs {
+				if _, isExisting := existingSet[id]; !isExisting {
+					newOnly = append(newOnly, id)
+				}
+			}
+			if len(newOnly) == 0 {
+				continue
+			}
+			pin := &models.Pin{
+				TripID:       tripID,
+				Name:         "Pin",
+				Description:  "",
+				Category:     trip.Category,
+				PrivacyLevel: trip.PrivacyLevel,
+				MediaCount:   int32(len(newOnly)),
+			}
+			if err := s.pinRepo.Create(pin); err != nil {
+				return nil, status.Error(codes.Internal, "failed to create pin")
+			}
+			if err := s.mediaRepo.UpdatePinIDByIDs(newOnly, pin.ID); err != nil {
+				return nil, status.Error(codes.Internal, "failed to assign media to new pin")
+			}
+			newPinIDs = append(newPinIDs, pin.ID)
+			touchedPinIDs[pin.ID] = struct{}{}
+		}
+	}
+	for pinID := range touchedPinIDs {
+		updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pinID)
+	}
+	if err := s.tripRepo.SetStatus(tripID, "PROCESSING"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update status")
+	}
+	// ТЗ 5.3.4: worker пропустит авто-теги/категорию для пинов, не попавших в new_pin_ids.
+	if s.eventRepo != nil {
+		if err := s.eventRepo.SetMLContext(ctx, tripID, "add_media", newPinIDs, 30*time.Minute); err != nil {
+			slog.WarnContext(ctx, "trip_service: failed to set ML context for add-media", "trip_id", tripID, "err", err)
+		}
+		_ = s.eventRepo.AddMLTaskWithFlow(ctx, tripID, "add_media", newPinIDs)
+	}
+	return &pb.AddMediaApplyGroupsAndProcessResponse{
+		Message: "Processing started",
+		Status:  "PROCESSING",
 	}, nil
 }
 

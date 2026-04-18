@@ -52,7 +52,7 @@ func (r *MediaRepository) Create(m *models.Media) error {
 
 func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
-		ST_X(location)::float as lat, ST_Y(location)::float as lon,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
 		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
 		FROM media WHERE id = $1`
 	var m models.Media
@@ -90,7 +90,7 @@ func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
 
 func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
-		ST_X(location)::float as lat, ST_Y(location)::float as lon,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
 		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
 		FROM media WHERE trip_id = $1 ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
@@ -202,8 +202,27 @@ func (r *MediaRepository) CountByTripID(tripID string) (total int, videos int, e
 }
 
 // ClusterIDsByLocation returns for each media ID (with location) its cluster index (PostGIS ST_ClusterDBSCAN).
+// Uses an azimuthal equidistant (AEQD) projection centred on the trip centroid so that eps is expressed
+// directly in metres and distortion stays below 10 m within several-thousand-kilometre trips.
 func (r *MediaRepository) ClusterIDsByLocation(tripID string, radiusMeters float64) (map[string]int, error) {
-	sqlStr := `SELECT id, ST_ClusterDBSCAN(location::geography, $2, 1) OVER ()::int as cid FROM media WHERE trip_id = $1 AND location IS NOT NULL`
+	sqlStr := `
+		WITH c AS (
+			SELECT ST_Y(ST_Centroid(ST_Collect(location))) AS lat0,
+			       ST_X(ST_Centroid(ST_Collect(location))) AS lon0
+			FROM media
+			WHERE trip_id = $1 AND location IS NOT NULL
+		)
+		SELECT m.id,
+		       ST_ClusterDBSCAN(
+		           ST_Transform(
+		               m.location,
+		               format('+proj=aeqd +lat_0=%s +lon_0=%s +ellps=WGS84 +units=m +no_defs', c.lat0, c.lon0)
+		           ),
+		           $2,
+		           1
+		       ) OVER ()::int AS cid
+		FROM media m CROSS JOIN c
+		WHERE m.trip_id = $1 AND m.location IS NOT NULL`
 	rows, err := r.db.Query(sqlStr, tripID, radiusMeters)
 	if err != nil {
 		return nil, err
@@ -224,7 +243,7 @@ func (r *MediaRepository) ClusterIDsByLocation(tripID string, radiusMeters float
 // ListByPinID returns media for a pin (for computing pin start/end time and location).
 func (r *MediaRepository) ListByPinID(pinID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
-		ST_X(location)::float as lat, ST_Y(location)::float as lon,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
 		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
 		FROM media WHERE pin_id = $1 ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, pinID)

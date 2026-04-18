@@ -19,31 +19,34 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TripService_CreateTrip_FullMethodName             = "/trip.TripService/CreateTrip"
-	TripService_GetTrip_FullMethodName                = "/trip.TripService/GetTrip"
-	TripService_ListUserTrips_FullMethodName          = "/trip.TripService/ListUserTrips"
-	TripService_UpdateTrip_FullMethodName             = "/trip.TripService/UpdateTrip"
-	TripService_DeleteTrip_FullMethodName             = "/trip.TripService/DeleteTrip"
-	TripService_RequestTripCoverUpload_FullMethodName = "/trip.TripService/RequestTripCoverUpload"
-	TripService_ConfirmTripCoverUpload_FullMethodName = "/trip.TripService/ConfirmTripCoverUpload"
-	TripService_DeleteTripCover_FullMethodName        = "/trip.TripService/DeleteTripCover"
-	TripService_GenerateInviteLink_FullMethodName     = "/trip.TripService/GenerateInviteLink"
-	TripService_JoinTripByToken_FullMethodName        = "/trip.TripService/JoinTripByToken"
-	TripService_RemoveParticipant_FullMethodName      = "/trip.TripService/RemoveParticipant"
-	TripService_LeaveTrip_FullMethodName              = "/trip.TripService/LeaveTrip"
-	TripService_TransferAdmin_FullMethodName          = "/trip.TripService/TransferAdmin"
-	TripService_ProcessMediaGrouping_FullMethodName   = "/trip.TripService/ProcessMediaGrouping"
-	TripService_ApplyGroupsAndProcess_FullMethodName  = "/trip.TripService/ApplyGroupsAndProcess"
-	TripService_GetTripReview_FullMethodName          = "/trip.TripService/GetTripReview"
-	TripService_FinalizeTrip_FullMethodName           = "/trip.TripService/FinalizeTrip"
-	TripService_PublishTrip_FullMethodName            = "/trip.TripService/PublishTrip"
-	TripService_UpdateTripSettings_FullMethodName     = "/trip.TripService/UpdateTripSettings"
-	TripService_ListFeed_FullMethodName               = "/trip.TripService/ListFeed"
-	TripService_LikeTrip_FullMethodName               = "/trip.TripService/LikeTrip"
-	TripService_DislikeTrip_FullMethodName            = "/trip.TripService/DislikeTrip"
-	TripService_AddToFavourites_FullMethodName        = "/trip.TripService/AddToFavourites"
-	TripService_RemoveFromFavourites_FullMethodName   = "/trip.TripService/RemoveFromFavourites"
-	TripService_ListFavourites_FullMethodName         = "/trip.TripService/ListFavourites"
+	TripService_CreateTrip_FullMethodName                    = "/trip.TripService/CreateTrip"
+	TripService_GetTrip_FullMethodName                       = "/trip.TripService/GetTrip"
+	TripService_ListUserTrips_FullMethodName                 = "/trip.TripService/ListUserTrips"
+	TripService_UpdateTrip_FullMethodName                    = "/trip.TripService/UpdateTrip"
+	TripService_DeleteTrip_FullMethodName                    = "/trip.TripService/DeleteTrip"
+	TripService_RequestTripCoverUpload_FullMethodName        = "/trip.TripService/RequestTripCoverUpload"
+	TripService_ConfirmTripCoverUpload_FullMethodName        = "/trip.TripService/ConfirmTripCoverUpload"
+	TripService_DeleteTripCover_FullMethodName               = "/trip.TripService/DeleteTripCover"
+	TripService_GenerateInviteLink_FullMethodName            = "/trip.TripService/GenerateInviteLink"
+	TripService_JoinTripByToken_FullMethodName               = "/trip.TripService/JoinTripByToken"
+	TripService_RemoveParticipant_FullMethodName             = "/trip.TripService/RemoveParticipant"
+	TripService_LeaveTrip_FullMethodName                     = "/trip.TripService/LeaveTrip"
+	TripService_TransferAdmin_FullMethodName                 = "/trip.TripService/TransferAdmin"
+	TripService_ProcessMediaGrouping_FullMethodName          = "/trip.TripService/ProcessMediaGrouping"
+	TripService_ApplyGroupsAndProcess_FullMethodName         = "/trip.TripService/ApplyGroupsAndProcess"
+	TripService_GetTripReview_FullMethodName                 = "/trip.TripService/GetTripReview"
+	TripService_FinalizeTrip_FullMethodName                  = "/trip.TripService/FinalizeTrip"
+	TripService_PublishTrip_FullMethodName                   = "/trip.TripService/PublishTrip"
+	TripService_UpdateTripSettings_FullMethodName            = "/trip.TripService/UpdateTripSettings"
+	TripService_ListFeed_FullMethodName                      = "/trip.TripService/ListFeed"
+	TripService_LikeTrip_FullMethodName                      = "/trip.TripService/LikeTrip"
+	TripService_DislikeTrip_FullMethodName                   = "/trip.TripService/DislikeTrip"
+	TripService_AddToFavourites_FullMethodName               = "/trip.TripService/AddToFavourites"
+	TripService_RemoveFromFavourites_FullMethodName          = "/trip.TripService/RemoveFromFavourites"
+	TripService_ListFavourites_FullMethodName                = "/trip.TripService/ListFavourites"
+	TripService_AddMediaStart_FullMethodName                 = "/trip.TripService/AddMediaStart"
+	TripService_AddMediaProcessGrouping_FullMethodName       = "/trip.TripService/AddMediaProcessGrouping"
+	TripService_AddMediaApplyGroupsAndProcess_FullMethodName = "/trip.TripService/AddMediaApplyGroupsAndProcess"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -80,6 +83,10 @@ type TripServiceClient interface {
 	AddToFavourites(ctx context.Context, in *AddToFavouritesRequest, opts ...grpc.CallOption) (*AddToFavouritesResponse, error)
 	RemoveFromFavourites(ctx context.Context, in *RemoveFromFavouritesRequest, opts ...grpc.CallOption) (*RemoveFromFavouritesResponse, error)
 	ListFavourites(ctx context.Context, in *ListFavouritesRequest, opts ...grpc.CallOption) (*ListFavouritesResponse, error)
+	// PINZ-131: Добавление медиа в существующий трип (ТЗ 5.1-5.3)
+	AddMediaStart(ctx context.Context, in *AddMediaStartRequest, opts ...grpc.CallOption) (*AddMediaStartResponse, error)
+	AddMediaProcessGrouping(ctx context.Context, in *AddMediaProcessGroupingRequest, opts ...grpc.CallOption) (*AddMediaProcessGroupingResponse, error)
+	AddMediaApplyGroupsAndProcess(ctx context.Context, in *AddMediaApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*AddMediaApplyGroupsAndProcessResponse, error)
 }
 
 type tripServiceClient struct {
@@ -340,6 +347,36 @@ func (c *tripServiceClient) ListFavourites(ctx context.Context, in *ListFavourit
 	return out, nil
 }
 
+func (c *tripServiceClient) AddMediaStart(ctx context.Context, in *AddMediaStartRequest, opts ...grpc.CallOption) (*AddMediaStartResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaStartResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaStart_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) AddMediaProcessGrouping(ctx context.Context, in *AddMediaProcessGroupingRequest, opts ...grpc.CallOption) (*AddMediaProcessGroupingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaProcessGroupingResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaProcessGrouping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) AddMediaApplyGroupsAndProcess(ctx context.Context, in *AddMediaApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*AddMediaApplyGroupsAndProcessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaApplyGroupsAndProcessResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaApplyGroupsAndProcess_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TripServiceServer is the server API for TripService service.
 // All implementations must embed UnimplementedTripServiceServer
 // for forward compatibility.
@@ -374,6 +411,10 @@ type TripServiceServer interface {
 	AddToFavourites(context.Context, *AddToFavouritesRequest) (*AddToFavouritesResponse, error)
 	RemoveFromFavourites(context.Context, *RemoveFromFavouritesRequest) (*RemoveFromFavouritesResponse, error)
 	ListFavourites(context.Context, *ListFavouritesRequest) (*ListFavouritesResponse, error)
+	// PINZ-131: Добавление медиа в существующий трип (ТЗ 5.1-5.3)
+	AddMediaStart(context.Context, *AddMediaStartRequest) (*AddMediaStartResponse, error)
+	AddMediaProcessGrouping(context.Context, *AddMediaProcessGroupingRequest) (*AddMediaProcessGroupingResponse, error)
+	AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
 
@@ -458,6 +499,15 @@ func (UnimplementedTripServiceServer) RemoveFromFavourites(context.Context, *Rem
 }
 func (UnimplementedTripServiceServer) ListFavourites(context.Context, *ListFavouritesRequest) (*ListFavouritesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFavourites not implemented")
+}
+func (UnimplementedTripServiceServer) AddMediaStart(context.Context, *AddMediaStartRequest) (*AddMediaStartResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaStart not implemented")
+}
+func (UnimplementedTripServiceServer) AddMediaProcessGrouping(context.Context, *AddMediaProcessGroupingRequest) (*AddMediaProcessGroupingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaProcessGrouping not implemented")
+}
+func (UnimplementedTripServiceServer) AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaApplyGroupsAndProcess not implemented")
 }
 func (UnimplementedTripServiceServer) mustEmbedUnimplementedTripServiceServer() {}
 func (UnimplementedTripServiceServer) testEmbeddedByValue()                     {}
@@ -930,6 +980,60 @@ func _TripService_ListFavourites_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_AddMediaStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaStartRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaStart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaStart_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaStart(ctx, req.(*AddMediaStartRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_AddMediaProcessGrouping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaProcessGroupingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaProcessGrouping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaProcessGrouping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaProcessGrouping(ctx, req.(*AddMediaProcessGroupingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_AddMediaApplyGroupsAndProcess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaApplyGroupsAndProcessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaApplyGroupsAndProcess(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaApplyGroupsAndProcess_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaApplyGroupsAndProcess(ctx, req.(*AddMediaApplyGroupsAndProcessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TripService_ServiceDesc is the grpc.ServiceDesc for TripService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1036,6 +1140,18 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListFavourites",
 			Handler:    _TripService_ListFavourites_Handler,
+		},
+		{
+			MethodName: "AddMediaStart",
+			Handler:    _TripService_AddMediaStart_Handler,
+		},
+		{
+			MethodName: "AddMediaProcessGrouping",
+			Handler:    _TripService_AddMediaProcessGrouping_Handler,
+		},
+		{
+			MethodName: "AddMediaApplyGroupsAndProcess",
+			Handler:    _TripService_AddMediaApplyGroupsAndProcess_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

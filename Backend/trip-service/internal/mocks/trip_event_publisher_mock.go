@@ -12,6 +12,7 @@ package mocks
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -54,6 +55,20 @@ func (mr *MockTripEventPublisherMockRecorder) AddMLTask(ctx, tripID any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTask", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTask), ctx, tripID)
 }
 
+// AddMLTaskWithFlow mocks base method.
+func (m *MockTripEventPublisher) AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMLTaskWithFlow", ctx, tripID, flow, newPinIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddMLTaskWithFlow indicates an expected call of AddMLTaskWithFlow.
+func (mr *MockTripEventPublisherMockRecorder) AddMLTaskWithFlow(ctx, tripID, flow, newPinIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTaskWithFlow", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTaskWithFlow), ctx, tripID, flow, newPinIDs)
+}
+
 // PublishTripEvent mocks base method.
 func (m *MockTripEventPublisher) PublishTripEvent(ctx context.Context, eventType, tripID, userID string) error {
 	m.ctrl.T.Helper()
@@ -66,4 +81,18 @@ func (m *MockTripEventPublisher) PublishTripEvent(ctx context.Context, eventType
 func (mr *MockTripEventPublisherMockRecorder) PublishTripEvent(ctx, eventType, tripID, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishTripEvent", reflect.TypeOf((*MockTripEventPublisher)(nil).PublishTripEvent), ctx, eventType, tripID, userID)
+}
+
+// SetMLContext mocks base method.
+func (m *MockTripEventPublisher) SetMLContext(ctx context.Context, tripID, flow string, newPinIDs []string, ttl time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetMLContext", ctx, tripID, flow, newPinIDs, ttl)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetMLContext indicates an expected call of SetMLContext.
+func (mr *MockTripEventPublisherMockRecorder) SetMLContext(ctx, tripID, flow, newPinIDs, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMLContext", reflect.TypeOf((*MockTripEventPublisher)(nil).SetMLContext), ctx, tripID, flow, newPinIDs, ttl)
 }
