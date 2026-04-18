@@ -129,7 +129,11 @@ func clusterMediaWithExistingPinsAsSeeds(mediaRepo repositories.MediaRepositoryI
 
 	// 2) Кластеризация по геолокации среди всех медиа с координатами.
 	// Новое медиа с координатами, попавшее в кластер с existing-медиа, присоединяется к соответствующему пину.
-	clusterIDs, _ := mediaRepo.ClusterIDsByLocation(tripID, float64(ClusterRadiusMeters))
+	clusterIDs, clusterErr := mediaRepo.ClusterIDsByLocation(tripID, float64(ClusterRadiusMeters))
+	if clusterErr != nil {
+		slog.Warn("grouping: PostGIS clustering failed during add-media",
+			"trip_id", tripID, "err", clusterErr)
+	}
 	clusterToExistingPin := make(map[int]string)
 	for mediaID, cid := range clusterIDs {
 		if m, ok := mediaByID[mediaID]; ok && m.PinID != nil {
