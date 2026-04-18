@@ -34,6 +34,7 @@ public class ProfileViewModel {
         case getProfile
         case saveProfile
         case deleteAccount
+        case deleteAvatar
         case navigate(Route)
     }
 
@@ -96,6 +97,16 @@ public class ProfileViewModel {
 
             Task {
                 await deleteAccount()
+            }
+        case .deleteAvatar:
+            guard !isLoading else {
+                return
+            }
+
+            isLoading = true
+
+            Task {
+                await deleteAvatar()
             }
         case let .navigate(route):
             switch route {
@@ -240,6 +251,27 @@ public class ProfileViewModel {
             router?.navigateToMain()
         } catch {
             print("[Profile] Failed to delete account: \(error)")
+        }
+    }
+
+    private func deleteAvatar() async {
+        defer {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isLoading = false
+            }
+        }
+
+        avatarUploadTask?.cancel()
+        avatarUploadTask = nil
+        userImage = nil
+
+        do {
+            let response = try await networkService.deleteAvatar()
+            user = response.toUser()
+            userImage = nil
+            router?.notifyCurrentProfileUpdated(user)
+        } catch {
+            print("[Profile] Failed to delete avatar: \(error)")
         }
     }
 

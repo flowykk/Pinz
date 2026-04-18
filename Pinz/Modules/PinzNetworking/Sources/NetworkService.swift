@@ -21,6 +21,7 @@ public protocol NetworkServiceProtocol {
     // Profile
     func getProfile() async throws -> ProfileResponseDTO
     func updateProfile(username: String) async throws -> ProfileResponseDTO
+    func deleteAvatar() async throws -> ProfileResponseDTO
     func deleteAccount() async throws -> DeleteAccountResponseDTO
     func requestAvatarUpload(filename: String, contentType: String) async throws -> AvatarUploadResponseDTO
     func confirmAvatarUpload(s3Key: String) async throws -> ProfileResponseDTO
@@ -241,6 +242,13 @@ public final class NetworkService: NetworkServiceProtocol {
         try await provider.request(
             .deleteAccount,
             type: DeleteAccountResponseDTO.self
+        )
+    }
+
+    public func deleteAvatar() async throws -> ProfileResponseDTO {
+        try await provider.request(
+            .deleteAvatar,
+            type: ProfileResponseDTO.self
         )
     }
 

@@ -19,6 +19,7 @@ enum PinzAPI {
     // Profile
     case getProfile
     case deleteAccount
+    case deleteAvatar
     case updateProfile(username: String)
     case requestAvatarUpload(filename: String, contentType: String)
     case confirmAvatarUpload(s3Key: String)
@@ -85,6 +86,7 @@ extension PinzAPI: TargetType {
         case .logout: endpointPath = "/auth/logout"
         case .getProfile: endpointPath = "/profile"
         case .deleteAccount: endpointPath = "/profile"
+        case .deleteAvatar: endpointPath = "/profile/avatar"
         case .updateProfile: endpointPath = "/profile"
         case .requestAvatarUpload: endpointPath = "/profile/avatar/upload"
         case .confirmAvatarUpload: endpointPath = "/profile/avatar/confirm"
@@ -123,6 +125,8 @@ extension PinzAPI: TargetType {
             return .get
         case .getProfile:
             return .get
+        case .deleteAvatar:
+            return .delete
         case .updateTrip, .updateTripSettings, .updateProfile:
             return .patch
         case .deleteTrip, .removeParticipant, .deleteAccount, .removeTripFromFavourites:
@@ -164,7 +168,7 @@ extension PinzAPI: TargetType {
         case let .passkeyRegisterFinish(regId, cred): return jsonParams(["registration_id": regId, "credential_json": cred])
         case let .refreshToken(token): return jsonParams(["refresh_token": token])
         case let .logout(token): return jsonParams(["refresh_token": token])
-        case .getProfile, .deleteAccount:
+        case .getProfile, .deleteAccount, .deleteAvatar:
             return .requestPlain
 
         case let .updateProfile(username): return jsonParams(["username": username])
@@ -264,6 +268,8 @@ extension PinzAPI {
             json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
         case .deleteAccount:
             json = #"{"success": true}"#
+        case .deleteAvatar:
+            json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":null}"#
         case .updateProfile:
             json = #"{"user_id":"user-001","username":"new_username","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
         case .requestAvatarUpload:
