@@ -733,10 +733,49 @@ definitions:
       url:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.UserStatsResponse:
+    properties:
+      battles_finished:
+        type: integer
+      total_dislikes:
+        type: integer
+      total_likes:
+        type: integer
+      total_media:
+        type: integer
+      total_pins:
+        type: integer
+      total_trips:
+        type: integer
+      user_id:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_responses.VerifyEmailCodeResponse:
     properties:
       success:
         type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.VisitedLocationResponse:
+    properties:
+      last_visit_at_unix:
+        type: integer
+      location_id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
+      type:
+        type: string
+      visit_count:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.VisitedLocationsResponse:
+    properties:
+      locations:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.VisitedLocationResponse'
+        type: array
     type: object
 host: pinz.website
 info:
@@ -1329,6 +1368,62 @@ paths:
       summary: Confirm email change with verification code
       tags:
       - profile
+  /api/v1/profile/stats:
+    get:
+      description: Returns counters (trips, pins, media, likes, dislikes, battles)
+        for authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UserStatsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user's stats
+      tags:
+      - statistics
+  /api/v1/profile/visited-locations:
+    get:
+      description: Returns countries/cities where the user had trips. Optional ?type=Country|City.
+      parameters:
+      - description: 'Filter by type: Country | City'
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.VisitedLocationsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user's visited locations
+      tags:
+      - statistics
   /api/v1/trips:
     get:
       consumes:

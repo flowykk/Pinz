@@ -28,3 +28,6 @@ RETURNING id;
 -- name: TripLocationInsert :exec
 INSERT INTO trip_locations (trip_id, location_id) VALUES ($1, $2)
 ON CONFLICT DO NOTHING;
+
+-- name: GeoRegistryGetByIDs :many
+SELECT id, parent_id, name, type FROM geo_registry WHERE id = ANY($1::int[]);

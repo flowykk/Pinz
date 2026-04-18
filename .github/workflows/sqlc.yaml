@@ -9,6 +9,9 @@ on:
       - 'Backend/trip-service/internal/db/migrations/**'
       - 'Backend/trip-service/queries/**'
       - 'Backend/trip-service/sqlc.yaml'
+      - 'Backend/statistics-service/internal/db/migrations/**'
+      - 'Backend/statistics-service/queries/**'
+      - 'Backend/statistics-service/sqlc.yaml'
       - 'Backend/Makefile'
       - '.github/workflows/sqlc.yaml'
   push:
@@ -20,6 +23,9 @@ on:
       - 'Backend/trip-service/internal/db/migrations/**'
       - 'Backend/trip-service/queries/**'
       - 'Backend/trip-service/sqlc.yaml'
+      - 'Backend/statistics-service/internal/db/migrations/**'
+      - 'Backend/statistics-service/queries/**'
+      - 'Backend/statistics-service/sqlc.yaml'
       - 'Backend/Makefile'
       - '.github/workflows/sqlc.yaml'
 

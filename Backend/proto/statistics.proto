@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package statistics;
+
+option go_package = "pinz/backend/statistics-service/pkg/proto";
+
+// StatisticsService — персональные действия пользователя (лайки/дизлайки/батлы)
+// и агрегация посещённых локаций по списку trip_ids. Коллективные счётчики
+// (total_trips/total_pins/total_media) вычисляются API Gateway через trip-service.
+service StatisticsService {
+  rpc GetUserStats(GetUserStatsRequest) returns (GetUserStatsResponse);
+  rpc GetVisitedLocations(GetVisitedLocationsRequest) returns (GetVisitedLocationsResponse);
+}
+
+message UserStats {
+  string user_id = 1;
+  int32 total_likes = 2;
+  int32 total_dislikes = 3;
+  int32 battles_finished = 4;
+}
+
+message VisitedLocation {
+  int32 location_id = 1;
+  string name = 2;
+  string type = 3;            // "Country" | "City"
+  int32 parent_id = 4;
+  int32 visit_count = 5;      // COUNT(DISTINCT trip_id) среди trip_ids пользователя
+  int64 last_visit_at_unix = 6;
+}
+
+message GetUserStatsRequest {
+  string user_id = 1;
+}
+
+message GetUserStatsResponse {
+  UserStats stats = 1;
+}
+
+message GetVisitedLocationsRequest {
+  string user_id = 1;
+  repeated string trip_ids = 2;
+  string type = 3;            // "Country" / "City" / "" (любой)
+}
+
+message GetVisitedLocationsResponse {
+  repeated VisitedLocation locations = 1;
+}

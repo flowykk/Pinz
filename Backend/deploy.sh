@@ -168,11 +168,13 @@ pull_images() {
     local api_gateway_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-api-gateway:${IMAGE_TAG}"
     local auth_service_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-auth-service:${IMAGE_TAG}"
     local trip_service_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-trip-service:${IMAGE_TAG}"
+    local statistics_service_image="${DOCKER_REGISTRY}/${DOCKER_REPO}/pinz-statistics-service:${IMAGE_TAG}"
 
     log_info "Pulling Docker images..."
     docker pull "$api_gateway_image" || log_warning "Pull failed for $api_gateway_image (non-fatal on k3s)"
     docker pull "$auth_service_image" || log_warning "Pull failed for $auth_service_image (non-fatal on k3s)"
     docker pull "$trip_service_image" || log_warning "Pull failed for $trip_service_image (non-fatal on k3s)"
+    docker pull "$statistics_service_image" || log_warning "Pull failed for $statistics_service_image (non-fatal on k3s)"
 
     log_success "Images pull step complete"
 }
@@ -203,6 +205,7 @@ deploy_app() {
     export API_GATEWAY_TAG="${API_GATEWAY_TAG:-${IMAGE_TAG}}"
     export AUTH_SERVICE_TAG="${AUTH_SERVICE_TAG:-${IMAGE_TAG}}"
     export TRIP_SERVICE_TAG="${TRIP_SERVICE_TAG:-${IMAGE_TAG}}"
+    export STATISTICS_SERVICE_TAG="${STATISTICS_SERVICE_TAG:-${IMAGE_TAG}}"
     export SERVER_IP="${SERVER_IP:-host.docker.internal}"
     export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
     export JWT_SECRET_KEY="${JWT_SECRET_KEY}"
@@ -422,7 +425,7 @@ wait_for_deployment() {
     elif [[ -n "${DEPLOY_SERVICES:-}" ]]; then
         IFS=',' read -ra deployments <<< "$DEPLOY_SERVICES"
     else
-        deployments=("api-gateway" "auth-service" "trip-service")
+        deployments=("api-gateway" "auth-service" "trip-service" "statistics-service")
     fi
 
     for deploy in "${deployments[@]}"; do

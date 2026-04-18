@@ -62,6 +62,8 @@ spec:
               value: {{ .Values.env.authServiceGrpcAddress | quote }}
             - name: TRIP_SERVICE_GRPC_ADDRESS
               value: {{ .Values.env.tripServiceGrpcAddress | quote }}
+            - name: STATISTICS_SERVICE_GRPC_ADDRESS
+              value: {{ .Values.env.statisticsServiceGrpcAddress | quote }}
             - name: REDIS_ADDR
               value: {{ .Values.env.redisAddr | quote }}
             - name: SWAGGER_HOST

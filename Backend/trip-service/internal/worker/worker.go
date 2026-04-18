@@ -319,7 +319,7 @@ func processTrip(ctx context.Context, tripID string, tripRepo *repositories.Trip
 	}
 
 	// Geocode all pins with coordinates and populate geo_registry + trip_locations.
-	geocodePins(ctx, tripID, geocoder, geoRepo, pinRepo)
+	locationIDs := geocodePins(ctx, tripID, geocoder, geoRepo, pinRepo)
 
 	participants, err := participantRepo.GetByTripID(tripID)
 	if err != nil {
@@ -330,6 +330,26 @@ func processTrip(ctx context.Context, tripID string, tripRepo *repositories.Trip
 	for _, p := range participants {
 		userIDs = append(userIDs, p.UserID)
 	}
+
+	if len(locationIDs) > 0 && len(userIDs) > 0 {
+		locs, err := geoRepo.GetLocations(ctx, locationIDs)
+		if err == nil && len(locs) > 0 {
+			payload := make([]map[string]any, 0, len(locs))
+			for _, l := range locs {
+				entry := map[string]any{"id": l.ID, "name": l.Name, "type": l.Type}
+				if l.ParentID != nil {
+					entry["parent_id"] = *l.ParentID
+				}
+				payload = append(payload, entry)
+			}
+			_ = eventRepo.PublishStatsEvent(ctx, "TRIP_LOCATIONS_ADDED", tripID, userIDs, map[string]any{
+				"locations": payload,
+			})
+		} else if err != nil {
+			slog.WarnContext(ctx, "worker: GetLocations failed", "trip_id", tripID, "error", err)
+		}
+	}
+
 	_ = eventRepo.PublishTripEventWS(ctx, tripID, userIDs, "TRIP_PROCESSING_COMPLETED", map[string]interface{}{
 		"trip_id": tripID,
 		"status":  "DRAFT_FINAL_REVIEW",
@@ -338,15 +358,18 @@ func processTrip(ctx context.Context, tripID string, tripRepo *repositories.Trip
 	return nil
 }
 
-func geocodePins(ctx context.Context, tripID string, geocoder services.LocationResolver, geoRepo *repositories.GeoRegistryRepository, pinRepo *repositories.PinRepository) {
+// geocodePins геокодирует все пины трипа, заполняет geo_registry/trip_locations и
+// возвращает уникальный список id локаций (страна/город), использованных в трипе —
+// чтобы processTrip смог опубликовать TRIP_LOCATIONS_ADDED в statistics-service.
+func geocodePins(ctx context.Context, tripID string, geocoder services.LocationResolver, geoRepo *repositories.GeoRegistryRepository, pinRepo *repositories.PinRepository) []int {
 	if geocoder == nil || geoRepo == nil || pinRepo == nil {
-		return
+		return nil
 	}
 
 	pins, err := pinRepo.ListByTripID(tripID)
 	if err != nil {
 		slog.WarnContext(ctx, "worker: geocodePins: failed to list pins", "trip_id", tripID, "error", err)
-		return
+		return nil
 	}
 
 	allLocationIDs := make(map[int]struct{})
@@ -380,13 +403,15 @@ func geocodePins(ctx context.Context, tripID string, geocoder services.LocationR
 		}
 	}
 
-	if len(allLocationIDs) > 0 {
-		ids := make([]int, 0, len(allLocationIDs))
-		for id := range allLocationIDs {
-			ids = append(ids, id)
-		}
-		if err := geoRepo.UpsertTripLocations(ctx, tripID, ids); err != nil {
-			slog.WarnContext(ctx, "worker: UpsertTripLocations failed", "trip_id", tripID, "error", err)
-		}
+	if len(allLocationIDs) == 0 {
+		return nil
 	}
+	ids := make([]int, 0, len(allLocationIDs))
+	for id := range allLocationIDs {
+		ids = append(ids, id)
+	}
+	if err := geoRepo.UpsertTripLocations(ctx, tripID, ids); err != nil {
+		slog.WarnContext(ctx, "worker: UpsertTripLocations failed", "trip_id", tripID, "error", err)
+	}
+	return ids
 }

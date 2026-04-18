@@ -39,6 +39,8 @@ service TripService {
   rpc AddMediaStart(AddMediaStartRequest) returns (AddMediaStartResponse);
   rpc AddMediaProcessGrouping(AddMediaProcessGroupingRequest) returns (AddMediaProcessGroupingResponse);
   rpc AddMediaApplyGroupsAndProcess(AddMediaApplyGroupsAndProcessRequest) returns (AddMediaApplyGroupsAndProcessResponse);
+  // PINZ-133: лёгкая сводка по всем трипам пользователя для statistics/profile
+  rpc ListUserTripSummaries(ListUserTripSummariesRequest) returns (ListUserTripSummariesResponse);
   // PINZ-132: фотобатлы и "лучшие воспоминания" (ТЗ 8)
   rpc StartBattle(StartBattleRequest) returns (StartBattleResponse);
   rpc SubmitBattleResult(SubmitBattleResultRequest) returns (SubmitBattleResultResponse);
@@ -65,6 +67,7 @@ message Trip {
   int64 updated_at_unix = 17;
   int32 media_count = 18;
   int32 participants_count = 19;
+  int32 pins_count = 20;
 }
 
 message CreateTripRequest {
@@ -457,6 +460,20 @@ message AddMediaApplyGroupsAndProcessRequest {
 message AddMediaApplyGroupsAndProcessResponse {
   string message = 1;
   string status = 2;
+}
+
+// PINZ-133: лёгкая сводка по всем трипам пользователя — для статистики профиля.
+// Не пагинируется, возвращает все трипы, где user — участник.
+message TripSummary {
+  string trip_id = 1;
+  int32 pins_count = 2;
+  int32 media_count = 3;
+}
+message ListUserTripSummariesRequest {
+  string user_id = 1;
+}
+message ListUserTripSummariesResponse {
+  repeated TripSummary trips = 1;
 }
 
 // PINZ-132: фотобатлы (ТЗ 8.1)

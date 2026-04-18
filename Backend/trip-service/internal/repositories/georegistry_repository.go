@@ -112,6 +112,40 @@ func (r *GeoRegistryRepository) FindLocationIDsByName(ctx context.Context, name 
 	return ids, nil
 }
 
+// GeoLocation — DTO для кросс-сервисной передачи (statistics-service).
+type GeoLocation struct {
+	ID       int
+	ParentID *int
+	Name     string
+	Type     string
+}
+
+// GetLocations возвращает записи geo_registry по набору id (для обогащения
+// TRIP_LOCATIONS_ADDED stats-события полями name/type/parent_id).
+func (r *GeoRegistryRepository) GetLocations(ctx context.Context, ids []int) ([]GeoLocation, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	ids32 := make([]int32, 0, len(ids))
+	for _, id := range ids {
+		ids32 = append(ids32, int32(id))
+	}
+	rows, err := r.q.GeoRegistryGetByIDs(ctx, ids32)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]GeoLocation, 0, len(rows))
+	for _, row := range rows {
+		loc := GeoLocation{ID: int(row.ID), Name: row.Name, Type: row.Type}
+		if row.ParentID.Valid {
+			p := int(row.ParentID.Int32)
+			loc.ParentID = &p
+		}
+		out = append(out, loc)
+	}
+	return out, nil
+}
+
 // UpsertTripLocations заполняет TRIP_LOCATIONS для трипа по списку locationID (страна/город).
 func (r *GeoRegistryRepository) UpsertTripLocations(ctx context.Context, tripID string, locationIDs []int) error {
 	if tripID == "" || len(locationIDs) == 0 {

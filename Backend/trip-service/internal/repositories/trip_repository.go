@@ -54,6 +54,7 @@ func (r *TripRepository) GetByID(id string) (*models.Trip, error) {
 		"created_at", "updated_at",
 		"(SELECT COUNT(*) FROM media m WHERE m.trip_id = trips.id)",
 		"(SELECT COUNT(*) FROM trip_participants tp WHERE tp.trip_id = trips.id)",
+		"(SELECT COUNT(*) FROM pins p WHERE p.trip_id = trips.id)",
 	).From("trips").Where(sq.Eq{"id": id})
 	sqlStr, args, err := q.ToSql()
 	if err != nil {
@@ -68,7 +69,7 @@ func (r *TripRepository) GetByID(id string) (*models.Trip, error) {
 		&t.Status, &t.PrivacyLevel, &startDate, &endDate,
 		&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
 		&t.CreatedAt, &t.UpdatedAt,
-		&t.MediaCount, &t.ParticipantsCount,
+		&t.MediaCount, &t.ParticipantsCount, &t.PinsCount,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -100,6 +101,7 @@ func (r *TripRepository) ListByUserID(userID string, limit, offset int32) ([]*mo
 		"t.created_at", "t.updated_at",
 		"(SELECT COUNT(*) FROM media m WHERE m.trip_id = t.id)",
 		"(SELECT COUNT(*) FROM trip_participants tp2 WHERE tp2.trip_id = t.id)",
+		"(SELECT COUNT(*) FROM pins p WHERE p.trip_id = t.id)",
 	).From("trips t").
 		InnerJoin("trip_participants tp ON tp.trip_id = t.id").
 		Where(sq.Eq{"tp.user_id": userID}).
@@ -125,7 +127,7 @@ func (r *TripRepository) ListByUserID(userID string, limit, offset int32) ([]*mo
 			&t.Status, &t.PrivacyLevel, &startDate, &endDate,
 			&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
 			&t.CreatedAt, &t.UpdatedAt,
-			&t.MediaCount, &t.ParticipantsCount,
+			&t.MediaCount, &t.ParticipantsCount, &t.PinsCount,
 		); err != nil {
 			return nil, err
 		}
@@ -319,4 +321,41 @@ func (r *TripRepository) ListFeed(limit, offset int32, category, season string, 
 		trips = append(trips, &t)
 	}
 	return trips, rows.Err()
+}
+
+// TripSummary — компактная сводка по трипу для statistics (без метаданных).
+type TripSummary struct {
+	TripID     string
+	PinsCount  int32
+	MediaCount int32
+}
+
+// ListSummariesByUserID возвращает все трипы пользователя (без пагинации) с count'ами
+// пинов и медиа. Используется API Gateway для агрегации профильной статистики.
+func (r *TripRepository) ListSummariesByUserID(userID string) ([]*TripSummary, error) {
+	q := psq.Select(
+		"t.id",
+		"(SELECT COUNT(*) FROM pins p WHERE p.trip_id = t.id)",
+		"(SELECT COUNT(*) FROM media m WHERE m.trip_id = t.id)",
+	).From("trips t").
+		InnerJoin("trip_participants tp ON tp.trip_id = t.id").
+		Where(sq.Eq{"tp.user_id": userID})
+	sqlStr, args, err := q.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.db.Query(sqlStr, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]*TripSummary, 0)
+	for rows.Next() {
+		var s TripSummary
+		if err := rows.Scan(&s.TripID, &s.PinsCount, &s.MediaCount); err != nil {
+			return nil, err
+		}
+		out = append(out, &s)
+	}
+	return out, rows.Err()
 }

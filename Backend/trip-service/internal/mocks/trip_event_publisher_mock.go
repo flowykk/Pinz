@@ -69,6 +69,20 @@ func (mr *MockTripEventPublisherMockRecorder) AddMLTaskWithFlow(ctx, tripID, flo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTaskWithFlow", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTaskWithFlow), ctx, tripID, flow, newPinIDs)
 }
 
+// PublishStatsEvent mocks base method.
+func (m *MockTripEventPublisher) PublishStatsEvent(ctx context.Context, eventType, tripID string, userIDs []string, payload map[string]any) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublishStatsEvent", ctx, eventType, tripID, userIDs, payload)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PublishStatsEvent indicates an expected call of PublishStatsEvent.
+func (mr *MockTripEventPublisherMockRecorder) PublishStatsEvent(ctx, eventType, tripID, userIDs, payload any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishStatsEvent", reflect.TypeOf((*MockTripEventPublisher)(nil).PublishStatsEvent), ctx, eventType, tripID, userIDs, payload)
+}
+
 // PublishTripEvent mocks base method.
 func (m *MockTripEventPublisher) PublishTripEvent(ctx context.Context, eventType, tripID, userID string) error {
 	m.ctrl.T.Helper()

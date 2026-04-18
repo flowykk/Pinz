@@ -22,36 +22,38 @@ func NewSocialRepository(db *sql.DB) *SocialRepository {
 }
 
 // SetReaction sets or replaces user's reaction (Like or Dislike). Updates trip likes_count/dislikes_count.
-func (r *SocialRepository) SetReaction(userID, tripID, reaction string) error {
+// Возвращает предыдущую реакцию (oldReaction: "", "Like", "Dislike"), чтобы вызывающий сервис
+// мог корректно опубликовать LIKE_ADDED/LIKE_REMOVED/DISLIKE_* события для statistics.
+func (r *SocialRepository) SetReaction(userID, tripID, reaction string) (oldReaction string, err error) {
 	if reaction != reactionLike && reaction != reactionDislike {
-		return nil
+		return "", nil
 	}
 	tx, err := r.db.Begin()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer func() { _ = tx.Rollback() }()
 
 	q := sqlcdb.New(tx)
 	uid, err := uuid.Parse(userID)
 	if err != nil {
-		return err
+		return "", err
 	}
 	tid, err := uuid.Parse(tripID)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	oldReaction, err := q.SocialGetReaction(context.Background(), sqlcdb.SocialGetReactionParams{UserID: uid, TripID: tid})
+	oldReaction, err = q.SocialGetReaction(context.Background(), sqlcdb.SocialGetReactionParams{UserID: uid, TripID: tid})
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			return err
+			return "", err
 		}
 		oldReaction = ""
 	}
 
 	if err := q.SocialUpsert(context.Background(), sqlcdb.SocialUpsertParams{UserID: uid, TripID: tid, Reaction: reaction}); err != nil {
-		return err
+		return oldReaction, err
 	}
 
 	if oldReaction != reaction {
@@ -66,7 +68,7 @@ func (r *SocialRepository) SetReaction(userID, tripID, reaction string) error {
 			_ = q.TripIncrementDislikes(context.Background(), tid)
 		}
 	}
-	return tx.Commit()
+	return oldReaction, tx.Commit()
 }
 
 // GetReaction returns the user's reaction for the trip ("", "Like", or "Dislike").

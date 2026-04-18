@@ -14,6 +14,7 @@ import (
 
 const (
 	tripEventsStream    = "pinz:trip:events"
+	statsEventsStream   = "pinz:stats:events"
 	mlTasksStream       = "pinz:trip:ml:tasks"
 	mlResultsStream     = "pinz:trip:ml:results"
 	mlContextPrefix     = "pinz:trip:ml:context:"
@@ -69,6 +70,36 @@ func instrumentRedis(client *redis.Client) {
 	if err := redisotel.InstrumentMetrics(client); err != nil {
 		slog.Warn("redis metrics instrumentation failed", "error", err)
 	}
+}
+
+// PublishStatsEvent отправляет событие в stream pinz:stats:events для statistics-service.
+// Формат: event_type (string), trip_id (string, опционально), user_ids (JSON []string),
+// payload (JSON map[string]any). Если Redis не настроен — no-op.
+func (r *RedisRepository) PublishStatsEvent(ctx context.Context, eventType, tripID string, userIDs []string, payload map[string]any) error {
+	if r == nil || r.client == nil {
+		return nil
+	}
+	vals := map[string]interface{}{
+		"event_type": eventType,
+	}
+	if tripID != "" {
+		vals["trip_id"] = tripID
+	}
+	if len(userIDs) > 0 {
+		if b, err := json.Marshal(userIDs); err == nil {
+			vals["user_ids"] = string(b)
+		}
+	}
+	if len(payload) > 0 {
+		if b, err := json.Marshal(payload); err == nil {
+			vals["payload"] = string(b)
+		}
+	}
+	if err := r.client.XAdd(ctx, &redis.XAddArgs{Stream: statsEventsStream, Values: vals}).Err(); err != nil {
+		slog.WarnContext(ctx, "PublishStatsEvent failed", "event", eventType, "trip_id", tripID, "error", err)
+		return err
+	}
+	return nil
 }
 
 // PublishTripEvent adds an event to the trip events stream for Notification/Statistics services.

@@ -66,12 +66,35 @@ releases:
           s3AccessKey: "{{ env "S3_ACCESS_KEY" | default "" }}"
           s3SecretKey: "{{ env "S3_SECRET_KEY" | default "" }}"
 
+  - name: statistics-service
+    namespace: default
+    chart: ./helm/statistics-service
+    values:
+      - image:
+          repository: backend-statistics-service
+          tag: latest
+          pullPolicy: Never
+      - env:
+          dbHost: host.docker.internal
+          dbPort: "5434"
+          dbUser: pinz_user
+          dbName: pinz_stats
+          redisAddr: host.docker.internal:6379
+          grpcPort: ":50053"
+          otelExporterEndpoint: "otel-collector:4317"
+          otelServiceName: "statistics-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+      - secret:
+          dbPassword: "pinz_password"
+
   - name: api-gateway
     namespace: default
     chart: ./helm/api-gateway
     needs:
       - default/auth-service
       - default/trip-service
+      - default/statistics-service
     values:
       - image:
           repository: backend-api-gateway-service
@@ -81,6 +104,7 @@ releases:
           apiGatewayPort: "8080"
           authServiceGrpcAddress: auth-service.default.svc.cluster.local:50051
           tripServiceGrpcAddress: trip-service.default.svc.cluster.local:50052
+          statisticsServiceGrpcAddress: statistics-service.default.svc.cluster.local:50053
           swaggerHost: "localhost:8080"
           otelExporterEndpoint: "otel-collector:4317"
           otelServiceName: "api-gateway-service"

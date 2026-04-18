@@ -17,6 +17,7 @@ jobs:
       api-gateway: ${{ steps.filter.outputs.api-gateway }}
       auth-service: ${{ steps.filter.outputs.auth-service }}
       trip-service: ${{ steps.filter.outputs.trip-service }}
+      statistics-service: ${{ steps.filter.outputs.statistics-service }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,6 +44,12 @@ jobs:
               - 'Backend/pkg/**'
               - 'Backend/proto/**'
               - 'helm/trip-service/**'
+              - 'helmfile.yaml.gotmpl'
+            statistics-service:
+              - 'Backend/statistics-service/**'
+              - 'Backend/pkg/**'
+              - 'Backend/proto/**'
+              - 'helm/statistics-service/**'
               - 'helmfile.yaml.gotmpl'
 
   build-and-push:
@@ -108,6 +115,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push statistics-service
+        if: needs.detect-changes.outputs.statistics-service == 'true' || github.event_name == 'workflow_dispatch'
+        uses: docker/build-push-action@v5
+        with:
+          context: Backend
+          file: Backend/statistics-service/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-statistics-service:latest
+            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-statistics-service:${{ steps.set-image-tag.outputs.image-tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy:
     runs-on: ubuntu-latest
     needs: [detect-changes, build-and-push]
@@ -138,6 +158,11 @@ jobs:
             SERVICES="${SERVICES:+$SERVICES,}trip-service"
           fi
 
+          if [[ "${{ needs.detect-changes.outputs.statistics-service }}" == "true" ]] || [[ "$DISPATCH" == "true" ]]; then
+            echo "statistics-service=$TAG" >> $GITHUB_OUTPUT
+            SERVICES="${SERVICES:+$SERVICES,}statistics-service"
+          fi
+
           # "none" tells deploy.sh to skip helmfile apply (infra-only deploy)
           echo "services=${SERVICES:-none}" >> $GITHUB_OUTPUT
 
@@ -160,6 +185,7 @@ jobs:
             export API_GATEWAY_TAG=${{ steps.tags.outputs.api-gateway }} &&
             export AUTH_SERVICE_TAG=${{ steps.tags.outputs.auth-service }} &&
             export TRIP_SERVICE_TAG=${{ steps.tags.outputs.trip-service }} &&
+            export STATISTICS_SERVICE_TAG=${{ steps.tags.outputs.statistics-service }} &&
             export DOCKER_REGISTRY=${{ secrets.DOCKER_REGISTRY }} &&
             export DOCKER_REPO=${{ secrets.DOCKER_REPO }} &&
             export GITHUB_TOKEN='${{ secrets.GITHUB_TOKEN }}' &&
@@ -168,7 +194,7 @@ jobs:
             export POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' &&
             export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}' &&
             export KUBECONFIG=/etc/rancher/k3s/k3s.yaml &&
-            echo 'Deploying: api-gateway=${{ steps.tags.outputs.api-gateway }} auth-service=${{ steps.tags.outputs.auth-service }} trip-service=${{ steps.tags.outputs.trip-service }}' &&
+            echo 'Deploying: api-gateway=${{ steps.tags.outputs.api-gateway }} auth-service=${{ steps.tags.outputs.auth-service }} trip-service=${{ steps.tags.outputs.trip-service }} statistics-service=${{ steps.tags.outputs.statistics-service }}' &&
             ./deploy.sh
           "
 
