@@ -47,7 +47,7 @@ func TestTripService_Integration(t *testing.T) {
 	socialRepo := repositories.NewSocialRepository(sqlDB)
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil)
 	ownerID := uuid.New().String()
 	user2ID := uuid.New().String()
 	user3ID := uuid.New().String()
@@ -322,7 +322,7 @@ func TestTripService_Integration_CreationFlow(t *testing.T) {
 	socialRepo := repositories.NewSocialRepository(sqlDB)
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil)
 	ownerID := uuid.New().String()
 
 	var tripID string
@@ -471,7 +471,7 @@ func TestTripService_Integration_SoftDelete(t *testing.T) {
 	socialRepo := repositories.NewSocialRepository(sqlDB)
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil)
 	ownerID := uuid.New().String()
 	user2ID := uuid.New().String()
 

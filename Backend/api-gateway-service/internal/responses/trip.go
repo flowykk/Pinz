@@ -209,3 +209,35 @@ type AddMediaApplyGroupsAndProcessResponse struct {
 	Message string `json:"message"`
 	Status  string `json:"status"`
 }
+
+// BattleMedia — одна карточка в выдаче StartBattle (PINZ-132, ТЗ 8.1.1).
+type BattleMedia struct {
+	MediaID   string `json:"media_id"`
+	URL       string `json:"url"`
+	MediaType string `json:"media_type"`
+}
+
+// StartBattleResponse — ответ POST /api/v1/trips/:id/battles (PINZ-132, ТЗ 8.1).
+type StartBattleResponse struct {
+	BattleID string        `json:"battle_id"`
+	Media    []BattleMedia `json:"media"`
+}
+
+// SubmitBattleResultResponse — ответ POST /api/v1/trips/:id/battles/:battle_id/result (PINZ-132, ТЗ 8.1.8).
+type SubmitBattleResultResponse struct {
+	NewBattleRating int32 `json:"new_battle_rating"`
+}
+
+// BestMemory — карточка медиа для story-mode "лучшие воспоминания" (PINZ-132, ТЗ 8.2).
+type BestMemory struct {
+	MediaID        string `json:"media_id"`
+	URL            string `json:"url"`
+	MediaType      string `json:"media_type"`
+	BattleRating   int32  `json:"battle_rating"`
+	CapturedAtUnix int64  `json:"captured_at_unix"`
+}
+
+// GetBestMemoriesResponse — ответ GET /api/v1/trips/:id/best-memories (PINZ-132, ТЗ 8.2).
+type GetBestMemoriesResponse struct {
+	Media []BestMemory `json:"media"`
+}

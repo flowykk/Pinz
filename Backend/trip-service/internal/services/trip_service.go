@@ -43,6 +43,7 @@ type TripService struct {
 	geocoder            LocationResolver
 	geoRepo             repositories.GeoRegistryRepositoryInterface
 	addMediaSessionRepo *repositories.AddMediaSessionRepository
+	battleRepo          repositories.MediaBattleRepositoryInterface
 }
 
 func NewTripService(
@@ -60,6 +61,7 @@ func NewTripService(
 	geocoder LocationResolver,
 	geoRepo repositories.GeoRegistryRepositoryInterface,
 	addMediaSessionRepo *repositories.AddMediaSessionRepository,
+	battleRepo repositories.MediaBattleRepositoryInterface,
 ) *TripService {
 	return &TripService{
 		tripRepo:            tripRepo,
@@ -76,6 +78,7 @@ func NewTripService(
 		geocoder:            geocoder,
 		geoRepo:             geoRepo,
 		addMediaSessionRepo: addMediaSessionRepo,
+		battleRepo:          battleRepo,
 	}
 }
 

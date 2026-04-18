@@ -39,6 +39,10 @@ service TripService {
   rpc AddMediaStart(AddMediaStartRequest) returns (AddMediaStartResponse);
   rpc AddMediaProcessGrouping(AddMediaProcessGroupingRequest) returns (AddMediaProcessGroupingResponse);
   rpc AddMediaApplyGroupsAndProcess(AddMediaApplyGroupsAndProcessRequest) returns (AddMediaApplyGroupsAndProcessResponse);
+  // PINZ-132: фотобатлы и "лучшие воспоминания" (ТЗ 8)
+  rpc StartBattle(StartBattleRequest) returns (StartBattleResponse);
+  rpc SubmitBattleResult(SubmitBattleResultRequest) returns (SubmitBattleResultResponse);
+  rpc GetBestMemories(GetBestMemoriesRequest) returns (GetBestMemoriesResponse);
 }
 
 message Trip {
@@ -453,4 +457,41 @@ message AddMediaApplyGroupsAndProcessRequest {
 message AddMediaApplyGroupsAndProcessResponse {
   string message = 1;
   string status = 2;
+}
+
+// PINZ-132: фотобатлы (ТЗ 8.1)
+message StartBattleRequest {
+  string trip_id = 1;
+}
+message BattleMedia {
+  string media_id = 1;
+  string url = 2;
+  string media_type = 3;
+}
+message StartBattleResponse {
+  string battle_id = 1;
+  repeated BattleMedia media = 2; // ровно 8 медиа, случайная выборка из трипа
+}
+
+message SubmitBattleResultRequest {
+  string battle_id = 1;
+  string winner_media_id = 2;
+}
+message SubmitBattleResultResponse {
+  int32 new_battle_rating = 1;
+}
+
+// PINZ-132: лучшие воспоминания, story-mode (ТЗ 8.2)
+message GetBestMemoriesRequest {
+  string trip_id = 1;
+}
+message BestMemory {
+  string media_id = 1;
+  string url = 2;
+  string media_type = 3;
+  int32 battle_rating = 4;
+  int64 captured_at_unix = 5;
+}
+message GetBestMemoriesResponse {
+  repeated BestMemory media = 1;
 }

@@ -115,6 +115,21 @@ func (mr *MockMediaRepositoryInterfaceMockRecorder) GetByID(id any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).GetByID), id)
 }
 
+// IncrementBattleRating mocks base method.
+func (m *MockMediaRepositoryInterface) IncrementBattleRating(mediaID string) (int32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrementBattleRating", mediaID)
+	ret0, _ := ret[0].(int32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IncrementBattleRating indicates an expected call of IncrementBattleRating.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) IncrementBattleRating(mediaID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementBattleRating", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).IncrementBattleRating), mediaID)
+}
+
 // ListByPinID mocks base method.
 func (m *MockMediaRepositoryInterface) ListByPinID(pinID string) ([]*models.Media, error) {
 	m.ctrl.T.Helper()
@@ -143,6 +158,36 @@ func (m *MockMediaRepositoryInterface) ListByTripID(tripID string) ([]*models.Me
 func (mr *MockMediaRepositoryInterfaceMockRecorder) ListByTripID(tripID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByTripID", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).ListByTripID), tripID)
+}
+
+// ListWithPositiveBattleRating mocks base method.
+func (m *MockMediaRepositoryInterface) ListWithPositiveBattleRating(tripID string) ([]*models.Media, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWithPositiveBattleRating", tripID)
+	ret0, _ := ret[0].([]*models.Media)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWithPositiveBattleRating indicates an expected call of ListWithPositiveBattleRating.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) ListWithPositiveBattleRating(tripID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWithPositiveBattleRating", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).ListWithPositiveBattleRating), tripID)
+}
+
+// PickRandomForBattle mocks base method.
+func (m *MockMediaRepositoryInterface) PickRandomForBattle(tripID string, limit int) ([]*models.Media, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PickRandomForBattle", tripID, limit)
+	ret0, _ := ret[0].([]*models.Media)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PickRandomForBattle indicates an expected call of PickRandomForBattle.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) PickRandomForBattle(tripID, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PickRandomForBattle", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).PickRandomForBattle), tripID, limit)
 }
 
 // SetSimilarGroupID mocks base method.

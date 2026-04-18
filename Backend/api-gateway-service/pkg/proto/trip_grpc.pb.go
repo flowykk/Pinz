@@ -47,6 +47,9 @@ const (
 	TripService_AddMediaStart_FullMethodName                 = "/trip.TripService/AddMediaStart"
 	TripService_AddMediaProcessGrouping_FullMethodName       = "/trip.TripService/AddMediaProcessGrouping"
 	TripService_AddMediaApplyGroupsAndProcess_FullMethodName = "/trip.TripService/AddMediaApplyGroupsAndProcess"
+	TripService_StartBattle_FullMethodName                   = "/trip.TripService/StartBattle"
+	TripService_SubmitBattleResult_FullMethodName            = "/trip.TripService/SubmitBattleResult"
+	TripService_GetBestMemories_FullMethodName               = "/trip.TripService/GetBestMemories"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -87,6 +90,10 @@ type TripServiceClient interface {
 	AddMediaStart(ctx context.Context, in *AddMediaStartRequest, opts ...grpc.CallOption) (*AddMediaStartResponse, error)
 	AddMediaProcessGrouping(ctx context.Context, in *AddMediaProcessGroupingRequest, opts ...grpc.CallOption) (*AddMediaProcessGroupingResponse, error)
 	AddMediaApplyGroupsAndProcess(ctx context.Context, in *AddMediaApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*AddMediaApplyGroupsAndProcessResponse, error)
+	// PINZ-132: фотобатлы и "лучшие воспоминания" (ТЗ 8)
+	StartBattle(ctx context.Context, in *StartBattleRequest, opts ...grpc.CallOption) (*StartBattleResponse, error)
+	SubmitBattleResult(ctx context.Context, in *SubmitBattleResultRequest, opts ...grpc.CallOption) (*SubmitBattleResultResponse, error)
+	GetBestMemories(ctx context.Context, in *GetBestMemoriesRequest, opts ...grpc.CallOption) (*GetBestMemoriesResponse, error)
 }
 
 type tripServiceClient struct {
@@ -377,6 +384,36 @@ func (c *tripServiceClient) AddMediaApplyGroupsAndProcess(ctx context.Context, i
 	return out, nil
 }
 
+func (c *tripServiceClient) StartBattle(ctx context.Context, in *StartBattleRequest, opts ...grpc.CallOption) (*StartBattleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StartBattleResponse)
+	err := c.cc.Invoke(ctx, TripService_StartBattle_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) SubmitBattleResult(ctx context.Context, in *SubmitBattleResultRequest, opts ...grpc.CallOption) (*SubmitBattleResultResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitBattleResultResponse)
+	err := c.cc.Invoke(ctx, TripService_SubmitBattleResult_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) GetBestMemories(ctx context.Context, in *GetBestMemoriesRequest, opts ...grpc.CallOption) (*GetBestMemoriesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBestMemoriesResponse)
+	err := c.cc.Invoke(ctx, TripService_GetBestMemories_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TripServiceServer is the server API for TripService service.
 // All implementations must embed UnimplementedTripServiceServer
 // for forward compatibility.
@@ -415,6 +452,10 @@ type TripServiceServer interface {
 	AddMediaStart(context.Context, *AddMediaStartRequest) (*AddMediaStartResponse, error)
 	AddMediaProcessGrouping(context.Context, *AddMediaProcessGroupingRequest) (*AddMediaProcessGroupingResponse, error)
 	AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error)
+	// PINZ-132: фотобатлы и "лучшие воспоминания" (ТЗ 8)
+	StartBattle(context.Context, *StartBattleRequest) (*StartBattleResponse, error)
+	SubmitBattleResult(context.Context, *SubmitBattleResultRequest) (*SubmitBattleResultResponse, error)
+	GetBestMemories(context.Context, *GetBestMemoriesRequest) (*GetBestMemoriesResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
 
@@ -508,6 +549,15 @@ func (UnimplementedTripServiceServer) AddMediaProcessGrouping(context.Context, *
 }
 func (UnimplementedTripServiceServer) AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMediaApplyGroupsAndProcess not implemented")
+}
+func (UnimplementedTripServiceServer) StartBattle(context.Context, *StartBattleRequest) (*StartBattleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartBattle not implemented")
+}
+func (UnimplementedTripServiceServer) SubmitBattleResult(context.Context, *SubmitBattleResultRequest) (*SubmitBattleResultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitBattleResult not implemented")
+}
+func (UnimplementedTripServiceServer) GetBestMemories(context.Context, *GetBestMemoriesRequest) (*GetBestMemoriesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBestMemories not implemented")
 }
 func (UnimplementedTripServiceServer) mustEmbedUnimplementedTripServiceServer() {}
 func (UnimplementedTripServiceServer) testEmbeddedByValue()                     {}
@@ -1034,6 +1084,60 @@ func _TripService_AddMediaApplyGroupsAndProcess_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_StartBattle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartBattleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).StartBattle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_StartBattle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).StartBattle(ctx, req.(*StartBattleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_SubmitBattleResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitBattleResultRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).SubmitBattleResult(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_SubmitBattleResult_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).SubmitBattleResult(ctx, req.(*SubmitBattleResultRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_GetBestMemories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBestMemoriesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).GetBestMemories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_GetBestMemories_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).GetBestMemories(ctx, req.(*GetBestMemoriesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TripService_ServiceDesc is the grpc.ServiceDesc for TripService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1152,6 +1256,18 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddMediaApplyGroupsAndProcess",
 			Handler:    _TripService_AddMediaApplyGroupsAndProcess_Handler,
+		},
+		{
+			MethodName: "StartBattle",
+			Handler:    _TripService_StartBattle_Handler,
+		},
+		{
+			MethodName: "SubmitBattleResult",
+			Handler:    _TripService_SubmitBattleResult_Handler,
+		},
+		{
+			MethodName: "GetBestMemories",
+			Handler:    _TripService_GetBestMemories_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

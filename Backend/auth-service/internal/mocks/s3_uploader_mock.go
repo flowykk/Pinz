@@ -54,21 +54,6 @@ func (mr *MockS3UploaderMockRecorder) DeleteObject(ctx, s3Key any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteObject", reflect.TypeOf((*MockS3Uploader)(nil).DeleteObject), ctx, s3Key)
 }
 
-// ReadURL mocks base method.
-func (m *MockS3Uploader) ReadURL(ctx context.Context, s3Key string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadURL", ctx, s3Key)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReadURL indicates an expected call of ReadURL.
-func (mr *MockS3UploaderMockRecorder) ReadURL(ctx, s3Key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadURL", reflect.TypeOf((*MockS3Uploader)(nil).ReadURL), ctx, s3Key)
-}
-
 // PresignedUploadURL mocks base method.
 func (m *MockS3Uploader) PresignedUploadURL(ctx context.Context, s3Key, contentType string) (string, error) {
 	m.ctrl.T.Helper()
@@ -82,4 +67,19 @@ func (m *MockS3Uploader) PresignedUploadURL(ctx context.Context, s3Key, contentT
 func (mr *MockS3UploaderMockRecorder) PresignedUploadURL(ctx, s3Key, contentType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresignedUploadURL", reflect.TypeOf((*MockS3Uploader)(nil).PresignedUploadURL), ctx, s3Key, contentType)
+}
+
+// ReadURL mocks base method.
+func (m *MockS3Uploader) ReadURL(ctx context.Context, s3Key string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadURL", ctx, s3Key)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadURL indicates an expected call of ReadURL.
+func (mr *MockS3UploaderMockRecorder) ReadURL(ctx, s3Key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadURL", reflect.TypeOf((*MockS3Uploader)(nil).ReadURL), ctx, s3Key)
 }
