@@ -85,6 +85,7 @@ type PinRepositoryInterface interface {
 	Delete(id string) error
 	DeleteByTripID(tripID string) error
 	ListPublishedPinsByTripIDs(tripIDs []string) (map[string][]*FeedPin, error)
+	SearchByUserID(userID, query string, limit, offset int32) ([]*models.Pin, error)
 }
 
 type TagRepositoryInterface interface {

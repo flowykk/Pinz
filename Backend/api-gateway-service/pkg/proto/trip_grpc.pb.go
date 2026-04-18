@@ -51,6 +51,7 @@ const (
 	TripService_StartBattle_FullMethodName                   = "/trip.TripService/StartBattle"
 	TripService_SubmitBattleResult_FullMethodName            = "/trip.TripService/SubmitBattleResult"
 	TripService_GetBestMemories_FullMethodName               = "/trip.TripService/GetBestMemories"
+	TripService_SearchPins_FullMethodName                    = "/trip.TripService/SearchPins"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -97,6 +98,8 @@ type TripServiceClient interface {
 	StartBattle(ctx context.Context, in *StartBattleRequest, opts ...grpc.CallOption) (*StartBattleResponse, error)
 	SubmitBattleResult(ctx context.Context, in *SubmitBattleResultRequest, opts ...grpc.CallOption) (*SubmitBattleResultResponse, error)
 	GetBestMemories(ctx context.Context, in *GetBestMemoriesRequest, opts ...grpc.CallOption) (*GetBestMemoriesResponse, error)
+	// PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
+	SearchPins(ctx context.Context, in *SearchPinsRequest, opts ...grpc.CallOption) (*SearchPinsResponse, error)
 }
 
 type tripServiceClient struct {
@@ -427,6 +430,16 @@ func (c *tripServiceClient) GetBestMemories(ctx context.Context, in *GetBestMemo
 	return out, nil
 }
 
+func (c *tripServiceClient) SearchPins(ctx context.Context, in *SearchPinsRequest, opts ...grpc.CallOption) (*SearchPinsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchPinsResponse)
+	err := c.cc.Invoke(ctx, TripService_SearchPins_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TripServiceServer is the server API for TripService service.
 // All implementations must embed UnimplementedTripServiceServer
 // for forward compatibility.
@@ -471,6 +484,8 @@ type TripServiceServer interface {
 	StartBattle(context.Context, *StartBattleRequest) (*StartBattleResponse, error)
 	SubmitBattleResult(context.Context, *SubmitBattleResultRequest) (*SubmitBattleResultResponse, error)
 	GetBestMemories(context.Context, *GetBestMemoriesRequest) (*GetBestMemoriesResponse, error)
+	// PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
+	SearchPins(context.Context, *SearchPinsRequest) (*SearchPinsResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
 
@@ -576,6 +591,9 @@ func (UnimplementedTripServiceServer) SubmitBattleResult(context.Context, *Submi
 }
 func (UnimplementedTripServiceServer) GetBestMemories(context.Context, *GetBestMemoriesRequest) (*GetBestMemoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBestMemories not implemented")
+}
+func (UnimplementedTripServiceServer) SearchPins(context.Context, *SearchPinsRequest) (*SearchPinsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchPins not implemented")
 }
 func (UnimplementedTripServiceServer) mustEmbedUnimplementedTripServiceServer() {}
 func (UnimplementedTripServiceServer) testEmbeddedByValue()                     {}
@@ -1174,6 +1192,24 @@ func _TripService_GetBestMemories_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_SearchPins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchPinsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).SearchPins(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_SearchPins_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).SearchPins(ctx, req.(*SearchPinsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TripService_ServiceDesc is the grpc.ServiceDesc for TripService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1308,6 +1344,10 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBestMemories",
 			Handler:    _TripService_GetBestMemories_Handler,
+		},
+		{
+			MethodName: "SearchPins",
+			Handler:    _TripService_SearchPins_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
