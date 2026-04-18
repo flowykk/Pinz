@@ -158,6 +158,10 @@ func (c *Client) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb.AddM
 	return c.client.AddMediaApplyGroupsAndProcess(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) ListUserTripSummaries(ctx context.Context, req *pb.ListUserTripSummariesRequest) (*pb.ListUserTripSummariesResponse, error) {
+	return c.client.ListUserTripSummaries(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

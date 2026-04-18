@@ -51,3 +51,21 @@ spec:
       to:
         - operation:
             ports: ["50052"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: statistics-service
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: statistics-service
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/default/sa/api-gateway-sa
+      to:
+        - operation:
+            ports: ["50053"]

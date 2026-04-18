@@ -47,6 +47,7 @@ const (
 	TripService_AddMediaStart_FullMethodName                 = "/trip.TripService/AddMediaStart"
 	TripService_AddMediaProcessGrouping_FullMethodName       = "/trip.TripService/AddMediaProcessGrouping"
 	TripService_AddMediaApplyGroupsAndProcess_FullMethodName = "/trip.TripService/AddMediaApplyGroupsAndProcess"
+	TripService_ListUserTripSummaries_FullMethodName         = "/trip.TripService/ListUserTripSummaries"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -87,6 +88,8 @@ type TripServiceClient interface {
 	AddMediaStart(ctx context.Context, in *AddMediaStartRequest, opts ...grpc.CallOption) (*AddMediaStartResponse, error)
 	AddMediaProcessGrouping(ctx context.Context, in *AddMediaProcessGroupingRequest, opts ...grpc.CallOption) (*AddMediaProcessGroupingResponse, error)
 	AddMediaApplyGroupsAndProcess(ctx context.Context, in *AddMediaApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*AddMediaApplyGroupsAndProcessResponse, error)
+	// PINZ-133: лёгкая сводка по всем трипам пользователя для statistics/profile
+	ListUserTripSummaries(ctx context.Context, in *ListUserTripSummariesRequest, opts ...grpc.CallOption) (*ListUserTripSummariesResponse, error)
 }
 
 type tripServiceClient struct {
@@ -377,6 +380,16 @@ func (c *tripServiceClient) AddMediaApplyGroupsAndProcess(ctx context.Context, i
 	return out, nil
 }
 
+func (c *tripServiceClient) ListUserTripSummaries(ctx context.Context, in *ListUserTripSummariesRequest, opts ...grpc.CallOption) (*ListUserTripSummariesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUserTripSummariesResponse)
+	err := c.cc.Invoke(ctx, TripService_ListUserTripSummaries_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TripServiceServer is the server API for TripService service.
 // All implementations must embed UnimplementedTripServiceServer
 // for forward compatibility.
@@ -415,6 +428,8 @@ type TripServiceServer interface {
 	AddMediaStart(context.Context, *AddMediaStartRequest) (*AddMediaStartResponse, error)
 	AddMediaProcessGrouping(context.Context, *AddMediaProcessGroupingRequest) (*AddMediaProcessGroupingResponse, error)
 	AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error)
+	// PINZ-133: лёгкая сводка по всем трипам пользователя для statistics/profile
+	ListUserTripSummaries(context.Context, *ListUserTripSummariesRequest) (*ListUserTripSummariesResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
 
@@ -508,6 +523,9 @@ func (UnimplementedTripServiceServer) AddMediaProcessGrouping(context.Context, *
 }
 func (UnimplementedTripServiceServer) AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMediaApplyGroupsAndProcess not implemented")
+}
+func (UnimplementedTripServiceServer) ListUserTripSummaries(context.Context, *ListUserTripSummariesRequest) (*ListUserTripSummariesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserTripSummaries not implemented")
 }
 func (UnimplementedTripServiceServer) mustEmbedUnimplementedTripServiceServer() {}
 func (UnimplementedTripServiceServer) testEmbeddedByValue()                     {}
@@ -1034,6 +1052,24 @@ func _TripService_AddMediaApplyGroupsAndProcess_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_ListUserTripSummaries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserTripSummariesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).ListUserTripSummaries(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_ListUserTripSummaries_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).ListUserTripSummaries(ctx, req.(*ListUserTripSummariesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TripService_ServiceDesc is the grpc.ServiceDesc for TripService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1152,6 +1188,10 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddMediaApplyGroupsAndProcess",
 			Handler:    _TripService_AddMediaApplyGroupsAndProcess_Handler,
+		},
+		{
+			MethodName: "ListUserTripSummaries",
+			Handler:    _TripService_ListUserTripSummaries_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

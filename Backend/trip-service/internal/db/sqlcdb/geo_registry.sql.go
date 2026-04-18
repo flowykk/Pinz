@@ -10,6 +10,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const geoRegistryFindCityByNameAndParent = `-- name: GeoRegistryFindCityByNameAndParent :one
@@ -68,6 +69,38 @@ func (q *Queries) GeoRegistryFindIDsByNamePattern(ctx context.Context, name stri
 			return nil, err
 		}
 		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const geoRegistryGetByIDs = `-- name: GeoRegistryGetByIDs :many
+SELECT id, parent_id, name, type FROM geo_registry WHERE id = ANY($1::int[])
+`
+
+func (q *Queries) GeoRegistryGetByIDs(ctx context.Context, dollar_1 []int32) ([]GeoRegistry, error) {
+	rows, err := q.db.QueryContext(ctx, geoRegistryGetByIDs, pq.Array(dollar_1))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GeoRegistry{}
+	for rows.Next() {
+		var i GeoRegistry
+		if err := rows.Scan(
+			&i.ID,
+			&i.ParentID,
+			&i.Name,
+			&i.Type,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

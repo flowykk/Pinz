@@ -55,11 +55,12 @@ func (mr *MockSocialRepositoryInterfaceMockRecorder) GetReaction(userID, tripID 
 }
 
 // SetReaction mocks base method.
-func (m *MockSocialRepositoryInterface) SetReaction(userID, tripID, reaction string) error {
+func (m *MockSocialRepositoryInterface) SetReaction(userID, tripID, reaction string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetReaction", userID, tripID, reaction)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // SetReaction indicates an expected call of SetReaction.

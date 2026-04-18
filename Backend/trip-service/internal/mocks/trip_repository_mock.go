@@ -11,6 +11,7 @@ package mocks
 
 import (
 	models "pinz/backend/trip-service/internal/models"
+	repositories "pinz/backend/trip-service/internal/repositories"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -111,6 +112,21 @@ func (m *MockTripRepositoryInterface) ListFeed(limit, offset int32, category, se
 func (mr *MockTripRepositoryInterfaceMockRecorder) ListFeed(limit, offset, category, season, locationIDs, sortBy any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeed", reflect.TypeOf((*MockTripRepositoryInterface)(nil).ListFeed), limit, offset, category, season, locationIDs, sortBy)
+}
+
+// ListSummariesByUserID mocks base method.
+func (m *MockTripRepositoryInterface) ListSummariesByUserID(userID string) ([]*repositories.TripSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSummariesByUserID", userID)
+	ret0, _ := ret[0].([]*repositories.TripSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSummariesByUserID indicates an expected call of ListSummariesByUserID.
+func (mr *MockTripRepositoryInterfaceMockRecorder) ListSummariesByUserID(userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSummariesByUserID", reflect.TypeOf((*MockTripRepositoryInterface)(nil).ListSummariesByUserID), userID)
 }
 
 // SetSoftDeleted mocks base method.

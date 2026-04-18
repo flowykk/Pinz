@@ -296,6 +296,32 @@ func (s *TripService) ListUserTrips(ctx context.Context, req *pb.ListUserTripsRe
 	return &pb.ListUserTripsResponse{Trips: out}, nil
 }
 
+// ListUserTripSummaries — лёгкая сводка для API Gateway при сборке статистики профиля.
+// Возвращает все трипы, где user — участник, без пагинации; только id + counts.
+func (s *TripService) ListUserTripSummaries(ctx context.Context, req *pb.ListUserTripSummariesRequest) (*pb.ListUserTripSummariesResponse, error) {
+	authUserID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	userID := req.GetUserId()
+	if userID == "" {
+		userID = authUserID
+	}
+	summaries, err := s.tripRepo.ListSummariesByUserID(userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list trip summaries")
+	}
+	out := make([]*pb.TripSummary, 0, len(summaries))
+	for _, s := range summaries {
+		out = append(out, &pb.TripSummary{
+			TripId:     s.TripID,
+			PinsCount:  s.PinsCount,
+			MediaCount: s.MediaCount,
+		})
+	}
+	return &pb.ListUserTripSummariesResponse{Trips: out}, nil
+}
+
 func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest) (*pb.UpdateTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -556,6 +582,10 @@ func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest)
 	if len(participants) == 0 {
 		if err := s.tripRepo.Delete(tripID); err != nil {
 			return nil, status.Error(codes.Internal, "failed to delete trip")
+		}
+		if s.eventRepo != nil {
+			// TRIP_DELETED — для cleanup trip_locations_mirror в statistics-service.
+			_ = s.eventRepo.PublishStatsEvent(ctx, "TRIP_DELETED", tripID, nil, nil)
 		}
 		return &pb.DeleteTripResponse{Success: true}, nil
 	}
@@ -1720,8 +1750,16 @@ func (s *TripService) LikeTrip(ctx context.Context, req *pb.LikeTripRequest) (*p
 	if !trip.IsPublished {
 		return nil, status.Error(codes.FailedPrecondition, "trip is not published")
 	}
-	if err := s.socialRepo.SetReaction(userID, tripID, "Like"); err != nil {
+	old, err := s.socialRepo.SetReaction(userID, tripID, "Like")
+	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to set like")
+	}
+	if s.eventRepo != nil && old != "Like" {
+		// Переход Dislike→Like — сбросить дизлайк в stats.
+		if old == "Dislike" {
+			_ = s.eventRepo.PublishStatsEvent(ctx, "DISLIKE_REMOVED", tripID, []string{userID}, nil)
+		}
+		_ = s.eventRepo.PublishStatsEvent(ctx, "LIKE_ADDED", tripID, []string{userID}, nil)
 	}
 	return &pb.LikeTripResponse{Success: true}, nil
 }
@@ -1743,8 +1781,15 @@ func (s *TripService) DislikeTrip(ctx context.Context, req *pb.DislikeTripReques
 	if !trip.IsPublished {
 		return nil, status.Error(codes.FailedPrecondition, "trip is not published")
 	}
-	if err := s.socialRepo.SetReaction(userID, tripID, "Dislike"); err != nil {
+	old, err := s.socialRepo.SetReaction(userID, tripID, "Dislike")
+	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to set dislike")
+	}
+	if s.eventRepo != nil && old != "Dislike" {
+		if old == "Like" {
+			_ = s.eventRepo.PublishStatsEvent(ctx, "LIKE_REMOVED", tripID, []string{userID}, nil)
+		}
+		_ = s.eventRepo.PublishStatsEvent(ctx, "DISLIKE_ADDED", tripID, []string{userID}, nil)
 	}
 	return &pb.DislikeTripResponse{Success: true}, nil
 }
@@ -1880,6 +1925,7 @@ func (s *TripService) tripToProto(ctx context.Context, t *models.Trip) *pb.Trip 
 		UpdatedAtUnix:     t.UpdatedAt.Unix(),
 		MediaCount:        t.MediaCount,
 		ParticipantsCount: t.ParticipantsCount,
+		PinsCount:         t.PinsCount,
 	}
 	if t.StartDate != nil {
 		out.StartDateUnix = t.StartDate.Unix()
@@ -1889,3 +1935,4 @@ func (s *TripService) tripToProto(ctx context.Context, t *models.Trip) *pb.Trip 
 	}
 	return out
 }
+

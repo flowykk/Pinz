@@ -66,12 +66,35 @@ releases:
           s3SecretKey: "{{ env "S3_SECRET_KEY" | default "" }}"
           geocodingApiKey: "{{ env "GEOCODING_API_KEY" | default "" }}"
 
+  - name: statistics-service
+    namespace: default
+    chart: ./helm/statistics-service
+    values:
+      - image:
+          repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-statistics-service"
+          tag: "{{ env "STATISTICS_SERVICE_TAG" | default (env "IMAGE_TAG") | default "latest" }}"
+          pullPolicy: Always
+      - env:
+          dbHost: "db-stats"
+          dbPort: "5434"
+          dbUser: pinz_user
+          dbName: pinz_stats
+          redisAddr: "redis:6379"
+          grpcPort: ":50053"
+          otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+          otelServiceName: "statistics-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+      - secret:
+          dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
+
   - name: api-gateway
     namespace: default
     chart: ./helm/api-gateway
     needs:
       - default/auth-service
       - default/trip-service
+      - default/statistics-service
     values:
       - image:
           repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-api-gateway"
@@ -81,6 +104,7 @@ releases:
           apiGatewayPort: "8080"
           authServiceGrpcAddress: auth-service.default.svc.cluster.local:50051
           tripServiceGrpcAddress: trip-service.default.svc.cluster.local:50052
+          statisticsServiceGrpcAddress: statistics-service.default.svc.cluster.local:50053
           otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
           otelServiceName: "api-gateway-service"
           otelTracesSampler: "parentbased_traceidratio"

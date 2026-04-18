@@ -91,6 +91,8 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Post("/avatar/upload", deps.AuthHandler.RequestAvatarUpload)
 				r.Post("/avatar/confirm", deps.AuthHandler.ConfirmAvatarUpload)
 				r.Delete("/avatar", deps.AuthHandler.DeleteAvatar)
+				r.Get("/stats", deps.StatisticsHandler.GetProfileStats)
+				r.Get("/visited-locations", deps.StatisticsHandler.GetProfileVisitedLocations)
 			})
 
 			// Основные операции над путешествиями.

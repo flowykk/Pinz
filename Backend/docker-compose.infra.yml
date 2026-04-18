@@ -1,8 +1,9 @@
 version: "3.9"
 
-# Два отдельных инстанса PostgreSQL (Database-per-Service):
+# Инстансы PostgreSQL (Database-per-Service):
 # db       — Auth Service (pinz_db)
 # db-trips — Trip Service (pinz_trips, PostGIS)
+# db-stats — Statistics Service (pinz_stats)
 
 services:
   db:
@@ -39,6 +40,23 @@ services:
     volumes:
       - db_trips_data:/var/lib/postgresql/data
 
+  db-stats:
+    image: postgres:15-alpine
+    container_name: pinz-db-stats
+    environment:
+      POSTGRES_USER: pinz_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pinz_password}
+      POSTGRES_DB: pinz_stats
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pinz_user -d pinz_stats"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - db_stats_data:/var/lib/postgresql/data
+
   redis:
     image: redis:7-alpine
     container_name: pinz-redis
@@ -50,4 +68,5 @@ services:
 volumes:
   db_data:
   db_trips_data:
+  db_stats_data:
   redis_data:

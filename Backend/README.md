@@ -25,6 +25,7 @@
 | **api-gateway-service** | REST → gRPC прокси, HTTP-трейсинг, WebSocket |
 | **auth-service** | Бизнес-логика авторизации, passkey, JWT |
 | **trip-service** | Путешествия, пины, медиа, участники, лента, async-флоу |
+| **statistics-service** | Счётчики пользователя (трипы, пины, медиа, батлы), посещённые локации (consumer Redis Streams `pinz:stats:events`) |
 | **otel-collector** | Приём и маршрутизация телеметрии (OTLP) |
 | **tempo** | Хранение распределённых трейсов |
 | **prometheus** | Метрики (RED + бизнес + Go runtime) |
@@ -98,6 +99,13 @@ Real‑time уведомление о завершении шага 3–4 идё
 | POST | `/api/v1/trips/{id}/dislike` | Дизлайк путешествия |
 | POST | `/api/v1/trips/{id}/favourite` | Добавить путешествие в избранное |
 | DELETE | `/api/v1/trips/{id}/favourite` | Удалить путешествие из избранного |
+
+### Statistics (statistics-service через API Gateway)
+
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/api/v1/profile/stats` | Счётчики текущего пользователя: трипы, пины, медиа, завершённые батлы |
+| GET | `/api/v1/profile/visited-locations` | Список посещённых стран/городов; опц. `?type=Country\|City` |
 
 Swagger UI: `http://pinz.example.com/swagger/index.html`
 

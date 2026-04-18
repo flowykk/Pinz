@@ -13,6 +13,7 @@ type TripRepositoryInterface interface {
 	Create(t *models.Trip) error
 	GetByID(id string) (*models.Trip, error)
 	ListByUserID(userID string, limit, offset int32) ([]*models.Trip, error)
+	ListSummariesByUserID(userID string) ([]*TripSummary, error)
 	Update(t *models.Trip) error
 	Delete(id string) error
 	SetStatus(tripID, status string) error
@@ -48,6 +49,8 @@ type TripEventPublisher interface {
 	// PINZ-131: add-media flow: помечает контекст трипа, чтобы worker пропустил авто-теги для существующих пинов (ТЗ 5.3.4).
 	SetMLContext(ctx context.Context, tripID, flow string, newPinIDs []string, ttl time.Duration) error
 	AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error
+	// PINZ-133: statistics-service consumer — публикация в pinz:stats:events.
+	PublishStatsEvent(ctx context.Context, eventType, tripID string, userIDs []string, payload map[string]any) error
 }
 
 type MediaRepositoryInterface interface {
@@ -83,7 +86,8 @@ type TagRepositoryInterface interface {
 }
 
 type SocialRepositoryInterface interface {
-	SetReaction(userID, tripID, reaction string) error
+	// Возвращает oldReaction ("", "Like", "Dislike") — для публикации статистических событий.
+	SetReaction(userID, tripID, reaction string) (oldReaction string, err error)
 	GetReaction(userID, tripID string) (string, error)
 }
 

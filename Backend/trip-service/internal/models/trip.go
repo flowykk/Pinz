@@ -18,6 +18,7 @@ type Trip struct {
 	DislikesCount     int32
 	MediaCount        int32
 	ParticipantsCount int32
+	PinsCount         int32
 	CoverURL          string
 	IsPublished   bool
 	IsGenerated   bool
