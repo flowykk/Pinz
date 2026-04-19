@@ -18,6 +18,8 @@ enum PinzAPI {
 
     // Profile
     case getProfile
+    case getProfileStats
+    case getVisitedLocations(type: String?)
     case deleteAccount
     case deleteAvatar
     case updateProfile(username: String)
@@ -86,6 +88,8 @@ extension PinzAPI: TargetType {
         case .logout: endpointPath = "/auth/logout"
         case .getProfile: endpointPath = "/profile"
         case .deleteAccount: endpointPath = "/profile"
+        case .getProfileStats: endpointPath = "/profile/stats"
+        case .getVisitedLocations: endpointPath = "/profile/visited-locations"
         case .deleteAvatar: endpointPath = "/profile/avatar"
         case .updateProfile: endpointPath = "/profile"
         case .requestAvatarUpload: endpointPath = "/profile/avatar/upload"
@@ -123,7 +127,7 @@ extension PinzAPI: TargetType {
         switch self {
         case .getFeed, .getTrips, .getFavouriteTrips, .getTrip, .getTripReview:
             return .get
-        case .getProfile:
+        case .getProfile, .getProfileStats, .getVisitedLocations:
             return .get
         case .deleteAvatar:
             return .delete
@@ -142,6 +146,12 @@ extension PinzAPI: TargetType {
         case .getTrips, .getTrip, .getTripReview, .deleteTrip, .removeParticipant,
              .leaveTrip, .likeTrip, .dislikeTrip, .addTripToFavourites, .removeTripFromFavourites:
             return .requestPlain
+        case .getProfile, .getProfileStats:
+            return .requestPlain
+        case let .getVisitedLocations(type):
+            var params: [String: Any] = [:]
+            if let type { params["type"] = type }
+            return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
 
         case let .getFeed(limit, offset, category, season, locationId, sortBy):
             var params: [String: Any] = [:]
@@ -168,7 +178,7 @@ extension PinzAPI: TargetType {
         case let .passkeyRegisterFinish(regId, cred): return jsonParams(["registration_id": regId, "credential_json": cred])
         case let .refreshToken(token): return jsonParams(["refresh_token": token])
         case let .logout(token): return jsonParams(["refresh_token": token])
-        case .getProfile, .deleteAccount, .deleteAvatar:
+        case .deleteAccount, .deleteAvatar:
             return .requestPlain
 
         case let .updateProfile(username): return jsonParams(["username": username])
@@ -266,6 +276,10 @@ extension PinzAPI {
             json = #"{"success": true}"#
         case .getProfile:
             json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
+        case .getProfileStats:
+            json = #"{"trips_count":12,"pins_count":42,"media_count":77,"likes_count":128,"dislikes_count":4,"battles_count":3}"#
+        case .getVisitedLocations:
+            json = #"[{"parent_id":null,"location_id":"ru","name":"Россия","last_visited_at_unix":1700000000,"visits_count":12},{"parent_id":null,"location_id":"fr","name":"Франция","last_visited_at_unix":1698000000,"visits_count":5}]"#
         case .deleteAccount:
             json = #"{"success": true}"#
         case .deleteAvatar:

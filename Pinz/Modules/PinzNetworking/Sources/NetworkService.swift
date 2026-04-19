@@ -20,6 +20,8 @@ public protocol NetworkServiceProtocol {
 
     // Profile
     func getProfile() async throws -> ProfileResponseDTO
+    func getProfileStats() async throws -> UserStatsResponseDTO
+    func getVisitedLocations(type: String?) async throws -> VisitedLocationsResponseDTO
     func updateProfile(username: String) async throws -> ProfileResponseDTO
     func deleteAvatar() async throws -> ProfileResponseDTO
     func deleteAccount() async throws -> DeleteAccountResponseDTO
@@ -105,7 +107,7 @@ public final class NetworkService: NetworkServiceProtocol {
     private let provider: NetworkProvider<PinzAPI>
 
     public init() {
-        let stub: Bool = false
+        let stub: Bool = true
         self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: 0.5)
     }
 
@@ -224,6 +226,20 @@ public final class NetworkService: NetworkServiceProtocol {
         try await provider.request(
             .getProfile,
             type: ProfileResponseDTO.self
+        )
+    }
+
+    public func getProfileStats() async throws -> UserStatsResponseDTO {
+        try await provider.request(
+            .getProfileStats,
+            type: UserStatsResponseDTO.self
+        )
+    }
+
+    public func getVisitedLocations(type: String?) async throws -> VisitedLocationsResponseDTO {
+        try await provider.request(
+            .getVisitedLocations(type: type),
+            type: VisitedLocationsResponseDTO.self
         )
     }
 

@@ -25,10 +25,32 @@ public enum Setting {
         }
     }
 
+    public struct Title {
+        public let title: String
+        public let subtitle: String?
+
+        public init(title: String, subtitle: String?) {
+            self.title = title
+            self.subtitle = subtitle
+        }
+    }
+
     public enum Leading {
-        case iconTitle(Icon, String)
-        case title(String)
-        case imageTitle(UIImage, String)
+        case iconTitle(Icon, Title)
+        case title(Title)
+        case imageTitle(UIImage, Title)
+
+        static public func iconTitle(_ icon: Icon, _ title: String) -> Self {
+            return .iconTitle(icon, Title(title: title, subtitle: nil))
+        }
+
+        static public func title(_ title: String) -> Self {
+            return .title(Title(title: title, subtitle: nil))
+        }
+
+        static public func imageTitle(_ image: UIImage, _ title: String) -> Self {
+            return .imageTitle(image, Title(title: title, subtitle: nil))
+        }
     }
 
     public enum Trailing {

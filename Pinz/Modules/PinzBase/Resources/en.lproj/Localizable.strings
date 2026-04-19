@@ -58,6 +58,16 @@
 
 // MARK: - Statistics
 "statistics.title.main" = "Statistics";
+"statistics.group.countries" = "Your countries";
+"statistics.group.cities" = "Your cities";
+"statistics.visited.lastVisited" = "Last visited: %@";
+"statistics.visited.visitsCount" = "Visits: %@";
+"statistics.label.trips" = "Trips";
+"statistics.label.pins" = "Pins";
+"statistics.label.media" = "Media";
+"statistics.label.likes" = "Likes";
+"statistics.label.dislikes" = "Dislikes";
+"statistics.label.battles" = "Battles";
 
 // MARK: - Email Change
 "emailChange.title.main" = "Change Email";

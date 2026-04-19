@@ -58,6 +58,10 @@ final class MockNetworkService: NetworkServiceProtocol {
     var updateProfileResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
     var deleteAvatarResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
     var deleteAccountResult: Result<DeleteAccountResponseDTO, Error> = .success(DeleteAccountResponseDTO(success: true))
+    var getVisitedLocationsResult: Result<VisitedLocationsResponseDTO, Error> = .success(VisitedLocationsResponseDTO())
+    var getProfileStatsResult: Result<UserStatsResponseDTO, Error> = .success(
+        UserStatsResponseDTO(tripsCount: 0, pinsCount: 0, mediaCount: 0, likesCount: 0, dislikesCount: 0, battlesCount: 0)
+    )
     var requestAvatarUploadResult: Result<AvatarUploadResponseDTO, Error> = .success(
         AvatarUploadResponseDTO(uploadUrl: "https://example.com/upload", s3Key: "mock-s3-key")
     )
@@ -156,6 +160,10 @@ final class MockNetworkService: NetworkServiceProtocol {
         if let error = removeTripFromFavouritesError { throw error }
     }
     func getProfile() async throws -> ProfileResponseDTO { try getProfileResult.get() }
+    func getVisitedLocations(type: String?) async throws -> VisitedLocationsResponseDTO {
+        try getVisitedLocationsResult.get()
+    }
+    func getProfileStats() async throws -> UserStatsResponseDTO { try getProfileStatsResult.get() }
     func updateProfile(username: String) async throws -> ProfileResponseDTO {
         try updateProfileResult.get()
     }
