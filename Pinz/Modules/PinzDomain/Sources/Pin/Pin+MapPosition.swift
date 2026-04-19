@@ -10,7 +10,11 @@ public extension Array where Element == Pin {
             return .automatic
         }
 
-        let coordinates = map { $0.coordinates }
+        let coordinates = map { $0.coordinates }.compactMap { $0 }
+
+        guard !coordinates.isEmpty else {
+            return .automatic
+        }
 
         let minLat = coordinates.map { $0.latitude }.min() ?? 0
         let maxLat = coordinates.map { $0.latitude }.max() ?? 0

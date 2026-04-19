@@ -73,7 +73,10 @@ final class PinInfoViewModelTests: XCTestCase {
         sut.dispatch(.navigate(.changePlace))
         let newCoord = CLLocationCoordinate2D(latitude: 10, longitude: 20)
         mockRouter.navigatedPinPlaceChange?.action.action(newCoord)
-        XCTAssertEqual(sut.pin.coordinates.latitude, 10)
-        XCTAssertEqual(sut.pin.coordinates.longitude, 20)
+        guard let coordinate = sut.pin.coordinates else {
+            return XCTFail("Expected pin coordinates to be set")
+        }
+        XCTAssertEqual(coordinate.latitude, 10)
+        XCTAssertEqual(coordinate.longitude, 20)
     }
 }

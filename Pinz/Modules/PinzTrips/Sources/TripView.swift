@@ -151,7 +151,7 @@ public struct TripView: View {
                             invertColors: true
                         ) {
                             viewModel.dispatch(.toggleRouteState)
-                        }.disabledWithOpacity(selectedTrip?.pins.isEmpty == true)
+                        }.disabledWithOpacity(hasDisplayablePins(for: selectedTrip) == false)
                     }
                 }
 
@@ -199,6 +199,13 @@ public struct TripView: View {
                     .cornerRadius(Constants.buttonsCornerRadius)
             )
         }.buttonStyle(.plain)
+    }
+
+    private func hasDisplayablePins(for trip: Trip?) -> Bool {
+        guard let trip else {
+            return false
+        }
+        return trip.pins.contains { $0.coordinates != nil }
     }
 
     @ViewBuilder

@@ -23,7 +23,14 @@ extension DraftPinMediaDTO {
 
 extension ReviewPinDTO {
     func toPin(index: Int) -> Pin {
-        Pin(
+        let coordinates: CLLocationCoordinate2D?
+        if let latitude, let longitude {
+            coordinates = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        } else {
+            coordinates = nil
+        }
+
+        return Pin(
             name: name ?? PinzBaseStrings.Common.Label.pinNumber(index + 1),
             category: category?.toPinCategory() ?? .custom(nil),
             medias: (media ?? []).enumerated().map { offset, m in
@@ -36,10 +43,7 @@ extension ReviewPinDTO {
             },
             isPrivate: false,
             tags: (tags ?? []).map { MediaTag(tag: $0) },
-            coordinates: CLLocationCoordinate2D(
-                latitude: latitude ?? 0,
-                longitude: longitude ?? 0
-            )
+            coordinates: coordinates
         )
     }
 }
