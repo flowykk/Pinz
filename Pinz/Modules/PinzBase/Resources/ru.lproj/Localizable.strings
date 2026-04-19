@@ -159,6 +159,7 @@
 "pinInfo.label.location" = "Местоположение";
 "pinInfo.label.category" = "Категория";
 "pinInfo.label.dates" = "Даты";
+"pinInfo.button.addLocation" = "Добавить местоположение";
 "pinInfo.hint.changeLocation" = "Нажми, чтобы изменить местоположение пина";
 
 // MARK: - Raw Pin

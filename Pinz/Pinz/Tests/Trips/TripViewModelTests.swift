@@ -2,6 +2,7 @@ import XCTest
 @testable import PinzTrips
 import PinzBase
 import PinzDomain
+import CoreLocation
 
 final class TripViewModelTests: XCTestCase {
 
@@ -157,6 +158,76 @@ final class TripViewModelTests: XCTestCase {
         XCTAssertEqual(sut.routePinIndex, 0)
     }
 
+    func test_toggleRouteState_skipsPinsWithoutCoordinates() {
+        let trip = Trip(
+            name: "Route Test",
+            pins: [
+                Pin(
+                    name: "Without coordinates",
+                    category: .custom(),
+                    medias: [],
+                    isPrivate: false,
+                    tags: [],
+                    coordinates: nil
+                ),
+                Pin(
+                    name: "With coordinates",
+                    category: .custom(),
+                    medias: [],
+                    isPrivate: false,
+                    tags: [],
+                    coordinates: CLLocationCoordinate2D(latitude: 55.75, longitude: 37.617)
+                )
+            ],
+            season: .summer,
+            category: .vacation
+        )
+
+        sut.dispatch(.selectTrip(trip))
+        sut.dispatch(.toggleRouteState)
+
+        XCTAssertEqual(sut.routePinIndex, 1)
+        guard case let .camera(camera) = sut.position else {
+            return XCTFail("Expected camera position after selecting route pin with coordinates")
+        }
+        XCTAssertEqual(camera.centerCoordinate.latitude, 55.75, accuracy: 0.0001)
+        XCTAssertEqual(camera.centerCoordinate.longitude, 37.617, accuracy: 0.0001)
+    }
+
+    func test_toggleRouteState_staysOnNoCoordinatesIfAllPinsAreMissingCoordinates() {
+        let trip = Trip(
+            name: "No coordinate route",
+            pins: [
+                Pin(
+                    name: "Without coordinates 1",
+                    category: .custom(),
+                    medias: [],
+                    isPrivate: false,
+                    tags: [],
+                    coordinates: nil
+                ),
+                Pin(
+                    name: "Without coordinates 2",
+                    category: .custom(),
+                    medias: [],
+                    isPrivate: false,
+                    tags: [],
+                    coordinates: nil
+                )
+            ],
+            season: .summer,
+            category: .vacation
+        )
+
+        sut.dispatch(.selectTrip(trip))
+        sut.dispatch(.toggleRouteState)
+
+        XCTAssertEqual(sut.routePinIndex, 0)
+        guard case .automatic = sut.position else {
+            return XCTFail("Expected automatic position when all pins miss coordinates")
+        }
+    }
+
     // MARK: - sortedPins
 
     func test_sortedPins_sortsByStartDateAscending() {
@@ -165,6 +236,32 @@ final class TripViewModelTests: XCTestCase {
         let sorted = sut.sortedPins
         let dates = sorted.compactMap { $0.startDate }
         XCTAssertEqual(dates, dates.sorted())
+    }
+
+    func test_calculateInitialMapPosition_returnsAutomaticWithoutCoordinates() {
+        let pins: [Pin] = [
+            Pin(
+                name: "No coordinates 1",
+                category: .custom(),
+                medias: [],
+                isPrivate: false,
+                tags: [],
+                coordinates: nil
+            ),
+            Pin(
+                name: "No coordinates 2",
+                category: .custom(),
+                medias: [],
+                isPrivate: false,
+                tags: [],
+                coordinates: nil
+            )
+        ]
+
+        let position = pins.calculateInitialMapPosition()
+        guard case .automatic = position else {
+            return XCTFail("Expected automatic map position when no pins have coordinates")
+        }
     }
 
     // MARK: - Navigate

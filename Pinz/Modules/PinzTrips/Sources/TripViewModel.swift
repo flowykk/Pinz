@@ -183,12 +183,69 @@ final class TripViewModel {
 
     private func navigateToRoutePin(at index: Int) {
         let pins = sortedPins
-        guard !pins.isEmpty, index < pins.count else { return }
-        withAnimation(.easeInOut(duration: 1)) {
-            position = .camera(MapCamera(
-                centerCoordinate: pins[index].coordinates,
-                distance: 5000
-            ))
+        guard !pins.isEmpty, index >= 0, index < pins.count else { return }
+
+        let direction: Int
+        if index > routePinIndex {
+            direction = 1
+        } else if index < routePinIndex {
+            direction = -1
+        } else {
+            direction = 0
+        }
+
+        func setCamera(at index: Int) {
+            guard let coordinate = pins[index].coordinates else {
+                return
+            }
+            routePinIndex = index
+            withAnimation(.easeInOut(duration: 1)) {
+                position = .camera(
+                    MapCamera(
+                        centerCoordinate: coordinate,
+                        distance: 5000
+                    )
+                )
+            }
+        }
+
+        var targetIndex = index
+        if pins[targetIndex].coordinates != nil {
+            setCamera(at: targetIndex)
+            return
+        }
+
+        if direction == 0 {
+            var offset = 1
+            while offset < pins.count {
+                let nextIndex = targetIndex + offset
+                if nextIndex < pins.count, pins[nextIndex].coordinates != nil {
+                    setCamera(at: nextIndex)
+                    return
+                }
+
+                let previousIndex = targetIndex - offset
+                if previousIndex >= 0, pins[previousIndex].coordinates != nil {
+                    setCamera(at: previousIndex)
+                    return
+                }
+
+                offset += 1
+            }
+
+            return
+        }
+
+        while true {
+            let nextIndex = targetIndex + direction
+            guard nextIndex >= 0, nextIndex < pins.count else {
+                return
+            }
+            targetIndex = nextIndex
+            if pins[targetIndex].coordinates != nil {
+                setCamera(at: targetIndex)
+                return
+            }
         }
     }
 

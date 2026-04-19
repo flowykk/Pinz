@@ -12,7 +12,7 @@ public struct Pin: Hashable, Identifiable {
     public var startDate: Date?
     public var endDate: Date?
     public var tags: [MediaTag]
-    public var coordinates: CLLocationCoordinate2D
+    public var coordinates: CLLocationCoordinate2D?
 
     public init(
         name: String,
@@ -23,7 +23,7 @@ public struct Pin: Hashable, Identifiable {
         startDate: Date? = nil,
         endDate: Date? = nil,
         tags: [MediaTag],
-        coordinates: CLLocationCoordinate2D
+        coordinates: CLLocationCoordinate2D? = nil
     ) {
         self.name = name
         self.description = description

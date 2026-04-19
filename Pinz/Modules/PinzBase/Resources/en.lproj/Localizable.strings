@@ -159,6 +159,7 @@
 "pinInfo.label.location" = "Location";
 "pinInfo.label.category" = "Category";
 "pinInfo.label.dates" = "Dates";
+"pinInfo.button.addLocation" = "Add location";
 "pinInfo.hint.changeLocation" = "Tap to change pin location";
 
 // MARK: - Raw Pin

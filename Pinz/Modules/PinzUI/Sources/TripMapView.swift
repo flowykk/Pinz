@@ -23,13 +23,15 @@ public struct TripMapView: View {
     public var body: some View {
         Map(position: $position) {
             ForEach(pins) { pin in
-                Annotation(pin.name, coordinate: pin.coordinates, anchor: .bottom) {
-                    PinAnnotationView(pin: pin)
-                        .if(onPinTap != nil) { view in
-                            view.onTapGesture {
-                                onPinTap?(pin)
+                if let coordinate = pin.coordinates {
+                    Annotation(pin.name, coordinate: coordinate, anchor: .bottom) {
+                        PinAnnotationView(pin: pin)
+                            .if(onPinTap != nil) { view in
+                                view.onTapGesture {
+                                    onPinTap?(pin)
+                                }
                             }
-                        }
+                    }
                 }
             }
         }

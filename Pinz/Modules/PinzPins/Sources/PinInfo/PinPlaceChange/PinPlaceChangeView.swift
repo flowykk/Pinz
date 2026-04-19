@@ -11,7 +11,7 @@ public struct PinPlaceChangeView: View {
     @Environment(\.appRouter) private var router
     @AppStorage("pinzMapStyle") private var mapStyleRawValue: String = PinzMapStyle.satelight.rawValue
 
-    public init(pin: Pin, onSave: @escaping (CLLocationCoordinate2D) -> Void) {
+    public init(pin: Pin, onSave: @escaping (CLLocationCoordinate2D?) -> Void) {
         self._viewModel = State(initialValue: PinPlaceChangeViewModel(pin: pin, onSave: onSave))
     }
 

@@ -34,8 +34,8 @@ final class PinPlaceChangeViewModelTests: XCTestCase {
     }
 
     func test_initialCoordinate() {
-        XCTAssertEqual(sut.currentCoordinate.latitude, originalCoord.latitude)
-        XCTAssertEqual(sut.currentCoordinate.longitude, originalCoord.longitude)
+        XCTAssertEqual(sut.currentCoordinate?.latitude, originalCoord.latitude)
+        XCTAssertEqual(sut.currentCoordinate?.longitude, originalCoord.longitude)
     }
 
     func test_hasChanges_falseInitially() {
@@ -56,6 +56,24 @@ final class PinPlaceChangeViewModelTests: XCTestCase {
         XCTAssertEqual(mockRouter.popCallCount, 1)
     }
 
+    func test_save_callsOnSaveWithNilCoordinate() {
+        let pin = Pin(
+            name: "NoCoord",
+            category: .custom(),
+            medias: [],
+            isPrivate: false,
+            tags: []
+        )
+        var savedCoordinate: CLLocationCoordinate2D?
+        let noCoordVM = PinPlaceChangeViewModel(pin: pin) { coordinate in
+            savedCoordinate = coordinate
+        }
+
+        XCTAssertNil(noCoordVM.currentCoordinate)
+        noCoordVM.dispatch(.save)
+        XCTAssertNil(savedCoordinate)
+    }
+
     func test_back_callsPop() {
         sut.dispatch(.back)
         XCTAssertEqual(mockRouter.popCallCount, 1)
@@ -64,8 +82,8 @@ final class PinPlaceChangeViewModelTests: XCTestCase {
     func test_reset_restoresOriginalCoordinate() {
         sut.currentCoordinate = CLLocationCoordinate2D(latitude: 10.0, longitude: 20.0)
         sut.dispatch(.reset)
-        XCTAssertEqual(sut.currentCoordinate.latitude, originalCoord.latitude, accuracy: 0.0001)
-        XCTAssertEqual(sut.currentCoordinate.longitude, originalCoord.longitude, accuracy: 0.0001)
+        XCTAssertEqual(sut.currentCoordinate?.latitude, originalCoord.latitude, accuracy: 0.0001)
+        XCTAssertEqual(sut.currentCoordinate?.longitude, originalCoord.longitude, accuracy: 0.0001)
     }
 
     // .update(MapCameraUpdateContext) is not directly testable since

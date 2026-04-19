@@ -8,7 +8,7 @@ extension PinInfoView {
         VStack(spacing: 12) {
             if viewModel.isEditing { nameEditing }
             general
-            tags
+            if !viewModel.pin.tags.isEmpty { tags }
             if viewModel.isEditing {
                 descriptionEditing
                 delete
