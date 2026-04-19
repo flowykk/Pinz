@@ -58,6 +58,16 @@
 
 // MARK: - Statistics
 "statistics.title.main" = "Статистика";
+"statistics.group.countries" = "Твои страны";
+"statistics.group.cities" = "Твои города";
+"statistics.visited.lastVisited" = "Последнее посещение: %@";
+"statistics.visited.visitsCount" = "Посещений: %@";
+"statistics.label.trips" = "Твои путешествия";
+"statistics.label.pins" = "Твои пины";
+"statistics.label.media" = "Твоё медиа";
+"statistics.label.likes" = "Твои лайки";
+"statistics.label.dislikes" = "Твои дизлайки";
+"statistics.label.battles" = "Твои битвы";
 
 // MARK: - Email Change
 "emailChange.title.main" = "Смена почты";
