@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [main, develop, PINZ-146]
+    branches: [main, develop]
     paths:
       - 'Backend/**'
       - 'proto/**'
@@ -62,18 +62,48 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     needs: detect-changes
-    outputs:
-      image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - key: api-gateway
+            dir: api-gateway-service
+            image: pinz-api-gateway
+          - key: auth-service
+            dir: auth-service
+            image: pinz-auth-service
+          - key: trip-service
+            dir: trip-service
+            image: pinz-trip-service
+          - key: statistics-service
+            dir: statistics-service
+            image: pinz-statistics-service
+          - key: notification-service
+            dir: notification-service
+            image: pinz-notification-service
     steps:
+      - name: Check if this service needs rebuild
+        id: should-build
+        run: |
+          CHANGED="${{ needs.detect-changes.outputs[matrix.key] }}"
+          DISPATCH="${{ github.event_name == 'workflow_dispatch' }}"
+          if [[ "$CHANGED" == "true" || "$DISPATCH" == "true" ]]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout code
+        if: steps.should-build.outputs.run == 'true'
         uses: actions/checkout@v4
 
       - name: Set image tag
-        id: set-image-tag
-        run: |
-          echo "image-tag=sha-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+        if: steps.should-build.outputs.run == 'true'
+        id: tag
+        run: echo "image-tag=sha-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
 
       - name: Log in to Container Registry
+        if: steps.should-build.outputs.run == 'true'
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.DOCKER_REGISTRY }}
@@ -81,72 +111,21 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Set up Docker Buildx
+        if: steps.should-build.outputs.run == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push api-gateway-service
-        if: needs.detect-changes.outputs.api-gateway == 'true' || github.event_name == 'workflow_dispatch'
+      - name: Build and push ${{ matrix.key }}
+        if: steps.should-build.outputs.run == 'true'
         uses: docker/build-push-action@v5
         with:
           context: Backend
-          file: Backend/api-gateway-service/Dockerfile
+          file: Backend/${{ matrix.dir }}/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-api-gateway:latest
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-api-gateway:${{ steps.set-image-tag.outputs.image-tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push auth-service
-        if: needs.detect-changes.outputs.auth-service == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v5
-        with:
-          context: Backend
-          file: Backend/auth-service/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-auth-service:latest
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-auth-service:${{ steps.set-image-tag.outputs.image-tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push trip-service
-        if: needs.detect-changes.outputs.trip-service == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v5
-        with:
-          context: Backend
-          file: Backend/trip-service/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-trip-service:latest
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-trip-service:${{ steps.set-image-tag.outputs.image-tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push statistics-service
-        if: needs.detect-changes.outputs.statistics-service == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v5
-        with:
-          context: Backend
-          file: Backend/statistics-service/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-statistics-service:latest
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-statistics-service:${{ steps.set-image-tag.outputs.image-tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push notification-service
-        if: needs.detect-changes.outputs.notification-service == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v5
-        with:
-          context: Backend
-          file: Backend/notification-service/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-notification-service:latest
-            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/pinz-notification-service:${{ steps.set-image-tag.outputs.image-tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/${{ matrix.image }}:latest
+            ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}/${{ matrix.image }}:${{ steps.tag.outputs.image-tag }}
+          cache-from: type=gha,scope=${{ matrix.key }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.key }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -159,7 +138,7 @@ jobs:
       - name: Set per-service image tags and deploy list
         id: tags
         run: |
-          TAG="${{ needs.build-and-push.outputs.image-tag }}"
+          TAG="sha-${GITHUB_SHA::8}"
           DISPATCH="${{ github.event_name == 'workflow_dispatch' }}"
           SERVICES=""
 
