@@ -242,6 +242,7 @@ func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.
 func (s *TripService) pinWithMediaToProto(ctx context.Context, pin *models.Pin, mediaList []*models.Media, tags []string) *pb.TripPin {
 	out := &pb.TripPin{
 		Id:           pin.ID,
+		TripId:       pin.TripID,
 		Name:         pin.Name,
 		Description:  pin.Description,
 		Category:     pin.Category,
@@ -323,6 +324,52 @@ func (s *TripService) ListUserTripSummaries(ctx context.Context, req *pb.ListUse
 		})
 	}
 	return &pb.ListUserTripSummariesResponse{Trips: out}, nil
+}
+
+// MaxSearchQueryLength ограничивает длину текстового поиска, чтобы защитить БД от очень больших ILIKE-паттернов.
+const MaxSearchQueryLength = 128
+
+// SearchPins — PINZ-135: текстовый поиск пинов по name/description/тегам среди трипов, где user — участник.
+func (s *TripService) SearchPins(ctx context.Context, req *pb.SearchPinsRequest) (*pb.SearchPinsResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+	query := strings.TrimSpace(req.GetQuery())
+	if query == "" {
+		return nil, status.Error(codes.InvalidArgument, "query is required")
+	}
+	if len(query) > MaxSearchQueryLength {
+		query = query[:MaxSearchQueryLength]
+	}
+	limit := req.GetLimit()
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	offset := req.GetOffset()
+	if offset < 0 {
+		offset = 0
+	}
+	pins, err := s.pinRepo.SearchByUserID(userID, query, limit, offset)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to search pins")
+	}
+	out := make([]*pb.TripPin, 0, len(pins))
+	for _, pin := range pins {
+		mediaList, err := s.mediaRepo.ListByPinID(pin.ID)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to list pin media")
+		}
+		tags, err := s.tagRepo.GetByPinID(pin.ID)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to list pin tags")
+		}
+		if tags == nil {
+			tags = []string{}
+		}
+		out = append(out, s.pinWithMediaToProto(ctx, pin, mediaList, tags))
+	}
+	return &pb.SearchPinsResponse{Pins: out}, nil
 }
 
 func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest) (*pb.UpdateTripResponse, error) {

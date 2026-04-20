@@ -51,6 +51,7 @@ type TripClient interface {
 	StartBattle(ctx context.Context, req *proto.StartBattleRequest) (*proto.StartBattleResponse, error)
 	SubmitBattleResult(ctx context.Context, req *proto.SubmitBattleResultRequest) (*proto.SubmitBattleResultResponse, error)
 	GetBestMemories(ctx context.Context, req *proto.GetBestMemoriesRequest) (*proto.GetBestMemoriesResponse, error)
+	SearchPins(ctx context.Context, req *proto.SearchPinsRequest) (*proto.SearchPinsResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient) *TripHandler {
@@ -1090,6 +1091,63 @@ func (h *TripHandler) ListFavourites(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
+// SearchPins searches pins by text query across trips where the authenticated user is a participant (PINZ-135).
+// @Summary Search pins by query
+// @Description Text search over pin name, description and tags within trips where the user participates. Requires JWT.
+// @Tags pins
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "search query (1..128 chars)"
+// @Param limit query int false "limit (1..100, default 20)"
+// @Param offset query int false "offset (>=0, default 0)"
+// @Success 200 {array} responses.TripPin
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/pins/search [get]
+func (h *TripHandler) SearchPins(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		respondError(w, http.StatusBadRequest, "query parameter q is required")
+		return
+	}
+	limit := int32(20)
+	offset := int32(0)
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if n, err := parseInt(l); err == nil && n > 0 && n <= 100 {
+			limit = int32(n)
+		}
+	}
+	if o := r.URL.Query().Get("offset"); o != "" {
+		if n, err := parseInt(o); err == nil && n >= 0 {
+			offset = int32(n)
+		}
+	}
+	resp, err := h.tripClient.SearchPins(ctx, &proto.SearchPinsRequest{
+		Query:  query,
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "SearchPins")
+		return
+	}
+	out := make([]responses.TripPin, 0, len(resp.GetPins()))
+	for _, p := range resp.GetPins() {
+		if p == nil {
+			continue
+		}
+		out = append(out, tripPinProtoToResponse(p))
+	}
+	respondJSON(w, http.StatusOK, out)
+}
+
 func tripProtoToResponse(t *proto.Trip) responses.Trip {
 	if t == nil {
 		return responses.Trip{}
@@ -1126,34 +1184,39 @@ func getTripResponseToREST(resp *proto.GetTripResponse) responses.GetTripRespons
 		if p == nil {
 			continue
 		}
-		pin := responses.TripPin{
-			ID:            p.GetId(),
-			Name:          p.GetName(),
-			Description:   p.GetDescription(),
-			Category:      p.GetCategory(),
-			Latitude:      p.Latitude,
-			Longitude:     p.Longitude,
-			StartTimeUnix: p.GetStartTimeUnix(),
-			EndTimeUnix:   p.GetEndTimeUnix(),
-			PrivacyLevel:  p.GetPrivacyLevel(),
-			Tags:          p.GetTags(),
-			Media:         make([]responses.TripPinMedia, 0, len(p.GetMedia())),
-		}
-		for _, m := range p.GetMedia() {
-			if m == nil {
-				continue
-			}
-			pin.Media = append(pin.Media, responses.TripPinMedia{
-				MediaID:        m.GetMediaId(),
-				URL:            m.GetUrl(),
-				MediaType:      m.GetMediaType(),
-				CapturedAtUnix: m.GetCapturedAtUnix(),
-				PrivacyLevel:   m.GetPrivacyLevel(),
-			})
-		}
-		out.Pins = append(out.Pins, pin)
+		out.Pins = append(out.Pins, tripPinProtoToResponse(p))
 	}
 	return out
+}
+
+func tripPinProtoToResponse(p *proto.TripPin) responses.TripPin {
+	pin := responses.TripPin{
+		ID:            p.GetId(),
+		TripID:        p.GetTripId(),
+		Name:          p.GetName(),
+		Description:   p.GetDescription(),
+		Category:      p.GetCategory(),
+		Latitude:      p.Latitude,
+		Longitude:     p.Longitude,
+		StartTimeUnix: p.GetStartTimeUnix(),
+		EndTimeUnix:   p.GetEndTimeUnix(),
+		PrivacyLevel:  p.GetPrivacyLevel(),
+		Tags:          p.GetTags(),
+		Media:         make([]responses.TripPinMedia, 0, len(p.GetMedia())),
+	}
+	for _, m := range p.GetMedia() {
+		if m == nil {
+			continue
+		}
+		pin.Media = append(pin.Media, responses.TripPinMedia{
+			MediaID:        m.GetMediaId(),
+			URL:            m.GetUrl(),
+			MediaType:      m.GetMediaType(),
+			CapturedAtUnix: m.GetCapturedAtUnix(),
+			PrivacyLevel:   m.GetPrivacyLevel(),
+		})
+	}
+	return pin
 }
 
 // AddMediaStart starts a session for adding media to an existing READY trip (PINZ-131, ТЗ 5.3 → 3.8).

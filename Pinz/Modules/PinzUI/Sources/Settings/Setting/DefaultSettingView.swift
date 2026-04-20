@@ -8,6 +8,13 @@ extension Setting.DefaultSetting {
         }
     }
 
+    var subtitleColor: Color {
+        switch style {
+        case .default: PinzUIAsset.textSecondary.swiftUIColor
+        case .destructive: PinzUIAsset.accentRed.swiftUIColor
+        }
+    }
+
     var trailColor: Color {
         switch style {
         case .default: PinzUIAsset.textSecondary.swiftUIColor
@@ -131,9 +138,15 @@ extension Setting.DefaultSetting {
         }
     }
 
-    private func titleView(for title: String) -> some View {
-        Text(title)
-            .roundedFont(size: 16, foregroundColor: titleColor)
+    private func titleView(for title: Setting.Title) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title.title)
+                .roundedFont(size: 16, foregroundColor: titleColor)
+            if let subtitle = title.subtitle, !subtitle.isEmpty {
+                Text(subtitle)
+                    .roundedFont(size: 12, foregroundColor: subtitleColor)
+            }
+        }
     }
 
     private func imageView(for image: UIImage) -> some View {

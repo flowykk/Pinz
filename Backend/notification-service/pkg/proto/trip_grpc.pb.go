@@ -55,6 +55,7 @@ const (
 	TripService_ListAnniversaryTrips_FullMethodName          = "/trip.TripService/ListAnniversaryTrips"
 	TripService_ListEndedMonthAgoTrips_FullMethodName        = "/trip.TripService/ListEndedMonthAgoTrips"
 	TripService_ListTripParticipants_FullMethodName          = "/trip.TripService/ListTripParticipants"
+	TripService_SearchPins_FullMethodName                    = "/trip.TripService/SearchPins"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -106,6 +107,8 @@ type TripServiceClient interface {
 	ListAnniversaryTrips(ctx context.Context, in *ListAnniversaryTripsRequest, opts ...grpc.CallOption) (*ListAnniversaryTripsResponse, error)
 	ListEndedMonthAgoTrips(ctx context.Context, in *ListEndedMonthAgoTripsRequest, opts ...grpc.CallOption) (*ListEndedMonthAgoTripsResponse, error)
 	ListTripParticipants(ctx context.Context, in *ListTripParticipantsRequest, opts ...grpc.CallOption) (*ListTripParticipantsResponse, error)
+	// PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
+	SearchPins(ctx context.Context, in *SearchPinsRequest, opts ...grpc.CallOption) (*SearchPinsResponse, error)
 }
 
 type tripServiceClient struct {
@@ -476,6 +479,16 @@ func (c *tripServiceClient) ListTripParticipants(ctx context.Context, in *ListTr
 	return out, nil
 }
 
+func (c *tripServiceClient) SearchPins(ctx context.Context, in *SearchPinsRequest, opts ...grpc.CallOption) (*SearchPinsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchPinsResponse)
+	err := c.cc.Invoke(ctx, TripService_SearchPins_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TripServiceServer is the server API for TripService service.
 // All implementations must embed UnimplementedTripServiceServer
 // for forward compatibility.
@@ -525,6 +538,8 @@ type TripServiceServer interface {
 	ListAnniversaryTrips(context.Context, *ListAnniversaryTripsRequest) (*ListAnniversaryTripsResponse, error)
 	ListEndedMonthAgoTrips(context.Context, *ListEndedMonthAgoTripsRequest) (*ListEndedMonthAgoTripsResponse, error)
 	ListTripParticipants(context.Context, *ListTripParticipantsRequest) (*ListTripParticipantsResponse, error)
+	// PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
+	SearchPins(context.Context, *SearchPinsRequest) (*SearchPinsResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
 
@@ -642,6 +657,9 @@ func (UnimplementedTripServiceServer) ListEndedMonthAgoTrips(context.Context, *L
 }
 func (UnimplementedTripServiceServer) ListTripParticipants(context.Context, *ListTripParticipantsRequest) (*ListTripParticipantsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListTripParticipants not implemented")
+}
+func (UnimplementedTripServiceServer) SearchPins(context.Context, *SearchPinsRequest) (*SearchPinsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchPins not implemented")
 }
 func (UnimplementedTripServiceServer) mustEmbedUnimplementedTripServiceServer() {}
 func (UnimplementedTripServiceServer) testEmbeddedByValue()                     {}
@@ -1312,6 +1330,24 @@ func _TripService_ListTripParticipants_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_SearchPins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchPinsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).SearchPins(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_SearchPins_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).SearchPins(ctx, req.(*SearchPinsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TripService_ServiceDesc is the grpc.ServiceDesc for TripService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1462,6 +1498,10 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTripParticipants",
 			Handler:    _TripService_ListTripParticipants_Handler,
+		},
+		{
+			MethodName: "SearchPins",
+			Handler:    _TripService_SearchPins_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

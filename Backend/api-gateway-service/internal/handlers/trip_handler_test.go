@@ -300,3 +300,87 @@ func TestTripHandler_DeleteTripCover_Success(t *testing.T) {
 	require.Equal(t, "trip-1", resp.ID)
 	require.Empty(t, resp.CoverURL)
 }
+
+func TestTripHandler_SearchPins_WithoutJWT(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripClient := mocks.NewMockTripClient(ctrl)
+
+	h := NewTripHandler(tripClient)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/pins/search?q=cafe", nil)
+	rr := httptest.NewRecorder()
+
+	h.SearchPins(rr, req)
+
+	require.Equal(t, http.StatusUnauthorized, rr.Code)
+}
+
+func TestTripHandler_SearchPins_MissingQuery(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripClient := mocks.NewMockTripClient(ctrl)
+
+	h := NewTripHandler(tripClient)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/pins/search", nil)
+	req = req.WithContext(ctxWithUserID("user-1"))
+	rr := httptest.NewRecorder()
+
+	h.SearchPins(rr, req)
+
+	require.Equal(t, http.StatusBadRequest, rr.Code)
+	require.Contains(t, rr.Body.String(), "q is required")
+}
+
+func TestTripHandler_SearchPins_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripClient := mocks.NewMockTripClient(ctrl)
+	lat, lon := 55.75, 37.62
+	tripClient.EXPECT().
+		SearchPins(gomock.Any(), &proto.SearchPinsRequest{Query: "cafe", Limit: 50, Offset: 10}).
+		Return(&proto.SearchPinsResponse{
+			Pins: []*proto.TripPin{
+				{
+					Id: "pin-1", TripId: "trip-1", Name: "Cafe Central",
+					Description: "best cafe", Category: "Food",
+					Latitude: &lat, Longitude: &lon,
+					PrivacyLevel: "Public", Tags: []string{"cafe", "coffee"},
+					Media: []*proto.TripPinMedia{
+						{MediaId: "m1", Url: "https://s3/m1", MediaType: "photo", PrivacyLevel: "Public"},
+					},
+				},
+			},
+		}, nil)
+
+	h := NewTripHandler(tripClient)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/pins/search?q=cafe&limit=50&offset=10", nil)
+	req = req.WithContext(ctxWithUserID("user-1"))
+	rr := httptest.NewRecorder()
+
+	h.SearchPins(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+	var pins []responses.TripPin
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &pins))
+	require.Len(t, pins, 1)
+	require.Equal(t, "pin-1", pins[0].ID)
+	require.Equal(t, "trip-1", pins[0].TripID)
+	require.Equal(t, "Cafe Central", pins[0].Name)
+	require.Equal(t, []string{"cafe", "coffee"}, pins[0].Tags)
+	require.Len(t, pins[0].Media, 1)
+	require.Equal(t, "m1", pins[0].Media[0].MediaID)
+}
+
+func TestTripHandler_SearchPins_ServiceError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripClient := mocks.NewMockTripClient(ctrl)
+	tripClient.EXPECT().
+		SearchPins(gomock.Any(), gomock.Any()).
+		Return(nil, status.Error(codes.Internal, "boom"))
+
+	h := NewTripHandler(tripClient)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/pins/search?q=cafe", nil)
+	req = req.WithContext(ctxWithUserID("user-1"))
+	rr := httptest.NewRecorder()
+
+	h.SearchPins(rr, req)
+
+	require.Equal(t, http.StatusInternalServerError, rr.Code)
+}

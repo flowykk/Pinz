@@ -128,6 +128,21 @@ func (mr *MockPinRepositoryInterfaceMockRecorder) ListPublishedPinsByTripIDs(tri
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPublishedPinsByTripIDs", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ListPublishedPinsByTripIDs), tripIDs)
 }
 
+// SearchByUserID mocks base method.
+func (m *MockPinRepositoryInterface) SearchByUserID(userID, query string, limit, offset int32) ([]*models.Pin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchByUserID", userID, query, limit, offset)
+	ret0, _ := ret[0].([]*models.Pin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchByUserID indicates an expected call of SearchByUserID.
+func (mr *MockPinRepositoryInterfaceMockRecorder) SearchByUserID(userID, query, limit, offset any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByUserID", reflect.TypeOf((*MockPinRepositoryInterface)(nil).SearchByUserID), userID, query, limit, offset)
+}
+
 // Update mocks base method.
 func (m *MockPinRepositoryInterface) Update(p *models.Pin) error {
 	m.ctrl.T.Helper()

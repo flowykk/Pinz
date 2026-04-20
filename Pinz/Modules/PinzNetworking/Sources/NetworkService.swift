@@ -20,6 +20,8 @@ public protocol NetworkServiceProtocol {
 
     // Profile
     func getProfile() async throws -> ProfileResponseDTO
+    func getProfileStats() async throws -> UserStatsResponseDTO
+    func getVisitedLocations(type: String?) async throws -> VisitedLocationsResponseDTO
     func updateProfile(username: String) async throws -> ProfileResponseDTO
     func deleteAvatar() async throws -> ProfileResponseDTO
     func deleteAccount() async throws -> DeleteAccountResponseDTO
@@ -95,6 +97,14 @@ public protocol NetworkServiceProtocol {
         pinUpdates: [PinUpdateInputDTO],
         mediaToDelete: [String]
     ) async throws -> FinalizeTripDTO
+
+    // Photo battles
+    func startBattle(tripId: String) async throws -> StartBattleResponseDTO
+    func submitBattleResult(
+        tripId: String,
+        battleId: String,
+        winnerMediaId: String
+    ) async throws -> SubmitBattleResultResponseDTO
 }
 
 // MARK: - Implementation
@@ -224,6 +234,20 @@ public final class NetworkService: NetworkServiceProtocol {
         try await provider.request(
             .getProfile,
             type: ProfileResponseDTO.self
+        )
+    }
+
+    public func getProfileStats() async throws -> UserStatsResponseDTO {
+        try await provider.request(
+            .getProfileStats,
+            type: UserStatsResponseDTO.self
+        )
+    }
+
+    public func getVisitedLocations(type: String?) async throws -> VisitedLocationsResponseDTO {
+        try await provider.request(
+            .getVisitedLocations(type: type),
+            type: VisitedLocationsResponseDTO.self
         )
     }
 
@@ -642,6 +666,32 @@ public final class NetworkService: NetworkServiceProtocol {
                 mediaToDelete: mediaToDelete
             ),
             type: FinalizeTripDTO.self
+        )
+    }
+
+    public func startBattle(
+        tripId: String
+    ) async throws -> StartBattleResponseDTO {
+        try await provider.request(
+            .startBattle(
+                tripId: tripId
+            ),
+            type: StartBattleResponseDTO.self
+        )
+    }
+
+    public func submitBattleResult(
+        tripId: String,
+        battleId: String,
+        winnerMediaId: String
+    ) async throws -> SubmitBattleResultResponseDTO {
+        try await provider.request(
+            .submitBattleResult(
+                tripId: tripId,
+                battleId: battleId,
+                winnerMediaId: winnerMediaId
+            ),
+            type: SubmitBattleResultResponseDTO.self
         )
     }
 }

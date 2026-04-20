@@ -3,9 +3,9 @@ import CoreLocation
 
 public struct PlaceSaveAction: Equatable, Hashable {
     public let id = UUID()
-    public let action: (CLLocationCoordinate2D) -> Void
+    public let action: (CLLocationCoordinate2D?) -> Void
     
-    public init(action: @escaping (CLLocationCoordinate2D) -> Void) {
+    public init(action: @escaping (CLLocationCoordinate2D?) -> Void) {
         self.action = action
     }
     

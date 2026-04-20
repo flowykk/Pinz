@@ -58,6 +58,16 @@
 
 // MARK: - Statistics
 "statistics.title.main" = "Статистика";
+"statistics.group.countries" = "Твои страны";
+"statistics.group.cities" = "Твои города";
+"statistics.visited.lastVisited" = "Последнее посещение: %@";
+"statistics.visited.visitsCount" = "Посещений: %@";
+"statistics.label.trips" = "Твои путешествия";
+"statistics.label.pins" = "Твои пины";
+"statistics.label.media" = "Твоё медиа";
+"statistics.label.likes" = "Твои лайки";
+"statistics.label.dislikes" = "Твои дизлайки";
+"statistics.label.battles" = "Твои битвы";
 
 // MARK: - Email Change
 "emailChange.title.main" = "Смена почты";
@@ -112,6 +122,13 @@
 "tripInfo.label.dates" = "Даты";
 "tripInfo.header.public" = "Публичная информация";
 "tripInfo.label.publishTrip" = "Опубликовать путешествие";
+"tripInfo.message.photoBattleNeedMedia" = "Для фото-баттла нужно минимум %d медиа";
+"tripInfo.message.photoBattleNeedMediaWithContext" = "Для фото-баттла нужно минимум %d медиа в путешествии";
+"tripInfo.message.photoBattleStartFailed" = "Не удалось запустить баттл: сервер вернул меньше медиа, чем нужно";
+"tripInfo.message.photoBattleStartFailedGeneric" = "Не удалось запустить фото-баттл. Попробуйте позже";
+"tripInfo.section.specialModes" = "Особые режимы";
+"tripInfo.button.stories" = "Сторис";
+"tripInfo.button.photoBattle" = "Фото-баттл";
 "tripInfo.placeholder.name" = "Название путешествия";
 "tripInfo.hint.tripNameRules" = "Название путешествия должно состоять из букв, цифр, точки и подчёркивания";
 "tripInfo.placeholder.description" = "Описание путешествия";
@@ -159,6 +176,7 @@
 "pinInfo.label.location" = "Местоположение";
 "pinInfo.label.category" = "Категория";
 "pinInfo.label.dates" = "Даты";
+"pinInfo.button.addLocation" = "Добавить местоположение";
 "pinInfo.hint.changeLocation" = "Нажми, чтобы изменить местоположение пина";
 
 // MARK: - Raw Pin
@@ -201,6 +219,20 @@
 
 // MARK: - Tags
 "tags.placeholder.tag" = "Тег";
+
+// MARK: - Photo Battle
+"photoBattle.title" = "Фото-баттл";
+"photoBattle.header" = "Фото-баттл";
+"photoBattle.button.chooseMedia" = "Выбираю это";
+"photoBattle.loadingMedias" = "Подгружаем медиа…";
+"photoBattle.loadingSaving" = "Сохраняем победителя";
+"photoBattle.progress.round" = "Раунд %1$d из %2$d • Шаг %3$d из %4$d";
+"photoBattle.progress.comparisons" = "Сравнения: %1$d из %2$d";
+"photoBattle.winner.title" = "Победитель";
+"photoBattle.winner.rating" = "Новый рейтинг: %1$d";
+"photoBattle.winner.loadingRating" = "Нет данных о новом рейтинге";
+"photoBattle.error.submitResultFailed" = "Не удалось отправить результат баттла, попробуйте ещё раз";
+"photoBattle.footer.close" = "Закрыть";
 
 // MARK: - Alerts
 "alert.clearCache.title" = "Очистить данные";

@@ -40,6 +40,12 @@ final class TripInfoViewModel {
     private let onTripUpdated: (() -> Void)?
     private var tripCoverUploadTask: Task<TripDTO, Error>?
 
+    static let requiredBattleMediaCount = PhotoBattleViewModel.requiredBattleMediaCount
+    var isPhotoBattlePresented = false
+    var isStartingBattle = false
+    var battleError: String?
+    var photoBattleViewModel: PhotoBattleViewModel?
+
     private enum TripCoverUploadFlowError: Error {
         case missingImageData
         case invalidUploadResponse
@@ -108,6 +114,90 @@ final class TripInfoViewModel {
     func deleteTrip() async throws {
         try await networkService.deleteTrip(id: trip.id)
         SelectedTripStorage.shared.clearSelection()
+    }
+
+    var tripMediaCount: Int {
+        trip.pins.reduce(0) { $0 + $1.medias.count }
+    }
+
+    var canStartPhotoBattle: Bool {
+        tripMediaCount >= Self.requiredBattleMediaCount
+    }
+
+    var photoBattleAvailabilityMessage: String? {
+        canStartPhotoBattle ? nil : PinzBaseStrings.TripInfo.Message.photoBattleNeedMedia(Self.requiredBattleMediaCount)
+    }
+
+    func startPhotoBattle() async {
+        guard !isStartingBattle else {
+            return
+        }
+
+        guard canStartPhotoBattle else {
+            battleError = photoBattleAvailabilityMessage
+            return
+        }
+
+        isStartingBattle = true
+        clearPhotoBattleError()
+        closePhotoBattle()
+
+        defer {
+            isStartingBattle = false
+        }
+
+        do {
+            let response = try await networkService.startBattle(tripId: trip.id)
+            let parsedMedia = response.media.compactMap { Self.mapToBattleMedia(from: $0) }
+            let battleMedia = Array(parsedMedia.prefix(Self.requiredBattleMediaCount))
+
+            guard battleMedia.count == Self.requiredBattleMediaCount else {
+                battleError = PinzBaseStrings.TripInfo.Message.photoBattleStartFailed
+                return
+            }
+
+            let battleSessionId = response.battleId.isEmpty ? UUID().uuidString : response.battleId
+            photoBattleViewModel = PhotoBattleViewModel(
+                tripId: trip.id,
+                battleSessionId: battleSessionId,
+                media: battleMedia,
+                networkService: networkService,
+                onFinish: { [weak self] in
+                    self?.closePhotoBattle()
+                }
+            )
+            isPhotoBattlePresented = true
+            Task {
+                await photoBattleViewModel?.preloadBattleMedia()
+            }
+        } catch let error as HTTPError where error == .preconditionFailed {
+            battleError = PinzBaseStrings.TripInfo.Message.photoBattleNeedMediaWithContext(Self.requiredBattleMediaCount)
+        } catch {
+            battleError = PinzBaseStrings.TripInfo.Message.photoBattleStartFailedGeneric
+        }
+    }
+
+    func dismissPhotoBattle() {
+        closePhotoBattle()
+    }
+
+    private func closePhotoBattle() {
+        isPhotoBattlePresented = false
+        photoBattleViewModel = nil
+    }
+
+    func clearPhotoBattleError() {
+        battleError = nil
+    }
+
+    private static func mapToBattleMedia(from dto: StartBattleMediaDTO) -> PhotoBattleMedia? {
+        guard !dto.photoBattleMediaId.isEmpty else { return nil }
+        guard let mediaURL = URL(string: dto.url) else { return nil }
+        return PhotoBattleMedia(
+            photoBattleMediaId: dto.photoBattleMediaId,
+            url: mediaURL,
+            kind: dto.mediaType.toPhotoBattleKind
+        )
     }
 
     private func editTrip() async throws {

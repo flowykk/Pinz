@@ -18,6 +18,8 @@ enum PinzAPI {
 
     // Profile
     case getProfile
+    case getProfileStats
+    case getVisitedLocations(type: String?)
     case deleteAccount
     case deleteAvatar
     case updateProfile(username: String)
@@ -60,6 +62,10 @@ enum PinzAPI {
     case applyGroupsAndProcess(tripId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String])
     case getTripReview(tripId: String)
     case finalizeTrip(tripId: String, pinUpdates: [PinUpdateInputDTO], mediaToDelete: [String])
+
+    // Photo battles
+    case startBattle(tripId: String)
+    case submitBattleResult(tripId: String, battleId: String, winnerMediaId: String)
 }
 
 // MARK: - TargetType
@@ -86,6 +92,8 @@ extension PinzAPI: TargetType {
         case .logout: endpointPath = "/auth/logout"
         case .getProfile: endpointPath = "/profile"
         case .deleteAccount: endpointPath = "/profile"
+        case .getProfileStats: endpointPath = "/profile/stats"
+        case .getVisitedLocations: endpointPath = "/profile/visited-locations"
         case .deleteAvatar: endpointPath = "/profile/avatar"
         case .updateProfile: endpointPath = "/profile"
         case .requestAvatarUpload: endpointPath = "/profile/avatar/upload"
@@ -110,6 +118,8 @@ extension PinzAPI: TargetType {
         case .dislikeTrip(let id): endpointPath = "/trips/\(id)/dislike"
         case .addTripToFavourites(let id): endpointPath = "/trips/\(id)/favourite"
         case .removeTripFromFavourites(let id): endpointPath = "/trips/\(id)/favourite"
+        case .startBattle(let tripId): endpointPath = "/trips/\(tripId)/battles"
+        case let .submitBattleResult(tripId, battleId, _): endpointPath = "/trips/\(tripId)/battles/\(battleId)/result"
         case .createTrip: endpointPath = "/trips/creation/start"
         case .processMediaGrouping(let tripId, _): endpointPath = "/trips/creation/\(tripId)/media/process-grouping"
         case .applyGroupsAndProcess(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/apply-groups-and-process"
@@ -123,7 +133,7 @@ extension PinzAPI: TargetType {
         switch self {
         case .getFeed, .getTrips, .getFavouriteTrips, .getTrip, .getTripReview:
             return .get
-        case .getProfile:
+        case .getProfile, .getProfileStats, .getVisitedLocations:
             return .get
         case .deleteAvatar:
             return .delete
@@ -142,6 +152,12 @@ extension PinzAPI: TargetType {
         case .getTrips, .getTrip, .getTripReview, .deleteTrip, .removeParticipant,
              .leaveTrip, .likeTrip, .dislikeTrip, .addTripToFavourites, .removeTripFromFavourites:
             return .requestPlain
+        case .getProfile, .getProfileStats:
+            return .requestPlain
+        case let .getVisitedLocations(type):
+            var params: [String: Any] = [:]
+            if let type { params["type"] = type }
+            return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
 
         case let .getFeed(limit, offset, category, season, locationId, sortBy):
             var params: [String: Any] = [:]
@@ -168,7 +184,7 @@ extension PinzAPI: TargetType {
         case let .passkeyRegisterFinish(regId, cred): return jsonParams(["registration_id": regId, "credential_json": cred])
         case let .refreshToken(token): return jsonParams(["refresh_token": token])
         case let .logout(token): return jsonParams(["refresh_token": token])
-        case .getProfile, .deleteAccount, .deleteAvatar:
+        case .deleteAccount, .deleteAvatar:
             return .requestPlain
 
         case let .updateProfile(username): return jsonParams(["username": username])
@@ -188,6 +204,10 @@ extension PinzAPI: TargetType {
             if let secs { params["expires_in_seconds"] = secs }
             return jsonParams(params)
         case let .publishTrip(_, whole, pinIds): return jsonParams(["publish_whole": whole, "pin_ids": pinIds])
+        case .startBattle:
+            return .requestPlain
+        case let .submitBattleResult(_, _, winnerMediaId):
+            return jsonParams(["winner_media_id": winnerMediaId])
         case let .updateTripSettings(_, enabled): return jsonParams(["notifications_enabled": enabled])
 
         case let .updateTrip(_, name, desc, cat, season, privacy, cover, start, end):
@@ -266,6 +286,10 @@ extension PinzAPI {
             json = #"{"success": true}"#
         case .getProfile:
             json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
+        case .getProfileStats:
+            json = #"{"trips_count":12,"pins_count":42,"media_count":77,"likes_count":128,"dislikes_count":4,"battles_count":3}"#
+        case .getVisitedLocations:
+            json = #"[{"parent_id":null,"location_id":"ru","name":"Россия","last_visited_at_unix":1700000000,"visits_count":12},{"parent_id":null,"location_id":"fr","name":"Франция","last_visited_at_unix":1698000000,"visits_count":5}]"#
         case .deleteAccount:
             json = #"{"success": true}"#
         case .deleteAvatar:
@@ -299,7 +323,24 @@ extension PinzAPI {
             """#
         case .getTrip:
             json = #"""
-            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"pins":[{"id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"}]},{"id":"pin-002","name":"Лувр","category":"entertainment","latitude":48.8606,"longitude":2.3352,"location_name":"Париж","tags":["музей","искусство"],"issues":[],"media":[{"media_id":"m-003","url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","privacy_level":"public"}]},{"id":"pin-003","name":"Собор Парижской Богоматери","category":"entertainment","latitude":48.8530,"longitude":2.3499,"location_name":"Париж","tags":["готика","история"],"issues":[],"media":[{"media_id":"m-004","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"}]}]}
+            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"pins":[
+              {"id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"media":[
+                {"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"},
+                {"media_id":"m-002","url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","privacy_level":"public"},
+                {"media_id":"m-003","url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","privacy_level":"public"}
+              ]},
+              {"id":"pin-002","name":"Лувр","category":"entertainment","latitude":48.8606,"longitude":2.3352,"location_name":"Париж","tags":["музей","искусство"],"issues":[],"media":[
+                {"media_id":"m-004","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"},
+                {"media_id":"m-005","url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg","privacy_level":"public"}
+              ]},
+              {"id":"pin-003","name":"Собор Парижской Богоматери","category":"entertainment","latitude":48.8530,"longitude":2.3499,"location_name":"Париж","tags":["готика","история"],"issues":[],"media":[
+                {"media_id":"m-006","url":"https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg","privacy_level":"public"},
+                {"media_id":"m-007","url":"https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg","privacy_level":"public"}
+              ]},
+              {"id":"pin-004","name":"Монмартр","category":"entertainment","latitude":48.8867,"longitude":2.3431,"location_name":"Париж","tags":["сцена","культура"],"issues":[],"media":[
+                {"media_id":"m-008","url":"https://i.pinimg.com/736x/77/65/ac/7765ac5175540792659b036142c9a49d.jpg","privacy_level":"public"}
+              ]}
+            ]}
             """#
         case .updateTrip, .publishTrip:
             json = #"""
@@ -314,6 +355,24 @@ extension PinzAPI {
         case .leaveTrip:
             json = #"{"success":true,"trip_deleted":false}"#
         case .updateTripSettings, .likeTrip, .dislikeTrip, .addTripToFavourites:
+            json = #"{"success":true}"#
+        case .startBattle:
+            json = #"""
+            {
+              "battle_id": "battle-001",
+              "media": [
+                {"media_id": "m-001", "media_type": "photo", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"},
+                {"media_id": "m-002", "media_type": "photo", "url": "https://i.pinimg.com/736x/cb/f7/9b/cbf79b6388c70e03982a519436942256.jpg"},
+                {"media_id": "m-003", "media_type": "video", "url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4"},
+                {"media_id": "m-004", "media_type": "photo", "url": "https://i.pinimg.com/736x/34/cb/9314/34cb93114fb0cca8f020cb9c26928394.jpg"},
+                {"media_id": "m-005", "media_type": "photo", "url": "https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg"},
+                {"media_id": "m-006", "media_type": "photo", "url": "https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg"},
+                {"media_id": "m-007", "media_type": "photo", "url": "https://i.pinimg.com/736x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"},
+                {"media_id": "m-008", "media_type": "photo", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg"}
+              ]
+            }
+            """#
+        case .submitBattleResult:
             json = #"{"success":true}"#
         case .createTrip:
             json = #"""

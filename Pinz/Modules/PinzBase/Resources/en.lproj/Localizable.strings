@@ -58,6 +58,16 @@
 
 // MARK: - Statistics
 "statistics.title.main" = "Statistics";
+"statistics.group.countries" = "Your countries";
+"statistics.group.cities" = "Your cities";
+"statistics.visited.lastVisited" = "Last visited: %@";
+"statistics.visited.visitsCount" = "Visits: %@";
+"statistics.label.trips" = "Trips";
+"statistics.label.pins" = "Pins";
+"statistics.label.media" = "Media";
+"statistics.label.likes" = "Likes";
+"statistics.label.dislikes" = "Dislikes";
+"statistics.label.battles" = "Battles";
 
 // MARK: - Email Change
 "emailChange.title.main" = "Change Email";
@@ -112,6 +122,13 @@
 "tripInfo.label.dates" = "Dates";
 "tripInfo.header.public" = "Public Information";
 "tripInfo.label.publishTrip" = "Publish Trip";
+"tripInfo.message.photoBattleNeedMedia" = "Photo battle requires at least %d media";
+"tripInfo.message.photoBattleNeedMediaWithContext" = "Photo battle requires at least %d media in this trip";
+"tripInfo.message.photoBattleStartFailed" = "Failed to start photo battle: server returned less media than required";
+"tripInfo.message.photoBattleStartFailedGeneric" = "Failed to start photo battle. Please try again later";
+"tripInfo.section.specialModes" = "Special modes";
+"tripInfo.button.stories" = "Stories";
+"tripInfo.button.photoBattle" = "Photo battle";
 "tripInfo.placeholder.name" = "Trip Name";
 "tripInfo.hint.tripNameRules" = "Trip name must contain only letters, digits, dots and underscores";
 "tripInfo.placeholder.description" = "Trip Description";
@@ -159,6 +176,7 @@
 "pinInfo.label.location" = "Location";
 "pinInfo.label.category" = "Category";
 "pinInfo.label.dates" = "Dates";
+"pinInfo.button.addLocation" = "Add location";
 "pinInfo.hint.changeLocation" = "Tap to change pin location";
 
 // MARK: - Raw Pin
@@ -201,6 +219,20 @@
 
 // MARK: - Tags
 "tags.placeholder.tag" = "Tag";
+
+// MARK: - Photo Battle
+"photoBattle.title" = "Photo battle";
+"photoBattle.header" = "Photo battle";
+"photoBattle.button.chooseMedia" = "Choose this";
+"photoBattle.loadingMedias" = "Loading media…";
+"photoBattle.loadingSaving" = "Saving winner";
+"photoBattle.progress.round" = "Round %1$d of %2$d • Step %3$d of %4$d";
+"photoBattle.progress.comparisons" = "Comparisons: %1$d of %2$d";
+"photoBattle.winner.title" = "Winner";
+"photoBattle.winner.rating" = "New rating: %1$d";
+"photoBattle.winner.loadingRating" = "New rating is unavailable";
+"photoBattle.error.submitResultFailed" = "Failed to submit battle result, please try again";
+"photoBattle.footer.close" = "Close";
 
 // MARK: - Alerts
 "alert.clearCache.title" = "Clear Data";

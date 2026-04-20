@@ -32,6 +32,7 @@ type GetTripResponse struct {
 // TripPin is a pin with media for trip view.
 type TripPin struct {
 	ID            string         `json:"id"`
+	TripID        string         `json:"trip_id"`
 	Name          string         `json:"name"`
 	Description   string         `json:"description"`
 	Category      string         `json:"category"`
