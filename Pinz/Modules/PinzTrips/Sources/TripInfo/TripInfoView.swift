@@ -5,6 +5,8 @@ import PinzBase
 
 enum TripInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
+    case stories = "rectangle.portrait.on.rectangle.portrait.angled"
+    case battle = "flame.fill"
 
     case pins = "pin"
 
@@ -76,6 +78,9 @@ public struct TripInfoView: View {
                 } else {
                     descriptionEditing
                 }
+                if viewModel.state == .default {
+                    specialModes
+                }
                 risky
             }
             .padding(.top, 8)
@@ -119,6 +124,11 @@ public struct TripInfoView: View {
         )
         .fullScreenCover(isPresented: $isStoriesPresented) {
             PinStoryView(pins: viewModel.trip.pins)
+        }
+        .fullScreenCover(isPresented: $viewModel.isPhotoBattlePresented) {
+            if let battleViewModel = viewModel.photoBattleViewModel {
+                PhotoBattleView(viewModel: battleViewModel)
+            }
         }
         .confirmationDialog(
             PinzBaseStrings.Common.Alert.Title.selectAction,
@@ -166,6 +176,18 @@ public struct TripInfoView: View {
         } message: {
             Text(PinzBaseStrings.TripInfo.Alert.LeaveTrip.message)
         }
+        .alert(PinzBaseStrings.TripInfo.Button.photoBattle, isPresented: Binding(
+            get: { viewModel.battleError != nil && !viewModel.isPhotoBattlePresented },
+            set: { isPresented in
+                if !isPresented { viewModel.clearPhotoBattleError() }
+            }
+        )) {
+            Button(PinzBaseStrings.Common.Button.ok) {
+                viewModel.clearPhotoBattleError()
+            }
+        } message: {
+            Text(viewModel.battleError ?? "")
+        }
     }
 
     @ViewBuilder
@@ -184,18 +206,13 @@ public struct TripInfoView: View {
                     subtitle: "\(viewModel.trip.category.value), \(viewModel.trip.season.value)"
                 )
             }, rightView: {
-                if !viewModel.trip.pins.isEmpty {
+                HStack(spacing: 10) {
                     PinzButton(
-                        type: .icon(.stories),
+                        type: .icon(.pencil),
                         tint: PinzUIAsset.textPrimary.swiftUIColor,
-                        action: .plain { isStoriesPresented = true }
+                        action: .plain { viewModel.dispatch(.changeState) }
                     )
                 }
-                PinzButton(
-                    type: .icon(.pencil),
-                    tint: PinzUIAsset.textPrimary.swiftUIColor,
-                    action: .plain { viewModel.dispatch(.changeState) }
-                )
             })
         case .editing:
             Header {
@@ -222,6 +239,11 @@ public struct TripInfoView: View {
                 .frame(120)
                 .cornerRadius(60)
                 .clipped()
+
+            if let battleHint = viewModel.photoBattleAvailabilityMessage {
+                Text(battleHint)
+                    .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+            }
 
             if viewModel.state == .editing {
                 Button {
@@ -372,6 +394,39 @@ public struct TripInfoView: View {
                     value: $areNotificationsEnabled
                 )),
             ],
+        )
+    }
+
+    private var specialModes: some View {
+        var items: [Setting] = []
+
+        if !viewModel.trip.pins.isEmpty {
+            items.append(.default(Setting.DefaultSetting(
+                id: "tripStories",
+                leading: .iconTitle(TripInfoIcon.stories, PinzBaseStrings.TripInfo.Button.stories),
+                trailing: .icon(TripInfoIcon.chevronRight),
+                action: .plain { isStoriesPresented = true }
+            )))
+        }
+
+        items.append(.default(Setting.DefaultSetting(
+            id: "tripPhotoBattle",
+            leading: .iconTitle(
+                TripInfoIcon.battle,
+                Setting.Title(
+                    title: PinzBaseStrings.TripInfo.Button.photoBattle,
+                    subtitle: viewModel.canStartPhotoBattle ? nil : viewModel.photoBattleAvailabilityMessage
+                )
+            ),
+            trailing: .icon(TripInfoIcon.chevronRight),
+            action: (viewModel.canStartPhotoBattle && !viewModel.isStartingBattle && !viewModel.isPhotoBattlePresented)
+            ? .async { await viewModel.startPhotoBattle() }
+            : nil
+        )))
+
+        return SettingsGroup(
+            title: PinzBaseStrings.TripInfo.Section.specialModes,
+            settings: items
         )
     }
 
