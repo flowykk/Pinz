@@ -3,7 +3,7 @@ export GOPROXY
 
 .PHONY: proto
 proto:
-	mkdir -p auth-service/pkg/proto api-gateway-service/pkg/proto trip-service/pkg/proto statistics-service/pkg/proto
+	mkdir -p auth-service/pkg/proto api-gateway-service/pkg/proto trip-service/pkg/proto statistics-service/pkg/proto notification-service/pkg/proto
 	protoc -I proto \
 		--go_out=auth-service --go_opt=module=pinz/backend/auth-service \
 		--go-grpc_out=auth-service --go-grpc_opt=module=pinz/backend/auth-service \
@@ -28,6 +28,18 @@ proto:
 		--go_out=api-gateway-service --go_opt=module=pinz/backend/api-gateway-service --go_opt=Mstatistics.proto=pinz/backend/api-gateway-service/pkg/proto \
 		--go-grpc_out=api-gateway-service --go-grpc_opt=module=pinz/backend/api-gateway-service --go-grpc_opt=Mstatistics.proto=pinz/backend/api-gateway-service/pkg/proto \
 		proto/statistics.proto
+	protoc -I proto \
+		--go_out=notification-service --go_opt=module=pinz/backend/notification-service \
+		--go-grpc_out=notification-service --go-grpc_opt=module=pinz/backend/notification-service \
+		proto/notification.proto
+	protoc -I proto \
+		--go_out=notification-service --go_opt=module=pinz/backend/notification-service --go_opt=Mtrip.proto=pinz/backend/notification-service/pkg/proto \
+		--go-grpc_out=notification-service --go-grpc_opt=module=pinz/backend/notification-service --go-grpc_opt=Mtrip.proto=pinz/backend/notification-service/pkg/proto \
+		proto/trip.proto
+	protoc -I proto \
+		--go_out=api-gateway-service --go_opt=module=pinz/backend/api-gateway-service --go_opt=Mnotification.proto=pinz/backend/api-gateway-service/pkg/proto \
+		--go-grpc_out=api-gateway-service --go-grpc_opt=module=pinz/backend/api-gateway-service --go-grpc_opt=Mnotification.proto=pinz/backend/api-gateway-service/pkg/proto \
+		proto/notification.proto
 
 .PHONY: mocks
 mocks:
@@ -35,6 +47,7 @@ mocks:
 	cd api-gateway-service && go generate ./internal/mocks/...
 	cd trip-service && go generate ./internal/mocks/...
 	cd statistics-service && go generate ./internal/mocks/...
+	cd notification-service && go generate ./internal/mocks/...
 
 .PHONY: swagger
 swagger:
@@ -44,19 +57,20 @@ SQLC_DOCKER_IMAGE ?= sqlc/sqlc:1.28.0
 .PHONY: sqlc sqlc-check
 sqlc:
 	@if command -v sqlc >/dev/null 2>&1; then \
-		(cd auth-service && sqlc generate) && (cd trip-service && sqlc generate) && (cd statistics-service && sqlc generate); \
+		(cd auth-service && sqlc generate) && (cd trip-service && sqlc generate) && (cd statistics-service && sqlc generate) && (cd notification-service && sqlc generate); \
 	elif command -v docker >/dev/null 2>&1; then \
 		docker run --rm -v "$(PWD)/auth-service:/src" -w /src $(SQLC_DOCKER_IMAGE) generate && \
 		docker run --rm -v "$(PWD)/trip-service:/src" -w /src $(SQLC_DOCKER_IMAGE) generate && \
-		docker run --rm -v "$(PWD)/statistics-service:/src" -w /src $(SQLC_DOCKER_IMAGE) generate; \
+		docker run --rm -v "$(PWD)/statistics-service:/src" -w /src $(SQLC_DOCKER_IMAGE) generate && \
+		docker run --rm -v "$(PWD)/notification-service:/src" -w /src $(SQLC_DOCKER_IMAGE) generate; \
 	else \
 		echo "Install sqlc (https://docs.sqlc.dev) or Docker to run $(SQLC_DOCKER_IMAGE)"; exit 1; \
 	fi
 
 sqlc-check: sqlc
-	@if [ -n "$$(git -C .. status --porcelain -- Backend/auth-service/internal/db/sqlcdb Backend/auth-service/queries Backend/auth-service/sqlc.yaml Backend/trip-service/internal/db/sqlcdb Backend/trip-service/queries Backend/trip-service/sqlc.yaml Backend/statistics-service/internal/db/sqlcdb Backend/statistics-service/queries Backend/statistics-service/sqlc.yaml 2>/dev/null)" ]; then \
+	@if [ -n "$$(git -C .. status --porcelain -- Backend/auth-service/internal/db/sqlcdb Backend/auth-service/queries Backend/auth-service/sqlc.yaml Backend/trip-service/internal/db/sqlcdb Backend/trip-service/queries Backend/trip-service/sqlc.yaml Backend/statistics-service/internal/db/sqlcdb Backend/statistics-service/queries Backend/statistics-service/sqlc.yaml Backend/notification-service/internal/db/sqlcdb Backend/notification-service/queries Backend/notification-service/sqlc.yaml 2>/dev/null)" ]; then \
 		echo "sqlc drift: run 'make sqlc' from Backend and commit"; \
-		git -C .. status --porcelain -- Backend/auth-service/internal/db/sqlcdb Backend/auth-service/queries Backend/trip-service/internal/db/sqlcdb Backend/trip-service/queries Backend/statistics-service/internal/db/sqlcdb Backend/statistics-service/queries || true; \
+		git -C .. status --porcelain -- Backend/auth-service/internal/db/sqlcdb Backend/auth-service/queries Backend/trip-service/internal/db/sqlcdb Backend/trip-service/queries Backend/statistics-service/internal/db/sqlcdb Backend/statistics-service/queries Backend/notification-service/internal/db/sqlcdb Backend/notification-service/queries || true; \
 		exit 1; \
 	fi
 	@echo "sqlc artifacts up to date ✓"
@@ -67,6 +81,7 @@ tidy:
 	cd auth-service && go mod tidy
 	cd trip-service && go mod tidy
 	cd statistics-service && go mod tidy
+	cd notification-service && go mod tidy
 	cd api-gateway-service && go mod tidy
 	cd e2e && go mod tidy
 
@@ -74,8 +89,8 @@ tidy:
 check-env:
 	@bash scripts/check-env.sh
 
-.PHONY: lint lint-api lint-auth lint-trip lint-stats
-lint: lint-api lint-auth lint-trip lint-stats check-env
+.PHONY: lint lint-api lint-auth lint-trip lint-stats lint-notif
+lint: lint-api lint-auth lint-trip lint-stats lint-notif check-env
 
 lint-api:
 	cd api-gateway-service && golangci-lint run ./...
@@ -89,6 +104,9 @@ lint-trip:
 lint-stats:
 	cd statistics-service && golangci-lint run ./...
 
+lint-notif:
+	cd notification-service && golangci-lint run ./...
+
 .PHONY: test test-unit test-unit-only test-integration test-e2e test-all
 test: test-unit
 
@@ -100,6 +118,7 @@ test-unit:
 	cd auth-service && go test -short ./...
 	cd trip-service && go test -short ./...
 	cd statistics-service && go test -short ./...
+	cd notification-service && go test -short ./...
 	cd api-gateway-service && go test -short ./...
 
 test-unit-only: test-unit
@@ -108,6 +127,7 @@ test-integration:
 	cd auth-service && go test ./...
 	cd trip-service && go test ./...
 	cd statistics-service && go test ./...
+	cd notification-service && go test ./...
 	cd api-gateway-service && go test ./...
 
 test-e2e:
@@ -115,8 +135,8 @@ test-e2e:
 
 test-all: test-unit test-e2e
 
-.PHONY: coverage coverage-auth coverage-trip coverage-gateway coverage-stats
-coverage: coverage-auth coverage-trip coverage-stats coverage-gateway
+.PHONY: coverage coverage-auth coverage-trip coverage-gateway coverage-stats coverage-notif
+coverage: coverage-auth coverage-trip coverage-stats coverage-notif coverage-gateway
 
 .PHONY: coverage-check
 MIN_COVER ?= 80
@@ -128,6 +148,8 @@ coverage-check:
 	@cd trip-service && go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$$3); print "trip-service internal/services:",$$3"%"; if ($$3+0 < $(MIN_COVER)+0) exit 1}'
 	@cd statistics-service && go test -short ./internal/services/... -coverprofile=coverage.out
 	@cd statistics-service && go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$$3); print "statistics-service internal/services:",$$3"%"; if ($$3+0 < $(MIN_COVER)+0) exit 1}'
+	@cd notification-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	@cd notification-service && go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$$3); print "notification-service internal/services:",$$3"%"; if ($$3+0 < $(MIN_COVER)+0) exit 1}'
 	@cd api-gateway-service && go test -short ./internal/handlers/... -coverprofile=coverage.out
 	@cd api-gateway-service && go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$$3); print "api-gateway-service internal/handlers:",$$3"%"; if ($$3+0 < $(MIN_COVER)+0) exit 1}'
 
@@ -146,6 +168,10 @@ coverage-gateway:
 coverage-stats:
 	cd statistics-service && go test -short ./internal/services/... -coverprofile=coverage.out
 	cd statistics-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
+
+coverage-notif:
+	cd notification-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	cd notification-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
 
 .PHONY: infra-up infra-down
 infra-up:
@@ -183,12 +209,13 @@ k8s-build:
 	docker build -t backend-auth-service:latest -f auth-service/Dockerfile . && \
 	docker build -t backend-trip-service:latest -f trip-service/Dockerfile . && \
 	docker build -t backend-statistics-service:latest -f statistics-service/Dockerfile . && \
+	docker build -t backend-notification-service:latest -f notification-service/Dockerfile . && \
 	docker build -t backend-api-gateway-service:latest -f api-gateway-service/Dockerfile .
 
 k8s-deploy:
 	set -a && [ -f .env ] && . ./.env; set +a && \
 	helmfile -f helmfile.local.yaml.gotmpl apply && \
-	kubectl rollout restart deployment/api-gateway deployment/auth-service deployment/trip-service deployment/statistics-service
+	kubectl rollout restart deployment/api-gateway deployment/auth-service deployment/trip-service deployment/statistics-service deployment/notification-service
 
 k8s-istio:
 	kubectl apply -f k8s-istio/

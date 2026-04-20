@@ -53,6 +53,21 @@ func (mr *MockTripSettingsRepositoryInterfaceMockRecorder) EnsureDefaultSettings
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureDefaultSettings", reflect.TypeOf((*MockTripSettingsRepositoryInterface)(nil).EnsureDefaultSettings), tripID, userID)
 }
 
+// GetByTripAndUsers mocks base method.
+func (m *MockTripSettingsRepositoryInterface) GetByTripAndUsers(tripID string, userIDs []string) (map[string]bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByTripAndUsers", tripID, userIDs)
+	ret0, _ := ret[0].(map[string]bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByTripAndUsers indicates an expected call of GetByTripAndUsers.
+func (mr *MockTripSettingsRepositoryInterfaceMockRecorder) GetByTripAndUsers(tripID, userIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByTripAndUsers", reflect.TypeOf((*MockTripSettingsRepositoryInterface)(nil).GetByTripAndUsers), tripID, userIDs)
+}
+
 // UpdateNotifications mocks base method.
 func (m *MockTripSettingsRepositoryInterface) UpdateNotifications(tripID, userID string, enabled bool) error {
 	m.ctrl.T.Helper()

@@ -1,0 +1,54 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/dmitry-pr/pinz-notification-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: grpc
+  port: 50054
+
+env:
+  dbHost: db-notifications
+  dbPort: "5435"
+  dbUser: pinz_user
+  dbName: pinz_notifications
+  redisAddr: redis:6379
+  grpcPort: ":50054"
+  otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+  otelServiceName: "notification-service"
+  otelTracesSampler: "parentbased_always_on"
+  otelTracesSamplerArg: "1.0"
+  tripServiceGrpcAddress: "trip-service.default.svc.cluster.local:50052"
+  apnsKeyId: ""
+  apnsTeamId: ""
+  apnsBundleId: ""
+  apnsProduction: "false"
+  smtpHost: ""
+  smtpPort: "587"
+  smtpFrom: ""
+
+secret:
+  dbPassword: "REPLACE_IN_PRODUCTION"
+  apnsKeyBase64: ""
+  smtpUsername: ""
+  smtpPassword: ""
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "48Mi"
+  limits:
+    cpu: "200m"
+    memory: "96Mi"
+
+pdb:
+  enabled: false
+  minAvailable: 1
+
+dockerConfig:
+  auths:
+    ghcr.io:
+      username: "{{ .Values.github.actor }}"
+      password: "{{ .Values.github.token }}"

@@ -48,6 +48,7 @@ spec:
         - source:
             principals:
               - cluster.local/ns/default/sa/api-gateway-sa
+              - cluster.local/ns/default/sa/notification-service-sa
       to:
         - operation:
             ports: ["50052"]
@@ -69,3 +70,21 @@ spec:
       to:
         - operation:
             ports: ["50053"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: notification-service
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: notification-service
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/default/sa/api-gateway-sa
+      to:
+        - operation:
+            ports: ["50054"]

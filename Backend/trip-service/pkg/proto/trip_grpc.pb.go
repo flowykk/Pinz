@@ -51,6 +51,10 @@ const (
 	TripService_StartBattle_FullMethodName                   = "/trip.TripService/StartBattle"
 	TripService_SubmitBattleResult_FullMethodName            = "/trip.TripService/SubmitBattleResult"
 	TripService_GetBestMemories_FullMethodName               = "/trip.TripService/GetBestMemories"
+	TripService_GetNotificationSettings_FullMethodName       = "/trip.TripService/GetNotificationSettings"
+	TripService_ListAnniversaryTrips_FullMethodName          = "/trip.TripService/ListAnniversaryTrips"
+	TripService_ListEndedMonthAgoTrips_FullMethodName        = "/trip.TripService/ListEndedMonthAgoTrips"
+	TripService_ListTripParticipants_FullMethodName          = "/trip.TripService/ListTripParticipants"
 	TripService_SearchPins_FullMethodName                    = "/trip.TripService/SearchPins"
 )
 
@@ -98,6 +102,11 @@ type TripServiceClient interface {
 	StartBattle(ctx context.Context, in *StartBattleRequest, opts ...grpc.CallOption) (*StartBattleResponse, error)
 	SubmitBattleResult(ctx context.Context, in *SubmitBattleResultRequest, opts ...grpc.CallOption) (*SubmitBattleResultResponse, error)
 	GetBestMemories(ctx context.Context, in *GetBestMemoriesRequest, opts ...grpc.CallOption) (*GetBestMemoriesResponse, error)
+	// PINZ-134: поддержка notification-service — настройки уведомлений и таймерные выборки трипов.
+	GetNotificationSettings(ctx context.Context, in *GetNotificationSettingsRequest, opts ...grpc.CallOption) (*GetNotificationSettingsResponse, error)
+	ListAnniversaryTrips(ctx context.Context, in *ListAnniversaryTripsRequest, opts ...grpc.CallOption) (*ListAnniversaryTripsResponse, error)
+	ListEndedMonthAgoTrips(ctx context.Context, in *ListEndedMonthAgoTripsRequest, opts ...grpc.CallOption) (*ListEndedMonthAgoTripsResponse, error)
+	ListTripParticipants(ctx context.Context, in *ListTripParticipantsRequest, opts ...grpc.CallOption) (*ListTripParticipantsResponse, error)
 	// PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
 	SearchPins(ctx context.Context, in *SearchPinsRequest, opts ...grpc.CallOption) (*SearchPinsResponse, error)
 }
@@ -430,6 +439,46 @@ func (c *tripServiceClient) GetBestMemories(ctx context.Context, in *GetBestMemo
 	return out, nil
 }
 
+func (c *tripServiceClient) GetNotificationSettings(ctx context.Context, in *GetNotificationSettingsRequest, opts ...grpc.CallOption) (*GetNotificationSettingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetNotificationSettingsResponse)
+	err := c.cc.Invoke(ctx, TripService_GetNotificationSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) ListAnniversaryTrips(ctx context.Context, in *ListAnniversaryTripsRequest, opts ...grpc.CallOption) (*ListAnniversaryTripsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAnniversaryTripsResponse)
+	err := c.cc.Invoke(ctx, TripService_ListAnniversaryTrips_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) ListEndedMonthAgoTrips(ctx context.Context, in *ListEndedMonthAgoTripsRequest, opts ...grpc.CallOption) (*ListEndedMonthAgoTripsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListEndedMonthAgoTripsResponse)
+	err := c.cc.Invoke(ctx, TripService_ListEndedMonthAgoTrips_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) ListTripParticipants(ctx context.Context, in *ListTripParticipantsRequest, opts ...grpc.CallOption) (*ListTripParticipantsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTripParticipantsResponse)
+	err := c.cc.Invoke(ctx, TripService_ListTripParticipants_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *tripServiceClient) SearchPins(ctx context.Context, in *SearchPinsRequest, opts ...grpc.CallOption) (*SearchPinsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SearchPinsResponse)
@@ -484,6 +533,11 @@ type TripServiceServer interface {
 	StartBattle(context.Context, *StartBattleRequest) (*StartBattleResponse, error)
 	SubmitBattleResult(context.Context, *SubmitBattleResultRequest) (*SubmitBattleResultResponse, error)
 	GetBestMemories(context.Context, *GetBestMemoriesRequest) (*GetBestMemoriesResponse, error)
+	// PINZ-134: поддержка notification-service — настройки уведомлений и таймерные выборки трипов.
+	GetNotificationSettings(context.Context, *GetNotificationSettingsRequest) (*GetNotificationSettingsResponse, error)
+	ListAnniversaryTrips(context.Context, *ListAnniversaryTripsRequest) (*ListAnniversaryTripsResponse, error)
+	ListEndedMonthAgoTrips(context.Context, *ListEndedMonthAgoTripsRequest) (*ListEndedMonthAgoTripsResponse, error)
+	ListTripParticipants(context.Context, *ListTripParticipantsRequest) (*ListTripParticipantsResponse, error)
 	// PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
 	SearchPins(context.Context, *SearchPinsRequest) (*SearchPinsResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
@@ -591,6 +645,18 @@ func (UnimplementedTripServiceServer) SubmitBattleResult(context.Context, *Submi
 }
 func (UnimplementedTripServiceServer) GetBestMemories(context.Context, *GetBestMemoriesRequest) (*GetBestMemoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBestMemories not implemented")
+}
+func (UnimplementedTripServiceServer) GetNotificationSettings(context.Context, *GetNotificationSettingsRequest) (*GetNotificationSettingsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNotificationSettings not implemented")
+}
+func (UnimplementedTripServiceServer) ListAnniversaryTrips(context.Context, *ListAnniversaryTripsRequest) (*ListAnniversaryTripsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAnniversaryTrips not implemented")
+}
+func (UnimplementedTripServiceServer) ListEndedMonthAgoTrips(context.Context, *ListEndedMonthAgoTripsRequest) (*ListEndedMonthAgoTripsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListEndedMonthAgoTrips not implemented")
+}
+func (UnimplementedTripServiceServer) ListTripParticipants(context.Context, *ListTripParticipantsRequest) (*ListTripParticipantsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListTripParticipants not implemented")
 }
 func (UnimplementedTripServiceServer) SearchPins(context.Context, *SearchPinsRequest) (*SearchPinsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchPins not implemented")
@@ -1192,6 +1258,78 @@ func _TripService_GetBestMemories_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_GetNotificationSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNotificationSettingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).GetNotificationSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_GetNotificationSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).GetNotificationSettings(ctx, req.(*GetNotificationSettingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_ListAnniversaryTrips_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAnniversaryTripsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).ListAnniversaryTrips(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_ListAnniversaryTrips_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).ListAnniversaryTrips(ctx, req.(*ListAnniversaryTripsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_ListEndedMonthAgoTrips_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListEndedMonthAgoTripsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).ListEndedMonthAgoTrips(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_ListEndedMonthAgoTrips_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).ListEndedMonthAgoTrips(ctx, req.(*ListEndedMonthAgoTripsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_ListTripParticipants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTripParticipantsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).ListTripParticipants(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_ListTripParticipants_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).ListTripParticipants(ctx, req.(*ListTripParticipantsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TripService_SearchPins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SearchPinsRequest)
 	if err := dec(in); err != nil {
@@ -1344,6 +1482,22 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBestMemories",
 			Handler:    _TripService_GetBestMemories_Handler,
+		},
+		{
+			MethodName: "GetNotificationSettings",
+			Handler:    _TripService_GetNotificationSettings_Handler,
+		},
+		{
+			MethodName: "ListAnniversaryTrips",
+			Handler:    _TripService_ListAnniversaryTrips_Handler,
+		},
+		{
+			MethodName: "ListEndedMonthAgoTrips",
+			Handler:    _TripService_ListEndedMonthAgoTrips_Handler,
+		},
+		{
+			MethodName: "ListTripParticipants",
+			Handler:    _TripService_ListTripParticipants_Handler,
 		},
 		{
 			MethodName: "SearchPins",

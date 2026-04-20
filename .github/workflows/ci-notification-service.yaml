@@ -1,0 +1,26 @@
+name: CI notification-service
+
+on:
+  push:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'Backend/notification-service/**'
+      - 'Backend/pkg/**'
+      - 'Backend/proto/**'
+      - '.github/workflows/ci-notification-service.yaml'
+      - '.github/workflows/ci-reusable.yaml'
+  pull_request:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'Backend/notification-service/**'
+      - 'Backend/pkg/**'
+      - 'Backend/proto/**'
+      - '.github/workflows/ci-notification-service.yaml'
+      - '.github/workflows/ci-reusable.yaml'
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yaml
+    with:
+      service: notification-service
+    secrets: inherit

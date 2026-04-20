@@ -20,6 +20,9 @@ type TripRepositoryInterface interface {
 	SetSoftDeleted(tripID string) error
 	UpdateCoverURL(tripID, s3Key string) error
 	ListFeed(limit, offset int32, category, season string, locationIDs []int, sortBy string) ([]*models.Trip, error)
+	// PINZ-134: выборки для notification-service scheduler'а.
+	ListAnniversaryCandidates(today int64) ([]*NotificationTripCandidate, error)
+	ListEndedMonthAgoCandidates(today int64) ([]*NotificationTripCandidate, error)
 }
 
 type TripParticipantRepositoryInterface interface {
@@ -40,6 +43,8 @@ type InvitationLinkRepositoryInterface interface {
 type TripSettingsRepositoryInterface interface {
 	EnsureDefaultSettings(tripID, userID string) error
 	UpdateNotifications(tripID, userID string, enabled bool) error
+	// PINZ-134: выборка notifications_enabled для списка участников трипа.
+	GetByTripAndUsers(tripID string, userIDs []string) (map[string]bool, error)
 }
 
 // TripEventPublisher — методы RedisRepository, используемые TripService (eventRepo может быть nil-интерфейсом).

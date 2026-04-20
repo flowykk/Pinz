@@ -20,9 +20,6 @@ env:
   otelServiceName: "auth-service"
   otelTracesSampler: "parentbased_traceidratio"
   otelTracesSamplerArg: "1.0"
-  smtpHost: ""
-  smtpPort: "587"
-  smtpFrom: ""
   s3Endpoint: "https://storage.yandexcloud.net"
   s3Region: "ru-central1"
   s3Bucket: ""
@@ -31,8 +28,6 @@ env:
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"
   jwtSecretKey: "REPLACE_IN_PRODUCTION"
-  smtpUsername: ""
-  smtpPassword: ""
   s3AccessKey: ""
   s3SecretKey: ""
 

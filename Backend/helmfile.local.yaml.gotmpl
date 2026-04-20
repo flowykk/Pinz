@@ -21,9 +21,6 @@ releases:
           otelTracesSampler: "parentbased_always_on"
           otelTracesSamplerArg: "1.0"
       - env:
-          smtpHost: "{{ env "SMTP_HOST" | default "" }}"
-          smtpPort: "{{ env "SMTP_PORT" | default "587" }}"
-          smtpFrom: "{{ env "SMTP_FROM" | default "" }}"
           s3Endpoint: "{{ env "S3_ENDPOINT" | default "https://storage.yandexcloud.net" }}"
           s3Region: "{{ env "S3_REGION" | default "ru-central1" }}"
           s3Bucket: "{{ env "S3_BUCKET" | default "" }}"
@@ -31,8 +28,6 @@ releases:
       - secret:
           dbPassword: "pinz_password"
           jwtSecretKey: "change-me-in-production"
-          smtpUsername: "{{ env "SMTP_USERNAME" | default "" }}"
-          smtpPassword: "{{ env "SMTP_PASSWORD" | default "" }}"
           s3AccessKey: "{{ env "S3_ACCESS_KEY" | default "" }}"
           s3SecretKey: "{{ env "S3_SECRET_KEY" | default "" }}"
 
@@ -88,6 +83,39 @@ releases:
       - secret:
           dbPassword: "pinz_password"
 
+  - name: notification-service
+    namespace: default
+    chart: ./helm/notification-service
+    values:
+      - image:
+          repository: backend-notification-service
+          tag: latest
+          pullPolicy: Never
+      - env:
+          dbHost: host.docker.internal
+          dbPort: "5435"
+          dbUser: pinz_user
+          dbName: pinz_notifications
+          redisAddr: host.docker.internal:6379
+          grpcPort: ":50054"
+          otelExporterEndpoint: "otel-collector:4317"
+          otelServiceName: "notification-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+          tripServiceGrpcAddress: "trip-service.default.svc.cluster.local:50052"
+          apnsKeyId: "{{ env "APNS_KEY_ID" | default "" }}"
+          apnsTeamId: "{{ env "APNS_TEAM_ID" | default "" }}"
+          apnsBundleId: "{{ env "APNS_BUNDLE_ID" | default "" }}"
+          apnsProduction: "{{ env "APNS_PRODUCTION" | default "false" }}"
+          smtpHost: "{{ env "SMTP_HOST" | default "" }}"
+          smtpPort: "{{ env "SMTP_PORT" | default "587" }}"
+          smtpFrom: "{{ env "SMTP_FROM" | default "" }}"
+      - secret:
+          dbPassword: "pinz_password"
+          apnsKeyBase64: "{{ env "APNS_KEY_BASE64" | default "" }}"
+          smtpUsername: "{{ env "SMTP_USERNAME" | default "" }}"
+          smtpPassword: "{{ env "SMTP_PASSWORD" | default "" }}"
+
   - name: api-gateway
     namespace: default
     chart: ./helm/api-gateway
@@ -95,6 +123,7 @@ releases:
       - default/auth-service
       - default/trip-service
       - default/statistics-service
+      - default/notification-service
     values:
       - image:
           repository: backend-api-gateway-service
@@ -105,6 +134,7 @@ releases:
           authServiceGrpcAddress: auth-service.default.svc.cluster.local:50051
           tripServiceGrpcAddress: trip-service.default.svc.cluster.local:50052
           statisticsServiceGrpcAddress: statistics-service.default.svc.cluster.local:50053
+          notificationServiceGrpcAddress: notification-service.default.svc.cluster.local:50054
           swaggerHost: "localhost:8080"
           otelExporterEndpoint: "otel-collector:4317"
           otelServiceName: "api-gateway-service"
