@@ -25,7 +25,7 @@ public final class VideoPlayerController {
             self,
             selector: #selector(playerDidFinish),
             name: .AVPlayerItemDidPlayToEndTime,
-            object: nil
+            object: player.currentItem
         )
     }
 

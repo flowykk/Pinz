@@ -87,6 +87,17 @@ final class MockNetworkService: NetworkServiceProtocol {
     var finalizeTripResult: Result<FinalizeTripDTO, Error> = .success(
         FinalizeTripDTO(tripId: "trip-001", status: "finalized", message: "done")
     )
+    var startBattleResult: Result<StartBattleResponseDTO, Error> = .success(
+        StartBattleResponseDTO(
+            battleId: "battle-001",
+            media: MockNetworkService.stubBattleMedia()
+        )
+    )
+    var submitBattleResultResult: Result<SubmitBattleResultResponseDTO, Error> = .success(
+        SubmitBattleResultResponseDTO(success: true, newBattleRating: 1)
+    )
+    var startBattleCall: String?
+    var submitBattleResultCall: (tripId: String, battleId: String, winnerMediaId: String)?
     var uploadToS3Error: Error?
 
     // MARK: - Auth implementations
@@ -197,6 +208,14 @@ final class MockNetworkService: NetworkServiceProtocol {
     func applyGroupsAndProcess(tripId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String]) async throws -> ApplyGroupsAndProcessDTO { try applyGroupsAndProcessResult.get() }
     func getTripReview(tripId: String) async throws -> GetTripReviewDTO { try getTripReviewResult.get() }
     func finalizeTrip(tripId: String, pinUpdates: [PinUpdateInputDTO], mediaToDelete: [String]) async throws -> FinalizeTripDTO { try finalizeTripResult.get() }
+    func startBattle(tripId: String) async throws -> StartBattleResponseDTO {
+        startBattleCall = tripId
+        return try startBattleResult.get()
+    }
+    func submitBattleResult(tripId: String, battleId: String, winnerMediaId: String) async throws -> SubmitBattleResultResponseDTO {
+        submitBattleResultCall = (tripId: tripId, battleId: battleId, winnerMediaId: winnerMediaId)
+        return try submitBattleResultResult.get()
+    }
 
     // MARK: - Stub data
 
@@ -215,9 +234,60 @@ final class MockNetworkService: NetworkServiceProtocol {
     private static let stubTrip = TripDTO(
         id: "trip-001", name: "Test Trip", description: nil, category: nil, season: nil,
         coverUrl: nil, ownerUserId: "user-001", privacyLevel: "public", status: "published",
-        isPublished: true, isGenerated: false, likesCount: 0, dislikesCount: 0,
+        isPublished: true, isGenerated: false, likesCount: 0, dislikesCount: 0, mediaCount: 12,
         startDateUnix: nil, endDateUnix: nil, createdAtUnix: 1_700_000_000, updatedAtUnix: 1_700_000_000
     )
-    private static let stubTripResponse = GetTripResponseDTO(trip: stubTrip, pins: [])
+
+    private static let stubTripPins: [ReviewPinDTO] = [
+        ReviewPinDTO(
+            id: "pin-1",
+            name: "Pin 1",
+            category: "vacation",
+            latitude: 55.75,
+            longitude: 37.62,
+            locationName: "Москва",
+            startTimeUnix: nil,
+            endTimeUnix: nil,
+            tags: ["travel", "city"],
+            issues: nil,
+            media: (1...6).map { index in
+                ReviewPinMediaDTO(
+                    mediaId: "review-media-\(index)",
+                    url: "https://example.com/review-\(index).jpg",
+                    privacyLevel: "public"
+                )
+            }
+        ),
+        ReviewPinDTO(
+            id: "pin-2",
+            name: "Pin 2",
+            category: "vacation",
+            latitude: 55.76,
+            longitude: 37.64,
+            locationName: "Сад",
+            startTimeUnix: nil,
+            endTimeUnix: nil,
+            tags: ["trip"],
+            issues: nil,
+            media: (7...12).map { index in
+                ReviewPinMediaDTO(
+                    mediaId: "review-media-\(index)",
+                    url: "https://example.com/review-\(index).jpg",
+                    privacyLevel: "public"
+                )
+            }
+        )
+    ]
+
+    private static func stubBattleMedia() -> [StartBattleMediaDTO] {
+        (1...8).map { index in
+            StartBattleMediaDTO(
+                photoBattleMediaId: "battle-media-\(index)",
+                mediaType: "photo",
+                url: "https://example.com/battle-\(index).jpg"
+            )
+        }
+    }
+    private static let stubTripResponse = GetTripResponseDTO(trip: stubTrip, pins: stubTripPins)
 }
 // swiftlint:enable file_length

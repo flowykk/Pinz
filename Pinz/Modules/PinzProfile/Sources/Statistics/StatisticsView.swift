@@ -153,21 +153,6 @@ public struct StatisticsView: View {
                         )
                     }
             )
-        } else {
-            SettingsGroup(
-                title: title,
-                settings: [
-                    .default(
-                        Setting.DefaultSetting(
-                            id: "statistics.visited.locations.empty.\(title)",
-                            leading: Setting.Leading.title(
-                                Setting.Title(title: PinzBaseStrings.Common.Label.notSelected, subtitle: nil)
-                            ),
-                            trailing: nil
-                        )
-                    )
-                ]
-            )
         }
     }
 }

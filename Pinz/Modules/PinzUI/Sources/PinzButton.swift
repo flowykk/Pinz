@@ -43,6 +43,7 @@ public struct PinzButton: View {
         case stories = "rectangle.portrait.on.rectangle.portrait.angled"
         case warning = "exclamationmark.triangle.fill"
         case checkmark = "checkmark.circle.fill"
+        case battle = "flame.fill"
 
         case download = "square.and.arrow.down.fill"
         case crop = "crop"

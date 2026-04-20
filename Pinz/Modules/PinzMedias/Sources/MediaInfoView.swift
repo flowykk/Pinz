@@ -96,7 +96,7 @@ public struct MediaInfoView: View {
     private var videoPlayerSection: some View {
         if let controller = playerController {
             let ratio = controller.naturalSize.map { $0.width / $0.height } ?? 1.0
-            CollapsibleView(limitedHeight: 50) {
+            CollapsibleView {
                 VideoPlayerView(player: controller.player)
                     .aspectRatio(ratio, contentMode: .fill)
             }

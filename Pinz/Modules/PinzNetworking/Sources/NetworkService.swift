@@ -97,6 +97,14 @@ public protocol NetworkServiceProtocol {
         pinUpdates: [PinUpdateInputDTO],
         mediaToDelete: [String]
     ) async throws -> FinalizeTripDTO
+
+    // Photo battles
+    func startBattle(tripId: String) async throws -> StartBattleResponseDTO
+    func submitBattleResult(
+        tripId: String,
+        battleId: String,
+        winnerMediaId: String
+    ) async throws -> SubmitBattleResultResponseDTO
 }
 
 // MARK: - Implementation
@@ -107,7 +115,7 @@ public final class NetworkService: NetworkServiceProtocol {
     private let provider: NetworkProvider<PinzAPI>
 
     public init() {
-        let stub: Bool = true
+        let stub: Bool = false
         self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: 0.5)
     }
 
@@ -658,6 +666,32 @@ public final class NetworkService: NetworkServiceProtocol {
                 mediaToDelete: mediaToDelete
             ),
             type: FinalizeTripDTO.self
+        )
+    }
+
+    public func startBattle(
+        tripId: String
+    ) async throws -> StartBattleResponseDTO {
+        try await provider.request(
+            .startBattle(
+                tripId: tripId
+            ),
+            type: StartBattleResponseDTO.self
+        )
+    }
+
+    public func submitBattleResult(
+        tripId: String,
+        battleId: String,
+        winnerMediaId: String
+    ) async throws -> SubmitBattleResultResponseDTO {
+        try await provider.request(
+            .submitBattleResult(
+                tripId: tripId,
+                battleId: battleId,
+                winnerMediaId: winnerMediaId
+            ),
+            type: SubmitBattleResultResponseDTO.self
         )
     }
 }
