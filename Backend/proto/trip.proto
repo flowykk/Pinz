@@ -45,6 +45,11 @@ service TripService {
   rpc StartBattle(StartBattleRequest) returns (StartBattleResponse);
   rpc SubmitBattleResult(SubmitBattleResultRequest) returns (SubmitBattleResultResponse);
   rpc GetBestMemories(GetBestMemoriesRequest) returns (GetBestMemoriesResponse);
+  // PINZ-134: поддержка notification-service — настройки уведомлений и таймерные выборки трипов.
+  rpc GetNotificationSettings(GetNotificationSettingsRequest) returns (GetNotificationSettingsResponse);
+  rpc ListAnniversaryTrips(ListAnniversaryTripsRequest) returns (ListAnniversaryTripsResponse);
+  rpc ListEndedMonthAgoTrips(ListEndedMonthAgoTripsRequest) returns (ListEndedMonthAgoTripsResponse);
+  rpc ListTripParticipants(ListTripParticipantsRequest) returns (ListTripParticipantsResponse);
 }
 
 message Trip {
@@ -511,4 +516,52 @@ message BestMemory {
 }
 message GetBestMemoriesResponse {
   repeated BestMemory media = 1;
+}
+
+// PINZ-134: выбранные настройки уведомлений по списку участников трипа.
+// Возвращает map user_id -> notifications_enabled. Если записи в trip_settings
+// нет, значение считается true (см. EnsureDefaultSettings).
+message GetNotificationSettingsRequest {
+  string trip_id = 1;
+  repeated string user_ids = 2;
+}
+message GetNotificationSettingsResponse {
+  map<string, bool> notifications_enabled = 1;
+}
+
+// PINZ-134: трип + участники для рассылки таймерных пушей.
+// years_elapsed — для anniversary-события (ТЗ 11.3.1): «N лет назад»;
+// для end_date-события не заполняется (0).
+message NotificationTrip {
+  string trip_id = 1;
+  string name = 2;
+  repeated string participant_user_ids = 3;
+  int64 start_date_unix = 4;
+  int64 end_date_unix = 5;
+  int32 years_elapsed = 6;
+}
+
+// PINZ-134: трипы, отмечающие годовщину (created_at == today - 1 year).
+message ListAnniversaryTripsRequest {
+  int64 today_unix = 1;
+}
+message ListAnniversaryTripsResponse {
+  repeated NotificationTrip trips = 1;
+}
+
+// PINZ-134: трипы, у которых end_date пришёлся на сегодня минус 1 месяц.
+message ListEndedMonthAgoTripsRequest {
+  int64 today_unix = 1;
+}
+message ListEndedMonthAgoTripsResponse {
+  repeated NotificationTrip trips = 1;
+}
+
+// PINZ-134: список user_id участников трипа (для notification-service
+// адресации пушей всем участникам по событию).
+message ListTripParticipantsRequest {
+  string trip_id = 1;
+}
+message ListTripParticipantsResponse {
+  repeated string user_ids = 1;
 }

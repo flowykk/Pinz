@@ -93,6 +93,8 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Delete("/avatar", deps.AuthHandler.DeleteAvatar)
 				r.Get("/stats", deps.StatisticsHandler.GetProfileStats)
 				r.Get("/visited-locations", deps.StatisticsHandler.GetProfileVisitedLocations)
+				r.Post("/device-tokens", deps.NotificationHandler.RegisterDeviceToken)
+				r.Delete("/device-tokens", deps.NotificationHandler.UnregisterDeviceToken)
 			})
 
 			// Основные операции над путешествиями.

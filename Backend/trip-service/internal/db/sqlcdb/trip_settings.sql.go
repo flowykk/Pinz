@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const tripSettingsEnsureDefault = `-- name: TripSettingsEnsureDefault :exec
@@ -24,6 +25,45 @@ type TripSettingsEnsureDefaultParams struct {
 func (q *Queries) TripSettingsEnsureDefault(ctx context.Context, arg TripSettingsEnsureDefaultParams) error {
 	_, err := q.db.ExecContext(ctx, tripSettingsEnsureDefault, arg.UserID, arg.TripID)
 	return err
+}
+
+const tripSettingsGetByTripAndUsers = `-- name: TripSettingsGetByTripAndUsers :many
+SELECT user_id, notifications_enabled
+FROM trip_settings
+WHERE trip_id = $1 AND user_id = ANY($2::uuid[])
+`
+
+type TripSettingsGetByTripAndUsersParams struct {
+	TripID  uuid.UUID
+	Column2 []uuid.UUID
+}
+
+type TripSettingsGetByTripAndUsersRow struct {
+	UserID               uuid.UUID
+	NotificationsEnabled bool
+}
+
+func (q *Queries) TripSettingsGetByTripAndUsers(ctx context.Context, arg TripSettingsGetByTripAndUsersParams) ([]TripSettingsGetByTripAndUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, tripSettingsGetByTripAndUsers, arg.TripID, pq.Array(arg.Column2))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []TripSettingsGetByTripAndUsersRow{}
+	for rows.Next() {
+		var i TripSettingsGetByTripAndUsersRow
+		if err := rows.Scan(&i.UserID, &i.NotificationsEnabled); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const tripSettingsUpdateNotifications = `-- name: TripSettingsUpdateNotifications :execrows

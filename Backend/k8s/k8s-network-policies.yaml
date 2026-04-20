@@ -135,6 +135,48 @@ spec:
         - protocol: TCP
           port: 50053
 ---
+# Allow api-gateway pods to call notification-service on its gRPC port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-to-notification-service
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: notification-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 50054
+---
+# Allow notification-service to call trip-service (scheduler + trip events worker).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-notification-service-to-trip-service
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: trip-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: notification-service
+      ports:
+        - protocol: TCP
+          port: 50052
+---
 # Allow app pods to push telemetry to otel-collector.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -161,6 +203,9 @@ spec:
         - podSelector:
             matchLabels:
               app: statistics-service
+        - podSelector:
+            matchLabels:
+              app: notification-service
       ports:
         - protocol: TCP
           port: 4317   # OTLP gRPC

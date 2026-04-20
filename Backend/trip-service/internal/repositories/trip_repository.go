@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 
 	"pinz/backend/trip-service/internal/models"
 )
@@ -356,6 +357,90 @@ func (r *TripRepository) ListSummariesByUserID(userID string) ([]*TripSummary, e
 			return nil, err
 		}
 		out = append(out, &s)
+	}
+	return out, rows.Err()
+}
+
+// NotificationTripCandidate — сводный формат для notification-service
+// scheduler'а: id, name, участники, ключевые даты. YearsElapsed — целое число
+// лет от start_date (для текста «N лет назад»).
+type NotificationTripCandidate struct {
+	TripID        string
+	Name          string
+	Participants  []string
+	StartDateUnix int64
+	EndDateUnix   int64
+	YearsElapsed  int32
+}
+
+// ListAnniversaryCandidates — ТЗ 11.3.1: трипы, у которых сегодня исполняется
+// ровно N лет с start_date (N ∈ {1, 2, 3, ...}). Сравниваем день+месяц с
+// сегодняшним и возвращаем число полных лет. Трипы без start_date пропускаем.
+func (r *TripRepository) ListAnniversaryCandidates(today int64) ([]*NotificationTripCandidate, error) {
+	const q = `
+		SELECT t.id, t.name,
+			COALESCE(t.start_date, to_timestamp(0)),
+			COALESCE(t.end_date, to_timestamp(0)),
+			EXTRACT(YEAR FROM age(date_trunc('day', to_timestamp($1)), date_trunc('day', t.start_date)))::int AS years_elapsed,
+			COALESCE(array_agg(tp.user_id) FILTER (WHERE tp.user_id IS NOT NULL), '{}')
+		FROM trips t
+		LEFT JOIN trip_participants tp ON tp.trip_id = t.id
+		WHERE t.is_soft_deleted = false
+			AND t.start_date IS NOT NULL
+			AND EXTRACT(MONTH FROM t.start_date) = EXTRACT(MONTH FROM to_timestamp($1))
+			AND EXTRACT(DAY FROM t.start_date)   = EXTRACT(DAY FROM to_timestamp($1))
+			AND date_trunc('day', t.start_date) < date_trunc('day', to_timestamp($1))
+		GROUP BY t.id
+	`
+	return r.queryNotificationCandidates(q, today, true)
+}
+
+// ListEndedMonthAgoCandidates возвращает трипы, end_date которых пришёлся на
+// today - 1 month (ТЗ 11.3.2).
+func (r *TripRepository) ListEndedMonthAgoCandidates(today int64) ([]*NotificationTripCandidate, error) {
+	const q = `
+		SELECT t.id, t.name,
+			COALESCE(t.start_date, to_timestamp(0)),
+			COALESCE(t.end_date, to_timestamp(0)),
+			COALESCE(array_agg(tp.user_id) FILTER (WHERE tp.user_id IS NOT NULL), '{}')
+		FROM trips t
+		LEFT JOIN trip_participants tp ON tp.trip_id = t.id
+		WHERE t.is_soft_deleted = false
+			AND t.end_date IS NOT NULL
+			AND date_trunc('day', t.end_date) = date_trunc('day', to_timestamp($1) - interval '1 month')
+		GROUP BY t.id
+	`
+	return r.queryNotificationCandidates(q, today, false)
+}
+
+func (r *TripRepository) queryNotificationCandidates(query string, today int64, withYears bool) ([]*NotificationTripCandidate, error) {
+	rows, err := r.db.Query(query, today)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]*NotificationTripCandidate, 0)
+	for rows.Next() {
+		var c NotificationTripCandidate
+		var startDate, endDate sql.NullTime
+		var participants pq.StringArray
+		if withYears {
+			if err := rows.Scan(&c.TripID, &c.Name, &startDate, &endDate, &c.YearsElapsed, &participants); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := rows.Scan(&c.TripID, &c.Name, &startDate, &endDate, &participants); err != nil {
+				return nil, err
+			}
+		}
+		if startDate.Valid {
+			c.StartDateUnix = startDate.Time.Unix()
+		}
+		if endDate.Valid {
+			c.EndDateUnix = endDate.Time.Unix()
+		}
+		c.Participants = []string(participants)
+		out = append(out, &c)
 	}
 	return out, rows.Err()
 }

@@ -2,6 +2,7 @@ package di
 
 import (
 	auth "pinz/backend/api-gateway-service/internal/clients/auth"
+	notification "pinz/backend/api-gateway-service/internal/clients/notification"
 	statistics "pinz/backend/api-gateway-service/internal/clients/statistics"
 	trip "pinz/backend/api-gateway-service/internal/clients/trip"
 	"pinz/backend/api-gateway-service/internal/handlers"
@@ -9,13 +10,15 @@ import (
 )
 
 type Dependencies struct {
-	AuthHandler       *handlers.AuthHandler
-	AuthClient        *auth.Client
-	TripHandler       *handlers.TripHandler
-	TripClient        *trip.Client
-	StatisticsHandler *handlers.StatisticsHandler
-	StatisticsClient  *statistics.Client
-	WSHandler         *handlers.WSHandler
+	AuthHandler         *handlers.AuthHandler
+	AuthClient          *auth.Client
+	TripHandler         *handlers.TripHandler
+	TripClient          *trip.Client
+	StatisticsHandler   *handlers.StatisticsHandler
+	StatisticsClient    *statistics.Client
+	NotificationHandler *handlers.NotificationHandler
+	NotificationClient  *notification.Client
+	WSHandler           *handlers.WSHandler
 }
 
 func BuildDependencies() (*Dependencies, error) {
@@ -28,8 +31,8 @@ func BuildDependencies() (*Dependencies, error) {
 
 	redisClient, err := services.InitRedisClient()
 	if err != nil {
-		_ = authClient.Close()
-		return nil, err
+		// Redis optional — gateway WebSocket handler сам проверяет на nil.
+		redisClient = nil
 	}
 
 	tripClient, err := trip.NewClient()
@@ -54,14 +57,28 @@ func BuildDependencies() (*Dependencies, error) {
 	}
 	statsHandler := handlers.NewStatisticsHandler(statsClient, tripClient)
 
+	notifClient, err := notification.NewClient()
+	if err != nil {
+		_ = authClient.Close()
+		_ = tripClient.Close()
+		_ = statsClient.Close()
+		if redisClient != nil {
+			_ = redisClient.Close()
+		}
+		return nil, err
+	}
+	notifHandler := handlers.NewNotificationHandler(notifClient)
+
 	return &Dependencies{
-		AuthHandler:       authHandler,
-		AuthClient:        authClient,
-		TripHandler:       tripHandler,
-		TripClient:        tripClient,
-		StatisticsHandler: statsHandler,
-		StatisticsClient:  statsClient,
-		WSHandler:         wsHandler,
+		AuthHandler:         authHandler,
+		AuthClient:          authClient,
+		TripHandler:         tripHandler,
+		TripClient:          tripClient,
+		StatisticsHandler:   statsHandler,
+		StatisticsClient:    statsClient,
+		NotificationHandler: notifHandler,
+		NotificationClient:  notifClient,
+		WSHandler:           wsHandler,
 	}, nil
 }
 
@@ -74,5 +91,8 @@ func (d *Dependencies) Close() {
 	}
 	if d.StatisticsClient != nil {
 		_ = d.StatisticsClient.Close()
+	}
+	if d.NotificationClient != nil {
+		_ = d.NotificationClient.Close()
 	}
 }

@@ -44,6 +44,18 @@ spec:
     tls:
       mode: DISABLE
 ---
+# Notification Service DB (external Postgres on host:5435) — plain TCP, no mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: db-notifications-external
+  namespace: default
+spec:
+  host: db-notifications.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:

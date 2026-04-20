@@ -26,6 +26,7 @@
 | **auth-service** | Бизнес-логика авторизации, passkey, JWT |
 | **trip-service** | Путешествия, пины, медиа, участники, лента, async-флоу |
 | **statistics-service** | Счётчики пользователя (трипы, пины, медиа, батлы), посещённые локации (consumer Redis Streams `pinz:stats:events`) |
+| **notification-service** | Push через APNS + email через SMTP (consumer `pinz:trip:events`, `pinz:auth:email:tasks`); scheduler для годовщины трипа и «1 месяц после end_date» |
 | **otel-collector** | Приём и маршрутизация телеметрии (OTLP) |
 | **tempo** | Хранение распределённых трейсов |
 | **prometheus** | Метрики (RED + бизнес + Go runtime) |
@@ -106,6 +107,15 @@ Real‑time уведомление о завершении шага 3–4 идё
 |---|---|---|
 | GET | `/api/v1/profile/stats` | Счётчики текущего пользователя: трипы, пины, медиа, завершённые батлы |
 | GET | `/api/v1/profile/visited-locations` | Список посещённых стран/городов; опц. `?type=Country\|City` |
+
+### Notifications (notification-service через API Gateway, PINZ-134)
+
+| Метод | Путь | Описание |
+|---|---|---|
+| POST | `/api/v1/profile/device-tokens` | Регистрация APNS-токена устройства: `{"apns_token":"..."}`. Повторная регистрация переносит токен на нового пользователя. Возвращает `token_id`. |
+| DELETE | `/api/v1/profile/device-tokens` | Удаление APNS-токена устройства (logout на iOS): `{"apns_token":"..."}`. |
+
+`notification-service` отправляет push через APNS по событиям `pinz:trip:events` (PARTICIPANT_JOINED/LEFT/REMOVED, ADMIN_CHANGED, TRIP_READY, PIN_ADDED) и таймерно через scheduler (годовщина трипа, 1 месяц после окончания). SMTP-отправка писем с кодами верификации (`pinz:auth:email:tasks`, публикует auth-service) также перенесена в этот сервис.
 
 ### Photo battles (trip-service через API Gateway, PINZ-132, ТЗ 8)
 

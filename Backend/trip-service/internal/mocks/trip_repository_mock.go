@@ -84,6 +84,21 @@ func (mr *MockTripRepositoryInterfaceMockRecorder) GetByID(id any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockTripRepositoryInterface)(nil).GetByID), id)
 }
 
+// ListAnniversaryCandidates mocks base method.
+func (m *MockTripRepositoryInterface) ListAnniversaryCandidates(today int64) ([]*repositories.NotificationTripCandidate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAnniversaryCandidates", today)
+	ret0, _ := ret[0].([]*repositories.NotificationTripCandidate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAnniversaryCandidates indicates an expected call of ListAnniversaryCandidates.
+func (mr *MockTripRepositoryInterfaceMockRecorder) ListAnniversaryCandidates(today any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAnniversaryCandidates", reflect.TypeOf((*MockTripRepositoryInterface)(nil).ListAnniversaryCandidates), today)
+}
+
 // ListByUserID mocks base method.
 func (m *MockTripRepositoryInterface) ListByUserID(userID string, limit, offset int32) ([]*models.Trip, error) {
 	m.ctrl.T.Helper()
@@ -97,6 +112,21 @@ func (m *MockTripRepositoryInterface) ListByUserID(userID string, limit, offset 
 func (mr *MockTripRepositoryInterfaceMockRecorder) ListByUserID(userID, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByUserID", reflect.TypeOf((*MockTripRepositoryInterface)(nil).ListByUserID), userID, limit, offset)
+}
+
+// ListEndedMonthAgoCandidates mocks base method.
+func (m *MockTripRepositoryInterface) ListEndedMonthAgoCandidates(today int64) ([]*repositories.NotificationTripCandidate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEndedMonthAgoCandidates", today)
+	ret0, _ := ret[0].([]*repositories.NotificationTripCandidate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEndedMonthAgoCandidates indicates an expected call of ListEndedMonthAgoCandidates.
+func (mr *MockTripRepositoryInterfaceMockRecorder) ListEndedMonthAgoCandidates(today any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEndedMonthAgoCandidates", reflect.TypeOf((*MockTripRepositoryInterface)(nil).ListEndedMonthAgoCandidates), today)
 }
 
 // ListFeed mocks base method.

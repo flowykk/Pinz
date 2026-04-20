@@ -1525,6 +1525,13 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 	if err := s.tripRepo.SetStatus(tripID, "PROCESSING"); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
+	// PINZ-134: уведомляем notification-service о добавленных пинах. userID —
+	// автор добавления медиа; notification-service адресует пуш остальным
+	// участникам трипа. Одно событие на весь add-media запрос — избегаем
+	// флуда, если пользователь добавил сразу несколько pin'ов.
+	if s.eventRepo != nil && len(newPinIDs) > 0 {
+		_ = s.eventRepo.PublishTripEvent(ctx, "PIN_ADDED", tripID, userID)
+	}
 	// ТЗ 5.3.4: worker пропустит авто-теги/категорию для пинов, не попавших в new_pin_ids.
 	if s.eventRepo != nil {
 		if err := s.eventRepo.SetMLContext(ctx, tripID, "add_media", newPinIDs, 30*time.Minute); err != nil {
@@ -1939,3 +1946,74 @@ func (s *TripService) tripToProto(ctx context.Context, t *models.Trip) *pb.Trip 
 	return out
 }
 
+// GetNotificationSettings — PINZ-134. Используется notification-service
+// worker'ом/scheduler'ом чтобы отфильтровать адресатов пуша по их настройкам.
+// Не требует быть участником (мониторинг делается на стороне клиента).
+func (s *TripService) GetNotificationSettings(ctx context.Context, req *pb.GetNotificationSettingsRequest) (*pb.GetNotificationSettingsResponse, error) {
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	userIDs := req.GetUserIds()
+	if len(userIDs) == 0 {
+		return &pb.GetNotificationSettingsResponse{NotificationsEnabled: map[string]bool{}}, nil
+	}
+	settings, err := s.settingsRepo.GetByTripAndUsers(tripID, userIDs)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get settings: %v", err)
+	}
+	return &pb.GetNotificationSettingsResponse{NotificationsEnabled: settings}, nil
+}
+
+// ListAnniversaryTrips — PINZ-134. Возвращает трипы, у которых created_at
+// пришёлся ровно на today-1y. Используется scheduler'ом notification-service.
+func (s *TripService) ListAnniversaryTrips(ctx context.Context, req *pb.ListAnniversaryTripsRequest) (*pb.ListAnniversaryTripsResponse, error) {
+	candidates, err := s.tripRepo.ListAnniversaryCandidates(req.GetTodayUnix())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list anniversary: %v", err)
+	}
+	return &pb.ListAnniversaryTripsResponse{Trips: toNotificationTrips(candidates)}, nil
+}
+
+// ListEndedMonthAgoTrips — PINZ-134. Возвращает трипы, у которых end_date
+// пришёлся ровно на today-1m.
+func (s *TripService) ListEndedMonthAgoTrips(ctx context.Context, req *pb.ListEndedMonthAgoTripsRequest) (*pb.ListEndedMonthAgoTripsResponse, error) {
+	candidates, err := s.tripRepo.ListEndedMonthAgoCandidates(req.GetTodayUnix())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list ended month ago: %v", err)
+	}
+	return &pb.ListEndedMonthAgoTripsResponse{Trips: toNotificationTrips(candidates)}, nil
+}
+
+// ListTripParticipants — PINZ-134. Список user_id участников трипа для
+// notification-service (рассылка пушей по ТЗ 11.1).
+func (s *TripService) ListTripParticipants(ctx context.Context, req *pb.ListTripParticipantsRequest) (*pb.ListTripParticipantsResponse, error) {
+	tripID := req.GetTripId()
+	if tripID == "" {
+		return nil, status.Error(codes.InvalidArgument, "trip_id is required")
+	}
+	parts, err := s.participantRepo.GetByTripID(tripID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list participants: %v", err)
+	}
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		out = append(out, p.UserID)
+	}
+	return &pb.ListTripParticipantsResponse{UserIds: out}, nil
+}
+
+func toNotificationTrips(candidates []*repositories.NotificationTripCandidate) []*pb.NotificationTrip {
+	out := make([]*pb.NotificationTrip, 0, len(candidates))
+	for _, c := range candidates {
+		out = append(out, &pb.NotificationTrip{
+			TripId:             c.TripID,
+			Name:               c.Name,
+			ParticipantUserIds: c.Participants,
+			StartDateUnix:      c.StartDateUnix,
+			EndDateUnix:        c.EndDateUnix,
+			YearsElapsed:       c.YearsElapsed,
+		})
+	}
+	return out
+}

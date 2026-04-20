@@ -1,9 +1,10 @@
 version: "3.9"
 
 # Инстансы PostgreSQL (Database-per-Service):
-# db       — Auth Service (pinz_db)
-# db-trips — Trip Service (pinz_trips, PostGIS)
-# db-stats — Statistics Service (pinz_stats)
+# db               — Auth Service (pinz_db)
+# db-trips         — Trip Service (pinz_trips, PostGIS)
+# db-stats         — Statistics Service (pinz_stats)
+# db-notifications — Notification Service (pinz_notifications)
 
 services:
   db:
@@ -57,6 +58,23 @@ services:
     volumes:
       - db_stats_data:/var/lib/postgresql/data
 
+  db-notifications:
+    image: postgres:15-alpine
+    container_name: pinz-db-notifications
+    environment:
+      POSTGRES_USER: pinz_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pinz_password}
+      POSTGRES_DB: pinz_notifications
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pinz_user -d pinz_notifications"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - db_notifications_data:/var/lib/postgresql/data
+
   redis:
     image: redis:7-alpine
     container_name: pinz-redis
@@ -69,4 +87,5 @@ volumes:
   db_data:
   db_trips_data:
   db_stats_data:
+  db_notifications_data:
   redis_data:

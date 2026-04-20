@@ -12,10 +12,8 @@ import (
 
 	"pinz/backend/auth-service/internal/db"
 	"pinz/backend/auth-service/internal/di"
-	"pinz/backend/auth-service/internal/email"
 	"pinz/backend/auth-service/internal/repositories"
 	"pinz/backend/auth-service/internal/server"
-	"pinz/backend/auth-service/internal/worker"
 	pinzotel "pinz/backend/pkg/otel"
 )
 
@@ -62,20 +60,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	workerCtx, workerCancel := context.WithCancel(context.Background())
-	defer workerCancel()
-	sender := email.NewSender(
-		os.Getenv("SMTP_HOST"),
-		os.Getenv("SMTP_PORT"),
-		os.Getenv("SMTP_USERNAME"),
-		os.Getenv("SMTP_PASSWORD"),
-		os.Getenv("SMTP_FROM"),
-	)
-	go func() {
-		if err := worker.Run(workerCtx, redisClient, sender); err != nil {
-			slog.Error("email worker error", "error", err)
-		}
-	}()
+	// PINZ-134: email-воркер перенесён в notification-service. Здесь auth-service
+	// только публикует задачи в pinz:auth:email:tasks; отправка выполняется
+	// notification-service'ом.
 
 	if err := server.RunGRPCServer(deps.AuthService); err != nil {
 		slog.Error("gRPC server error", "error", err)

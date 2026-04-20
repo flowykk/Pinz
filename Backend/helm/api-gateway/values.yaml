@@ -14,6 +14,7 @@ env:
   authServiceGrpcAddress: "auth-service:50051"
   tripServiceGrpcAddress: "trip-service:50052"
   statisticsServiceGrpcAddress: "statistics-service:50053"
+  notificationServiceGrpcAddress: "notification-service:50054"
   redisAddr: "redis:6379"
   swaggerHost: ""
   otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
