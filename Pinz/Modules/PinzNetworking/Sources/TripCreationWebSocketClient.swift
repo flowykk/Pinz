@@ -17,6 +17,20 @@ final class TripCreationWebSocketClient {
     private struct TripReviewSocketPayload: Decodable {
         let tripId: String
         let status: String
+
+        private enum CodingKeys: String, CodingKey {
+            case tripId
+            case tripIdSnake = "trip_id"
+            case status
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let snakeCaseTripId = try container.decodeIfPresent(String.self, forKey: .tripIdSnake)
+            let camelCaseTripId = try container.decodeIfPresent(String.self, forKey: .tripId)
+            tripId = camelCaseTripId?.isEmpty == false ? camelCaseTripId ?? "" : snakeCaseTripId ?? ""
+            status = try container.decode(String.self, forKey: .status)
+        }
     }
 
     private struct TripReviewSocketEvent: Decodable {
@@ -74,7 +88,10 @@ final class TripCreationWebSocketClient {
                     "elapsed: \(Self.formattedElapsed(since: start))"
                 ]
             )
-            webSocketTask.cancel(with: .normalClosure, reason: nil)
+            webSocketTask.cancel(
+                with: URLSessionWebSocketTask.CloseCode.normalClosure,
+                reason: nil as Data?
+            )
         }
 
         do {
@@ -254,7 +271,7 @@ final class TripCreationWebSocketClient {
         components.scheme = base.scheme
         components.host = base.host
         components.port = base.port
-        components.path = "/api/v1/trips/creation/\(tripId)/review/ws"
+        components.path = "/v1/ws"
         return components.url ?? base
     }
 
