@@ -271,7 +271,7 @@ final class TripCreationWebSocketClient {
         components.scheme = base.scheme
         components.host = base.host
         components.port = base.port
-        components.path = "/v1/ws"
+        components.path = "/api/v1/trips/creation/\(tripId)/review/ws"
         return components.url ?? base
     }
 
