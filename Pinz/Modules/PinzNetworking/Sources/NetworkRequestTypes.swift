@@ -30,6 +30,36 @@ struct MediaMetaEntryJSON: Encodable {
     }
 }
 
+struct AddMediaProcessGroupingJSON: Encodable {
+    let session_id: String
+    let media: [MediaMetaEntryJSON]
+
+    init(sessionId: String, media: [MediaMetaEntryJSON]) {
+        session_id = sessionId
+        self.media = media
+    }
+}
+
+struct AddMediaStartJSON: Encodable {
+    let files_to_upload: [FileToUploadJSON]
+
+    init(_ filesToUpload: [FileToUploadDTO]) {
+        self.files_to_upload = filesToUpload.map(FileToUploadJSON.init)
+    }
+}
+
+struct AddMediaApplyGroupsAndProcessJSON: Encodable {
+    let session_id: String
+    let draft_pins: [DraftPinInputJSON]
+    let deleted_media_ids: [String]
+
+    init(sessionId: String, draftPins: [DraftPinInputJSON], deletedMediaIds: [String]) {
+        session_id = sessionId
+        draft_pins = draftPins
+        deleted_media_ids = deletedMediaIds
+    }
+}
+
 struct DraftPinInputJSON: Encodable {
     let draft_pin_id: String
     let media_ids: [String]

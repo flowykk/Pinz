@@ -10,6 +10,7 @@ public struct RawPinView: View {
     private let allPins: [RawPin]
     private let onDeleteMedia: ((RawPinMedia) -> Void)?
     private let onMoveMedia: ((RawPinMedia, Int) -> Void)?
+    private let isMediaLocked: (RawPinMedia) -> Bool
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 4)
 
@@ -24,13 +25,15 @@ public struct RawPinView: View {
         index: Int,
         allPins: [RawPin] = [],
         onDeleteMedia: ((RawPinMedia) -> Void)? = nil,
-        onMoveMedia: ((RawPinMedia, Int) -> Void)? = nil
+        onMoveMedia: ((RawPinMedia, Int) -> Void)? = nil,
+        isMediaLocked: @escaping (RawPinMedia) -> Bool = { _ in false }
     ) {
         self.pin = pin
         self.index = index
         self.allPins = allPins
         self.onDeleteMedia = onDeleteMedia
         self.onMoveMedia = onMoveMedia
+        self.isMediaLocked = isMediaLocked
     }
 
     public var body: some View {
@@ -43,7 +46,8 @@ public struct RawPinView: View {
                             media: media,
                             movablePins: movablePins,
                             onDeleteMedia: onDeleteMedia,
-                            onMoveMedia: onMoveMedia
+                            onMoveMedia: onMoveMedia,
+                            isLocked: isMediaLocked(media)
                         )
                     }
                 }
@@ -76,13 +80,16 @@ public struct RawPinView: View {
 private struct MediaThumbnailCell: View {
 
     let media: RawPinMedia
-    let movablePins: [(globalIndex: Int, pin: RawPin)]
+    let movablePins: [(globalIndex: Int, pin: RawPin)] 
     let onDeleteMedia: ((RawPinMedia) -> Void)?
     let onMoveMedia: ((RawPinMedia, Int) -> Void)?
+    let isLocked: Bool
 
     @State private var isMovePickerPresented = false
 
     var body: some View {
+        let isInteractive = !isLocked
+
         RawPinMediaThumbnailView(
             media: media,
             contentMode: .fill,
@@ -92,22 +99,29 @@ private struct MediaThumbnailCell: View {
         .overlay {
             MediaBadgesView(
                 leadingTopBadge: {
-                    if media.type == .video {
+                    if media.type == .video && !isLocked {
                         BadgeView(icon: .video)
+                    }
+                },
+                trailingTopBadge: {
+                    if isLocked {
+                        BadgeView(icon: .lock, color: PinzUIAsset.accentRed.swiftUIColor)
                     }
                 }
             ).padding(4)
         }
         .contextMenu {
-            if movablePins.count > 0 {
-                Button {
-                    isMovePickerPresented = true
-                } label: {
-                    Label(PinzBaseStrings.RawPin.Button.move, systemImage: "arrow.left.arrow.right")
+            if isInteractive {
+                if movablePins.count > 0 {
+                    Button {
+                        isMovePickerPresented = true
+                    } label: {
+                        Label(PinzBaseStrings.RawPin.Button.move, systemImage: "arrow.left.arrow.right")
+                    }
                 }
-            }
-            Button(role: .destructive) { onDeleteMedia?(media) } label: {
-                Label(PinzBaseStrings.Common.Button.delete, systemImage: "trash")
+                Button(role: .destructive) { onDeleteMedia?(media) } label: {
+                    Label(PinzBaseStrings.Common.Button.delete, systemImage: "trash")
+                }
             }
         } preview: {
             RawPinMediaThumbnailView(
@@ -117,8 +131,9 @@ private struct MediaThumbnailCell: View {
             )
         }
         .movePinMediaSheet(isPresented: $isMovePickerPresented, movablePins: movablePins) { globalIndex in
-            onMoveMedia?(media, globalIndex)
+            if isInteractive {
+                onMoveMedia?(media, globalIndex)
+            }
         }
     }
 }
-

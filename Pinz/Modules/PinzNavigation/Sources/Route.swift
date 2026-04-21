@@ -55,6 +55,7 @@ public enum Route: Hashable {
     case trip(TripRoute)
     case tripInfo(TripInfoRoute)
     case tripCreation(TripCreationRoute)
+    case tripAddMedia(tripId: String)
     case profile(ProfileRoute)
     case pinInfo(PinInfoRoute)
     case media(MediaRoute)

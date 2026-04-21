@@ -91,6 +91,21 @@ public protocol NetworkServiceProtocol {
         draftPins: [DraftPinInputDTO],
         deletedMediaIds: [String]
     ) async throws -> ApplyGroupsAndProcessDTO
+    func addMediaStart(
+        tripId: String,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> AddMediaStartDTO
+    func addMediaProcessGrouping(
+        tripId: String,
+        sessionId: String,
+        media: [MediaMetaEntryDTO]
+    ) async throws -> AddMediaProcessGroupingDTO
+    func addMediaApplyGroupsAndProcess(
+        tripId: String,
+        sessionId: String,
+        draftPins: [DraftPinInputDTO],
+        deletedMediaIds: [String]
+    ) async throws -> ApplyGroupsAndProcessDTO
     func getTripReview(tripId: String) async throws -> GetTripReviewDTO
     func finalizeTrip(
         tripId: String,
@@ -644,6 +659,57 @@ public final class NetworkService: NetworkServiceProtocol {
             ),
             type: ApplyGroupsAndProcessDTO.self
         )
+    }
+
+    public func addMediaStart(
+        tripId: String,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> AddMediaStartDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .addMediaStart(
+                    tripId: tripId,
+                    filesToUpload: filesToUpload
+                ),
+                type: AddMediaStartDTO.self
+            )
+        }
+    }
+
+    public func addMediaProcessGrouping(
+        tripId: String,
+        sessionId: String,
+        media: [MediaMetaEntryDTO]
+    ) async throws -> AddMediaProcessGroupingDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .addMediaProcessGrouping(
+                    tripId: tripId,
+                    sessionId: sessionId,
+                    media: media
+                ),
+                type: AddMediaProcessGroupingDTO.self
+            )
+        }
+    }
+
+    public func addMediaApplyGroupsAndProcess(
+        tripId: String,
+        sessionId: String,
+        draftPins: [DraftPinInputDTO],
+        deletedMediaIds: [String]
+    ) async throws -> ApplyGroupsAndProcessDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .addMediaApplyGroupsAndProcess(
+                    tripId: tripId,
+                    sessionId: sessionId,
+                    draftPins: draftPins,
+                    deletedMediaIds: deletedMediaIds
+                ),
+                type: ApplyGroupsAndProcessDTO.self
+            )
+        }
     }
     
     public func getTripReview(

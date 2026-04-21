@@ -7,6 +7,7 @@ public final class AppRouter: AppRouting {
     public var path: [Route]
     
     @ObservationIgnored private var tripInfoUpdateHandler: (() -> Void)?
+    @ObservationIgnored private var tripReloadHandler: (() -> Void)?
     @ObservationIgnored private var currentProfileUpdateHandler: ((User) -> Void)?
 
     public init(initialPath: [Route] = []) {
@@ -16,6 +17,11 @@ public final class AppRouter: AppRouting {
     public func consumeTripInfoUpdateHandler() -> (() -> Void)? {
         defer { tripInfoUpdateHandler = nil }
         return tripInfoUpdateHandler
+    }
+
+    public func consumeTripReloadHandler() -> (() -> Void)? {
+        defer { tripReloadHandler = nil }
+        return tripReloadHandler
     }
 
     public func navigateToMain() {
@@ -79,6 +85,27 @@ extension AppRouter {
 
     public func navigateToFeed() {
         navigate(to: .trip(.feed))
+    }
+
+    public func navigateToTripAddMedia(tripId: String) {
+        navigate(to: .tripAddMedia(tripId: tripId))
+    }
+}
+
+// MARK: - Trip reload callbacks
+
+extension AppRouter {
+    public func subscribeToTripReload(_ action: @escaping () -> Void) {
+        tripReloadHandler = action
+    }
+
+    public func notifyTripReloadNeeded() {
+        tripReloadHandler?()
+        tripReloadHandler = nil
+    }
+
+    public func clearTripReloadUpdates() {
+        tripReloadHandler = nil
     }
 }
 
