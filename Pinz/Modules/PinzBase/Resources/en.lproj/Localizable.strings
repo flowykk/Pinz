@@ -148,6 +148,20 @@
 "tripPins.button.addPin" = "Add Pin";
 "tripPins.empty.noPins" = "There are no pins in this trip yet";
 
+// MARK: - Add Media
+"addMedia.label.sessionStarted" = "Session started";
+"addMedia.label.sessionIdPrefix" = "Session ID: ";
+"addMedia.label.statusPrefix" = "Status: ";
+"addMedia.label.currentTripPins" = "Current trip pins";
+"addMedia.label.draftGroups" = "Draft groups";
+"addMedia.hint.chooseMedia" = "Choose photos or videos to add";
+"addMedia.description.sessionHint" = "Tap the picker button and select media. After selecting, session request will be sent.";
+"addMedia.message.noGroupsGeneratedYet" = "No groups were generated yet.";
+"addMedia.message.waitingForGrouping" = "Waiting for media grouping...";
+"addMedia.message.noDraftGroupsGeneratedYet" = "No draft groups were generated yet.";
+"addMedia.loading.grouping" = "Grouping media";
+"addMedia.loading.applying" = "Applying changes";
+
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "My Trips";
 "tripsListPopup.button.createTrip" = "Create Trip";

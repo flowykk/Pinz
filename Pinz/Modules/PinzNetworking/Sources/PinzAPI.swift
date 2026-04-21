@@ -60,6 +60,9 @@ enum PinzAPI {
     case createTrip(name: String, description: String?, category: String?, season: String?, filesToUpload: [FileToUploadDTO])
     case processMediaGrouping(tripId: String, media: [MediaMetaEntryDTO])
     case applyGroupsAndProcess(tripId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String])
+    case addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO])
+    case addMediaProcessGrouping(tripId: String, sessionId: String, media: [MediaMetaEntryDTO])
+    case addMediaApplyGroupsAndProcess(tripId: String, sessionId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String])
     case getTripReview(tripId: String)
     case finalizeTrip(tripId: String, pinUpdates: [PinUpdateInputDTO], mediaToDelete: [String])
 }
@@ -117,6 +120,9 @@ extension PinzAPI: TargetType {
         case .createTrip: endpointPath = "/trips/creation/start"
         case .processMediaGrouping(let tripId, _): endpointPath = "/trips/creation/\(tripId)/media/process-grouping"
         case .applyGroupsAndProcess(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/apply-groups-and-process"
+        case .addMediaStart(let tripId, _): endpointPath = "/trips/\(tripId)/media/add/start"
+        case .addMediaProcessGrouping(let tripId, _, _): endpointPath = "/trips/\(tripId)/media/add/process-grouping"
+        case .addMediaApplyGroupsAndProcess(let tripId, _, _, _): endpointPath = "/trips/\(tripId)/media/add/apply-groups-and-process"
         case .getTripReview(let tripId): endpointPath = "/trips/creation/\(tripId)/review"
         case .finalizeTrip(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/finalize"
         }
@@ -226,6 +232,19 @@ extension PinzAPI: TargetType {
         case let .applyGroupsAndProcess(_, pins, deleted):
             struct Body: Encodable { let draft_pins: [DraftPinInputJSON]; let deleted_media_ids: [String] }
             return .requestJSONEncodable(Body(draft_pins: pins.map(DraftPinInputJSON.init), deleted_media_ids: deleted))
+        case let .addMediaStart(_, files):
+            return .requestJSONEncodable(AddMediaStartJSON(files))
+        case let .addMediaProcessGrouping(_, sessionId, media):
+            struct Body: Encodable { let session_id: String; let media: [MediaMetaEntryJSON] }
+            return .requestJSONEncodable(Body(session_id: sessionId, media: media.map(MediaMetaEntryJSON.init)))
+        case let .addMediaApplyGroupsAndProcess(_, sessionId, draftPins, deletedMediaIds):
+            return .requestJSONEncodable(
+                AddMediaApplyGroupsAndProcessJSON(
+                    sessionId: sessionId,
+                    draftPins: draftPins.map(DraftPinInputJSON.init),
+                    deletedMediaIds: deletedMediaIds
+                )
+            )
 
         case let .finalizeTrip(_, updates, toDelete):
             struct Body: Encodable { let pin_updates: [PinUpdateInputJSON]; let media_to_delete: [String] }
@@ -381,6 +400,34 @@ extension PinzAPI {
             """#
         case .applyGroupsAndProcess:
             json = #"{"status":"processing","message":"Groups applied, processing started"}"#
+        case .addMediaStart:
+            json = #"""
+            {
+              "trip_id": "trip-001",
+              "status": "ADD_MEDIA_UPLOADING",
+              "upload_urls": [
+                {"client_id": "media-1", "s3_key": "trips/trip-001/media/media-1.jpg", "url": "https://pinz.s3.example.com/upload"}
+              ]
+            }
+            """#
+        case .addMediaProcessGrouping:
+            json = #"""
+            {
+              "trip_id": "trip-001",
+              "status": "ADD_MEDIA_GROUPING_REVIEW",
+              "existing_media_ids": ["media-existing-001"],
+              "draft_pins": [
+                {
+                  "draft_pin_id": "draft-unassigned",
+                  "media": [
+                    {"media_id":"media-002","type":"photo","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"}
+                  ]
+                }
+              ]
+            }
+            """#
+        case .addMediaApplyGroupsAndProcess:
+            json = #"{"status":"PROCESSING","message":"Processing started"}"#
         case .getTripReview:
             json = #"""
             {

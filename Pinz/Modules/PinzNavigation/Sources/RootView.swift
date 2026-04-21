@@ -57,6 +57,8 @@ public struct RootView<Content: View>: View {
             case let .postPreview(trip, selectedPins):
                 PostPreviewView(trip: trip, selectedPins: selectedPins)
             }
+        case let .tripAddMedia(tripId):
+            AddMediaHostView(tripId: tripId)
         case let .tripCreation(tripCreationRoute):
             switch tripCreationRoute {
             case .initial:

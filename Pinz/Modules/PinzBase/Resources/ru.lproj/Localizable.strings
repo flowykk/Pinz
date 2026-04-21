@@ -148,6 +148,20 @@
 "tripPins.button.addPin" = "Добавить пин";
 "tripPins.empty.noPins" = "В этом путешествии пока нет пинов";
 
+// MARK: - Add Media
+"addMedia.label.sessionStarted" = "Сессия запущена";
+"addMedia.label.sessionIdPrefix" = "ID сессии: ";
+"addMedia.label.statusPrefix" = "Статус: ";
+"addMedia.label.currentTripPins" = "Текущие пины путешествия";
+"addMedia.label.draftGroups" = "Черновые группы";
+"addMedia.description.sessionHint" = "Нажми на кнопку выбора и выбери медиа. После выбора будет отправлен запрос на запуск сессии.";
+"addMedia.hint.chooseMedia" = "Выбери фото или видео, чтобы добавить";
+"addMedia.message.noGroupsGeneratedYet" = "Группы еще не сформированы.";
+"addMedia.message.waitingForGrouping" = "Ожидаем группировку медиа...";
+"addMedia.message.noDraftGroupsGeneratedYet" = "Черновые группы еще не сформированы.";
+"addMedia.loading.grouping" = "Группировка медиа";
+"addMedia.loading.applying" = "Применение изменений";
+
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "Твои путешествия";
 "tripsListPopup.button.createTrip" = "Создать путешествие";

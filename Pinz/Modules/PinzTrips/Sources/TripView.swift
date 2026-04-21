@@ -85,6 +85,9 @@ public struct TripView: View {
                 } createPinTapped: {
                     isPinsListPresented = false
                     viewModel.dispatch(.navigate(.pinCreation))
+                } addMediaTapped: {
+                    isPinsListPresented = false
+                    viewModel.dispatch(.navigate(.addMedia))
                 }
                 .pinzSheet()
                 .presentationDetents([.medium, .large])

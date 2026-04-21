@@ -9,15 +9,18 @@ struct TripPinsListPopupView: View {
     let pins: [Pin]
     let pinTapped: (Pin) -> Void
     let createPinTapped: () -> Void
+    let addMediaTapped: () -> Void
 
     init(
         pins: [Pin],
         pinTapped: @escaping (Pin) -> Void,
-        createPinTapped: @escaping () -> Void
+        createPinTapped: @escaping () -> Void,
+        addMediaTapped: @escaping () -> Void
     ) {
         self.pins = pins
         self.pinTapped = pinTapped
         self.createPinTapped = createPinTapped
+        self.addMediaTapped = addMediaTapped
     }
 
     var body: some View {
@@ -70,7 +73,7 @@ struct TripPinsListPopupView: View {
                 PinzButton(
                     type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.TripPins.Button.addMedia),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
-                    action: .plain { }
+                    action: .plain { addMediaTapped() }
                 )
 
                 PinzButton(

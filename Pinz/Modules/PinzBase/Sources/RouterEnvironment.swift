@@ -14,6 +14,7 @@ public protocol AppRouting {
     func navigateToTripCreationInitial()
     func navigateToTripCreationPreprocessedPins(tripId: String, pins: RawPins)
     func navigateToTripCreationReview(tripId: String, pins: [Pin])
+    func navigateToTripAddMedia(tripId: String)
 
     func navigateToPinsList(trip: Trip)
     func navigateToSelectablePinsList(trip: Trip)
@@ -33,6 +34,11 @@ public protocol AppRouting {
     func subscribeToCurrentProfileUpdates(_ action: @escaping (User) -> Void)
     func notifyCurrentProfileUpdated(_ user: User)
     func clearCurrentProfileUpdates()
+
+    func subscribeToTripReload(_ action: @escaping () -> Void)
+    func notifyTripReloadNeeded()
+    func consumeTripReloadHandler() -> (() -> Void)?
+    func clearTripReloadUpdates()
 
     func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction)
 

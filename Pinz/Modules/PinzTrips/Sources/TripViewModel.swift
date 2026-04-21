@@ -15,6 +15,7 @@ final class TripViewModel {
         case members
         case pinInfo(Pin)
         case pinCreation
+        case addMedia
     }
 
     enum State {
@@ -117,6 +118,10 @@ final class TripViewModel {
                 router?.navigateToPinCreation()
             case .members:
                 router?.navigateToTripMembers()
+            case .addMedia:
+                if let selectedTripID = SelectedTripStorage.shared.selectedTripID {
+                    router?.navigateToTripAddMedia(tripId: selectedTripID)
+                }
             }
         case let .selectPin(pin):
             selectedPin = pin
@@ -177,6 +182,15 @@ final class TripViewModel {
         router?.subscribeToCurrentProfileUpdates { [weak self] updatedUser in
             Task { @MainActor in
                 await self?.applyProfileUpdateFromProfileScreen(updatedUser)
+            }
+        }
+        router?.subscribeToTripReload { [weak self] in
+            guard let self else {
+                return
+            }
+            self.dispatch(.forceReloadSavedTrip)
+            Task { @MainActor in
+                try? await self.asyncDispatch(.loadSavedTrip)
             }
         }
     }
