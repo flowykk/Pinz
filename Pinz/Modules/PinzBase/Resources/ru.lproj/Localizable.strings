@@ -43,7 +43,9 @@
 "profile.label.savedMaps" = "Сохранённые карты";
 "profile.label.notifications" = "Уведомления";
 "profile.label.appearance" = "Оформление";
+"profile.label.storage" = "Хранилище";
 "profile.label.clearCache" = "Очистить данные";
+"profile.hint.saveImagesLocally" = "При включении изображения кэшируются локально для более быстрого открытия.";
 "profile.label.changeEmail" = "Сменить почту";
 "profile.placeholder.name" = "Имя";
 "profile.hint.nicknameRules" = "Имя пользователя должно состоять из букв, цифр, точки и подчёркивания";
@@ -242,3 +244,5 @@
 "alert.deleteAccount.title" = "Удалить аккаунт?";
 "alert.deleteAccount.message" = "Это действие необратимо. Аккаунт будет удалён без возможности восстановления.";
 "alert.deleteAccount.confirm" = "Удалить";
+
+"profile.label.saveImagesLocally" = "Сохранять изображения локально";

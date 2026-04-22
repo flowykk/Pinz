@@ -108,7 +108,7 @@ extension Setting.DefaultSetting {
     }
 
     private func toggleView(with value: Binding<Bool>) -> some View {
-        Toggle(isOn: value) {}
+        Toggle(isOn: value) { Spacer(minLength: 0) }.frame(width: 100)
     }
 }
 

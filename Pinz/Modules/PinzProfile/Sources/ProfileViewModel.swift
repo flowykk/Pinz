@@ -22,6 +22,7 @@ public class ProfileViewModel {
         case wishlist
         case saved
 
+        case storageSettings
         case notifications
         case appearance
 
@@ -124,6 +125,8 @@ public class ProfileViewModel {
                 router?.navigateToPlacesWishlist()
             case .saved:
                 router?.navigateToSavedMaps()
+            case .storageSettings:
+                router?.navigateToStorageSettings()
             case .notifications:
                 router?.navigateToNotifications()
             case .appearance:

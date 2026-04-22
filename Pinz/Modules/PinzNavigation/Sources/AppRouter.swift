@@ -148,6 +148,10 @@ extension AppRouter {
         navigate(to: .profile(.saved))
     }
 
+    public func navigateToStorageSettings() {
+        navigate(to: .profile(.storageSettings))
+    }
+
     public func navigateToNotifications() {
         navigate(to: .profile(.notifications))
     }

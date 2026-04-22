@@ -78,6 +78,8 @@ public struct RootView<Content: View>: View {
                 WishlistView()
             case .saved:
                 SavedMapsView()
+            case .storageSettings:
+                StorageSettingsView()
             case .notifications:
                 NotificationsView()
             case .appearance:

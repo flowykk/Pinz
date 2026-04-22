@@ -27,6 +27,7 @@ public protocol AppRouting {
     func navigateToTrips()
     func navigateToPlacesWishlist()
     func navigateToSavedMaps()
+    func navigateToStorageSettings()
     func navigateToNotifications()
     func navigateToAppearance()
 
