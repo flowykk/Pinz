@@ -8,7 +8,6 @@ public struct AddMediaHostView: View {
     @State private var viewModel: AddMediaHostViewModel
     @State private var selectionViewModel: AddMediaSelectionViewModel
     @State private var groupingViewModel: AddMediaGroupingViewModel?
-    @State private var reviewViewModel: AddMediaReviewViewModel?
 
     @Environment(\.appRouter) private var router
 
@@ -36,33 +35,10 @@ public struct AddMediaHostView: View {
                             resetToSelection()
                         },
                         onRetry: {
-                            await processGrouping(for: groupingViewModel)
+                            await applyChanges(using: groupingViewModel)
                         },
                         onContinue: {
-                            openReview(with: groupingViewModel)
-                        }
-                    )
-                } else {
-                    AddMediaSelectionView(
-                        viewModel: selectionViewModel,
-                        onBack: {
-                            viewModel.dispatch(.navigate(.back))
-                        },
-                        onSessionReady: handleSessionReady
-                    )
-                }
-            case .review:
-                if let reviewViewModel {
-                    AddMediaReviewView(
-                        viewModel: reviewViewModel,
-                        onBack: {
-                            resetToSelection()
-                        },
-                        onRetry: {
-                            await applyReview(for: reviewViewModel)
-                        },
-                        onApply: {
-                            await applyReview(for: reviewViewModel)
+                            await applyChanges(using: groupingViewModel)
                         }
                     )
                 } else {
@@ -119,36 +95,13 @@ public struct AddMediaHostView: View {
         }
     }
 
-    private func openReview(with groupingVM: AddMediaGroupingViewModel) {
-        guard viewModel.flowStatus == .ready, groupingVM.canProceed else {
+    private func applyChanges(using groupingVM: AddMediaGroupingViewModel) async {
+        guard groupingVM.canProceed else {
             return
         }
-        let draftPins = groupingVM.draftPins
-        let existingMediaIds = Array(viewModel.existingMediaIds)
-        let existingPinsPreview = viewModel.existingPinsPreview
-        let deletedMediaIds = Array(groupingVM.deletedMediaIds)
 
-        reviewViewModel = nil
-        reviewViewModel = AddMediaReviewViewModel(
-            tripId: viewModel.tripId,
-            session: groupingVM.session,
-            draftPins: draftPins,
-            existingMediaIds: existingMediaIds,
-            existingPinsPreview: existingPinsPreview,
-            deletedMediaIds: deletedMediaIds
-        )
-        viewModel.markReviewState(
-            draftPins: draftPins,
-            existingMediaIds: existingMediaIds,
-            existingPinsPreview: existingPinsPreview,
-            deletedMediaIds: deletedMediaIds
-        )
-        viewModel.dispatch(.openReview)
-    }
-
-    private func applyReview(for reviewVM: AddMediaReviewViewModel) async {
         do {
-            try await reviewVM.asyncDispatch(.apply)
+            try await groupingVM.asyncDispatch(.applyGroupsAndProcess)
             await MainActor.run {
                 viewModel.dispatch(.finish)
             }
@@ -157,7 +110,7 @@ public struct AddMediaHostView: View {
                 if isRestartNeeded(for: error) {
                     resetToSelection()
                 } else {
-                    reviewVM.markFailed()
+                    groupingVM.setFailedState()
                 }
             }
         }
@@ -174,6 +127,5 @@ public struct AddMediaHostView: View {
         viewModel.dispatch(.backToSelection)
         selectionViewModel.reset()
         groupingViewModel = nil
-        reviewViewModel = nil
     }
 }
