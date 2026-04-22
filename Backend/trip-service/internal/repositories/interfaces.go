@@ -56,6 +56,8 @@ type TripEventPublisher interface {
 	AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error
 	// PINZ-133: statistics-service consumer — публикация в pinz:stats:events.
 	PublishStatsEvent(ctx context.Context, eventType, tripID string, userIDs []string, payload map[string]any) error
+	// Fan-out WS-события в pinz:trip:{id}:events и pinz:user:{uid}:events.
+	PublishTripEventWS(ctx context.Context, tripID string, userIDs []string, eventType string, payload map[string]interface{}) error
 }
 
 type MediaRepositoryInterface interface {
