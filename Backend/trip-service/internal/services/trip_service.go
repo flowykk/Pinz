@@ -1011,17 +1011,46 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 		// Compute start_time/end_time from media (first/last by captured_at)
 		updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pin.ID)
 	}
-	// Status -> PROCESSING, push to Redis Streams for worker
+	// STUB: ML-пайплайн ещё не реализован, поэтому сразу переводим трип в
+	// DRAFT_FINAL_REVIEW и публикуем TRIP_PROCESSING_COMPLETED.
+	// TODO: вернуть AddMLTask, когда воркер pinz:trip:ml:tasks заработает в проде.
 	if err := s.tripRepo.SetStatus(tripID, "PROCESSING"); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
-	if s.eventRepo != nil {
-		_ = s.eventRepo.AddMLTask(ctx, tripID)
-	}
+	s.finalizeProcessingStub(ctx, tripID)
 	return &pb.ApplyGroupsAndProcessResponse{
 		Message: "Processing started",
 		Status:  "PROCESSING",
 	}, nil
+}
+
+// finalizeProcessingStub заменяет настоящий ML-воркер: синхронно переводит трип
+// в DRAFT_FINAL_REVIEW и публикует TRIP_PROCESSING_COMPLETED подписчикам WS
+// (канал pinz:trip:{id}:events + per-user каналы). Удалить вместе с TODO в
+// ApplyGroupsAndProcess/AddMediaApplyGroupsAndProcess, когда воркер заработает.
+func (s *TripService) finalizeProcessingStub(ctx context.Context, tripID string) {
+	if err := s.tripRepo.SetStatus(tripID, "DRAFT_FINAL_REVIEW"); err != nil {
+		slog.ErrorContext(ctx, "finalizeProcessingStub: SetStatus failed", "trip_id", tripID, "error", err)
+		return
+	}
+	if s.eventRepo == nil || s.participantRepo == nil {
+		return
+	}
+	participants, err := s.participantRepo.GetByTripID(tripID)
+	if err != nil {
+		slog.WarnContext(ctx, "finalizeProcessingStub: GetByTripID failed", "trip_id", tripID, "error", err)
+		return
+	}
+	userIDs := make([]string, 0, len(participants))
+	for _, p := range participants {
+		userIDs = append(userIDs, p.UserID)
+	}
+	if err := s.eventRepo.PublishTripEventWS(ctx, tripID, userIDs, "TRIP_PROCESSING_COMPLETED", map[string]interface{}{
+		"trip_id": tripID,
+		"status":  "DRAFT_FINAL_REVIEW",
+	}); err != nil {
+		slog.WarnContext(ctx, "finalizeProcessingStub: PublishTripEventWS failed", "trip_id", tripID, "error", err)
+	}
 }
 
 func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRequest) (*pb.GetTripReviewResponse, error) {
@@ -1579,13 +1608,10 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 	if s.eventRepo != nil && len(newPinIDs) > 0 {
 		_ = s.eventRepo.PublishTripEvent(ctx, "PIN_ADDED", tripID, userID)
 	}
-	// ТЗ 5.3.4: worker пропустит авто-теги/категорию для пинов, не попавших в new_pin_ids.
-	if s.eventRepo != nil {
-		if err := s.eventRepo.SetMLContext(ctx, tripID, "add_media", newPinIDs, 30*time.Minute); err != nil {
-			slog.WarnContext(ctx, "trip_service: failed to set ML context for add-media", "trip_id", tripID, "err", err)
-		}
-		_ = s.eventRepo.AddMLTaskWithFlow(ctx, tripID, "add_media", newPinIDs)
-	}
+	// STUB: ML-пайплайн пока не реализован, поэтому SetMLContext/AddMLTaskWithFlow
+	// не нужны — сразу двигаем трип в DRAFT_FINAL_REVIEW через общий стаб.
+	// TODO: вернуть оригинальный enqueue, когда воркер ml:tasks заработает в проде.
+	s.finalizeProcessingStub(ctx, tripID)
 	return &pb.AddMediaApplyGroupsAndProcessResponse{
 		Message: "Processing started",
 		Status:  "PROCESSING",
