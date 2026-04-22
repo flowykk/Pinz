@@ -110,6 +110,7 @@ private struct MediaThumbnailCell: View {
                 }
             ).padding(4)
         }
+        .disabledWithOpacity(isLocked)
         .contextMenu {
             if isInteractive {
                 if movablePins.count > 0 {

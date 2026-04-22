@@ -35,7 +35,10 @@ struct AddMediaReviewView: View {
                         )
                     },
                     centerView: {
-                        HeaderTitle(PinzBaseStrings.TripPins.Button.addMedia)
+                        HeaderTitle(
+                            PinzBaseStrings.TripPins.Button.addMedia,
+                            subtitle: PinzBaseStrings.AddMedia.Subtitle.step2
+                        )
                     }
                 )
             } content: {
