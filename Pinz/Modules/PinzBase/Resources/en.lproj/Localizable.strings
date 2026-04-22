@@ -43,7 +43,9 @@
 "profile.label.savedMaps" = "Saved Maps";
 "profile.label.notifications" = "Notifications";
 "profile.label.appearance" = "Appearance";
+"profile.label.storage" = "Storage";
 "profile.label.clearCache" = "Clear Data";
+"profile.hint.saveImagesLocally" = "When enabled, images are cached locally for faster loading.";
 "profile.label.changeEmail" = "Change Email";
 "profile.placeholder.name" = "Name";
 "profile.hint.nicknameRules" = "Username must contain only letters, digits, dots and underscores";
@@ -242,3 +244,5 @@
 "alert.deleteAccount.title" = "Delete account?";
 "alert.deleteAccount.message" = "This action is irreversible. Your account will be permanently deleted.";
 "alert.deleteAccount.confirm" = "Delete";
+
+"profile.label.saveImagesLocally" = "Save images locally";

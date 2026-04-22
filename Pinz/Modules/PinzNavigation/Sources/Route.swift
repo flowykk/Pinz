@@ -31,6 +31,7 @@ public enum ProfileRoute: Hashable {
     case wishlist
     case saved
 
+    case storageSettings
     case notifications
     case appearance
 }

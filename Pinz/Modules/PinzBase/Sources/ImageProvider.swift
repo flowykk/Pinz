@@ -25,7 +25,8 @@ public enum ImageProvider {
             return nil
         }
 
-        if let cached = FileManagerImageStorage.shared.getImage(url: urlString) {
+        if FileManagerImageStorage.shared.isCachingEnabled,
+           let cached = FileManagerImageStorage.shared.getImage(url: urlString) {
             return cached
         }
 
@@ -43,7 +44,8 @@ public enum ImageProvider {
     }
 
     public static func loadAndCacheImage(for urlString: String, _ type: ImageProviderType) async {
-        guard FileManagerImageStorage.shared.getImage(url: urlString) == nil,
+        guard FileManagerImageStorage.shared.isCachingEnabled,
+              FileManagerImageStorage.shared.getImage(url: urlString) == nil,
               let url = URL(string: urlString)
         else { return }
 
@@ -65,7 +67,8 @@ public enum ImageProvider {
         let cacheKey = "video_thumb_" + urlString
         
         // Проверяем кеш
-        if let cached = FileManagerImageStorage.shared.getImage(url: cacheKey) {
+        if FileManagerImageStorage.shared.isCachingEnabled,
+           let cached = FileManagerImageStorage.shared.getImage(url: cacheKey) {
             return cached
         }
         

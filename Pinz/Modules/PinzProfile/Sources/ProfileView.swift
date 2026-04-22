@@ -23,8 +23,6 @@ public struct ProfileView: View {
 
     @State var viewModel: ProfileViewModel
 
-    @State var cacheSize = ""
-    @State var showClearCacheAlert = false
     @State var showDeleteAccountAlert = false
 
     @State var imageEditingDialogShown = false
@@ -80,7 +78,6 @@ public struct ProfileView: View {
         }
         .onAppear {
             viewModel.setRouter(router)
-            cacheSize = FileManagerImageStorage.shared.getCacheSize()
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .transition(.opacity)
@@ -103,15 +100,6 @@ public struct ProfileView: View {
         })
         .fullScreenCover(isPresented: $isAddPersonPresented) {
             AddPersonView()
-        }
-        .alert(PinzBaseStrings.Alert.ClearCache.title, isPresented: $showClearCacheAlert) {
-            Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) { }
-            Button(PinzBaseStrings.Alert.ClearCache.confirm, role: .destructive) {
-                FileManagerImageStorage.shared.clear()
-                cacheSize = FileManagerImageStorage.shared.getCacheSize()
-            }
-        } message: {
-            Text(PinzBaseStrings.Alert.ClearCache.message)
         }
         .alert(PinzBaseStrings.Alert.DeleteAccount.title, isPresented: $showDeleteAccountAlert) {
             Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) { }
@@ -270,6 +258,15 @@ public struct ProfileView: View {
         SettingsGroup(
             settings: [
                 .default(Setting.DefaultSetting(
+                    id: "profileStorage",
+                    leading: .iconTitle(
+                        ProfileIcon.opticaldiscdrive,
+                        PinzBaseStrings.Profile.Label.storage
+                    ),
+                    trailing: .icon(ProfileIcon.chevronRight),
+                    action: .plain { viewModel.dispatch(.navigate(.storageSettings)) }
+                )),
+                .default(Setting.DefaultSetting(
                     id: "profileNotifications",
                     leading: .iconTitle(ProfileIcon.bell, PinzBaseStrings.Profile.Label.notifications),
                     trailing: .icon(ProfileIcon.chevronRight),
@@ -282,17 +279,6 @@ public struct ProfileView: View {
                     action: .plain { viewModel.dispatch(.navigate(.appearance)) }
                 )),
             ],
-        )
-
-        SettingsGroup(
-            settings: [
-                .default(Setting.DefaultSetting(
-                    id: "profileClearCache",
-                    leading: .iconTitle(ProfileIcon.opticaldiscdrive, PinzBaseStrings.Profile.Label.clearCache),
-                    trailing: .valuesIcon([.text(cacheSize)], ProfileIcon.chevronRight),
-                    action: .plain { showClearCacheAlert = true }
-                )),
-            ]
         )
 
         SettingsGroup(

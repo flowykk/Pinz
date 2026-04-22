@@ -1,4 +1,5 @@
 import SwiftUI
+import CryptoKit
 
 protocol LocalFileManagerProtocol {
     func saveImage(image: UIImage, url: String)
@@ -9,22 +10,43 @@ protocol LocalFileManagerProtocol {
 
 public final class FileManagerImageStorage: LocalFileManagerProtocol {
     public static let shared = FileManagerImageStorage()
+    public static let cacheEnabledKey = "pinz.imageCache.enabled"
 
     private let folderName = "rewind-images"
     private let memoryCache = NSCache<NSString, UIImage>()
+    private let userDefaults = UserDefaults.standard
 
     private init() { }
 
+    public var isCachingEnabled: Bool {
+        get {
+            guard let storedValue = userDefaults.object(forKey: Self.cacheEnabledKey) as? Bool else {
+                return true
+            }
+            return storedValue
+        }
+        set {
+            userDefaults.set(newValue, forKey: Self.cacheEnabledKey)
+            if !newValue {
+                memoryCache.removeAllObjects()
+            }
+        }
+    }
+
     public func saveImage(image: UIImage, url: String) {
         print(#function)
-        let imageName = url.replacingOccurrences(of: "/", with: "_")
+        guard isCachingEnabled else {
+            return
+        }
+
+        let imageName = fileName(for: url)
         createFolderIfNeeded(folderName: folderName)
 
         guard let data = image.pngData(),
               let fileURL = getURLForImage(urlToArticle: imageName, folderName: folderName)
         else { return }
 
-        memoryCache.setObject(image, forKey: url as NSString)
+        memoryCache.setObject(image, forKey: cacheKey(for: url) as NSString)
 
         do {
             print("SAVING IMAGE")
@@ -37,14 +59,17 @@ public final class FileManagerImageStorage: LocalFileManagerProtocol {
 
     public func getImage(url: String) -> UIImage? {
         print(#function)
+        guard isCachingEnabled else {
+            return nil
+        }
 
-        let imageKey = url as NSString
+        let imageKey = cacheKey(for: url) as NSString
         if let cachedImage = memoryCache.object(forKey: imageKey) {
             print("RETURNING IMAGE FROM CACHE")
             return cachedImage
         }
 
-        let imageName = url.replacingOccurrences(of: "/", with: "_")
+        let imageName = fileName(for: url)
         guard let url = getURLForImage(urlToArticle: imageName, folderName: folderName),
               FileManager.default.fileExists(atPath: url.path)
         else {
@@ -61,7 +86,9 @@ public final class FileManagerImageStorage: LocalFileManagerProtocol {
     }
 
     public func deleteImage(url: String) {
-        let imageName = url.replacingOccurrences(of: "/", with: "_")
+        let imageName = fileName(for: url)
+        let cacheKey = cacheKey(for: url) as NSString
+        memoryCache.removeObject(forKey: cacheKey)
         guard let url = getURLForImage(urlToArticle: imageName, folderName: folderName),
             FileManager.default.fileExists(atPath: url.path) else {
             return
@@ -144,10 +171,43 @@ extension FileManagerImageStorage {
     }
 
     private func getURLForImage(urlToArticle: String, folderName: String) -> URL? {
-        let imageName = urlToArticle.replacingOccurrences(of: "/", with: "_")
         guard let folderURL = getURLForFolder(folderName: folderName) else {
             return nil
         }
-        return folderURL.appendingPathComponent(imageName + ".png")
+        return folderURL.appendingPathComponent(urlToArticle + ".png")
+    }
+
+    private func cacheKey(for key: String) -> String {
+        return "cache_" + normalizedImageKey(key)
+    }
+
+    private func fileName(for key: String) -> String {
+        return hashString(cacheKey(for: key))
+    }
+
+    private func normalizedImageKey(_ key: String) -> String {
+        let videoPrefix = "video_thumb_"
+        if key.hasPrefix(videoPrefix),
+           let parsed = URL(string: String(key.dropFirst(videoPrefix.count))) {
+            return "video_thumb_" + pathWithoutQuery(from: parsed)
+        }
+
+        if let parsed = URL(string: key) {
+            return pathWithoutQuery(from: parsed)
+        }
+
+        return key
+    }
+
+    private func pathWithoutQuery(from url: URL) -> String {
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        components?.query = nil
+        components?.fragment = nil
+        return components?.url?.absoluteString ?? url.absoluteString
+    }
+
+    private func hashString(_ text: String) -> String {
+        let digest = SHA256.hash(data: Data(text.utf8))
+        return digest.map { String(format: "%02x", $0) }.joined()
     }
 }
