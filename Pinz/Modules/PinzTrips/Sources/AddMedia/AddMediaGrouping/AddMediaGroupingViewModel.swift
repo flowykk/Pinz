@@ -16,6 +16,7 @@ final class AddMediaGroupingViewModel {
     enum LoadingStatus {
         case uploading
         case grouping
+        case applying
 
         var localizedValue: String {
             switch self {
@@ -23,6 +24,8 @@ final class AddMediaGroupingViewModel {
                 PinzBaseStrings.TripCreation.Loading.uploadingMedia
             case .grouping:
                 PinzBaseStrings.AddMedia.Loading.grouping
+            case .applying:
+                PinzBaseStrings.AddMedia.Loading.applying
             }
         }
     }
@@ -64,11 +67,12 @@ final class AddMediaGroupingViewModel {
 
     enum Intent {
         case deleteMedia(RawPinMedia, fromPin: String)
-        case moveMedia(RawPinMedia, fromPin: Int, toPin: Int)
+        case moveMedia(RawPinMedia, fromPinId: String, toPinId: String)
     }
 
     enum AsyncIntent {
         case startGrouping
+        case applyGroupsAndProcess
     }
 
     func dispatch(_ intent: Intent) {
@@ -83,17 +87,17 @@ final class AddMediaGroupingViewModel {
                     deletedMediaIds.insert(media.id)
                 }
             }
-        case let .moveMedia(media, fromPin, toPin):
+        case let .moveMedia(media, fromPinId, toPinId):
             guard !existingMediaIds.contains(media.id),
-                  fromPin != toPin,
-                  fromPin < draftPins.count,
-                  toPin < draftPins.count else {
+                  fromPinId != toPinId,
+                  let fromPinIndex = draftPinIndex(for: fromPinId),
+                  let toPinIndex = draftPinIndex(for: toPinId) else {
                 return
             }
 
             withAnimation(.easeInOut(duration: 0.3)) {
-                draftPins[fromPin].medias.removeAll { $0.id == media.id }
-                draftPins[toPin].medias.append(media)
+                draftPins[fromPinIndex].medias.removeAll { $0.id == media.id }
+                draftPins[toPinIndex].medias.append(media)
             }
         }
     }
@@ -102,6 +106,8 @@ final class AddMediaGroupingViewModel {
         switch intent {
         case .startGrouping:
             try await startGrouping()
+        case .applyGroupsAndProcess:
+            try await applyGroupsAndProcess()
         }
     }
 
@@ -134,8 +140,8 @@ final class AddMediaGroupingViewModel {
                 media: mediaEntries
             )
 
-            draftPins = response.draftPins.map { $0.toRawPin() }
             existingMediaIds = Set(response.existingMediaIds ?? [])
+            draftPins = sanitize(responseDraftPins: response.draftPins.map { $0.toRawPin() })
             existingPinsPreview = await loadExistingPinsPreview()
             isReady = true
             flowStatus = .ready
@@ -212,10 +218,34 @@ final class AddMediaGroupingViewModel {
         }
     }
 
-    var canProceed: Bool {
-        draftPins.contains {
-            $0.medias.contains { !existingMediaIds.contains($0.id) }
+    private func applyGroupsAndProcess() async throws {
+        guard canProceed else {
+            return
         }
+
+        changeLoading(to: true, status: .applying)
+        hasFailed = false
+        flowStatus = .ready
+
+        do {
+            let draftPinsRequest = buildDraftPinsRequest()
+            _ = try await networkService.addMediaApplyGroupsAndProcess(
+                tripId: tripId,
+                sessionId: session.sessionId,
+                draftPins: draftPinsRequest,
+                deletedMediaIds: Array(deletedMediaIds)
+            )
+            flowStatus = .ready
+            changeLoading(to: false, status: nil)
+        } catch {
+            changeLoading(to: false, status: nil)
+            setFailedState()
+            throw error
+        }
+    }
+
+    var canProceed: Bool {
+        !draftPins.isEmpty
     }
 
     private func changeLoading(to isLoading: Bool, status: LoadingStatus?) {
@@ -230,6 +260,36 @@ final class AddMediaGroupingViewModel {
             return httpError == .conflict || httpError == .preconditionFailed
         }
         return false
+    }
+
+    private func sanitize(responseDraftPins: [RawPin]) -> [RawPin] {
+        responseDraftPins.compactMap { pin in
+            var sanitizedPin = pin
+            sanitizedPin.medias.removeAll { existingMediaIds.contains($0.id) }
+            return sanitizedPin.medias.isEmpty ? nil : sanitizedPin
+        }
+    }
+
+    func setFailedState() {
+        hasFailed = true
+        flowStatus = .failed
+    }
+
+    private func buildDraftPinsRequest() -> [DraftPinInputDTO] {
+        draftPins.compactMap { pin in
+            let mediaIds = pin.medias
+                .map(\.id)
+                .filter { !existingMediaIds.contains($0) }
+
+            guard !mediaIds.isEmpty else {
+                return nil
+            }
+            return DraftPinInputDTO(draftPinId: pin.id, mediaIds: mediaIds)
+        }
+    }
+
+    private func draftPinIndex(for id: String) -> Int? {
+        draftPins.firstIndex(where: { $0.id == id })
     }
 }
 

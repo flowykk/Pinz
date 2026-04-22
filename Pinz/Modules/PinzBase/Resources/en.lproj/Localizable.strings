@@ -154,6 +154,9 @@
 "addMedia.label.statusPrefix" = "Status: ";
 "addMedia.label.currentTripPins" = "Current trip pins";
 "addMedia.label.draftGroups" = "Draft groups";
+"addMedia.subtitle.step0" = "0/2";
+"addMedia.subtitle.step1" = "1/2";
+"addMedia.subtitle.step2" = "2/2";
 "addMedia.hint.chooseMedia" = "Choose photos or videos to add";
 "addMedia.description.sessionHint" = "Tap the picker button and select media. After selecting, session request will be sent.";
 "addMedia.message.noGroupsGeneratedYet" = "No groups were generated yet.";

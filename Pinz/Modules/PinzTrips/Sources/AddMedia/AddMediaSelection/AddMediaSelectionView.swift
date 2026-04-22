@@ -33,7 +33,10 @@ struct AddMediaSelectionView: View {
                         action: .plain { onBack() }
                     )
                 }, centerView: {
-                    HeaderTitle(PinzBaseStrings.TripPins.Button.addMedia)
+                    HeaderTitle(
+                        PinzBaseStrings.TripPins.Button.addMedia,
+                        subtitle: PinzBaseStrings.AddMedia.Subtitle.step0
+                    )
                 })
             } content: {
                 VStack(spacing: 16) {

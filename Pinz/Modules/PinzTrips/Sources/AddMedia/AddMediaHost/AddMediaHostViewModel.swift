@@ -16,7 +16,6 @@ final class AddMediaHostViewModel {
     enum Step {
         case selection
         case grouping
-        case review
     }
 
     enum Route {
@@ -26,7 +25,6 @@ final class AddMediaHostViewModel {
     enum Intent {
         case navigate(Route)
         case backToSelection
-        case openReview
         case openGrouping(session: AddMediaStartDTO, loadedMedia: [LoadedMedia])
         case finish
     }
@@ -58,9 +56,6 @@ final class AddMediaHostViewModel {
             self.loadedMedia = loadedMedia
             self.step = .grouping
             self.flowStatus = .uploading
-        case .openReview:
-            self.step = .review
-            self.flowStatus = .ready
         case .finish:
             router?.notifyTripReloadNeeded()
             router?.pop()
@@ -76,19 +71,6 @@ final class AddMediaHostViewModel {
         self.existingMediaIds = Set(existingMediaIds)
         self.existingPinsPreview = existingPinsPreview
         self.deletedMediaIds = []
-        self.flowStatus = .ready
-    }
-
-    func markReviewState(
-        draftPins: [RawPin],
-        existingMediaIds: [String],
-        existingPinsPreview: [RawPin],
-        deletedMediaIds: [String]
-    ) {
-        self.draftPins = draftPins
-        self.existingMediaIds = Set(existingMediaIds)
-        self.existingPinsPreview = existingPinsPreview
-        self.deletedMediaIds = Set(deletedMediaIds)
         self.flowStatus = .ready
     }
 

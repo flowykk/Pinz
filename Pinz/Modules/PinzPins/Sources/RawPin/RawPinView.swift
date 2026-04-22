@@ -8,6 +8,7 @@ public struct RawPinView: View {
     private let pin: RawPin
     private let index: Int
     private let allPins: [RawPin]
+    private let movablePinIds: Set<String>?
     private let onDeleteMedia: ((RawPinMedia) -> Void)?
     private let onMoveMedia: ((RawPinMedia, Int) -> Void)?
     private let isMediaLocked: (RawPinMedia) -> Bool
@@ -15,8 +16,13 @@ public struct RawPinView: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 4)
 
     private var movablePins: [(globalIndex: Int, pin: RawPin)] {
-        allPins.indices
+        let allowed = movablePinIds
+        return allPins.indices
             .filter { $0 != index }
+            .filter { targetIndex in
+                guard let movablePinIds else { return true }
+                return movablePinIds.contains(allPins[targetIndex].id)
+            }
             .map { (globalIndex: $0, pin: allPins[$0]) }
     }
 
@@ -26,7 +32,8 @@ public struct RawPinView: View {
         allPins: [RawPin] = [],
         onDeleteMedia: ((RawPinMedia) -> Void)? = nil,
         onMoveMedia: ((RawPinMedia, Int) -> Void)? = nil,
-        isMediaLocked: @escaping (RawPinMedia) -> Bool = { _ in false }
+        isMediaLocked: @escaping (RawPinMedia) -> Bool = { _ in false },
+        movablePinIds: Set<String>? = nil
     ) {
         self.pin = pin
         self.index = index
@@ -34,6 +41,7 @@ public struct RawPinView: View {
         self.onDeleteMedia = onDeleteMedia
         self.onMoveMedia = onMoveMedia
         self.isMediaLocked = isMediaLocked
+        self.movablePinIds = movablePinIds
     }
 
     public var body: some View {
@@ -110,6 +118,7 @@ private struct MediaThumbnailCell: View {
                 }
             ).padding(4)
         }
+        .disabledWithOpacity(isLocked, opacity: 0.4)
         .contextMenu {
             if isInteractive {
                 if movablePins.count > 0 {
