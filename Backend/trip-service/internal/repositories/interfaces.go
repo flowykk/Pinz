@@ -58,6 +58,8 @@ type TripEventPublisher interface {
 	PublishStatsEvent(ctx context.Context, eventType, tripID string, userIDs []string, payload map[string]any) error
 	// Fan-out WS-события в pinz:trip:{id}:events и pinz:user:{uid}:events.
 	PublishTripEventWS(ctx context.Context, tripID string, userIDs []string, eventType string, payload map[string]interface{}) error
+	// DeleteTripEventStream удаляет per-trip WS-stream (вызывается из DeleteTrip).
+	DeleteTripEventStream(ctx context.Context, tripID string) error
 }
 
 type MediaRepositoryInterface interface {

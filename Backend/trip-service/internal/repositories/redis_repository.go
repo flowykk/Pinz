@@ -25,6 +25,13 @@ const (
 
 	tripEventsChannelPrefix = "pinz:trip:"
 	tripEventsChannelSuffix = ":events"
+
+	// wsStreamMaxLen ограничивает длину per-trip и per-user WS-стримов, чтобы
+	// они не росли бесконечно. Approx=true у XADD допускает небольшой оверхед.
+	wsStreamMaxLen = 100
+	// wsStreamTTL — TTL на stream key, ставится после каждого XADD. Фикcит
+	// orphan streams на случай, если DeleteTripEventStream не был вызван.
+	wsStreamTTL = 1 * time.Hour
 )
 
 // RedisRepository provides Redis client and trip event streaming for Notification/Statistics
@@ -262,10 +269,14 @@ func (r *RedisRepository) PublishUserEvent(ctx context.Context, userID, eventTyp
 	return nil
 }
 
-// PublishTripEventWS fan-outs a WebSocket event to both the per-trip channel
-// (consumed by per-resource WS endpoints) and each participant's per-user channel
+// PublishTripEventWS fan-outs a WebSocket event to both the per-trip stream
+// (consumed by per-resource WS endpoints) and each participant's per-user stream
 // (consumed by the global /v1/ws endpoint). Payload is always wrapped into
 // {"event","payload"} with trip_id injected so downstream filters work uniformly.
+//
+// Доставка идёт через Redis Streams (XADD с MAXLEN ~ wsStreamMaxLen + EXPIRE).
+// XREAD на стороне api-gateway может начать чтение с "0-0" и получить backfill —
+// это устраняет гонку publish-до-subscribe, которая была у Pub/Sub.
 func (r *RedisRepository) PublishTripEventWS(ctx context.Context, tripID string, userIDs []string, eventType string, payload map[string]interface{}) error {
 	if r == nil || r.client == nil || tripID == "" {
 		return nil
@@ -285,17 +296,43 @@ func (r *RedisRepository) PublishTripEventWS(ctx context.Context, tripID string,
 		return err
 	}
 	tripChannel := tripEventsChannelPrefix + tripID + tripEventsChannelSuffix
-	if err := r.client.Publish(ctx, tripChannel, data).Err(); err != nil {
-		slog.WarnContext(ctx, "PublishTripEventWS trip publish failed", "channel", tripChannel, "event", eventType, "error", err)
-	}
+	r.publishWSStream(ctx, tripChannel, data, eventType)
 	for _, uid := range userIDs {
 		if uid == "" {
 			continue
 		}
 		userChannel := userEventsChannelPrefix + uid + userEventsChannelSuffix
-		if err := r.client.Publish(ctx, userChannel, data).Err(); err != nil {
-			slog.WarnContext(ctx, "PublishTripEventWS user publish failed", "channel", userChannel, "event", eventType, "error", err)
-		}
+		r.publishWSStream(ctx, userChannel, data, eventType)
+	}
+	return nil
+}
+
+// publishWSStream делает XADD + best-effort EXPIRE на WS-stream.
+func (r *RedisRepository) publishWSStream(ctx context.Context, key string, data []byte, eventType string) {
+	if err := r.client.XAdd(ctx, &redis.XAddArgs{
+		Stream: key,
+		MaxLen: wsStreamMaxLen,
+		Approx: true,
+		Values: map[string]interface{}{"data": data},
+	}).Err(); err != nil {
+		slog.WarnContext(ctx, "PublishTripEventWS xadd failed", "stream", key, "event", eventType, "error", err)
+		return
+	}
+	if err := r.client.Expire(ctx, key, wsStreamTTL).Err(); err != nil {
+		slog.WarnContext(ctx, "PublishTripEventWS expire failed", "stream", key, "error", err)
+	}
+}
+
+// DeleteTripEventStream удаляет per-trip WS-stream. Вызывается из DeleteTrip,
+// чтобы не копить orphan-ключи в Redis.
+func (r *RedisRepository) DeleteTripEventStream(ctx context.Context, tripID string) error {
+	if r == nil || r.client == nil || tripID == "" {
+		return nil
+	}
+	key := tripEventsChannelPrefix + tripID + tripEventsChannelSuffix
+	if err := r.client.Del(ctx, key).Err(); err != nil {
+		slog.WarnContext(ctx, "DeleteTripEventStream failed", "stream", key, "error", err)
+		return err
 	}
 	return nil
 }

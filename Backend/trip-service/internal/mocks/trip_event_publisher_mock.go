@@ -69,6 +69,20 @@ func (mr *MockTripEventPublisherMockRecorder) AddMLTaskWithFlow(ctx, tripID, flo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTaskWithFlow", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTaskWithFlow), ctx, tripID, flow, newPinIDs)
 }
 
+// DeleteTripEventStream mocks base method.
+func (m *MockTripEventPublisher) DeleteTripEventStream(ctx context.Context, tripID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTripEventStream", ctx, tripID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteTripEventStream indicates an expected call of DeleteTripEventStream.
+func (mr *MockTripEventPublisherMockRecorder) DeleteTripEventStream(ctx, tripID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTripEventStream", reflect.TypeOf((*MockTripEventPublisher)(nil).DeleteTripEventStream), ctx, tripID)
+}
+
 // PublishStatsEvent mocks base method.
 func (m *MockTripEventPublisher) PublishStatsEvent(ctx context.Context, eventType, tripID string, userIDs []string, payload map[string]any) error {
 	m.ctrl.T.Helper()
