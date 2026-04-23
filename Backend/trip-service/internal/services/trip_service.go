@@ -636,6 +636,8 @@ func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest)
 		if s.eventRepo != nil {
 			// TRIP_DELETED — для cleanup trip_locations_mirror в statistics-service.
 			_ = s.eventRepo.PublishStatsEvent(ctx, "TRIP_DELETED", tripID, nil, nil)
+			// Убираем per-trip WS-stream, чтобы не копить orphan-ключи в Redis.
+			_ = s.eventRepo.DeleteTripEventStream(ctx, tripID)
 		}
 		return &pb.DeleteTripResponse{Success: true}, nil
 	}

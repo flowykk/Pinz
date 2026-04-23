@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -42,6 +43,14 @@ const (
 	wsWriteTimeout = 10 * time.Second
 	wsReadDeadline = 60 * time.Second
 	wsPingPeriod   = 30 * time.Second
+	// wsXReadBlock — сколько XREAD блокирует при отсутствии новых сообщений.
+	// Короче ping-period, чтобы пинги не задерживались из-за блокирующего чтения
+	// (XREAD идёт в отдельной goroutine, так что это не критично, но полезно
+	// для cooperative cancellation при ctx.Done).
+	wsXReadBlock = 15 * time.Second
+	// wsSubChanBuffer — буфер канала между XRead-goroutine и pumpWS, чтобы
+	// медленный клиент не блокировал чтение из Redis.
+	wsSubChanBuffer = 16
 )
 
 type wsEvent struct {
@@ -102,11 +111,12 @@ func (h *WSHandler) serveTripWS(w http.ResponseWriter, r *http.Request, tripID s
 	}
 	defer conn.Close()
 
-	channel := "pinz:trip:" + tripID + ":events"
-	pubsub := h.redis.Subscribe(ctx, channel)
-	defer pubsub.Close()
+	subCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	streamKey := "pinz:trip:" + tripID + ":events"
+	msgs := subscribeStream(subCtx, h.redis, streamKey)
 
-	pumpWS(ctx, conn, pubsub.Channel(), nil)
+	pumpWS(ctx, conn, msgs, nil)
 }
 
 func tripAccessError(err error) (int, string) {
@@ -147,16 +157,65 @@ func (h *WSHandler) serveUserWS(w http.ResponseWriter, r *http.Request, allow fu
 	}
 	defer conn.Close()
 
-	channel := "pinz:user:" + userID + ":events"
-	pubsub := h.redis.Subscribe(ctx, channel)
-	defer pubsub.Close()
+	subCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	streamKey := "pinz:user:" + userID + ":events"
+	msgs := subscribeStream(subCtx, h.redis, streamKey)
 
-	pumpWS(ctx, conn, pubsub.Channel(), allow)
+	pumpWS(ctx, conn, msgs, allow)
+}
+
+// subscribeStream запускает goroutine, читающую Redis Stream через XRead без
+// consumer-group (broadcast-семантика, совместимая со старым Pub/Sub). Первый
+// XREAD идёт от "0-0" — забирает backfill, что устраняет гонку publish-до-
+// subscribe. Канал закрывается при отмене ctx.
+func subscribeStream(ctx context.Context, client *redis.Client, key string) <-chan []byte {
+	out := make(chan []byte, wsSubChanBuffer)
+	go func() {
+		defer close(out)
+		lastID := "0-0"
+		for {
+			if ctx.Err() != nil {
+				return
+			}
+			res, err := client.XRead(ctx, &redis.XReadArgs{
+				Streams: []string{key, lastID},
+				Block:   wsXReadBlock,
+				Count:   wsSubChanBuffer,
+			}).Result()
+			if err != nil {
+				if errors.Is(err, redis.Nil) {
+					continue
+				}
+				if ctx.Err() != nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return
+				}
+				slog.WarnContext(ctx, "ws: XRead error", "stream", key, "error", err)
+				continue
+			}
+			for _, stream := range res {
+				for _, m := range stream.Messages {
+					data, _ := m.Values["data"].(string)
+					if data == "" {
+						lastID = m.ID
+						continue
+					}
+					select {
+					case out <- []byte(data):
+					case <-ctx.Done():
+						return
+					}
+					lastID = m.ID
+				}
+			}
+		}
+	}()
+	return out
 }
 
 // pumpWS runs the read/write loop for a single WebSocket connection: forwards filtered
-// Redis Pub/Sub payloads, heartbeats with ping/pong, and detects remote close via reader.
-func pumpWS(ctx context.Context, conn *websocket.Conn, sub <-chan *redis.Message, allow func(wsEvent) bool) {
+// WS-stream payloads, heartbeats with ping/pong, and detects remote close via reader.
+func pumpWS(ctx context.Context, conn *websocket.Conn, sub <-chan []byte, allow func(wsEvent) bool) {
 	_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline))
 	conn.SetPongHandler(func(string) error {
 		return conn.SetReadDeadline(time.Now().Add(wsReadDeadline))
@@ -177,13 +236,13 @@ func pumpWS(ctx context.Context, conn *websocket.Conn, sub <-chan *redis.Message
 
 	for {
 		select {
-		case msg, ok := <-sub:
+		case payload, ok := <-sub:
 			if !ok {
 				return
 			}
 			if allow != nil {
 				var ev wsEvent
-				if err := json.Unmarshal([]byte(msg.Payload), &ev); err != nil {
+				if err := json.Unmarshal(payload, &ev); err != nil {
 					continue
 				}
 				if !allow(ev) {
@@ -191,7 +250,7 @@ func pumpWS(ctx context.Context, conn *websocket.Conn, sub <-chan *redis.Message
 				}
 			}
 			_ = conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
-			if err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload)); err != nil {
+			if err := conn.WriteMessage(websocket.TextMessage, payload); err != nil {
 				slog.WarnContext(ctx, "ws: write failed", "error", err)
 				return
 			}
