@@ -1038,6 +1038,11 @@ func (s *TripService) finalizeProcessingStub(ctx context.Context, tripID string)
 	if s.eventRepo == nil || s.participantRepo == nil {
 		return
 	}
+	// Очищаем per-trip WS-stream от backfill предыдущих processing-сессий
+	// (например, свежий add-media-flow на трипе, который ранее уже проходил
+	// creation). Иначе подписчик на XREAD "0-0" получил бы чужое старое
+	// TRIP_PROCESSING_COMPLETED ещё до того, как текущий publish произошёл.
+	_ = s.eventRepo.DeleteTripEventStream(ctx, tripID)
 	participants, err := s.participantRepo.GetByTripID(tripID)
 	if err != nil {
 		slog.WarnContext(ctx, "finalizeProcessingStub: GetByTripID failed", "trip_id", tripID, "error", err)
