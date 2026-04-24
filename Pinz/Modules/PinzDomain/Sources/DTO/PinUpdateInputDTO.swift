@@ -7,6 +7,8 @@ public struct PinUpdateInputDTO {
     public let latitude: Double?
     public let longitude: Double?
     public let tags: [String]?
+    public let startTimeUnix: Int?
+    public let endTimeUnix: Int?
 
     public init(
         pinId: String,
@@ -16,7 +18,9 @@ public struct PinUpdateInputDTO {
         privacyLevel: String? = nil,
         latitude: Double? = nil,
         longitude: Double? = nil,
-        tags: [String]? = nil
+        tags: [String]? = nil,
+        startTimeUnix: Int? = nil,
+        endTimeUnix: Int? = nil
     ) {
         self.pinId = pinId
         self.name = name
@@ -26,5 +30,7 @@ public struct PinUpdateInputDTO {
         self.latitude = latitude
         self.longitude = longitude
         self.tags = tags
+        self.startTimeUnix = startTimeUnix
+        self.endTimeUnix = endTimeUnix
     }
 }

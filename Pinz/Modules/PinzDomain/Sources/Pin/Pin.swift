@@ -3,6 +3,7 @@ import CoreLocation
 
 public struct Pin: Hashable, Identifiable {
     public var id: String { name }
+    public let serverId: String?
     
     public var name: String
     public var description: String?
@@ -23,6 +24,7 @@ public struct Pin: Hashable, Identifiable {
         startDate: Date? = nil,
         endDate: Date? = nil,
         tags: [MediaTag],
+        serverId: String? = nil,
         coordinates: CLLocationCoordinate2D? = nil
     ) {
         self.name = name
@@ -33,6 +35,7 @@ public struct Pin: Hashable, Identifiable {
         self.startDate = startDate
         self.endDate = endDate
         self.tags = tags
+        self.serverId = serverId
         self.coordinates = coordinates
     }
 }

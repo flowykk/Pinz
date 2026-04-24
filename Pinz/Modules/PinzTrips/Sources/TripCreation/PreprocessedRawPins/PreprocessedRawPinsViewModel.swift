@@ -108,21 +108,15 @@ final class PreprocessedRawPinsViewModel {
                 try await waitTask.value
                 reviewResponse = try await networkService.getTripReview(tripId: tripId)
             } catch TripReviewWaitError.timeout {
-                Self.log("WS timeout fallback started", ["tripId: \(tripId)"])
                 reviewResponse = try await Self.waitForReviewAfterTimeout(
                     tripId: tripId,
                     networkService: networkService
                 )
                 let reviewStatus = Self.normalizedReviewStatus(reviewResponse.status)
-                Self.log(
-                    "WS timeout fallback finished",
-                    ["tripId: \(tripId)", "status: \(reviewStatus)"]
-                )
                 guard reviewStatus == "PROCESSING" || reviewStatus == "DRAFT_FINAL_REVIEW" else {
                     throw TripReviewWaitError.webSocket(message: "unexpected review status: \(reviewStatus)")
                 }
             } catch {
-                Self.log("Trip processing continuation failed", ["tripId: \(tripId)", "error: \(error)"])
                 throw error
             }
 
@@ -154,14 +148,6 @@ final class PreprocessedRawPinsViewModel {
             }
             let response = try await networkService.getTripReview(tripId: tripId)
             let status = normalizedReviewStatus(response.status)
-            Self.log(
-                "Review poll",
-                [
-                    "tripId: \(tripId)",
-                    "attempt: \(attempt + 1)/\(attempts)",
-                    "status: \(status)"
-                ]
-            )
             if status == "PROCESSING" || status == "DRAFT_FINAL_REVIEW" {
                 return response
             }
@@ -171,17 +157,6 @@ final class PreprocessedRawPinsViewModel {
             return lastResponse
         }
         throw TripReviewWaitError.timeout
-    }
-
-    private static func log(_ message: String, _ details: [String] = []) {
-        #if DEBUG
-        let lines = details.map { "│  \($0)" }.joined(separator: "\n")
-        if lines.isEmpty {
-            print("┌─ [TripCreation][WARN] \(message)\n└─────────────────────────")
-        } else {
-            print("┌─ [TripCreation][WARN] \(message)\n\(lines)\n└─────────────────────────")
-        }
-        #endif
     }
 
     private static func normalizedReviewStatus(_ status: String) -> String {

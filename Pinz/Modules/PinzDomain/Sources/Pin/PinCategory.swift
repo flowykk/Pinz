@@ -35,6 +35,24 @@ public enum PinCategory: PickerItem {
         }
     }
 
+    public var apiValue: String {
+        switch self {
+        case let .custom(text):
+            text?.lowercased() ?? "custom"
+        case .sight: "sight"
+        case .nature: "nature"
+        case .leisure: "leisure"
+        case .housing: "housing"
+        case .food: "food"
+        case .shopping: "shopping"
+        case .transport: "transport"
+        case .entertainment: "entertainment"
+        case .event: "event"
+        case .sport: "sport"
+        case .work: "work"
+        }
+    }
+
     public static let allCases: [PinCategory] = [
         .custom("Другое"),
         .sight,

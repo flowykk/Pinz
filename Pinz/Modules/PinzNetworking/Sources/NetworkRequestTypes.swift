@@ -49,6 +49,8 @@ struct PinUpdateInputJSON: Encodable {
     let latitude: Double?
     let longitude: Double?
     let tags: [String]?
+    let start_time_unix: Int?
+    let end_time_unix: Int?
 
     init(_ dto: PinUpdateInputDTO) {
         pin_id = dto.pinId
@@ -59,5 +61,7 @@ struct PinUpdateInputJSON: Encodable {
         latitude = dto.latitude
         longitude = dto.longitude
         tags = dto.tags
+        start_time_unix = dto.startTimeUnix
+        end_time_unix = dto.endTimeUnix
     }
 }

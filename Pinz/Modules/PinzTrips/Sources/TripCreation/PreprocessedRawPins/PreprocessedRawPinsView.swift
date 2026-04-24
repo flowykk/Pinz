@@ -94,7 +94,7 @@ public struct PreprocessedRawPinsView: View {
             PinzButton(
                 type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
-                disabled: false,
+                disabled: viewModel.isLoading,
                 action: .async { try await viewModel.asyncDispatch(.continue) }
             )
         }
