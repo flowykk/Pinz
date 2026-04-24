@@ -327,18 +327,44 @@ extension PinzAPI {
               {"id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"media":[
                 {"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"},
                 {"media_id":"m-002","url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","privacy_level":"public"},
-                {"media_id":"m-003","url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","privacy_level":"public"}
+                {"media_id":"m-003","url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","privacy_level":"public"},
+                {"media_id":"m-004","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"},
+                {"media_id":"m-005","url":"https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg","privacy_level":"public"}
               ]},
               {"id":"pin-002","name":"Лувр","category":"entertainment","latitude":48.8606,"longitude":2.3352,"location_name":"Париж","tags":["музей","искусство"],"issues":[],"media":[
-                {"media_id":"m-004","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"},
-                {"media_id":"m-005","url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg","privacy_level":"public"}
+                {"media_id":"m-006","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"},
+                {"media_id":"m-007","url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg","privacy_level":"public"},
+                {"media_id":"m-008","url":"https://i.pinimg.com/736x/59/79/59/5979594c0f0de1b583f60ce9ac15b94e.jpg","privacy_level":"public"},
+                {"media_id":"m-009","url":"https://i.pinimg.com/736x/29/9e/ff/299effcb075e97c1b4dc5ebcb7aac061.jpg","privacy_level":"public"},
+                {"media_id":"m-010","url":"https://i.pinimg.com/736x/aa/a9/1f/aaa91f5d5b7a4d2f9c2a4d57f8f0e8e0.jpg","privacy_level":"public"}
               ]},
               {"id":"pin-003","name":"Собор Парижской Богоматери","category":"entertainment","latitude":48.8530,"longitude":2.3499,"location_name":"Париж","tags":["готика","история"],"issues":[],"media":[
-                {"media_id":"m-006","url":"https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg","privacy_level":"public"},
-                {"media_id":"m-007","url":"https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg","privacy_level":"public"}
+                {"media_id":"m-011","url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","privacy_level":"public"},
+                {"media_id":"m-012","url":"https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg","privacy_level":"public"},
+                {"media_id":"m-013","url":"https://i.pinimg.com/736x/1f/2d/c7/1f2dc7ba98b1c5c737e8942aab90751d.jpg","privacy_level":"public"},
+                {"media_id":"m-014","url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","privacy_level":"public"}
               ]},
               {"id":"pin-004","name":"Монмартр","category":"entertainment","latitude":48.8867,"longitude":2.3431,"location_name":"Париж","tags":["сцена","культура"],"issues":[],"media":[
-                {"media_id":"m-008","url":"https://i.pinimg.com/736x/77/65/ac/7765ac5175540792659b036142c9a49d.jpg","privacy_level":"public"}
+                {"media_id":"m-015","url":"https://i.pinimg.com/736x/77/65/ac/7765ac5175540792659b036142c9a49d.jpg","privacy_level":"public"},
+                {"media_id":"m-016","url":"https://i.pinimg.com/736x/06/dc/fa/06dcfa6e1a3aaf1539724b3d48f21280.jpg","privacy_level":"public"},
+                {"media_id":"m-017","url":"https://i.pinimg.com/736x/34/cb/93/34cb93114fb0cca8f020cb9c26928394.jpg","privacy_level":"public"},
+                {"media_id":"m-018","url":"https://i.pinimg.com/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg","privacy_level":"public"}
+              ]},
+              {"id":"pin-005","name":"Сен-Шапель","category":"entertainment","latitude":48.8554,"longitude":2.3594,"location_name":"Париж","tags":["стекло","готика"],"issues":[],"media":[
+                {"media_id":"m-019","url":"https://i.pinimg.com/736x/b1/d4/07/b1d4074af9450d9ce0b6f2fe5db8f36c.jpg","privacy_level":"public"},
+                {"media_id":"m-020","url":"https://i.pinimg.com/1200x/83/3d/4e/833d4ec2c8b7afe0593de70d09823443.jpg","privacy_level":"public"},
+                {"media_id":"m-021","url":"https://i.pinimg.com/736x/f5/ce/ef/f5ceef7cf315cb31474d66a41e093b13.jpg","privacy_level":"public"}
+              ]},
+              {"id":"pin-006","name":"Елисейские поля","category":"entertainment","latitude":48.8698,"longitude":2.3078,"location_name":"Париж","tags":["шопинг","прогулка"],"issues":[],"media":[
+                {"media_id":"m-022","url":"https://i.pinimg.com/736x/1c/f0/2f/1cf02f94d8800d6a172c3f4e554eb512.jpg","privacy_level":"public"},
+                {"media_id":"m-023","url":"https://i.pinimg.com/736x/cb/f7/9b/cbf79b6388c70e03982a519436942256.jpg","privacy_level":"public"},
+                {"media_id":"m-024","url":"https://i.pinimg.com/1200x/e2/b4/26/e2b426206dbb0b1cc832c80e2d9259ee.jpg","privacy_level":"public"},
+                {"media_id":"m-025","url":"https://i.pinimg.com/736x/2f/0b/16/2f0b16ad2c349d732a53b97ae30932f2.jpg","privacy_level":"public"}
+              ]},
+              {"id":"pin-007","name":"Остров Сите","category":"entertainment","latitude":48.8529,"longitude":2.3500,"location_name":"Париж","tags":["архитектура","история"],"issues":[],"media":[
+                {"media_id":"m-026","url":"https://i.pinimg.com/1200x/5f/2e/15/5f2e1561dc3ddd63cb50435e360a6abb.jpg","privacy_level":"public"},
+                {"media_id":"m-027","url":"https://i.pinimg.com/1200x/a9/e8/67/a9e867ac241af016ee06bea2cd5b5abb.jpg","privacy_level":"public"},
+                {"media_id":"m-028","url":"https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg","privacy_level":"public"}
               ]}
             ]}
             """#
@@ -435,11 +461,11 @@ extension PinzAPI {
               "pins": [
                 {
                   "id": "pin-001",
-                  "name": "Храм Христа Спасителя",
+                  "name": "Эйфелева башня",
                   "category": "entertainment",
-                  "latitude": 55.7447,
-                  "longitude": 37.6055,
-                  "location_name": "Москва",
+                  "latitude": 48.8584,
+                  "longitude": 2.2945,
+                  "location_name": "Париж",
                   "tags": ["история", "архитектура", "религия"],
                   "issues": [],
                   "media": [
@@ -447,38 +473,58 @@ extension PinzAPI {
                     {"media_id": "m-002", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg", "privacy_level": "public"},
                     {"media_id": "m-003", "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg", "privacy_level": "public"},
                     {"media_id": "m-004", "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg", "privacy_level": "public"},
-                    {"media_id": "m-005", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg", "privacy_level": "public"}
+                    {"media_id": "m-005", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg", "privacy_level": "public"},
+                    {"media_id": "m-008", "url": "https://i.pinimg.com/736x/59/79/59/5979594c0f0de1b583f60ce9ac15b94e.jpg", "privacy_level": "public"},
+                    {"media_id": "m-009", "url": "https://i.pinimg.com/736x/29/9e/ff/299effcb075e97c1b4dc5ebcb7aac061.jpg", "privacy_level": "public"},
+                    {"media_id": "m-010", "url": "https://i.pinimg.com/736x/aa/a9/1f/aaa91f5d5b7a4d2f9c2a4d57f8f0e8e0.jpg", "privacy_level": "public"}
                   ]
                 },
                 {
                   "id": "pin-002",
-                  "name": "Красная площадь",
+                  "name": "Лувр",
                   "category": "entertainment",
-                  "latitude": 55.7539,
-                  "longitude": 37.6208,
-                  "location_name": "Москва",
+                  "latitude": 48.8606,
+                  "longitude": 2.3352,
+                  "location_name": "Париж",
                   "tags": ["достопримечательность"],
                   "issues": [],
                   "media": [
                     {"media_id": "m-006", "url": "https://i.pinimg.com/736x/34/cb/93/34cb93114fb0cca8f020cb9c26928394.jpg", "privacy_level": "public"},
                     {"media_id": "m-007", "url": "https://i.pinimg.com/736x/cb/f7/9b/cbf79b6388c70e03982a519436942256.jpg", "privacy_level": "public"},
                     {"media_id": "m-008", "url": "https://i.pinimg.com/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg", "privacy_level": "public"},
-                    {"media_id": "m-009", "url": "https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg", "privacy_level": "public"}
+                    {"media_id": "m-009", "url": "https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg", "privacy_level": "public"},
+                    {"media_id": "m-011", "url": "https://i.pinimg.com/736x/70/13/e5/7013e510c6ca3a000d15989fcf12e5f0.jpg", "privacy_level": "public"}
                   ]
                 },
                 {
                   "id": "pin-003",
-                  "name": "Парк Горького",
+                  "name": "Собор Парижской Богоматери",
                   "category": "nature",
-                  "latitude": 55.7312,
-                  "longitude": 37.6014,
-                  "location_name": "Москва",
-                  "tags": ["парк", "природа"],
+                  "latitude": 48.8530,
+                  "longitude": 2.3499,
+                  "location_name": "Париж",
+                  "tags": ["достопримечательность", "религия"],
                   "issues": [],
                   "media": [
-                    {"media_id": "m-010", "url": "https://i.pinimg.com/1200x/cd/47/23/cd4723e7bac0a34506e84b9c378d9eaf.jpg", "privacy_level": "public"},
-                    {"media_id": "m-011", "url": "https://i.pinimg.com/1200x/a9/e8/67/a9e867ac241af016ee06bea2cd5b5abb.jpg", "privacy_level": "public"},
-                    {"media_id": "m-012", "url": "https://i.pinimg.com/1200x/66/a0/94/66a094638921cfd9e7a3ce009bc43409.jpg", "privacy_level": "public"}
+                    {"media_id": "m-012", "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg", "privacy_level": "public"},
+                    {"media_id": "m-013", "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg", "privacy_level": "public"},
+                    {"media_id": "m-014", "url": "https://i.pinimg.com/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg", "privacy_level": "public"},
+                    {"media_id": "m-015", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg", "privacy_level": "public"}
+                  ]
+                },
+                {
+                  "id": "pin-004",
+                  "name": "Монмартр",
+                  "category": "entertainment",
+                  "latitude": 48.8867,
+                  "longitude": 2.3431,
+                  "location_name": "Париж",
+                  "tags": ["культура", "театр"],
+                  "issues": [],
+                  "media": [
+                    {"media_id": "m-016", "url": "https://i.pinimg.com/736x/77/65/ac/7765ac5175540792659b036142c9a49d.jpg", "privacy_level": "public"},
+                    {"media_id": "m-017", "url": "https://i.pinimg.com/736x/34/cb/93/34cb93114fb0cca8f020cb9c26928394.jpg", "privacy_level": "public"},
+                    {"media_id": "m-018", "url": "https://i.pinimg.com/1200x/e2/b4/26/e2b426206dbb0b1cc832c80e2d9259ee.jpg", "privacy_level": "public"}
                   ]
                 }
               ]

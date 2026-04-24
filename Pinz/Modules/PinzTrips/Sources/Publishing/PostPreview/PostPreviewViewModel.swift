@@ -35,6 +35,7 @@ final class PostPreviewViewModel {
                 startDate: pin.startDate,
                 endDate: pin.endDate,
                 tags: pin.tags,
+                issues: pin.issues,
                 coordinates: pin.coordinates
             )
         }

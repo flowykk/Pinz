@@ -8,6 +8,7 @@ public final class AppRouter: AppRouting {
     
     @ObservationIgnored private var tripInfoUpdateHandler: (() -> Void)?
     @ObservationIgnored private var currentProfileUpdateHandler: ((User) -> Void)?
+    @ObservationIgnored private var tripCreationDraftPins: [String: [Pin]] = [:]
 
     public init(initialPath: [Route] = []) {
         self.path = initialPath
@@ -110,6 +111,22 @@ extension AppRouter {
 
     public func navigateToTripCreationReview(tripId: String, pins: [Pin]) {
         navigate(to: .tripCreation(.final(tripId: tripId, pins: pins)))
+    }
+
+    public func navigateToTripCreationProblems(tripId: String, pins: [Pin]) {
+        navigate(to: .tripCreation(.problems(tripId: tripId, pins: pins)))
+    }
+
+    public func setTripCreationDraftPins(_ pins: [Pin], for tripId: String) {
+        tripCreationDraftPins[tripId] = pins
+    }
+
+    public func tripCreationDraftPins(for tripId: String) -> [Pin]? {
+        tripCreationDraftPins[tripId]
+    }
+
+    public func clearTripCreationDraftPins(for tripId: String) {
+        tripCreationDraftPins[tripId] = nil
     }
 }
 

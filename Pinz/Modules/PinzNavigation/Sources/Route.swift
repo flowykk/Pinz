@@ -20,6 +20,7 @@ public enum TripCreationRoute: Hashable {
     case initial
     case preprocessed(tripId: String, pins: RawPins)
     case final(tripId: String, pins: [Pin])
+    case problems(tripId: String, pins: [Pin])
 }
 
 public enum ProfileRoute: Hashable {

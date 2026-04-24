@@ -45,6 +45,7 @@ extension ReviewPinDTO {
             startDate: startTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
             endDate: endTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
             tags: (tags ?? []).map { MediaTag(tag: $0) },
+            issues: issues ?? [],
             serverId: pinId,
             coordinates: coordinates
         )

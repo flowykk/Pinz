@@ -50,6 +50,14 @@ public struct ReviewTripCreationView: View {
             )
         }, centerView: {
             HeaderTitle(PinzBaseStrings.ReviewTripCreation.Title.main)
+        }, rightView: {
+            if viewModel.pinsHaveIssues {
+                PinzButton(
+                    type: .icon(.warning),
+                    tint: PinzUIAsset.accentOrange.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.navigate(.problems)) }
+                )
+            }
         })
     }
 
@@ -58,7 +66,8 @@ public struct ReviewTripCreationView: View {
             PinzButton(
                 type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
-                action: .async { }
+                disabled: viewModel.pinsHaveIssues,
+                action: .async { try await viewModel.asyncDispatch(.finalize) }
             )
         }
     }

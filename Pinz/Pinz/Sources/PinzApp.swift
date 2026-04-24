@@ -13,7 +13,23 @@ import PinzPins
 @main
 struct PinzApp: App {
     @State private var router = AppRouter(
-        initialPath: TokenStorage.shared.isAuthenticated ? [.main] : []
+//        initialPath: TokenStorage.shared.isAuthenticated ? [.main] : []
+        initialPath: {
+            #if DEBUG
+            let reviewRoute = Route.tripCreation(
+                .final(
+                    tripId: "mock-trip-id",
+                    pins: Array(Pin.stubs().prefix(3))
+                )
+            )
+            if TokenStorage.shared.isAuthenticated {
+                return [.main, reviewRoute]
+            }
+            return [reviewRoute]
+            #else
+            return TokenStorage.shared.isAuthenticated ? [.main] : []
+            #endif
+        }()
     )
 
     var body: some Scene {

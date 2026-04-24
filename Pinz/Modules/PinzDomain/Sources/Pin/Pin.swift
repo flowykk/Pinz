@@ -2,6 +2,11 @@ import Foundation
 import CoreLocation
 
 public struct Pin: Hashable, Identifiable {
+    public enum Issue: String, Codable {
+        case missingCoordinates = "MISSING_COORDINATES"
+        case missingDates = "MISSING_DATES"
+    }
+
     public var id: String { name }
     public let serverId: String?
     
@@ -14,6 +19,11 @@ public struct Pin: Hashable, Identifiable {
     public var endDate: Date?
     public var tags: [MediaTag]
     public var coordinates: CLLocationCoordinate2D?
+    public var issues: [String]
+
+    public var issueKinds: [Issue] {
+        issues.compactMap(Issue.init(rawValue:))
+    }
 
     public init(
         name: String,
@@ -24,6 +34,7 @@ public struct Pin: Hashable, Identifiable {
         startDate: Date? = nil,
         endDate: Date? = nil,
         tags: [MediaTag],
+        issues: [String] = [],
         serverId: String? = nil,
         coordinates: CLLocationCoordinate2D? = nil
     ) {
@@ -35,6 +46,7 @@ public struct Pin: Hashable, Identifiable {
         self.startDate = startDate
         self.endDate = endDate
         self.tags = tags
+        self.issues = issues
         self.serverId = serverId
         self.coordinates = coordinates
     }
@@ -91,10 +103,12 @@ extension Pin {
                     MediaTag(tag: "Архитектура"),
                     MediaTag(tag: "История")
                 ],
-                coordinates: CLLocationCoordinate2D(
-                    latitude: 55.7447,
-                    longitude: 37.6055
-                )
+//                issues: [
+//                    Pin.Issue.missingCoordinates.rawValue,
+//                    Pin.Issue.missingDates.rawValue
+//                ],
+                serverId: "pin-stub-001",
+                coordinates: nil
             ),
             Pin(
                 name: "Красная площадь",
@@ -120,6 +134,8 @@ extension Pin {
                 tags: [
                     MediaTag(tag: "Достопримечательность")
                 ],
+                issues: [Pin.Issue.missingDates.rawValue],
+                serverId: "pin-stub-002",
                 coordinates: CLLocationCoordinate2D(
                     latitude: 55.7539,
                     longitude: 37.6208
@@ -147,6 +163,7 @@ extension Pin {
                 tags: [
                     MediaTag(tag: "Парк")
                 ],
+                serverId: "pin-stub-003",
                 coordinates: CLLocationCoordinate2D(
                     latitude: 55.7312,
                     longitude: 37.6014
@@ -172,6 +189,7 @@ extension Pin {
                 tags: [
                     MediaTag(tag: "Архитектура")
                 ],
+                serverId: "pin-stub-004",
                 coordinates: CLLocationCoordinate2D(
                     latitude: 55.7496,
                     longitude: 37.5369
@@ -201,6 +219,7 @@ extension Pin {
                 tags: [
                     MediaTag(tag: "Природа")
                 ],
+                serverId: "pin-stub-005",
                 coordinates: CLLocationCoordinate2D(
                     latitude: 55.7105,
                     longitude: 37.5425

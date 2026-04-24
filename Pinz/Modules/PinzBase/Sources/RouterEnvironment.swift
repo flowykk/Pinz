@@ -14,6 +14,10 @@ public protocol AppRouting {
     func navigateToTripCreationInitial()
     func navigateToTripCreationPreprocessedPins(tripId: String, pins: RawPins)
     func navigateToTripCreationReview(tripId: String, pins: [Pin])
+    func navigateToTripCreationProblems(tripId: String, pins: [Pin])
+    func setTripCreationDraftPins(_ pins: [Pin], for tripId: String)
+    func tripCreationDraftPins(for tripId: String) -> [Pin]?
+    func clearTripCreationDraftPins(for tripId: String)
 
     func navigateToPinsList(trip: Trip)
     func navigateToSelectablePinsList(trip: Trip)
