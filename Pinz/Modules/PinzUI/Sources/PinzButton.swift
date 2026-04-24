@@ -81,8 +81,16 @@ public struct PinzButton: View {
             case let .async(action):
                 isLoading = true
                 Task {
-                    try await action()
-                    isLoading = false
+                    defer {
+                        isLoading = false
+                    }
+                    do {
+                        try await action()
+                    } catch {
+                        #if DEBUG
+                        print("[PinzButton] async action failed: \(error)")
+                        #endif
+                    }
                 }
             }
         } label: {

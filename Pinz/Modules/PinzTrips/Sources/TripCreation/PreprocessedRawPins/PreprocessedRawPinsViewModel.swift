@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 import PinzNetworking
 import PinzBase
 import PinzDomain
@@ -80,16 +81,47 @@ final class PreprocessedRawPinsViewModel {
         switch intent {
         case .continue:
             changeLoading(to: true)
+            defer { changeLoading(to: false) }
+
             let draftPins = pins.pins.map { DraftPinInputDTO(draftPinId: $0.id, mediaIds: $0.medias.map(\.id)) }
-            try await networkService.applyGroupsAndProcess(
-                tripId: tripId,
-                draftPins: draftPins,
-                deletedMediaIds: deletedMediaIds
-            )
-            let reviewResponse = try await networkService.getTripReview(tripId: tripId)
+            let waitTask = Task {
+                try await networkService.waitForTripProcessingCompleted(
+                    tripId: tripId,
+                    timeout: 30
+                )
+            }
+
+            do {
+                try await networkService.applyGroupsAndProcess(
+                    tripId: tripId,
+                    draftPins: draftPins,
+                    deletedMediaIds: deletedMediaIds
+                )
+            } catch {
+                waitTask.cancel()
+                throw error
+            }
+
+            let reviewResponse: GetTripReviewDTO
+
+            do {
+                try await waitTask.value
+                reviewResponse = try await networkService.getTripReview(tripId: tripId)
+            } catch TripReviewWaitError.timeout {
+                reviewResponse = try await Self.waitForReviewAfterTimeout(
+                    tripId: tripId,
+                    networkService: networkService
+                )
+                let reviewStatus = Self.normalizedReviewStatus(reviewResponse.status)
+                guard reviewStatus == "PROCESSING" || reviewStatus == "DRAFT_FINAL_REVIEW" else {
+                    throw TripReviewWaitError.webSocket(message: "unexpected review status: \(reviewStatus)")
+                }
+            } catch {
+                throw error
+            }
+
             let pins = reviewResponse.pins.enumerated().map { index, dto in dto.toPin(index: index) }
             dispatch(.navigate(.review(tripId: tripId, pins: pins)))
-            changeLoading(to: false)
         }
     }
 
@@ -101,5 +133,33 @@ final class PreprocessedRawPinsViewModel {
         withAnimation(.easeInOut(duration: 0.3)) {
             self.isLoading = isLoading
         }
+    }
+
+    private static func waitForReviewAfterTimeout(
+        tripId: String,
+        networkService: NetworkService,
+        attempts: Int = 6,
+        interval: TimeInterval = 2.0
+    ) async throws -> GetTripReviewDTO {
+        var lastResponse: GetTripReviewDTO?
+        for attempt in 0..<attempts {
+            if attempt > 0 {
+                try await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+            }
+            let response = try await networkService.getTripReview(tripId: tripId)
+            let status = normalizedReviewStatus(response.status)
+            if status == "PROCESSING" || status == "DRAFT_FINAL_REVIEW" {
+                return response
+            }
+            lastResponse = response
+        }
+        if let lastResponse {
+            return lastResponse
+        }
+        throw TripReviewWaitError.timeout
+    }
+
+    private static func normalizedReviewStatus(_ status: String) -> String {
+        status.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

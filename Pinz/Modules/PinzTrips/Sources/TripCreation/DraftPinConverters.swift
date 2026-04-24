@@ -42,7 +42,10 @@ extension ReviewPinDTO {
                 )
             },
             isPrivate: false,
+            startDate: startTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
+            endDate: endTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
             tags: (tags ?? []).map { MediaTag(tag: $0) },
+            serverId: pinId,
             coordinates: coordinates
         )
     }
