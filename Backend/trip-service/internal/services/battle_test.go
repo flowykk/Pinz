@@ -195,21 +195,28 @@ func TestGetBestMemories_OnlyPositiveRating(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
 	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
 
 	participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
 	captured := time.Unix(1700000000, 0)
+	pinA := "pin-A"
 	mediaRepo.EXPECT().ListWithPositiveBattleRating("trip-1").Return([]*models.Media{
-		{ID: "m-1", TripID: "trip-1", S3Key: "k1", MediaType: "photo", BattleRating: 3, CapturedAt: &captured},
+		{ID: "m-1", TripID: "trip-1", PinID: &pinA, S3Key: "k1", MediaType: "photo", BattleRating: 3, CapturedAt: &captured},
 		{ID: "m-2", TripID: "trip-1", S3Key: "k2", MediaType: "video", BattleRating: 1},
 	}, nil)
+	pinRepo.EXPECT().ListByTripID("trip-1").Return([]*models.Pin{
+		{ID: "pin-A", TripID: "trip-1", Name: "Эйфелева башня"},
+	}, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.GetBestMemories(ctxWithUser("u1"), &pb.GetBestMemoriesRequest{TripId: "trip-1"})
 	require.NoError(t, err)
 	require.Len(t, resp.GetMedia(), 2)
 	require.Equal(t, int32(3), resp.GetMedia()[0].GetBattleRating())
 	require.Equal(t, captured.Unix(), resp.GetMedia()[0].GetCapturedAtUnix())
+	require.Equal(t, "Эйфелева башня", resp.GetMedia()[0].GetPinName())
 	require.Equal(t, int64(0), resp.GetMedia()[1].GetCapturedAtUnix())
+	require.Equal(t, "", resp.GetMedia()[1].GetPinName())
 }
 
 func TestGetBestMemories_EmptyOk(t *testing.T) {

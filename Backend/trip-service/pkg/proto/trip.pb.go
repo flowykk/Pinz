@@ -6070,6 +6070,7 @@ type BestMemory struct {
 	MediaType      string                 `protobuf:"bytes,3,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"`
 	BattleRating   int32                  `protobuf:"varint,4,opt,name=battle_rating,json=battleRating,proto3" json:"battle_rating,omitempty"`
 	CapturedAtUnix int64                  `protobuf:"varint,5,opt,name=captured_at_unix,json=capturedAtUnix,proto3" json:"captured_at_unix,omitempty"`
+	PinName        string                 `protobuf:"bytes,6,opt,name=pin_name,json=pinName,proto3" json:"pin_name,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -6137,6 +6138,13 @@ func (x *BestMemory) GetCapturedAtUnix() int64 {
 		return x.CapturedAtUnix
 	}
 	return 0
+}
+
+func (x *BestMemory) GetPinName() string {
+	if x != nil {
+		return x.PinName
+	}
+	return ""
 }
 
 type GetBestMemoriesResponse struct {
@@ -7442,7 +7450,7 @@ const file_trip_proto_rawDesc = "" +
 	"\x1aSubmitBattleResultResponse\x12*\n" +
 	"\x11new_battle_rating\x18\x01 \x01(\x05R\x0fnewBattleRating\"1\n" +
 	"\x16GetBestMemoriesRequest\x12\x17\n" +
-	"\atrip_id\x18\x01 \x01(\tR\x06tripId\"\xa7\x01\n" +
+	"\atrip_id\x18\x01 \x01(\tR\x06tripId\"\xc2\x01\n" +
 	"\n" +
 	"BestMemory\x12\x19\n" +
 	"\bmedia_id\x18\x01 \x01(\tR\amediaId\x12\x10\n" +
@@ -7450,7 +7458,8 @@ const file_trip_proto_rawDesc = "" +
 	"\n" +
 	"media_type\x18\x03 \x01(\tR\tmediaType\x12#\n" +
 	"\rbattle_rating\x18\x04 \x01(\x05R\fbattleRating\x12(\n" +
-	"\x10captured_at_unix\x18\x05 \x01(\x03R\x0ecapturedAtUnix\"A\n" +
+	"\x10captured_at_unix\x18\x05 \x01(\x03R\x0ecapturedAtUnix\x12\x19\n" +
+	"\bpin_name\x18\x06 \x01(\tR\apinName\"A\n" +
 	"\x17GetBestMemoriesResponse\x12&\n" +
 	"\x05media\x18\x01 \x03(\v2\x10.trip.BestMemoryR\x05media\"T\n" +
 	"\x1eGetNotificationSettingsRequest\x12\x17\n" +

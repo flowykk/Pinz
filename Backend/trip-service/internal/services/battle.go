@@ -130,11 +130,25 @@ func (s *TripService) GetBestMemories(ctx context.Context, req *pb.GetBestMemori
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list best memories")
 	}
+	pinNameByID := map[string]string{}
+	if len(list) > 0 {
+		pins, err := s.pinRepo.ListByTripID(tripID)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to list trip pins")
+		}
+		for _, p := range pins {
+			pinNameByID[p.ID] = p.Name
+		}
+	}
 	out := make([]*pb.BestMemory, 0, len(list))
 	for _, m := range list {
 		var capturedAtUnix int64
 		if m.CapturedAt != nil {
 			capturedAtUnix = m.CapturedAt.Unix()
+		}
+		var pinName string
+		if m.PinID != nil {
+			pinName = pinNameByID[*m.PinID]
 		}
 		out = append(out, &pb.BestMemory{
 			MediaId: m.ID,
@@ -142,6 +156,7 @@ func (s *TripService) GetBestMemories(ctx context.Context, req *pb.GetBestMemori
 			MediaType: m.MediaType,
 			BattleRating: m.BattleRating,
 			CapturedAtUnix: capturedAtUnix,
+			PinName: pinName,
 		})
 	}
 	return &pb.GetBestMemoriesResponse{Media: out}, nil

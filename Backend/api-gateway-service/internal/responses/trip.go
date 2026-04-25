@@ -359,6 +359,7 @@ type BestMemory struct {
 	MediaType string `json:"media_type"`
 	BattleRating int32 `json:"battle_rating"`
 	CapturedAtUnix int64 `json:"captured_at_unix"`
+	PinName string `json:"pin_name"`
 }
 
 // GetBestMemoriesResponse — ответ GET /api/v1/trips/:id/best-memories (ТЗ 8.2).

@@ -4108,6 +4108,9 @@ const docTemplate = `{
                 "media_type": {
                     "type": "string"
                 },
+                "pin_name": {
+                    "type": "string"
+                },
                 "url": {
                     "type": "string"
                 }
