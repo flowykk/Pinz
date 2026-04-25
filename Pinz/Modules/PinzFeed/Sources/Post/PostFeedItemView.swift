@@ -4,7 +4,7 @@ import PinzUI
 import PinzDomain
 import PinzBase
 
-struct PostView: View {
+struct PostFeedItemView: View {
 
     @State private var viewModel: PostViewModel
     @State private var selection: Int = 0

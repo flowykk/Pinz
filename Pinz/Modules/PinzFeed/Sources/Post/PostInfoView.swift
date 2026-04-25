@@ -16,24 +16,23 @@ public struct PostInfoView: View {
         CollapsibleHeader(needsBlur: true) {
             header
         } content: {
-            ScrollView {
-                VStack(spacing: 16) {
-                    tripMap
-                        .padding(.horizontal, 12)
-                    statistics
-                        .padding(.horizontal, 12)
-                    DescriptionView(description: viewModel.post.description)
-                        .padding(.horizontal, 12)
-                    DefaultPinsListView(
-                        pins: viewModel.post.pins,
-                        hideMediaBadges: true,
-                        pinTapped: { _ in }
-                    )
+            VStack(spacing: 16) {
+                tripMap
                     .padding(.horizontal, 12)
-                    .padding(.bottom, 20)
-                }
-                .padding(.top, 8)
+                statistics
+                    .padding(.horizontal, 18)
+                    .padding(.top, -4)
+                DescriptionView(description: viewModel.post.description)
+                    .padding(.horizontal, 12)
+                DefaultPinsListView(
+                    pins: viewModel.post.pins,
+                    hideMediaBadges: true,
+                    pinTapped: { _ in }
+                )
+                .padding(.horizontal, 12)
+                .padding(.bottom, 20)
             }
+            .padding(.top, 8)
         }
         .background(PinzUIAsset.background.swiftUIColor)
     }

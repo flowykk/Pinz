@@ -54,8 +54,24 @@ final class FeedViewModel {
                 sortBy: sortBy
             )
 
-            posts = feed.map { trip in
-                Post(
+            posts = feed.map { item -> Post in
+                let trip = item.trip
+                let tripMedias = item.media.enumerated().compactMap { index, media in
+                    media.toMediaItem(id: index + 1)
+                }
+
+                let mediasPerPin = Self.mediaBuckets(media: tripMedias, bucketCount: item.pins.count)
+
+                let pins = item.pins.enumerated().map { index, pin in
+                    let pinMedias = pin.mediaItems()
+                    let fallbackMedias = index < mediasPerPin.count ? mediasPerPin[index] : []
+                    return pin.toPin(
+                        index: index,
+                        medias: pinMedias.isEmpty ? fallbackMedias : pinMedias
+                    )
+                }
+
+                return Post(
                     id: trip.id,
                     name: trip.name,
                     description: trip.description,
@@ -63,13 +79,24 @@ final class FeedViewModel {
                     likes: trip.likesCount,
                     dislikes: trip.dislikesCount,
                     favorites: 0,
-                    views: trip.mediaCount ?? 0,
-                    pins: []
+                    views: 0,
+                    pins: pins
                 )
             }
         } catch {
             print(error)
         }
+    }
+
+    private static func mediaBuckets(media: [MediaItem], bucketCount: Int) -> [[MediaItem]] {
+        guard bucketCount > 0 else { return [] }
+        var buckets = Array(repeating: [MediaItem](), count: bucketCount)
+
+        for index in media.indices {
+            buckets[index % bucketCount].append(media[index])
+        }
+
+        return buckets
     }
 
     public func setRouter(_ router: AppRouting?) {

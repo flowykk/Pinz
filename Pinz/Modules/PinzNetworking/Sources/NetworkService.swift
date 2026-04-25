@@ -38,7 +38,7 @@ public protocol NetworkServiceProtocol {
         season: String?,
         locationId: Int?,
         sortBy: String?
-    ) async throws -> [TripDTO]
+    ) async throws -> [FeedItemDTO]
 
     // Trips CRUD
     func getTrips() async throws -> [TripDTO]
@@ -354,7 +354,7 @@ public final class NetworkService: NetworkServiceProtocol {
         season: String? = nil,
         locationId: Int? = nil,
         sortBy: String? = nil
-    ) async throws -> [TripDTO] {
+    ) async throws -> [FeedItemDTO] {
         try await provider.request(
             .getFeed(
                 limit: limit,
@@ -364,7 +364,7 @@ public final class NetworkService: NetworkServiceProtocol {
                 locationId: locationId,
                 sortBy: sortBy
             ),
-            type: [TripDTO].self
+            type: [FeedItemDTO].self
         )
     }
     
