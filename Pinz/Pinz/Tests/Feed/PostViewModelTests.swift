@@ -8,14 +8,14 @@ import PinzNetworking
 final class PostViewModelTests: XCTestCase {
 
     private var mockNetwork: MockNetworkService!
-    private var sut: PostViewModel!
+    private var sut: PostFeedItemViewModel!
     private var post: Post!
 
     override func setUp() {
         super.setUp()
         mockNetwork = MockNetworkService()
         post = Post.stub
-        sut = PostViewModel(post: post, networkService: mockNetwork)
+        sut = PostFeedItemViewModel(post: post, networkService: mockNetwork)
     }
 
     override func tearDown() {

@@ -1,29 +1,30 @@
 import SwiftUI
-import MapKit
 import PinzUI
 import PinzDomain
 import PinzBase
 
 struct PostFeedItemView: View {
 
-    @State private var viewModel: PostViewModel
+    @State private var viewModel: PostFeedItemViewModel
     @State private var selection: Int = 0
 
     init(post: Post) {
-        viewModel = PostViewModel(post: post)
+        viewModel = PostFeedItemViewModel(post: post)
     }
 
     var body: some View {
         VStack(spacing: 0) {
             TabView(selection: $selection.animation()) {
-                map
-                pins
+                if hasMap {
+                    map.tag(0)
+                }
+                mediaPages
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(height: 300)
             .padding(.top, 4)
 
-            TabViewProgressView(numberOfPages: viewModel.post.pins.count + 1, currentIndex: selection)
+            TabViewProgressView(numberOfPages: max(totalTabPages, 1), currentIndex: selection)
                 .padding(.top, 8)
 
             statistics
@@ -80,11 +81,71 @@ struct PostFeedItemView: View {
         }
     }
 
-    public var map: some View {
+    @ViewBuilder
+    private var mediaPages: some View {
+        if viewModel.post.media.isEmpty && !hasMap {
+            placeholderPage.tag(0)
+        } else {
+            ForEach(viewModel.post.media.indices, id: \.self) { index in
+                let media = viewModel.post.media[index]
+                mediaPage(media: media, tagIndex: index + mediaOffset, mediaIndex: index)
+            }
+        }
+    }
+
+    private var hasMap: Bool {
+        !viewModel.post.pins.isEmpty
+    }
+
+    private var totalTabPages: Int {
+        viewModel.post.media.count + (hasMap ? 1 : 0)
+    }
+
+    private var mediaOffset: Int {
+        hasMap ? 1 : 0
+    }
+
+    private var placeholderPage: some View {
+        Rectangle()
+            .fill(Color.gray.opacity(0.3))
+            .frame(width: UIScreen.main.bounds.width, height: 300)
+            .clipped()
+            .cornerRadius(10)
+    }
+
+    private func mediaPage(media: MediaItem, tagIndex: Int, mediaIndex: Int) -> some View {
+        Group {
+            if media.type == .image, let image = viewModel.images[mediaIndex] {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .clipped()
+            } else {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .overlay {
+                        if media.type == .video {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundColor(.white)
+                        } else {
+                            ProgressView().tint(.white)
+                        }
+                    }
+            }
+        }
+        .frame(width: UIScreen.main.bounds.width, height: 300)
+        .clipped()
+        .cornerRadius(10)
+        .tag(tagIndex)
+    }
+
+    var map: some View {
         TripMapView(
             position: $viewModel.position,
             pins: viewModel.post.pins
         )
+        .frame(width: UIScreen.main.bounds.width, height: 300)
         .disabled(true)
         .overlay {
             VStack {
@@ -95,8 +156,18 @@ struct PostFeedItemView: View {
         .overlay {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(viewModel.post.name).roundedFont(size: 20, weight: .bold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                    Text("Отдых, Лето").roundedFont(size: 14, weight: .semibold, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                    Text(viewModel.post.name)
+                        .roundedFont(
+                            size: 20,
+                            weight: .bold,
+                            foregroundColor: PinzUIAsset.background.swiftUIColor
+                        )
+                    Text("Отдых, Лето")
+                        .roundedFont(
+                            size: 14,
+                            weight: .semibold,
+                            foregroundColor: PinzUIAsset.background.swiftUIColor
+                        )
                     Spacer()
                 }
                 Spacer()
@@ -104,55 +175,11 @@ struct PostFeedItemView: View {
                     icon: "person.2.fill",
                     text: String(viewModel.post.participants),
                     iconSize: 16,
-                    iconColor: PinzUIAsset.textPrimary
+                    iconColor: PinzUIAsset.background
                 )
             }
             .padding(.horizontal, 14)
             .padding(.top, 10)
-        }
-        .disabled(true)
-        .cornerRadius(10)
-        .tag(0)
-    }
-
-    public var pins: some View {
-        ForEach(viewModel.post.pins.indices, id: \.self) { index in
-            let pin = viewModel.post.pins[index]
-            Group {
-                if let image = viewModel.images[index] {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .clipped()
-                } else {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay { ProgressView().tint(.white) }
-                }
-            }
-            .frame(width: UIScreen.main.bounds.width, height: 300)
-            .clipped()
-            .overlay {
-                VStack {
-                    Spacer()
-                    GradientView(style: .bottom, color: .black, height: 200)
-                }
-                .padding(.bottom, -100)
-            }
-            .overlay {
-                HStack {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Spacer()
-                        Text(pin.name).roundedFont(size: 16, weight: .bold, foregroundColor: .white)
-                        Text(pin.category.value).roundedFont(size: 10, weight: .semibold, foregroundColor: .white)
-                    }
-                    Spacer()
-                }
-                .padding(.leading, 14)
-                .padding(.bottom, 10)
-            }
-            .cornerRadius(10)
-            .tag(index + 1)
         }
     }
 }

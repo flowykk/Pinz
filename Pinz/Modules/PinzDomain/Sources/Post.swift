@@ -10,6 +10,7 @@ public struct Post: Equatable, Identifiable, Hashable {
     public var favorites: Int
     public var views: Int
     public var pins: [Pin]
+    public var media: [MediaItem]
 
     public init(
         id: String,
@@ -20,7 +21,8 @@ public struct Post: Equatable, Identifiable, Hashable {
         dislikes: Int,
         favorites: Int,
         views: Int,
-        pins: [Pin]
+        pins: [Pin],
+        media: [MediaItem] = []
     ) {
         self.id = id
         self.name = name
@@ -31,6 +33,7 @@ public struct Post: Equatable, Identifiable, Hashable {
         self.favorites = favorites
         self.views = views
         self.pins = pins
+        self.media = media
     }
 }
 
@@ -45,7 +48,8 @@ extension Post {
             dislikes: 21,
             favorites: 45,
             views: 1200,
-            pins: Pin.stubs()
+            pins: Pin.stubs(),
+            media: Pin.stubs().flatMap { $0.medias }
         )
     }
 }
