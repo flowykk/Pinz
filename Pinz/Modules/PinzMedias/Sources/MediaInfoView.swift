@@ -164,17 +164,6 @@ public struct MediaInfoView: View {
                 tint: PinzUIAsset.textPrimary.swiftUIColor,
                 action: .plain { router?.pop(by: 1) }
             )
-        }, rightView: {
-            PinzButton(
-                type: .icon(.crop),
-                tint: PinzUIAsset.textPrimary.swiftUIColor,
-                action: .plain { }
-            )
-            PinzButton(
-                type: .icon(.download),
-                tint: PinzUIAsset.textPrimary.swiftUIColor,
-                action: .plain { }
-            )
         })
     }
 

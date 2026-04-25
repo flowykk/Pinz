@@ -117,7 +117,7 @@ public final class NetworkService: NetworkServiceProtocol {
     private let tripCreationWebSocketClient: TripCreationWebSocketClient
 
     public init() {
-        let stub: Bool = false
+        let stub: Bool = true
         self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: 0.5)
         self.tripCreationWebSocketClient = TripCreationWebSocketClient()
     }

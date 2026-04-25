@@ -19,14 +19,9 @@ struct PinzApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-//                FeedView()
                 RootView(router: router) {
                     AuthFlowView()
                 }
-
-#if DEBUG
-                debugResetButton
-#endif
             }
         }
     }

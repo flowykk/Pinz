@@ -63,7 +63,7 @@ public struct SelectablePinsListView: View {
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             HStack(spacing: 6) {
-                if viewModel.selectedPins.count > 1 {
+                if viewModel.pins.count > 1 {
                     PinzButton(
                         type: .slot(
                             style: .secondary(needBorder: true),
