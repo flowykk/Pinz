@@ -693,6 +693,7 @@ message BestMemory {
  string media_type = 3;
  int32 battle_rating = 4;
  int64 captured_at_unix = 5;
+ string pin_name = 6;
 }
 message GetBestMemoriesResponse {
  repeated BestMemory media = 1;

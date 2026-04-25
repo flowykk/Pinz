@@ -2165,6 +2165,7 @@ func (h *TripHandler) GetBestMemories(w http.ResponseWriter, r *http.Request) {
 			MediaType: m.GetMediaType(),
 			BattleRating: m.GetBattleRating(),
 			CapturedAtUnix: m.GetCapturedAtUnix(),
+			PinName: m.GetPinName(),
 		})
 	}
 	respondJSON(w, http.StatusOK, responses.GetBestMemoriesResponse{Media: media})

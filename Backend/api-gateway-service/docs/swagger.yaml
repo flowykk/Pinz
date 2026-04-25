@@ -503,6 +503,8 @@ definitions:
         type: string
       media_type:
         type: string
+      pin_name:
+        type: string
       url:
         type: string
     type: object
