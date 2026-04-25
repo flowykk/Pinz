@@ -17,12 +17,25 @@ public struct FeedView: View {
         CollapsibleHeader(needsBlur: true) {
             header
         } content: {
-            VStack {
-                PostView(post: Post.stub)
+            ScrollView {
+                LazyVStack(spacing: 24) {
+                    ForEach(viewModel.posts) { post in
+                        PostView(post: post)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                viewModel.dispatch(.navigate(.openPost(post)))
+                            }
+                    }
+                }
+                .padding(.vertical, 12)
             }
+            .padding(.horizontal, 12)
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
+        .task {
+            await viewModel.fetchFeed()
+        }
     }
 
     public var header: some View {

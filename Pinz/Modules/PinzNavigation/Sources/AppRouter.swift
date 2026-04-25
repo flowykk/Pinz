@@ -97,6 +97,10 @@ extension AppRouter {
     public func navigateToPostPreview(trip: Trip, selectedPins: [Pin]) {
         navigate(to: .tripInfo(.postPreview(trip: trip, selectedPins: selectedPins)))
     }
+
+    public func navigateToPostInfo(post: Post) {
+        navigate(to: .tripInfo(.postInfo(post: post)))
+    }
 }
 
 // MARK: - TripCreation Routing

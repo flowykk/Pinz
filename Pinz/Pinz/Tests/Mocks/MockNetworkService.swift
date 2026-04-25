@@ -49,6 +49,10 @@ final class MockNetworkService: NetworkServiceProtocol {
     var likeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var dislikeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var addTripToFavouritesResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
+    var likeTripCall: String?
+    var dislikeTripCall: String?
+    var addTripToFavouritesCall: String?
+    var removeTripFromFavouritesCall: String?
     var getFavouriteTripsResult: Result<[TripDTO], Error> = .success([])
     var removeTripFromFavouritesError: Error?
 
@@ -165,10 +169,20 @@ final class MockNetworkService: NetworkServiceProtocol {
         updateTripSettingsCall = (id: id, notificationsEnabled: notificationsEnabled)
         return try updateTripSettingsResult.get()
     }
-    func likeTrip(id: String) async throws -> SuccessDTO { try likeTripResult.get() }
-    func dislikeTrip(id: String) async throws -> SuccessDTO { try dislikeTripResult.get() }
-    func addTripToFavourites(id: String) async throws -> SuccessDTO { try addTripToFavouritesResult.get() }
+    func likeTrip(id: String) async throws -> SuccessDTO {
+        likeTripCall = id
+        return try likeTripResult.get()
+    }
+    func dislikeTrip(id: String) async throws -> SuccessDTO {
+        dislikeTripCall = id
+        return try dislikeTripResult.get()
+    }
+    func addTripToFavourites(id: String) async throws -> SuccessDTO {
+        addTripToFavouritesCall = id
+        return try addTripToFavouritesResult.get()
+    }
     func removeTripFromFavourites(id: String) async throws {
+        removeTripFromFavouritesCall = id
         if let error = removeTripFromFavouritesError { throw error }
     }
     func getProfile() async throws -> ProfileResponseDTO { try getProfileResult.get() }
