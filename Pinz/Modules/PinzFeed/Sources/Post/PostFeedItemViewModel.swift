@@ -6,14 +6,14 @@ import PinzBase
 import PinzNetworking
 
 @MainActor @Observable
-final class PostViewModel {
+final class PostFeedItemViewModel {
 
     private(set) var post: Post
     private(set) var images: [Int: UIImage] = [:]
-    var position: MapCameraPosition
     var isLiked = false
     var isDisliked = false
     var isFavourite = false
+    var position: MapCameraPosition
 
     private let networkService: NetworkServiceProtocol
 
@@ -50,9 +50,9 @@ final class PostViewModel {
 
     func loadImages() async {
         await withTaskGroup(of: (Int, UIImage?).self) { group in
-            for index in post.pins.indices {
-                guard let media = post.pins[index].medias.filter({ $0.type == .image }).randomElement(),
-                      let url = media.mediaURL else { continue }
+            for index in post.media.indices {
+                guard post.media[index].type == .image,
+                      let url = post.media[index].mediaURL else { continue }
                 group.addTask {
                     let image = await ImageProvider.loadOrGetImage(for: url.absoluteString, .media)
                     return (index, image)

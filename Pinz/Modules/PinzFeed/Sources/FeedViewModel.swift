@@ -56,11 +56,22 @@ final class FeedViewModel {
 
             posts = feed.map { item -> Post in
                 let trip = item.trip
-                let tripMedias = item.media.enumerated().compactMap { index, media in
+                let tripMedia = item.media.enumerated().compactMap { index, media in
                     media.toMediaItem(id: index + 1)
                 }
+                let fallbackMedia = Array(item.pins.enumerated().flatMap { pinIndex, pin in
+                        pin.mediaItems().enumerated().map { mediaIndex, media in
+                            MediaItem(
+                                id: pinIndex * 1000 + mediaIndex + 1,
+                                isPrivate: media.isPrivate,
+                                type: media.type,
+                                mediaURL: media.mediaURL
+                            )
+                        }
+                    })
+                let postMedia = tripMedia.isEmpty ? fallbackMedia : tripMedia
 
-                let mediasPerPin = Self.mediaBuckets(media: tripMedias, bucketCount: item.pins.count)
+                let mediasPerPin = Self.mediaBuckets(media: tripMedia, bucketCount: item.pins.count)
 
                 let pins = item.pins.enumerated().map { index, pin in
                     let pinMedias = pin.mediaItems()
@@ -80,7 +91,8 @@ final class FeedViewModel {
                     dislikes: trip.dislikesCount,
                     favorites: 0,
                     views: 0,
-                    pins: pins
+                    pins: pins,
+                    media: postMedia
                 )
             }
         } catch {

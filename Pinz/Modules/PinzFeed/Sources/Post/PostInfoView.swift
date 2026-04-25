@@ -5,11 +5,11 @@ import PinzDomain
 
 public struct PostInfoView: View {
 
-    @State private var viewModel: PostViewModel
+    @State private var viewModel: PostFeedItemViewModel
     @Environment(\.appRouter) private var router
 
     public init(post: Post) {
-        viewModel = PostViewModel(post: post)
+        viewModel = PostFeedItemViewModel(post: post)
     }
 
     public var body: some View {
