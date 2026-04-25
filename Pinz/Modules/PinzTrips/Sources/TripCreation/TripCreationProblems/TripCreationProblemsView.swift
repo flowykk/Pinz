@@ -57,7 +57,7 @@ public struct TripCreationProblemsView: View {
                 ForEach(pinsWithIssues.indices, id: \.self) { index in
                     ProblemPinRow(item: pinsWithIssues[index]) {
                         viewModel.navigateToPinInfo(at: index, router: router)
-                    }
+                    }.padding(.top, 8)
 
                     if index != pinsWithIssues.count - 1 {
                         Divider().padding(.leading, 16)

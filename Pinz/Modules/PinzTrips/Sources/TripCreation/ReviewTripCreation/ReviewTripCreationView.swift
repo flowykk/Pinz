@@ -57,6 +57,12 @@ public struct ReviewTripCreationView: View {
                     tint: PinzUIAsset.accentOrange.swiftUIColor,
                     action: .plain { viewModel.dispatch(.navigate(.problems)) }
                 )
+            } else {
+                PinzButton(
+                    type: .icon(.checkmark),
+                    tint: PinzUIAsset.accentGreen.swiftUIColor,
+                    action: .plain {}
+                )
             }
         })
     }

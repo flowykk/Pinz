@@ -103,10 +103,10 @@ extension Pin {
                     MediaTag(tag: "Архитектура"),
                     MediaTag(tag: "История")
                 ],
-//                issues: [
-//                    Pin.Issue.missingCoordinates.rawValue,
-//                    Pin.Issue.missingDates.rawValue
-//                ],
+                issues: [
+                    Pin.Issue.missingCoordinates.rawValue,
+                    Pin.Issue.missingDates.rawValue
+                ],
                 serverId: "pin-stub-001",
                 coordinates: nil
             ),
