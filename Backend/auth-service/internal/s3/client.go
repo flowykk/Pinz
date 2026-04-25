@@ -14,10 +14,10 @@ import (
 )
 
 type Client struct {
-	bucket     string
+	bucket string
 	presignTTL time.Duration
-	api        *awss3.Client
-	presign    *awss3.PresignClient
+	api *awss3.Client
+	presign *awss3.PresignClient
 }
 
 // redactAccessKeyID logs only a short prefix of the access key id (never the secret).
@@ -61,17 +61,17 @@ func NewClient(ctx context.Context, endpoint, bucket, region, accessKey, secretK
 		"access_key_id_prefix", redactAccessKeyID(accessKey),
 	)
 	return &Client{
-		bucket:     bucket,
+		bucket: bucket,
 		presignTTL: presignTTL,
-		api:        api,
-		presign:    awss3.NewPresignClient(api),
+		api: api,
+		presign: awss3.NewPresignClient(api),
 	}, nil
 }
 
 func (c *Client) PresignedUploadURL(ctx context.Context, s3Key, contentType string) (string, error) {
 	in := &awss3.PutObjectInput{
 		Bucket: aws.String(c.bucket),
-		Key:    aws.String(s3Key),
+		Key: aws.String(s3Key),
 	}
 	if contentType != "" {
 		in.ContentType = aws.String(contentType)
@@ -89,7 +89,7 @@ func (c *Client) PresignedUploadURL(ctx context.Context, s3Key, contentType stri
 func (c *Client) ReadURL(ctx context.Context, s3Key string) (string, error) {
 	out, err := c.presign.PresignGetObject(ctx, &awss3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
-		Key:    aws.String(s3Key),
+		Key: aws.String(s3Key),
 	}, func(opts *awss3.PresignOptions) {
 		opts.Expires = c.presignTTL
 	})
@@ -103,7 +103,7 @@ func (c *Client) ReadURL(ctx context.Context, s3Key string) (string, error) {
 func (c *Client) DeleteObject(ctx context.Context, s3Key string) error {
 	_, err := c.api.DeleteObject(ctx, &awss3.DeleteObjectInput{
 		Bucket: aws.String(c.bucket),
-		Key:    aws.String(s3Key),
+		Key: aws.String(s3Key),
 	})
 	if err != nil {
 		slog.Error("s3: delete object failed", "bucket", c.bucket, "key", s3Key, "err", err)

@@ -15,27 +15,28 @@ import (
 )
 
 const (
-	TripEventsStream        = "pinz:trip:events"
+	TripEventsStream = "pinz:trip:events"
 	tripEventsConsumerGroup = "notification-service-trip"
-	tripEventsConsumerName  = "notif-trip-1"
+	tripEventsConsumerName = "notif-trip-1"
 )
 
 // Event types, публикуемые trip-service (repositories/redis_repository.go:PublishTripEvent).
 const (
-	EventParticipantJoined  = "PARTICIPANT_JOINED"
-	EventParticipantLeft    = "PARTICIPANT_LEFT"
+	EventParticipantJoined = "PARTICIPANT_JOINED"
+	EventParticipantLeft = "PARTICIPANT_LEFT"
 	EventParticipantRemoved = "PARTICIPANT_REMOVED"
-	EventAdminChanged       = "ADMIN_CHANGED"
-	EventTripReady          = "TRIP_READY"
-	EventPinAdded           = "PIN_ADDED"
+	EventAdminChanged = "ADMIN_CHANGED"
+	EventTripReady = "TRIP_READY"
+	EventPinAdded = "PIN_ADDED"
+	EventAddMediaSessionCompleted = "ADD_MEDIA_SESSION_COMPLETED" //
 )
 
 type TripEventsDeps struct {
-	Redis      *redis.Client
-	Tokens     repositories.DeviceTokensRepositoryInterface
-	NotifLog   repositories.NotificationLogRepositoryInterface
+	Redis *redis.Client
+	Tokens repositories.DeviceTokensRepositoryInterface
+	NotifLog repositories.NotificationLogRepositoryInterface
 	TripClient repositories.TripClientInterface
-	APNS       apns.Sender
+	APNS apns.Sender
 }
 
 // RunTripEvents — consumer-loop для pinz:trip:events. Преобразует события в
@@ -59,11 +60,11 @@ func RunTripEvents(ctx context.Context, d TripEventsDeps) error {
 		default:
 		}
 		streams, err := d.Redis.XReadGroup(ctx, &redis.XReadGroupArgs{
-			Group:    tripEventsConsumerGroup,
+			Group: tripEventsConsumerGroup,
 			Consumer: tripEventsConsumerName,
-			Streams:  []string{TripEventsStream, ">"},
-			Count:    50,
-			Block:    2 * time.Second,
+			Streams: []string{TripEventsStream, ">"},
+			Count: 50,
+			Block: 2 * time.Second,
 		}).Result()
 		if err != nil && err != redis.Nil {
 			if ctx.Err() != nil {
@@ -133,7 +134,7 @@ func handleTripEvent(ctx context.Context, d TripEventsDeps, msg redis.XMessage) 
 	title, body := buildMessage(eventType, tripID)
 	push := models.PushNotification{
 		Title: title,
-		Body:  body,
+		Body: body,
 		Extra: map[string]string{"trip_id": tripID, "event_type": eventType},
 	}
 
@@ -157,13 +158,14 @@ func handleTripEvent(ctx context.Context, d TripEventsDeps, msg redis.XMessage) 
 }
 
 // resolveRecipients — кому адресовано событие по ТЗ 11.1:
-//   - PARTICIPANT_JOINED: все текущие участники кроме присоединившегося (actor).
-//   - PARTICIPANT_LEFT: все остальные участники (actor уже удалён из списка).
-//   - PARTICIPANT_REMOVED: все остальные участники + сам удалённый (actor).
-//     После удаления actor отсутствует в списке участников — добавляем его руками.
-//   - ADMIN_CHANGED: все участники трипа (включая нового админа = actor).
-//   - TRIP_READY: owner (actor содержит owner_user_id — см. trip_service.go).
-//   - PIN_ADDED: все участники кроме автора (actor).
+// - PARTICIPANT_JOINED: все текущие участники кроме присоединившегося (actor).
+// - PARTICIPANT_LEFT: все остальные участники (actor уже удалён из списка).
+// - PARTICIPANT_REMOVED: все остальные участники + сам удалённый (actor).
+// После удаления actor отсутствует в списке участников — добавляем его руками.
+// - ADMIN_CHANGED: все участники трипа (включая нового админа = actor).
+// - TRIP_READY: owner (actor содержит owner_user_id — см. trip_service.go).
+// - PIN_ADDED: все участники кроме автора (actor).
+// - ADD_MEDIA_SESSION_COMPLETED: все участники кроме инициатора Confirm (actor) — M1.
 func resolveRecipients(ctx context.Context, d TripEventsDeps, eventType, tripID, actorUserID string) ([]string, error) {
 	participants, err := d.TripClient.ListTripParticipantIDs(ctx, tripID)
 	if err != nil {
@@ -214,6 +216,10 @@ func buildMessage(eventType, tripID string) (title, body string) {
 		return "Pinz", "Your trip is ready"
 	case EventPinAdded:
 		return "Pinz", "New pin added to your trip"
+	case EventAddMediaSessionCompleted:
+		// пуш другим participant'ам о завершении add-media сессии.
+		// Автор Confirm'а исключается в resolveRecipients (M1).
+		return "Pinz", "New pins were added to the trip"
 	default:
 		return "Pinz", "Trip update"
 	}

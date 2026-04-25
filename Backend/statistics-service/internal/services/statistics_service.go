@@ -14,7 +14,7 @@ type StatisticsService struct {
 	pb.UnimplementedStatisticsServiceServer
 
 	userStats repositories.UserStatsRepositoryInterface
-	tripLocations    repositories.TripLocationsRepositoryInterface
+	tripLocations repositories.TripLocationsRepositoryInterface
 }
 
 func NewStatisticsService(
@@ -36,9 +36,9 @@ func (s *StatisticsService) GetUserStats(ctx context.Context, req *pb.GetUserSta
 		return nil, status.Error(codes.Internal, "failed to get stats")
 	}
 	return &pb.GetUserStatsResponse{Stats: &pb.UserStats{
-		UserId:          st.UserID,
-		TotalLikes:      st.TotalLikes,
-		TotalDislikes:   st.TotalDislikes,
+		UserId: st.UserID,
+		TotalLikes: st.TotalLikes,
+		TotalDislikes: st.TotalDislikes,
 		BattlesFinished: st.BattlesFinished,
 	}}, nil
 }
@@ -61,11 +61,11 @@ func (s *StatisticsService) GetVisitedLocations(ctx context.Context, req *pb.Get
 	out := make([]*pb.VisitedLocation, 0, len(locs))
 	for _, l := range locs {
 		out = append(out, &pb.VisitedLocation{
-			LocationId:      l.LocationID,
-			Name:            l.Name,
-			Type:            l.Type,
-			ParentId:        l.ParentID,
-			VisitCount:      l.VisitCount,
+			LocationId: l.LocationID,
+			Name: l.Name,
+			Type: l.Type,
+			ParentId: l.ParentID,
+			VisitCount: l.VisitCount,
 			LastVisitAtUnix: l.LastVisitAt.Unix(),
 		})
 	}

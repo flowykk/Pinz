@@ -10,15 +10,15 @@ import (
 )
 
 type Dependencies struct {
-	AuthHandler         *handlers.AuthHandler
-	AuthClient          *auth.Client
-	TripHandler         *handlers.TripHandler
-	TripClient          *trip.Client
-	StatisticsHandler   *handlers.StatisticsHandler
-	StatisticsClient    *statistics.Client
+	AuthHandler *handlers.AuthHandler
+	AuthClient *auth.Client
+	TripHandler *handlers.TripHandler
+	TripClient *trip.Client
+	StatisticsHandler *handlers.StatisticsHandler
+	StatisticsClient *statistics.Client
 	NotificationHandler *handlers.NotificationHandler
-	NotificationClient  *notification.Client
-	WSHandler           *handlers.WSHandler
+	NotificationClient *notification.Client
+	WSHandler *handlers.WSHandler
 }
 
 func BuildDependencies() (*Dependencies, error) {
@@ -43,7 +43,7 @@ func BuildDependencies() (*Dependencies, error) {
 		}
 		return nil, err
 	}
-	tripHandler := handlers.NewTripHandler(tripClient)
+	tripHandler := handlers.NewTripHandler(tripClient, authClient)
 	wsHandler := handlers.NewWSHandler(redisClient, tripClient)
 
 	statsClient, err := statistics.NewClient()
@@ -70,15 +70,15 @@ func BuildDependencies() (*Dependencies, error) {
 	notifHandler := handlers.NewNotificationHandler(notifClient)
 
 	return &Dependencies{
-		AuthHandler:         authHandler,
-		AuthClient:          authClient,
-		TripHandler:         tripHandler,
-		TripClient:          tripClient,
-		StatisticsHandler:   statsHandler,
-		StatisticsClient:    statsClient,
+		AuthHandler: authHandler,
+		AuthClient: authClient,
+		TripHandler: tripHandler,
+		TripClient: tripClient,
+		StatisticsHandler: statsHandler,
+		StatisticsClient: statsClient,
 		NotificationHandler: notifHandler,
-		NotificationClient:  notifClient,
-		WSHandler:           wsHandler,
+		NotificationClient: notifClient,
+		WSHandler: wsHandler,
 	}, nil
 }
 

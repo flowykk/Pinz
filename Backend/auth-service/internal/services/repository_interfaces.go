@@ -17,6 +17,7 @@ type UserRepositoryInterface interface {
 	AddSession(userID, token string, expiresAt interface{}) error
 	GetRefreshToken(token string) (*models.RefreshToken, error)
 	GetUserByID(userID string) (*models.User, error)
+	GetUsersByIDs(userIDs []string) ([]*models.User, error)
 	DeleteRefreshToken(id string) error
 	DeleteUserRefreshTokens(userID string) error
 	UpdateUsername(userID, username string) (*models.User, error)

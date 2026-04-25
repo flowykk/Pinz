@@ -19,15 +19,15 @@ const (
 	// Окно отправки. Scheduler просыпается раз в час, но отправляет только если
 	// прошло ≥24ч с прошлого прогона (идемпотентность на рестартах пода).
 	runInterval = 24 * time.Hour
-	tickEvery   = 1 * time.Hour
+	tickEvery = 1 * time.Hour
 )
 
 type Deps struct {
-	Redis      *redis.Client
-	Tokens     repositories.DeviceTokensRepositoryInterface
-	NotifLog   repositories.NotificationLogRepositoryInterface
+	Redis *redis.Client
+	Tokens repositories.DeviceTokensRepositoryInterface
+	NotifLog repositories.NotificationLogRepositoryInterface
 	TripClient repositories.TripClientInterface
-	APNS       apns.Sender
+	APNS apns.Sender
 }
 
 // Run запускает scheduler. Блокирующий вызов, возвращает nil при отмене ctx.
@@ -146,7 +146,7 @@ func dispatchTrips(ctx context.Context, d Deps, trips []*pb.NotificationTrip, ev
 		eventID := fmt.Sprintf("%s:%s:%d:%s", eventType, t.GetTripId(), t.GetYearsElapsed(), time.Now().UTC().Format("2006-01-02"))
 		push := models.PushNotification{
 			Title: title,
-			Body:  body,
+			Body: body,
 			Extra: map[string]string{"trip_id": t.GetTripId(), "event_type": eventType},
 		}
 		for _, tok := range tokens {

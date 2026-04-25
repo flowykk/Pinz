@@ -109,9 +109,9 @@ func TestSubmitBattleResult_HappyPath(t *testing.T) {
 	battleRepo := mocks.NewMockMediaBattleRepositoryInterface(ctrl)
 
 	battleRepo.EXPECT().GetByID("battle-1").Return(&models.MediaBattle{
-		ID:       "battle-1",
-		TripID:   "trip-1",
-		UserID:   "u1",
+		ID: "battle-1",
+		TripID: "trip-1",
+		UserID: "u1",
 		MediaIDs: []string{"m-0", "m-1", "m-2", "m-3", "m-4", "m-5", "m-6", "m-7"},
 	}, nil)
 	battleRepo.EXPECT().SetWinner("battle-1", "m-3").Return(nil)
@@ -119,7 +119,7 @@ func TestSubmitBattleResult_HappyPath(t *testing.T) {
 
 	svc := NewTripService(nil, nil, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo)
 	resp, err := svc.SubmitBattleResult(ctxWithUser("u1"), &pb.SubmitBattleResultRequest{
-		BattleId:      "battle-1",
+		BattleId: "battle-1",
 		WinnerMediaId: "m-3",
 	})
 	require.NoError(t, err)

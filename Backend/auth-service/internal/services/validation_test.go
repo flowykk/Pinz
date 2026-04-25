@@ -9,19 +9,19 @@ import (
 func TestValidateUsernameFormat(t *testing.T) {
 	cases := map[string]struct {
 		input string
-		want  bool
+		want bool
 	}{
-		"letters":          {"JohnDoe", true},
-		"digits":           {"user123", true},
-		"underscore":       {"my_user", true},
-		"hyphen":           {"my-user", true},
-		"mixed":            {"User_name-01", true},
-		"spaces":           {"user name", false},
-		"cyrillic":         {"Пользователь", false},
-		"special_chars":    {"user@name", false},
-		"dot":              {"user.name", false},
-		"exclamation":      {"user!", false},
-		"empty":            {"", false},
+		"letters": {"JohnDoe", true},
+		"digits": {"user123", true},
+		"underscore": {"my_user", true},
+		"hyphen": {"my-user", true},
+		"mixed": {"User_name-01", true},
+		"spaces": {"user name", false},
+		"cyrillic": {"Пользователь", false},
+		"special_chars": {"user@name", false},
+		"dot": {"user.name", false},
+		"exclamation": {"user!", false},
+		"empty": {"", false},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

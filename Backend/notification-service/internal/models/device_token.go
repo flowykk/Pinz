@@ -3,8 +3,8 @@ package models
 import "time"
 
 type DeviceToken struct {
-	ID        string
-	UserID    string
+	ID string
+	UserID string
 	APNSToken string
 	UpdatedAt time.Time
 }
@@ -14,7 +14,7 @@ type DeviceToken struct {
 // от типа события.
 type PushNotification struct {
 	Title string
-	Body  string
+	Body string
 	// Extra попадёт в APNS custom payload.
 	Extra map[string]string
 }

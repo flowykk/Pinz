@@ -9,10 +9,20 @@ import (
 	"strconv"
 	"time"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"pinz/backend/api-gateway-service/internal/responses"
+)
+
+// Reason-коды, выставляемые trip-service (add-media ошибки, PINZ-172).
+// Синхронизировано с trip-service/internal/services/add_media_errors.go.
+const (
+	reasonSessionStale  = "SESSION_STALE"  // устаревший session_id → 410 Gone
+	reasonWrongStatus   = "WRONG_STATUS"   // неподходящий trip.status → 412
+	reasonNotInitiator  = "NOT_INITIATOR"  // мутация не-ведущим до истечения часа → 403
+	reasonLimitExceeded = "LIMIT_EXCEEDED" // ТЗ 4.1.2 (500 медиа, 50 видео) → 422
 )
 
 func parseInt(s string) (int, error) {
@@ -55,6 +65,21 @@ func handleServiceError(w http.ResponseWriter, r *http.Request, err error, actio
 		return
 	}
 	slog.WarnContext(r.Context(), "grpc error", "action", action, "code", st.Code().String(), "msg", st.Message())
+
+	// Сначала смотрим на prикреплённый ErrorInfo.Reason — если сервис явно указал
+	// семантическую причину (SESSION_STALE/WRONG_STATUS/NOT_INITIATOR/LIMIT_EXCEEDED),
+	// мапим в точный HTTP-код и прикладываем metadata в тело.
+	if reason, metadata := extractErrorInfo(st); reason != "" {
+		if httpCode, ok := reasonToHTTPStatus[reason]; ok {
+			respondJSON(w, httpCode, responses.ErrorResponse{
+				Error:   st.Message(),
+				Reason:  reason,
+				Details: metadata,
+			})
+			return
+		}
+	}
+
 	switch st.Code() {
 	case codes.InvalidArgument:
 		respondError(w, http.StatusBadRequest, st.Message())
@@ -74,15 +99,37 @@ func handleServiceError(w http.ResponseWriter, r *http.Request, err error, actio
 		respondError(w, http.StatusNotImplemented, st.Message())
 	case codes.FailedPrecondition:
 		respondError(w, http.StatusConflict, st.Message())
+	case codes.ResourceExhausted:
+		respondError(w, http.StatusTooManyRequests, st.Message())
 	default:
 		respondError(w, http.StatusInternalServerError, st.Message())
 	}
 }
 
+// reasonToHTTPStatus — маппинг известных ErrorInfo.Reason в HTTP-код. Соответствует
+// документу addMediaParallelFlow.md (корнер-кейсы).
+var reasonToHTTPStatus = map[string]int{
+	reasonSessionStale:  http.StatusGone,               // 410
+	reasonWrongStatus:   http.StatusPreconditionFailed, // 412
+	reasonNotInitiator:  http.StatusForbidden,          // 403
+	reasonLimitExceeded: http.StatusUnprocessableEntity, // 422
+}
+
+// extractErrorInfo достаёт первый ErrorInfo из gRPC status.Details().
+// Возвращает ("", nil), если ErrorInfo не прикреплён.
+func extractErrorInfo(st *status.Status) (reason string, metadata map[string]string) {
+	for _, d := range st.Details() {
+		if info, ok := d.(*errdetails.ErrorInfo); ok {
+			return info.GetReason(), info.GetMetadata()
+		}
+	}
+	return "", nil
+}
+
 func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{
-		"status":    "healthy",
-		"service":   "api-gateway",
+		"status": "healthy",
+		"service": "api-gateway",
 		"timestamp": fmt.Sprintf("%d", time.Now().Unix()),
 	})
 }
@@ -91,21 +138,21 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 // Must be reachable at /.well-known/apple-app-site-association with no redirects.
 func AppleAppSiteAssociation(w http.ResponseWriter, r *http.Request) {
 	const aasa = `{
-  "applinks": {
-    "apps": [],
-    "details": [
-      {
-        "appID": "ABNY5S6RA5.io.tuist.Pinz",
-        "paths": [
-          "/join/*",
-          "/reset-password*"
-        ]
-      }
-    ]
-  },
-  "webcredentials": {
-    "apps": ["ABNY5S6RA5.io.tuist.Pinz"]
-  }
+ "applinks": {
+ "apps": [],
+ "details": [
+ {
+ "appID": "ABNY5S6RA5.io.tuist.Pinz",
+ "paths": [
+ "/join/*",
+ "/reset-password*"
+ ]
+ }
+ ]
+ },
+ "webcredentials": {
+ "apps": ["ABNY5S6RA5.io.tuist.Pinz"]
+ }
 }`
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

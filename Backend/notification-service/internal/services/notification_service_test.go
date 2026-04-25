@@ -20,9 +20,9 @@ func TestRegisterDeviceToken_Validation(t *testing.T) {
 	svc := NewNotificationService(mocks.NewMockDeviceTokensRepositoryInterface(ctrl))
 
 	cases := map[string]*pb.RegisterDeviceTokenRequest{
-		"empty_user":  {ApnsToken: "t"},
+		"empty_user": {ApnsToken: "t"},
 		"empty_token": {UserId: "u"},
-		"spaces_only": {UserId: "  ", ApnsToken: "  "},
+		"spaces_only": {UserId: " ", ApnsToken: " "},
 	}
 	for name, req := range cases {
 		t.Run(name, func(t *testing.T) {

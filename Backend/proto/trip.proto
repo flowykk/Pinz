@@ -5,577 +5,722 @@ package trip;
 option go_package = "pinz/backend/trip-service/pkg/proto";
 
 service TripService {
-  rpc CreateTrip(CreateTripRequest) returns (CreateTripResponse);
-  rpc GetTrip(GetTripRequest) returns (GetTripResponse);
-  rpc ListUserTrips(ListUserTripsRequest) returns (ListUserTripsResponse);
-  rpc UpdateTrip(UpdateTripRequest) returns (UpdateTripResponse);
-  rpc DeleteTrip(DeleteTripRequest) returns (DeleteTripResponse);
-  // Обложка трипа (двухшаговый поток, аналогичный аватару пользователя)
-  rpc RequestTripCoverUpload(RequestTripCoverUploadRequest) returns (RequestTripCoverUploadResponse);
-  rpc ConfirmTripCoverUpload(ConfirmTripCoverUploadRequest) returns (ConfirmTripCoverUploadResponse);
-  rpc DeleteTripCover(DeleteTripCoverRequest) returns (DeleteTripCoverResponse);
-  // Участники и инвайты (Фаза 2)
-  rpc GenerateInviteLink(GenerateInviteLinkRequest) returns (GenerateInviteLinkResponse);
-  rpc JoinTripByToken(JoinTripByTokenRequest) returns (JoinTripByTokenResponse);
-  rpc RemoveParticipant(RemoveParticipantRequest) returns (RemoveParticipantResponse);
-  rpc LeaveTrip(LeaveTripRequest) returns (LeaveTripResponse);
-  rpc TransferAdmin(TransferAdminRequest) returns (TransferAdminResponse);
-  // Поток создания (tripCreationFlow.md), Фаза 3/5:
-  rpc ProcessMediaGrouping(ProcessMediaGroupingRequest) returns (ProcessMediaGroupingResponse);
-  rpc ApplyGroupsAndProcess(ApplyGroupsAndProcessRequest) returns (ApplyGroupsAndProcessResponse);
-  rpc GetTripReview(GetTripReviewRequest) returns (GetTripReviewResponse);
-  rpc FinalizeTrip(FinalizeTripRequest) returns (FinalizeTripResponse);
-  // Публикация в ленту (PINZ-105, ТЗ 3.3): вся поездка целиком или выбранные пины
-  rpc PublishTrip(PublishTripRequest) returns (PublishTripResponse);
-  // PINZ-98: лента, лайки, избранное, настройки уведомлений
-  rpc UpdateTripSettings(UpdateTripSettingsRequest) returns (UpdateTripSettingsResponse);
-  rpc ListFeed(ListFeedRequest) returns (ListFeedResponse);
-  rpc LikeTrip(LikeTripRequest) returns (LikeTripResponse);
-  rpc DislikeTrip(DislikeTripRequest) returns (DislikeTripResponse);
-  rpc AddToFavourites(AddToFavouritesRequest) returns (AddToFavouritesResponse);
-  rpc RemoveFromFavourites(RemoveFromFavouritesRequest) returns (RemoveFromFavouritesResponse);
-  rpc ListFavourites(ListFavouritesRequest) returns (ListFavouritesResponse);
-  // PINZ-131: Добавление медиа в существующий трип (ТЗ 5.1-5.3)
-  rpc AddMediaStart(AddMediaStartRequest) returns (AddMediaStartResponse);
-  rpc AddMediaProcessGrouping(AddMediaProcessGroupingRequest) returns (AddMediaProcessGroupingResponse);
-  rpc AddMediaApplyGroupsAndProcess(AddMediaApplyGroupsAndProcessRequest) returns (AddMediaApplyGroupsAndProcessResponse);
-  // PINZ-133: лёгкая сводка по всем трипам пользователя для statistics/profile
-  rpc ListUserTripSummaries(ListUserTripSummariesRequest) returns (ListUserTripSummariesResponse);
-  // PINZ-132: фотобатлы и "лучшие воспоминания" (ТЗ 8)
-  rpc StartBattle(StartBattleRequest) returns (StartBattleResponse);
-  rpc SubmitBattleResult(SubmitBattleResultRequest) returns (SubmitBattleResultResponse);
-  rpc GetBestMemories(GetBestMemoriesRequest) returns (GetBestMemoriesResponse);
-  // PINZ-134: поддержка notification-service — настройки уведомлений и таймерные выборки трипов.
-  rpc GetNotificationSettings(GetNotificationSettingsRequest) returns (GetNotificationSettingsResponse);
-  rpc ListAnniversaryTrips(ListAnniversaryTripsRequest) returns (ListAnniversaryTripsResponse);
-  rpc ListEndedMonthAgoTrips(ListEndedMonthAgoTripsRequest) returns (ListEndedMonthAgoTripsResponse);
-  rpc ListTripParticipants(ListTripParticipantsRequest) returns (ListTripParticipantsResponse);
-  // PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
-  rpc SearchPins(SearchPinsRequest) returns (SearchPinsResponse);
+ rpc CreateTrip(CreateTripRequest) returns (CreateTripResponse);
+ rpc GetTrip(GetTripRequest) returns (GetTripResponse);
+ rpc ListUserTrips(ListUserTripsRequest) returns (ListUserTripsResponse);
+ rpc UpdateTrip(UpdateTripRequest) returns (UpdateTripResponse);
+ rpc DeleteTrip(DeleteTripRequest) returns (DeleteTripResponse);
+ // Обложка трипа (двухшаговый поток, аналогичный аватару пользователя)
+ rpc RequestTripCoverUpload(RequestTripCoverUploadRequest) returns (RequestTripCoverUploadResponse);
+ rpc ConfirmTripCoverUpload(ConfirmTripCoverUploadRequest) returns (ConfirmTripCoverUploadResponse);
+ rpc DeleteTripCover(DeleteTripCoverRequest) returns (DeleteTripCoverResponse);
+ // Участники и инвайты (Фаза 2)
+ rpc GenerateInviteLink(GenerateInviteLinkRequest) returns (GenerateInviteLinkResponse);
+ rpc JoinTripByToken(JoinTripByTokenRequest) returns (JoinTripByTokenResponse);
+ rpc RemoveParticipant(RemoveParticipantRequest) returns (RemoveParticipantResponse);
+ rpc LeaveTrip(LeaveTripRequest) returns (LeaveTripResponse);
+ rpc TransferAdmin(TransferAdminRequest) returns (TransferAdminResponse);
+ // Поток создания (tripCreationFlow.md), Фаза 3/5:
+ rpc ProcessMediaGrouping(ProcessMediaGroupingRequest) returns (ProcessMediaGroupingResponse);
+ rpc ApplyGroupsAndProcess(ApplyGroupsAndProcessRequest) returns (ApplyGroupsAndProcessResponse);
+ rpc GetTripReview(GetTripReviewRequest) returns (GetTripReviewResponse);
+ rpc FinalizeTrip(FinalizeTripRequest) returns (FinalizeTripResponse);
+ // Публикация в ленту (ТЗ 3.3): вся поездка целиком или выбранные пины
+ rpc PublishTrip(PublishTripRequest) returns (PublishTripResponse);
+ // лента, лайки, избранное, настройки уведомлений
+ rpc UpdateTripSettings(UpdateTripSettingsRequest) returns (UpdateTripSettingsResponse);
+ rpc ListFeed(ListFeedRequest) returns (ListFeedResponse);
+ rpc LikeTrip(LikeTripRequest) returns (LikeTripResponse);
+ rpc DislikeTrip(DislikeTripRequest) returns (DislikeTripResponse);
+ rpc AddToFavourites(AddToFavouritesRequest) returns (AddToFavouritesResponse);
+ rpc RemoveFromFavourites(RemoveFromFavouritesRequest) returns (RemoveFromFavouritesResponse);
+ rpc ListFavourites(ListFavouritesRequest) returns (ListFavouritesResponse);
+ // Добавление медиа в существующий трип (ТЗ 5.1-5.3)
+ rpc AddMediaStart(AddMediaStartRequest) returns (AddMediaStartResponse);
+ rpc AddMediaRequestUploadUrls(AddMediaRequestUploadUrlsRequest) returns (AddMediaRequestUploadUrlsResponse);
+ rpc AddMediaCommitUpload(AddMediaCommitUploadRequest) returns (AddMediaCommitUploadResponse);
+ rpc AddMediaGetSessionMedia(AddMediaGetSessionMediaRequest) returns (AddMediaGetSessionMediaResponse);
+ rpc AddMediaProcessGrouping(AddMediaProcessGroupingRequest) returns (AddMediaProcessGroupingResponse);
+ rpc AddMediaGetGrouping(AddMediaGetGroupingRequest) returns (AddMediaGetGroupingResponse);
+ rpc AddMediaApplyGroupsAndProcess(AddMediaApplyGroupsAndProcessRequest) returns (AddMediaApplyGroupsAndProcessResponse);
+ rpc AddMediaGetReview(AddMediaGetReviewRequest) returns (AddMediaGetReviewResponse);
+ rpc AddMediaConfirm(AddMediaConfirmRequest) returns (AddMediaConfirmResponse);
+ rpc AddMediaCancel(AddMediaCancelRequest) returns (AddMediaCancelResponse);
+ rpc AddMediaTakeover(AddMediaTakeoverRequest) returns (AddMediaTakeoverResponse);
+ // лёгкая сводка по всем трипам пользователя для statistics/profile
+ rpc ListUserTripSummaries(ListUserTripSummariesRequest) returns (ListUserTripSummariesResponse);
+ // фотобатлы и "лучшие воспоминания" (ТЗ 8)
+ rpc StartBattle(StartBattleRequest) returns (StartBattleResponse);
+ rpc SubmitBattleResult(SubmitBattleResultRequest) returns (SubmitBattleResultResponse);
+ rpc GetBestMemories(GetBestMemoriesRequest) returns (GetBestMemoriesResponse);
+ // поддержка notification-service — настройки уведомлений и таймерные выборки трипов.
+ rpc GetNotificationSettings(GetNotificationSettingsRequest) returns (GetNotificationSettingsResponse);
+ rpc ListAnniversaryTrips(ListAnniversaryTripsRequest) returns (ListAnniversaryTripsResponse);
+ rpc ListEndedMonthAgoTrips(ListEndedMonthAgoTripsRequest) returns (ListEndedMonthAgoTripsResponse);
+ rpc ListTripParticipants(ListTripParticipantsRequest) returns (ListTripParticipantsResponse);
+ // текстовый поиск пинов в трипах пользователя (по name/description/tags)
+ rpc SearchPins(SearchPinsRequest) returns (SearchPinsResponse);
 }
 
 message Trip {
-  string id = 1;
-  string owner_user_id = 2;
-  string name = 3;
-  string description = 4;
-  string category = 5;
-  string season = 6;
-  string status = 7;
-  string privacy_level = 8;
-  int64 start_date_unix = 9;
-  int64 end_date_unix = 10;
-  int32 likes_count = 11;
-  int32 dislikes_count = 12;
-  string cover_url = 13;
-  bool is_published = 14;
-  bool is_generated = 15;
-  int64 created_at_unix = 16;
-  int64 updated_at_unix = 17;
-  int32 media_count = 18;
-  int32 participants_count = 19;
-  int32 pins_count = 20;
+ string id = 1;
+ string owner_user_id = 2;
+ string name = 3;
+ string description = 4;
+ string category = 5;
+ string season = 6;
+ string status = 7;
+ string privacy_level = 8;
+ int64 start_date_unix = 9;
+ int64 end_date_unix = 10;
+ int32 likes_count = 11;
+ int32 dislikes_count = 12;
+ string cover_url = 13;
+ bool is_published = 14;
+ bool is_generated = 15;
+ int64 created_at_unix = 16;
+ int64 updated_at_unix = 17;
+ int32 media_count = 18;
+ int32 participants_count = 19;
+ int32 pins_count = 20;
 }
 
 message CreateTripRequest {
-  string owner_user_id = 1;
-  string name = 2;
-  string description = 3;
-  string category = 4;
-  string season = 5;
-  string privacy_level = 6;
-  repeated FileToUpload files_to_upload = 7;
+ string owner_user_id = 1;
+ string name = 2;
+ string description = 3;
+ string category = 4;
+ string season = 5;
+ string privacy_level = 6;
+ repeated FileToUpload files_to_upload = 7;
 }
 
 message FileToUpload {
-  string client_id = 1;
-  string content_type = 2;
+ string client_id = 1;
+ string content_type = 2;
 }
 
 message CreateTripResponse {
-  string trip_id = 1;
-  string status = 2;
-  repeated UploadUrl upload_urls = 3;
+ string trip_id = 1;
+ string status = 2;
+ repeated UploadUrl upload_urls = 3;
 }
 
 message UploadUrl {
-  string client_id = 1;
-  string s3_key = 2;
-  string url = 3;
+ string client_id = 1;
+ string s3_key = 2;
+ string url = 3;
 }
 
 message GetTripRequest {
-  string trip_id = 1;
-  string user_id = 2;
+ string trip_id = 1;
+ string user_id = 2;
 }
 
 // TripPin is a pin with media for GetTrip response (map view).
 message TripPin {
-  string id = 1;
-  string name = 2;
-  string description = 3;
-  string category = 4;
-  optional double latitude = 5;
-  optional double longitude = 6;
-  int64 start_time_unix = 7;
-  int64 end_time_unix = 8;
-  string privacy_level = 9;
-  repeated string tags = 10;
-  repeated TripPinMedia media = 11;
-  string trip_id = 12;
+ string id = 1;
+ string name = 2;
+ string description = 3;
+ string category = 4;
+ optional double latitude = 5;
+ optional double longitude = 6;
+ int64 start_time_unix = 7;
+ int64 end_time_unix = 8;
+ string privacy_level = 9;
+ repeated string tags = 10;
+ repeated TripPinMedia media = 11;
+ string trip_id = 12;
 }
 message TripPinMedia {
-  string media_id = 1;
-  string url = 2;           // presigned or CDN URL; may be empty if resolved elsewhere
-  string media_type = 3;    // photo, video
-  int64 captured_at_unix = 4;
-  string privacy_level = 5;
+ string media_id = 1;
+ string url = 2; // presigned or CDN URL; may be empty if resolved elsewhere
+ string media_type = 3; // photo, video
+ int64 captured_at_unix = 4;
+ string privacy_level = 5;
 }
 
 message GetTripResponse {
-  Trip trip = 1;
-  repeated TripPin pins = 2;
+ Trip trip = 1;
+ repeated TripPin pins = 2;
+ // если есть активная add-media-сессия, клиент получает её здесь.
+ // Null, если нет. Используется клиентом для роутинга на экран сессии.
+ optional ActiveAddMediaSession active_add_media_session = 3;
+}
+
+// активная add-media-сессия для трипа. Отдается в GetTripResponse.
+// current_initiator_user_id null до вызова AddMediaApplyGroupsAndProcess.
+message ActiveAddMediaSession {
+ string session_id = 1;
+ optional string current_initiator_user_id = 2;
+ optional int64 initiator_assigned_at_unix = 3;
+ optional int64 takeover_available_at_unix = 4;
+ int32 media_count_in_session = 5;
 }
 
 message ListUserTripsRequest {
-  string user_id = 1;
-  int32 limit = 2;
-  int32 offset = 3;
+ string user_id = 1;
+ int32 limit = 2;
+ int32 offset = 3;
 }
 
 message ListUserTripsResponse {
-  repeated Trip trips = 1;
+ repeated Trip trips = 1;
 }
 
 message UpdateTripRequest {
-  string trip_id = 1;
-  string user_id = 2;
-  optional string name = 3;
-  optional string description = 4;
-  optional string category = 5;
-  optional string season = 6;
-  optional string privacy_level = 7;
-  optional int64 start_date_unix = 8;
-  optional int64 end_date_unix = 9;
+ string trip_id = 1;
+ string user_id = 2;
+ optional string name = 3;
+ optional string description = 4;
+ optional string category = 5;
+ optional string season = 6;
+ optional string privacy_level = 7;
+ optional int64 start_date_unix = 8;
+ optional int64 end_date_unix = 9;
 }
 
 message UpdateTripResponse {
-  Trip trip = 1;
+ Trip trip = 1;
 }
 
 message DeleteTripRequest {
-  string trip_id = 1;
-  string user_id = 2;
+ string trip_id = 1;
+ string user_id = 2;
 }
 
 message DeleteTripResponse {
-  bool success = 1;
+ bool success = 1;
 }
 
 // Обложка трипа: запрос presigned PUT URL для загрузки в S3 (step 1)
 message RequestTripCoverUploadRequest {
-  string trip_id = 1;
-  string user_id = 2;
-  string filename = 3;
-  string content_type = 4;
+ string trip_id = 1;
+ string user_id = 2;
+ string filename = 3;
+ string content_type = 4;
 }
 message RequestTripCoverUploadResponse {
-  string upload_url = 1;
-  string s3_key = 2;
+ string upload_url = 1;
+ string s3_key = 2;
 }
 
 // Обложка трипа: подтверждение загрузки (step 2), обновление cover_url и best-effort удаление старого объекта
 message ConfirmTripCoverUploadRequest {
-  string trip_id = 1;
-  string user_id = 2;
-  string s3_key = 3;
+ string trip_id = 1;
+ string user_id = 2;
+ string s3_key = 3;
 }
 message ConfirmTripCoverUploadResponse {
-  Trip trip = 1;
+ Trip trip = 1;
 }
 
 // Удаление обложки трипа: чистит cover_url и best-effort удаляет объект из S3
 message DeleteTripCoverRequest {
-  string trip_id = 1;
-  string user_id = 2;
+ string trip_id = 1;
+ string user_id = 2;
 }
 message DeleteTripCoverResponse {
-  Trip trip = 1;
+ Trip trip = 1;
 }
 
-// PublishTrip: отдельный флоу публикации в общую ленту (ТЗ 3.3, PINZ-105).
+// PublishTrip: отдельный флоу публикации в общую ленту (ТЗ 3.3,).
 // publish_whole=true публикует всю поездку; иначе публикуются только выбранные пины (pin_ids).
 message PublishTripRequest {
-  string trip_id = 1;
-  bool publish_whole = 2;
-  repeated string pin_ids = 3;
+ string trip_id = 1;
+ bool publish_whole = 2;
+ repeated string pin_ids = 3;
 }
 
 message PublishTripResponse {
-  Trip trip = 1;
+ Trip trip = 1;
 }
 
 // ProcessMediaGrouping: save media, cluster by geo/time, return draft_pins (tripCreationFlow.md stage 2)
 message ProcessMediaGroupingRequest {
-  string trip_id = 1;
-  repeated MediaMeta media = 2;
+ string trip_id = 1;
+ repeated MediaMeta media = 2;
 }
 message MediaMeta {
-  string s3_key = 1;
-  string media_type = 2;  // image, video
-  int64 captured_at_unix = 3;
-  optional double latitude = 4;
-  optional double longitude = 5;
+ string s3_key = 1;
+ string media_type = 2; // image, video
+ int64 captured_at_unix = 3;
+ optional double latitude = 4;
+ optional double longitude = 5;
 }
 message ProcessMediaGroupingResponse {
-  string trip_id = 1;
-  string status = 2;
-  repeated DraftPin draft_pins = 3;
+ string trip_id = 1;
+ string status = 2;
+ repeated DraftPin draft_pins = 3;
 }
 message DraftPin {
-  string draft_pin_id = 1;
-  repeated DraftPinMedia media = 2;
+ string draft_pin_id = 1;
+ repeated DraftPinMedia media = 2;
 }
 message DraftPinMedia {
-  string media_id = 1;
-  string url = 2;   // read URL (from Media Service or placeholder)
-  string type = 3;  // image, video
+ string media_id = 1;
+ string url = 2; // read URL (from Media Service or placeholder)
+ string type = 3; // image, video
 }
 
 // ApplyGroupsAndProcess: apply user grouping, create pins, push to Redis Streams, return 202
 message ApplyGroupsAndProcessRequest {
-  string trip_id = 1;
-  repeated DraftPinInput draft_pins = 2;
-  repeated string deleted_media_ids = 3;
+ string trip_id = 1;
+ repeated DraftPinInput draft_pins = 2;
+ repeated string deleted_media_ids = 3;
 }
 message DraftPinInput {
-  string draft_pin_id = 1;
-  repeated string media_ids = 2;
+ string draft_pin_id = 1;
+ repeated string media_ids = 2;
 }
 message ApplyGroupsAndProcessResponse {
-  string message = 1;
-  string status = 2;
+ string message = 1;
+ string status = 2;
 }
 
 // GetTripReview: pins with tags, geo, issues, similar (tripCreationFlow.md stage 4)
 message GetTripReviewRequest {
-  string trip_id = 1;
+ string trip_id = 1;
 }
 message GetTripReviewResponse {
-  string trip_id = 1;
-  string status = 2;
-  repeated MediaSimilarGroup similar = 3;
-  repeated ReviewPin pins = 4;
+ string trip_id = 1;
+ string status = 2;
+ repeated MediaSimilarGroup similar = 3;
+ repeated ReviewPin pins = 4;
 }
 message MediaSimilarGroup {
-  repeated string media_ids = 1;
+ repeated string media_ids = 1;
 }
 message ReviewPin {
-  string pin_id = 1;
-  string name = 2;
-  string category = 3;
-  optional double latitude = 4;
-  optional double longitude = 5;
-  string location_name = 6;
-  int64 start_time_unix = 7;
-  int64 end_time_unix = 8;
-  repeated string issues = 9;   // MISSING_COORDINATES, MISSING_DATES
-  repeated string tags = 10;
-  repeated ReviewPinMedia media = 11;
+ string pin_id = 1;
+ string name = 2;
+ string category = 3;
+ optional double latitude = 4;
+ optional double longitude = 5;
+ string location_name = 6;
+ int64 start_time_unix = 7;
+ int64 end_time_unix = 8;
+ repeated string issues = 9; // MISSING_COORDINATES, MISSING_DATES
+ repeated string tags = 10;
+ repeated ReviewPinMedia media = 11;
 }
 message ReviewPinMedia {
-  string media_id = 1;
-  string url = 2;
-  string privacy_level = 4;
+ string media_id = 1;
+ string url = 2;
+ string privacy_level = 4;
 }
 
 // FinalizeTrip: apply pin_updates, delete media, reverse geocoding, aggregate trip, READY, TRIP_READY
 message FinalizeTripRequest {
-  string trip_id = 1;
-  repeated PinUpdate pin_updates = 2;
-  repeated string media_to_delete = 3;
+ string trip_id = 1;
+ repeated PinUpdate pin_updates = 2;
+ repeated string media_to_delete = 3;
 }
 message PinUpdate {
-  string pin_id = 1;
-  optional string name = 2;
-  optional double latitude = 3;
-  optional double longitude = 4;
-  // TODO(PINZ-127): add optional string description = 5; with validation <= 5000 chars (ТЗ 4.2.8)
-  // TODO(PINZ-127): add repeated string tags = 6; with validation <= 10 tags, each <= 15 chars (ТЗ 4.2.4-4.2.5)
+ string pin_id = 1;
+ optional string name = 2;
+ optional double latitude = 3;
+ optional double longitude = 4;
+ // TODO: add optional string description = 5; with validation <= 5000 chars (ТЗ 4.2.8)
+ // TODO: add repeated string tags = 6; with validation <= 10 tags, each <= 15 chars (ТЗ 4.2.4-4.2.5)
 }
 message FinalizeTripResponse {
-  string trip_id = 1;
-  string status = 2;
-  string message = 3;
+ string trip_id = 1;
+ string status = 2;
+ string message = 3;
 }
 
 // Участники и инвайты
 message GenerateInviteLinkRequest {
-  string trip_id = 1;
-  int64 expires_in_seconds = 2;  // TTL ссылки, например 86400 = 24 часа
+ string trip_id = 1;
+ int64 expires_in_seconds = 2; // TTL ссылки, например 86400 = 24 часа
 }
 message GenerateInviteLinkResponse {
-  string invite_link_id = 1;
-  string token = 2;
-  string invite_url = 3;   // полный URL для шаринга (клиент или gateway может собрать)
-  int64 expires_at_unix = 4;
+ string invite_link_id = 1;
+ string token = 2;
+ string invite_url = 3; // полный URL для шаринга (клиент или gateway может собрать)
+ int64 expires_at_unix = 4;
 }
 
 message JoinTripByTokenRequest {
-  string token = 1;
+ string token = 1;
 }
 message JoinTripByTokenResponse {
-  string trip_id = 1;
-  bool already_joined = 2;
+ string trip_id = 1;
+ bool already_joined = 2;
 }
 
 message RemoveParticipantRequest {
-  string trip_id = 1;
-  string user_id = 2;  // участник, которого удаляем
+ string trip_id = 1;
+ string user_id = 2; // участник, которого удаляем
 }
 message RemoveParticipantResponse {
-  bool success = 1;
+ bool success = 1;
 }
 
 message LeaveTripRequest {
-  string trip_id = 1;
+ string trip_id = 1;
 }
 message LeaveTripResponse {
-  bool success = 1;
-  bool trip_deleted = 2;  // true если трип удалён (был единственный участник)
+ bool success = 1;
+ bool trip_deleted = 2; // true если трип удалён (был единственный участник)
 }
 
 message TransferAdminRequest {
-  string trip_id = 1;
-  string new_admin_user_id = 2;
+ string trip_id = 1;
+ string new_admin_user_id = 2;
 }
 message TransferAdminResponse {
-  bool success = 1;
+ bool success = 1;
 }
 
-// PINZ-98: настройки уведомлений по трипу (ТЗ 12.4.1)
+// настройки уведомлений по трипу (ТЗ 12.4.1)
 message UpdateTripSettingsRequest {
-  string trip_id = 1;
-  bool notifications_enabled = 2;
+ string trip_id = 1;
+ bool notifications_enabled = 2;
 }
 message UpdateTripSettingsResponse {
-  bool success = 1;
+ bool success = 1;
 }
 
-// PINZ-98: лента опубликованных трипов
+// лента опубликованных трипов
 message ListFeedRequest {
-  int32 limit = 1;
-  int32 offset = 2;
-  string category = 3;   // optional filter
-  string season = 4;     // optional filter
-  repeated int32 location_ids = 5; // optional filter (geo_registry ids)
-  string sort_by = 6;   // "date" or "rating"
+ int32 limit = 1;
+ int32 offset = 2;
+ string category = 3; // optional filter
+ string season = 4; // optional filter
+ repeated int32 location_ids = 5; // optional filter (geo_registry ids)
+ string sort_by = 6; // "date" or "rating"
 }
 
-// PINZ-130: lightweight pin for feed card map.
+// lightweight pin for feed card map.
 message FeedPin {
-  string id = 1;
-  double latitude = 2;
-  double longitude = 3;
+ string id = 1;
+ double latitude = 2;
+ double longitude = 3;
 }
 
-// PINZ-130: lightweight media for feed card carousel (up to 8, sorted by battle_rating).
+// lightweight media for feed card carousel (up to 8, sorted by battle_rating).
 message FeedMedia {
-  string media_id = 1;
-  string url = 2;        // presigned GET URL
-  string media_type = 3; // photo, video
+ string media_id = 1;
+ string url = 2; // presigned GET URL
+ string media_type = 3; // photo, video
 }
 
-// PINZ-130: a single feed card with trip, pins and media.
+// a single feed card with trip, pins and media.
 message FeedItem {
-  Trip trip = 1;
-  repeated FeedPin pins = 2;
-  repeated FeedMedia media = 3;
+ Trip trip = 1;
+ repeated FeedPin pins = 2;
+ repeated FeedMedia media = 3;
 }
 
 message ListFeedResponse {
-  repeated FeedItem items = 1;
+ repeated FeedItem items = 1;
 }
 
 message LikeTripRequest {
-  string trip_id = 1;
+ string trip_id = 1;
 }
 message LikeTripResponse {
-  bool success = 1;
+ bool success = 1;
 }
 
 message DislikeTripRequest {
-  string trip_id = 1;
+ string trip_id = 1;
 }
 message DislikeTripResponse {
-  bool success = 1;
+ bool success = 1;
 }
 
 message AddToFavouritesRequest {
-  string trip_id = 1;
+ string trip_id = 1;
 }
 message AddToFavouritesResponse {
-  bool success = 1;
+ bool success = 1;
 }
 
 message RemoveFromFavouritesRequest {
-  string trip_id = 1;
+ string trip_id = 1;
 }
 message RemoveFromFavouritesResponse {
-  bool success = 1;
+ bool success = 1;
 }
 
 message ListFavouritesRequest {
-  int32 limit = 1;
-  int32 offset = 2;
+ int32 limit = 1;
+ int32 offset = 2;
 }
 message ListFavouritesResponse {
-  repeated Trip trips = 1;
+ repeated Trip trips = 1;
 }
 
-// PINZ-131: старт сессии добавления медиа в READY-трип (ТЗ 5.3 → 3.8)
+// старт сессии добавления медиа в READY-трип (ТЗ 5.3 → 3.8).
+// идемпотентна на race — если сессия уже активна, возвращает её с joined=true.
 message AddMediaStartRequest {
-  string trip_id = 1;
-  repeated FileToUpload files_to_upload = 2;
+ string trip_id = 1;
+ repeated FileToUpload files_to_upload = 2;
 }
 message AddMediaStartResponse {
-  string session_id = 1;
-  string status = 2;
-  repeated UploadUrl upload_urls = 3;
+ string session_id = 1;
+ string status = 2;
+ repeated UploadUrl upload_urls = 3;
+ // true, если подключились к уже существующей сессии (race).
+ // В этом случае upload_urls пустой — использовать AddMediaRequestUploadUrls.
+ bool joined = 4;
 }
 
-// PINZ-131: группировка добавленных медиа с использованием существующих пинов (ТЗ 5.3.1-5.3.2)
+// выдача presigned URLs для догрузки файлов в активную сессию.
+// Сессия должна быть в ADD_MEDIA_UPLOADING, session_id — валидный.
+message AddMediaRequestUploadUrlsRequest {
+ string trip_id = 1;
+ string session_id = 2;
+ repeated FileToUpload files_to_upload = 3;
+}
+message AddMediaRequestUploadUrlsResponse {
+ repeated UploadUrl upload_urls = 1;
+}
+
+// регистрация факта загрузки файла в S3. Клиент зовёт после каждого PUT.
+// Сервер создаёт media entry без pin_id, привязывает к сессии, публикует WS ADD_MEDIA_PROGRESS.
+message AddMediaCommitUploadRequest {
+ string trip_id = 1;
+ string session_id = 2;
+ string s3_key = 3;
+ string media_type = 4; // image | video
+ optional int64 captured_at_unix = 5;
+ optional double latitude = 6;
+ optional double longitude = 7;
+}
+message AddMediaCommitUploadResponse {
+ string media_id = 1;
+ int32 media_count_in_session = 2;
+ int32 remaining_slots = 3;
+}
+
+// снимок медиа сессии для экрана UPLOADING.
+// Возвращает и свои, и чужие медиа в сессии (с presigned GET URL).
+message AddMediaGetSessionMediaRequest {
+ string trip_id = 1;
+ string session_id = 2;
+}
+message AddMediaGetSessionMediaResponse {
+ string session_id = 1;
+ repeated SessionMedia media = 2;
+ int32 media_count_in_session = 3;
+}
+message SessionMedia {
+ string media_id = 1;
+ string url = 2; // presigned GET
+ string type = 3; // image | video
+ string actor_user_id = 4; // кто загрузил
+ int64 uploaded_at_unix = 5;
+}
+
+// → переход в группировку. media[] убран — сервер берёт из БД.
+// Флаг add_more откатывает обратно в ADD_MEDIA_UPLOADING для докидывания файлов.
 message AddMediaProcessGroupingRequest {
-  string trip_id = 1;
-  string session_id = 2;
-  repeated MediaMeta media = 3;
+ string trip_id = 1;
+ string session_id = 2;
+ reserved 3; // было: repeated MediaMeta media
+ bool add_more = 4;
 }
 message AddMediaProcessGroupingResponse {
-  string trip_id = 1;
-  string session_id = 2;
-  string status = 3;
-  repeated DraftPin draft_pins = 4;
-  repeated string existing_media_ids = 5; // read-only medi
+ string trip_id = 1;
+ string session_id = 2;
+ string status = 3;
+ repeated DraftPin draft_pins = 4;
+ repeated string existing_media_ids = 5;
 }
 
-// PINZ-131: применение групп и запуск ML (ТЗ 5.3.3-5.3.4)
+// снимок draft_pins для экрана GROUPING_REVIEW.
+// Вычисляется детерминированно (та же функция, что в ProcessGrouping), без изменения статуса.
+message AddMediaGetGroupingRequest {
+ string trip_id = 1;
+ string session_id = 2;
+}
+message AddMediaGetGroupingResponse {
+ string trip_id = 1;
+ string session_id = 2;
+ repeated DraftPin draft_pins = 3;
+ repeated string existing_media_ids = 4;
+}
+
+// применение групп и запуск ML (ТЗ 5.3.3-5.3.4).
+// вызвавший становится ведущим финального ревью.
 message AddMediaApplyGroupsAndProcessRequest {
-  string trip_id = 1;
-  string session_id = 2;
-  repeated DraftPinInput draft_pins = 3;
-  repeated string deleted_media_ids = 4;
+ string trip_id = 1;
+ string session_id = 2;
+ repeated DraftPinInput draft_pins = 3;
+ repeated string deleted_media_ids = 4;
 }
 message AddMediaApplyGroupsAndProcessResponse {
-  string message = 1;
-  string status = 2;
+ string message = 1;
+ string status = 2;
 }
 
-// PINZ-133: лёгкая сводка по всем трипам пользователя — для статистики профиля.
+// финальное ревью add-media. Read-only для не-ведущего.
+message AddMediaGetReviewRequest {
+ string trip_id = 1;
+ string session_id = 2;
+}
+message AddMediaGetReviewResponse {
+ string trip_id = 1;
+ string session_id = 2;
+ repeated TripPin pins = 3;
+ repeated string new_pin_ids = 4; // пины, созданные в этой сессии
+ repeated string protected_media_ids = 5; // медиа из старых пинов, нельзя трогать
+ optional string current_initiator_user_id = 6;
+ optional int64 takeover_available_at_unix = 7;
+ bool can_edit = 8; // рассчитано сервером для удобства клиента
+}
+
+// подтверждение финального ревью — закрывает сессию, трип → READY.
+// Только ведущий. Идемпотентна: повторный вызов уже закрытой сессии = already_confirmed.
+//
+// Правки пинов и удаление «похожих» медиа (ТЗ 3.14/3.15) передаются батчем прямо в
+// Confirm — аналогично FinalizeTrip в creation-флоу. Это атомарная операция:
+// применить правки → закрыть сессию → трип в READY. Если pin_updates/media_to_delete
+// пусты — Confirm работает как простое подтверждение без правок.
+message AddMediaConfirmRequest {
+ string trip_id = 1;
+ string session_id = 2;
+ repeated PinUpdate pin_updates = 3;
+ repeated string media_to_delete = 4;
+}
+message AddMediaConfirmResponse {
+ string status = 1;
+ bool already_confirmed = 2;
+}
+
+// отмена add-media сессии. Удаляет все медиа без pin_id, трип → READY.
+// На DRAFT_FINAL_REVIEW доступна только ведущему, на остальных этапах — любому participant.
+message AddMediaCancelRequest {
+ string trip_id = 1;
+ string session_id = 2;
+}
+message AddMediaCancelResponse {
+ string status = 1;
+}
+
+// AddMediaTakeover — explicit передача роли ведущего после истечения часа
+// бездействия предыдущего ведущего. Идемпотентна: если caller уже ведущий,
+// сервер возвращает 200 без mutation и без обновления таймера.
+message AddMediaTakeoverRequest {
+ string trip_id = 1;
+ string session_id = 2;
+}
+message AddMediaTakeoverResponse {
+ string current_initiator_user_id = 1;
+ int64 takeover_available_at_unix = 2;
+ bool is_initiator = 3;
+}
+
+// лёгкая сводка по всем трипам пользователя — для статистики профиля.
 // Не пагинируется, возвращает все трипы, где user — участник.
 message TripSummary {
-  string trip_id = 1;
-  int32 pins_count = 2;
-  int32 media_count = 3;
+ string trip_id = 1;
+ int32 pins_count = 2;
+ int32 media_count = 3;
 }
 message ListUserTripSummariesRequest {
-  string user_id = 1;
+ string user_id = 1;
 }
 message ListUserTripSummariesResponse {
-  repeated TripSummary trips = 1;
+ repeated TripSummary trips = 1;
 }
 
-// PINZ-132: фотобатлы (ТЗ 8.1)
+// фотобатлы (ТЗ 8.1)
 message StartBattleRequest {
-  string trip_id = 1;
+ string trip_id = 1;
 }
 message BattleMedia {
-  string media_id = 1;
-  string url = 2;
-  string media_type = 3;
+ string media_id = 1;
+ string url = 2;
+ string media_type = 3;
 }
 message StartBattleResponse {
-  string battle_id = 1;
-  repeated BattleMedia media = 2; // ровно 8 медиа, случайная выборка из трипа
+ string battle_id = 1;
+ repeated BattleMedia media = 2; // ровно 8 медиа, случайная выборка из трипа
 }
 
 message SubmitBattleResultRequest {
-  string battle_id = 1;
-  string winner_media_id = 2;
+ string battle_id = 1;
+ string winner_media_id = 2;
 }
 message SubmitBattleResultResponse {
-  int32 new_battle_rating = 1;
+ int32 new_battle_rating = 1;
 }
 
-// PINZ-132: лучшие воспоминания, story-mode (ТЗ 8.2)
+// лучшие воспоминания, story-mode (ТЗ 8.2)
 message GetBestMemoriesRequest {
-  string trip_id = 1;
+ string trip_id = 1;
 }
 message BestMemory {
-  string media_id = 1;
-  string url = 2;
-  string media_type = 3;
-  int32 battle_rating = 4;
-  int64 captured_at_unix = 5;
+ string media_id = 1;
+ string url = 2;
+ string media_type = 3;
+ int32 battle_rating = 4;
+ int64 captured_at_unix = 5;
 }
 message GetBestMemoriesResponse {
-  repeated BestMemory media = 1;
+ repeated BestMemory media = 1;
 }
 
-// PINZ-134: выбранные настройки уведомлений по списку участников трипа.
+// выбранные настройки уведомлений по списку участников трипа.
 // Возвращает map user_id -> notifications_enabled. Если записи в trip_settings
 // нет, значение считается true (см. EnsureDefaultSettings).
 message GetNotificationSettingsRequest {
-  string trip_id = 1;
-  repeated string user_ids = 2;
+ string trip_id = 1;
+ repeated string user_ids = 2;
 }
 message GetNotificationSettingsResponse {
-  map<string, bool> notifications_enabled = 1;
+ map<string, bool> notifications_enabled = 1;
 }
 
-// PINZ-134: трип + участники для рассылки таймерных пушей.
+// трип + участники для рассылки таймерных пушей.
 // years_elapsed — для anniversary-события (ТЗ 11.3.1): «N лет назад»;
 // для end_date-события не заполняется (0).
 message NotificationTrip {
-  string trip_id = 1;
-  string name = 2;
-  repeated string participant_user_ids = 3;
-  int64 start_date_unix = 4;
-  int64 end_date_unix = 5;
-  int32 years_elapsed = 6;
+ string trip_id = 1;
+ string name = 2;
+ repeated string participant_user_ids = 3;
+ int64 start_date_unix = 4;
+ int64 end_date_unix = 5;
+ int32 years_elapsed = 6;
 }
 
-// PINZ-134: трипы, отмечающие годовщину (created_at == today - 1 year).
+// трипы, отмечающие годовщину (created_at == today - 1 year).
 message ListAnniversaryTripsRequest {
-  int64 today_unix = 1;
+ int64 today_unix = 1;
 }
 message ListAnniversaryTripsResponse {
-  repeated NotificationTrip trips = 1;
+ repeated NotificationTrip trips = 1;
 }
 
-// PINZ-134: трипы, у которых end_date пришёлся на сегодня минус 1 месяц.
+// трипы, у которых end_date пришёлся на сегодня минус 1 месяц.
 message ListEndedMonthAgoTripsRequest {
-  int64 today_unix = 1;
+ int64 today_unix = 1;
 }
 message ListEndedMonthAgoTripsResponse {
-  repeated NotificationTrip trips = 1;
+ repeated NotificationTrip trips = 1;
 }
 
-// PINZ-134: список user_id участников трипа (для notification-service
+// список user_id участников трипа (для notification-service
 // адресации пушей всем участникам по событию).
 message ListTripParticipantsRequest {
-  string trip_id = 1;
+ string trip_id = 1;
 }
 message ListTripParticipantsResponse {
-  repeated string user_ids = 1;
+ repeated string user_ids = 1;
 }
 
-// PINZ-135: поиск пинов по name/description/tags в трипах пользователя.
+// поиск пинов по name/description/tags в трипах пользователя.
 // user_id берётся из gRPC metadata (x-user-id), не передаётся в request.
 message SearchPinsRequest {
-  string query = 1;
-  int32 limit = 2;
-  int32 offset = 3;
+ string query = 1;
+ int32 limit = 2;
+ int32 offset = 3;
 }
 message SearchPinsResponse {
-  repeated TripPin pins = 1;
+ repeated TripPin pins = 1;
 }

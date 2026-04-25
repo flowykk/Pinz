@@ -76,6 +76,9 @@ func main() {
 		}
 	}()
 
+	// cron для закрытия заброшенных add-media сессий (72ч без активности).
+	go worker.RunSessionCleanup(ctx, deps.AddMediaSessionRepo, deps.TripRepo, deps.ParticipantRepo, deps.MediaRepo, deps.EventRepo, deps.MediaURLs)
+
 	slog.Info("dependencies ready, starting gRPC server")
 	if err := server.RunGRPCServer(deps.TripService); err != nil {
 		slog.Error("gRPC server error", "error", err)

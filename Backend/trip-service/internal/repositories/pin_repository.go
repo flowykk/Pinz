@@ -259,8 +259,8 @@ func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32
 }
 
 type FeedPin struct {
-	ID        string
-	Latitude  float64
+	ID string
+	Latitude float64
 	Longitude float64
 }
 

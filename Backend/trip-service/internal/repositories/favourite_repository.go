@@ -105,7 +105,7 @@ func (r *FavouriteRepository) ListTripIDsByUserID(userID string, limit, offset i
 	}
 	uuids, err := r.q.FavouriteListTripIDsByUser(context.Background(), sqlcdb.FavouriteListTripIDsByUserParams{
 		UserID: uid,
-		Limit:  limit,
+		Limit: limit,
 		Offset: offset,
 	})
 	if err != nil {

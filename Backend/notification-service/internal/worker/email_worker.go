@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	EmailStream        = "pinz:auth:email:tasks"
+	EmailStream = "pinz:auth:email:tasks"
 	emailConsumerGroup = "notification-email-worker"
-	emailConsumerName  = "notif-email-1"
+	emailConsumerName = "notif-email-1"
 )
 
 type EmailDeps struct {
-	Redis  *redis.Client
+	Redis *redis.Client
 	Sender *email.Sender
 }
 
@@ -44,11 +44,11 @@ func RunEmail(ctx context.Context, d EmailDeps) error {
 		default:
 		}
 		streams, err := d.Redis.XReadGroup(ctx, &redis.XReadGroupArgs{
-			Group:    emailConsumerGroup,
+			Group: emailConsumerGroup,
 			Consumer: emailConsumerName,
-			Streams:  []string{EmailStream, ">"},
-			Count:    10,
-			Block:    2 * time.Second,
+			Streams: []string{EmailStream, ">"},
+			Count: 10,
+			Block: 2 * time.Second,
 		}).Result()
 		if err != nil && err != redis.Nil {
 			if ctx.Err() != nil {

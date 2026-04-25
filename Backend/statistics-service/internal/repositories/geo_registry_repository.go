@@ -31,8 +31,8 @@ func (r *GeoRegistryRepository) Upsert(ctx context.Context, loc *models.GeoLocat
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (id) DO UPDATE SET
 			parent_id = EXCLUDED.parent_id,
-			name      = EXCLUDED.name,
-			type      = EXCLUDED.type`,
+			name = EXCLUDED.name,
+			type = EXCLUDED.type`,
 		loc.ID, parent, loc.Name, loc.Type)
 	return err
 }

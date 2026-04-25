@@ -79,9 +79,9 @@ func TestGetVisitedLocations_Ok(t *testing.T) {
 
 	svc := NewStatisticsService(statsRepo, tripLocations)
 	resp, err := svc.GetVisitedLocations(context.Background(), &pb.GetVisitedLocationsRequest{
-		UserId:  "u",
+		UserId: "u",
 		TripIds: []string{"trip-1", "trip-2"},
-		Type:    "Country",
+		Type: "Country",
 	})
 	require.NoError(t, err)
 	require.Len(t, resp.GetLocations(), 1)

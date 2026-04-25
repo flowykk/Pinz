@@ -9,16 +9,16 @@ import (
 func TestValidateCategory(t *testing.T) {
 	cases := map[string]struct {
 		input string
-		want  bool
+		want bool
 	}{
-		"Отпуск":         {"Отпуск", true},
-		"Командировка":   {"Командировка", true},
-		"Выходные":       {"Выходные", true},
+		"Отпуск": {"Отпуск", true},
+		"Командировка": {"Командировка", true},
+		"Выходные": {"Выходные", true},
 		"Активный_отдых": {"Активный отдых", true},
-		"Образование":    {"Образование", true},
-		"Другое":         {"Другое", true},
-		"invalid":        {"invalid", false},
-		"empty":          {"", false},
+		"Образование": {"Образование", true},
+		"Другое": {"Другое", true},
+		"invalid": {"invalid", false},
+		"empty": {"", false},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -31,14 +31,14 @@ func TestValidateCategory(t *testing.T) {
 func TestValidateSeason(t *testing.T) {
 	cases := map[string]struct {
 		input string
-		want  bool
+		want bool
 	}{
-		"Зима":    {"Зима", true},
-		"Весна":   {"Весна", true},
-		"Лето":    {"Лето", true},
-		"Осень":   {"Осень", true},
+		"Зима": {"Зима", true},
+		"Весна": {"Весна", true},
+		"Лето": {"Лето", true},
+		"Осень": {"Осень", true},
 		"invalid": {"invalid", false},
-		"empty":   {"", false},
+		"empty": {"", false},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -51,13 +51,13 @@ func TestValidateSeason(t *testing.T) {
 func TestValidatePrivacyLevel(t *testing.T) {
 	cases := map[string]struct {
 		input string
-		want  bool
+		want bool
 	}{
-		"Public":     {"Public", true},
-		"Private":    {"Private", true},
+		"Public": {"Public", true},
+		"Private": {"Private", true},
 		"Restricted": {"Restricted", true},
-		"invalid":    {"invalid", false},
-		"empty":      {"", false},
+		"invalid": {"invalid", false},
+		"empty": {"", false},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -70,18 +70,18 @@ func TestValidatePrivacyLevel(t *testing.T) {
 func TestValidateContentType(t *testing.T) {
 	cases := map[string]struct {
 		input string
-		want  bool
+		want bool
 	}{
-		"image/jpeg":      {"image/jpeg", true},
-		"image/jpg":       {"image/jpg", true},
-		"image/png":       {"image/png", true},
-		"image/heic":      {"image/heic", true},
-		"video/mp4":       {"video/mp4", true},
+		"image/jpeg": {"image/jpeg", true},
+		"image/jpg": {"image/jpg", true},
+		"image/png": {"image/png", true},
+		"image/heic": {"image/heic", true},
+		"video/mp4": {"video/mp4", true},
 		"video/quicktime": {"video/quicktime", true},
-		"image/gif":       {"image/gif", false},
-		"video/avi":       {"video/avi", false},
+		"image/gif": {"image/gif", false},
+		"video/avi": {"video/avi", false},
 		"application/pdf": {"application/pdf", false},
-		"empty":           {"", false},
+		"empty": {"", false},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -129,14 +129,14 @@ func TestValidateTags(t *testing.T) {
 func TestValidatePinCategory(t *testing.T) {
 	cases := map[string]struct {
 		input string
-		want  string
+		want string
 	}{
-		"valid":     {"Достопримечательность", "Достопримечательность"},
-		"food":      {"Еда и напитки", "Еда и напитки"},
-		"other":     {"Другое", "Другое"},
-		"unknown":   {"Unknown", "Другое"},
-		"empty":     {"", "Другое"},
-		"english":   {"Sightseeing", "Другое"},
+		"valid": {"Достопримечательность", "Достопримечательность"},
+		"food": {"Еда и напитки", "Еда и напитки"},
+		"other": {"Другое", "Другое"},
+		"unknown": {"Unknown", "Другое"},
+		"empty": {"", "Другое"},
+		"english": {"Sightseeing", "Другое"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

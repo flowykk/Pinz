@@ -42,3 +42,8 @@ RETURNING id, email, username, avatar_url, created_at;
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
+
+-- name: GetUsersByIDs :many
+SELECT id, email, username, avatar_url, created_at
+FROM users
+WHERE id = ANY($1::uuid[]);

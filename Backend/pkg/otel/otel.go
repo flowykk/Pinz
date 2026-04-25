@@ -2,10 +2,10 @@
 // Pinz backend services. All configuration is driven by standard OTel
 // environment variables:
 //
-//	OTEL_EXPORTER_OTLP_ENDPOINT   – collector gRPC endpoint (default: localhost:4317)
-//	OTEL_SERVICE_NAME              – falls back to the serviceName argument
-//	OTEL_RESOURCE_ATTRIBUTES       – extra key=value pairs merged into the resource
-//	OTEL_TRACES_SAMPLER            – sampler type (default: parentbased_always_on)
+//	OTEL_EXPORTER_OTLP_ENDPOINT – collector gRPC endpoint (default: localhost:4317)
+//	OTEL_SERVICE_NAME – falls back to the serviceName argument
+//	OTEL_RESOURCE_ATTRIBUTES – extra key=value pairs merged into the resource
+//	OTEL_TRACES_SAMPLER – sampler type (default: parentbased_always_on)
 package otel
 
 import (
@@ -32,7 +32,7 @@ import (
 // perform a coordinated graceful shutdown.
 type Providers struct {
 	TracerProvider *sdktrace.TracerProvider
-	MeterProvider  *sdkmetric.MeterProvider
+	MeterProvider *sdkmetric.MeterProvider
 	LoggerProvider *sdklog.LoggerProvider
 }
 
@@ -128,7 +128,7 @@ func Init(ctx context.Context, serviceName, version string) (*Providers, error) 
 
 	return &Providers{
 		TracerProvider: tp,
-		MeterProvider:  mp,
+		MeterProvider: mp,
 		LoggerProvider: lp,
 	}, nil
 }

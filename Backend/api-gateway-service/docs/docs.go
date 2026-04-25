@@ -2457,6 +2457,181 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/trips/{id}/media/add/cancel": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-add-media"
+                ],
+                "summary": "Cancel add-media session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Session id",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaCancelRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaCancelResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/media/add/commit-upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-add-media"
+                ],
+                "summary": "Commit uploaded file to add-media session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Uploaded file metadata",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaCommitUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaCommitUploadResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/media/add/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-add-media"
+                ],
+                "summary": "Confirm add-media session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Session id",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaConfirmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaConfirmResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/media/add/grouping": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-add-media"
+                ],
+                "summary": "Add-media grouping snapshot",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Add-media session id",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaGetGroupingResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trips/{id}/media/add/process-grouping": {
             "post": {
                 "security": [
@@ -2497,6 +2672,131 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaProcessGroupingResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/media/add/request-upload-urls": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-add-media"
+                ],
+                "summary": "Request upload URLs for active add-media session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Session id and files to upload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaRequestUploadUrlsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaRequestUploadUrlsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/media/add/review": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-add-media"
+                ],
+                "summary": "Add-media final review",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Add-media session id",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaGetReviewResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/media/add/session-media": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-add-media"
+                ],
+                "summary": "Session media snapshot",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Add-media session id",
+                        "name": "session_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaGetSessionMediaResponse"
                         }
                     }
                 }
@@ -2566,6 +2866,52 @@ const docTemplate = `{
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/media/add/takeover": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Идемпотентен: если caller уже ведущий, вернёт 200 без изменений. Если час не прошёл — 403 NOT_INITIATOR.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip-add-media"
+                ],
+                "summary": "Take over add-media session leadership",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Session id",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaTakeoverRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaTakeoverResponse"
                         }
                     }
                 }
@@ -2754,13 +3100,76 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_requests.AddMediaCancelRequest": {
+            "type": "object",
+            "properties": {
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.AddMediaCommitUploadRequest": {
+            "type": "object",
+            "properties": {
+                "captured_at": {
+                    "description": "RFC3339",
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "s3_key": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.AddMediaConfirmRequest": {
+            "type": "object",
+            "properties": {
+                "media_to_delete": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "pin_updates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.PinUpdateInput"
+                    }
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest": {
             "type": "object",
             "properties": {
-                "media": {
+                "add_more": {
+                    "type": "boolean"
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.AddMediaRequestUploadUrlsRequest": {
+            "type": "object",
+            "properties": {
+                "files_to_upload": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry"
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry"
                     }
                 },
                 "session_id": {
@@ -2776,6 +3185,14 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry"
                     }
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.AddMediaTakeoverRequest": {
+            "type": "object",
+            "properties": {
+                "session_id": {
+                    "type": "string"
                 }
             }
         },
@@ -3161,6 +3578,26 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_responses.ActiveAddMediaSession": {
+            "type": "object",
+            "properties": {
+                "current_initiator": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile"
+                },
+                "initiator_assigned_at_unix": {
+                    "type": "integer"
+                },
+                "media_count_in_session": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "takeover_available_at_unix": {
+                    "type": "integer"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_responses.AddMediaApplyGroupsAndProcessResponse": {
             "type": "object",
             "properties": {
@@ -3168,6 +3605,117 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.AddMediaCancelResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.AddMediaCommitUploadResponse": {
+            "type": "object",
+            "properties": {
+                "media_count_in_session": {
+                    "type": "integer"
+                },
+                "media_id": {
+                    "type": "string"
+                },
+                "remaining_slots": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.AddMediaConfirmResponse": {
+            "type": "object",
+            "properties": {
+                "already_confirmed": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.AddMediaGetGroupingResponse": {
+            "type": "object",
+            "properties": {
+                "draft_pins": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DraftPin"
+                    }
+                },
+                "existing_media_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.AddMediaGetReviewResponse": {
+            "type": "object",
+            "properties": {
+                "can_edit": {
+                    "type": "boolean"
+                },
+                "current_initiator": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile"
+                },
+                "new_pin_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "pins": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin"
+                    }
+                },
+                "protected_media_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "takeover_available_at_unix": {
+                    "type": "integer"
+                },
+                "trip_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.AddMediaGetSessionMediaResponse": {
+            "type": "object",
+            "properties": {
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.SessionMediaEntry"
+                    }
+                },
+                "media_count_in_session": {
+                    "type": "integer"
+                },
+                "session_id": {
                     "type": "string"
                 }
             }
@@ -3198,9 +3746,23 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_responses.AddMediaRequestUploadUrlsResponse": {
+            "type": "object",
+            "properties": {
+                "upload_urls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL"
+                    }
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_responses.AddMediaStartResponse": {
             "type": "object",
             "properties": {
+                "joined": {
+                    "type": "boolean"
+                },
                 "session_id": {
                     "type": "string"
                 },
@@ -3212,6 +3774,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL"
                     }
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.AddMediaTakeoverResponse": {
+            "type": "object",
+            "properties": {
+                "current_initiator": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile"
+                },
+                "is_initiator": {
+                    "type": "boolean"
+                },
+                "takeover_available_at_unix": {
+                    "type": "integer"
                 }
             }
         },
@@ -3378,7 +3954,18 @@ const docTemplate = `{
         "pinz_backend_api-gateway-service_internal_responses.ErrorResponse": {
             "type": "object",
             "properties": {
+                "details": {
+                    "description": "Details — дополнительные structured-поля для конкретного reason. Пример:\n{\"remaining_slots\": 2, \"limit\": 500, \"kind\": \"media\"} для LIMIT_EXCEEDED.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "error": {
+                    "type": "string"
+                },
+                "reason": {
+                    "description": "Reason — машинный код ошибки (например, \"SESSION_STALE\", \"NOT_INITIATOR\",\n\"WRONG_STATUS\", \"LIMIT_EXCEEDED\"). Клиент может различать сценарии и\nреагировать по-разному, не парся текст Error.",
                     "type": "string"
                 }
             }
@@ -3476,6 +4063,9 @@ const docTemplate = `{
         "pinz_backend_api-gateway-service_internal_responses.GetTripResponse": {
             "type": "object",
             "properties": {
+                "active_add_media_session": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ActiveAddMediaSession"
+                },
                 "pins": {
                     "type": "array",
                     "items": {
@@ -3621,6 +4211,20 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_responses.PublicUserProfile": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_responses.RefreshTokenResponse": {
             "type": "object",
             "properties": {
@@ -3684,6 +4288,26 @@ const docTemplate = `{
                 },
                 "privacy_level": {
                     "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.SessionMediaEntry": {
+            "type": "object",
+            "properties": {
+                "actor_user_id": {
+                    "type": "string"
+                },
+                "media_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "uploaded_at_unix": {
+                    "type": "integer"
                 },
                 "url": {
                     "type": "string"

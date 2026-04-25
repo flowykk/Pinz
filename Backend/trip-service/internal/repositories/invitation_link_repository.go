@@ -29,9 +29,9 @@ func (r *InvitationLinkRepository) Create(link *models.InvitationLink) error {
 		return err
 	}
 	return r.q.InvitationLinkInsert(context.Background(), sqlcdb.InvitationLinkInsertParams{
-		ID:        id,
-		TripID:    tid,
-		Token:     link.Token,
+		ID: id,
+		TripID: tid,
+		Token: link.Token,
 		ExpiresAt: link.ExpiresAt,
 	})
 }
@@ -45,9 +45,9 @@ func (r *InvitationLinkRepository) GetByToken(token string) (*models.InvitationL
 		return nil, err
 	}
 	return &models.InvitationLink{
-		ID:        row.ID.String(),
-		TripID:    row.TripID.String(),
-		Token:     row.Token,
+		ID: row.ID.String(),
+		TripID: row.TripID.String(),
+		Token: row.Token,
 		ExpiresAt: row.ExpiresAt,
 		CreatedAt: row.CreatedAt,
 	}, nil

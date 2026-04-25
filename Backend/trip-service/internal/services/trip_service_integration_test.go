@@ -53,8 +53,8 @@ func TestTripService_Integration(t *testing.T) {
 	user3ID := uuid.New().String()
 
 	env := &struct {
-		tripID      string
-		tripID2     string
+		tripID string
+		tripID2 string
 		inviteToken string
 	}{}
 
@@ -62,9 +62,9 @@ func TestTripService_Integration(t *testing.T) {
 		"CreateTrip": func(t *testing.T) {
 			err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 				resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
-					Name:         "Trip",
-					Category:     "Отпуск",
-					Season:       "Лето",
+					Name: "Trip",
+					Category: "Отпуск",
+					Season: "Лето",
 					PrivacyLevel: "Private",
 					FilesToUpload: []*pb.FileToUpload{
 						{ClientId: "c1", ContentType: "image/jpeg"},
@@ -247,9 +247,9 @@ func TestTripService_Integration(t *testing.T) {
 		"CreateTrip_second_for_delete": func(t *testing.T) {
 			err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 				resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
-					Name:         "TripToDelete",
-					Category:     "Отпуск",
-					Season:       "Лето",
+					Name: "TripToDelete",
+					Category: "Отпуск",
+					Season: "Лето",
 					PrivacyLevel: "Private",
 					FilesToUpload: []*pb.FileToUpload{
 						{ClientId: "c2", ContentType: "image/jpeg"},
@@ -332,10 +332,10 @@ func TestTripService_Integration_CreationFlow(t *testing.T) {
 	t.Run("CreateTrip", func(t *testing.T) {
 		err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 			resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
-				Name:         "Алтай 2026",
-				Category:     "Отпуск",
-				Season:       "Лето",
-				Description:  "Поход с друзьями",
+				Name: "Алтай 2026",
+				Category: "Отпуск",
+				Season: "Лето",
+				Description: "Поход с друзьями",
 				PrivacyLevel: "Private",
 				FilesToUpload: []*pb.FileToUpload{
 					{ClientId: "file-1", ContentType: "image/jpeg"},
@@ -391,12 +391,12 @@ func TestTripService_Integration_CreationFlow(t *testing.T) {
 		for i, id := range draftPinIDs {
 			draftPins = append(draftPins, &pb.DraftPinInput{
 				DraftPinId: id,
-				MediaIds:   mediaIDsByDraftPin[i],
+				MediaIds: mediaIDsByDraftPin[i],
 			})
 		}
 		err := callAsUser(t, ownerID, "/pinz.TripService/ApplyGroupsAndProcess", func(ctx context.Context) error {
 			resp, err := svc.ApplyGroupsAndProcess(ctx, &pb.ApplyGroupsAndProcessRequest{
-				TripId:    tripID,
+				TripId: tripID,
 				DraftPins: draftPins,
 			})
 			if err != nil {
@@ -482,9 +482,9 @@ func TestTripService_Integration_SoftDelete(t *testing.T) {
 	t.Run("CreateTrip", func(t *testing.T) {
 		err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 			resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
-				Name:         "SoftDeleteTrip",
-				Category:     "Отпуск",
-				Season:       "Лето",
+				Name: "SoftDeleteTrip",
+				Category: "Отпуск",
+				Season: "Лето",
 				PrivacyLevel: "Public",
 				FilesToUpload: []*pb.FileToUpload{
 					{ClientId: "f1", ContentType: "image/jpeg"},

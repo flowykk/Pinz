@@ -8,14 +8,14 @@ import (
 
 func TestContentTypeToExt(t *testing.T) {
 	cases := map[string]string{
-		"image/jpeg":      ".jpg",
-		"image/jpg":       ".jpg",
-		"image/png":       ".png",
-		"image/heic":      ".heic",
-		"video/mp4":       ".mp4",
+		"image/jpeg": ".jpg",
+		"image/jpg": ".jpg",
+		"image/png": ".png",
+		"image/heic": ".heic",
+		"video/mp4": ".mp4",
 		"video/quicktime": ".mov",
-		"other":           ".bin",
-		"empty":           ".bin",
+		"other": ".bin",
+		"empty": ".bin",
 	}
 	for name, want := range cases {
 		t.Run(name, func(t *testing.T) {

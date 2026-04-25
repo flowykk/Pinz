@@ -5,13 +5,13 @@ type SubmitEmailRequest struct {
 }
 
 type VerifyEmailCodeRequest struct {
-	RegistrationID   string `json:"registration_id"`
+	RegistrationID string `json:"registration_id"`
 	VerificationCode string `json:"verification_code"`
 }
 
 type PasskeyRegisterBeginRequest struct {
 	RegistrationID string `json:"registration_id"`
-	Username       string `json:"username"`
+	Username string `json:"username"`
 }
 
 // PasskeyRegisterFinishRequest carries the raw attestation JSON from the authenticator.
@@ -57,7 +57,7 @@ type ConfirmEmailChangeRequest struct {
 }
 
 type RequestAvatarUploadRequest struct {
-	Filename    string `json:"filename" example:"avatar.jpg"`
+	Filename string `json:"filename" example:"avatar.jpg"`
 	ContentType string `json:"content_type" example:"image/jpeg"`
 }
 

@@ -27,11 +27,11 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 	return &Dependencies{
 		StatisticsService: statsSvc,
 		WorkerDeps: worker.Deps{
-			Redis:         redisClient,
-			UserStats:     userStats,
-			GeoRegistry:   geoRegistry,
+			Redis: redisClient,
+			UserStats: userStats,
+			GeoRegistry: geoRegistry,
 			TripLocations: tripLocations,
-			EventLog:      eventLog,
+			EventLog: eventLog,
 		},
 	}, nil
 }

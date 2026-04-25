@@ -10,21 +10,21 @@ import (
 
 type RedisContainer struct {
 	Container testcontainers.Container
-	Host      string
-	Port      string
+	Host string
+	Port string
 }
 
 func (c *RedisContainer) Addr() string { return fmt.Sprintf("%s:%s", c.Host, c.Port) }
 
 func StartRedis(ctx context.Context) (*RedisContainer, error) {
 	req := testcontainers.ContainerRequest{
-		Image:        "redis:7-alpine",
+		Image: "redis:7-alpine",
 		ExposedPorts: []string{"6379/tcp"},
-		WaitingFor:   wait.ForListeningPort("6379/tcp"),
+		WaitingFor: wait.ForListeningPort("6379/tcp"),
 	}
 	ctr, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
-		Started:          true,
+		Started: true,
 	})
 	if err != nil {
 		return nil, err

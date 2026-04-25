@@ -22,7 +22,7 @@ type StatsTripClient interface {
 
 type StatisticsHandler struct {
 	stats StatisticsClient
-	trip  StatsTripClient
+	trip StatsTripClient
 }
 
 func NewStatisticsHandler(stats StatisticsClient, trip StatsTripClient) *StatisticsHandler {
@@ -30,8 +30,8 @@ func NewStatisticsHandler(stats StatisticsClient, trip StatsTripClient) *Statist
 }
 
 // GetProfileStats — собирает профильную статистику (ТЗ 10.2):
-//   - total_trips = len(summaries), total_pins/total_media = суммы по трипам
-//   - total_likes/total_dislikes/battles_finished — из statistics-service
+// - total_trips = len(summaries), total_pins/total_media = суммы по трипам
+// - total_likes/total_dislikes/battles_finished — из statistics-service
 //
 // @Summary Get current user's stats
 // @Description Returns counters (trips, pins, media, likes, dislikes, battles) for authenticated user.
@@ -108,9 +108,9 @@ func (h *StatisticsHandler) GetProfileVisitedLocations(w http.ResponseWriter, r 
 	}
 
 	resp, err := h.stats.GetVisitedLocations(r.Context(), &pb.GetVisitedLocationsRequest{
-		UserId:  userID,
+		UserId: userID,
 		TripIds: tripIDs,
-		Type:    typeFilter,
+		Type: typeFilter,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "GetVisitedLocations")
@@ -119,11 +119,11 @@ func (h *StatisticsHandler) GetProfileVisitedLocations(w http.ResponseWriter, r 
 	out := responses.VisitedLocationsResponse{Locations: make([]responses.VisitedLocationResponse, 0, len(resp.GetLocations()))}
 	for _, l := range resp.GetLocations() {
 		out.Locations = append(out.Locations, responses.VisitedLocationResponse{
-			LocationID:      l.GetLocationId(),
-			Name:            l.GetName(),
-			Type:            l.GetType(),
-			ParentID:        l.GetParentId(),
-			VisitCount:      l.GetVisitCount(),
+			LocationID: l.GetLocationId(),
+			Name: l.GetName(),
+			Type: l.GetType(),
+			ParentID: l.GetParentId(),
+			VisitCount: l.GetVisitCount(),
 			LastVisitAtUnix: l.GetLastVisitAtUnix(),
 		})
 	}

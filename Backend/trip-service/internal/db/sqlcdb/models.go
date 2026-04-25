@@ -13,10 +13,15 @@ import (
 )
 
 type AddMediaSession struct {
-	SessionID        uuid.UUID
-	TripID           uuid.UUID
-	ExistingMediaIds json.RawMessage
-	CreatedAt        time.Time
+	SessionID              uuid.UUID
+	TripID                 uuid.UUID
+	ExistingMediaIds       json.RawMessage
+	CreatedAt              time.Time
+	CurrentInitiatorUserID uuid.NullUUID
+	InitiatorAssignedAt    sql.NullTime
+	LastActivityAt         time.Time
+	ClosedAt               sql.NullTime
+	CloseReason            sql.NullString
 }
 
 type Favourite struct {
@@ -69,6 +74,7 @@ type Medium struct {
 	SimilarGroupID uuid.NullUUID
 	ContentHash    sql.NullString
 	CreatedAt      time.Time
+	UploadedBy     uuid.NullUUID
 }
 
 type Pin struct {

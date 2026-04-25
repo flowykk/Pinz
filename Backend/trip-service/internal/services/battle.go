@@ -60,8 +60,8 @@ func (s *TripService) StartBattle(ctx context.Context, req *pb.StartBattleReques
 	outMedia := make([]*pb.BattleMedia, 0, len(picked))
 	for _, m := range picked {
 		outMedia = append(outMedia, &pb.BattleMedia{
-			MediaId:   m.ID,
-			Url:       s.presignedReadURL(ctx, m.S3Key),
+			MediaId: m.ID,
+			Url: s.presignedReadURL(ctx, m.S3Key),
 			MediaType: m.MediaType,
 		})
 	}
@@ -137,10 +137,10 @@ func (s *TripService) GetBestMemories(ctx context.Context, req *pb.GetBestMemori
 			capturedAtUnix = m.CapturedAt.Unix()
 		}
 		out = append(out, &pb.BestMemory{
-			MediaId:        m.ID,
-			Url:            s.presignedReadURL(ctx, m.S3Key),
-			MediaType:      m.MediaType,
-			BattleRating:   m.BattleRating,
+			MediaId: m.ID,
+			Url: s.presignedReadURL(ctx, m.S3Key),
+			MediaType: m.MediaType,
+			BattleRating: m.BattleRating,
 			CapturedAtUnix: capturedAtUnix,
 		})
 	}

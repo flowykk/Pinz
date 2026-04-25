@@ -103,7 +103,7 @@ func clusterMediaToDraftPins(mediaRepo repositories.MediaRepositoryInterface, tr
 // "draft-unassigned" — media without coordinates and time.
 type DraftPinGroup struct {
 	DraftPinID string
-	MediaIDs   []string
+	MediaIDs []string
 }
 
 // clusterMediaWithExistingPinsAsSeeds groups trip media using existing pins as seed clusters (ТЗ 5.3.1).
@@ -195,9 +195,9 @@ func clusterMediaWithExistingPinsAsSeeds(mediaRepo repositories.MediaRepositoryI
 	}
 	for _, m := range noLocWithTime {
 		t := *m.CapturedAt
-		bestKind := ""      // "existing" / "new" / ""
-		bestID := ""        // pin_id для existing
-		bestCID := 0        // cluster id для new
+		bestKind := "" // "existing" / "new" / ""
+		bestID := "" // pin_id для existing
+		bestCID := 0 // cluster id для new
 		bestDiff := time.Duration(TimeClusterMinutes) * time.Minute
 		for pinID, ct := range existingClusterTimes {
 			diff := t.Sub(ct)

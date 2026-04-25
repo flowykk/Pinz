@@ -28,11 +28,11 @@ func TestMediaRepository_ClusterIDsByLocation(t *testing.T) {
 	mkTrip := func(t *testing.T) string {
 		t.Helper()
 		trip := &models.Trip{
-			OwnerUserID:  uuid.New().String(),
-			Name:         "Trip",
-			Category:     "Отпуск",
-			Season:       "Лето",
-			Status:       "DRAFT",
+			OwnerUserID: uuid.New().String(),
+			Name: "Trip",
+			Category: "Отпуск",
+			Season: "Лето",
+			Status: "DRAFT",
 			PrivacyLevel: "Private",
 		}
 		require.NoError(t, tripRepo.Create(trip))
@@ -41,11 +41,11 @@ func TestMediaRepository_ClusterIDsByLocation(t *testing.T) {
 	addMedia := func(t *testing.T, tripID string, lat, lon float64) string {
 		t.Helper()
 		m := &models.Media{
-			TripID:       tripID,
-			S3Key:        "k/" + uuid.NewString(),
-			MediaType:    "image",
-			Latitude:     &lat,
-			Longitude:    &lon,
+			TripID: tripID,
+			S3Key: "k/" + uuid.NewString(),
+			MediaType: "image",
+			Latitude: &lat,
+			Longitude: &lon,
 			PrivacyLevel: "Private",
 		}
 		require.NoError(t, mediaRepo.Create(m))
@@ -73,8 +73,8 @@ func TestMediaRepository_ClusterIDsByLocation(t *testing.T) {
 
 	t.Run("distant_cities_form_separate_clusters", func(t *testing.T) {
 		tripID := mkTrip(t)
-		addMedia(t, tripID, 55.7558, 37.6176)  // Moscow
-		addMedia(t, tripID, 55.7560, 37.6180)  // Moscow (≈30 m)
+		addMedia(t, tripID, 55.7558, 37.6176) // Moscow
+		addMedia(t, tripID, 55.7560, 37.6180) // Moscow (≈30 m)
 		addMedia(t, tripID, 40.7128, -74.0060) // New York
 		clusters, err := mediaRepo.ClusterIDsByLocation(tripID, 75)
 		require.NoError(t, err)

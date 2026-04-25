@@ -7,11 +7,11 @@ import (
 )
 
 type Sender struct {
-	host     string
-	port     string
+	host string
+	port string
 	username string
 	password string
-	from     string
+	from string
 }
 
 // NewSenderFromEnv возвращает nil, если SMTP_HOST не задан.
@@ -25,11 +25,11 @@ func NewSenderFromEnv() *Sender {
 		port = "587"
 	}
 	return &Sender{
-		host:     host,
-		port:     port,
+		host: host,
+		port: port,
 		username: os.Getenv("SMTP_USERNAME"),
 		password: os.Getenv("SMTP_PASSWORD"),
-		from:     os.Getenv("SMTP_FROM"),
+		from: os.Getenv("SMTP_FROM"),
 	}
 }
 

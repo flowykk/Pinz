@@ -19,15 +19,15 @@ func WithAuthPostgres(t *testing.T) *PostgresContainer {
 
 	dbKeys := []string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"}
 	saved := make([]struct {
-		k   string
-		v   string
+		k string
+		v string
 		set bool
 	}, len(dbKeys))
 	for i, k := range dbKeys {
 		v, ok := os.LookupEnv(k)
 		saved[i] = struct {
-			k   string
-			v   string
+			k string
+			v string
 			set bool
 		}{k, v, ok}
 	}

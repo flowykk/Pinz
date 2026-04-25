@@ -11,7 +11,7 @@ import (
 
 // PrivacyEntry is one per-user privacy choice.
 type PrivacyEntry struct {
-	UserID       string
+	UserID string
 	PrivacyLevel string
 }
 
@@ -32,8 +32,8 @@ func (r *TripPrivacyRepository) Upsert(ctx context.Context, tripID, userID, priv
 		return err
 	}
 	return r.q.TripPrivacyUpsert(ctx, sqlcdb.TripPrivacyUpsertParams{
-		TripID:       tid,
-		UserID:       uid,
+		TripID: tid,
+		UserID: uid,
 		PrivacyLevel: privacyLevel,
 	})
 }
@@ -71,8 +71,8 @@ func (r *PinPrivacyRepository) Upsert(ctx context.Context, pinID, userID, privac
 		return err
 	}
 	return r.q.PinPrivacyUpsert(ctx, sqlcdb.PinPrivacyUpsertParams{
-		PinID:        pid,
-		UserID:       uid,
+		PinID: pid,
+		UserID: uid,
 		PrivacyLevel: privacyLevel,
 	})
 }
@@ -110,8 +110,8 @@ func (r *MediaPrivacyRepository) Upsert(ctx context.Context, mediaID, userID, pr
 		return err
 	}
 	return r.q.MediaPrivacyUpsert(ctx, sqlcdb.MediaPrivacyUpsertParams{
-		MediaID:      mid,
-		UserID:       uid,
+		MediaID: mid,
+		UserID: uid,
 		PrivacyLevel: privacyLevel,
 	})
 }

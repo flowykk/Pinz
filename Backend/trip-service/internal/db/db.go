@@ -36,8 +36,8 @@ func InitDB() (*sql.DB, error) {
 	db, err := otelsql.Open("pgx", dsnStr,
 		otelsql.WithAttributes(semconv.DBSystemPostgreSQL),
 		otelsql.WithSpanOptions(otelsql.SpanOptions{
-			Ping:           false,
-			RowsNext:       false,
+			Ping: false,
+			RowsNext: false,
 			DisableErrSkip: true,
 		}),
 	)

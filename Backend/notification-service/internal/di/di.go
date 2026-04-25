@@ -15,9 +15,9 @@ import (
 
 type Dependencies struct {
 	NotificationService *services.NotificationService
-	TripEventsDeps      worker.TripEventsDeps
-	EmailDeps           worker.EmailDeps
-	SchedulerDeps       scheduler.Deps
+	TripEventsDeps worker.TripEventsDeps
+	EmailDeps worker.EmailDeps
+	SchedulerDeps scheduler.Deps
 
 	// Closers — ресурсы, которые надо закрыть в shutdown.
 	TripClient *repositories.TripClient
@@ -42,22 +42,22 @@ func BuildDependencies(
 	return &Dependencies{
 		NotificationService: notifSvc,
 		TripEventsDeps: worker.TripEventsDeps{
-			Redis:          redisClient,
-			Tokens:         tokensRepo,
-			NotifLog:       notifLogRepo,
-			TripClient:     tripClient,
-			APNS:           apnsSender,
+			Redis: redisClient,
+			Tokens: tokensRepo,
+			NotifLog: notifLogRepo,
+			TripClient: tripClient,
+			APNS: apnsSender,
 		},
 		EmailDeps: worker.EmailDeps{
-			Redis:  redisClient,
+			Redis: redisClient,
 			Sender: emailSender,
 		},
 		SchedulerDeps: scheduler.Deps{
-			Redis:      redisClient,
-			Tokens:     tokensRepo,
-			NotifLog:   notifLogRepo,
+			Redis: redisClient,
+			Tokens: tokensRepo,
+			NotifLog: notifLogRepo,
 			TripClient: tripClient,
-			APNS:       apnsSender,
+			APNS: apnsSender,
 		},
 		TripClient: tripClient,
 	}, nil

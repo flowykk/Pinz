@@ -29,8 +29,8 @@ func (r *TripParticipantRepository) Add(p *models.TripParticipant) error {
 		return err
 	}
 	return r.q.TripParticipantAdd(context.Background(), sqlcdb.TripParticipantAddParams{
-		TripID:  tid,
-		UserID:  uid,
+		TripID: tid,
+		UserID: uid,
 		IsAdmin: p.IsAdmin,
 	})
 }
@@ -47,9 +47,9 @@ func (r *TripParticipantRepository) GetByTripID(tripID string) ([]*models.TripPa
 	list := make([]*models.TripParticipant, 0, len(rows))
 	for _, row := range rows {
 		list = append(list, &models.TripParticipant{
-			TripID:   row.TripID.String(),
-			UserID:   row.UserID.String(),
-			IsAdmin:  row.IsAdmin,
+			TripID: row.TripID.String(),
+			UserID: row.UserID.String(),
+			IsAdmin: row.IsAdmin,
 			JoinedAt: row.JoinedAt,
 		})
 	}

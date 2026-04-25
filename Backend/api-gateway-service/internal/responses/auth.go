@@ -1,7 +1,7 @@
 package responses
 
 type SubmitEmailResponse struct {
-	IsRegistered   bool   `json:"is_registered"`
+	IsRegistered bool `json:"is_registered"`
 	RegistrationID string `json:"registration_id,omitempty" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
@@ -15,7 +15,7 @@ type PasskeyRegisterBeginResponse struct {
 }
 
 type PasskeyRegisterFinishResponse struct {
-	AccessToken  string `json:"access_token"`
+	AccessToken string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
@@ -25,7 +25,7 @@ type PasskeyLoginBeginResponse struct {
 }
 
 type PasskeyLoginFinishResponse struct {
-	AccessToken  string `json:"access_token"`
+	AccessToken string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
@@ -38,16 +38,16 @@ type LogoutResponse struct {
 }
 
 type DevLoginResponse struct {
-	AccessToken  string `json:"access_token"`
+	AccessToken string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
 type ProfileResponse struct {
-	ID        string `json:"id"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
+	ID string `json:"id"`
+	Username string `json:"username"`
+	Email string `json:"email"`
 	AvatarURL string `json:"avatar_url,omitempty"`
-	CreatedAt int64  `json:"created_at"`
+	CreatedAt int64 `json:"created_at"`
 }
 
 type ChangeEmailResponse struct {
@@ -56,7 +56,7 @@ type ChangeEmailResponse struct {
 
 type AvatarUploadResponse struct {
 	UploadURL string `json:"upload_url"`
-	S3Key     string `json:"s3_key"`
+	S3Key string `json:"s3_key"`
 }
 
 type DeleteAccountResponse struct {

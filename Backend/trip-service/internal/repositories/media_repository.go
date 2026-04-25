@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -10,6 +11,14 @@ import (
 
 	"pinz/backend/trip-service/internal/models"
 )
+
+// ErrMediaLimitExceeded возвращается CommitInSession, если INSERT упёрся в общий
+// лимит медиа на трип (MaxMediaPerTrip).
+var ErrMediaLimitExceeded = errors.New("media limit exceeded")
+
+// ErrVideoLimitExceeded возвращается CommitInSession, если INSERT упёрся в лимит
+// видео на трип (MaxVideosPerTrip).
+var ErrVideoLimitExceeded = errors.New("video limit exceeded")
 
 type MediaRepository struct {
 	db *sql.DB
@@ -38,6 +47,10 @@ func (r *MediaRepository) Create(m *models.Media) error {
 		cols = append(cols, "content_hash")
 		vals = append(vals, *m.ContentHash)
 	}
+	if m.UploadedBy != nil {
+		cols = append(cols, "uploaded_by")
+		vals = append(vals, *m.UploadedBy)
+	}
 	q := psq.Insert("media").Columns(cols...).Values(vals...).Suffix("RETURNING id, created_at")
 	sqlStr, args, err := q.ToSql()
 	if err != nil {
@@ -48,6 +61,83 @@ func (r *MediaRepository) Create(m *models.Media) error {
 		return err
 	}
 	return nil
+}
+
+// CommitInSession атомарно вставляет media в рамках add-media сессии: берёт
+// advisory lock по session_id (сериализует параллельные commit'ы в ту же сессию),
+// проверяет лимиты, делает INSERT и возвращает totalAfter/videosAfter — сколько
+// медиа теперь в трипе (нужно сервису, чтобы посчитать media_count_in_session и
+// remaining_slots без гонки).
+//
+// При превышении лимита возвращает ErrMediaLimitExceeded или ErrVideoLimitExceeded
+// с заполненным totalAfter (= total до попытки, INSERT не выполняется).
+func (r *MediaRepository) CommitInSession(ctx context.Context, m *models.Media, sessionID string, maxMedia, maxVideos int) (totalAfter, videosAfter int, err error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, err
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+	if _, err = tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock(hashtext($1))", sessionID); err != nil {
+		return 0, 0, err
+	}
+	var total, videos int
+	if err = tx.QueryRowContext(ctx, "SELECT COUNT(*), COUNT(*) FILTER (WHERE media_type = 'video') FROM media WHERE trip_id = $1", m.TripID).Scan(&total, &videos); err != nil {
+		return 0, 0, err
+	}
+	if total >= maxMedia {
+		return total, videos, ErrMediaLimitExceeded
+	}
+	if m.MediaType == "video" && videos >= maxVideos {
+		return total, videos, ErrVideoLimitExceeded
+	}
+	cols := []string{"trip_id", "s3_key", "media_type", "captured_at", "battle_rating", "privacy_level"}
+	vals := []interface{}{m.TripID, m.S3Key, m.MediaType, m.CapturedAt, m.BattleRating, m.PrivacyLevel}
+	if m.PinID != nil {
+		cols = append(cols, "pin_id")
+		vals = append(vals, *m.PinID)
+	}
+	if m.SimilarGroupID != nil {
+		cols = append(cols, "similar_group_id")
+		vals = append(vals, *m.SimilarGroupID)
+	}
+	if m.Latitude != nil && m.Longitude != nil {
+		cols = append(cols, "location")
+		vals = append(vals, sq.Expr("ST_SetSRID(ST_MakePoint(?, ?), 4326)", *m.Longitude, *m.Latitude))
+	}
+	if m.ContentHash != nil {
+		cols = append(cols, "content_hash")
+		vals = append(vals, *m.ContentHash)
+	}
+	if m.UploadedBy != nil {
+		cols = append(cols, "uploaded_by")
+		vals = append(vals, *m.UploadedBy)
+	}
+	q := psq.Insert("media").Columns(cols...).Values(vals...).Suffix("RETURNING id, created_at")
+	sqlStr, args, qerr := q.ToSql()
+	if qerr != nil {
+		return 0, 0, qerr
+	}
+	if err = tx.QueryRowContext(ctx, sqlStr, args...).Scan(&m.ID, &m.CreatedAt); err != nil {
+		return 0, 0, err
+	}
+	if _, err = tx.ExecContext(ctx, "UPDATE add_media_sessions SET last_activity_at = NOW() WHERE session_id = $1", sessionID); err != nil {
+		return 0, 0, err
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, 0, err
+	}
+	committed = true
+	totalAfter = total + 1
+	videosAfter = videos
+	if m.MediaType == "video" {
+		videosAfter++
+	}
+	return totalAfter, videosAfter, nil
 }
 
 func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
@@ -91,7 +181,7 @@ func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
 func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, uploaded_by, created_at
 		FROM media WHERE trip_id = $1 ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
 	if err != nil {
@@ -101,11 +191,11 @@ func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 	var list []*models.Media
 	for rows.Next() {
 		var m models.Media
-		var pinID, similarGroupID, contentHash sql.NullString
+		var pinID, similarGroupID, contentHash, uploadedBy sql.NullString
 		var lat, lon sql.NullFloat64
 		var capturedAt sql.NullTime
 		if err := rows.Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
-			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &m.CreatedAt); err != nil {
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadedBy, &m.CreatedAt); err != nil {
 			return nil, err
 		}
 		if pinID.Valid {
@@ -125,6 +215,9 @@ func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 		}
 		if contentHash.Valid {
 			m.ContentHash = &contentHash.String
+		}
+		if uploadedBy.Valid {
+			m.UploadedBy = &uploadedBy.String
 		}
 		list = append(list, &m)
 	}
@@ -157,6 +250,51 @@ func (r *MediaRepository) DeleteByIDs(ids []string) error {
 	}
 	_, err := psq.Delete("media").Where(sq.Eq{"id": ids}).RunWith(r.db).Exec()
 	return err
+}
+
+// DeleteOrphanSessionMedia — удаляет медиа трипа, которые не попали ни в один
+// пин (pin_id IS NULL) и не входят в existingMediaIDs (то есть были загружены в текущей
+// add-media сессии, но остались без привязки). Вызывается при Cancel/abandoned.
+// Возвращает s3_keys удалённых медиа — вызывающий должен почистить S3.
+func (r *MediaRepository) DeleteOrphanSessionMedia(tripID string, existingMediaIDs []string) ([]string, error) {
+	cond := sq.And{
+		sq.Eq{"trip_id": tripID},
+		sq.Eq{"pin_id": nil},
+	}
+	if len(existingMediaIDs) > 0 {
+		cond = append(cond, sq.NotEq{"id": existingMediaIDs})
+	}
+	selectQ := psq.Select("id", "s3_key").From("media").Where(cond)
+	selectSQL, args, err := selectQ.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.db.Query(selectSQL, args...)
+	if err != nil {
+		return nil, err
+	}
+	var ids []string
+	var s3Keys []string
+	for rows.Next() {
+		var id, key string
+		if err := rows.Scan(&id, &key); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		ids = append(ids, id)
+		s3Keys = append(s3Keys, key)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	if _, err := psq.Delete("media").Where(sq.Eq{"id": ids}).RunWith(r.db).Exec(); err != nil {
+		return nil, err
+	}
+	return s3Keys, nil
 }
 
 // SetSimilarGroupID помечает медиа как одну группу похожих внутри пина (один и тот же groupID = одна группа).
@@ -311,19 +449,19 @@ func (r *MediaRepository) ClusterIDsByLocation(tripID string, radiusMeters float
 	sqlStr := `
 		WITH c AS (
 			SELECT ST_Y(ST_Centroid(ST_Collect(location))) AS lat0,
-			       ST_X(ST_Centroid(ST_Collect(location))) AS lon0
+			 ST_X(ST_Centroid(ST_Collect(location))) AS lon0
 			FROM media
 			WHERE trip_id = $1 AND location IS NOT NULL
 		)
 		SELECT m.id,
-		       ST_ClusterDBSCAN(
-		           ST_Transform(
-		               m.location,
-		               format('+proj=aeqd +lat_0=%s +lon_0=%s +ellps=WGS84 +units=m +no_defs', c.lat0, c.lon0)
-		           ),
-		           $2,
-		           1
-		       ) OVER ()::int AS cid
+		 ST_ClusterDBSCAN(
+		 ST_Transform(
+		 m.location,
+		 format('+proj=aeqd +lat_0=%s +lon_0=%s +ellps=WGS84 +units=m +no_defs', c.lat0, c.lon0)
+		 ),
+		 $2,
+		 1
+		 ) OVER ()::int AS cid
 		FROM media m CROSS JOIN c
 		WHERE m.trip_id = $1 AND m.location IS NOT NULL`
 	rows, err := r.db.Query(sqlStr, tripID, radiusMeters)
@@ -388,8 +526,8 @@ func (r *MediaRepository) ListByPinID(pinID string) ([]*models.Media, error) {
 }
 
 type FeedMedia struct {
-	ID        string
-	S3Key     string
+	ID string
+	S3Key string
 	MediaType string
 }
 

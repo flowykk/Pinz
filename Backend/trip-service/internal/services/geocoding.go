@@ -12,23 +12,23 @@ import (
 
 type GeocodingClient struct {
 	httpClient *http.Client
-	baseURL    string
-	apiKey     string
-	language   string
+	baseURL string
+	apiKey string
+	language string
 }
 
 // geocodingResponse — структура ответа BigDataCloud Reverse Geocoding API.
 // Docs: https://www.bigdatacloud.com/docs/reverse-geocoding
 type geocodingResponse struct {
-	CountryName            string `json:"countryName"`
-	CountryCode            string `json:"countryCode"`
-	PrincipalSubdivision   string `json:"principalSubdivision"`
-	City                   string `json:"city"`
-	Locality               string `json:"locality"`
-	Postcode               string `json:"postcode"`
-	Continent              string `json:"continent"`
-	ContinentCode          string `json:"continentCode"`
-	LocalityLanguageReq    string `json:"localityLanguageRequested"`
+	CountryName string `json:"countryName"`
+	CountryCode string `json:"countryCode"`
+	PrincipalSubdivision string `json:"principalSubdivision"`
+	City string `json:"city"`
+	Locality string `json:"locality"`
+	Postcode string `json:"postcode"`
+	Continent string `json:"continent"`
+	ContinentCode string `json:"continentCode"`
+	LocalityLanguageReq string `json:"localityLanguageRequested"`
 }
 
 func NewGeocodingClientFromEnv() *GeocodingClient {
@@ -42,22 +42,22 @@ func NewGeocodingClientFromEnv() *GeocodingClient {
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			Timeout:   3 * time.Second,
+			Timeout: 3 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
-		MaxIdleConns:        10,
-		IdleConnTimeout:     30 * time.Second,
+		MaxIdleConns: 10,
+		IdleConnTimeout: 30 * time.Second,
 		TLSHandshakeTimeout: 3 * time.Second,
 	}
 	client := &http.Client{
-		Timeout:   5 * time.Second,
+		Timeout: 5 * time.Second,
 		Transport: transport,
 	}
 	return &GeocodingClient{
 		httpClient: client,
-		baseURL:    baseURL,
-		apiKey:     apiKey,
-		language:   "ru",
+		baseURL: baseURL,
+		apiKey: apiKey,
+		language: "ru",
 	}
 }
 

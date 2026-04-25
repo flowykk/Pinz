@@ -26,7 +26,7 @@ type TripClientInterface interface {
 // OTel-инструментирование. Использует addr из env TRIP_SERVICE_GRPC_ADDRESS.
 type TripClient struct {
 	conn *grpc.ClientConn
-	cli  pb.TripServiceClient
+	cli pb.TripServiceClient
 }
 
 func NewTripClient() (*TripClient, error) {

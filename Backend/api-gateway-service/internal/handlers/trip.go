@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -17,7 +18,14 @@ import (
 var _ = responses.ErrorResponse{}
 
 type TripHandler struct {
-	tripClient TripClient
+	tripClient  TripClient
+	authEnricher AuthProfileEnricher
+}
+
+// AuthProfileEnricher — минимальный контракт auth-client'а для обогащения ответов
+// публичными профилями (N2). В тестах заменяется stub'ом.
+type AuthProfileEnricher interface {
+	GetUsersProfiles(ctx context.Context, req *proto.GetUsersProfilesRequest) (*proto.GetUsersProfilesResponse, error)
 }
 
 type TripClient interface {
@@ -46,16 +54,24 @@ type TripClient interface {
 	RemoveFromFavourites(ctx context.Context, req *proto.RemoveFromFavouritesRequest) (*proto.RemoveFromFavouritesResponse, error)
 	ListFavourites(ctx context.Context, req *proto.ListFavouritesRequest) (*proto.ListFavouritesResponse, error)
 	AddMediaStart(ctx context.Context, req *proto.AddMediaStartRequest) (*proto.AddMediaStartResponse, error)
+	AddMediaRequestUploadUrls(ctx context.Context, req *proto.AddMediaRequestUploadUrlsRequest) (*proto.AddMediaRequestUploadUrlsResponse, error)
+	AddMediaCommitUpload(ctx context.Context, req *proto.AddMediaCommitUploadRequest) (*proto.AddMediaCommitUploadResponse, error)
+	AddMediaGetSessionMedia(ctx context.Context, req *proto.AddMediaGetSessionMediaRequest) (*proto.AddMediaGetSessionMediaResponse, error)
 	AddMediaProcessGrouping(ctx context.Context, req *proto.AddMediaProcessGroupingRequest) (*proto.AddMediaProcessGroupingResponse, error)
+	AddMediaGetGrouping(ctx context.Context, req *proto.AddMediaGetGroupingRequest) (*proto.AddMediaGetGroupingResponse, error)
 	AddMediaApplyGroupsAndProcess(ctx context.Context, req *proto.AddMediaApplyGroupsAndProcessRequest) (*proto.AddMediaApplyGroupsAndProcessResponse, error)
+	AddMediaGetReview(ctx context.Context, req *proto.AddMediaGetReviewRequest) (*proto.AddMediaGetReviewResponse, error)
+	AddMediaConfirm(ctx context.Context, req *proto.AddMediaConfirmRequest) (*proto.AddMediaConfirmResponse, error)
+	AddMediaCancel(ctx context.Context, req *proto.AddMediaCancelRequest) (*proto.AddMediaCancelResponse, error)
+	AddMediaTakeover(ctx context.Context, req *proto.AddMediaTakeoverRequest) (*proto.AddMediaTakeoverResponse, error)
 	StartBattle(ctx context.Context, req *proto.StartBattleRequest) (*proto.StartBattleResponse, error)
 	SubmitBattleResult(ctx context.Context, req *proto.SubmitBattleResultRequest) (*proto.SubmitBattleResultResponse, error)
 	GetBestMemories(ctx context.Context, req *proto.GetBestMemoriesRequest) (*proto.GetBestMemoriesResponse, error)
 	SearchPins(ctx context.Context, req *proto.SearchPinsRequest) (*proto.SearchPinsResponse, error)
 }
 
-func NewTripHandler(tripClient TripClient) *TripHandler {
-	return &TripHandler{tripClient: tripClient}
+func NewTripHandler(tripClient TripClient, authEnricher AuthProfileEnricher) *TripHandler {
+	return &TripHandler{tripClient: tripClient, authEnricher: authEnricher}
 }
 
 // ListTrips returns trips for the authenticated user.
@@ -81,7 +97,7 @@ func (h *TripHandler) ListTrips(w http.ResponseWriter, r *http.Request) {
 	// Optional: parse limit/offset from query
 	resp, err := h.tripClient.ListUserTrips(ctx, &proto.ListUserTripsRequest{
 		UserId: userID,
-		Limit:  limit,
+		Limit: limit,
 		Offset: offset,
 	})
 	if err != nil {
@@ -125,11 +141,11 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		protoFiles = append(protoFiles, &proto.FileToUpload{ClientId: f.ClientID, ContentType: f.ContentType})
 	}
 	resp, err := h.tripClient.CreateTrip(ctx, &proto.CreateTripRequest{
-		OwnerUserId:   userID,
-		Name:          req.Name,
-		Description:   req.Description,
-		Category:      req.Category,
-		Season:        req.Season,
+		OwnerUserId: userID,
+		Name: req.Name,
+		Description: req.Description,
+		Category: req.Category,
+		Season: req.Season,
 		FilesToUpload: protoFiles,
 	})
 	if err != nil {
@@ -141,8 +157,8 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		urls[i] = responses.UploadURL{ClientID: u.GetClientId(), S3Key: u.GetS3Key(), URL: u.GetUrl()}
 	}
 	respondJSON(w, http.StatusCreated, responses.CreateTripResponse{
-		TripID:     resp.GetTripId(),
-		Status:     resp.GetStatus(),
+		TripID: resp.GetTripId(),
+		Status: resp.GetStatus(),
 		UploadURLs: urls,
 	})
 }
@@ -178,7 +194,7 @@ func (h *TripHandler) GetTrip(w http.ResponseWriter, r *http.Request) {
 		handleServiceError(w, r, err, "GetTrip")
 		return
 	}
-	respondJSON(w, http.StatusOK, getTripResponseToREST(resp))
+	respondJSON(w, http.StatusOK, h.getTripResponseToREST(ctx, resp))
 }
 
 // UpdateTrip updates trip metadata.
@@ -278,9 +294,9 @@ func (h *TripHandler) RequestTripCoverUpload(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	resp, err := h.tripClient.RequestTripCoverUpload(ctx, &proto.RequestTripCoverUploadRequest{
-		TripId:      tripID,
-		UserId:      userID,
-		Filename:    req.Filename,
+		TripId: tripID,
+		UserId: userID,
+		Filename: req.Filename,
 		ContentType: req.ContentType,
 	})
 	if err != nil {
@@ -289,7 +305,7 @@ func (h *TripHandler) RequestTripCoverUpload(w http.ResponseWriter, r *http.Requ
 	}
 	respondJSON(w, http.StatusOK, responses.TripCoverUploadResponse{
 		UploadURL: resp.GetUploadUrl(),
-		S3Key:     resp.GetS3Key(),
+		S3Key: resp.GetS3Key(),
 	})
 }
 
@@ -329,7 +345,7 @@ func (h *TripHandler) ConfirmTripCoverUpload(w http.ResponseWriter, r *http.Requ
 	resp, err := h.tripClient.ConfirmTripCoverUpload(ctx, &proto.ConfirmTripCoverUploadRequest{
 		TripId: tripID,
 		UserId: userID,
-		S3Key:  req.S3Key,
+		S3Key: req.S3Key,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "ConfirmTripCoverUpload")
@@ -448,9 +464,9 @@ func (h *TripHandler) GenerateInviteLink(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	respondJSON(w, http.StatusCreated, responses.GenerateInviteLinkResponse{
-		InviteLinkID:  resp.GetInviteLinkId(),
-		Token:         resp.GetToken(),
-		InviteURL:     resp.GetInviteUrl(),
+		InviteLinkID: resp.GetInviteLinkId(),
+		Token: resp.GetToken(),
+		InviteURL: resp.GetInviteUrl(),
 		ExpiresAtUnix: resp.GetExpiresAtUnix(),
 	})
 }
@@ -487,7 +503,7 @@ func (h *TripHandler) JoinTripByToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.JoinTripByTokenResponse{
-		TripID:        resp.GetTripId(),
+		TripID: resp.GetTripId(),
 		AlreadyJoined: resp.GetAlreadyJoined(),
 	})
 }
@@ -561,7 +577,7 @@ func (h *TripHandler) LeaveTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.LeaveTripResponse{
-		Success:     resp.GetSuccess(),
+		Success: resp.GetSuccess(),
 		TripDeleted: resp.GetTripDeleted(),
 	})
 }
@@ -623,8 +639,8 @@ func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Reques
 		draftPins = append(draftPins, responses.DraftPin{DraftPinID: dp.GetDraftPinId(), Media: mediaList})
 	}
 	respondJSON(w, http.StatusOK, responses.ProcessMediaGroupingResponse{
-		TripID:    resp.GetTripId(),
-		Status:    resp.GetStatus(),
+		TripID: resp.GetTripId(),
+		Status: resp.GetStatus(),
 		DraftPins: draftPins,
 	})
 }
@@ -661,8 +677,8 @@ func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Reque
 		draftPins = append(draftPins, &proto.DraftPinInput{DraftPinId: dp.DraftPinID, MediaIds: dp.MediaIDs})
 	}
 	resp, err := h.tripClient.ApplyGroupsAndProcess(ctx, &proto.ApplyGroupsAndProcessRequest{
-		TripId:          tripID,
-		DraftPins:       draftPins,
+		TripId: tripID,
+		DraftPins: draftPins,
 		DeletedMediaIds: req.DeletedMediaIDs,
 	})
 	if err != nil {
@@ -671,7 +687,7 @@ func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Reque
 	}
 	respondJSON(w, http.StatusAccepted, responses.ApplyGroupsAndProcessResponse{
 		Message: resp.GetMessage(),
-		Status:  resp.GetStatus(),
+		Status: resp.GetStatus(),
 	})
 }
 
@@ -772,7 +788,7 @@ func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// PublishTrip публикует трип в общую ленту (PINZ-105, ТЗ 3.3).
+// PublishTrip публикует трип в общую ленту (ТЗ 3.3).
 // @Summary Publish trip to feed
 // @Tags trips
 // @Accept json
@@ -802,9 +818,9 @@ func (h *TripHandler) PublishTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	protoReq := &proto.PublishTripRequest{
-		TripId:       tripID,
+		TripId: tripID,
 		PublishWhole: req.PublishWhole,
-		PinIds:       req.PinIDs,
+		PinIds: req.PinIDs,
 	}
 	resp, err := h.tripClient.PublishTrip(ctx, protoReq)
 	if err != nil {
@@ -814,7 +830,7 @@ func (h *TripHandler) PublishTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
 }
 
-// UpdateTripSettings updates notifications for the trip (PINZ-98, ТЗ 12.4.1).
+// UpdateTripSettings updates notifications for the trip (ТЗ 12.4.1).
 // @Summary Update trip notification settings
 // @Tags trips
 // @Accept json
@@ -842,7 +858,7 @@ func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	_, err := h.tripClient.UpdateTripSettings(ctx, &proto.UpdateTripSettingsRequest{
-		TripId:               tripID,
+		TripId: tripID,
 		NotificationsEnabled: req.NotificationsEnabled,
 	})
 	if err != nil {
@@ -852,7 +868,7 @@ func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, responses.TripSettingsResponse{Success: true})
 }
 
-// ListFeed returns published trips for the feed (PINZ-98).
+// ListFeed returns published trips for the feed .
 // @Summary List feed
 // @Tags feed
 // @Produce json
@@ -902,12 +918,12 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	resp, err := h.tripClient.ListFeed(ctx, &proto.ListFeedRequest{
-		Limit:       limit,
-		Offset:      offset,
-		Category:    category,
-		Season:      season,
+		Limit: limit,
+		Offset: offset,
+		Category: category,
+		Season: season,
 		LocationIds: locationIDs,
-		SortBy:      sortBy,
+		SortBy: sortBy,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "ListFeed")
@@ -919,29 +935,29 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 		pins := make([]responses.FeedPin, len(item.GetPins()))
 		for j, p := range item.GetPins() {
 			pins[j] = responses.FeedPin{
-				ID:        p.GetId(),
-				Latitude:  p.GetLatitude(),
+				ID: p.GetId(),
+				Latitude: p.GetLatitude(),
 				Longitude: p.GetLongitude(),
 			}
 		}
 		media := make([]responses.FeedMedia, len(item.GetMedia()))
 		for j, m := range item.GetMedia() {
 			media[j] = responses.FeedMedia{
-				MediaID:   m.GetMediaId(),
-				URL:       m.GetUrl(),
+				MediaID: m.GetMediaId(),
+				URL: m.GetUrl(),
 				MediaType: m.GetMediaType(),
 			}
 		}
 		out[i] = responses.FeedItem{
-			Trip:  tripProtoToResponse(item.GetTrip()),
-			Pins:  pins,
+			Trip: tripProtoToResponse(item.GetTrip()),
+			Pins: pins,
 			Media: media,
 		}
 	}
 	respondJSON(w, http.StatusOK, out)
 }
 
-// LikeTrip adds a like to the trip (PINZ-98).
+// LikeTrip adds a like to the trip .
 // @Summary Like trip
 // @Tags trips
 // @Security BearerAuth
@@ -968,7 +984,7 @@ func (h *TripHandler) LikeTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
 }
 
-// DislikeTrip adds a dislike to the trip (PINZ-98).
+// DislikeTrip adds a dislike to the trip .
 // @Summary Dislike trip
 // @Tags trips
 // @Security BearerAuth
@@ -995,7 +1011,7 @@ func (h *TripHandler) DislikeTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
 }
 
-// AddToFavourites adds the trip to user's favourites (PINZ-98).
+// AddToFavourites adds the trip to user's favourites .
 // @Summary Add trip to favourites
 // @Tags trips
 // @Security BearerAuth
@@ -1022,7 +1038,7 @@ func (h *TripHandler) AddToFavourites(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
 }
 
-// RemoveFromFavourites removes the trip from user's favourites (PINZ-98).
+// RemoveFromFavourites removes the trip from user's favourites .
 // @Summary Remove trip from favourites
 // @Tags trips
 // @Security BearerAuth
@@ -1049,7 +1065,7 @@ func (h *TripHandler) RemoveFromFavourites(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// ListFavourites returns the current user's favourite trips (PINZ-98).
+// ListFavourites returns the current user's favourite trips .
 // @Summary List favourite trips
 // @Description Returns trips the user has added to favourites. Supports limit and offset query params.
 // @Tags trips
@@ -1091,7 +1107,7 @@ func (h *TripHandler) ListFavourites(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
-// SearchPins searches pins by text query across trips where the authenticated user is a participant (PINZ-135).
+// SearchPins searches pins by text query across trips where the authenticated user is a participant .
 // @Summary Search pins by query
 // @Description Text search over pin name, description and tags within trips where the user participates. Requires JWT.
 // @Tags pins
@@ -1130,8 +1146,8 @@ func (h *TripHandler) SearchPins(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	resp, err := h.tripClient.SearchPins(ctx, &proto.SearchPinsRequest{
-		Query:  query,
-		Limit:  limit,
+		Query: query,
+		Limit: limit,
 		Offset: offset,
 	})
 	if err != nil {
@@ -1153,29 +1169,29 @@ func tripProtoToResponse(t *proto.Trip) responses.Trip {
 		return responses.Trip{}
 	}
 	return responses.Trip{
-		ID:            t.GetId(),
-		OwnerUserID:   t.GetOwnerUserId(),
-		Name:          t.GetName(),
-		Description:   t.GetDescription(),
-		Category:      t.GetCategory(),
-		Season:        t.GetSeason(),
-		Status:        t.GetStatus(),
-		PrivacyLevel:  t.GetPrivacyLevel(),
+		ID: t.GetId(),
+		OwnerUserID: t.GetOwnerUserId(),
+		Name: t.GetName(),
+		Description: t.GetDescription(),
+		Category: t.GetCategory(),
+		Season: t.GetSeason(),
+		Status: t.GetStatus(),
+		PrivacyLevel: t.GetPrivacyLevel(),
 		StartDateUnix: t.GetStartDateUnix(),
-		EndDateUnix:   t.GetEndDateUnix(),
-		LikesCount:    t.GetLikesCount(),
-		DislikesCount:     t.GetDislikesCount(),
-		MediaCount:        t.GetMediaCount(),
+		EndDateUnix: t.GetEndDateUnix(),
+		LikesCount: t.GetLikesCount(),
+		DislikesCount: t.GetDislikesCount(),
+		MediaCount: t.GetMediaCount(),
 		ParticipantsCount: t.GetParticipantsCount(),
-		CoverURL:          t.GetCoverUrl(),
-		IsPublished:   t.GetIsPublished(),
-		IsGenerated:   t.GetIsGenerated(),
+		CoverURL: t.GetCoverUrl(),
+		IsPublished: t.GetIsPublished(),
+		IsGenerated: t.GetIsGenerated(),
 		CreatedAtUnix: t.GetCreatedAtUnix(),
 		UpdatedAtUnix: t.GetUpdatedAtUnix(),
 	}
 }
 
-func getTripResponseToREST(resp *proto.GetTripResponse) responses.GetTripResponse {
+func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.GetTripResponse) responses.GetTripResponse {
 	out := responses.GetTripResponse{
 		Trip: tripProtoToResponse(resp.GetTrip()),
 		Pins: make([]responses.TripPin, 0, len(resp.GetPins())),
@@ -1186,40 +1202,103 @@ func getTripResponseToREST(resp *proto.GetTripResponse) responses.GetTripRespons
 		}
 		out.Pins = append(out.Pins, tripPinProtoToResponse(p))
 	}
+	// Опциональная активная add-media-сессия — клиент использует для роутинга.
+	// current_initiator обогащается публичным профилем через auth.GetUsersProfiles (N2):
+	// один batched запрос на ответ, несколько user_id — в будущем, когда понадобится
+	// ещё users (last_actor и т.п.) — просто добавляем в общий набор и переиспользуем map.
+	if active := resp.GetActiveAddMediaSession(); active != nil {
+		rest := &responses.ActiveAddMediaSession{
+			SessionID:               active.GetSessionId(),
+			InitiatorAssignedAtUnix: active.GetInitiatorAssignedAtUnix(),
+			TakeoverAvailableAtUnix: active.GetTakeoverAvailableAtUnix(),
+			MediaCountInSession:     active.GetMediaCountInSession(),
+		}
+		if uid := active.GetCurrentInitiatorUserId(); uid != "" {
+			profiles := h.enrichProfiles(ctx, []string{uid})
+			if p, ok := profiles[uid]; ok {
+				rest.CurrentInitiator = &p
+			} else {
+				rest.CurrentInitiator = &responses.PublicUserProfile{UserID: uid}
+			}
+		}
+		out.ActiveAddMediaSession = rest
+	}
+	return out
+}
+
+// enrichProfiles — N2: один batched вызов auth.GetUsersProfiles на набор user_id'ов.
+// Пустой набор или nil enricher — возвращает пустую map; ошибка auth не падает,
+// просто логируется и клиент получает profile без username/avatar (UserID сохранён).
+func (h *TripHandler) enrichProfiles(ctx context.Context, userIDs []string) map[string]responses.PublicUserProfile {
+	if len(userIDs) == 0 || h.authEnricher == nil {
+		return nil
+	}
+	// Дедупликация — один и тот же user_id может встретиться несколько раз в ответе.
+	seen := make(map[string]struct{}, len(userIDs))
+	ids := make([]string, 0, len(userIDs))
+	for _, id := range userIDs {
+		if id == "" {
+			continue
+		}
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	resp, err := h.authEnricher.GetUsersProfiles(ctx, &proto.GetUsersProfilesRequest{UserIds: ids})
+	if err != nil {
+		slog.WarnContext(ctx, "auth.GetUsersProfiles failed; returning raw user ids", "count", len(ids), "error", err)
+		return nil
+	}
+	out := make(map[string]responses.PublicUserProfile, len(resp.GetProfiles()))
+	for _, p := range resp.GetProfiles() {
+		if p == nil {
+			continue
+		}
+		out[p.GetUserId()] = responses.PublicUserProfile{
+			UserID:    p.GetUserId(),
+			Username:  p.GetUsername(),
+			AvatarURL: p.GetAvatarUrl(),
+		}
+	}
 	return out
 }
 
 func tripPinProtoToResponse(p *proto.TripPin) responses.TripPin {
 	pin := responses.TripPin{
-		ID:            p.GetId(),
-		TripID:        p.GetTripId(),
-		Name:          p.GetName(),
-		Description:   p.GetDescription(),
-		Category:      p.GetCategory(),
-		Latitude:      p.Latitude,
-		Longitude:     p.Longitude,
+		ID: p.GetId(),
+		TripID: p.GetTripId(),
+		Name: p.GetName(),
+		Description: p.GetDescription(),
+		Category: p.GetCategory(),
+		Latitude: p.Latitude,
+		Longitude: p.Longitude,
 		StartTimeUnix: p.GetStartTimeUnix(),
-		EndTimeUnix:   p.GetEndTimeUnix(),
-		PrivacyLevel:  p.GetPrivacyLevel(),
-		Tags:          p.GetTags(),
-		Media:         make([]responses.TripPinMedia, 0, len(p.GetMedia())),
+		EndTimeUnix: p.GetEndTimeUnix(),
+		PrivacyLevel: p.GetPrivacyLevel(),
+		Tags: p.GetTags(),
+		Media: make([]responses.TripPinMedia, 0, len(p.GetMedia())),
 	}
 	for _, m := range p.GetMedia() {
 		if m == nil {
 			continue
 		}
 		pin.Media = append(pin.Media, responses.TripPinMedia{
-			MediaID:        m.GetMediaId(),
-			URL:            m.GetUrl(),
-			MediaType:      m.GetMediaType(),
+			MediaID: m.GetMediaId(),
+			URL: m.GetUrl(),
+			MediaType: m.GetMediaType(),
 			CapturedAtUnix: m.GetCapturedAtUnix(),
-			PrivacyLevel:   m.GetPrivacyLevel(),
+			PrivacyLevel: m.GetPrivacyLevel(),
 		})
 	}
 	return pin
 }
 
-// AddMediaStart starts a session for adding media to an existing READY trip (PINZ-131, ТЗ 5.3 → 3.8).
+// AddMediaStart starts a session for adding media to an existing READY trip (ТЗ 5.3 → 3.8).
 // @Summary [1] Start add-media session
 // @Tags trip-add-media
 // @Accept json
@@ -1255,7 +1334,7 @@ func (h *TripHandler) AddMediaStart(w http.ResponseWriter, r *http.Request) {
 		protoFiles = append(protoFiles, &proto.FileToUpload{ClientId: f.ClientID, ContentType: f.ContentType})
 	}
 	resp, err := h.tripClient.AddMediaStart(ctx, &proto.AddMediaStartRequest{
-		TripId:        tripID,
+		TripId: tripID,
 		FilesToUpload: protoFiles,
 	})
 	if err != nil {
@@ -1267,13 +1346,14 @@ func (h *TripHandler) AddMediaStart(w http.ResponseWriter, r *http.Request) {
 		urls[i] = responses.UploadURL{ClientID: u.GetClientId(), S3Key: u.GetS3Key(), URL: u.GetUrl()}
 	}
 	respondJSON(w, http.StatusOK, responses.AddMediaStartResponse{
-		SessionID:  resp.GetSessionId(),
-		Status:     resp.GetStatus(),
+		SessionID: resp.GetSessionId(),
+		Status: resp.GetStatus(),
 		UploadURLs: urls,
+		Joined: resp.GetJoined(),
 	})
 }
 
-// AddMediaProcessGrouping clusters new media using existing pins as seeds (PINZ-131, ТЗ 5.3.1-5.3.2).
+// AddMediaProcessGrouping clusters new media using existing pins as seeds (ТЗ 5.3.1-5.3.2).
 // @Summary [2] Process grouping for add-media
 // @Tags trip-add-media
 // @Accept json
@@ -1300,26 +1380,12 @@ func (h *TripHandler) AddMediaProcessGrouping(w http.ResponseWriter, r *http.Req
 		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 		return
 	}
-	media := make([]*proto.MediaMeta, 0, len(req.Media))
-	for _, m := range req.Media {
-		mm := &proto.MediaMeta{S3Key: m.S3Key, MediaType: m.MediaType}
-		if m.CapturedAt != "" {
-			if t, err := time.Parse(time.RFC3339, m.CapturedAt); err == nil {
-				mm.CapturedAtUnix = t.Unix()
-			}
-		}
-		if m.Latitude != nil {
-			mm.Latitude = m.Latitude
-		}
-		if m.Longitude != nil {
-			mm.Longitude = m.Longitude
-		}
-		media = append(media, mm)
-	}
+	// media[] больше не передаётся — сервер берёт из БД (commit-upload).
+	// Флаг add_more=true откатывает GROUPING_REVIEW → UPLOADING.
 	resp, err := h.tripClient.AddMediaProcessGrouping(ctx, &proto.AddMediaProcessGroupingRequest{
-		TripId:    tripID,
+		TripId: tripID,
 		SessionId: req.SessionID,
-		Media:     media,
+		AddMore: req.AddMore,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "AddMediaProcessGrouping")
@@ -1334,15 +1400,15 @@ func (h *TripHandler) AddMediaProcessGrouping(w http.ResponseWriter, r *http.Req
 		draftPins = append(draftPins, responses.DraftPin{DraftPinID: dp.GetDraftPinId(), Media: mediaList})
 	}
 	respondJSON(w, http.StatusOK, responses.AddMediaProcessGroupingResponse{
-		TripID:           resp.GetTripId(),
-		SessionID:        resp.GetSessionId(),
-		Status:           resp.GetStatus(),
-		DraftPins:        draftPins,
+		TripID: resp.GetTripId(),
+		SessionID: resp.GetSessionId(),
+		Status: resp.GetStatus(),
+		DraftPins: draftPins,
 		ExistingMediaIDs: resp.GetExistingMediaIds(),
 	})
 }
 
-// AddMediaApplyGroupsAndProcess applies user grouping for add-media and starts ML processing (PINZ-131, ТЗ 5.3.3-5.3.4).
+// AddMediaApplyGroupsAndProcess applies user grouping for add-media and starts ML processing (ТЗ 5.3.3-5.3.4).
 // @Summary [3] Apply groups for add-media
 // @Tags trip-add-media
 // @Accept json
@@ -1374,9 +1440,9 @@ func (h *TripHandler) AddMediaApplyGroupsAndProcess(w http.ResponseWriter, r *ht
 		draftPins = append(draftPins, &proto.DraftPinInput{DraftPinId: dp.DraftPinID, MediaIds: dp.MediaIDs})
 	}
 	resp, err := h.tripClient.AddMediaApplyGroupsAndProcess(ctx, &proto.AddMediaApplyGroupsAndProcessRequest{
-		TripId:          tripID,
-		SessionId:       req.SessionID,
-		DraftPins:       draftPins,
+		TripId: tripID,
+		SessionId: req.SessionID,
+		DraftPins: draftPins,
 		DeletedMediaIds: req.DeletedMediaIDs,
 	})
 	if err != nil {
@@ -1385,11 +1451,407 @@ func (h *TripHandler) AddMediaApplyGroupsAndProcess(w http.ResponseWriter, r *ht
 	}
 	respondJSON(w, http.StatusAccepted, responses.AddMediaApplyGroupsAndProcessResponse{
 		Message: resp.GetMessage(),
-		Status:  resp.GetStatus(),
+		Status: resp.GetStatus(),
 	})
 }
 
-// StartBattle starts a new photo battle for the trip (PINZ-132, ТЗ 8.1).
+// AddMediaRequestUploadUrls — presigned URLs для догрузки файлов в активную сессию.
+// @Summary Request upload URLs for active add-media session
+// @Tags trip-add-media
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.AddMediaRequestUploadUrlsRequest true "Session id and files to upload"
+// @Success 200 {object} responses.AddMediaRequestUploadUrlsResponse
+// @Router /api/v1/trips/{id}/media/add/request-upload-urls [post]
+func (h *TripHandler) AddMediaRequestUploadUrls(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.AddMediaRequestUploadUrlsRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	files := make([]*proto.FileToUpload, 0, len(req.FilesToUpload))
+	for _, f := range req.FilesToUpload {
+		files = append(files, &proto.FileToUpload{ClientId: f.ClientID, ContentType: f.ContentType})
+	}
+	resp, err := h.tripClient.AddMediaRequestUploadUrls(ctx, &proto.AddMediaRequestUploadUrlsRequest{
+		TripId: tripID,
+		SessionId: req.SessionID,
+		FilesToUpload: files,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaRequestUploadUrls")
+		return
+	}
+	urls := make([]responses.UploadURL, 0, len(resp.GetUploadUrls()))
+	for _, u := range resp.GetUploadUrls() {
+		urls = append(urls, responses.UploadURL{ClientID: u.GetClientId(), S3Key: u.GetS3Key(), URL: u.GetUrl()})
+	}
+	respondJSON(w, http.StatusOK, responses.AddMediaRequestUploadUrlsResponse{UploadURLs: urls})
+}
+
+// AddMediaCommitUpload — регистрация факта успешного PUT в S3.
+// Клиент вызывает после каждого файла; сервер создаёт media entry и публикует
+// WS ADD_MEDIA_PROGRESS остальным participant'ам.
+// @Summary Commit uploaded file to add-media session
+// @Tags trip-add-media
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.AddMediaCommitUploadRequest true "Uploaded file metadata"
+// @Success 200 {object} responses.AddMediaCommitUploadResponse
+// @Router /api/v1/trips/{id}/media/add/commit-upload [post]
+func (h *TripHandler) AddMediaCommitUpload(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.AddMediaCommitUploadRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	protoReq := &proto.AddMediaCommitUploadRequest{
+		TripId: tripID,
+		SessionId: req.SessionID,
+		S3Key: req.S3Key,
+		MediaType: req.MediaType,
+	}
+	if req.CapturedAt != "" {
+		if t, err := time.Parse(time.RFC3339, req.CapturedAt); err == nil {
+			u := t.Unix()
+			protoReq.CapturedAtUnix = &u
+		}
+	}
+	if req.Latitude != nil {
+		protoReq.Latitude = req.Latitude
+	}
+	if req.Longitude != nil {
+		protoReq.Longitude = req.Longitude
+	}
+	resp, err := h.tripClient.AddMediaCommitUpload(ctx, protoReq)
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaCommitUpload")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.AddMediaCommitUploadResponse{
+		MediaID: resp.GetMediaId(),
+		MediaCountInSession: resp.GetMediaCountInSession(),
+		RemainingSlots: resp.GetRemainingSlots(),
+	})
+}
+
+// AddMediaGetSessionMedia — снимок медиа активной сессии.
+// @Summary Session media snapshot
+// @Tags trip-add-media
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param session_id query string true "Add-media session id"
+// @Success 200 {object} responses.AddMediaGetSessionMediaResponse
+// @Router /api/v1/trips/{id}/media/add/session-media [get]
+func (h *TripHandler) AddMediaGetSessionMedia(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	sessionID := r.URL.Query().Get("session_id")
+	if tripID == "" || sessionID == "" {
+		respondError(w, http.StatusBadRequest, "trip id and session_id required")
+		return
+	}
+	resp, err := h.tripClient.AddMediaGetSessionMedia(ctx, &proto.AddMediaGetSessionMediaRequest{
+		TripId: tripID,
+		SessionId: sessionID,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaGetSessionMedia")
+		return
+	}
+	media := make([]responses.SessionMediaEntry, 0, len(resp.GetMedia()))
+	for _, m := range resp.GetMedia() {
+		media = append(media, responses.SessionMediaEntry{
+			MediaID: m.GetMediaId(),
+			URL: m.GetUrl(),
+			Type: m.GetType(),
+			ActorUserID: m.GetActorUserId(),
+			UploadedAtUnix: m.GetUploadedAtUnix(),
+		})
+	}
+	respondJSON(w, http.StatusOK, responses.AddMediaGetSessionMediaResponse{
+		SessionID: resp.GetSessionId(),
+		Media: media,
+		MediaCountInSession: resp.GetMediaCountInSession(),
+	})
+}
+
+// AddMediaGetGrouping — снимок draft_pins для экрана GROUPING_REVIEW.
+// @Summary Add-media grouping snapshot
+// @Tags trip-add-media
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param session_id query string true "Add-media session id"
+// @Success 200 {object} responses.AddMediaGetGroupingResponse
+// @Router /api/v1/trips/{id}/media/add/grouping [get]
+func (h *TripHandler) AddMediaGetGrouping(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	sessionID := r.URL.Query().Get("session_id")
+	if tripID == "" || sessionID == "" {
+		respondError(w, http.StatusBadRequest, "trip id and session_id required")
+		return
+	}
+	resp, err := h.tripClient.AddMediaGetGrouping(ctx, &proto.AddMediaGetGroupingRequest{
+		TripId: tripID,
+		SessionId: sessionID,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaGetGrouping")
+		return
+	}
+	draftPins := make([]responses.DraftPin, 0, len(resp.GetDraftPins()))
+	for _, dp := range resp.GetDraftPins() {
+		mediaList := make([]responses.DraftPinMedia, 0, len(dp.GetMedia()))
+		for _, m := range dp.GetMedia() {
+			mediaList = append(mediaList, responses.DraftPinMedia{MediaID: m.GetMediaId(), URL: m.GetUrl(), Type: m.GetType()})
+		}
+		draftPins = append(draftPins, responses.DraftPin{DraftPinID: dp.GetDraftPinId(), Media: mediaList})
+	}
+	respondJSON(w, http.StatusOK, responses.AddMediaGetGroupingResponse{
+		TripID: resp.GetTripId(),
+		SessionID: resp.GetSessionId(),
+		DraftPins: draftPins,
+		ExistingMediaIDs: resp.GetExistingMediaIds(),
+	})
+}
+
+// AddMediaGetReview — финальное ревью add-media.
+// @Summary Add-media final review
+// @Tags trip-add-media
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param session_id query string true "Add-media session id"
+// @Success 200 {object} responses.AddMediaGetReviewResponse
+// @Router /api/v1/trips/{id}/media/add/review [get]
+func (h *TripHandler) AddMediaGetReview(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	sessionID := r.URL.Query().Get("session_id")
+	if tripID == "" || sessionID == "" {
+		respondError(w, http.StatusBadRequest, "trip id and session_id required")
+		return
+	}
+	resp, err := h.tripClient.AddMediaGetReview(ctx, &proto.AddMediaGetReviewRequest{
+		TripId: tripID,
+		SessionId: sessionID,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaGetReview")
+		return
+	}
+	pins := make([]responses.TripPin, 0, len(resp.GetPins()))
+	for _, p := range resp.GetPins() {
+		if p == nil {
+			continue
+		}
+		pins = append(pins, tripPinProtoToResponse(p))
+	}
+	out := responses.AddMediaGetReviewResponse{
+		TripID:                  resp.GetTripId(),
+		SessionID:               resp.GetSessionId(),
+		Pins:                    pins,
+		NewPinIDs:               resp.GetNewPinIds(),
+		ProtectedMediaIDs:       resp.GetProtectedMediaIds(),
+		TakeoverAvailableAtUnix: resp.GetTakeoverAvailableAtUnix(),
+		CanEdit:                 resp.GetCanEdit(),
+	}
+	// N2: обогащение ведущего публичным профилем, чтобы клиент мог сразу
+	// показать «Алиса завершает ревью», а не резолвить user_id отдельным запросом.
+	if uid := resp.GetCurrentInitiatorUserId(); uid != "" {
+		profiles := h.enrichProfiles(ctx, []string{uid})
+		if p, ok := profiles[uid]; ok {
+			out.CurrentInitiator = &p
+		} else {
+			out.CurrentInitiator = &responses.PublicUserProfile{UserID: uid}
+		}
+	}
+	respondJSON(w, http.StatusOK, out)
+}
+
+// AddMediaConfirm — финализация add-media сессии, трип → READY.
+// @Summary Confirm add-media session
+// @Tags trip-add-media
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.AddMediaConfirmRequest true "Session id"
+// @Success 200 {object} responses.AddMediaConfirmResponse
+// @Router /api/v1/trips/{id}/media/add/confirm [post]
+func (h *TripHandler) AddMediaConfirm(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.AddMediaConfirmRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	pinUpdates := make([]*proto.PinUpdate, 0, len(req.PinUpdates))
+	for _, pu := range req.PinUpdates {
+		pinUpdates = append(pinUpdates, &proto.PinUpdate{
+			PinId: pu.PinID, Name: pu.Name, Latitude: pu.Latitude, Longitude: pu.Longitude,
+		})
+	}
+	resp, err := h.tripClient.AddMediaConfirm(ctx, &proto.AddMediaConfirmRequest{
+		TripId:        tripID,
+		SessionId:     req.SessionID,
+		PinUpdates:    pinUpdates,
+		MediaToDelete: req.MediaToDelete,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaConfirm")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.AddMediaConfirmResponse{
+		Status: resp.GetStatus(),
+		AlreadyConfirmed: resp.GetAlreadyConfirmed(),
+	})
+}
+
+// AddMediaCancel — отмена add-media сессии.
+// @Summary Cancel add-media session
+// @Tags trip-add-media
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.AddMediaCancelRequest true "Session id"
+// @Success 200 {object} responses.AddMediaCancelResponse
+// @Router /api/v1/trips/{id}/media/add/cancel [post]
+func (h *TripHandler) AddMediaCancel(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.AddMediaCancelRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	resp, err := h.tripClient.AddMediaCancel(ctx, &proto.AddMediaCancelRequest{
+		TripId: tripID,
+		SessionId: req.SessionID,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaCancel")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.AddMediaCancelResponse{Status: resp.GetStatus()})
+}
+
+// AddMediaTakeover — explicit передача роли ведущего после истечения часа.
+// @Summary Take over add-media session leadership
+// @Description Идемпотентен: если caller уже ведущий, вернёт 200 без изменений. Если час не прошёл — 403 NOT_INITIATOR.
+// @Tags trip-add-media
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.AddMediaTakeoverRequest true "Session id"
+// @Success 200 {object} responses.AddMediaTakeoverResponse
+// @Router /api/v1/trips/{id}/media/add/takeover [post]
+func (h *TripHandler) AddMediaTakeover(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.AddMediaTakeoverRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	resp, err := h.tripClient.AddMediaTakeover(ctx, &proto.AddMediaTakeoverRequest{
+		TripId:    tripID,
+		SessionId: req.SessionID,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "AddMediaTakeover")
+		return
+	}
+	out := responses.AddMediaTakeoverResponse{
+		IsInitiator:             resp.GetIsInitiator(),
+		TakeoverAvailableAtUnix: resp.GetTakeoverAvailableAtUnix(),
+	}
+	if uid := resp.GetCurrentInitiatorUserId(); uid != "" {
+		profiles := h.enrichProfiles(ctx, []string{uid})
+		if p, ok := profiles[uid]; ok {
+			out.CurrentInitiator = &p
+		} else {
+			out.CurrentInitiator = &responses.PublicUserProfile{UserID: uid}
+		}
+	}
+	respondJSON(w, http.StatusOK, out)
+}
+
+// StartBattle starts a new photo battle for the trip (ТЗ 8.1).
 // @Summary Start photo battle
 // @Description Picks 8 random media from the trip and starts a battle session. Returns 412 if the trip has fewer than 8 available media (ТЗ 8.1.9).
 // @Tags trip-battles
@@ -1422,18 +1884,18 @@ func (h *TripHandler) StartBattle(w http.ResponseWriter, r *http.Request) {
 	media := make([]responses.BattleMedia, 0, len(resp.GetMedia()))
 	for _, m := range resp.GetMedia() {
 		media = append(media, responses.BattleMedia{
-			MediaID:   m.GetMediaId(),
-			URL:       m.GetUrl(),
+			MediaID: m.GetMediaId(),
+			URL: m.GetUrl(),
 			MediaType: m.GetMediaType(),
 		})
 	}
 	respondJSON(w, http.StatusOK, responses.StartBattleResponse{
 		BattleID: resp.GetBattleId(),
-		Media:    media,
+		Media: media,
 	})
 }
 
-// SubmitBattleResult finalizes a battle with the chosen winner (PINZ-132, ТЗ 8.1.7-8.1.8).
+// SubmitBattleResult finalizes a battle with the chosen winner (ТЗ 8.1.7-8.1.8).
 // @Summary Submit battle winner
 // @Description Records the final winner of a photo battle; increments media battle_rating by 1. Can be called once per battle.
 // @Tags trip-battles
@@ -1472,7 +1934,7 @@ func (h *TripHandler) SubmitBattleResult(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	resp, err := h.tripClient.SubmitBattleResult(ctx, &proto.SubmitBattleResultRequest{
-		BattleId:      battleID,
+		BattleId: battleID,
 		WinnerMediaId: req.WinnerMediaID,
 	})
 	if err != nil {
@@ -1484,7 +1946,7 @@ func (h *TripHandler) SubmitBattleResult(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// GetBestMemories returns trip media with battle_rating > 0 for story-mode (PINZ-132, ТЗ 8.2).
+// GetBestMemories returns trip media with battle_rating > 0 for story-mode (ТЗ 8.2).
 // @Summary Get best memories (story-mode)
 // @Description Returns media of the trip with battle_rating > 0, sorted by rating DESC. Empty array when the trip has no winners yet (ТЗ 8.2.3).
 // @Tags trip-battles
@@ -1516,10 +1978,10 @@ func (h *TripHandler) GetBestMemories(w http.ResponseWriter, r *http.Request) {
 	media := make([]responses.BestMemory, 0, len(resp.GetMedia()))
 	for _, m := range resp.GetMedia() {
 		media = append(media, responses.BestMemory{
-			MediaID:        m.GetMediaId(),
-			URL:            m.GetUrl(),
-			MediaType:      m.GetMediaType(),
-			BattleRating:   m.GetBattleRating(),
+			MediaID: m.GetMediaId(),
+			URL: m.GetUrl(),
+			MediaType: m.GetMediaType(),
+			BattleRating: m.GetBattleRating(),
 			CapturedAtUnix: m.GetCapturedAtUnix(),
 		})
 	}

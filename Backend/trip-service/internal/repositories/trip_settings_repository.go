@@ -59,7 +59,7 @@ func (r *TripSettingsRepository) GetByTripAndUsers(tripID string, userIDs []stri
 		return out, nil
 	}
 	rows, err := r.q.TripSettingsGetByTripAndUsers(context.Background(), sqlcdb.TripSettingsGetByTripAndUsersParams{
-		TripID:  tid,
+		TripID: tid,
 		Column2: uids,
 	})
 	if err != nil {
@@ -83,8 +83,8 @@ func (r *TripSettingsRepository) UpdateNotifications(tripID, userID string, enab
 	}
 	n, err := r.q.TripSettingsUpdateNotifications(context.Background(), sqlcdb.TripSettingsUpdateNotificationsParams{
 		NotificationsEnabled: enabled,
-		TripID:               tid,
-		UserID:               uid,
+		TripID: tid,
+		UserID: uid,
 	})
 	if err != nil {
 		return err

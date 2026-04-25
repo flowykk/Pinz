@@ -11,8 +11,8 @@ import (
 
 const (
 	defaultYandexEndpoint = "https://storage.yandexcloud.net"
-	defaultRegion         = "ru-central1"
-	defaultPresignTTL     = 15 * time.Minute
+	defaultRegion = "ru-central1"
+	defaultPresignTTL = 15 * time.Minute
 )
 
 // NewFromEnv loads S3 config from env; (nil, nil) if S3_BUCKET is unset.
