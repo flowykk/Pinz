@@ -214,6 +214,7 @@
 // MARK: - Post Preview
 "postPreview.title.main" = "Так будет выглядеть пост";
 "postPreview.button.publish" = "Опубликовать путешествие";
+"postPreview.error.publishFailed" = "Не удалось опубликовать путешествие. Попробуйте ещё раз.";
 
 // MARK: - Move Media
 "moveMedia.label.instructions" = "Выбери пин, в который\nхочешь переместить медиа";

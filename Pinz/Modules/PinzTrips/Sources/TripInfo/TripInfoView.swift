@@ -15,6 +15,10 @@ enum TripInfoIcon: String, Setting.Icon {
     case sun = "sun.max.fill"
     case calendar = "calendar"
     case info = "info.circle.fill"
+    case person = "person.2"
+    case media = "photo.stack"
+    case handThumbsdown = "hand.thumbsdown"
+    case handThumbsup = "hand.thumbsup"
 
     case bell = "bell.badge"
 
@@ -71,8 +75,9 @@ public struct TripInfoView: View {
                     pins
                 }
                 general
-                notifications
                 if viewModel.state == .default {
+                    notifications
+                    tripStats
                     description
                     privacy
                 } else {
@@ -385,6 +390,23 @@ public struct TripInfoView: View {
         ).animation(.default, value: viewModel.trip)
     }
 
+    private var tripStats: some View {
+        SettingsGroup(
+            settings: [
+                .default(Setting.DefaultSetting(
+                    id: "tripMembers",
+                    leading: .iconTitle(TripInfoIcon.person, PinzBaseStrings.TripMembers.Title.main),
+                    trailing: .values([.text(String(viewModel.trip.participantsCount))])
+                )),
+                .default(Setting.DefaultSetting(
+                    id: "tripMedia",
+                    leading: .iconTitle(TripInfoIcon.media, PinzBaseStrings.Statistics.Label.media),
+                    trailing: .values([.text(String(viewModel.trip.mediaCount))])
+                )),
+            ],
+        )
+    }
+
     private var notifications: some View {
         SettingsGroup(
             settings: [
@@ -430,19 +452,39 @@ public struct TripInfoView: View {
         )
     }
 
+    @ViewBuilder
     private var publishing: some View {
-        SettingsGroup(
-            title: PinzBaseStrings.TripInfo.Header.public,
-            settings: [
-                .default(Setting.DefaultSetting(
-                    id: "tripPublishing",
-                    leading: .iconTitle(TripInfoIcon.paperplane, PinzBaseStrings.TripInfo.Label.publishTrip),
-                    trailing: .icon(TripInfoIcon.chevronRight),
-                    action: .plain { viewModel.dispatch(.navigate(.selectPins)) }
-                )),
-            ],
-            subtitle: nil
-        )
+        if viewModel.trip.isPublished {
+            SettingsGroup(
+                title: PinzBaseStrings.TripInfo.Header.public,
+                settings: [
+                    .default(Setting.DefaultSetting(
+                        id: "tripLikes",
+                        leading: .iconTitle(TripInfoIcon.handThumbsup, PinzBaseStrings.Statistics.Label.likes),
+                        trailing: .values([.text(String(viewModel.trip.likesCount))])
+                    )),
+                    .default(Setting.DefaultSetting(
+                        id: "tripDislikes",
+                        leading: .iconTitle(TripInfoIcon.handThumbsdown, PinzBaseStrings.Statistics.Label.dislikes),
+                        trailing: .values([.text(String(viewModel.trip.dislikesCount))])
+                    )),
+                ],
+                subtitle: nil
+            )
+        } else {
+            SettingsGroup(
+                title: PinzBaseStrings.TripInfo.Header.public,
+                settings: [
+                    .default(Setting.DefaultSetting(
+                        id: "tripPublishing",
+                        leading: .iconTitle(TripInfoIcon.paperplane, PinzBaseStrings.TripInfo.Label.publishTrip),
+                        trailing: .icon(TripInfoIcon.chevronRight),
+                        action: .plain { viewModel.dispatch(.navigate(.selectPins)) }
+                    )),
+                ],
+                subtitle: nil
+            )
+        }
     }
 
     private var nameEditing: some View {

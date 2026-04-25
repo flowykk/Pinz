@@ -45,11 +45,33 @@ public struct PostPreviewView: View {
                 PinzButton(
                     type: .slot(style: .primary, title: PinzBaseStrings.PostPreview.Button.publish),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
-                    action: .plain { router?.pop(by: 2) }
+                    disabled: viewModel.isPublishing,
+                    action: .async {
+                        await viewModel.asyncDispatch(.publish) { error in
+                            viewModel.publishError = error.localizedDescription
+                        }
+                    }
                 )
             }
         }
         .onAppear { viewModel.setRouter(router) }
+        .alert("postPreview.error.publishFailed", isPresented: Binding(
+            get: { viewModel.publishError != nil },
+            set: { isPresented in
+                if !isPresented { viewModel.publishError = nil }
+            }
+        )) {
+            Button(PinzBaseStrings.Common.Button.ok) {
+                viewModel.publishError = nil
+            }
+        } message: {
+            Text(viewModel.publishError ?? "")
+        }
+        .overlay(alignment: .center) {
+            if viewModel.isPublishing {
+                LoadingView()
+            }
+        }
     }
 
     public var tripMap: some View {
