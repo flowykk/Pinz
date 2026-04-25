@@ -68,6 +68,9 @@ type TripClient interface {
 	SubmitBattleResult(ctx context.Context, req *proto.SubmitBattleResultRequest) (*proto.SubmitBattleResultResponse, error)
 	GetBestMemories(ctx context.Context, req *proto.GetBestMemoriesRequest) (*proto.GetBestMemoriesResponse, error)
 	SearchPins(ctx context.Context, req *proto.SearchPinsRequest) (*proto.SearchPinsResponse, error)
+	UpsertTripPrivacy(ctx context.Context, req *proto.UpsertTripPrivacyRequest) (*proto.UpsertPrivacyResponse, error)
+	UpsertPinPrivacy(ctx context.Context, req *proto.UpsertPinPrivacyRequest) (*proto.UpsertPrivacyResponse, error)
+	UpsertMediaPrivacy(ctx context.Context, req *proto.UpsertMediaPrivacyRequest) (*proto.UpsertPrivacyResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient, authEnricher AuthProfileEnricher) *TripHandler {
@@ -199,7 +202,7 @@ func (h *TripHandler) GetTrip(w http.ResponseWriter, r *http.Request) {
 
 // UpdateTrip updates trip metadata.
 // @Summary Update trip
-// @Description Updates trip metadata (name, description, category, season, dates, privacy_level). Requires JWT. Any trip participant can update (ТЗ 3.2). For cover use the /cover/upload + /cover/confirm endpoints.
+// @Description Updates trip metadata (name, description, category, season, dates). Requires JWT. Any trip participant can update (ТЗ 3.2). Обложка — через /cover/upload + /cover/confirm. Приватность — через PUT /trips/{id}/privacy (per-user, ТЗ 6.4-6.7).
 // @Tags trips
 // @Accept json
 // @Produce json
@@ -242,9 +245,6 @@ func (h *TripHandler) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Season != nil {
 		protoReq.Season = req.Season
-	}
-	if req.PrivacyLevel != nil {
-		protoReq.PrivacyLevel = req.PrivacyLevel
 	}
 	if req.StartDateUnix != nil {
 		protoReq.StartDateUnix = req.StartDateUnix
@@ -830,6 +830,147 @@ func (h *TripHandler) PublishTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
 }
 
+// UpdateTripPrivacy sets the caller's per-user privacy level on a trip.
+// @Summary Set per-user trip privacy
+// @Description Текущий пользователь выставляет свой уровень приватности на путешествии (ТЗ 6.4.1). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param body body requests.UpsertPrivacyRequest true "privacy_level (Public|Private)"
+// @Success 200 {object} responses.PrivacyResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 412 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/privacy [put]
+func (h *TripHandler) UpdateTripPrivacy(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	if tripID == "" {
+		respondError(w, http.StatusBadRequest, "trip id required")
+		return
+	}
+	var req requests.UpsertPrivacyRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	resp, err := h.tripClient.UpsertTripPrivacy(ctx, &proto.UpsertTripPrivacyRequest{
+		TripId: tripID,
+		PrivacyLevel: req.PrivacyLevel,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "UpsertTripPrivacy")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.PrivacyResponse{PrivacyLevel: resp.GetEffectivePrivacyLevel()})
+}
+
+// UpdatePinPrivacy sets the caller's per-user privacy level on a pin.
+// @Summary Set per-user pin privacy
+// @Description Текущий пользователь выставляет свой уровень приватности на пине (ТЗ 6.4.2 / 4.2.10). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param pin_id path string true "Pin ID"
+// @Param body body requests.UpsertPrivacyRequest true "privacy_level (Public|Private)"
+// @Success 200 {object} responses.PrivacyResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 412 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/pins/{pin_id}/privacy [put]
+func (h *TripHandler) UpdatePinPrivacy(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	pinID := chi.URLParam(r, "pin_id")
+	if tripID == "" || pinID == "" {
+		respondError(w, http.StatusBadRequest, "trip id and pin id required")
+		return
+	}
+	var req requests.UpsertPrivacyRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	resp, err := h.tripClient.UpsertPinPrivacy(ctx, &proto.UpsertPinPrivacyRequest{
+		TripId: tripID,
+		PinId: pinID,
+		PrivacyLevel: req.PrivacyLevel,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "UpsertPinPrivacy")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.PrivacyResponse{PrivacyLevel: resp.GetEffectivePrivacyLevel()})
+}
+
+// UpdateMediaPrivacy sets the caller's per-user privacy level on a media.
+// @Summary Set per-user media privacy
+// @Description Текущий пользователь выставляет свой уровень приватности на медиа (ТЗ 6.4.3 / 5.2). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+// @Tags trips
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Trip ID"
+// @Param media_id path string true "Media ID"
+// @Param body body requests.UpsertPrivacyRequest true "privacy_level (Public|Private)"
+// @Success 200 {object} responses.PrivacyResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 403 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Failure 412 {object} responses.ErrorResponse
+// @Failure 500 {object} responses.ErrorResponse
+// @Router /api/v1/trips/{id}/media/{media_id}/privacy [put]
+func (h *TripHandler) UpdateMediaPrivacy(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := middleware.UserIDFromContext(ctx)
+	if userID == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tripID := chi.URLParam(r, "id")
+	mediaID := chi.URLParam(r, "media_id")
+	if tripID == "" || mediaID == "" {
+		respondError(w, http.StatusBadRequest, "trip id and media id required")
+		return
+	}
+	var req requests.UpsertPrivacyRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
+	resp, err := h.tripClient.UpsertMediaPrivacy(ctx, &proto.UpsertMediaPrivacyRequest{
+		TripId: tripID,
+		MediaId: mediaID,
+		PrivacyLevel: req.PrivacyLevel,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "UpsertMediaPrivacy")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.PrivacyResponse{PrivacyLevel: resp.GetEffectivePrivacyLevel()})
+}
+
 // UpdateTripSettings updates notifications for the trip (ТЗ 12.4.1).
 // @Summary Update trip notification settings
 // @Tags trips
@@ -1204,6 +1345,7 @@ func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.Get
 	out := responses.GetTripResponse{
 		Trip: tripProtoToResponse(resp.GetTrip()),
 		Pins: make([]responses.TripPin, 0, len(resp.GetPins())),
+		Participants: make([]responses.TripParticipant, 0, len(resp.GetParticipants())),
 	}
 	for _, p := range resp.GetPins() {
 		if p == nil {
@@ -1211,10 +1353,42 @@ func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.Get
 		}
 		out.Pins = append(out.Pins, tripPinProtoToResponse(p))
 	}
-	// Опциональная активная add-media-сессия — клиент использует для роутинга.
-	// current_initiator обогащается публичным профилем через auth.GetUsersProfiles (N2):
-	// один batched запрос на ответ, несколько user_id — в будущем, когда понадобится
-	// ещё users (last_actor и т.п.) — просто добавляем в общий набор и переиспользуем map.
+	// Один batched enrichProfiles на участников + initiator add-media сессии (N2):
+	// собираем все user_id заранее, идём в auth один раз, переиспользуем map ниже.
+	userIDs := make([]string, 0, len(resp.GetParticipants())+1)
+	for _, p := range resp.GetParticipants() {
+		if p == nil || p.GetUserId() == "" {
+			continue
+		}
+		userIDs = append(userIDs, p.GetUserId())
+	}
+	if active := resp.GetActiveAddMediaSession(); active != nil {
+		if uid := active.GetCurrentInitiatorUserId(); uid != "" {
+			userIDs = append(userIDs, uid)
+		}
+	}
+	profiles := h.enrichProfiles(ctx, userIDs)
+	for _, p := range resp.GetParticipants() {
+		if p == nil {
+			continue
+		}
+		part := responses.TripParticipant{
+			UserID: p.GetUserId(),
+			PrivacyLevel: p.GetPrivacyLevel(),
+			Role: p.GetRole(),
+		}
+		if profile, ok := profiles[p.GetUserId()]; ok {
+			part.Username = profile.Username
+			part.AvatarURL = profile.AvatarURL
+		}
+		out.Participants = append(out.Participants, part)
+	}
+	if cs := resp.GetCurrentUserSettings(); cs != nil {
+		out.CurrentUserSettings = responses.TripSettings{
+			NotificationsEnabled: cs.GetNotificationsEnabled(),
+			PrivacyLevel: cs.GetPrivacyLevel(),
+		}
+	}
 	if active := resp.GetActiveAddMediaSession(); active != nil {
 		rest := &responses.ActiveAddMediaSession{
 			SessionID:           active.GetSessionId(),
@@ -1223,7 +1397,6 @@ func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.Get
 			MediaCountInSession: active.GetMediaCountInSession(),
 		}
 		if uid := active.GetCurrentInitiatorUserId(); uid != "" {
-			profiles := h.enrichProfiles(ctx, []string{uid})
 			if p, ok := profiles[uid]; ok {
 				rest.CurrentInitiator = &p
 			} else {

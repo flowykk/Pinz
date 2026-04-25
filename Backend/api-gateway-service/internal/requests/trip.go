@@ -1,6 +1,6 @@
 package requests
 
-// CreateTripRequest is the REST body for POST /api/v1/trips (creation/start). Privacy is set by default and changed via PATCH .../privacy + worker.
+// CreateTripRequest is the REST body for POST /api/v1/trips (creation/start). Privacy задаётся per-user через PUT /trips/{id}/privacy.
 type CreateTripRequest struct {
 	Name string `json:"name"`
 	Description string `json:"description"`
@@ -17,12 +17,12 @@ type FileToUploadEntry struct {
 
 // UpdateTripRequest is the REST body for PATCH /api/v1/trips/:id.
 // Обложка редактируется отдельно: POST /cover/upload → PUT в S3 → POST /cover/confirm (DELETE /cover для очистки).
+// Privacy задаётся per-user через PUT /api/v1/trips/{id}/privacy.
 type UpdateTripRequest struct {
 	Name *string `json:"name,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Category *string `json:"category,omitempty"`
 	Season *string `json:"season,omitempty"`
-	PrivacyLevel *string `json:"privacy_level,omitempty"`
 	StartDateUnix *int64 `json:"start_date_unix,omitempty"`
 	EndDateUnix *int64 `json:"end_date_unix,omitempty"`
 }
@@ -95,19 +95,23 @@ type PinUpdateInput struct {
 	Longitude *float64 `json:"longitude,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Category *string `json:"category,omitempty"`
-	PrivacyLevel *string `json:"privacy_level,omitempty"`
 	Tags []string `json:"tags,omitempty"`
 }
 
+// UpdatePinRequest — Privacy задаётся per-user через PUT /trips/{trip_id}/pins/{pin_id}/privacy.
 type UpdatePinRequest struct {
 	Name *string `json:"name,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Category *string `json:"category,omitempty"`
-	PrivacyLevel *string `json:"privacy_level,omitempty"`
 	Latitude *float64 `json:"latitude,omitempty"`
 	Longitude *float64 `json:"longitude,omitempty"`
 	StartTimeUnix *int64 `json:"start_time_unix,omitempty"`
 	EndTimeUnix *int64 `json:"end_time_unix,omitempty"`
+}
+
+// UpsertPrivacyRequest — тело PUT /trips/{id}/privacy и аналогичных ручек по pin/media.
+type UpsertPrivacyRequest struct {
+	PrivacyLevel string `json:"privacy_level"`
 }
 
 // AddMediaStartRequest is the REST body for POST /api/v1/trips/:id/media/add/start

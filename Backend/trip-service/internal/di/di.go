@@ -72,7 +72,7 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	addMediaSessionRepo := repositories.NewAddMediaSessionRepository(db)
 	battleRepo := repositories.NewMediaBattleRepository(db)
 
-	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geocoder, geoRepo, addMediaSessionRepo, battleRepo)
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geocoder, geoRepo, addMediaSessionRepo, battleRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo)
 	return &Dependencies{
 		TripService: tripSvc,
 		RedisClient: redisClient,

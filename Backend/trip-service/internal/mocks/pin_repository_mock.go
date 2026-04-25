@@ -143,6 +143,20 @@ func (mr *MockPinRepositoryInterfaceMockRecorder) SearchByUserID(userID, query, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByUserID", reflect.TypeOf((*MockPinRepositoryInterface)(nil).SearchByUserID), userID, query, limit, offset)
 }
 
+// SetPrivacyLevel mocks base method.
+func (m *MockPinRepositoryInterface) SetPrivacyLevel(pinID, level string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetPrivacyLevel", pinID, level)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetPrivacyLevel indicates an expected call of SetPrivacyLevel.
+func (mr *MockPinRepositoryInterfaceMockRecorder) SetPrivacyLevel(pinID, level any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPrivacyLevel", reflect.TypeOf((*MockPinRepositoryInterface)(nil).SetPrivacyLevel), pinID, level)
+}
+
 // Update mocks base method.
 func (m *MockPinRepositoryInterface) Update(p *models.Pin) error {
 	m.ctrl.T.Helper()

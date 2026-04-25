@@ -210,6 +210,18 @@ func (c *Client) SearchPins(ctx context.Context, req *pb.SearchPinsRequest) (*pb
 	return c.client.SearchPins(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) UpsertTripPrivacy(ctx context.Context, req *pb.UpsertTripPrivacyRequest) (*pb.UpsertPrivacyResponse, error) {
+	return c.client.UpsertTripPrivacy(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) UpsertPinPrivacy(ctx context.Context, req *pb.UpsertPinPrivacyRequest) (*pb.UpsertPrivacyResponse, error) {
+	return c.client.UpsertPinPrivacy(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) UpsertMediaPrivacy(ctx context.Context, req *pb.UpsertMediaPrivacyRequest) (*pb.UpsertPrivacyResponse, error) {
+	return c.client.UpsertMediaPrivacy(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

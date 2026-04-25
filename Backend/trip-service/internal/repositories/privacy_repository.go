@@ -132,10 +132,15 @@ func (r *MediaPrivacyRepository) GetByMediaID(ctx context.Context, mediaID strin
 	return out, nil
 }
 
-// AggregatePrivacyLevel computes effective level from per-user choices: any Private -> Private; else Public. Restricted is never downgraded by this (ML sets it).
+// AggregatePrivacyLevel computes effective level from per-user choices.
+// Restricted is never downgraded (ML sets it). Empty entries -> Private (DB DEFAULT,
+// «никто не высказался» трактуется как приватно). Иначе: any Private -> Private; else Public.
 func AggregatePrivacyLevel(currentLevel string, entries []PrivacyEntry) string {
 	if currentLevel == "Restricted" {
 		return "Restricted"
+	}
+	if len(entries) == 0 {
+		return "Private"
 	}
 	for _, e := range entries {
 		if e.PrivacyLevel == "Private" {

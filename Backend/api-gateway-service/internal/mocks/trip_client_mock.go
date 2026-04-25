@@ -625,3 +625,48 @@ func (mr *MockTripClientMockRecorder) UpdateTripSettings(ctx, req any) *gomock.C
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTripSettings", reflect.TypeOf((*MockTripClient)(nil).UpdateTripSettings), ctx, req)
 }
+
+// UpsertMediaPrivacy mocks base method.
+func (m *MockTripClient) UpsertMediaPrivacy(ctx context.Context, req *proto.UpsertMediaPrivacyRequest) (*proto.UpsertPrivacyResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertMediaPrivacy", ctx, req)
+	ret0, _ := ret[0].(*proto.UpsertPrivacyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertMediaPrivacy indicates an expected call of UpsertMediaPrivacy.
+func (mr *MockTripClientMockRecorder) UpsertMediaPrivacy(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertMediaPrivacy", reflect.TypeOf((*MockTripClient)(nil).UpsertMediaPrivacy), ctx, req)
+}
+
+// UpsertPinPrivacy mocks base method.
+func (m *MockTripClient) UpsertPinPrivacy(ctx context.Context, req *proto.UpsertPinPrivacyRequest) (*proto.UpsertPrivacyResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertPinPrivacy", ctx, req)
+	ret0, _ := ret[0].(*proto.UpsertPrivacyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertPinPrivacy indicates an expected call of UpsertPinPrivacy.
+func (mr *MockTripClientMockRecorder) UpsertPinPrivacy(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPinPrivacy", reflect.TypeOf((*MockTripClient)(nil).UpsertPinPrivacy), ctx, req)
+}
+
+// UpsertTripPrivacy mocks base method.
+func (m *MockTripClient) UpsertTripPrivacy(ctx context.Context, req *proto.UpsertTripPrivacyRequest) (*proto.UpsertPrivacyResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertTripPrivacy", ctx, req)
+	ret0, _ := ret[0].(*proto.UpsertPrivacyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertTripPrivacy indicates an expected call of UpsertTripPrivacy.
+func (mr *MockTripClientMockRecorder) UpsertTripPrivacy(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertTripPrivacy", reflect.TypeOf((*MockTripClient)(nil).UpsertTripPrivacy), ctx, req)
+}

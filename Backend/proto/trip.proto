@@ -10,6 +10,11 @@ service TripService {
  rpc ListUserTrips(ListUserTripsRequest) returns (ListUserTripsResponse);
  rpc UpdateTrip(UpdateTripRequest) returns (UpdateTripResponse);
  rpc DeleteTrip(DeleteTripRequest) returns (DeleteTripResponse);
+ // Per-user приватность (ТЗ 6.4-6.7): каждый участник выставляет свой уровень,
+ // эффективный privacy_level пересчитывается синхронно по AggregatePrivacyLevel.
+ rpc UpsertTripPrivacy(UpsertTripPrivacyRequest) returns (UpsertPrivacyResponse);
+ rpc UpsertPinPrivacy(UpsertPinPrivacyRequest) returns (UpsertPrivacyResponse);
+ rpc UpsertMediaPrivacy(UpsertMediaPrivacyRequest) returns (UpsertPrivacyResponse);
  // Обложка трипа (двухшаговый поток, аналогичный аватару пользователя)
  rpc RequestTripCoverUpload(RequestTripCoverUploadRequest) returns (RequestTripCoverUploadResponse);
  rpc ConfirmTripCoverUpload(ConfirmTripCoverUploadRequest) returns (ConfirmTripCoverUploadResponse);
@@ -86,12 +91,13 @@ message Trip {
 }
 
 message CreateTripRequest {
+ reserved 6;
+ reserved "privacy_level";
  string owner_user_id = 1;
  string name = 2;
  string description = 3;
  string category = 4;
  string season = 5;
- string privacy_level = 6;
  repeated FileToUpload files_to_upload = 7;
 }
 
@@ -146,6 +152,30 @@ message GetTripResponse {
  // если есть активная add-media-сессия, клиент получает её здесь.
  // Null, если нет. Используется клиентом для роутинга на экран сессии.
  optional ActiveAddMediaSession active_add_media_session = 3;
+ // участники трипа с per-user privacy_level и ролью; username/avatar_url
+ // дозаполняет gateway через auth.GetUsersProfiles.
+ repeated TripParticipant participants = 4;
+ // расширяемый bag per-user настроек текущего юзера (notifications_enabled,
+ // privacy_level, тема и т.д.).
+ TripSettings current_user_settings = 5;
+}
+
+// TripParticipant — участник трипа для ответа GetTrip.
+// privacy_level — выбор этого юзера из trip_privacy ("Private" если записи нет).
+// role — "admin" | "member".
+message TripParticipant {
+ string user_id = 1;
+ string username = 2;
+ string avatar_url = 3;
+ string privacy_level = 4;
+ string role = 5;
+}
+
+// TripSettings — per-user настройки текущего юзера на трипе. Расширяемый bag:
+// сюда добавляем новые per-user настройки (тема и т.п.) вместо новых эндпоинтов.
+message TripSettings {
+ bool notifications_enabled = 1;
+ string privacy_level = 2;
 }
 
 // активная add-media-сессия для трипа. Отдается в GetTripResponse.
@@ -169,13 +199,14 @@ message ListUserTripsResponse {
 }
 
 message UpdateTripRequest {
+ reserved 7;
+ reserved "privacy_level";
  string trip_id = 1;
  string user_id = 2;
  optional string name = 3;
  optional string description = 4;
  optional string category = 5;
  optional string season = 6;
- optional string privacy_level = 7;
  optional int64 start_date_unix = 8;
  optional int64 end_date_unix = 9;
 }
@@ -724,4 +755,25 @@ message SearchPinsRequest {
 }
 message SearchPinsResponse {
  repeated TripPin pins = 1;
+}
+
+// Per-user приватность: каждый участник выставляет свой уровень для trip/pin/media.
+// privacy_level — выбор пользователя (Public|Private). user_id берётся из gRPC metadata.
+message UpsertTripPrivacyRequest {
+ string trip_id = 1;
+ string privacy_level = 2;
+}
+message UpsertPinPrivacyRequest {
+ string trip_id = 1;
+ string pin_id = 2;
+ string privacy_level = 3;
+}
+message UpsertMediaPrivacyRequest {
+ string trip_id = 1;
+ string media_id = 2;
+ string privacy_level = 3;
+}
+// effective_privacy_level — агрегированный уровень сущности после пересчёта.
+message UpsertPrivacyResponse {
+ string effective_privacy_level = 1;
 }

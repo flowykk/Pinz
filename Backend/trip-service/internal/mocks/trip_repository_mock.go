@@ -159,6 +159,20 @@ func (mr *MockTripRepositoryInterfaceMockRecorder) ListSummariesByUserID(userID 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSummariesByUserID", reflect.TypeOf((*MockTripRepositoryInterface)(nil).ListSummariesByUserID), userID)
 }
 
+// SetPrivacyLevel mocks base method.
+func (m *MockTripRepositoryInterface) SetPrivacyLevel(tripID, level string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetPrivacyLevel", tripID, level)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetPrivacyLevel indicates an expected call of SetPrivacyLevel.
+func (mr *MockTripRepositoryInterfaceMockRecorder) SetPrivacyLevel(tripID, level any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPrivacyLevel", reflect.TypeOf((*MockTripRepositoryInterface)(nil).SetPrivacyLevel), tripID, level)
+}
+
 // SetSoftDeleted mocks base method.
 func (m *MockTripRepositoryInterface) SetSoftDeleted(tripID string) error {
 	m.ctrl.T.Helper()

@@ -47,7 +47,7 @@ func TestTripService_Integration(t *testing.T) {
 	socialRepo := repositories.NewSocialRepository(sqlDB)
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil)
 	ownerID := uuid.New().String()
 	user2ID := uuid.New().String()
 	user3ID := uuid.New().String()
@@ -65,7 +65,6 @@ func TestTripService_Integration(t *testing.T) {
 					Name: "Trip",
 					Category: "Отпуск",
 					Season: "Лето",
-					PrivacyLevel: "Private",
 					FilesToUpload: []*pb.FileToUpload{
 						{ClientId: "c1", ContentType: "image/jpeg"},
 					},
@@ -250,7 +249,6 @@ func TestTripService_Integration(t *testing.T) {
 					Name: "TripToDelete",
 					Category: "Отпуск",
 					Season: "Лето",
-					PrivacyLevel: "Private",
 					FilesToUpload: []*pb.FileToUpload{
 						{ClientId: "c2", ContentType: "image/jpeg"},
 					},
@@ -322,7 +320,7 @@ func TestTripService_Integration_CreationFlow(t *testing.T) {
 	socialRepo := repositories.NewSocialRepository(sqlDB)
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil)
 	ownerID := uuid.New().String()
 
 	var tripID string
@@ -336,7 +334,6 @@ func TestTripService_Integration_CreationFlow(t *testing.T) {
 				Category: "Отпуск",
 				Season: "Лето",
 				Description: "Поход с друзьями",
-				PrivacyLevel: "Private",
 				FilesToUpload: []*pb.FileToUpload{
 					{ClientId: "file-1", ContentType: "image/jpeg"},
 					{ClientId: "file-2", ContentType: "image/jpeg"},
@@ -471,7 +468,7 @@ func TestTripService_Integration_SoftDelete(t *testing.T) {
 	socialRepo := repositories.NewSocialRepository(sqlDB)
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil)
 	ownerID := uuid.New().String()
 	user2ID := uuid.New().String()
 
@@ -485,7 +482,6 @@ func TestTripService_Integration_SoftDelete(t *testing.T) {
 				Name: "SoftDeleteTrip",
 				Category: "Отпуск",
 				Season: "Лето",
-				PrivacyLevel: "Public",
 				FilesToUpload: []*pb.FileToUpload{
 					{ClientId: "f1", ContentType: "image/jpeg"},
 					{ClientId: "f2", ContentType: "image/jpeg"},

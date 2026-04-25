@@ -13,4 +13,7 @@
 //go:generate go run go.uber.org/mock/mockgen@latest -destination=favourite_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories FavouriteRepositoryInterface
 //go:generate go run go.uber.org/mock/mockgen@latest -destination=media_url_resolver_mock.go -package=mocks pinz/backend/trip-service/internal/services MediaURLResolver
 //go:generate go run go.uber.org/mock/mockgen@latest -destination=add_media_session_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories AddMediaSessionRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=trip_privacy_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories TripPrivacyRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=pin_privacy_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories PinPrivacyRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=media_privacy_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories MediaPrivacyRepositoryInterface
 package mocks

@@ -24,6 +24,9 @@ const (
 	TripService_ListUserTrips_FullMethodName                 = "/trip.TripService/ListUserTrips"
 	TripService_UpdateTrip_FullMethodName                    = "/trip.TripService/UpdateTrip"
 	TripService_DeleteTrip_FullMethodName                    = "/trip.TripService/DeleteTrip"
+	TripService_UpsertTripPrivacy_FullMethodName             = "/trip.TripService/UpsertTripPrivacy"
+	TripService_UpsertPinPrivacy_FullMethodName              = "/trip.TripService/UpsertPinPrivacy"
+	TripService_UpsertMediaPrivacy_FullMethodName            = "/trip.TripService/UpsertMediaPrivacy"
 	TripService_RequestTripCoverUpload_FullMethodName        = "/trip.TripService/RequestTripCoverUpload"
 	TripService_ConfirmTripCoverUpload_FullMethodName        = "/trip.TripService/ConfirmTripCoverUpload"
 	TripService_DeleteTripCover_FullMethodName               = "/trip.TripService/DeleteTripCover"
@@ -75,6 +78,11 @@ type TripServiceClient interface {
 	ListUserTrips(ctx context.Context, in *ListUserTripsRequest, opts ...grpc.CallOption) (*ListUserTripsResponse, error)
 	UpdateTrip(ctx context.Context, in *UpdateTripRequest, opts ...grpc.CallOption) (*UpdateTripResponse, error)
 	DeleteTrip(ctx context.Context, in *DeleteTripRequest, opts ...grpc.CallOption) (*DeleteTripResponse, error)
+	// Per-user приватность (ТЗ 6.4-6.7): каждый участник выставляет свой уровень,
+	// эффективный privacy_level пересчитывается синхронно по AggregatePrivacyLevel.
+	UpsertTripPrivacy(ctx context.Context, in *UpsertTripPrivacyRequest, opts ...grpc.CallOption) (*UpsertPrivacyResponse, error)
+	UpsertPinPrivacy(ctx context.Context, in *UpsertPinPrivacyRequest, opts ...grpc.CallOption) (*UpsertPrivacyResponse, error)
+	UpsertMediaPrivacy(ctx context.Context, in *UpsertMediaPrivacyRequest, opts ...grpc.CallOption) (*UpsertPrivacyResponse, error)
 	// Обложка трипа (двухшаговый поток, аналогичный аватару пользователя)
 	RequestTripCoverUpload(ctx context.Context, in *RequestTripCoverUploadRequest, opts ...grpc.CallOption) (*RequestTripCoverUploadResponse, error)
 	ConfirmTripCoverUpload(ctx context.Context, in *ConfirmTripCoverUploadRequest, opts ...grpc.CallOption) (*ConfirmTripCoverUploadResponse, error)
@@ -179,6 +187,36 @@ func (c *tripServiceClient) DeleteTrip(ctx context.Context, in *DeleteTripReques
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteTripResponse)
 	err := c.cc.Invoke(ctx, TripService_DeleteTrip_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) UpsertTripPrivacy(ctx context.Context, in *UpsertTripPrivacyRequest, opts ...grpc.CallOption) (*UpsertPrivacyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpsertPrivacyResponse)
+	err := c.cc.Invoke(ctx, TripService_UpsertTripPrivacy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) UpsertPinPrivacy(ctx context.Context, in *UpsertPinPrivacyRequest, opts ...grpc.CallOption) (*UpsertPrivacyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpsertPrivacyResponse)
+	err := c.cc.Invoke(ctx, TripService_UpsertPinPrivacy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) UpsertMediaPrivacy(ctx context.Context, in *UpsertMediaPrivacyRequest, opts ...grpc.CallOption) (*UpsertPrivacyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpsertPrivacyResponse)
+	err := c.cc.Invoke(ctx, TripService_UpsertMediaPrivacy_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -594,6 +632,11 @@ type TripServiceServer interface {
 	ListUserTrips(context.Context, *ListUserTripsRequest) (*ListUserTripsResponse, error)
 	UpdateTrip(context.Context, *UpdateTripRequest) (*UpdateTripResponse, error)
 	DeleteTrip(context.Context, *DeleteTripRequest) (*DeleteTripResponse, error)
+	// Per-user приватность (ТЗ 6.4-6.7): каждый участник выставляет свой уровень,
+	// эффективный privacy_level пересчитывается синхронно по AggregatePrivacyLevel.
+	UpsertTripPrivacy(context.Context, *UpsertTripPrivacyRequest) (*UpsertPrivacyResponse, error)
+	UpsertPinPrivacy(context.Context, *UpsertPinPrivacyRequest) (*UpsertPrivacyResponse, error)
+	UpsertMediaPrivacy(context.Context, *UpsertMediaPrivacyRequest) (*UpsertPrivacyResponse, error)
 	// Обложка трипа (двухшаговый поток, аналогичный аватару пользователя)
 	RequestTripCoverUpload(context.Context, *RequestTripCoverUploadRequest) (*RequestTripCoverUploadResponse, error)
 	ConfirmTripCoverUpload(context.Context, *ConfirmTripCoverUploadRequest) (*ConfirmTripCoverUploadResponse, error)
@@ -668,6 +711,15 @@ func (UnimplementedTripServiceServer) UpdateTrip(context.Context, *UpdateTripReq
 }
 func (UnimplementedTripServiceServer) DeleteTrip(context.Context, *DeleteTripRequest) (*DeleteTripResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTrip not implemented")
+}
+func (UnimplementedTripServiceServer) UpsertTripPrivacy(context.Context, *UpsertTripPrivacyRequest) (*UpsertPrivacyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertTripPrivacy not implemented")
+}
+func (UnimplementedTripServiceServer) UpsertPinPrivacy(context.Context, *UpsertPinPrivacyRequest) (*UpsertPrivacyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertPinPrivacy not implemented")
+}
+func (UnimplementedTripServiceServer) UpsertMediaPrivacy(context.Context, *UpsertMediaPrivacyRequest) (*UpsertPrivacyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertMediaPrivacy not implemented")
 }
 func (UnimplementedTripServiceServer) RequestTripCoverUpload(context.Context, *RequestTripCoverUploadRequest) (*RequestTripCoverUploadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestTripCoverUpload not implemented")
@@ -896,6 +948,60 @@ func _TripService_DeleteTrip_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TripServiceServer).DeleteTrip(ctx, req.(*DeleteTripRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_UpsertTripPrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertTripPrivacyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).UpsertTripPrivacy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_UpsertTripPrivacy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).UpsertTripPrivacy(ctx, req.(*UpsertTripPrivacyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_UpsertPinPrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertPinPrivacyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).UpsertPinPrivacy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_UpsertPinPrivacy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).UpsertPinPrivacy(ctx, req.(*UpsertPinPrivacyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_UpsertMediaPrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertMediaPrivacyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).UpsertMediaPrivacy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_UpsertMediaPrivacy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).UpsertMediaPrivacy(ctx, req.(*UpsertMediaPrivacyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1646,6 +1752,18 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteTrip",
 			Handler:    _TripService_DeleteTrip_Handler,
+		},
+		{
+			MethodName: "UpsertTripPrivacy",
+			Handler:    _TripService_UpsertTripPrivacy_Handler,
+		},
+		{
+			MethodName: "UpsertPinPrivacy",
+			Handler:    _TripService_UpsertPinPrivacy_Handler,
+		},
+		{
+			MethodName: "UpsertMediaPrivacy",
+			Handler:    _TripService_UpsertMediaPrivacy_Handler,
 		},
 		{
 			MethodName: "RequestTripCoverUpload",
