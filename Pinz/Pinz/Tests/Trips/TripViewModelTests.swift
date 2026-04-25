@@ -4,6 +4,7 @@ import PinzBase
 import PinzDomain
 import CoreLocation
 
+@MainActor
 final class TripViewModelTests: XCTestCase {
 
     private var mockRouter: MockRouter!
@@ -123,7 +124,7 @@ final class TripViewModelTests: XCTestCase {
     // MARK: - nextPin / previousPin
 
     func test_nextPin_incrementsIndex() {
-        let trip = Trip.stub()
+        let trip = makeRouteTrip()
         sut.dispatch(.selectTrip(trip))
         sut.dispatch(.toggleRouteState)
         sut.dispatch(.nextPin)
@@ -142,7 +143,7 @@ final class TripViewModelTests: XCTestCase {
     }
 
     func test_previousPin_doesNotGoBelowZero() {
-        let trip = Trip.stub()
+        let trip = makeRouteTrip()
         sut.dispatch(.selectTrip(trip))
         sut.dispatch(.toggleRouteState)
         sut.dispatch(.previousPin)
@@ -150,7 +151,7 @@ final class TripViewModelTests: XCTestCase {
     }
 
     func test_nextThenPrevious_restoresIndex() {
-        let trip = Trip.stub()
+        let trip = makeRouteTrip()
         sut.dispatch(.selectTrip(trip))
         sut.dispatch(.toggleRouteState)
         sut.dispatch(.nextPin)
@@ -187,7 +188,7 @@ final class TripViewModelTests: XCTestCase {
         sut.dispatch(.toggleRouteState)
 
         XCTAssertEqual(sut.routePinIndex, 1)
-        guard case let .camera(camera) = sut.position else {
+        guard let camera = sut.position.camera else {
             return XCTFail("Expected camera position after selecting route pin with coordinates")
         }
         XCTAssertEqual(camera.centerCoordinate.latitude, 55.75, accuracy: 0.0001)
@@ -293,5 +294,23 @@ final class TripViewModelTests: XCTestCase {
     func test_navigate_pinCreation_callsRouter() {
         sut.dispatch(.navigate(.pinCreation))
         XCTAssertTrue(mockRouter.navigatedToPinCreation)
+    }
+
+    private func makeRouteTrip(pinCount: Int = 3) -> Trip {
+        Trip(
+            name: "Route Trip",
+            pins: (0..<pinCount).map { i in
+                Pin(
+                    name: "Pin \(i)",
+                    category: .entertainment,
+                    medias: [],
+                    isPrivate: false,
+                    tags: [],
+                    coordinates: CLLocationCoordinate2D(latitude: 55.0 + Double(i) * 0.01, longitude: 37.0)
+                )
+            },
+            season: .summer,
+            category: .vacation
+        )
     }
 }

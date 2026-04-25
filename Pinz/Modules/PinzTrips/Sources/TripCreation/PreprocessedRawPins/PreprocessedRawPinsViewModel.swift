@@ -28,13 +28,14 @@ final class PreprocessedRawPinsViewModel {
     var pins: RawPins
     private(set) var isLoading = false
 
-    private let networkService = NetworkService.shared
+    private let networkService: NetworkServiceProtocol
     private var router: AppRouting?
     private var deletedMediaIds: [String] = []
 
-    init(tripId: String, pins: RawPins) {
+    init(tripId: String, pins: RawPins, networkService: NetworkServiceProtocol = NetworkService.shared) {
         self.tripId = tripId
         self.pins = pins
+        self.networkService = networkService
     }
 
     func dispatch(_ intent: Intent) {
@@ -137,7 +138,7 @@ final class PreprocessedRawPinsViewModel {
 
     private static func waitForReviewAfterTimeout(
         tripId: String,
-        networkService: NetworkService,
+        networkService: NetworkServiceProtocol,
         attempts: Int = 6,
         interval: TimeInterval = 2.0
     ) async throws -> GetTripReviewDTO {

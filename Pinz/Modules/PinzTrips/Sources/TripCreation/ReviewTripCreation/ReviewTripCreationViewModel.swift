@@ -23,14 +23,16 @@ final class ReviewTripCreationViewModel {
     var pins: [Pin]
 
     private var router: AppRouting?
+    private let networkService: NetworkServiceProtocol
 
     var pinsHaveIssues: Bool {
         return pins.contains(where: { !$0.issueKinds.isEmpty })
     }
 
-    init(tripId: String, pins: [Pin]) {
+    init(tripId: String, pins: [Pin], networkService: NetworkServiceProtocol = NetworkService.shared) {
         self.tripId = tripId
         self.pins = pins
+        self.networkService = networkService
     }
 
     func dispatch(_ intent: Intent) {
@@ -91,7 +93,7 @@ final class ReviewTripCreationViewModel {
                 )
             }
 
-            _ = try await NetworkService.shared.finalizeTrip(
+            _ = try await networkService.finalizeTrip(
                 tripId: tripId,
                 pinUpdates: pinUpdates,
                 mediaToDelete: []

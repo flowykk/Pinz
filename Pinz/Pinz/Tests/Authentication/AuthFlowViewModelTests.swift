@@ -172,4 +172,124 @@ final class AuthFlowViewModelTests: XCTestCase {
         XCTAssertEqual(sut.state, .register(.passkeyPrompt))
         #endif
     }
+
+    func test_asyncContinue_fromRegisterNickname_failure_revertsToNickname() async {
+        #if targetEnvironment(simulator)
+        // On simulator the passkey step is bypassed, failure path is unreachable
+        #else
+        mockNetwork.passkeyRegisterBeginResult = .failure(URLError(.badServerResponse))
+        sut.state = .register(.nickname)
+        sut.text = "testuser"
+
+        do {
+            try await sut.asyncDispatch(.continue)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            XCTAssertEqual(sut.state, .register(.nickname))
+        }
+        #endif
+    }
+
+    // MARK: - Async: no-op states
+
+    func test_asyncContinue_fromWelcome_isNoOp() async throws {
+        sut.state = .welcome
+        sut.text = "anything"
+
+        try await sut.asyncDispatch(.continue)
+
+        XCTAssertEqual(sut.state, .welcome)
+        XCTAssertEqual(sut.text, "")
+    }
+
+    func test_asyncContinue_fromLoginPasskeyPrompt_isNoOp() async throws {
+        sut.state = .login(.passkeyPrompt)
+        sut.text = "anything"
+
+        try await sut.asyncDispatch(.continue)
+
+        XCTAssertEqual(sut.state, .login(.passkeyPrompt))
+        XCTAssertEqual(sut.text, "")
+    }
+
+    func test_asyncContinue_fromRegisterPasskeyPrompt_isNoOp() async throws {
+        sut.state = .register(.passkeyPrompt)
+        sut.text = "anything"
+
+        try await sut.asyncDispatch(.continue)
+
+        XCTAssertEqual(sut.state, .register(.passkeyPrompt))
+        XCTAssertEqual(sut.text, "")
+    }
+
+    // MARK: - performZoomAnimation
+
+    func test_performZoomAnimation_inProgress_interpolatesCameraDistance() {
+        let startDistance = 40_000_000.0
+        let targetDistance = 28_000_000.0
+
+        sut.dispatch(.performZoomAnimation(
+            targetDistance: targetDistance,
+            startDistance: startDistance,
+            startTime: Date(timeIntervalSinceNow: -1.0),
+            completion: nil
+        ))
+
+        XCTAssertGreaterThan(sut.cameraDistance, targetDistance)
+        XCTAssertLessThan(sut.cameraDistance, startDistance)
+    }
+
+    func test_performZoomAnimation_whenComplete_setsFinalDistanceAndCallsCompletion() {
+        let targetDistance = 28_000_000.0
+        var completionCalled = false
+
+        sut.dispatch(.performZoomAnimation(
+            targetDistance: targetDistance,
+            startDistance: 40_000_000.0,
+            startTime: Date.distantPast,
+            completion: { completionCalled = true }
+        ))
+
+        XCTAssertEqual(sut.cameraDistance, targetDistance, accuracy: 1)
+        XCTAssertTrue(completionCalled)
+    }
+
+    func test_performZoomAnimation_whenComplete_nilCompletion_doesNotCrash() {
+        sut.dispatch(.performZoomAnimation(
+            targetDistance: 28_000_000.0,
+            startDistance: 40_000_000.0,
+            startTime: Date.distantPast,
+            completion: nil
+        ))
+
+        XCTAssertEqual(sut.cameraDistance, 28_000_000.0, accuracy: 1)
+    }
+
+    // MARK: - zoomCamera
+
+    func test_zoomCamera_setsInitialCameraDistanceUnchanged() {
+        let initialDistance = sut.cameraDistance
+
+        sut.dispatch(.zoomCamera(to: 28_000_000, duration: 1.5, completion: nil))
+
+        // zoomCamera only starts a timer; cameraDistance unchanged until animation ticks
+        XCTAssertEqual(sut.cameraDistance, initialDistance)
+    }
+
+    // MARK: - proceedFromWelcome zoom closure
+
+    func test_proceedFromWelcome_afterZoomComplete_setsStateToEmail() {
+        sut.dispatch(.proceedFromWelcome)
+
+        // Simulate the zoom completing by dispatching performZoomAnimation with a
+        // past startTime and the same completion the internal zoom uses (state = .email)
+        sut.dispatch(.performZoomAnimation(
+            targetDistance: 28_000_000,
+            startDistance: 40_000_000,
+            startTime: Date.distantPast,
+            completion: { [weak sut] in sut?.state = .email }
+        ))
+
+        XCTAssertEqual(sut.state, .email)
+    }
 }

@@ -59,15 +59,21 @@ final class MockNetworkService: NetworkServiceProtocol {
     var deleteAvatarResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
     var deleteAccountResult: Result<DeleteAccountResponseDTO, Error> = .success(DeleteAccountResponseDTO(success: true))
     var getVisitedLocationsResult: Result<VisitedLocationsResponseDTO, Error> = .success(VisitedLocationsResponseDTO())
+    var getVisitedLocationsCountryResult: Result<VisitedLocationsResponseDTO, Error>?
+    var getVisitedLocationsCityResult: Result<VisitedLocationsResponseDTO, Error>?
+    var getVisitedLocationsCallTypes: [String] = []
     var getProfileStatsResult: Result<UserStatsResponseDTO, Error> = .success(
         UserStatsResponseDTO(tripsCount: 0, pinsCount: 0, mediaCount: 0, likesCount: 0, dislikesCount: 0, battlesCount: 0)
     )
+    var getProfileStatsCallCount = 0
     var requestAvatarUploadResult: Result<AvatarUploadResponseDTO, Error> = .success(
         AvatarUploadResponseDTO(uploadUrl: "https://example.com/upload", s3Key: "mock-s3-key")
     )
     var confirmAvatarUploadResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
     var changeEmailResult: Result<ChangeEmailResponseDTO, Error> = .success(ChangeEmailResponseDTO(success: true))
+    var changeEmailCall: (userId: String?, newEmail: String)?
     var confirmEmailChangeResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
+    var confirmEmailChangeCall: String?
     var requestAvatarUploadCall: (filename: String, contentType: String)?
     var confirmAvatarUploadCall: String?
     var uploadToS3Call: (url: String, dataBytes: Int, contentType: String)?
@@ -143,7 +149,7 @@ final class MockNetworkService: NetworkServiceProtocol {
             startDateUnix: startDateUnix,
             endDateUnix: endDateUnix
         )
-        try updateTripResult.get()
+        return try updateTripResult.get()
     }
     func deleteTrip(id: String) async throws {
         if let error = deleteTripError { throw error }
@@ -160,7 +166,11 @@ final class MockNetworkService: NetworkServiceProtocol {
     func removeParticipant(tripId: String, userId: String) async throws {
         if let error = removeParticipantError { throw error }
     }
-    func publishTrip(id: String, publishWhole: Bool, pinIds: [String]) async throws -> TripDTO { try publishTripResult.get() }
+    var publishTripCall: (id: String, publishWhole: Bool, pinIds: [String])?
+    func publishTrip(id: String, publishWhole: Bool, pinIds: [String]) async throws -> TripDTO {
+        publishTripCall = (id, publishWhole, pinIds)
+        return try publishTripResult.get()
+    }
     func updateTripSettings(id: String, notificationsEnabled: Bool) async throws -> SuccessDTO {
         updateTripSettingsCall = (id: id, notificationsEnabled: notificationsEnabled)
         return try updateTripSettingsResult.get()
@@ -173,11 +183,19 @@ final class MockNetworkService: NetworkServiceProtocol {
     }
     func getProfile() async throws -> ProfileResponseDTO { try getProfileResult.get() }
     func getVisitedLocations(type: String?) async throws -> VisitedLocationsResponseDTO {
-        try getVisitedLocationsResult.get()
+        if let type { getVisitedLocationsCallTypes.append(type) }
+        if type == "Country", let result = getVisitedLocationsCountryResult { return try result.get() }
+        if type == "City", let result = getVisitedLocationsCityResult { return try result.get() }
+        return try getVisitedLocationsResult.get()
     }
-    func getProfileStats() async throws -> UserStatsResponseDTO { try getProfileStatsResult.get() }
+    func getProfileStats() async throws -> UserStatsResponseDTO {
+        getProfileStatsCallCount += 1
+        return try getProfileStatsResult.get()
+    }
+    var updateProfileCall: String?
     func updateProfile(username: String) async throws -> ProfileResponseDTO {
-        try updateProfileResult.get()
+        updateProfileCall = username
+        return try updateProfileResult.get()
     }
     func deleteAccount() async throws -> DeleteAccountResponseDTO { try deleteAccountResult.get() }
     func deleteAvatar() async throws -> ProfileResponseDTO { try deleteAvatarResult.get() }
@@ -190,9 +208,13 @@ final class MockNetworkService: NetworkServiceProtocol {
         return try confirmAvatarUploadResult.get()
     }
     func changeEmail(userId: String?, newEmail: String) async throws -> ChangeEmailResponseDTO {
-        try changeEmailResult.get()
+        changeEmailCall = (userId, newEmail)
+        return try changeEmailResult.get()
     }
-    func confirmEmailChange(verificationCode: String) async throws -> ProfileResponseDTO { try confirmEmailChangeResult.get() }
+    func confirmEmailChange(verificationCode: String) async throws -> ProfileResponseDTO {
+        confirmEmailChangeCall = verificationCode
+        return try confirmEmailChangeResult.get()
+    }
     func getFavouriteTrips(limit: Int?, offset: Int?) async throws -> [TripDTO] {
         try getFavouriteTripsResult.get()
     }
