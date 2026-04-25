@@ -26,6 +26,24 @@ func (q *Queries) PinHiddenInsert(ctx context.Context, arg PinHiddenInsertParams
 	return err
 }
 
+const pinHiddenIsHidden = `-- name: PinHiddenIsHidden :one
+SELECT EXISTS (
+ SELECT 1 FROM pin_hidden_by_user WHERE pin_id = $1 AND user_id = $2
+)
+`
+
+type PinHiddenIsHiddenParams struct {
+	PinID  uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) PinHiddenIsHidden(ctx context.Context, arg PinHiddenIsHiddenParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, pinHiddenIsHidden, arg.PinID, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const pinHiddenListForUser = `-- name: PinHiddenListForUser :many
 SELECT ph.pin_id
 FROM pin_hidden_by_user ph

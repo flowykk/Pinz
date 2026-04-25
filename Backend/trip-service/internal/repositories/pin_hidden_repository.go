@@ -48,3 +48,21 @@ func (r *PinHiddenRepository) ListHiddenPinIDsForUser(tripID, userID string) ([]
 	}
 	return out, nil
 }
+
+// IsHidden проверяет, скрыт ли пин для конкретного юзера (ТЗ 4.5.2).
+// Используется в GetPin для возврата 404, как если бы пин не существовал.
+func (r *PinHiddenRepository) IsHidden(pinID, userID string) (bool, error) {
+	pid, err := uuid.Parse(pinID)
+	if err != nil {
+		return false, err
+	}
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return false, err
+	}
+	hidden, err := r.q.PinHiddenIsHidden(context.Background(), sqlcdb.PinHiddenIsHiddenParams{PinID: pid, UserID: uid})
+	if err != nil {
+		return false, err
+	}
+	return hidden, nil
+}

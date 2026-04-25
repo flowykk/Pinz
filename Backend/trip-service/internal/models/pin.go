@@ -23,6 +23,12 @@ type Pin struct {
 // Media is a photo or video in a trip.
 // SimilarGroupID: медиа с одинаковым значением внутри одного пина образуют одну группу похожих (только для ответа review, в БД храним только идентификатор группы).
 // UploadedBy: автор загрузки . nil для медиа, загруженных до этой миграции.
+// PinAdditionSessionID: связь с активной pin-add-media-сессией (ТЗ 4.2.2 + 4.12-4.14).
+// До FinalizePinMediaAddition media лежит с pin_id=NULL и pin_addition_session_id=session;
+// при finalize pin_id заполняется и pin_addition_session_id очищается через ON DELETE SET NULL FK.
+// PinCreationSessionID: связь с pin-creation-сессией (ТЗ 4.1, 4.6-4.11). До
+// FinalizePinCreation media лежит с pin_id=NULL и pin_creation_session_id=session;
+// на finalize создаётся новый pin и pin_id заполняется через UpdatePinIDByIDs.
 type Media struct {
 	ID string
 	TripID string
@@ -37,6 +43,8 @@ type Media struct {
 	SimilarGroupID *string
 	ContentHash *string
 	UploadedBy *string
+	PinAdditionSessionID *string
+	PinCreationSessionID *string
 	CreatedAt time.Time
 }
 

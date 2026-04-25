@@ -98,6 +98,20 @@ func (mr *MockPinRepositoryInterfaceMockRecorder) GetByID(id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockPinRepositoryInterface)(nil).GetByID), id)
 }
 
+// IncMediaCount mocks base method.
+func (m *MockPinRepositoryInterface) IncMediaCount(pinID string, delta int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncMediaCount", pinID, delta)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IncMediaCount indicates an expected call of IncMediaCount.
+func (mr *MockPinRepositoryInterfaceMockRecorder) IncMediaCount(pinID, delta any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncMediaCount", reflect.TypeOf((*MockPinRepositoryInterface)(nil).IncMediaCount), pinID, delta)
+}
+
 // ListByTripID mocks base method.
 func (m *MockPinRepositoryInterface) ListByTripID(tripID string) ([]*models.Pin, error) {
 	m.ctrl.T.Helper()
@@ -111,6 +125,21 @@ func (m *MockPinRepositoryInterface) ListByTripID(tripID string) ([]*models.Pin,
 func (mr *MockPinRepositoryInterfaceMockRecorder) ListByTripID(tripID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByTripID", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ListByTripID), tripID)
+}
+
+// ListByTripIDExcludingHidden mocks base method.
+func (m *MockPinRepositoryInterface) ListByTripIDExcludingHidden(tripID, userID string) ([]*models.Pin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByTripIDExcludingHidden", tripID, userID)
+	ret0, _ := ret[0].([]*models.Pin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByTripIDExcludingHidden indicates an expected call of ListByTripIDExcludingHidden.
+func (mr *MockPinRepositoryInterfaceMockRecorder) ListByTripIDExcludingHidden(tripID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByTripIDExcludingHidden", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ListByTripIDExcludingHidden), tripID, userID)
 }
 
 // ListPublishedPinsByTripIDs mocks base method.

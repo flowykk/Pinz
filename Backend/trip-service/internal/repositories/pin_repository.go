@@ -205,6 +205,7 @@ func (r *PinRepository) DeleteByTripID(tripID string) error {
 }
 
 // SearchByUserID returns pins from trips where user is participant, matching query in name, description or tag.
+// Скрытые пины (pin_hidden_by_user) — отфильтрованы (ТЗ 4.5.2).
 func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32) ([]*models.Pin, error) {
 	if query == "" {
 		return nil, nil
@@ -216,7 +217,9 @@ func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32
 		FROM pins p
 		INNER JOIN trip_participants tp ON tp.trip_id = p.trip_id AND tp.user_id = $1
 		LEFT JOIN tags t ON t.pin_id = p.id AND t.trip_id = p.trip_id
-		WHERE p.name ILIKE $2 OR p.description ILIKE $2 OR t.tag ILIKE $2
+		LEFT JOIN pin_hidden_by_user ph ON ph.pin_id = p.id AND ph.user_id = $1
+		WHERE (p.name ILIKE $2 OR p.description ILIKE $2 OR t.tag ILIKE $2)
+		 AND ph.pin_id IS NULL
 		ORDER BY p.id, p.created_at DESC
 		LIMIT $3 OFFSET $4`
 	rows, err := r.db.Query(sqlStr, userID, pattern, limit, offset)
@@ -291,4 +294,70 @@ func (r *PinRepository) ListPublishedPinsByTripIDs(tripIDs []string) (map[string
 		out[tripID] = append(out[tripID], &FeedPin{ID: id, Latitude: lat, Longitude: lon})
 	}
 	return out, rows.Err()
+}
+
+// ListByTripIDExcludingHidden — список пинов трипа, кроме скрытых для userID
+// через pin_hidden_by_user (ТЗ 4.5.2 soft-delete-for-self).
+func (r *PinRepository) ListByTripIDExcludingHidden(tripID, userID string) ([]*models.Pin, error) {
+	sqlStr := `SELECT p.id, p.trip_id, p.name, p.description, p.category, p.privacy_level, p.media_count,
+		ST_Y(p.location)::float as lat, ST_X(p.location)::float as lon,
+		p.start_time, p.end_time, p.is_published_in_feed, p.location_name, p.created_at
+		FROM pins p
+		LEFT JOIN pin_hidden_by_user ph ON ph.pin_id = p.id AND ph.user_id = $2
+		WHERE p.trip_id = $1 AND ph.pin_id IS NULL
+		ORDER BY p.start_time ASC NULLS LAST, p.created_at ASC`
+	rows, err := r.db.Query(sqlStr, tripID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []*models.Pin
+	for rows.Next() {
+		var p models.Pin
+		var desc sql.NullString
+		var lat, lon sql.NullFloat64
+		var startTime, endTime sql.NullTime
+		var isPublished sql.NullBool
+		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		if desc.Valid {
+			p.Description = desc.String
+		}
+		if lat.Valid {
+			p.Latitude = &lat.Float64
+		}
+		if lon.Valid {
+			p.Longitude = &lon.Float64
+		}
+		if startTime.Valid {
+			p.StartTime = &startTime.Time
+		}
+		if endTime.Valid {
+			p.EndTime = &endTime.Time
+		}
+		if isPublished.Valid {
+			p.IsPublishedInFeed = isPublished.Bool
+		}
+		list = append(list, &p)
+	}
+	return list, rows.Err()
+}
+
+// IncMediaCount атомарно увеличивает (delta>0) или уменьшает (delta<0)
+// pins.media_count для пина. Используется AddMediaToPin/RemoveMediaFromPin.
+// Защищён от ухода в отрицательные значения через GREATEST.
+func (r *PinRepository) IncMediaCount(pinID string, delta int) error {
+	res, err := r.db.Exec(
+		`UPDATE pins SET media_count = GREATEST(media_count + $2, 0) WHERE id = $1`,
+		pinID, delta)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }

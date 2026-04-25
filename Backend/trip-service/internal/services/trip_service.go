@@ -52,6 +52,9 @@ type TripService struct {
 	tripPrivacyRepo repositories.TripPrivacyRepositoryInterface
 	pinPrivacyRepo repositories.PinPrivacyRepositoryInterface
 	mediaPrivacyRepo repositories.MediaPrivacyRepositoryInterface
+	pinHiddenRepo repositories.PinHiddenRepositoryInterface
+	pinAddSessionRepo repositories.PinMediaAdditionSessionRepositoryInterface
+	pinCreationSessionRepo repositories.PinCreationSessionRepositoryInterface
 }
 
 func NewTripService(
@@ -73,6 +76,9 @@ func NewTripService(
 	tripPrivacyRepo repositories.TripPrivacyRepositoryInterface,
 	pinPrivacyRepo repositories.PinPrivacyRepositoryInterface,
 	mediaPrivacyRepo repositories.MediaPrivacyRepositoryInterface,
+	pinHiddenRepo repositories.PinHiddenRepositoryInterface,
+	pinAddSessionRepo repositories.PinMediaAdditionSessionRepositoryInterface,
+	pinCreationSessionRepo repositories.PinCreationSessionRepositoryInterface,
 ) *TripService {
 	return &TripService{
 		tripRepo: tripRepo,
@@ -93,6 +99,9 @@ func NewTripService(
 		tripPrivacyRepo: tripPrivacyRepo,
 		pinPrivacyRepo: pinPrivacyRepo,
 		mediaPrivacyRepo: mediaPrivacyRepo,
+		pinHiddenRepo: pinHiddenRepo,
+		pinAddSessionRepo: pinAddSessionRepo,
+		pinCreationSessionRepo: pinCreationSessionRepo,
 	}
 }
 
@@ -231,7 +240,16 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 // per-user privacy_level вызывающего юзера). также догружает active_add_media_session —
 // клиент использует его для роутинга на экран сессии без дополнительных запросов.
 func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.Trip, callerUserID string) (*pb.GetTripResponse, error) {
-	pins, err := s.pinRepo.ListByTripID(trip.ID)
+	// ТЗ 4.5.2: пины, скрытые caller'ом через pin_hidden_by_user (soft-delete-for-self),
+	// не возвращаются. Если pinHiddenRepo не подключён (старый DI/тесты), fallback —
+	// обычный ListByTripID.
+	var pins []*models.Pin
+	var err error
+	if s.pinHiddenRepo != nil && callerUserID != "" {
+		pins, err = s.pinRepo.ListByTripIDExcludingHidden(trip.ID, callerUserID)
+	} else {
+		pins, err = s.pinRepo.ListByTripID(trip.ID)
+	}
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list pins")
 	}

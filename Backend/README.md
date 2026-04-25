@@ -124,9 +124,47 @@ Real‑time уведомление о завершении шага 3–4 идё
 | POST | `/api/v1/trips/{id}/battles` | Старт фотобатла: сервер случайно выбирает 8 медиа трипа (исключая `Restricted`) и возвращает `battle_id` + массив из 8 `{media_id, url, media_type}`. `412/409 FailedPrecondition`, если доступных медиа < 8 (ТЗ 8.1.9). Пары 4→2→1 клиент формирует локально. |
 | POST | `/api/v1/trips/{id}/battles/{battle_id}/result` | Финал батла: `{"winner_media_id":"..."}`. Валидирует принадлежность победителя к выборке, атомарно закрывает сессию (`finished_at = NOW()`) и увеличивает `battle_rating` победителя на 1 (ТЗ 8.1.8). Повторный вызов — `409 FailedPrecondition: battle already finished`. |
 | GET | `/api/v1/trips/{id}/best-memories` | «Лучшие воспоминания» (story-mode, ТЗ 8.2): медиа трипа с `battle_rating > 0`, отсортированные по рейтингу DESC. Пустой массив, если победителей ещё нет (ТЗ 8.2.3 — решение скрыть режим принимает клиент). |
-| GET | `/api/v1/pins/search?q=&limit=&offset=` | Поиск пинов (PINZ-135) по `name`/`description`/`tags` в трипах, где пользователь — участник. `q` обязателен (1..128 симв.), `limit` 1..100 (по умолчанию 20), `offset` ≥0. Возвращает массив `TripPin` с `trip_id`, координатами, тегами и медиа. Поиск по ML-контенту (embeddings) — отдельная задача. |
+| GET | `/api/v1/pins/search?q=&limit=&offset=` | Поиск пинов (PINZ-135) по `name`/`description`/`tags` в трипах, где пользователь — участник. `q` обязателен (1..128 симв.), `limit` 1..100 (по умолчанию 20), `offset` ≥0. Возвращает массив `TripPin` с `trip_id`, координатами, тегами и медиа. Скрытые `pin_hidden_by_user` записи отфильтрованы (ТЗ 4.5.2). Поиск по ML-контенту (embeddings) — отдельная задача. |
 
 Все три эндпоинта требуют JWT и участия в трипе (`PermissionDenied` → 403 для не-участников). Состояние батла хранится в таблице `media_battles` (`trip-service/internal/db/migrations/00003_photo_battles.sql`); `battle_rating` — колонка `media.battle_rating` и влияет на сортировку топ-медиа в ленте.
+
+### Pin Create + RUD + Media (trip-service через API Gateway, ТЗ §4)
+
+Полный CRUD пинов на READY-трипе: создание (sessioned флоу с ML-stub'ом и ревью), чтение/обновление/удаление, добавление/удаление медиа в существующий пин. Privacy (4.2.10) — отдельная ручка `PUT /api/v1/trips/{id}/pins/{pin_id}/privacy` (PINZ-154); поиск (4.4) — `/api/v1/pins/search` выше.
+
+#### Создание пина (ТЗ 4.1, 4.6-4.11)
+
+Sessioned флоу: один пользователь ведёт сессию от Start до Finalize или Cancel. UNIQUE-индекс не даёт двум сессиям создания идти параллельно на одном трипе. Трип всё это время остаётся в `READY`.
+
+| Метод | Путь | Описание |
+|---|---|---|
+| POST | `/api/v1/trips/{id}/pins/creation/start` | Старт sessioned-флоу + presigned PUT URLs. `412 FailedPrecondition`, если для трипа уже идёт сессия. |
+| POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/upload-urls` | Догрузка дополнительных presigned URLs. |
+| POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/commit-upload` | Регистрация s3-загруженного файла: создаётся `media` с `pin_id=NULL` и `pin_creation_session_id=$session`. |
+| POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/process` | Синхронный ML-stub: хеш-дедуп (4.7.6.a), NSFW (4.7.5, заглушка), similar (4.7.7, заглушка), suggested поля пина — имя/категория/теги/координаты/start-end (4.7.2.a-f), pin issues (4.7.3-4.7.4 — `MISSING_COORDINATES` / `MISSING_DATES`). Snapshot сохраняется в `pin_creation_sessions.draft_snapshot` (JSONB). |
+| GET | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/review` | Чтение snapshot Process: suggested-поля, медиа (с presigned GET URLs), issues, similar groups. |
+| POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/finalize` | Финал (ТЗ 4.9-4.11): применение `media_to_delete`, создание записи `pins` с финальными полями (правки клиента поверх ML-suggested), привязка media (`UpdatePinIDByIDs`), теги, reverse-geocoding, публикация `PIN_ADDED` (notification-service шлёт push остальным участникам, ТЗ 11.2.1), закрытие сессии. |
+| POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/cancel` | Удаляет orphan media сессии + S3 cleanup, закрывает сессию. Идемпотентен. |
+
+Состояние сессии — таблица `pin_creation_sessions` (`trip-service/internal/db/migrations/00006_pin_creation_sessions.sql`) с UNIQUE-индексом `idx_pin_creation_sessions_active_per_trip`. Связь media с draft-сессией — колонка `media.pin_creation_session_id` с `ON DELETE SET NULL`.
+
+#### RUD пина и Add/Remove Media (ТЗ §4.2-4.5)
+
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/api/v1/trips/{id}/pins/{pin_id}` | Все поля пина: media + tags + privacy_level (ТЗ 4.3). Доступ — participant трипа или favourite-юзер. Если пин скрыт для caller'а через `pin_hidden_by_user` (soft-delete-for-self) → 404. |
+| PATCH | `/api/v1/trips/{id}/pins/{pin_id}` | Изменение полей: name (≤100), description (≤5000), category (из ТЗ 2.2.4), latitude/longitude, start/end_time_unix, tags (replace-all при `tags_set=true`). Любой participant. Trip должен быть в READY. При смене координат — reverse-geocoding и обновление `trip_locations` для статистики. |
+| DELETE | `/api/v1/trips/{id}/pins/{pin_id}` | Удаление пина. Если трип в избранном у других пользователей — soft-delete-for-self через запись в `pin_hidden_by_user` (ТЗ 4.5.2): пин остаётся видимым другим участникам и favourite-юзерам, но автору удаления больше не возвращается; `deletion_mode = "soft_for_user"`. Иначе full delete (`deletion_mode = "full"`): удаляются media (явный каскад через `mediaRepo.DeleteByPinID` + S3 cleanup), теги (FK CASCADE дублируется явным `tagRepo.DeleteForPin`), сам пин (FK CASCADE для `pin_privacy` и `pin_hidden_by_user`). Защита: запрет удаления при активной сессии добавления медиа в этот пин (`pin_media_addition_sessions`). |
+| POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/start` | Старт sessioned-флоу добавления медиа в существующий пин (ТЗ 4.2.2 + 4.12-4.14): создаёт сессию (UNIQUE per-pin) и выдаёт presigned PUT URLs. Если для пина уже идёт сессия — `412 FailedPrecondition`. |
+| POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/upload-urls` | Догрузка дополнительных presigned URLs к активной сессии. |
+| POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/commit-upload` | Регистрация s3-загруженного файла: создаётся `media` с `pin_id=NULL` и `pin_addition_session_id=$session`. Лимиты трипа (≤500 media, ≤50 video) учитываются включая draft media — это защищает от over-upload в S3. |
+| POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/process` | Синхронный ML-stub: хеш-дедупликация (4.7.6.a — дубликаты удаляются физически), NSFW (4.7.5 — заглушка до подключения ML), similar groups (4.7.7 — заглушка), pin issues (4.7.3-4.7.4 — `MISSING_COORDINATES` / `MISSING_DATES`). Snapshot сохраняется в `pin_media_addition_sessions.draft_snapshot`. |
+| GET | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/review` | Чтение snapshot Process: список новых медиа (с presigned GET URLs), pin issues, similar groups. |
+| POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/finalize` | Применение `media_to_delete` (orphan-cleanup), привязка оставшихся media к пину (`UpdatePinIDByIDs`), пересчёт start/end/lat/lon (`updatePinTimesAndLocation`), reverse-geocoding (если у пина появились координаты), закрытие сессии. |
+| POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/cancel` | Удаление orphan media сессии (`DeleteOrphanByPinAdditionSession` + S3 cleanup), закрытие сессии. Идемпотентен. |
+| DELETE | `/api/v1/trips/{id}/pins/{pin_id}/media/{media_id}` | Sessionless удаление одного медиа из пина с пересчётом агрегатов и S3 cleanup. Защита: пин не может остаться без медиа (ТЗ 2.2.9). |
+
+Состояние сессии — таблица `pin_media_addition_sessions` (`trip-service/internal/db/migrations/00005_pin_crud.sql`) с UNIQUE-индексом `idx_pin_media_addition_sessions_active_per_pin` (одна активная сессия на пин). Связь media с draft-сессией — колонка `media.pin_addition_session_id` с `ON DELETE SET NULL`. Snapshot хранится как JSONB.
 
 Swagger UI: `http://pinz.example.com/swagger/index.html`
 

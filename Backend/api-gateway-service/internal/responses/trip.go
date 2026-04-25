@@ -366,3 +366,111 @@ type BestMemory struct {
 type GetBestMemoriesResponse struct {
 	Media []BestMemory `json:"media"`
 }
+
+// PinResponse — ответ GET/PATCH /api/v1/trips/{trip_id}/pins/{pin_id}
+// и финального шага add-media сессии.
+type PinResponse struct {
+	Pin TripPin `json:"pin"`
+}
+
+// DeletePinResponse — ответ DELETE /api/v1/trips/{trip_id}/pins/{pin_id}.
+// deletion_mode: "full" (ТЗ 4.5.1) — пин и медиа удалены физически;
+// "soft_for_user" (ТЗ 4.5.2) — пин скрыт только для caller'а через pin_hidden_by_user.
+type DeletePinResponse struct {
+	DeletionMode string `json:"deletion_mode" example:"full"`
+}
+
+// AddMediaToPinStartResponse — старт sessioned-флоу добавления медиа в пин.
+type AddMediaToPinStartResponse struct {
+	SessionID string `json:"session_id"`
+	UploadURLs []UploadURL `json:"upload_urls"`
+}
+
+// RequestPinMediaUploadUrlsResponse — догрузка presigned URLs.
+type RequestPinMediaUploadUrlsResponse struct {
+	UploadURLs []UploadURL `json:"upload_urls"`
+}
+
+// CommitPinMediaUploadResponse — фиксация s3-загрузки в активную сессию.
+type CommitPinMediaUploadResponse struct {
+	MediaID string `json:"media_id"`
+	MediaCountInSession int32 `json:"media_count_in_session"`
+}
+
+// PinAdditionDraft — снимок Process для review (ТЗ 4.7.3-4.7.7).
+type PinAdditionDraft struct {
+	NewMedia []ReviewPinMedia `json:"new_media"`
+	PinIssues []string `json:"pin_issues"`
+	NSFWMediaIDs []string `json:"nsfw_media_ids,omitempty"`
+	DedupedMediaIDs []string `json:"deduped_media_ids,omitempty"`
+}
+
+// ProcessPinMediaAdditionResponse — ответ Process: snapshot и similar groups.
+type ProcessPinMediaAdditionResponse struct {
+	SessionID string `json:"session_id"`
+	Draft PinAdditionDraft `json:"draft"`
+	Similar [][]string `json:"similar"`
+}
+
+// GetPinMediaAdditionReviewResponse — повторное чтение snapshot.
+type GetPinMediaAdditionReviewResponse struct {
+	SessionID string `json:"session_id"`
+	Draft PinAdditionDraft `json:"draft"`
+	Similar [][]string `json:"similar"`
+}
+
+// CancelPinMediaAdditionResponse — отмена сессии (orphan-cleanup).
+type CancelPinMediaAdditionResponse struct {
+	Status string `json:"status" example:"cancelled"`
+}
+
+// CreatePinStartResponse — старт sessioned-флоу создания пина.
+type CreatePinStartResponse struct {
+	SessionID string `json:"session_id"`
+	UploadURLs []UploadURL `json:"upload_urls"`
+}
+
+// RequestPinCreationUploadUrlsResponse — догрузка presigned URLs.
+type RequestPinCreationUploadUrlsResponse struct {
+	UploadURLs []UploadURL `json:"upload_urls"`
+}
+
+// CommitPinCreationUploadResponse — фиксация s3-загрузки в pin-creation сессию.
+type CommitPinCreationUploadResponse struct {
+	MediaID string `json:"media_id"`
+	MediaCountInSession int32 `json:"media_count_in_session"`
+}
+
+// PinCreationDraft — snapshot Process: suggested-поля от ML + анализ media (ТЗ 4.7).
+type PinCreationDraft struct {
+	SuggestedName string `json:"suggested_name"`
+	SuggestedCategory string `json:"suggested_category"`
+	SuggestedTags []string `json:"suggested_tags,omitempty"`
+	SuggestedLatitude *float64 `json:"suggested_latitude,omitempty"`
+	SuggestedLongitude *float64 `json:"suggested_longitude,omitempty"`
+	SuggestedStartTimeUnix *int64 `json:"suggested_start_time_unix,omitempty"`
+	SuggestedEndTimeUnix *int64 `json:"suggested_end_time_unix,omitempty"`
+	Media []ReviewPinMedia `json:"media"`
+	PinIssues []string `json:"pin_issues,omitempty"`
+	NSFWMediaIDs []string `json:"nsfw_media_ids,omitempty"`
+	DedupedMediaIDs []string `json:"deduped_media_ids,omitempty"`
+}
+
+// ProcessPinCreationResponse — ответ Process: snapshot и similar groups.
+type ProcessPinCreationResponse struct {
+	SessionID string `json:"session_id"`
+	Draft PinCreationDraft `json:"draft"`
+	Similar [][]string `json:"similar"`
+}
+
+// GetPinCreationReviewResponse — повторное чтение snapshot.
+type GetPinCreationReviewResponse struct {
+	SessionID string `json:"session_id"`
+	Draft PinCreationDraft `json:"draft"`
+	Similar [][]string `json:"similar"`
+}
+
+// CancelPinCreationResponse — отмена сессии создания пина.
+type CancelPinCreationResponse struct {
+	Status string `json:"status" example:"cancelled"`
+}

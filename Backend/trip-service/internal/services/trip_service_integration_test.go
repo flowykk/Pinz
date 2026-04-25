@@ -47,7 +47,7 @@ func TestTripService_Integration(t *testing.T) {
 	socialRepo := repositories.NewSocialRepository(sqlDB)
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ownerID := uuid.New().String()
 	user2ID := uuid.New().String()
 	user3ID := uuid.New().String()
@@ -320,7 +320,7 @@ func TestTripService_Integration_CreationFlow(t *testing.T) {
 	socialRepo := repositories.NewSocialRepository(sqlDB)
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ownerID := uuid.New().String()
 
 	var tripID string
@@ -467,8 +467,9 @@ func TestTripService_Integration_SoftDelete(t *testing.T) {
 	tagRepo := repositories.NewTagRepository(sqlDB)
 	socialRepo := repositories.NewSocialRepository(sqlDB)
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
+	tripPrivacyRepo := repositories.NewTripPrivacyRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, nil, nil, nil, tripPrivacyRepo, nil, nil, nil, nil, nil)
 	ownerID := uuid.New().String()
 	user2ID := uuid.New().String()
 
@@ -539,6 +540,18 @@ func TestTripService_Integration_SoftDelete(t *testing.T) {
 	t.Run("FinalizeTrip", func(t *testing.T) {
 		err := callAsUser(t, ownerID, "/pinz.TripService/FinalizeTrip", func(ctx context.Context) error {
 			_, err := svc.FinalizeTrip(ctx, &pb.FinalizeTripRequest{TripId: tripID})
+			return err
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("UpsertTripPrivacy_Public", func(t *testing.T) {
+		// После PINZ-154 trip.privacy_level — агрегированное значение из per-user
+		// записей в trip_privacy. PublishTrip требует Public, поэтому owner должен
+		// сначала выставить свой выбор Public — единственный участник, поэтому
+		// агрегация даст Public.
+		err := callAsUser(t, ownerID, "/pinz.TripService/UpsertTripPrivacy", func(ctx context.Context) error {
+			_, err := svc.UpsertTripPrivacy(ctx, &pb.UpsertTripPrivacyRequest{TripId: tripID, PrivacyLevel: "Public"})
 			return err
 		})
 		require.NoError(t, err)
