@@ -21,11 +21,11 @@ import (
 
 func TestIsUniqueViolation(t *testing.T) {
 	cases := map[string]struct {
-		err  error
+		err error
 		want bool
 	}{
-		"nil":                 {nil, false},
-		"plain_error":         {errors.New("plain"), false},
+		"nil": {nil, false},
+		"plain_error": {errors.New("plain"), false},
 		"pg_error_code_23505": {&pgconn.PgError{Code: "23505"}, true},
 		"pg_error_code_23503": {&pgconn.PgError{Code: "23503"}, false},
 		"pg_error_code_other": {&pgconn.PgError{Code: "23001"}, false},
@@ -48,7 +48,7 @@ func TestDevLogin_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.DevLoginRequest
+		req *pb.DevLoginRequest
 		code codes.Code
 	}{
 		"empty_email": {req: &pb.DevLoginRequest{Email: ""}, code: codes.InvalidArgument},
@@ -68,12 +68,12 @@ func TestSubmitEmail_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.SubmitEmailRequest
+		req *pb.SubmitEmailRequest
 		code codes.Code
 	}{
-		"empty_email":       {req: &pb.SubmitEmailRequest{Email: ""}, code: codes.InvalidArgument},
-		"invalid_email":     {req: &pb.SubmitEmailRequest{Email: "not-an-email"}, code: codes.InvalidArgument},
-		"whitespace_only":   {req: &pb.SubmitEmailRequest{Email: "   "}, code: codes.InvalidArgument},
+		"empty_email": {req: &pb.SubmitEmailRequest{Email: ""}, code: codes.InvalidArgument},
+		"invalid_email": {req: &pb.SubmitEmailRequest{Email: "not-an-email"}, code: codes.InvalidArgument},
+		"whitespace_only": {req: &pb.SubmitEmailRequest{Email: " "}, code: codes.InvalidArgument},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestRefreshToken_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.RefreshTokenRequest
+		req *pb.RefreshTokenRequest
 		code codes.Code
 	}{
 		"empty_token": {req: &pb.RefreshTokenRequest{RefreshToken: ""}, code: codes.InvalidArgument},
@@ -110,7 +110,7 @@ func TestLogout_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.LogoutRequest
+		req *pb.LogoutRequest
 		code codes.Code
 	}{
 		"empty_token": {req: &pb.LogoutRequest{RefreshToken: ""}, code: codes.InvalidArgument},
@@ -130,15 +130,15 @@ func TestVerifyEmailCode_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.VerifyEmailCodeRequest
+		req *pb.VerifyEmailCodeRequest
 		code codes.Code
 	}{
 		"empty_registration_id": {
-			req:  &pb.VerifyEmailCodeRequest{RegistrationId: "", VerificationCode: "123456"},
+			req: &pb.VerifyEmailCodeRequest{RegistrationId: "", VerificationCode: "123456"},
 			code: codes.InvalidArgument,
 		},
 		"empty_code": {
-			req:  &pb.VerifyEmailCodeRequest{RegistrationId: "reg-1", VerificationCode: ""},
+			req: &pb.VerifyEmailCodeRequest{RegistrationId: "reg-1", VerificationCode: ""},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -157,35 +157,35 @@ func TestPasskeyRegisterBegin_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.PasskeyRegisterBeginRequest
+		req *pb.PasskeyRegisterBeginRequest
 		code codes.Code
 	}{
 		"empty_registration_id": {
-			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "", Username: "user"},
+			req: &pb.PasskeyRegisterBeginRequest{RegistrationId: "", Username: "user"},
 			code: codes.InvalidArgument,
 		},
 		"empty_username": {
-			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: ""},
+			req: &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: ""},
 			code: codes.InvalidArgument,
 		},
 		"username_too_short": {
-			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "abc"},
+			req: &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "abc"},
 			code: codes.InvalidArgument,
 		},
 		"username_too_long": {
-			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: string(make([]byte, 21))},
+			req: &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: string(make([]byte, 21))},
 			code: codes.InvalidArgument,
 		},
 		"username_invalid_chars": {
-			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "user@name"},
+			req: &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "user@name"},
 			code: codes.InvalidArgument,
 		},
 		"username_spaces": {
-			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "user name"},
+			req: &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "user name"},
 			code: codes.InvalidArgument,
 		},
 		"username_cyrillic": {
-			req:  &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "Пользователь"},
+			req: &pb.PasskeyRegisterBeginRequest{RegistrationId: "reg-1", Username: "Пользователь"},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -204,15 +204,15 @@ func TestPasskeyRegisterFinish_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.PasskeyRegisterFinishRequest
+		req *pb.PasskeyRegisterFinishRequest
 		code codes.Code
 	}{
 		"empty_registration_id": {
-			req:  &pb.PasskeyRegisterFinishRequest{RegistrationId: "", CredentialJson: []byte("{}")},
+			req: &pb.PasskeyRegisterFinishRequest{RegistrationId: "", CredentialJson: []byte("{}")},
 			code: codes.InvalidArgument,
 		},
 		"empty_credential_json": {
-			req:  &pb.PasskeyRegisterFinishRequest{RegistrationId: "reg-1", CredentialJson: nil},
+			req: &pb.PasskeyRegisterFinishRequest{RegistrationId: "reg-1", CredentialJson: nil},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -231,7 +231,7 @@ func TestPasskeyLoginBegin_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.PasskeyLoginBeginRequest
+		req *pb.PasskeyLoginBeginRequest
 		code codes.Code
 	}{
 		"empty_email": {req: &pb.PasskeyLoginBeginRequest{Email: ""}, code: codes.InvalidArgument},
@@ -251,15 +251,15 @@ func TestPasskeyLoginFinish_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.PasskeyLoginFinishRequest
+		req *pb.PasskeyLoginFinishRequest
 		code codes.Code
 	}{
 		"empty_email": {
-			req:  &pb.PasskeyLoginFinishRequest{Email: "", CredentialJson: []byte("{}")},
+			req: &pb.PasskeyLoginFinishRequest{Email: "", CredentialJson: []byte("{}")},
 			code: codes.InvalidArgument,
 		},
 		"empty_credential_json": {
-			req:  &pb.PasskeyLoginFinishRequest{Email: "user@example.com", CredentialJson: nil},
+			req: &pb.PasskeyLoginFinishRequest{Email: "user@example.com", CredentialJson: nil},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -417,23 +417,23 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	cases := map[string]struct {
-		req  *pb.UpdateProfileRequest
+		req *pb.UpdateProfileRequest
 		code codes.Code
 	}{
 		"empty_user_id": {
-			req:  &pb.UpdateProfileRequest{UserId: "", Username: "valid"},
+			req: &pb.UpdateProfileRequest{UserId: "", Username: "valid"},
 			code: codes.InvalidArgument,
 		},
 		"username_too_short": {
-			req:  &pb.UpdateProfileRequest{UserId: "u1", Username: "abc"},
+			req: &pb.UpdateProfileRequest{UserId: "u1", Username: "abc"},
 			code: codes.InvalidArgument,
 		},
 		"username_invalid_chars": {
-			req:  &pb.UpdateProfileRequest{UserId: "u1", Username: "user@name"},
+			req: &pb.UpdateProfileRequest{UserId: "u1", Username: "user@name"},
 			code: codes.InvalidArgument,
 		},
 		"username_cyrillic": {
-			req:  &pb.UpdateProfileRequest{UserId: "u1", Username: "Пользователь"},
+			req: &pb.UpdateProfileRequest{UserId: "u1", Username: "Пользователь"},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -467,16 +467,16 @@ func TestDeleteAvatar_WithAvatar(t *testing.T) {
 	ctx := context.Background()
 
 	userWithAvatar := &models.User{
-		ID:        "user-1",
-		Email:     "test@example.com",
-		Username:  "test",
+		ID: "user-1",
+		Email: "test@example.com",
+		Username: "test",
 		AvatarURL: "avatars/user-1/avatar.jpg",
 		CreatedAt: time.Now(),
 	}
 	userWithoutAvatar := &models.User{
-		ID:        "user-1",
-		Email:     "test@example.com",
-		Username:  "test",
+		ID: "user-1",
+		Email: "test@example.com",
+		Username: "test",
 		AvatarURL: "",
 		CreatedAt: time.Now(),
 	}
@@ -498,9 +498,9 @@ func TestDeleteAvatar_WithoutAvatar(t *testing.T) {
 	ctx := context.Background()
 
 	user := &models.User{
-		ID:        "user-1",
-		Email:     "test@example.com",
-		Username:  "test",
+		ID: "user-1",
+		Email: "test@example.com",
+		Username: "test",
 		AvatarURL: "",
 		CreatedAt: time.Now(),
 	}
@@ -533,7 +533,7 @@ func TestRequestAvatarUpload_InvalidFormat(t *testing.T) {
 	svc := authServiceForValidation(t)
 	ctx := context.Background()
 	_, err := svc.RequestAvatarUpload(ctx, &pb.RequestAvatarUploadRequest{
-		UserId:   "u1",
+		UserId: "u1",
 		Filename: "avatar.gif",
 	})
 	require.Error(t, err)

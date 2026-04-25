@@ -15,8 +15,8 @@ import (
 
 const aggregateVisitedByTrips = `-- name: AggregateVisitedByTrips :many
 SELECT g.id, g.name, g.type, COALESCE(g.parent_id, 0) AS parent_id,
-       COUNT(DISTINCT m.trip_id)::int AS visit_count,
-       MAX(m.recorded_at) AS last_visit_at
+ COUNT(DISTINCT m.trip_id)::int AS visit_count,
+ MAX(m.recorded_at) AS last_visit_at
 FROM trip_locations m
 JOIN geo_registry g ON g.id = m.location_id
 WHERE m.trip_id = ANY($1::uuid[])
@@ -65,8 +65,8 @@ func (q *Queries) AggregateVisitedByTrips(ctx context.Context, dollar_1 []uuid.U
 
 const aggregateVisitedByTripsAndType = `-- name: AggregateVisitedByTripsAndType :many
 SELECT g.id, g.name, g.type, COALESCE(g.parent_id, 0) AS parent_id,
-       COUNT(DISTINCT m.trip_id)::int AS visit_count,
-       MAX(m.recorded_at) AS last_visit_at
+ COUNT(DISTINCT m.trip_id)::int AS visit_count,
+ MAX(m.recorded_at) AS last_visit_at
 FROM trip_locations m
 JOIN geo_registry g ON g.id = m.location_id
 WHERE m.trip_id = ANY($1::uuid[]) AND g.type = $2
@@ -131,9 +131,9 @@ const upsertGeoLocation = `-- name: UpsertGeoLocation :exec
 INSERT INTO geo_registry (id, parent_id, name, type)
 VALUES ($1, $2, $3, $4)
 ON CONFLICT (id) DO UPDATE SET
-    parent_id = EXCLUDED.parent_id,
-    name      = EXCLUDED.name,
-    type      = EXCLUDED.type
+ parent_id = EXCLUDED.parent_id,
+ name = EXCLUDED.name,
+ type = EXCLUDED.type
 `
 
 type UpsertGeoLocationParams struct {

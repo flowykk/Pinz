@@ -8,22 +8,22 @@ option go_package = "pinz/backend/notification-service/pkg/proto";
 // Отправка уведомлений происходит асинхронно: сервис читает события из Redis
 // Streams (pinz:trip:events, pinz:auth:email:tasks) и таймерно через scheduler.
 service NotificationService {
-  rpc RegisterDeviceToken(RegisterDeviceTokenRequest) returns (RegisterDeviceTokenResponse);
-  rpc UnregisterDeviceToken(UnregisterDeviceTokenRequest) returns (UnregisterDeviceTokenResponse);
+ rpc RegisterDeviceToken(RegisterDeviceTokenRequest) returns (RegisterDeviceTokenResponse);
+ rpc UnregisterDeviceToken(UnregisterDeviceTokenRequest) returns (UnregisterDeviceTokenResponse);
 }
 
 message RegisterDeviceTokenRequest {
-  string user_id = 1;
-  string apns_token = 2;
+ string user_id = 1;
+ string apns_token = 2;
 }
 message RegisterDeviceTokenResponse {
-  string token_id = 1;
+ string token_id = 1;
 }
 
 message UnregisterDeviceTokenRequest {
-  string user_id = 1;
-  string apns_token = 2;
+ string user_id = 1;
+ string apns_token = 2;
 }
 message UnregisterDeviceTokenResponse {
-  bool success = 1;
+ bool success = 1;
 }

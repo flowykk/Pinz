@@ -2,34 +2,34 @@ package requests
 
 // CreateTripRequest is the REST body for POST /api/v1/trips (creation/start). Privacy is set by default and changed via PATCH .../privacy + worker.
 type CreateTripRequest struct {
-	Name          string              `json:"name"`
-	Description   string              `json:"description"`
-	Category      string              `json:"category"`
-	Season        string              `json:"season"`
+	Name string `json:"name"`
+	Description string `json:"description"`
+	Category string `json:"category"`
+	Season string `json:"season"`
 	FilesToUpload []FileToUploadEntry `json:"files_to_upload,omitempty"`
 }
 
 // FileToUploadEntry is one file to upload (client_id + content_type for Presigned URL).
 type FileToUploadEntry struct {
-	ClientID    string `json:"client_id"`
+	ClientID string `json:"client_id"`
 	ContentType string `json:"content_type"`
 }
 
 // UpdateTripRequest is the REST body for PATCH /api/v1/trips/:id.
 // Обложка редактируется отдельно: POST /cover/upload → PUT в S3 → POST /cover/confirm (DELETE /cover для очистки).
 type UpdateTripRequest struct {
-	Name          *string `json:"name,omitempty"`
-	Description   *string `json:"description,omitempty"`
-	Category      *string `json:"category,omitempty"`
-	Season        *string `json:"season,omitempty"`
-	PrivacyLevel  *string `json:"privacy_level,omitempty"`
-	StartDateUnix *int64  `json:"start_date_unix,omitempty"`
-	EndDateUnix   *int64  `json:"end_date_unix,omitempty"`
+	Name *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Category *string `json:"category,omitempty"`
+	Season *string `json:"season,omitempty"`
+	PrivacyLevel *string `json:"privacy_level,omitempty"`
+	StartDateUnix *int64 `json:"start_date_unix,omitempty"`
+	EndDateUnix *int64 `json:"end_date_unix,omitempty"`
 }
 
 // RequestTripCoverUploadRequest — тело POST /api/v1/trips/:id/cover/upload (step 1 двухшагового потока обложки).
 type RequestTripCoverUploadRequest struct {
-	Filename    string `json:"filename" example:"cover.jpg"`
+	Filename string `json:"filename" example:"cover.jpg"`
 	ContentType string `json:"content_type" example:"image/jpeg"`
 }
 
@@ -55,59 +55,59 @@ type ProcessMediaGroupingRequest struct {
 
 // MediaMetaEntry is metadata for one uploaded media file.
 type MediaMetaEntry struct {
-	S3Key       string   `json:"s3_key"`
-	MediaType   string   `json:"media_type"`
-	CapturedAt  string   `json:"captured_at,omitempty"` // ISO8601
-	Latitude    *float64 `json:"latitude,omitempty"`
-	Longitude   *float64 `json:"longitude,omitempty"`
-	ContentHash *string  `json:"content_hash,omitempty"` // e.g. SHA-256 for duplicate detection
+	S3Key string `json:"s3_key"`
+	MediaType string `json:"media_type"`
+	CapturedAt string `json:"captured_at,omitempty"` // ISO8601
+	Latitude *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+	ContentHash *string `json:"content_hash,omitempty"` // e.g. SHA-256 for duplicate detection
 }
 
 // ApplyGroupsAndProcessRequest is the REST body for POST /api/v1/trips/creation/:id/apply-groups-and-process
 type ApplyGroupsAndProcessRequest struct {
-	DraftPins       []DraftPinInput `json:"draft_pins"`
-	DeletedMediaIDs []string        `json:"deleted_media_ids,omitempty"`
+	DraftPins []DraftPinInput `json:"draft_pins"`
+	DeletedMediaIDs []string `json:"deleted_media_ids,omitempty"`
 }
 
 // DraftPinInput is one draft pin with media IDs.
 type DraftPinInput struct {
-	DraftPinID string   `json:"draft_pin_id"`
-	MediaIDs   []string `json:"media_ids"`
+	DraftPinID string `json:"draft_pin_id"`
+	MediaIDs []string `json:"media_ids"`
 }
 
 // FinalizeTripRequest is the REST body for POST /api/v1/trips/creation/:id/finalize
 type FinalizeTripRequest struct {
-	PinUpdates    []PinUpdateInput `json:"pin_updates,omitempty"`
-	MediaToDelete []string         `json:"media_to_delete,omitempty"`
+	PinUpdates []PinUpdateInput `json:"pin_updates,omitempty"`
+	MediaToDelete []string `json:"media_to_delete,omitempty"`
 }
 
 // PublishTripRequest is the REST body for POST /api/v1/trips/:id/publish.
 type PublishTripRequest struct {
-	PublishWhole bool     `json:"publish_whole,omitempty"`
-	PinIDs       []string `json:"pin_ids,omitempty"`
+	PublishWhole bool `json:"publish_whole,omitempty"`
+	PinIDs []string `json:"pin_ids,omitempty"`
 }
 
 // PinUpdateInput is name and/or manual coordinates for a pin.
 type PinUpdateInput struct {
-	PinID        string   `json:"pin_id"`
-	Name         *string  `json:"name,omitempty"`
-	Latitude     *float64 `json:"latitude,omitempty"`
-	Longitude    *float64 `json:"longitude,omitempty"`
-	Description  *string  `json:"description,omitempty"`
-	Category     *string  `json:"category,omitempty"`
-	PrivacyLevel *string  `json:"privacy_level,omitempty"`
-	Tags         []string `json:"tags,omitempty"`
+	PinID string `json:"pin_id"`
+	Name *string `json:"name,omitempty"`
+	Latitude *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Category *string `json:"category,omitempty"`
+	PrivacyLevel *string `json:"privacy_level,omitempty"`
+	Tags []string `json:"tags,omitempty"`
 }
 
 type UpdatePinRequest struct {
-	Name          *string  `json:"name,omitempty"`
-	Description   *string  `json:"description,omitempty"`
-	Category      *string  `json:"category,omitempty"`
-	PrivacyLevel  *string  `json:"privacy_level,omitempty"`
-	Latitude      *float64 `json:"latitude,omitempty"`
-	Longitude     *float64 `json:"longitude,omitempty"`
-	StartTimeUnix *int64   `json:"start_time_unix,omitempty"`
-	EndTimeUnix   *int64   `json:"end_time_unix,omitempty"`
+	Name *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Category *string `json:"category,omitempty"`
+	PrivacyLevel *string `json:"privacy_level,omitempty"`
+	Latitude *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+	StartTimeUnix *int64 `json:"start_time_unix,omitempty"`
+	EndTimeUnix *int64 `json:"end_time_unix,omitempty"`
 }
 
 // AddMediaStartRequest is the REST body for POST /api/v1/trips/:id/media/add/start
@@ -115,17 +115,57 @@ type AddMediaStartRequest struct {
 	FilesToUpload []FileToUploadEntry `json:"files_to_upload,omitempty"`
 }
 
-// AddMediaProcessGroupingRequest is the REST body for POST /api/v1/trips/:id/media/add/process-grouping
+// AddMediaProcessGroupingRequest is the REST body for POST /api/v1/trips/:id/media/add/process-grouping.
+// media[] больше не передаётся (медиа регистрируются через /commit-upload).
+// add_more=true откатывает GROUPING_REVIEW → UPLOADING для докидывания файлов.
 type AddMediaProcessGroupingRequest struct {
-	SessionID string           `json:"session_id"`
-	Media     []MediaMetaEntry `json:"media"`
+	SessionID string `json:"session_id"`
+	AddMore bool `json:"add_more,omitempty"`
 }
 
 // AddMediaApplyGroupsAndProcessRequest is the REST body for POST /api/v1/trips/:id/media/add/apply-groups-and-process
 type AddMediaApplyGroupsAndProcessRequest struct {
-	SessionID       string          `json:"session_id"`
-	DraftPins       []DraftPinInput `json:"draft_pins"`
-	DeletedMediaIDs []string        `json:"deleted_media_ids,omitempty"`
+	SessionID string `json:"session_id"`
+	DraftPins []DraftPinInput `json:"draft_pins"`
+	DeletedMediaIDs []string `json:"deleted_media_ids,omitempty"`
+}
+
+// AddMediaRequestUploadUrlsRequest — запрос presigned URL для догрузки файлов
+// в уже активную сессию (клиент присоединился, либо хочет добавить ещё файлов).
+type AddMediaRequestUploadUrlsRequest struct {
+	SessionID string `json:"session_id"`
+	FilesToUpload []FileToUploadEntry `json:"files_to_upload"`
+}
+
+// AddMediaCommitUploadRequest — клиент зовёт после каждого успешного PUT в S3.
+// Сервер создаёт media entry (pin_id NULL) и публикует WS ADD_MEDIA_PROGRESS.
+type AddMediaCommitUploadRequest struct {
+	SessionID string `json:"session_id"`
+	S3Key string `json:"s3_key"`
+	MediaType string `json:"media_type"`
+	CapturedAt string `json:"captured_at,omitempty"` // RFC3339
+	Latitude *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+}
+
+// AddMediaConfirmRequest — финализация add-media сессии: правки пинов и удаление
+// «похожих» медиа передаются батчем и применяются атомарно с закрытием сессии
+// (ТЗ 3.14/3.15). Аналогично FinalizeTripRequest для creation-флоу. Если pin_updates
+// и media_to_delete пусты — Confirm просто подтверждает сессию без правок.
+// session_id нужен для защиты от устаревшего клиентского контекста.
+type AddMediaConfirmRequest struct {
+	SessionID     string           `json:"session_id"`
+	PinUpdates    []PinUpdateInput `json:"pin_updates,omitempty"`
+	MediaToDelete []string         `json:"media_to_delete,omitempty"`
+}
+type AddMediaCancelRequest struct {
+	SessionID string `json:"session_id"`
+}
+
+// AddMediaTakeoverRequest — тело POST /api/v1/trips/:id/media/add/takeover.
+// Идемпотентен: если caller уже ведущий — 200 без изменений.
+type AddMediaTakeoverRequest struct {
+	SessionID string `json:"session_id"`
 }
 
 // TripSettingsRequest is the REST body for PATCH /api/v1/trips/:id/settings.
@@ -133,7 +173,7 @@ type TripSettingsRequest struct {
 	NotificationsEnabled bool `json:"notifications_enabled"`
 }
 
-// SubmitBattleResultRequest — тело POST /api/v1/trips/:id/battles/:battle_id/result (PINZ-132, ТЗ 8.1.8).
+// SubmitBattleResultRequest — тело POST /api/v1/trips/:id/battles/:battle_id/result (ТЗ 8.1.8).
 type SubmitBattleResultRequest struct {
 	WinnerMediaID string `json:"winner_media_id"`
 }

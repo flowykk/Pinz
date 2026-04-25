@@ -36,6 +36,7 @@ const (
 	AuthService_ConfirmAvatarUpload_FullMethodName   = "/auth.AuthService/ConfirmAvatarUpload"
 	AuthService_DeleteAvatar_FullMethodName          = "/auth.AuthService/DeleteAvatar"
 	AuthService_DeleteAccount_FullMethodName         = "/auth.AuthService/DeleteAccount"
+	AuthService_GetUsersProfiles_FullMethodName      = "/auth.AuthService/GetUsersProfiles"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -59,6 +60,9 @@ type AuthServiceClient interface {
 	ConfirmAvatarUpload(ctx context.Context, in *ConfirmAvatarUploadRequest, opts ...grpc.CallOption) (*ConfirmAvatarUploadResponse, error)
 	DeleteAvatar(ctx context.Context, in *DeleteAvatarRequest, opts ...grpc.CallOption) (*DeleteAvatarResponse, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
+	// Batched публичные профили по списку user_id. Используется api-gateway для
+	// обогащения ответов списками участников (current_initiator, authors и т.п.).
+	GetUsersProfiles(ctx context.Context, in *GetUsersProfilesRequest, opts ...grpc.CallOption) (*GetUsersProfilesResponse, error)
 }
 
 type authServiceClient struct {
@@ -239,6 +243,16 @@ func (c *authServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccount
 	return out, nil
 }
 
+func (c *authServiceClient) GetUsersProfiles(ctx context.Context, in *GetUsersProfilesRequest, opts ...grpc.CallOption) (*GetUsersProfilesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUsersProfilesResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetUsersProfiles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -260,6 +274,9 @@ type AuthServiceServer interface {
 	ConfirmAvatarUpload(context.Context, *ConfirmAvatarUploadRequest) (*ConfirmAvatarUploadResponse, error)
 	DeleteAvatar(context.Context, *DeleteAvatarRequest) (*DeleteAvatarResponse, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
+	// Batched публичные профили по списку user_id. Используется api-gateway для
+	// обогащения ответов списками участников (current_initiator, authors и т.п.).
+	GetUsersProfiles(context.Context, *GetUsersProfilesRequest) (*GetUsersProfilesResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -320,6 +337,9 @@ func (UnimplementedAuthServiceServer) DeleteAvatar(context.Context, *DeleteAvata
 }
 func (UnimplementedAuthServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
+}
+func (UnimplementedAuthServiceServer) GetUsersProfiles(context.Context, *GetUsersProfilesRequest) (*GetUsersProfilesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsersProfiles not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -648,6 +668,24 @@ func _AuthService_DeleteAccount_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_GetUsersProfiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsersProfilesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetUsersProfiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetUsersProfiles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetUsersProfiles(ctx, req.(*GetUsersProfilesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -722,6 +760,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteAccount",
 			Handler:    _AuthService_DeleteAccount_Handler,
+		},
+		{
+			MethodName: "GetUsersProfiles",
+			Handler:    _AuthService_GetUsersProfiles_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

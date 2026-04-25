@@ -18,7 +18,7 @@ import (
 
 type fakeWSTripClient struct {
 	resp *proto.GetTripResponse
-	err  error
+	err error
 }
 
 func (f *fakeWSTripClient) GetTrip(ctx context.Context, req *proto.GetTripRequest) (*proto.GetTripResponse, error) {
@@ -72,7 +72,7 @@ func TestServeTripCreationReviewWS_NoRedisReturns503(t *testing.T) {
 func TestTripAccessError_Mapping(t *testing.T) {
 	cases := []struct {
 		name string
-		err  error
+		err error
 		code int
 	}{
 		{"permission denied → 403", grpcstatus.Error(codes.PermissionDenied, "x"), http.StatusForbidden},

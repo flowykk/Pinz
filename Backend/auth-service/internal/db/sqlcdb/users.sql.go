@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const addSession = `-- name: AddSession :exec
@@ -135,6 +136,41 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getUsersByIDs = `-- name: GetUsersByIDs :many
+SELECT id, email, username, avatar_url, created_at
+FROM users
+WHERE id = ANY($1::uuid[])
+`
+
+func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersByIDs, pq.Array(dollar_1))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.Username,
+			&i.AvatarUrl,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateAvatarURL = `-- name: UpdateAvatarURL :one

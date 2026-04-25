@@ -44,8 +44,8 @@ func (r *TripLocationsRepository) AggregateVisitedByTripIDs(ctx context.Context,
 	}
 	query := `
 		SELECT g.id, g.name, g.type, COALESCE(g.parent_id, 0),
-		       COUNT(DISTINCT tl.trip_id)::int,
-		       MAX(tl.recorded_at)
+		 COUNT(DISTINCT tl.trip_id)::int,
+		 MAX(tl.recorded_at)
 		FROM trip_locations tl
 		JOIN geo_registry g ON g.id = tl.location_id
 		WHERE tl.trip_id = ANY($1::uuid[])`

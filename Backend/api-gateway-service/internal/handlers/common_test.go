@@ -16,21 +16,21 @@ import (
 func TestDecodeJSONBody(t *testing.T) {
 	cases := map[string]struct {
 		contentType string
-		body        string
-		wantErr     bool
-		wantSubstr  string
-		wantDst     map[string]any
+		body string
+		wantErr bool
+		wantSubstr string
+		wantDst map[string]any
 	}{
 		"rejects_non_application_json": {
 			contentType: "text/plain",
-			body:        `{"a":1}`,
-			wantErr:     true,
-			wantSubstr:  "application/json",
+			body: `{"a":1}`,
+			wantErr: true,
+			wantSubstr: "application/json",
 		},
 		"accepts_application_json": {
 			contentType: "application/json",
-			body:        `{"a":1}`,
-			wantDst:     map[string]any{"a": 1.0},
+			body: `{"a":1}`,
+			wantDst: map[string]any{"a": 1.0},
 		},
 	}
 	for name, tc := range cases {
@@ -56,15 +56,15 @@ func TestDecodeJSONBody(t *testing.T) {
 
 func TestParseInt(t *testing.T) {
 	cases := map[string]struct {
-		s       string
+		s string
 		wantVal int
 		wantErr bool
 	}{
-		"zero":       {"0", 0, false},
-		"positive":   {"42", 42, false},
-		"negative":   {"-5", -5, false},
-		"invalid":    {"abc", 0, true},
-		"empty":      {"", 0, true},
+		"zero": {"0", 0, false},
+		"positive": {"42", 42, false},
+		"negative": {"-5", -5, false},
+		"invalid": {"abc", 0, true},
+		"empty": {"", 0, true},
 		"with_space": {" 1", 0, true},
 	}
 	for name, tc := range cases {
@@ -83,18 +83,18 @@ func TestParseInt(t *testing.T) {
 
 func TestHandleServiceError(t *testing.T) {
 	cases := map[string]struct {
-		code     codes.Code
+		code codes.Code
 		wantHTTP int
 		wantBody string
 	}{
-		"invalid_argument":    {codes.InvalidArgument, http.StatusBadRequest, "boom"},
-		"unauthenticated":     {codes.Unauthenticated, http.StatusUnauthorized, "boom"},
-		"permission_denied":   {codes.PermissionDenied, http.StatusForbidden, "boom"},
-		"not_found":           {codes.NotFound, http.StatusNotFound, "boom"},
-		"already_exists":      {codes.AlreadyExists, http.StatusConflict, "boom"},
-		"unavailable":         {codes.Unavailable, http.StatusServiceUnavailable, "service unavailable"},
-		"deadline_exceeded":   {codes.DeadlineExceeded, http.StatusGatewayTimeout, "boom"},
-		"unimplemented":       {codes.Unimplemented, http.StatusNotImplemented, "boom"},
+		"invalid_argument": {codes.InvalidArgument, http.StatusBadRequest, "boom"},
+		"unauthenticated": {codes.Unauthenticated, http.StatusUnauthorized, "boom"},
+		"permission_denied": {codes.PermissionDenied, http.StatusForbidden, "boom"},
+		"not_found": {codes.NotFound, http.StatusNotFound, "boom"},
+		"already_exists": {codes.AlreadyExists, http.StatusConflict, "boom"},
+		"unavailable": {codes.Unavailable, http.StatusServiceUnavailable, "service unavailable"},
+		"deadline_exceeded": {codes.DeadlineExceeded, http.StatusGatewayTimeout, "boom"},
+		"unimplemented": {codes.Unimplemented, http.StatusNotImplemented, "boom"},
 		"failed_precondition": {codes.FailedPrecondition, http.StatusConflict, "boom"},
 	}
 	for name, tc := range cases {

@@ -10,6 +10,7 @@
 package mocks
 
 import (
+	context "context"
 	models "pinz/backend/trip-service/internal/models"
 	repositories "pinz/backend/trip-service/internal/repositories"
 	reflect "reflect"
@@ -56,6 +57,22 @@ func (mr *MockMediaRepositoryInterfaceMockRecorder) ClusterIDsByLocation(tripID,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClusterIDsByLocation", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).ClusterIDsByLocation), tripID, radiusMeters)
 }
 
+// CommitInSession mocks base method.
+func (m_2 *MockMediaRepositoryInterface) CommitInSession(ctx context.Context, m *models.Media, sessionID string, maxMedia, maxVideos int) (int, int, error) {
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "CommitInSession", ctx, m, sessionID, maxMedia, maxVideos)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CommitInSession indicates an expected call of CommitInSession.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) CommitInSession(ctx, m, sessionID, maxMedia, maxVideos any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitInSession", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).CommitInSession), ctx, m, sessionID, maxMedia, maxVideos)
+}
+
 // CountByTripID mocks base method.
 func (m *MockMediaRepositoryInterface) CountByTripID(tripID string) (int, int, error) {
 	m.ctrl.T.Helper()
@@ -98,6 +115,21 @@ func (m *MockMediaRepositoryInterface) DeleteByIDs(ids []string) error {
 func (mr *MockMediaRepositoryInterfaceMockRecorder) DeleteByIDs(ids any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByIDs", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).DeleteByIDs), ids)
+}
+
+// DeleteOrphanSessionMedia mocks base method.
+func (m *MockMediaRepositoryInterface) DeleteOrphanSessionMedia(tripID string, existingMediaIDs []string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOrphanSessionMedia", tripID, existingMediaIDs)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteOrphanSessionMedia indicates an expected call of DeleteOrphanSessionMedia.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) DeleteOrphanSessionMedia(tripID, existingMediaIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrphanSessionMedia", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).DeleteOrphanSessionMedia), tripID, existingMediaIDs)
 }
 
 // GetByID mocks base method.

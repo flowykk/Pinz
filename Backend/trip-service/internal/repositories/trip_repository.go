@@ -326,8 +326,8 @@ func (r *TripRepository) ListFeed(limit, offset int32, category, season string, 
 
 // TripSummary — компактная сводка по трипу для statistics (без метаданных).
 type TripSummary struct {
-	TripID     string
-	PinsCount  int32
+	TripID string
+	PinsCount int32
 	MediaCount int32
 }
 
@@ -365,12 +365,12 @@ func (r *TripRepository) ListSummariesByUserID(userID string) ([]*TripSummary, e
 // scheduler'а: id, name, участники, ключевые даты. YearsElapsed — целое число
 // лет от start_date (для текста «N лет назад»).
 type NotificationTripCandidate struct {
-	TripID        string
-	Name          string
-	Participants  []string
+	TripID string
+	Name string
+	Participants []string
 	StartDateUnix int64
-	EndDateUnix   int64
-	YearsElapsed  int32
+	EndDateUnix int64
+	YearsElapsed int32
 }
 
 // ListAnniversaryCandidates — ТЗ 11.3.1: трипы, у которых сегодня исполняется
@@ -388,7 +388,7 @@ func (r *TripRepository) ListAnniversaryCandidates(today int64) ([]*Notification
 		WHERE t.is_soft_deleted = false
 			AND t.start_date IS NOT NULL
 			AND EXTRACT(MONTH FROM t.start_date) = EXTRACT(MONTH FROM to_timestamp($1))
-			AND EXTRACT(DAY FROM t.start_date)   = EXTRACT(DAY FROM to_timestamp($1))
+			AND EXTRACT(DAY FROM t.start_date) = EXTRACT(DAY FROM to_timestamp($1))
 			AND date_trunc('day', t.start_date) < date_trunc('day', to_timestamp($1))
 		GROUP BY t.id
 	`

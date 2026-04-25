@@ -3,8 +3,8 @@
 INSERT INTO device_tokens (user_id, apns_token)
 VALUES ($1, $2)
 ON CONFLICT (apns_token) DO UPDATE
-    SET user_id = EXCLUDED.user_id,
-        updated_at = NOW()
+ SET user_id = EXCLUDED.user_id,
+ updated_at = NOW()
 RETURNING id;
 
 -- name: DeviceTokenDelete :execrows

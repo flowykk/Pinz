@@ -17,20 +17,21 @@ type Dependencies struct {
 	TripService pb.TripServiceServer
 
 	// Worker dependencies — used by worker.Run goroutine in main.
-	RedisClient         *redis.Client
-	TripRepo            *repositories.TripRepository
-	ParticipantRepo     *repositories.TripParticipantRepository
-	GeoRepo             *repositories.GeoRegistryRepository
-	MediaRepo           *repositories.MediaRepository
-	TagRepo             *repositories.TagRepository
-	PinRepo             *repositories.PinRepository
-	EventRepo           *repositories.RedisRepository
-	TripPrivacyRepo     *repositories.TripPrivacyRepository
-	PinPrivacyRepo      *repositories.PinPrivacyRepository
-	MediaPrivacyRepo    *repositories.MediaPrivacyRepository
+	RedisClient *redis.Client
+	TripRepo *repositories.TripRepository
+	ParticipantRepo *repositories.TripParticipantRepository
+	GeoRepo *repositories.GeoRegistryRepository
+	MediaRepo *repositories.MediaRepository
+	TagRepo *repositories.TagRepository
+	PinRepo *repositories.PinRepository
+	EventRepo *repositories.RedisRepository
+	TripPrivacyRepo *repositories.TripPrivacyRepository
+	PinPrivacyRepo *repositories.PinPrivacyRepository
+	MediaPrivacyRepo *repositories.MediaPrivacyRepository
 	AddMediaSessionRepo *repositories.AddMediaSessionRepository
-	BattleRepo          *repositories.MediaBattleRepository
-	Geocoder            services.LocationResolver
+	BattleRepo *repositories.MediaBattleRepository
+	Geocoder services.LocationResolver
+	MediaURLs services.MediaURLResolver
 }
 
 func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Client) (*Dependencies, error) {
@@ -73,20 +74,21 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 
 	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geocoder, geoRepo, addMediaSessionRepo, battleRepo)
 	return &Dependencies{
-		TripService:         tripSvc,
-		RedisClient:         redisClient,
-		TripRepo:            tripRepo,
-		ParticipantRepo:     participantRepo,
-		GeoRepo:             geoRepo,
-		MediaRepo:           mediaRepo,
-		TagRepo:             tagRepo,
-		PinRepo:             pinRepo,
-		EventRepo:           eventRepo,
-		TripPrivacyRepo:     tripPrivacyRepo,
-		PinPrivacyRepo:      pinPrivacyRepo,
-		MediaPrivacyRepo:    mediaPrivacyRepo,
+		TripService: tripSvc,
+		RedisClient: redisClient,
+		TripRepo: tripRepo,
+		ParticipantRepo: participantRepo,
+		GeoRepo: geoRepo,
+		MediaRepo: mediaRepo,
+		TagRepo: tagRepo,
+		PinRepo: pinRepo,
+		EventRepo: eventRepo,
+		TripPrivacyRepo: tripPrivacyRepo,
+		PinPrivacyRepo: pinPrivacyRepo,
+		MediaPrivacyRepo: mediaPrivacyRepo,
 		AddMediaSessionRepo: addMediaSessionRepo,
-		BattleRepo:          battleRepo,
-		Geocoder:            geocoder,
+		BattleRepo: battleRepo,
+		Geocoder: geocoder,
+		MediaURLs: mediaURLs,
 	}, nil
 }

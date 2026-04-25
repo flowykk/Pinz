@@ -38,9 +38,9 @@ func (r *UserRepository) CreateUser(u *models.User) error {
 	}
 	avatar := sql.NullString{String: u.AvatarURL, Valid: u.AvatarURL != ""}
 	createdAt, err := r.q.CreateUser(context.Background(), sqlcdb.CreateUserParams{
-		ID:        id,
-		Email:     u.Email,
-		Username:  u.Username,
+		ID: id,
+		Email: u.Email,
+		Username: u.Username,
 		AvatarUrl: avatar,
 	})
 	if err != nil {
@@ -60,8 +60,8 @@ func (r *UserRepository) AddSession(userID, token string, expiresAt interface{})
 		return errors.New("expiresAt must be time.Time")
 	}
 	return r.q.AddSession(context.Background(), sqlcdb.AddSessionParams{
-		UserID:    uid,
-		Token:     token,
+		UserID: uid,
+		Token: token,
 		ExpiresAt: t,
 	})
 }
@@ -75,9 +75,9 @@ func (r *UserRepository) GetRefreshToken(token string) (*models.RefreshToken, er
 		return nil, err
 	}
 	return &models.RefreshToken{
-		ID:        rt.ID.String(),
-		UserID:    rt.UserID.String(),
-		Token:     rt.Token,
+		ID: rt.ID.String(),
+		UserID: rt.UserID.String(),
+		Token: rt.Token,
 		ExpiresAt: rt.ExpiresAt,
 	}, nil
 }
@@ -95,6 +95,36 @@ func (r *UserRepository) GetUserByID(userID string) (*models.User, error) {
 		return nil, err
 	}
 	return userFromSQLC(u), nil
+}
+
+// GetUsersByIDs — batched выборка пользователей по списку id для api-gateway
+// enrichment (N2). Несуществующие id просто отсутствуют в ответе. Дубликаты в
+// запросе не ошибочны — Postgres вернёт их один раз, вызывающая сторона
+// строит map user_id → профиль и переиспользует.
+func (r *UserRepository) GetUsersByIDs(userIDs []string) ([]*models.User, error) {
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+	ids := make([]uuid.UUID, 0, len(userIDs))
+	for _, s := range userIDs {
+		id, err := uuid.Parse(s)
+		if err != nil {
+			continue
+		}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	rows, err := r.q.GetUsersByIDs(context.Background(), ids)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*models.User, 0, len(rows))
+	for _, u := range rows {
+		out = append(out, userFromSQLC(u))
+	}
+	return out, nil
 }
 
 func (r *UserRepository) DeleteRefreshToken(id string) error {
@@ -119,7 +149,7 @@ func (r *UserRepository) UpdateUsername(userID, username string) (*models.User, 
 		return nil, err
 	}
 	u, err := r.q.UpdateUsername(context.Background(), sqlcdb.UpdateUsernameParams{
-		ID:       id,
+		ID: id,
 		Username: username,
 	})
 	if err != nil {
@@ -134,7 +164,7 @@ func (r *UserRepository) UpdateEmail(userID, email string) (*models.User, error)
 		return nil, err
 	}
 	u, err := r.q.UpdateEmail(context.Background(), sqlcdb.UpdateEmailParams{
-		ID:    id,
+		ID: id,
 		Email: email,
 	})
 	if err != nil {
@@ -150,7 +180,7 @@ func (r *UserRepository) UpdateAvatarURL(userID, avatarURL string) (*models.User
 	}
 	avatar := sql.NullString{String: avatarURL, Valid: avatarURL != ""}
 	u, err := r.q.UpdateAvatarURL(context.Background(), sqlcdb.UpdateAvatarURLParams{
-		ID:        id,
+		ID: id,
 		AvatarUrl: avatar,
 	})
 	if err != nil {
@@ -169,9 +199,9 @@ func (r *UserRepository) DeleteUser(userID string) error {
 
 func userFromSQLC(u sqlcdb.User) *models.User {
 	out := &models.User{
-		ID:        u.ID.String(),
-		Email:     u.Email,
-		Username:  u.Username,
+		ID: u.ID.String(),
+		Email: u.Email,
+		Username: u.Username,
 		CreatedAt: u.CreatedAt,
 	}
 	if u.AvatarUrl.Valid {

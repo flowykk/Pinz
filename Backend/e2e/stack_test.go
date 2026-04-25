@@ -20,15 +20,15 @@ import (
 )
 
 type stack struct {
-	network   testcontainers.Network
-	netName   string
-	authDB    testcontainers.Container
-	tripDB    testcontainers.Container
-	redis     testcontainers.Container
-	authSvc   testcontainers.Container
-	tripSvc   testcontainers.Container
-	gateway   testcontainers.Container
-	baseURL   string
+	network testcontainers.Network
+	netName string
+	authDB testcontainers.Container
+	tripDB testcontainers.Container
+	redis testcontainers.Container
+	authSvc testcontainers.Container
+	tripSvc testcontainers.Container
+	gateway testcontainers.Container
+	baseURL string
 	authDBDSN string
 }
 
@@ -80,7 +80,7 @@ func startStack(t *testing.T) *stack {
 	st.netName = netName
 	netw, err := testcontainers.GenericNetwork(ctx, testcontainers.GenericNetworkRequest{
 		NetworkRequest: testcontainers.NetworkRequest{
-			Name:           netName,
+			Name: netName,
 			CheckDuplicate: true,
 		},
 	})
@@ -89,22 +89,22 @@ func startStack(t *testing.T) *stack {
 
 	startDB := func(image, alias, dbName string) testcontainers.Container {
 		req := testcontainers.ContainerRequest{
-			Image:        image,
+			Image: image,
 			ExposedPorts: []string{"5432/tcp"},
-			Networks:     []string{netName},
+			Networks: []string{netName},
 			NetworkAliases: map[string][]string{
 				netName: {alias},
 			},
 			Env: map[string]string{
-				"POSTGRES_USER":     "pinz_user",
+				"POSTGRES_USER": "pinz_user",
 				"POSTGRES_PASSWORD": "pinz_password",
-				"POSTGRES_DB":       dbName,
+				"POSTGRES_DB": dbName,
 			},
 			WaitingFor: wait.ForListeningPort("5432/tcp").WithStartupTimeout(30 * time.Second),
 		}
 		ctr, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 			ContainerRequest: req,
-			Started:          true,
+			Started: true,
 		})
 		infraOrSkip(t, err, "start "+alias)
 		return ctr
@@ -114,17 +114,17 @@ func startStack(t *testing.T) *stack {
 	st.tripDB = startDB("postgis/postgis:15-3.4-alpine", "trip-db", "pinz_trips")
 
 	redisReq := testcontainers.ContainerRequest{
-		Image:        "redis:7-alpine",
+		Image: "redis:7-alpine",
 		ExposedPorts: []string{"6379/tcp"},
-		WaitingFor:   wait.ForListeningPort("6379/tcp"),
-		Networks:     []string{netName},
+		WaitingFor: wait.ForListeningPort("6379/tcp"),
+		Networks: []string{netName},
 		NetworkAliases: map[string][]string{
 			netName: {"redis"},
 		},
 	}
 	redisCtr, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: redisReq,
-		Started:          true,
+		Started: true,
 	})
 	infraOrSkip(t, err, "start redis")
 	st.redis = redisCtr
@@ -135,24 +135,24 @@ func startStack(t *testing.T) *stack {
 		Started: true,
 		ContainerRequest: testcontainers.ContainerRequest{
 			FromDockerfile: testcontainers.FromDockerfile{
-				Context:    "..",
+				Context: "..",
 				Dockerfile: "auth-service/Dockerfile",
 			},
 			ExposedPorts: []string{"50051/tcp"},
-			Networks:     []string{netName},
+			Networks: []string{netName},
 			NetworkAliases: map[string][]string{
 				netName: {"auth-service"},
 			},
 			Env: map[string]string{
-				"GRPC_PORT":          ":50051",
-				"DB_HOST":            "auth-db",
-				"DB_PORT":            "5432",
-				"DB_USER":            "pinz_user",
-				"DB_PASSWORD":        "pinz_password",
-				"DB_NAME":            "pinz_db",
-				"REDIS_ADDR":         "redis:6379",
-				"JWT_SECRET_KEY":     jwtSecret,
-				"WEBAUTHN_RP_ID":     "pinz.website",
+				"GRPC_PORT": ":50051",
+				"DB_HOST": "auth-db",
+				"DB_PORT": "5432",
+				"DB_USER": "pinz_user",
+				"DB_PASSWORD": "pinz_password",
+				"DB_NAME": "pinz_db",
+				"REDIS_ADDR": "redis:6379",
+				"JWT_SECRET_KEY": jwtSecret,
+				"WEBAUTHN_RP_ID": "pinz.website",
 				"WEBAUTHN_RP_ORIGIN": "https://pinz.website",
 			},
 			WaitingFor: wait.ForListeningPort("50051/tcp"),
@@ -165,22 +165,22 @@ func startStack(t *testing.T) *stack {
 		Started: true,
 		ContainerRequest: testcontainers.ContainerRequest{
 			FromDockerfile: testcontainers.FromDockerfile{
-				Context:    "..",
+				Context: "..",
 				Dockerfile: "trip-service/Dockerfile",
 			},
 			ExposedPorts: []string{"50052/tcp"},
-			Networks:     []string{netName},
+			Networks: []string{netName},
 			NetworkAliases: map[string][]string{
 				netName: {"trip-service"},
 			},
 			Env: map[string]string{
-				"GRPC_PORT":   ":50052",
-				"DB_HOST":     "trip-db",
-				"DB_PORT":     "5432",
-				"DB_USER":     "pinz_user",
+				"GRPC_PORT": ":50052",
+				"DB_HOST": "trip-db",
+				"DB_PORT": "5432",
+				"DB_USER": "pinz_user",
 				"DB_PASSWORD": "pinz_password",
-				"DB_NAME":     "pinz_trips",
-				"REDIS_ADDR":  "redis:6379",
+				"DB_NAME": "pinz_trips",
+				"REDIS_ADDR": "redis:6379",
 			},
 			WaitingFor: wait.ForListeningPort("50052/tcp"),
 		},
@@ -192,17 +192,17 @@ func startStack(t *testing.T) *stack {
 		Started: true,
 		ContainerRequest: testcontainers.ContainerRequest{
 			FromDockerfile: testcontainers.FromDockerfile{
-				Context:    "..",
+				Context: "..",
 				Dockerfile: "api-gateway-service/Dockerfile",
 			},
 			ExposedPorts: []string{"8080/tcp"},
-			Networks:     []string{netName},
+			Networks: []string{netName},
 			Env: map[string]string{
-				"API_GATEWAY_PORT":            "8080",
-				"AUTH_SERVICE_GRPC_ADDRESS":   "auth-service:50051",
-				"TRIP_SERVICE_GRPC_ADDRESS":   "trip-service:50052",
-				"REDIS_ADDR":                  "redis:6379",
-				"JWT_SECRET_KEY":              jwtSecret,
+				"API_GATEWAY_PORT": "8080",
+				"AUTH_SERVICE_GRPC_ADDRESS": "auth-service:50051",
+				"TRIP_SERVICE_GRPC_ADDRESS": "trip-service:50052",
+				"REDIS_ADDR": "redis:6379",
+				"JWT_SECRET_KEY": jwtSecret,
 				"OTEL_EXPORTER_OTLP_ENDPOINT": "",
 			},
 			WaitingFor: wait.ForHTTP("/health").WithPort("8080/tcp").WithStartupTimeout(30 * time.Second),

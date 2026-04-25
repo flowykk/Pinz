@@ -31,7 +31,7 @@ func TestE2E_Auth_DevLogin(t *testing.T) {
 		resp, body := st.doJSON(t, http.MethodPost, "/api/v1/auth/dev-login", "", `{"email":"`+email+`"}`)
 		require.Equal(t, http.StatusOK, resp.StatusCode, body)
 		var login struct {
-			AccessToken  string `json:"access_token"`
+			AccessToken string `json:"access_token"`
 			RefreshToken string `json:"refresh_token"`
 		}
 		require.NoError(t, json.Unmarshal([]byte(body), &login))
@@ -56,23 +56,23 @@ func TestE2E_Trip_CreationStart(t *testing.T) {
 
 	t.Run("POST_creation_start_returns_201_and_upload_urls", func(t *testing.T) {
 		startBody := `{
-	  "name":"Trip",
-	  "category":"Отпуск",
-	  "season":"Лето",
-	  "description":"d",
-	  "privacy_level":"Private",
-	  "files_to_upload":[{"client_id":"c1","content_type":"image/jpeg"}]
+	 "name":"Trip",
+	 "category":"Отпуск",
+	 "season":"Лето",
+	 "description":"d",
+	 "privacy_level":"Private",
+	 "files_to_upload":[{"client_id":"c1","content_type":"image/jpeg"}]
 	}`
 		resp, body := st.doJSON(t, http.MethodPost, "/api/v1/trips/creation/start", login.AccessToken, startBody)
 		require.Equal(t, http.StatusCreated, resp.StatusCode, body)
 
 		var created struct {
-			TripID     string `json:"trip_id"`
-			Status     string `json:"status"`
+			TripID string `json:"trip_id"`
+			Status string `json:"status"`
 			UploadUrls []struct {
 				ClientID string `json:"client_id"`
-				S3Key    string `json:"s3_key"`
-				URL      string `json:"url"`
+				S3Key string `json:"s3_key"`
+				URL string `json:"url"`
 			} `json:"upload_urls"`
 		}
 		require.NoError(t, json.Unmarshal([]byte(body), &created))
@@ -103,12 +103,12 @@ func TestE2E_Trip_InviteJoin_GetTrip(t *testing.T) {
 	require.NotEmpty(t, ownerLogin.AccessToken)
 
 	resp, body = st.doJSON(t, http.MethodPost, "/api/v1/trips", ownerLogin.AccessToken, `{
-	  "name":"Trip",
-	  "category":"Отпуск",
-	  "season":"Лето",
-	  "description":"d",
-	  "privacy_level":"Private",
-	  "files_to_upload":[]
+	 "name":"Trip",
+	 "category":"Отпуск",
+	 "season":"Лето",
+	 "description":"d",
+	 "privacy_level":"Private",
+	 "files_to_upload":[]
 	}`)
 	require.Equal(t, http.StatusCreated, resp.StatusCode, body)
 	var created struct {
@@ -170,16 +170,16 @@ func TestE2E_Social_LikeDislikeFavourite(t *testing.T) {
 
 	// Create trip via creation flow (with file) to get UPLOADING
 	resp, body = st.doJSON(t, http.MethodPost, "/api/v1/trips/creation/start", login.AccessToken, `{
-	  "name":"Trip",
-	  "category":"Отпуск",
-	  "season":"Лето",
-	  "description":"d",
-	  "privacy_level":"Public",
-	  "files_to_upload":[{"client_id":"c1","content_type":"image/jpeg"}]
+	 "name":"Trip",
+	 "category":"Отпуск",
+	 "season":"Лето",
+	 "description":"d",
+	 "privacy_level":"Public",
+	 "files_to_upload":[{"client_id":"c1","content_type":"image/jpeg"}]
 	}`)
 	require.Equal(t, http.StatusCreated, resp.StatusCode, body)
 	var created struct {
-		ID     string `json:"id"`
+		ID string `json:"id"`
 		TripID string `json:"trip_id"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(body), &created))
@@ -191,13 +191,13 @@ func TestE2E_Social_LikeDislikeFavourite(t *testing.T) {
 
 	// ProcessMediaGrouping: save media metadata (S3 key stub; no actual upload in e2e)
 	resp, body = st.doJSON(t, http.MethodPost, "/api/v1/trips/creation/"+tripID+"/media/process-grouping", login.AccessToken, `{
-	  "media":[{"s3_key":"trips/`+tripID+`/c1.jpg","media_type":"image","captured_at":"2024-05-01T12:00:00Z","latitude":50.0,"longitude":87.0}]
+	 "media":[{"s3_key":"trips/`+tripID+`/c1.jpg","media_type":"image","captured_at":"2024-05-01T12:00:00Z","latitude":50.0,"longitude":87.0}]
 	}`)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 	var groupingResp struct {
 		DraftPins []struct {
 			DraftPinID string `json:"draft_pin_id"`
-			Media      []struct {
+			Media []struct {
 				MediaID string `json:"media_id"`
 			} `json:"media"`
 		} `json:"draft_pins"`

@@ -20,10 +20,10 @@ func TestParsePayload(t *testing.T) {
 
 func TestParseLocation(t *testing.T) {
 	loc := parseLocation(map[string]any{
-		"id":        float64(10),
+		"id": float64(10),
 		"parent_id": float64(5),
-		"name":      "Paris",
-		"type":      "City",
+		"name": "Paris",
+		"type": "City",
 	})
 	require.NotNil(t, loc)
 	require.EqualValues(t, 10, loc.ID)

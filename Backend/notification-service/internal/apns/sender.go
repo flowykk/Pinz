@@ -23,7 +23,7 @@ type Sender interface {
 
 // Client — боевая реализация через github.com/sideshow/apns2.
 type Client struct {
-	cli      *apns2.Client
+	cli *apns2.Client
 	bundleID string
 }
 
@@ -68,8 +68,8 @@ func (c *Client) Send(ctx context.Context, apnsToken string, n models.PushNotifi
 	}
 	notif := &apns2.Notification{
 		DeviceToken: apnsToken,
-		Topic:       c.bundleID,
-		Payload:     pl,
+		Topic: c.bundleID,
+		Payload: pl,
 	}
 	res, err := c.cli.PushWithContext(ctx, notif)
 	if err != nil {

@@ -31,8 +31,8 @@ func (r *CredentialRepository) CreateCredential(userID string, cred *webauthn.Cr
 		return err
 	}
 	return r.q.CreateCredential(context.Background(), sqlcdb.CreateCredentialParams{
-		UserID:         uid,
-		CredentialID:   cred.ID,
+		UserID: uid,
+		CredentialID: cred.ID,
 		CredentialJson: data,
 	})
 }
@@ -66,7 +66,7 @@ func (r *CredentialRepository) UpdateCredential(cred *webauthn.Credential) error
 	}
 	n, err := r.q.UpdateCredentialJSON(context.Background(), sqlcdb.UpdateCredentialJSONParams{
 		CredentialJson: data,
-		CredentialID:   cred.ID,
+		CredentialID: cred.ID,
 	})
 	if err != nil {
 		return err

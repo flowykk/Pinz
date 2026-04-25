@@ -31,8 +31,8 @@ func TestAuthService_Integration(t *testing.T) {
 
 	userRepo := repositories.NewUserRepository(sqlDB)
 	u := &models.User{
-		ID:       uuid.New().String(),
-		Email:    "user@example.com",
+		ID: uuid.New().String(),
+		Email: "user@example.com",
 		Username: "user",
 	}
 	require.NoError(t, userRepo.CreateUser(u))
@@ -41,7 +41,7 @@ func TestAuthService_Integration(t *testing.T) {
 	ctx := context.Background()
 
 	env := &struct {
-		accessToken  string
+		accessToken string
 		refreshToken string
 	}{}
 

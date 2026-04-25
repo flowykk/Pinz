@@ -7,19 +7,19 @@ WHERE user_id = $1;
 INSERT INTO user_stats (user_id, total_likes)
 VALUES ($1, GREATEST($2, 0))
 ON CONFLICT (user_id) DO UPDATE SET
-    total_likes = GREATEST(user_stats.total_likes + $2, 0),
-    updated_at  = NOW();
+ total_likes = GREATEST(user_stats.total_likes + $2, 0),
+ updated_at = NOW();
 
 -- name: IncrementTotalDislikes :exec
 INSERT INTO user_stats (user_id, total_dislikes)
 VALUES ($1, GREATEST($2, 0))
 ON CONFLICT (user_id) DO UPDATE SET
-    total_dislikes = GREATEST(user_stats.total_dislikes + $2, 0),
-    updated_at     = NOW();
+ total_dislikes = GREATEST(user_stats.total_dislikes + $2, 0),
+ updated_at = NOW();
 
 -- name: IncrementBattlesFinished :exec
 INSERT INTO user_stats (user_id, battles_finished)
 VALUES ($1, GREATEST($2, 0))
 ON CONFLICT (user_id) DO UPDATE SET
-    battles_finished = GREATEST(user_stats.battles_finished + $2, 0),
-    updated_at       = NOW();
+ battles_finished = GREATEST(user_stats.battles_finished + $2, 0),
+ updated_at = NOW();

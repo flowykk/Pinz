@@ -33,7 +33,7 @@ func ctxWithUser(userID string) context.Context {
 func TestTripToProto(t *testing.T) {
 	now := time.Unix(1000, 0)
 	cases := map[string]struct {
-		trip  *models.Trip
+		trip *models.Trip
 		check func(t *testing.T, out *pb.Trip)
 	}{
 		"basic": {
@@ -89,48 +89,48 @@ func TestCreateTrip_ValidationErrors(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		ctx  context.Context
-		req  *pb.CreateTripRequest
+		ctx context.Context
+		req *pb.CreateTripRequest
 		code codes.Code
 	}{
 		"missing_user": {
-			ctx:  context.Background(),
-			req:  validReq,
+			ctx: context.Background(),
+			req: validReq,
 			code: codes.Unauthenticated,
 		},
 		"empty_name": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.CreateTripRequest{Name: "", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Private"},
+			ctx: ctxWithUser("u1"),
+			req: &pb.CreateTripRequest{Name: "", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Private"},
 			code: codes.InvalidArgument,
 		},
 		"name_too_long": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.CreateTripRequest{Name: string(make([]byte, MaxNameLength+1)), Category: "Отпуск", Season: "Лето", PrivacyLevel: "Private"},
+			ctx: ctxWithUser("u1"),
+			req: &pb.CreateTripRequest{Name: string(make([]byte, MaxNameLength+1)), Category: "Отпуск", Season: "Лето", PrivacyLevel: "Private"},
 			code: codes.InvalidArgument,
 		},
 		"description_too_long": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.CreateTripRequest{Name: "Trip", Description: string(make([]byte, MaxDescriptionLength+1)), Category: "Отпуск", Season: "Лето", PrivacyLevel: "Private"},
+			ctx: ctxWithUser("u1"),
+			req: &pb.CreateTripRequest{Name: "Trip", Description: string(make([]byte, MaxDescriptionLength+1)), Category: "Отпуск", Season: "Лето", PrivacyLevel: "Private"},
 			code: codes.InvalidArgument,
 		},
 		"invalid_category": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.CreateTripRequest{Name: "Trip", Category: "Invalid", Season: "Лето", PrivacyLevel: "Private"},
+			ctx: ctxWithUser("u1"),
+			req: &pb.CreateTripRequest{Name: "Trip", Category: "Invalid", Season: "Лето", PrivacyLevel: "Private"},
 			code: codes.InvalidArgument,
 		},
 		"invalid_season": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Invalid", PrivacyLevel: "Private"},
+			ctx: ctxWithUser("u1"),
+			req: &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Invalid", PrivacyLevel: "Private"},
 			code: codes.InvalidArgument,
 		},
 		"invalid_privacy": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Invalid"},
+			ctx: ctxWithUser("u1"),
+			req: &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Invalid"},
 			code: codes.InvalidArgument,
 		},
 		"restricted_privacy_not_allowed": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Restricted"},
+			ctx: ctxWithUser("u1"),
+			req: &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Лето", PrivacyLevel: "Restricted"},
 			code: codes.InvalidArgument,
 		},
 		"unsupported_content_type": {
@@ -174,9 +174,9 @@ func TestCreateTrip_PresignedUploadURLs(t *testing.T) {
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urlMock, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.CreateTrip(ctxWithUser("u1"), &pb.CreateTripRequest{
-		Name:         "Trip",
-		Category:     "Отпуск",
-		Season:       "Лето",
+		Name: "Trip",
+		Category: "Отпуск",
+		Season: "Лето",
 		PrivacyLevel: "Private",
 		FilesToUpload: []*pb.FileToUpload{
 			{ClientId: "client-1", ContentType: "image/jpeg"},
@@ -192,18 +192,18 @@ func TestCreateTrip_PresignedUploadURLs(t *testing.T) {
 func TestGetTrip_ValidationErrors(t *testing.T) {
 	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
-		ctx  context.Context
-		req  *pb.GetTripRequest
+		ctx context.Context
+		req *pb.GetTripRequest
 		code codes.Code
 	}{
 		"missing_user": {
-			ctx:  context.Background(),
-			req:  &pb.GetTripRequest{TripId: "trip-1"},
+			ctx: context.Background(),
+			req: &pb.GetTripRequest{TripId: "trip-1"},
 			code: codes.Unauthenticated,
 		},
 		"empty_trip_id": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.GetTripRequest{TripId: ""},
+			ctx: ctxWithUser("u1"),
+			req: &pb.GetTripRequest{TripId: ""},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -221,18 +221,18 @@ func TestGetTrip_ValidationErrors(t *testing.T) {
 func TestUpdateTrip_ValidationErrors(t *testing.T) {
 	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
-		ctx  context.Context
-		req  *pb.UpdateTripRequest
+		ctx context.Context
+		req *pb.UpdateTripRequest
 		code codes.Code
 	}{
 		"missing_user": {
-			ctx:  context.Background(),
-			req:  &pb.UpdateTripRequest{TripId: "trip-1"},
+			ctx: context.Background(),
+			req: &pb.UpdateTripRequest{TripId: "trip-1"},
 			code: codes.Unauthenticated,
 		},
 		"empty_trip_id": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.UpdateTripRequest{TripId: ""},
+			ctx: ctxWithUser("u1"),
+			req: &pb.UpdateTripRequest{TripId: ""},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -250,18 +250,18 @@ func TestUpdateTrip_ValidationErrors(t *testing.T) {
 func TestDeleteTrip_ValidationErrors(t *testing.T) {
 	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
-		ctx  context.Context
-		req  *pb.DeleteTripRequest
+		ctx context.Context
+		req *pb.DeleteTripRequest
 		code codes.Code
 	}{
 		"missing_user": {
-			ctx:  context.Background(),
-			req:  &pb.DeleteTripRequest{TripId: "trip-1"},
+			ctx: context.Background(),
+			req: &pb.DeleteTripRequest{TripId: "trip-1"},
 			code: codes.Unauthenticated,
 		},
 		"empty_trip_id": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.DeleteTripRequest{TripId: ""},
+			ctx: ctxWithUser("u1"),
+			req: &pb.DeleteTripRequest{TripId: ""},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -279,23 +279,23 @@ func TestDeleteTrip_ValidationErrors(t *testing.T) {
 func TestRemoveParticipant_ValidationErrors(t *testing.T) {
 	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
-		ctx  context.Context
-		req  *pb.RemoveParticipantRequest
+		ctx context.Context
+		req *pb.RemoveParticipantRequest
 		code codes.Code
 	}{
 		"missing_user": {
-			ctx:  context.Background(),
-			req:  &pb.RemoveParticipantRequest{TripId: "trip-1", UserId: "u2"},
+			ctx: context.Background(),
+			req: &pb.RemoveParticipantRequest{TripId: "trip-1", UserId: "u2"},
 			code: codes.Unauthenticated,
 		},
 		"empty_trip_id": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.RemoveParticipantRequest{TripId: "", UserId: "u2"},
+			ctx: ctxWithUser("u1"),
+			req: &pb.RemoveParticipantRequest{TripId: "", UserId: "u2"},
 			code: codes.InvalidArgument,
 		},
 		"empty_user_id": {
-			ctx:  ctxWithUser("u1"),
-			req:  &pb.RemoveParticipantRequest{TripId: "trip-1", UserId: ""},
+			ctx: ctxWithUser("u1"),
+			req: &pb.RemoveParticipantRequest{TripId: "trip-1", UserId: ""},
 			code: codes.InvalidArgument,
 		},
 	}
@@ -313,13 +313,13 @@ func TestRemoveParticipant_ValidationErrors(t *testing.T) {
 func TestListUserTrips_ValidationErrors(t *testing.T) {
 	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
-		ctx  context.Context
-		req  *pb.ListUserTripsRequest
+		ctx context.Context
+		req *pb.ListUserTripsRequest
 		code codes.Code
 	}{
 		"missing_user": {
-			ctx:  context.Background(),
-			req:  &pb.ListUserTripsRequest{},
+			ctx: context.Background(),
+			req: &pb.ListUserTripsRequest{},
 			code: codes.Unauthenticated,
 		},
 	}
@@ -550,23 +550,23 @@ func TestResolveMediaDeletionsForTrip(t *testing.T) {
 	const tripID = "trip-1"
 
 	cases := map[string]struct {
-		inputIDs    []string
-		wantErr     bool
-		wantCode    codes.Code
+		inputIDs []string
+		wantErr bool
+		wantCode codes.Code
 		wantAllowed []string
-		wantS3Keys  []string
-		setupMedia  func(*mocks.MockMediaRepositoryInterface)
+		wantS3Keys []string
+		setupMedia func(*mocks.MockMediaRepositoryInterface)
 	}{
 		"empty_input": {
-			inputIDs:    nil,
-			wantErr:     false,
+			inputIDs: nil,
+			wantErr: false,
 			wantAllowed: nil,
-			wantS3Keys:  nil,
-			setupMedia:  func(_ *mocks.MockMediaRepositoryInterface) {},
+			wantS3Keys: nil,
+			setupMedia: func(_ *mocks.MockMediaRepositoryInterface) {},
 		},
 		"unknown_media_id": {
 			inputIDs: []string{"no-such"},
-			wantErr:  true,
+			wantErr: true,
 			wantCode: codes.InvalidArgument,
 			setupMedia: func(m *mocks.MockMediaRepositoryInterface) {
 				m.EXPECT().GetByID("no-such").Return(nil, sql.ErrNoRows)
@@ -574,7 +574,7 @@ func TestResolveMediaDeletionsForTrip(t *testing.T) {
 		},
 		"get_media_internal_error": {
 			inputIDs: []string{"m1"},
-			wantErr:  true,
+			wantErr: true,
 			wantCode: codes.Internal,
 			setupMedia: func(m *mocks.MockMediaRepositoryInterface) {
 				m.EXPECT().GetByID("m1").Return(nil, sql.ErrConnDone)
@@ -582,7 +582,7 @@ func TestResolveMediaDeletionsForTrip(t *testing.T) {
 		},
 		"media_from_other_trip": {
 			inputIDs: []string{"m-foreign"},
-			wantErr:  true,
+			wantErr: true,
 			wantCode: codes.PermissionDenied,
 			setupMedia: func(m *mocks.MockMediaRepositoryInterface) {
 				m.EXPECT().GetByID("m-foreign").Return(
@@ -590,30 +590,30 @@ func TestResolveMediaDeletionsForTrip(t *testing.T) {
 			},
 		},
 		"with_s3_key": {
-			inputIDs:    []string{"m1"},
-			wantErr:     false,
+			inputIDs: []string{"m1"},
+			wantErr: false,
 			wantAllowed: []string{"m1"},
-			wantS3Keys:  []string{"s3/k1"},
+			wantS3Keys: []string{"s3/k1"},
 			setupMedia: func(m *mocks.MockMediaRepositoryInterface) {
 				m.EXPECT().GetByID("m1").Return(
 					&models.Media{ID: "m1", TripID: tripID, S3Key: "s3/k1"}, nil)
 			},
 		},
 		"empty_s3_key": {
-			inputIDs:    []string{"m2"},
-			wantErr:     false,
+			inputIDs: []string{"m2"},
+			wantErr: false,
 			wantAllowed: []string{"m2"},
-			wantS3Keys:  nil,
+			wantS3Keys: nil,
 			setupMedia: func(m *mocks.MockMediaRepositoryInterface) {
 				m.EXPECT().GetByID("m2").Return(
 					&models.Media{ID: "m2", TripID: tripID, S3Key: ""}, nil)
 			},
 		},
 		"two_ids": {
-			inputIDs:    []string{"a", "b"},
-			wantErr:     false,
+			inputIDs: []string{"a", "b"},
+			wantErr: false,
 			wantAllowed: []string{"a", "b"},
-			wantS3Keys:  []string{"ka", "kb"},
+			wantS3Keys: []string{"ka", "kb"},
 			setupMedia: func(m *mocks.MockMediaRepositoryInterface) {
 				m.EXPECT().GetByID("a").Return(&models.Media{ID: "a", TripID: tripID, S3Key: "ka"}, nil)
 				m.EXPECT().GetByID("b").Return(&models.Media{ID: "b", TripID: tripID, S3Key: "kb"}, nil)
@@ -668,7 +668,7 @@ func TestApplyGroupsAndProcess_DeletedMediaSuccess(t *testing.T) {
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ApplyGroupsAndProcess(ctxWithUser(userID), &pb.ApplyGroupsAndProcessRequest{
-		TripId:          tripID,
+		TripId: tripID,
 		DeletedMediaIds: []string{"m1"},
 	})
 	require.NoError(t, err)
@@ -697,20 +697,20 @@ func TestFinalizeTrip_MediaToDeleteSuccess(t *testing.T) {
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.FinalizeTrip(ctxWithUser(userID), &pb.FinalizeTripRequest{
-		TripId:        tripID,
+		TripId: tripID,
 		MediaToDelete: []string{"m1"},
 	})
 	require.NoError(t, err)
 	require.Equal(t, "READY", resp.GetStatus())
 }
 
-// --- Privacy enforcement tests (PINZ-129) ---
+// --- Privacy enforcement tests ---
 
 func TestPublishTrip_RejectsNonPublicPrivacy(t *testing.T) {
 	cases := map[string]struct {
 		privacyLevel string
 	}{
-		"private":    {privacyLevel: "Private"},
+		"private": {privacyLevel: "Private"},
 		"restricted": {privacyLevel: "Restricted"},
 	}
 	for name, tc := range cases {
@@ -750,7 +750,7 @@ func TestUpdateTrip_CannotSetRestricted(t *testing.T) {
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	restricted := "Restricted"
 	_, err := svc.UpdateTrip(ctxWithUser("u1"), &pb.UpdateTripRequest{
-		TripId:       "trip-1",
+		TripId: "trip-1",
 		PrivacyLevel: &restricted,
 	})
 	require.Error(t, err)
@@ -772,7 +772,7 @@ func TestUpdateTrip_CannotChangeFromRestricted(t *testing.T) {
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	pub := "Public"
 	_, err := svc.UpdateTrip(ctxWithUser("u1"), &pb.UpdateTripRequest{
-		TripId:       "trip-1",
+		TripId: "trip-1",
 		PrivacyLevel: &pub,
 	})
 	require.Error(t, err)
@@ -801,8 +801,8 @@ func TestRequestTripCoverUpload_Success(t *testing.T) {
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.RequestTripCoverUpload(ctxWithUser("u1"), &pb.RequestTripCoverUploadRequest{
-		TripId:      "trip-1",
-		Filename:    "cover.JPG",
+		TripId: "trip-1",
+		Filename: "cover.JPG",
 		ContentType: "image/jpeg",
 	})
 	require.NoError(t, err)
@@ -820,7 +820,7 @@ func TestRequestTripCoverUpload_NotParticipant(t *testing.T) {
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.RequestTripCoverUpload(ctxWithUser("stranger"), &pb.RequestTripCoverUploadRequest{
-		TripId:   "trip-1",
+		TripId: "trip-1",
 		Filename: "cover.jpg",
 	})
 	require.Error(t, err)
@@ -839,7 +839,7 @@ func TestRequestTripCoverUpload_BadExtension(t *testing.T) {
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.RequestTripCoverUpload(ctxWithUser("u1"), &pb.RequestTripCoverUploadRequest{
-		TripId:   "trip-1",
+		TripId: "trip-1",
 		Filename: "cover.gif",
 	})
 	require.Error(t, err)
@@ -869,7 +869,7 @@ func TestConfirmTripCoverUpload_DeletesOldAndUpdates(t *testing.T) {
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ConfirmTripCoverUpload(ctxWithUser("u1"), &pb.ConfirmTripCoverUploadRequest{
 		TripId: "trip-1",
-		S3Key:  "trips/trip-1/cover/new.jpg",
+		S3Key: "trips/trip-1/cover/new.jpg",
 	})
 	require.NoError(t, err)
 	require.Equal(t, "https://s3/get?sig=1", resp.GetTrip().GetCoverUrl())
@@ -907,7 +907,7 @@ func TestSearchPins_Unauthenticated(t *testing.T) {
 
 func TestSearchPins_EmptyQuery(t *testing.T) {
 	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	_, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: "   "})
+	_, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: " "})
 	require.Error(t, err)
 	require.Equal(t, codes.InvalidArgument, status.Code(err))
 }

@@ -16,7 +16,7 @@ type TagRepository struct {
 
 const (
 	maxTagsPerPin = 10
-	maxTagLength  = 15
+	maxTagLength = 15
 )
 
 func NewTagRepository(db *sql.DB) *TagRepository {
@@ -44,7 +44,7 @@ func (r *TagRepository) SetForPin(tripID, pinID string, tags []string) error {
 	}
 	if err := r.q.TagDeleteForPin(context.Background(), sqlcdb.TagDeleteForPinParams{
 		TripID: tid,
-		PinID:  pinNullUUID(pinID),
+		PinID: pinNullUUID(pinID),
 	}); err != nil {
 		return err
 	}
@@ -76,8 +76,8 @@ func (r *TagRepository) Add(t *models.Tag) error {
 	}
 	id, err := r.q.TagInsert(context.Background(), sqlcdb.TagInsertParams{
 		TripID: tid,
-		PinID:  pinNullUUID(t.PinID),
-		Tag:    t.Tag,
+		PinID: pinNullUUID(t.PinID),
+		Tag: t.Tag,
 	})
 	if err != nil {
 		return err

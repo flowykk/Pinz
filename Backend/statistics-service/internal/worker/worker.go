@@ -14,28 +14,28 @@ import (
 )
 
 const (
-	StreamName    = "pinz:stats:events"
+	StreamName = "pinz:stats:events"
 	consumerGroup = "statistics-service-worker"
-	consumerName  = "stats-worker-1"
+	consumerName = "stats-worker-1"
 )
 
 // Event types — соответствуют publisher'у trip-service (RedisRepository.PublishStatsEvent).
 const (
-	EventTripDeleted        = "TRIP_DELETED"         // cleanup trip_locations_mirror
+	EventTripDeleted = "TRIP_DELETED" // cleanup trip_locations_mirror
 	EventTripLocationsAdded = "TRIP_LOCATIONS_ADDED" // upsert mirror
-	EventLikeAdded          = "LIKE_ADDED"
-	EventLikeRemoved        = "LIKE_REMOVED"
-	EventDislikeAdded       = "DISLIKE_ADDED"
-	EventDislikeRemoved     = "DISLIKE_REMOVED"
-	EventBattleFinished     = "BATTLE_FINISHED"
+	EventLikeAdded = "LIKE_ADDED"
+	EventLikeRemoved = "LIKE_REMOVED"
+	EventDislikeAdded = "DISLIKE_ADDED"
+	EventDislikeRemoved = "DISLIKE_REMOVED"
+	EventBattleFinished = "BATTLE_FINISHED"
 )
 
 type Deps struct {
-	Redis        *redis.Client
-	UserStats    repositories.UserStatsRepositoryInterface
+	Redis *redis.Client
+	UserStats repositories.UserStatsRepositoryInterface
 	GeoRegistry repositories.GeoRegistryRepositoryInterface
 	TripLocations repositories.TripLocationsRepositoryInterface
-	EventLog     repositories.EventLogRepositoryInterface
+	EventLog repositories.EventLogRepositoryInterface
 }
 
 // Run запускает consumer-loop Redis Streams до отмены ctx.
@@ -59,11 +59,11 @@ func Run(ctx context.Context, d Deps) error {
 		}
 
 		streams, err := d.Redis.XReadGroup(ctx, &redis.XReadGroupArgs{
-			Group:    consumerGroup,
+			Group: consumerGroup,
 			Consumer: consumerName,
-			Streams:  []string{StreamName, ">"},
-			Count:    50,
-			Block:    2 * time.Second,
+			Streams: []string{StreamName, ">"},
+			Count: 50,
+			Block: 2 * time.Second,
 		}).Result()
 		if err != nil && err != redis.Nil {
 			if ctx.Err() != nil {

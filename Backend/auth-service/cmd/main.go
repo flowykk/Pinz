@@ -60,7 +60,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// PINZ-134: email-воркер перенесён в notification-service. Здесь auth-service
+	// email-воркер перенесён в notification-service. Здесь auth-service
 	// только публикует задачи в pinz:auth:email:tasks; отправка выполняется
 	// notification-service'ом.
 

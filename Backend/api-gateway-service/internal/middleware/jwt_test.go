@@ -68,7 +68,7 @@ func TestRequireJWT(t *testing.T) {
 			userID := "user-123"
 			t.Setenv("JWT_SECRET_KEY", secret)
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-				"user_id":  userID,
+				"user_id": userID,
 				"username": "u",
 			})
 			s, err := token.SignedString([]byte(secret))

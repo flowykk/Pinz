@@ -18,7 +18,7 @@ import (
 const metadataUserIDKey = "x-user-id"
 
 type Client struct {
-	conn   *grpc.ClientConn
+	conn *grpc.ClientConn
 	client pb.TripServiceClient
 }
 
@@ -36,7 +36,7 @@ func NewClient() (*Client, error) {
 		return nil, fmt.Errorf("trip gRPC client: %w", err)
 	}
 	return &Client{
-		conn:   conn,
+		conn: conn,
 		client: pb.NewTripServiceClient(conn),
 	}, nil
 }
@@ -150,12 +150,44 @@ func (c *Client) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRequest
 	return c.client.AddMediaStart(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) AddMediaRequestUploadUrls(ctx context.Context, req *pb.AddMediaRequestUploadUrlsRequest) (*pb.AddMediaRequestUploadUrlsResponse, error) {
+	return c.client.AddMediaRequestUploadUrls(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) AddMediaCommitUpload(ctx context.Context, req *pb.AddMediaCommitUploadRequest) (*pb.AddMediaCommitUploadResponse, error) {
+	return c.client.AddMediaCommitUpload(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) AddMediaGetSessionMedia(ctx context.Context, req *pb.AddMediaGetSessionMediaRequest) (*pb.AddMediaGetSessionMediaResponse, error) {
+	return c.client.AddMediaGetSessionMedia(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMediaProcessGroupingRequest) (*pb.AddMediaProcessGroupingResponse, error) {
 	return c.client.AddMediaProcessGrouping(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) AddMediaGetGrouping(ctx context.Context, req *pb.AddMediaGetGroupingRequest) (*pb.AddMediaGetGroupingResponse, error) {
+	return c.client.AddMediaGetGrouping(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb.AddMediaApplyGroupsAndProcessRequest) (*pb.AddMediaApplyGroupsAndProcessResponse, error) {
 	return c.client.AddMediaApplyGroupsAndProcess(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) AddMediaGetReview(ctx context.Context, req *pb.AddMediaGetReviewRequest) (*pb.AddMediaGetReviewResponse, error) {
+	return c.client.AddMediaGetReview(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) AddMediaConfirm(ctx context.Context, req *pb.AddMediaConfirmRequest) (*pb.AddMediaConfirmResponse, error) {
+	return c.client.AddMediaConfirm(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) AddMediaCancel(ctx context.Context, req *pb.AddMediaCancelRequest) (*pb.AddMediaCancelResponse, error) {
+	return c.client.AddMediaCancel(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) AddMediaTakeover(ctx context.Context, req *pb.AddMediaTakeoverRequest) (*pb.AddMediaTakeoverResponse, error) {
+	return c.client.AddMediaTakeover(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) ListUserTripSummaries(ctx context.Context, req *pb.ListUserTripSummariesRequest) (*pb.ListUserTripSummariesResponse, error) {

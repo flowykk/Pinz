@@ -55,7 +55,7 @@ func (r *GeoRegistryRepository) EnsureLocationByName(ctx context.Context, countr
 		var err error
 		if cID != nil {
 			id, err = r.q.GeoRegistryFindCityByNameAndParent(ctx, sqlcdb.GeoRegistryFindCityByNameAndParentParams{
-				Name:     cityName,
+				Name: cityName,
 				ParentID: sql.NullInt32{Int32: int32(*cID), Valid: true},
 			})
 		} else {
@@ -71,7 +71,7 @@ func (r *GeoRegistryRepository) EnsureLocationByName(ctx context.Context, countr
 				parentID = sql.NullInt32{Int32: int32(*cID), Valid: true}
 			}
 			id, err = r.q.GeoRegistryUpsertCity(ctx, sqlcdb.GeoRegistryUpsertCityParams{
-				Name:     cityName,
+				Name: cityName,
 				ParentID: parentID,
 			})
 			if err != nil {
@@ -114,10 +114,10 @@ func (r *GeoRegistryRepository) FindLocationIDsByName(ctx context.Context, name 
 
 // GeoLocation — DTO для кросс-сервисной передачи (statistics-service).
 type GeoLocation struct {
-	ID       int
+	ID int
 	ParentID *int
-	Name     string
-	Type     string
+	Name string
+	Type string
 }
 
 // GetLocations возвращает записи geo_registry по набору id (для обогащения
@@ -157,7 +157,7 @@ func (r *GeoRegistryRepository) UpsertTripLocations(ctx context.Context, tripID 
 	}
 	for _, id := range locationIDs {
 		if err := r.q.TripLocationInsert(ctx, sqlcdb.TripLocationInsertParams{
-			TripID:     tid,
+			TripID: tid,
 			LocationID: int32(id),
 		}); err != nil {
 			return err

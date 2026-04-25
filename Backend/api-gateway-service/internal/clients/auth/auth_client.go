@@ -14,7 +14,7 @@ import (
 )
 
 type Client struct {
-	conn   *grpc.ClientConn
+	conn *grpc.ClientConn
 	client pb.AuthServiceClient
 }
 
@@ -32,7 +32,7 @@ func NewClient() (*Client, error) {
 		return nil, fmt.Errorf("auth gRPC client: %w", err)
 	}
 	return &Client{
-		conn:   conn,
+		conn: conn,
 		client: pb.NewAuthServiceClient(conn),
 	}, nil
 }
@@ -103,6 +103,10 @@ func (c *Client) DeleteAvatar(ctx context.Context, req *pb.DeleteAvatarRequest) 
 
 func (c *Client) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
 	return c.client.DeleteAccount(ctx, req)
+}
+
+func (c *Client) GetUsersProfiles(ctx context.Context, req *pb.GetUsersProfilesRequest) (*pb.GetUsersProfilesResponse, error) {
+	return c.client.GetUsersProfiles(ctx, req)
 }
 
 func (c *Client) Close() error {

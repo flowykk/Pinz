@@ -22,7 +22,7 @@ func TestAuthHandler_DevLogin_Success(t *testing.T) {
 	authSvc.EXPECT().
 		DevLogin(gomock.Any(), "user@example.com").
 		Return(&proto.DevLoginResponse{
-			AccessToken:  "access-123",
+			AccessToken: "access-123",
 			RefreshToken: "refresh-456",
 		}, nil)
 
@@ -37,7 +37,7 @@ func TestAuthHandler_DevLogin_Success(t *testing.T) {
 	require.Equal(t, http.StatusOK, rr.Code)
 	require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 	var dst struct {
-		AccessToken  string `json:"access_token"`
+		AccessToken string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
 	}
 	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &dst))

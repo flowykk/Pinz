@@ -18,7 +18,7 @@ import (
 const metadataUserIDKey = "x-user-id"
 
 type Client struct {
-	conn   *grpc.ClientConn
+	conn *grpc.ClientConn
 	client pb.NotificationServiceClient
 }
 

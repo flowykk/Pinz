@@ -36,7 +36,7 @@ func TestTripHandler_ListTrips_WithoutJWT(t *testing.T) {
 	tripClient := mocks.NewMockTripClient(ctrl)
 	// No ListUserTrips call expected — handler returns 401 before calling client
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/trips", nil)
 	rr := httptest.NewRecorder()
 
@@ -52,7 +52,7 @@ func TestTripHandler_ListTrips_Success(t *testing.T) {
 	tripClient.EXPECT().
 		ListUserTrips(gomock.Any(), &proto.ListUserTripsRequest{
 			UserId: "user-1",
-			Limit:  20,
+			Limit: 20,
 			Offset: 0,
 		}).
 		Return(&proto.ListUserTripsResponse{
@@ -66,7 +66,7 @@ func TestTripHandler_ListTrips_Success(t *testing.T) {
 			},
 		}, nil)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/trips", nil)
 	req = req.WithContext(ctxWithUserID("user-1"))
 	rr := httptest.NewRecorder()
@@ -88,7 +88,7 @@ func TestTripHandler_ListTrips_ClientError(t *testing.T) {
 		ListUserTrips(gomock.Any(), gomock.Any()).
 		Return(nil, status.Error(codes.Internal, "db error"))
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/trips", nil)
 	req = req.WithContext(ctxWithUserID("user-1"))
 	rr := httptest.NewRecorder()
@@ -103,7 +103,7 @@ func TestTripHandler_ListFavourites_WithoutJWT(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	tripClient := mocks.NewMockTripClient(ctrl)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/trips/favourites", nil)
 	rr := httptest.NewRecorder()
 
@@ -129,7 +129,7 @@ func TestTripHandler_ListFavourites_Success(t *testing.T) {
 			},
 		}, nil)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/trips/favourites", nil)
 	req = req.WithContext(ctxWithUserID("user-1"))
 	rr := httptest.NewRecorder()
@@ -151,7 +151,7 @@ func TestTripHandler_ListFavourites_ClientError(t *testing.T) {
 		ListFavourites(gomock.Any(), gomock.Any()).
 		Return(nil, status.Error(codes.Internal, "db error"))
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/trips/favourites", nil)
 	req = req.WithContext(ctxWithUserID("user-1"))
 	rr := httptest.NewRecorder()
@@ -167,11 +167,11 @@ func TestTripHandler_CreateTrip_Success(t *testing.T) {
 	tripClient := mocks.NewMockTripClient(ctrl)
 	tripClient.EXPECT().
 		CreateTrip(gomock.Any(), &proto.CreateTripRequest{
-			OwnerUserId:   "user-1",
-			Name:          "New Trip",
-			Description:   "desc",
-			Category:      "Отпуск",
-			Season:        "Лето",
+			OwnerUserId: "user-1",
+			Name: "New Trip",
+			Description: "desc",
+			Category: "Отпуск",
+			Season: "Лето",
 			FilesToUpload: []*proto.FileToUpload{{ClientId: "c1", ContentType: "image/jpeg"}},
 		}).
 		Return(&proto.CreateTripResponse{
@@ -182,7 +182,7 @@ func TestTripHandler_CreateTrip_Success(t *testing.T) {
 			},
 		}, nil)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	body := `{"name":"New Trip","description":"desc","category":"Отпуск","season":"Лето","privacy_level":"Private","files_to_upload":[{"client_id":"c1","content_type":"image/jpeg"}]}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/creation/start", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -206,17 +206,17 @@ func TestTripHandler_RequestTripCoverUpload_Success(t *testing.T) {
 	tripClient := mocks.NewMockTripClient(ctrl)
 	tripClient.EXPECT().
 		RequestTripCoverUpload(gomock.Any(), &proto.RequestTripCoverUploadRequest{
-			TripId:      "trip-1",
-			UserId:      "user-1",
-			Filename:    "cover.jpg",
+			TripId: "trip-1",
+			UserId: "user-1",
+			Filename: "cover.jpg",
 			ContentType: "image/jpeg",
 		}).
 		Return(&proto.RequestTripCoverUploadResponse{
 			UploadUrl: "https://s3.example.com/put?sig=1",
-			S3Key:     "trips/trip-1/cover/abc.jpg",
+			S3Key: "trips/trip-1/cover/abc.jpg",
 		}, nil)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	body := `{"filename":"cover.jpg","content_type":"image/jpeg"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/trip-1/cover/upload", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -239,7 +239,7 @@ func TestTripHandler_RequestTripCoverUpload_Forbidden(t *testing.T) {
 		RequestTripCoverUpload(gomock.Any(), gomock.Any()).
 		Return(nil, status.Error(codes.PermissionDenied, "not a participant"))
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	body := `{"filename":"cover.jpg","content_type":"image/jpeg"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/trip-1/cover/upload", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -258,13 +258,13 @@ func TestTripHandler_ConfirmTripCoverUpload_Success(t *testing.T) {
 		ConfirmTripCoverUpload(gomock.Any(), &proto.ConfirmTripCoverUploadRequest{
 			TripId: "trip-1",
 			UserId: "user-1",
-			S3Key:  "trips/trip-1/cover/abc.jpg",
+			S3Key: "trips/trip-1/cover/abc.jpg",
 		}).
 		Return(&proto.ConfirmTripCoverUploadResponse{
 			Trip: &proto.Trip{Id: "trip-1", CoverUrl: "https://s3/get?sig=1"},
 		}, nil)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	body := `{"s3_key":"trips/trip-1/cover/abc.jpg"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/trip-1/cover/confirm", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -287,7 +287,7 @@ func TestTripHandler_DeleteTripCover_Success(t *testing.T) {
 		DeleteTripCover(gomock.Any(), &proto.DeleteTripCoverRequest{TripId: "trip-1", UserId: "user-1"}).
 		Return(&proto.DeleteTripCoverResponse{Trip: &proto.Trip{Id: "trip-1"}}, nil)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodDelete, "/api/v1/trips/trip-1/cover", nil)
 	req = reqWithTripID(req.WithContext(ctxWithUserID("user-1")), "trip-1")
 	rr := httptest.NewRecorder()
@@ -305,7 +305,7 @@ func TestTripHandler_SearchPins_WithoutJWT(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	tripClient := mocks.NewMockTripClient(ctrl)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/pins/search?q=cafe", nil)
 	rr := httptest.NewRecorder()
 
@@ -318,7 +318,7 @@ func TestTripHandler_SearchPins_MissingQuery(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	tripClient := mocks.NewMockTripClient(ctrl)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/pins/search", nil)
 	req = req.WithContext(ctxWithUserID("user-1"))
 	rr := httptest.NewRecorder()
@@ -349,7 +349,7 @@ func TestTripHandler_SearchPins_Success(t *testing.T) {
 			},
 		}, nil)
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/pins/search?q=cafe&limit=50&offset=10", nil)
 	req = req.WithContext(ctxWithUserID("user-1"))
 	rr := httptest.NewRecorder()
@@ -375,7 +375,7 @@ func TestTripHandler_SearchPins_ServiceError(t *testing.T) {
 		SearchPins(gomock.Any(), gomock.Any()).
 		Return(nil, status.Error(codes.Internal, "boom"))
 
-	h := NewTripHandler(tripClient)
+	h := NewTripHandler(tripClient, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/pins/search?q=cafe", nil)
 	req = req.WithContext(ctxWithUserID("user-1"))
 	rr := httptest.NewRecorder()

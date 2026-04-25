@@ -60,7 +60,7 @@ func (s *AuthService) SubmitEmail(ctx context.Context, email string) (*pb.Submit
 
 func (s *AuthService) VerifyEmailCode(ctx context.Context, registrationID, verificationCode string) (*pb.VerifyEmailCodeResponse, error) {
 	return s.authClient.VerifyEmailCode(ctx, &pb.VerifyEmailCodeRequest{
-		RegistrationId:   registrationID,
+		RegistrationId: registrationID,
 		VerificationCode: verificationCode,
 	})
 }
@@ -68,7 +68,7 @@ func (s *AuthService) VerifyEmailCode(ctx context.Context, registrationID, verif
 func (s *AuthService) PasskeyRegisterBegin(ctx context.Context, registrationID, username string) (*pb.PasskeyRegisterBeginResponse, error) {
 	return s.authClient.PasskeyRegisterBegin(ctx, &pb.PasskeyRegisterBeginRequest{
 		RegistrationId: registrationID,
-		Username:       username,
+		Username: username,
 	})
 }
 
@@ -85,7 +85,7 @@ func (s *AuthService) PasskeyLoginBegin(ctx context.Context, email string) (*pb.
 
 func (s *AuthService) PasskeyLoginFinish(ctx context.Context, email string, credentialJSON []byte) (*pb.PasskeyLoginFinishResponse, error) {
 	return s.authClient.PasskeyLoginFinish(ctx, &pb.PasskeyLoginFinishRequest{
-		Email:          email,
+		Email: email,
 		CredentialJson: credentialJSON,
 	})
 }
@@ -120,8 +120,8 @@ func (s *AuthService) ConfirmEmailChange(ctx context.Context, userID, code strin
 
 func (s *AuthService) RequestAvatarUpload(ctx context.Context, userID, filename, contentType string) (*pb.RequestAvatarUploadResponse, error) {
 	return s.authClient.RequestAvatarUpload(ctx, &pb.RequestAvatarUploadRequest{
-		UserId:      userID,
-		Filename:    filename,
+		UserId: userID,
+		Filename: filename,
 		ContentType: contentType,
 	})
 }

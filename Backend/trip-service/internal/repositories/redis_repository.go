@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	tripEventsStream    = "pinz:trip:events"
-	statsEventsStream   = "pinz:stats:events"
-	mlTasksStream       = "pinz:trip:ml:tasks"
-	mlResultsStream     = "pinz:trip:ml:results"
-	mlContextPrefix     = "pinz:trip:ml:context:"
+	tripEventsStream = "pinz:trip:events"
+	statsEventsStream = "pinz:stats:events"
+	mlTasksStream = "pinz:trip:ml:tasks"
+	mlResultsStream = "pinz:trip:ml:results"
+	mlContextPrefix = "pinz:trip:ml:context:"
 	privacyEventsStream = "pinz:trip:privacy:events"
 
 	userEventsChannelPrefix = "pinz:user:"
@@ -32,6 +32,16 @@ const (
 	// wsStreamTTL — TTL на stream key, ставится после каждого XADD. Фикcит
 	// orphan streams на случай, если DeleteTripEventStream не был вызван.
 	wsStreamTTL = 1 * time.Hour
+)
+
+// константы event-type для add-media флоу. Публикуются через
+// PublishTripEventWS на per-trip WS-канале, клиент разбирает по "type" в payload.
+const (
+	EventTripStatusChanged = "TRIP_STATUS_CHANGED"
+	EventTripProcessingCompleted = "TRIP_PROCESSING_COMPLETED"
+	EventAddMediaProgress = "ADD_MEDIA_PROGRESS"
+	EventAddMediaInitiatorChanged = "ADD_MEDIA_INITIATOR_CHANGED"
+	EventAddMediaSessionCompleted = "ADD_MEDIA_SESSION_COMPLETED"
 )
 
 // RedisRepository provides Redis client and trip event streaming for Notification/Statistics
@@ -113,7 +123,7 @@ func (r *RedisRepository) PublishStatsEvent(ctx context.Context, eventType, trip
 func (r *RedisRepository) PublishTripEvent(ctx context.Context, eventType string, tripID, userID string) error {
 	vals := map[string]interface{}{
 		"event_type": eventType,
-		"trip_id":    tripID,
+		"trip_id": tripID,
 	}
 	if userID != "" {
 		vals["user_id"] = userID
@@ -134,11 +144,11 @@ func (r *RedisRepository) ReadMLResults(ctx context.Context, group, consumer str
 		return nil, nil
 	}
 	streams, err := r.client.XReadGroup(ctx, &redis.XReadGroupArgs{
-		Group:    group,
+		Group: group,
 		Consumer: consumer,
-		Streams:  []string{mlResultsStream, ">"},
-		Count:    count,
-		Block:    time.Duration(blockMs) * time.Millisecond,
+		Streams: []string{mlResultsStream, ">"},
+		Count: count,
+		Block: time.Duration(blockMs) * time.Millisecond,
 	}).Result()
 	if err != nil {
 		if err == redis.Nil {
@@ -231,11 +241,11 @@ func (r *RedisRepository) PublishPrivacyEvent(ctx context.Context, objectType, o
 	return r.client.XAdd(ctx, &redis.XAddArgs{
 		Stream: privacyEventsStream,
 		Values: map[string]interface{}{
-			"event_type":    "PRIVACY_CHANGED",
-			"object_type":   objectType,
-			"object_id":     objectID,
-			"trip_id":       tripID,
-			"user_id":       userID,
+			"event_type": "PRIVACY_CHANGED",
+			"object_type": objectType,
+			"object_id": objectID,
+			"trip_id": tripID,
+			"user_id": userID,
 			"privacy_level": privacyLevel,
 		},
 	}).Err()
@@ -245,15 +255,15 @@ func (r *RedisRepository) PublishPrivacyEvent(ctx context.Context, objectType, o
 // WebSocket connections. Message format:
 //
 //	{
-//	  "event": "<event_type>",
-//	  "payload": { ... arbitrary JSON ... }
+//	 "event": "<event_type>",
+//	 "payload": { ... arbitrary JSON ... }
 //	}
 func (r *RedisRepository) PublishUserEvent(ctx context.Context, userID, eventType string, payload map[string]interface{}) error {
 	if r == nil || r.client == nil {
 		return nil
 	}
 	msg := map[string]interface{}{
-		"event":   eventType,
+		"event": eventType,
 		"payload": payload,
 	}
 	data, err := json.Marshal(msg)
@@ -288,7 +298,7 @@ func (r *RedisRepository) PublishTripEventWS(ctx context.Context, tripID string,
 		payload["trip_id"] = tripID
 	}
 	data, err := json.Marshal(map[string]interface{}{
-		"event":   eventType,
+		"event": eventType,
 		"payload": payload,
 	})
 	if err != nil {

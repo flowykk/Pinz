@@ -124,11 +124,19 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Post("/{id}/favourite", deps.TripHandler.AddToFavourites)
 				r.Delete("/{id}/favourite", deps.TripHandler.RemoveFromFavourites)
 				r.Delete("/{id}/participants/{user_id}", deps.TripHandler.RemoveParticipant)
-				// PINZ-131: добавление медиа в существующий READY-трип (ТЗ 5.1-5.3).
+				// кооперативное добавление медиа в READY-трип (ТЗ 5.1-5.3).
 				r.Post("/{id}/media/add/start", deps.TripHandler.AddMediaStart)
+				r.Post("/{id}/media/add/request-upload-urls", deps.TripHandler.AddMediaRequestUploadUrls)
+				r.Post("/{id}/media/add/commit-upload", deps.TripHandler.AddMediaCommitUpload)
+				r.Get("/{id}/media/add/session-media", deps.TripHandler.AddMediaGetSessionMedia)
 				r.Post("/{id}/media/add/process-grouping", deps.TripHandler.AddMediaProcessGrouping)
+				r.Get("/{id}/media/add/grouping", deps.TripHandler.AddMediaGetGrouping)
 				r.Post("/{id}/media/add/apply-groups-and-process", deps.TripHandler.AddMediaApplyGroupsAndProcess)
-				// PINZ-132: фотобатлы и лучшие воспоминания (ТЗ 8).
+				r.Get("/{id}/media/add/review", deps.TripHandler.AddMediaGetReview)
+				r.Post("/{id}/media/add/confirm", deps.TripHandler.AddMediaConfirm)
+				r.Post("/{id}/media/add/cancel", deps.TripHandler.AddMediaCancel)
+				r.Post("/{id}/media/add/takeover", deps.TripHandler.AddMediaTakeover)
+				// фотобатлы и лучшие воспоминания (ТЗ 8).
 				r.Post("/{id}/battles", deps.TripHandler.StartBattle)
 				r.Post("/{id}/battles/{battle_id}/result", deps.TripHandler.SubmitBattleResult)
 				r.Get("/{id}/best-memories", deps.TripHandler.GetBestMemories)
@@ -139,7 +147,7 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Get("/", deps.TripHandler.ListFeed)
 			})
 
-			// PINZ-135: текстовый поиск пинов в трипах авторизованного пользователя.
+			// текстовый поиск пинов в трипах авторизованного пользователя.
 			r.Route("/pins", func(r chi.Router) {
 				r.Use(middleware.RequireJWT)
 				r.Get("/search", deps.TripHandler.SearchPins)
@@ -159,9 +167,9 @@ func NewServer(deps *di.Dependencies) *Server {
 
 	return &Server{
 		Server: http.Server{
-			Addr:         ":" + port,
-			Handler:      r,
-			ReadTimeout:  15 * time.Second,
+			Addr: ":" + port,
+			Handler: r,
+			ReadTimeout: 15 * time.Second,
 			WriteTimeout: 15 * time.Second,
 		},
 	}

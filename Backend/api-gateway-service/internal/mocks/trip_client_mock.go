@@ -56,6 +56,96 @@ func (mr *MockTripClientMockRecorder) AddMediaApplyGroupsAndProcess(ctx, req any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaApplyGroupsAndProcess", reflect.TypeOf((*MockTripClient)(nil).AddMediaApplyGroupsAndProcess), ctx, req)
 }
 
+// AddMediaCancel mocks base method.
+func (m *MockTripClient) AddMediaCancel(ctx context.Context, req *proto.AddMediaCancelRequest) (*proto.AddMediaCancelResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMediaCancel", ctx, req)
+	ret0, _ := ret[0].(*proto.AddMediaCancelResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMediaCancel indicates an expected call of AddMediaCancel.
+func (mr *MockTripClientMockRecorder) AddMediaCancel(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaCancel", reflect.TypeOf((*MockTripClient)(nil).AddMediaCancel), ctx, req)
+}
+
+// AddMediaCommitUpload mocks base method.
+func (m *MockTripClient) AddMediaCommitUpload(ctx context.Context, req *proto.AddMediaCommitUploadRequest) (*proto.AddMediaCommitUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMediaCommitUpload", ctx, req)
+	ret0, _ := ret[0].(*proto.AddMediaCommitUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMediaCommitUpload indicates an expected call of AddMediaCommitUpload.
+func (mr *MockTripClientMockRecorder) AddMediaCommitUpload(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaCommitUpload", reflect.TypeOf((*MockTripClient)(nil).AddMediaCommitUpload), ctx, req)
+}
+
+// AddMediaConfirm mocks base method.
+func (m *MockTripClient) AddMediaConfirm(ctx context.Context, req *proto.AddMediaConfirmRequest) (*proto.AddMediaConfirmResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMediaConfirm", ctx, req)
+	ret0, _ := ret[0].(*proto.AddMediaConfirmResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMediaConfirm indicates an expected call of AddMediaConfirm.
+func (mr *MockTripClientMockRecorder) AddMediaConfirm(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaConfirm", reflect.TypeOf((*MockTripClient)(nil).AddMediaConfirm), ctx, req)
+}
+
+// AddMediaGetGrouping mocks base method.
+func (m *MockTripClient) AddMediaGetGrouping(ctx context.Context, req *proto.AddMediaGetGroupingRequest) (*proto.AddMediaGetGroupingResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMediaGetGrouping", ctx, req)
+	ret0, _ := ret[0].(*proto.AddMediaGetGroupingResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMediaGetGrouping indicates an expected call of AddMediaGetGrouping.
+func (mr *MockTripClientMockRecorder) AddMediaGetGrouping(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaGetGrouping", reflect.TypeOf((*MockTripClient)(nil).AddMediaGetGrouping), ctx, req)
+}
+
+// AddMediaGetReview mocks base method.
+func (m *MockTripClient) AddMediaGetReview(ctx context.Context, req *proto.AddMediaGetReviewRequest) (*proto.AddMediaGetReviewResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMediaGetReview", ctx, req)
+	ret0, _ := ret[0].(*proto.AddMediaGetReviewResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMediaGetReview indicates an expected call of AddMediaGetReview.
+func (mr *MockTripClientMockRecorder) AddMediaGetReview(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaGetReview", reflect.TypeOf((*MockTripClient)(nil).AddMediaGetReview), ctx, req)
+}
+
+// AddMediaGetSessionMedia mocks base method.
+func (m *MockTripClient) AddMediaGetSessionMedia(ctx context.Context, req *proto.AddMediaGetSessionMediaRequest) (*proto.AddMediaGetSessionMediaResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMediaGetSessionMedia", ctx, req)
+	ret0, _ := ret[0].(*proto.AddMediaGetSessionMediaResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMediaGetSessionMedia indicates an expected call of AddMediaGetSessionMedia.
+func (mr *MockTripClientMockRecorder) AddMediaGetSessionMedia(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaGetSessionMedia", reflect.TypeOf((*MockTripClient)(nil).AddMediaGetSessionMedia), ctx, req)
+}
+
 // AddMediaProcessGrouping mocks base method.
 func (m *MockTripClient) AddMediaProcessGrouping(ctx context.Context, req *proto.AddMediaProcessGroupingRequest) (*proto.AddMediaProcessGroupingResponse, error) {
 	m.ctrl.T.Helper()
@@ -71,6 +161,21 @@ func (mr *MockTripClientMockRecorder) AddMediaProcessGrouping(ctx, req any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaProcessGrouping", reflect.TypeOf((*MockTripClient)(nil).AddMediaProcessGrouping), ctx, req)
 }
 
+// AddMediaRequestUploadUrls mocks base method.
+func (m *MockTripClient) AddMediaRequestUploadUrls(ctx context.Context, req *proto.AddMediaRequestUploadUrlsRequest) (*proto.AddMediaRequestUploadUrlsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMediaRequestUploadUrls", ctx, req)
+	ret0, _ := ret[0].(*proto.AddMediaRequestUploadUrlsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMediaRequestUploadUrls indicates an expected call of AddMediaRequestUploadUrls.
+func (mr *MockTripClientMockRecorder) AddMediaRequestUploadUrls(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaRequestUploadUrls", reflect.TypeOf((*MockTripClient)(nil).AddMediaRequestUploadUrls), ctx, req)
+}
+
 // AddMediaStart mocks base method.
 func (m *MockTripClient) AddMediaStart(ctx context.Context, req *proto.AddMediaStartRequest) (*proto.AddMediaStartResponse, error) {
 	m.ctrl.T.Helper()
@@ -84,6 +189,21 @@ func (m *MockTripClient) AddMediaStart(ctx context.Context, req *proto.AddMediaS
 func (mr *MockTripClientMockRecorder) AddMediaStart(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaStart", reflect.TypeOf((*MockTripClient)(nil).AddMediaStart), ctx, req)
+}
+
+// AddMediaTakeover mocks base method.
+func (m *MockTripClient) AddMediaTakeover(ctx context.Context, req *proto.AddMediaTakeoverRequest) (*proto.AddMediaTakeoverResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMediaTakeover", ctx, req)
+	ret0, _ := ret[0].(*proto.AddMediaTakeoverResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMediaTakeover indicates an expected call of AddMediaTakeover.
+func (mr *MockTripClientMockRecorder) AddMediaTakeover(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaTakeover", reflect.TypeOf((*MockTripClient)(nil).AddMediaTakeover), ctx, req)
 }
 
 // AddToFavourites mocks base method.

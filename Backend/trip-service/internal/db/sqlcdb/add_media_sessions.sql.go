@@ -7,13 +7,37 @@ package sqlcdb
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
 
+const addMediaSessionClose = `-- name: AddMediaSessionClose :one
+UPDATE add_media_sessions
+SET closed_at = $2, close_reason = $3
+WHERE session_id = $1 AND closed_at IS NULL
+RETURNING trip_id
+`
+
+type AddMediaSessionCloseParams struct {
+	SessionID   uuid.UUID
+	ClosedAt    sql.NullTime
+	CloseReason sql.NullString
+}
+
+func (q *Queries) AddMediaSessionClose(ctx context.Context, arg AddMediaSessionCloseParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, addMediaSessionClose, arg.SessionID, arg.ClosedAt, arg.CloseReason)
+	var trip_id uuid.UUID
+	err := row.Scan(&trip_id)
+	return trip_id, err
+}
+
 const addMediaSessionCreate = `-- name: AddMediaSessionCreate :one
-INSERT INTO add_media_sessions (trip_id, existing_media_ids) VALUES ($1, $2)
+INSERT INTO add_media_sessions (trip_id, existing_media_ids)
+VALUES ($1, $2)
+ON CONFLICT DO NOTHING
 RETURNING session_id
 `
 
@@ -59,4 +83,102 @@ func (q *Queries) AddMediaSessionGet(ctx context.Context, sessionID uuid.UUID) (
 	var i AddMediaSessionGetRow
 	err := row.Scan(&i.TripID, &i.ExistingMediaIds)
 	return i, err
+}
+
+const addMediaSessionGetActive = `-- name: AddMediaSessionGetActive :one
+SELECT session_id, trip_id, existing_media_ids, current_initiator_user_id, initiator_assigned_at, last_activity_at
+FROM add_media_sessions
+WHERE trip_id = $1 AND closed_at IS NULL
+`
+
+type AddMediaSessionGetActiveRow struct {
+	SessionID              uuid.UUID
+	TripID                 uuid.UUID
+	ExistingMediaIds       json.RawMessage
+	CurrentInitiatorUserID uuid.NullUUID
+	InitiatorAssignedAt    sql.NullTime
+	LastActivityAt         time.Time
+}
+
+func (q *Queries) AddMediaSessionGetActive(ctx context.Context, tripID uuid.UUID) (AddMediaSessionGetActiveRow, error) {
+	row := q.db.QueryRowContext(ctx, addMediaSessionGetActive, tripID)
+	var i AddMediaSessionGetActiveRow
+	err := row.Scan(
+		&i.SessionID,
+		&i.TripID,
+		&i.ExistingMediaIds,
+		&i.CurrentInitiatorUserID,
+		&i.InitiatorAssignedAt,
+		&i.LastActivityAt,
+	)
+	return i, err
+}
+
+const addMediaSessionListAbandoned = `-- name: AddMediaSessionListAbandoned :many
+SELECT session_id, trip_id
+FROM add_media_sessions
+WHERE closed_at IS NULL AND last_activity_at < $1
+`
+
+type AddMediaSessionListAbandonedRow struct {
+	SessionID uuid.UUID
+	TripID    uuid.UUID
+}
+
+func (q *Queries) AddMediaSessionListAbandoned(ctx context.Context, lastActivityAt time.Time) ([]AddMediaSessionListAbandonedRow, error) {
+	rows, err := q.db.QueryContext(ctx, addMediaSessionListAbandoned, lastActivityAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []AddMediaSessionListAbandonedRow{}
+	for rows.Next() {
+		var i AddMediaSessionListAbandonedRow
+		if err := rows.Scan(&i.SessionID, &i.TripID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const addMediaSessionSetInitiator = `-- name: AddMediaSessionSetInitiator :exec
+UPDATE add_media_sessions
+SET current_initiator_user_id = $2,
+ initiator_assigned_at = $3,
+ last_activity_at = $3
+WHERE session_id = $1 AND closed_at IS NULL
+`
+
+type AddMediaSessionSetInitiatorParams struct {
+	SessionID              uuid.UUID
+	CurrentInitiatorUserID uuid.NullUUID
+	InitiatorAssignedAt    sql.NullTime
+}
+
+func (q *Queries) AddMediaSessionSetInitiator(ctx context.Context, arg AddMediaSessionSetInitiatorParams) error {
+	_, err := q.db.ExecContext(ctx, addMediaSessionSetInitiator, arg.SessionID, arg.CurrentInitiatorUserID, arg.InitiatorAssignedAt)
+	return err
+}
+
+const addMediaSessionTouch = `-- name: AddMediaSessionTouch :exec
+UPDATE add_media_sessions
+SET last_activity_at = $2
+WHERE session_id = $1 AND closed_at IS NULL
+`
+
+type AddMediaSessionTouchParams struct {
+	SessionID      uuid.UUID
+	LastActivityAt time.Time
+}
+
+func (q *Queries) AddMediaSessionTouch(ctx context.Context, arg AddMediaSessionTouchParams) error {
+	_, err := q.db.ExecContext(ctx, addMediaSessionTouch, arg.SessionID, arg.LastActivityAt)
+	return err
 }

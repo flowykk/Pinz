@@ -25,7 +25,7 @@ type WSTripClient interface {
 }
 
 type WSHandler struct {
-	redis      *redis.Client
+	redis *redis.Client
 	tripClient WSTripClient
 }
 
@@ -42,7 +42,7 @@ var upgrader = websocket.Upgrader{
 const (
 	wsWriteTimeout = 10 * time.Second
 	wsReadDeadline = 60 * time.Second
-	wsPingPeriod   = 30 * time.Second
+	wsPingPeriod = 30 * time.Second
 	// wsXReadBlock — сколько XREAD блокирует при отсутствии новых сообщений.
 	// Короче ping-period, чтобы пинги не задерживались из-за блокирующего чтения
 	// (XREAD идёт в отдельной goroutine, так что это не критично, но полезно
@@ -54,7 +54,7 @@ const (
 )
 
 type wsEvent struct {
-	Event   string                 `json:"event"`
+	Event string `json:"event"`
 	Payload map[string]interface{} `json:"payload"`
 }
 
@@ -180,8 +180,8 @@ func subscribeStream(ctx context.Context, client *redis.Client, key string) <-ch
 			}
 			res, err := client.XRead(ctx, &redis.XReadArgs{
 				Streams: []string{key, lastID},
-				Block:   wsXReadBlock,
-				Count:   wsSubChanBuffer,
+				Block: wsXReadBlock,
+				Count: wsSubChanBuffer,
 			}).Result()
 			if err != nil {
 				if errors.Is(err, redis.Nil) {

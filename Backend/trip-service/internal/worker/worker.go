@@ -15,21 +15,21 @@ import (
 )
 
 const (
-	mlTasksConsumerGroup   = "trip-service-worker"
-	mlTasksConsumerName    = "trip-worker-1"
+	mlTasksConsumerGroup = "trip-service-worker"
+	mlTasksConsumerName = "trip-worker-1"
 	mlResultsConsumerGroup = "trip-service-ml-results"
-	mlResultsConsumerName  = "trip-ml-results-1"
-	privacyStream          = "pinz:trip:privacy:events"
-	privacyConsumerGroup   = "trip-service-privacy"
-	privacyConsumerName    = "trip-privacy-1"
+	mlResultsConsumerName = "trip-ml-results-1"
+	privacyStream = "pinz:trip:privacy:events"
+	privacyConsumerGroup = "trip-service-privacy"
+	privacyConsumerName = "trip-privacy-1"
 )
 
 // Worker consumes ML/processing tasks from Redis Streams and advances the trip
 // creation flow asynchronously.
 //
 // Responsibilities:
-//   - Read tasks from pinz:trip:ml:tasks (created in ApplyGroupsAndProcess)
-//   - For each trip_id: mark trip status as DRAFT_FINAL_REVIEW, notify participants via Redis Pub/Sub.
+// - Read tasks from pinz:trip:ml:tasks (created in ApplyGroupsAndProcess)
+// - For each trip_id: mark trip status as DRAFT_FINAL_REVIEW, notify participants via Redis Pub/Sub.
 func Run(ctx context.Context, redisClient *redis.Client, tripRepo *repositories.TripRepository, participantRepo *repositories.TripParticipantRepository, geoRepo *repositories.GeoRegistryRepository, mediaRepo *repositories.MediaRepository, tagRepo *repositories.TagRepository, pinRepo *repositories.PinRepository, eventRepo *repositories.RedisRepository, tripPrivacyRepo *repositories.TripPrivacyRepository, pinPrivacyRepo *repositories.PinPrivacyRepository, mediaPrivacyRepo *repositories.MediaPrivacyRepository, geocoder services.LocationResolver) error {
 	if redisClient == nil || eventRepo == nil {
 		slog.Warn("worker: redis not configured, background processing disabled")
@@ -52,11 +52,11 @@ func Run(ctx context.Context, redisClient *redis.Client, tripRepo *repositories.
 		}
 
 		streams, err := redisClient.XReadGroup(ctx, &redis.XReadGroupArgs{
-			Group:    mlTasksConsumerGroup,
+			Group: mlTasksConsumerGroup,
 			Consumer: mlTasksConsumerName,
-			Streams:  []string{"pinz:trip:ml:tasks", ">"},
-			Count:    10,
-			Block:    2 * time.Second,
+			Streams: []string{"pinz:trip:ml:tasks", ">"},
+			Count: 10,
+			Block: 2 * time.Second,
 		}).Result()
 		if err != nil && err != redis.Nil {
 			slog.WarnContext(ctx, "worker: XReadGroup tasks error", "error", err)
@@ -119,11 +119,11 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 	}
 
 	streams, err := client.XReadGroup(ctx, &redis.XReadGroupArgs{
-		Group:    mlResultsConsumerGroup,
+		Group: mlResultsConsumerGroup,
 		Consumer: mlResultsConsumerName,
-		Streams:  []string{"pinz:trip:ml:results", ">"},
-		Count:    10,
-		Block:    1 * time.Second,
+		Streams: []string{"pinz:trip:ml:results", ">"},
+		Count: 10,
+		Block: 1 * time.Second,
 	}).Result()
 	if err != nil && err != redis.Nil {
 		return err
@@ -168,9 +168,9 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 			if raw, ok := msg.Values["pin_tags"]; ok && tagRepo != nil && pinRepo != nil {
 				if s, ok := raw.(string); ok && s != "" {
 					type pinTagsPayload struct {
-						PinID    string   `json:"pin_id"`
-						Category string   `json:"category"`
-						Tags     []string `json:"tags"`
+						PinID string `json:"pin_id"`
+						Category string `json:"category"`
+						Tags []string `json:"tags"`
 					}
 					var pts []pinTagsPayload
 					if err := json.Unmarshal([]byte(s), &pts); err == nil {
@@ -239,11 +239,11 @@ func processPrivacyEvents(ctx context.Context, client *redis.Client, tripRepo *r
 		return err
 	}
 	streams, err := client.XReadGroup(ctx, &redis.XReadGroupArgs{
-		Group:    privacyConsumerGroup,
+		Group: privacyConsumerGroup,
 		Consumer: privacyConsumerName,
-		Streams:  []string{privacyStream, ">"},
-		Count:    10,
-		Block:    1 * time.Second,
+		Streams: []string{privacyStream, ">"},
+		Count: 10,
+		Block: 1 * time.Second,
 	}).Result()
 	if err != nil && err != redis.Nil {
 		return err
@@ -352,7 +352,7 @@ func processTrip(ctx context.Context, tripID string, tripRepo *repositories.Trip
 
 	_ = eventRepo.PublishTripEventWS(ctx, tripID, userIDs, "TRIP_PROCESSING_COMPLETED", map[string]interface{}{
 		"trip_id": tripID,
-		"status":  "DRAFT_FINAL_REVIEW",
+		"status": "DRAFT_FINAL_REVIEW",
 	})
 
 	return nil

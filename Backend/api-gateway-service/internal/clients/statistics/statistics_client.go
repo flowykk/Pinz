@@ -18,7 +18,7 @@ import (
 const metadataUserIDKey = "x-user-id"
 
 type Client struct {
-	conn   *grpc.ClientConn
+	conn *grpc.ClientConn
 	client pb.StatisticsServiceClient
 }
 
@@ -36,7 +36,7 @@ func NewClient() (*Client, error) {
 		return nil, fmt.Errorf("statistics gRPC client: %w", err)
 	}
 	return &Client{
-		conn:   conn,
+		conn: conn,
 		client: pb.NewStatisticsServiceClient(conn),
 	}, nil
 }

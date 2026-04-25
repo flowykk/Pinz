@@ -155,6 +155,21 @@ func (mr *MockUserRepositoryInterfaceMockRecorder) GetUserByID(userID any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockUserRepositoryInterface)(nil).GetUserByID), userID)
 }
 
+// GetUsersByIDs mocks base method.
+func (m *MockUserRepositoryInterface) GetUsersByIDs(userIDs []string) ([]*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsersByIDs", userIDs)
+	ret0, _ := ret[0].([]*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsersByIDs indicates an expected call of GetUsersByIDs.
+func (mr *MockUserRepositoryInterfaceMockRecorder) GetUsersByIDs(userIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersByIDs", reflect.TypeOf((*MockUserRepositoryInterface)(nil).GetUsersByIDs), userIDs)
+}
+
 // UpdateAvatarURL mocks base method.
 func (m *MockUserRepositoryInterface) UpdateAvatarURL(userID, avatarURL string) (*models.User, error) {
 	m.ctrl.T.Helper()

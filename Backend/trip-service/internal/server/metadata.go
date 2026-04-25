@@ -21,11 +21,27 @@ func UserIDFromContext(ctx context.Context) (string, bool) {
 	return v, ok
 }
 
+// internalMethodsNoAuth — RPC, которые зовутся другими сервисами без x-user-id
+// (fanout пушей, cron-джобы) и не используют UserIDFromContext в реализации.
+// Для них skip проверки x-user-id, чтобы cross-service вызовы не ловили
+// Unauthenticated.
+var internalMethodsNoAuth = map[string]struct{}{
+	"/trip.TripService/ListTripParticipants":   {},
+	"/trip.TripService/GetNotificationSettings": {},
+	"/trip.TripService/ListAnniversaryTrips":   {},
+}
+
 // AuthUnaryInterceptor reads x-user-id from gRPC metadata and puts it in context.
-// Skips auth for health check; returns Unauthenticated for trip methods if key is missing.
+// Skips auth for health check and internal RPCs (internalMethodsNoAuth); returns
+// Unauthenticated for user-facing methods if the key is missing.
 func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 	if info != nil && (info.FullMethod == "/grpc.health.v1.Health/Check" || info.FullMethod == "/grpc.health.v1.Health/Watch") {
 		return handler(ctx, req)
+	}
+	if info != nil {
+		if _, ok := internalMethodsNoAuth[info.FullMethod]; ok {
+			return handler(ctx, req)
+		}
 	}
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

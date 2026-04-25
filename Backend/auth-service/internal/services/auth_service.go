@@ -31,40 +31,40 @@ import (
 
 // pendingUser implements webauthn.User for a not-yet-persisted registration.
 type pendingUser struct {
-	id          []byte
-	name        string
+	id []byte
+	name string
 	displayName string
 	credentials []webauthn.Credential
 }
 
-func (u *pendingUser) WebAuthnID() []byte                         { return u.id }
-func (u *pendingUser) WebAuthnName() string                       { return u.name }
-func (u *pendingUser) WebAuthnDisplayName() string                { return u.displayName }
+func (u *pendingUser) WebAuthnID() []byte { return u.id }
+func (u *pendingUser) WebAuthnName() string { return u.name }
+func (u *pendingUser) WebAuthnDisplayName() string { return u.displayName }
 func (u *pendingUser) WebAuthnCredentials() []webauthn.Credential { return u.credentials }
 
 // existingUser implements webauthn.User for a fully-persisted user.
 type existingUser struct {
-	id          []byte
-	name        string
+	id []byte
+	name string
 	displayName string
 	credentials []webauthn.Credential
 }
 
-func (u *existingUser) WebAuthnID() []byte                         { return u.id }
-func (u *existingUser) WebAuthnName() string                       { return u.name }
-func (u *existingUser) WebAuthnDisplayName() string                { return u.displayName }
+func (u *existingUser) WebAuthnID() []byte { return u.id }
+func (u *existingUser) WebAuthnName() string { return u.name }
+func (u *existingUser) WebAuthnDisplayName() string { return u.displayName }
 func (u *existingUser) WebAuthnCredentials() []webauthn.Credential { return u.credentials }
 
 // regSession is stored in Redis between PasskeyRegisterBegin and PasskeyRegisterFinish.
 type regSession struct {
-	PendingUserID string               `json:"pending_user_id"`
-	Username      string               `json:"username"`
-	SessionData   webauthn.SessionData `json:"session_data"`
+	PendingUserID string `json:"pending_user_id"`
+	Username string `json:"username"`
+	SessionData webauthn.SessionData `json:"session_data"`
 }
 
 // loginSession is stored in Redis between PasskeyLoginBegin and PasskeyLoginFinish.
 type loginSession struct {
-	UserID      string               `json:"user_id"`
+	UserID string `json:"user_id"`
 	SessionData webauthn.SessionData `json:"session_data"`
 }
 
@@ -76,15 +76,15 @@ type S3Uploader interface {
 
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
-	userRepo  UserRepositoryInterface
-	credRepo  CredentialRepositoryInterface
+	userRepo UserRepositoryInterface
+	credRepo CredentialRepositoryInterface
 	redisRepo RedisRepositoryInterface
 	validator *validator.Validate
-	wa        *webauthn.WebAuthn
-	s3        S3Uploader
+	wa *webauthn.WebAuthn
+	s3 S3Uploader
 
-	tracer              trace.Tracer
-	loginCounter        metric.Int64Counter
+	tracer trace.Tracer
+	loginCounter metric.Int64Counter
 	registrationCounter metric.Int64Counter
 	tokenRefreshCounter metric.Int64Counter
 }
@@ -111,14 +111,14 @@ func NewAuthService(
 	)
 
 	return &AuthService{
-		userRepo:            userRepo,
-		credRepo:            credRepo,
-		redisRepo:           redisRepo,
-		validator:           validator,
-		wa:                  wa,
-		s3:                  s3,
-		tracer:              tracer,
-		loginCounter:        loginCounter,
+		userRepo: userRepo,
+		credRepo: credRepo,
+		redisRepo: redisRepo,
+		validator: validator,
+		wa: wa,
+		s3: s3,
+		tracer: tracer,
+		loginCounter: loginCounter,
 		registrationCounter: registrationCounter,
 		tokenRefreshCounter: tokenRefreshCounter,
 	}
@@ -162,8 +162,8 @@ func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailReques
 	}
 
 	if err := s.redisRepo.XAdd(ctx, "pinz:auth:email:tasks", map[string]interface{}{
-		"email":           email,
-		"code":            code,
+		"email": email,
+		"code": code,
 		"registration_id": registrationID,
 	}); err != nil {
 		slog.ErrorContext(ctx, "SubmitEmail: failed to enqueue email task", "registration_id", registrationID, "error", err)
@@ -229,8 +229,8 @@ func (s *AuthService) PasskeyRegisterBegin(ctx context.Context, req *pb.PasskeyR
 
 	pendingUserID := uuid.New()
 	user := &pendingUser{
-		id:          pendingUserID[:],
-		name:        username,
+		id: pendingUserID[:],
+		name: username,
 		displayName: username,
 	}
 
@@ -245,8 +245,8 @@ func (s *AuthService) PasskeyRegisterBegin(ctx context.Context, req *pb.PasskeyR
 
 	rs := regSession{
 		PendingUserID: pendingUserID.String(),
-		Username:      username,
-		SessionData:   *session,
+		Username: username,
+		SessionData: *session,
 	}
 	rsJSON, err := json.Marshal(rs)
 	if err != nil {
@@ -300,8 +300,8 @@ func (s *AuthService) PasskeyRegisterFinish(ctx context.Context, req *pb.Passkey
 		return nil, status.Error(codes.Internal, "invalid pending user id")
 	}
 	user := &pendingUser{
-		id:          pendingUID[:],
-		name:        rs.Username,
+		id: pendingUID[:],
+		name: rs.Username,
 		displayName: rs.Username,
 	}
 
@@ -315,8 +315,8 @@ func (s *AuthService) PasskeyRegisterFinish(ctx context.Context, req *pb.Passkey
 	}
 
 	u := &models.User{
-		ID:       rs.PendingUserID,
-		Email:    email,
+		ID: rs.PendingUserID,
+		Email: email,
 		Username: rs.Username,
 	}
 	if err := s.userRepo.CreateUser(u); err != nil {
@@ -376,8 +376,8 @@ func (s *AuthService) PasskeyLoginBegin(ctx context.Context, req *pb.PasskeyLogi
 		return nil, status.Error(codes.Internal, "invalid user id")
 	}
 	waUser := &existingUser{
-		id:          uid[:],
-		name:        u.Username,
+		id: uid[:],
+		name: u.Username,
 		displayName: u.Username,
 		credentials: creds,
 	}
@@ -452,8 +452,8 @@ func (s *AuthService) PasskeyLoginFinish(ctx context.Context, req *pb.PasskeyLog
 		return nil, status.Error(codes.Internal, "invalid user id")
 	}
 	waUser := &existingUser{
-		id:          uid[:],
-		name:        u.Username,
+		id: uid[:],
+		name: u.Username,
 		displayName: u.Username,
 		credentials: creds,
 	}
@@ -487,7 +487,7 @@ func (s *AuthService) PasskeyLoginFinish(ctx context.Context, req *pb.PasskeyLog
 		return nil, err
 	}
 	return &pb.PasskeyLoginFinishResponse{
-		AccessToken:  resp.AccessToken,
+		AccessToken: resp.AccessToken,
 		RefreshToken: resp.RefreshToken,
 	}, nil
 }
@@ -579,7 +579,7 @@ func (s *AuthService) issueTokens(ctx context.Context, u *models.User) (*pb.Pass
 		return nil, status.Error(codes.Internal, "failed to save session")
 	}
 	return &pb.PasskeyRegisterFinishResponse{
-		AccessToken:  accessToken,
+		AccessToken: accessToken,
 		RefreshToken: refreshToken,
 	}, nil
 }
@@ -614,7 +614,7 @@ func (s *AuthService) DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*p
 		return nil, err
 	}
 	return &pb.DevLoginResponse{
-		AccessToken:  resp.AccessToken,
+		AccessToken: resp.AccessToken,
 		RefreshToken: resp.RefreshToken,
 	}, nil
 }
@@ -630,10 +630,10 @@ func (s *AuthService) userToProto(ctx context.Context, u *models.User) *pb.User 
 		}
 	}
 	return &pb.User{
-		Id:            u.ID,
-		Username:      u.Username,
-		Email:         u.Email,
-		AvatarUrl:     avatar,
+		Id: u.ID,
+		Username: u.Username,
+		Email: u.Email,
+		AvatarUrl: avatar,
 		CreatedAtUnix: u.CreatedAt.Unix(),
 	}
 }
@@ -657,6 +657,49 @@ func (s *AuthService) GetProfile(ctx context.Context, req *pb.GetProfileRequest)
 	}
 
 	return &pb.GetProfileResponse{User: s.userToProto(ctx, u)}, nil
+}
+
+// GetUsersProfiles — batched публичные профили (без email). Используется api-gateway
+// для обогащения списков участников / current_initiator в ответах trip-service.
+// avatar_url presigned; если пользователь не найден — в ответе остаётся пустой
+// объект с заполненным user_id, клиент фильтрует по непустому username.
+func (s *AuthService) GetUsersProfiles(ctx context.Context, req *pb.GetUsersProfilesRequest) (*pb.GetUsersProfilesResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.GetUsersProfiles")
+	defer span.End()
+
+	userIDs := req.GetUserIds()
+	if len(userIDs) == 0 {
+		return &pb.GetUsersProfilesResponse{Profiles: nil}, nil
+	}
+	users, err := s.userRepo.GetUsersByIDs(userIDs)
+	if err != nil {
+		slog.ErrorContext(ctx, "GetUsersProfiles: GetUsersByIDs", "error", err)
+		return nil, status.Error(codes.Internal, "failed to load users")
+	}
+	byID := make(map[string]*models.User, len(users))
+	for _, u := range users {
+		byID[u.ID] = u
+	}
+	profiles := make([]*pb.PublicUserProfile, 0, len(userIDs))
+	for _, id := range userIDs {
+		u, ok := byID[id]
+		if !ok {
+			profiles = append(profiles, &pb.PublicUserProfile{UserId: id})
+			continue
+		}
+		avatar := ""
+		if u.AvatarURL != "" && s.s3 != nil {
+			if url, perr := s.s3.ReadURL(ctx, u.AvatarURL); perr == nil {
+				avatar = url
+			}
+		}
+		profiles = append(profiles, &pb.PublicUserProfile{
+			UserId:    u.ID,
+			Username:  u.Username,
+			AvatarUrl: avatar,
+		})
+	}
+	return &pb.GetUsersProfilesResponse{Profiles: profiles}, nil
 }
 
 func (s *AuthService) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
@@ -720,8 +763,8 @@ func (s *AuthService) ChangeEmail(ctx context.Context, req *pb.ChangeEmailReques
 	}
 
 	if err := s.redisRepo.XAdd(ctx, "pinz:auth:email:tasks", map[string]interface{}{
-		"email":   newEmail,
-		"code":    code,
+		"email": newEmail,
+		"code": code,
 		"user_id": userID,
 	}); err != nil {
 		slog.ErrorContext(ctx, "ChangeEmail: failed to enqueue email task", "error", err)
@@ -799,7 +842,7 @@ func (s *AuthService) RequestAvatarUpload(ctx context.Context, req *pb.RequestAv
 
 	return &pb.RequestAvatarUploadResponse{
 		UploadUrl: uploadURL,
-		S3Key:     s3Key,
+		S3Key: s3Key,
 	}, nil
 }
 

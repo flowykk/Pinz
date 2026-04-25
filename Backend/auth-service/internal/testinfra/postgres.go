@@ -10,11 +10,11 @@ import (
 
 type PostgresContainer struct {
 	Container testcontainers.Container
-	Host      string
-	Port      string
-	User      string
-	Password  string
-	DBName    string
+	Host string
+	Port string
+	User string
+	Password string
+	DBName string
 }
 
 func (c *PostgresContainer) DSN() string {
@@ -51,10 +51,10 @@ func StartPostgres(ctx context.Context, dbName string) (*PostgresContainer, erro
 
 	return &PostgresContainer{
 		Container: pg,
-		Host:      host,
-		Port:      port.Port(),
-		User:      user,
-		Password:  password,
-		DBName:    dbName,
+		Host: host,
+		Port: port.Port(),
+		User: user,
+		Password: password,
+		DBName: dbName,
 	}, nil
 }

@@ -40,7 +40,7 @@ func (h *AuthHandler) SubmitEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.SubmitEmailResponse{
-		IsRegistered:   resp.GetIsRegistered(),
+		IsRegistered: resp.GetIsRegistered(),
 		RegistrationID: resp.GetRegistrationKey(),
 	})
 }
@@ -120,7 +120,7 @@ func (h *AuthHandler) PasskeyRegisterFinish(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.PasskeyRegisterFinishResponse{
-		AccessToken:  resp.GetAccessToken(),
+		AccessToken: resp.GetAccessToken(),
 		RefreshToken: resp.GetRefreshToken(),
 	})
 }
@@ -175,7 +175,7 @@ func (h *AuthHandler) PasskeyLoginFinish(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.PasskeyLoginFinishResponse{
-		AccessToken:  resp.GetAccessToken(),
+		AccessToken: resp.GetAccessToken(),
 		RefreshToken: resp.GetRefreshToken(),
 	})
 }
@@ -227,7 +227,7 @@ func (h *AuthHandler) DevLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.DevLoginResponse{
-		AccessToken:  resp.GetAccessToken(),
+		AccessToken: resp.GetAccessToken(),
 		RefreshToken: resp.GetRefreshToken(),
 	})
 }
@@ -277,9 +277,9 @@ func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	u := resp.GetUser()
 	respondJSON(w, http.StatusOK, responses.ProfileResponse{
-		ID:        u.GetId(),
-		Username:  u.GetUsername(),
-		Email:     u.GetEmail(),
+		ID: u.GetId(),
+		Username: u.GetUsername(),
+		Email: u.GetEmail(),
 		AvatarURL: u.GetAvatarUrl(),
 		CreatedAt: u.GetCreatedAtUnix(),
 	})
@@ -314,9 +314,9 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	u := resp.GetUser()
 	respondJSON(w, http.StatusOK, responses.ProfileResponse{
-		ID:        u.GetId(),
-		Username:  u.GetUsername(),
-		Email:     u.GetEmail(),
+		ID: u.GetId(),
+		Username: u.GetUsername(),
+		Email: u.GetEmail(),
 		AvatarURL: u.GetAvatarUrl(),
 		CreatedAt: u.GetCreatedAtUnix(),
 	})
@@ -381,9 +381,9 @@ func (h *AuthHandler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request)
 	}
 	u := resp.GetUser()
 	respondJSON(w, http.StatusOK, responses.ProfileResponse{
-		ID:        u.GetId(),
-		Username:  u.GetUsername(),
-		Email:     u.GetEmail(),
+		ID: u.GetId(),
+		Username: u.GetUsername(),
+		Email: u.GetEmail(),
 		AvatarURL: u.GetAvatarUrl(),
 		CreatedAt: u.GetCreatedAtUnix(),
 	})
@@ -417,7 +417,7 @@ func (h *AuthHandler) RequestAvatarUpload(w http.ResponseWriter, r *http.Request
 	}
 	respondJSON(w, http.StatusOK, responses.AvatarUploadResponse{
 		UploadURL: resp.GetUploadUrl(),
-		S3Key:     resp.GetS3Key(),
+		S3Key: resp.GetS3Key(),
 	})
 }
 
@@ -449,9 +449,9 @@ func (h *AuthHandler) ConfirmAvatarUpload(w http.ResponseWriter, r *http.Request
 	}
 	u := resp.GetUser()
 	respondJSON(w, http.StatusOK, responses.ProfileResponse{
-		ID:        u.GetId(),
-		Username:  u.GetUsername(),
-		Email:     u.GetEmail(),
+		ID: u.GetId(),
+		Username: u.GetUsername(),
+		Email: u.GetEmail(),
 		AvatarURL: u.GetAvatarUrl(),
 		CreatedAt: u.GetCreatedAtUnix(),
 	})
@@ -479,9 +479,9 @@ func (h *AuthHandler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 	}
 	u := resp.GetUser()
 	respondJSON(w, http.StatusOK, responses.ProfileResponse{
-		ID:        u.GetId(),
-		Username:  u.GetUsername(),
-		Email:     u.GetEmail(),
+		ID: u.GetId(),
+		Username: u.GetUsername(),
+		Email: u.GetEmail(),
 		AvatarURL: u.GetAvatarUrl(),
 		CreatedAt: u.GetCreatedAtUnix(),
 	})

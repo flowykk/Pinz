@@ -36,9 +36,9 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 	}
 
 	wa, err := webauthn.New(&webauthn.Config{
-		RPID:          rpID,
+		RPID: rpID,
 		RPDisplayName: rpDisplayName,
-		RPOrigins:     []string{rpOrigin},
+		RPOrigins: []string{rpOrigin},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("webauthn init: %w", err)

@@ -13,11 +13,52 @@ definitions:
       session_id:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaCancelRequest:
+    properties:
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaCommitUploadRequest:
+    properties:
+      captured_at:
+        description: RFC3339
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      media_type:
+        type: string
+      s3_key:
+        type: string
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaConfirmRequest:
+    properties:
+      media_to_delete:
+        items:
+          type: string
+        type: array
+      pin_updates:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PinUpdateInput'
+        type: array
+      session_id:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest:
     properties:
-      media:
+      add_more:
+        type: boolean
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaRequestUploadUrlsRequest:
+    properties:
+      files_to_upload:
         items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry'
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
         type: array
       session_id:
         type: string
@@ -28,6 +69,11 @@ definitions:
         items:
           $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
         type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaTakeoverRequest:
+    properties:
+      session_id:
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest:
     properties:
@@ -281,11 +327,96 @@ definitions:
       verification_code:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.ActiveAddMediaSession:
+    properties:
+      current_initiator:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile'
+      initiator_assigned_at_unix:
+        type: integer
+      media_count_in_session:
+        type: integer
+      session_id:
+        type: string
+      takeover_available_at_unix:
+        type: integer
+    type: object
   pinz_backend_api-gateway-service_internal_responses.AddMediaApplyGroupsAndProcessResponse:
     properties:
       message:
         type: string
       status:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaCancelResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaCommitUploadResponse:
+    properties:
+      media_count_in_session:
+        type: integer
+      media_id:
+        type: string
+      remaining_slots:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaConfirmResponse:
+    properties:
+      already_confirmed:
+        type: boolean
+      status:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaGetGroupingResponse:
+    properties:
+      draft_pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DraftPin'
+        type: array
+      existing_media_ids:
+        items:
+          type: string
+        type: array
+      session_id:
+        type: string
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaGetReviewResponse:
+    properties:
+      can_edit:
+        type: boolean
+      current_initiator:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile'
+      new_pin_ids:
+        items:
+          type: string
+        type: array
+      pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
+        type: array
+      protected_media_ids:
+        items:
+          type: string
+        type: array
+      session_id:
+        type: string
+      takeover_available_at_unix:
+        type: integer
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaGetSessionMediaResponse:
+    properties:
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SessionMediaEntry'
+        type: array
+      media_count_in_session:
+        type: integer
+      session_id:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.AddMediaProcessGroupingResponse:
@@ -305,8 +436,17 @@ definitions:
       trip_id:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaRequestUploadUrlsResponse:
+    properties:
+      upload_urls:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
+        type: array
+    type: object
   pinz_backend_api-gateway-service_internal_responses.AddMediaStartResponse:
     properties:
+      joined:
+        type: boolean
       session_id:
         type: string
       status:
@@ -315,6 +455,15 @@ definitions:
         items:
           $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
         type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaTakeoverResponse:
+    properties:
+      current_initiator:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile'
+      is_initiator:
+        type: boolean
+      takeover_available_at_unix:
+        type: integer
     type: object
   pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse:
     properties:
@@ -420,7 +569,20 @@ definitions:
     type: object
   pinz_backend_api-gateway-service_internal_responses.ErrorResponse:
     properties:
+      details:
+        additionalProperties:
+          type: string
+        description: |-
+          Details — дополнительные structured-поля для конкретного reason. Пример:
+          {"remaining_slots": 2, "limit": 500, "kind": "media"} для LIMIT_EXCEEDED.
+        type: object
       error:
+        type: string
+      reason:
+        description: |-
+          Reason — машинный код ошибки (например, "SESSION_STALE", "NOT_INITIATOR",
+          "WRONG_STATUS", "LIMIT_EXCEEDED"). Клиент может различать сценарии и
+          реагировать по-разному, не парся текст Error.
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.FeedItem:
@@ -483,6 +645,8 @@ definitions:
     type: object
   pinz_backend_api-gateway-service_internal_responses.GetTripResponse:
     properties:
+      active_add_media_session:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ActiveAddMediaSession'
       pins:
         items:
           $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
@@ -577,6 +741,15 @@ definitions:
       username:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.PublicUserProfile:
+    properties:
+      avatar_url:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_responses.RefreshTokenResponse:
     properties:
       access_token:
@@ -619,6 +792,19 @@ definitions:
         type: string
       privacy_level:
         type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SessionMediaEntry:
+    properties:
+      actor_user_id:
+        type: string
+      media_id:
+        type: string
+      type:
+        type: string
+      uploaded_at_unix:
+        type: integer
       url:
         type: string
     type: object
@@ -2166,6 +2352,115 @@ paths:
       summary: '[3] Apply groups for add-media'
       tags:
       - trip-add-media
+  /api/v1/trips/{id}/media/add/cancel:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaCancelRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaCancelResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel add-media session
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/commit-upload:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Uploaded file metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaCommitUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaCommitUploadResponse'
+      security:
+      - BearerAuth: []
+      summary: Commit uploaded file to add-media session
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/confirm:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaConfirmResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm add-media session
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/grouping:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Add-media session id
+        in: query
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaGetGroupingResponse'
+      security:
+      - BearerAuth: []
+      summary: Add-media grouping snapshot
+      tags:
+      - trip-add-media
   /api/v1/trips/{id}/media/add/process-grouping:
     post:
       consumes:
@@ -2192,6 +2487,84 @@ paths:
       security:
       - BearerAuth: []
       summary: '[2] Process grouping for add-media'
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/request-upload-urls:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session id and files to upload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaRequestUploadUrlsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaRequestUploadUrlsResponse'
+      security:
+      - BearerAuth: []
+      summary: Request upload URLs for active add-media session
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/review:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Add-media session id
+        in: query
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaGetReviewResponse'
+      security:
+      - BearerAuth: []
+      summary: Add-media final review
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/session-media:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Add-media session id
+        in: query
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaGetSessionMediaResponse'
+      security:
+      - BearerAuth: []
+      summary: Session media snapshot
       tags:
       - trip-add-media
   /api/v1/trips/{id}/media/add/start:
@@ -2236,6 +2609,36 @@ paths:
       security:
       - BearerAuth: []
       summary: '[1] Start add-media session'
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/takeover:
+    post:
+      consumes:
+      - application/json
+      description: 'Идемпотентен: если caller уже ведущий, вернёт 200 без изменений.
+        Если час не прошёл — 403 NOT_INITIATOR.'
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaTakeoverRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaTakeoverResponse'
+      security:
+      - BearerAuth: []
+      summary: Take over add-media session leadership
       tags:
       - trip-add-media
   /api/v1/trips/{id}/participants/{user_id}:

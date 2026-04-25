@@ -45,8 +45,16 @@ const (
 	TripService_RemoveFromFavourites_FullMethodName          = "/trip.TripService/RemoveFromFavourites"
 	TripService_ListFavourites_FullMethodName                = "/trip.TripService/ListFavourites"
 	TripService_AddMediaStart_FullMethodName                 = "/trip.TripService/AddMediaStart"
+	TripService_AddMediaRequestUploadUrls_FullMethodName     = "/trip.TripService/AddMediaRequestUploadUrls"
+	TripService_AddMediaCommitUpload_FullMethodName          = "/trip.TripService/AddMediaCommitUpload"
+	TripService_AddMediaGetSessionMedia_FullMethodName       = "/trip.TripService/AddMediaGetSessionMedia"
 	TripService_AddMediaProcessGrouping_FullMethodName       = "/trip.TripService/AddMediaProcessGrouping"
+	TripService_AddMediaGetGrouping_FullMethodName           = "/trip.TripService/AddMediaGetGrouping"
 	TripService_AddMediaApplyGroupsAndProcess_FullMethodName = "/trip.TripService/AddMediaApplyGroupsAndProcess"
+	TripService_AddMediaGetReview_FullMethodName             = "/trip.TripService/AddMediaGetReview"
+	TripService_AddMediaConfirm_FullMethodName               = "/trip.TripService/AddMediaConfirm"
+	TripService_AddMediaCancel_FullMethodName                = "/trip.TripService/AddMediaCancel"
+	TripService_AddMediaTakeover_FullMethodName              = "/trip.TripService/AddMediaTakeover"
 	TripService_ListUserTripSummaries_FullMethodName         = "/trip.TripService/ListUserTripSummaries"
 	TripService_StartBattle_FullMethodName                   = "/trip.TripService/StartBattle"
 	TripService_SubmitBattleResult_FullMethodName            = "/trip.TripService/SubmitBattleResult"
@@ -82,9 +90,9 @@ type TripServiceClient interface {
 	ApplyGroupsAndProcess(ctx context.Context, in *ApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*ApplyGroupsAndProcessResponse, error)
 	GetTripReview(ctx context.Context, in *GetTripReviewRequest, opts ...grpc.CallOption) (*GetTripReviewResponse, error)
 	FinalizeTrip(ctx context.Context, in *FinalizeTripRequest, opts ...grpc.CallOption) (*FinalizeTripResponse, error)
-	// Публикация в ленту (PINZ-105, ТЗ 3.3): вся поездка целиком или выбранные пины
+	// Публикация в ленту (ТЗ 3.3): вся поездка целиком или выбранные пины
 	PublishTrip(ctx context.Context, in *PublishTripRequest, opts ...grpc.CallOption) (*PublishTripResponse, error)
-	// PINZ-98: лента, лайки, избранное, настройки уведомлений
+	// лента, лайки, избранное, настройки уведомлений
 	UpdateTripSettings(ctx context.Context, in *UpdateTripSettingsRequest, opts ...grpc.CallOption) (*UpdateTripSettingsResponse, error)
 	ListFeed(ctx context.Context, in *ListFeedRequest, opts ...grpc.CallOption) (*ListFeedResponse, error)
 	LikeTrip(ctx context.Context, in *LikeTripRequest, opts ...grpc.CallOption) (*LikeTripResponse, error)
@@ -92,22 +100,30 @@ type TripServiceClient interface {
 	AddToFavourites(ctx context.Context, in *AddToFavouritesRequest, opts ...grpc.CallOption) (*AddToFavouritesResponse, error)
 	RemoveFromFavourites(ctx context.Context, in *RemoveFromFavouritesRequest, opts ...grpc.CallOption) (*RemoveFromFavouritesResponse, error)
 	ListFavourites(ctx context.Context, in *ListFavouritesRequest, opts ...grpc.CallOption) (*ListFavouritesResponse, error)
-	// PINZ-131: Добавление медиа в существующий трип (ТЗ 5.1-5.3)
+	// Добавление медиа в существующий трип (ТЗ 5.1-5.3)
 	AddMediaStart(ctx context.Context, in *AddMediaStartRequest, opts ...grpc.CallOption) (*AddMediaStartResponse, error)
+	AddMediaRequestUploadUrls(ctx context.Context, in *AddMediaRequestUploadUrlsRequest, opts ...grpc.CallOption) (*AddMediaRequestUploadUrlsResponse, error)
+	AddMediaCommitUpload(ctx context.Context, in *AddMediaCommitUploadRequest, opts ...grpc.CallOption) (*AddMediaCommitUploadResponse, error)
+	AddMediaGetSessionMedia(ctx context.Context, in *AddMediaGetSessionMediaRequest, opts ...grpc.CallOption) (*AddMediaGetSessionMediaResponse, error)
 	AddMediaProcessGrouping(ctx context.Context, in *AddMediaProcessGroupingRequest, opts ...grpc.CallOption) (*AddMediaProcessGroupingResponse, error)
+	AddMediaGetGrouping(ctx context.Context, in *AddMediaGetGroupingRequest, opts ...grpc.CallOption) (*AddMediaGetGroupingResponse, error)
 	AddMediaApplyGroupsAndProcess(ctx context.Context, in *AddMediaApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*AddMediaApplyGroupsAndProcessResponse, error)
-	// PINZ-133: лёгкая сводка по всем трипам пользователя для statistics/profile
+	AddMediaGetReview(ctx context.Context, in *AddMediaGetReviewRequest, opts ...grpc.CallOption) (*AddMediaGetReviewResponse, error)
+	AddMediaConfirm(ctx context.Context, in *AddMediaConfirmRequest, opts ...grpc.CallOption) (*AddMediaConfirmResponse, error)
+	AddMediaCancel(ctx context.Context, in *AddMediaCancelRequest, opts ...grpc.CallOption) (*AddMediaCancelResponse, error)
+	AddMediaTakeover(ctx context.Context, in *AddMediaTakeoverRequest, opts ...grpc.CallOption) (*AddMediaTakeoverResponse, error)
+	// лёгкая сводка по всем трипам пользователя для statistics/profile
 	ListUserTripSummaries(ctx context.Context, in *ListUserTripSummariesRequest, opts ...grpc.CallOption) (*ListUserTripSummariesResponse, error)
-	// PINZ-132: фотобатлы и "лучшие воспоминания" (ТЗ 8)
+	// фотобатлы и "лучшие воспоминания" (ТЗ 8)
 	StartBattle(ctx context.Context, in *StartBattleRequest, opts ...grpc.CallOption) (*StartBattleResponse, error)
 	SubmitBattleResult(ctx context.Context, in *SubmitBattleResultRequest, opts ...grpc.CallOption) (*SubmitBattleResultResponse, error)
 	GetBestMemories(ctx context.Context, in *GetBestMemoriesRequest, opts ...grpc.CallOption) (*GetBestMemoriesResponse, error)
-	// PINZ-134: поддержка notification-service — настройки уведомлений и таймерные выборки трипов.
+	// поддержка notification-service — настройки уведомлений и таймерные выборки трипов.
 	GetNotificationSettings(ctx context.Context, in *GetNotificationSettingsRequest, opts ...grpc.CallOption) (*GetNotificationSettingsResponse, error)
 	ListAnniversaryTrips(ctx context.Context, in *ListAnniversaryTripsRequest, opts ...grpc.CallOption) (*ListAnniversaryTripsResponse, error)
 	ListEndedMonthAgoTrips(ctx context.Context, in *ListEndedMonthAgoTripsRequest, opts ...grpc.CallOption) (*ListEndedMonthAgoTripsResponse, error)
 	ListTripParticipants(ctx context.Context, in *ListTripParticipantsRequest, opts ...grpc.CallOption) (*ListTripParticipantsResponse, error)
-	// PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
+	// текстовый поиск пинов в трипах пользователя (по name/description/tags)
 	SearchPins(ctx context.Context, in *SearchPinsRequest, opts ...grpc.CallOption) (*SearchPinsResponse, error)
 }
 
@@ -379,6 +395,36 @@ func (c *tripServiceClient) AddMediaStart(ctx context.Context, in *AddMediaStart
 	return out, nil
 }
 
+func (c *tripServiceClient) AddMediaRequestUploadUrls(ctx context.Context, in *AddMediaRequestUploadUrlsRequest, opts ...grpc.CallOption) (*AddMediaRequestUploadUrlsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaRequestUploadUrlsResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaRequestUploadUrls_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) AddMediaCommitUpload(ctx context.Context, in *AddMediaCommitUploadRequest, opts ...grpc.CallOption) (*AddMediaCommitUploadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaCommitUploadResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaCommitUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) AddMediaGetSessionMedia(ctx context.Context, in *AddMediaGetSessionMediaRequest, opts ...grpc.CallOption) (*AddMediaGetSessionMediaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaGetSessionMediaResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaGetSessionMedia_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *tripServiceClient) AddMediaProcessGrouping(ctx context.Context, in *AddMediaProcessGroupingRequest, opts ...grpc.CallOption) (*AddMediaProcessGroupingResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AddMediaProcessGroupingResponse)
@@ -389,10 +435,60 @@ func (c *tripServiceClient) AddMediaProcessGrouping(ctx context.Context, in *Add
 	return out, nil
 }
 
+func (c *tripServiceClient) AddMediaGetGrouping(ctx context.Context, in *AddMediaGetGroupingRequest, opts ...grpc.CallOption) (*AddMediaGetGroupingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaGetGroupingResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaGetGrouping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *tripServiceClient) AddMediaApplyGroupsAndProcess(ctx context.Context, in *AddMediaApplyGroupsAndProcessRequest, opts ...grpc.CallOption) (*AddMediaApplyGroupsAndProcessResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AddMediaApplyGroupsAndProcessResponse)
 	err := c.cc.Invoke(ctx, TripService_AddMediaApplyGroupsAndProcess_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) AddMediaGetReview(ctx context.Context, in *AddMediaGetReviewRequest, opts ...grpc.CallOption) (*AddMediaGetReviewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaGetReviewResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaGetReview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) AddMediaConfirm(ctx context.Context, in *AddMediaConfirmRequest, opts ...grpc.CallOption) (*AddMediaConfirmResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaConfirmResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaConfirm_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) AddMediaCancel(ctx context.Context, in *AddMediaCancelRequest, opts ...grpc.CallOption) (*AddMediaCancelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaCancelResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaCancel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) AddMediaTakeover(ctx context.Context, in *AddMediaTakeoverRequest, opts ...grpc.CallOption) (*AddMediaTakeoverResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMediaTakeoverResponse)
+	err := c.cc.Invoke(ctx, TripService_AddMediaTakeover_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -513,9 +609,9 @@ type TripServiceServer interface {
 	ApplyGroupsAndProcess(context.Context, *ApplyGroupsAndProcessRequest) (*ApplyGroupsAndProcessResponse, error)
 	GetTripReview(context.Context, *GetTripReviewRequest) (*GetTripReviewResponse, error)
 	FinalizeTrip(context.Context, *FinalizeTripRequest) (*FinalizeTripResponse, error)
-	// Публикация в ленту (PINZ-105, ТЗ 3.3): вся поездка целиком или выбранные пины
+	// Публикация в ленту (ТЗ 3.3): вся поездка целиком или выбранные пины
 	PublishTrip(context.Context, *PublishTripRequest) (*PublishTripResponse, error)
-	// PINZ-98: лента, лайки, избранное, настройки уведомлений
+	// лента, лайки, избранное, настройки уведомлений
 	UpdateTripSettings(context.Context, *UpdateTripSettingsRequest) (*UpdateTripSettingsResponse, error)
 	ListFeed(context.Context, *ListFeedRequest) (*ListFeedResponse, error)
 	LikeTrip(context.Context, *LikeTripRequest) (*LikeTripResponse, error)
@@ -523,22 +619,30 @@ type TripServiceServer interface {
 	AddToFavourites(context.Context, *AddToFavouritesRequest) (*AddToFavouritesResponse, error)
 	RemoveFromFavourites(context.Context, *RemoveFromFavouritesRequest) (*RemoveFromFavouritesResponse, error)
 	ListFavourites(context.Context, *ListFavouritesRequest) (*ListFavouritesResponse, error)
-	// PINZ-131: Добавление медиа в существующий трип (ТЗ 5.1-5.3)
+	// Добавление медиа в существующий трип (ТЗ 5.1-5.3)
 	AddMediaStart(context.Context, *AddMediaStartRequest) (*AddMediaStartResponse, error)
+	AddMediaRequestUploadUrls(context.Context, *AddMediaRequestUploadUrlsRequest) (*AddMediaRequestUploadUrlsResponse, error)
+	AddMediaCommitUpload(context.Context, *AddMediaCommitUploadRequest) (*AddMediaCommitUploadResponse, error)
+	AddMediaGetSessionMedia(context.Context, *AddMediaGetSessionMediaRequest) (*AddMediaGetSessionMediaResponse, error)
 	AddMediaProcessGrouping(context.Context, *AddMediaProcessGroupingRequest) (*AddMediaProcessGroupingResponse, error)
+	AddMediaGetGrouping(context.Context, *AddMediaGetGroupingRequest) (*AddMediaGetGroupingResponse, error)
 	AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error)
-	// PINZ-133: лёгкая сводка по всем трипам пользователя для statistics/profile
+	AddMediaGetReview(context.Context, *AddMediaGetReviewRequest) (*AddMediaGetReviewResponse, error)
+	AddMediaConfirm(context.Context, *AddMediaConfirmRequest) (*AddMediaConfirmResponse, error)
+	AddMediaCancel(context.Context, *AddMediaCancelRequest) (*AddMediaCancelResponse, error)
+	AddMediaTakeover(context.Context, *AddMediaTakeoverRequest) (*AddMediaTakeoverResponse, error)
+	// лёгкая сводка по всем трипам пользователя для statistics/profile
 	ListUserTripSummaries(context.Context, *ListUserTripSummariesRequest) (*ListUserTripSummariesResponse, error)
-	// PINZ-132: фотобатлы и "лучшие воспоминания" (ТЗ 8)
+	// фотобатлы и "лучшие воспоминания" (ТЗ 8)
 	StartBattle(context.Context, *StartBattleRequest) (*StartBattleResponse, error)
 	SubmitBattleResult(context.Context, *SubmitBattleResultRequest) (*SubmitBattleResultResponse, error)
 	GetBestMemories(context.Context, *GetBestMemoriesRequest) (*GetBestMemoriesResponse, error)
-	// PINZ-134: поддержка notification-service — настройки уведомлений и таймерные выборки трипов.
+	// поддержка notification-service — настройки уведомлений и таймерные выборки трипов.
 	GetNotificationSettings(context.Context, *GetNotificationSettingsRequest) (*GetNotificationSettingsResponse, error)
 	ListAnniversaryTrips(context.Context, *ListAnniversaryTripsRequest) (*ListAnniversaryTripsResponse, error)
 	ListEndedMonthAgoTrips(context.Context, *ListEndedMonthAgoTripsRequest) (*ListEndedMonthAgoTripsResponse, error)
 	ListTripParticipants(context.Context, *ListTripParticipantsRequest) (*ListTripParticipantsResponse, error)
-	// PINZ-135: текстовый поиск пинов в трипах пользователя (по name/description/tags)
+	// текстовый поиск пинов в трипах пользователя (по name/description/tags)
 	SearchPins(context.Context, *SearchPinsRequest) (*SearchPinsResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
@@ -628,11 +732,35 @@ func (UnimplementedTripServiceServer) ListFavourites(context.Context, *ListFavou
 func (UnimplementedTripServiceServer) AddMediaStart(context.Context, *AddMediaStartRequest) (*AddMediaStartResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMediaStart not implemented")
 }
+func (UnimplementedTripServiceServer) AddMediaRequestUploadUrls(context.Context, *AddMediaRequestUploadUrlsRequest) (*AddMediaRequestUploadUrlsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaRequestUploadUrls not implemented")
+}
+func (UnimplementedTripServiceServer) AddMediaCommitUpload(context.Context, *AddMediaCommitUploadRequest) (*AddMediaCommitUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaCommitUpload not implemented")
+}
+func (UnimplementedTripServiceServer) AddMediaGetSessionMedia(context.Context, *AddMediaGetSessionMediaRequest) (*AddMediaGetSessionMediaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaGetSessionMedia not implemented")
+}
 func (UnimplementedTripServiceServer) AddMediaProcessGrouping(context.Context, *AddMediaProcessGroupingRequest) (*AddMediaProcessGroupingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMediaProcessGrouping not implemented")
 }
+func (UnimplementedTripServiceServer) AddMediaGetGrouping(context.Context, *AddMediaGetGroupingRequest) (*AddMediaGetGroupingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaGetGrouping not implemented")
+}
 func (UnimplementedTripServiceServer) AddMediaApplyGroupsAndProcess(context.Context, *AddMediaApplyGroupsAndProcessRequest) (*AddMediaApplyGroupsAndProcessResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMediaApplyGroupsAndProcess not implemented")
+}
+func (UnimplementedTripServiceServer) AddMediaGetReview(context.Context, *AddMediaGetReviewRequest) (*AddMediaGetReviewResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaGetReview not implemented")
+}
+func (UnimplementedTripServiceServer) AddMediaConfirm(context.Context, *AddMediaConfirmRequest) (*AddMediaConfirmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaConfirm not implemented")
+}
+func (UnimplementedTripServiceServer) AddMediaCancel(context.Context, *AddMediaCancelRequest) (*AddMediaCancelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaCancel not implemented")
+}
+func (UnimplementedTripServiceServer) AddMediaTakeover(context.Context, *AddMediaTakeoverRequest) (*AddMediaTakeoverResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMediaTakeover not implemented")
 }
 func (UnimplementedTripServiceServer) ListUserTripSummaries(context.Context, *ListUserTripSummariesRequest) (*ListUserTripSummariesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUserTripSummaries not implemented")
@@ -1150,6 +1278,60 @@ func _TripService_AddMediaStart_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_AddMediaRequestUploadUrls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaRequestUploadUrlsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaRequestUploadUrls(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaRequestUploadUrls_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaRequestUploadUrls(ctx, req.(*AddMediaRequestUploadUrlsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_AddMediaCommitUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaCommitUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaCommitUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaCommitUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaCommitUpload(ctx, req.(*AddMediaCommitUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_AddMediaGetSessionMedia_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaGetSessionMediaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaGetSessionMedia(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaGetSessionMedia_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaGetSessionMedia(ctx, req.(*AddMediaGetSessionMediaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TripService_AddMediaProcessGrouping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddMediaProcessGroupingRequest)
 	if err := dec(in); err != nil {
@@ -1168,6 +1350,24 @@ func _TripService_AddMediaProcessGrouping_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_AddMediaGetGrouping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaGetGroupingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaGetGrouping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaGetGrouping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaGetGrouping(ctx, req.(*AddMediaGetGroupingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TripService_AddMediaApplyGroupsAndProcess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddMediaApplyGroupsAndProcessRequest)
 	if err := dec(in); err != nil {
@@ -1182,6 +1382,78 @@ func _TripService_AddMediaApplyGroupsAndProcess_Handler(srv interface{}, ctx con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TripServiceServer).AddMediaApplyGroupsAndProcess(ctx, req.(*AddMediaApplyGroupsAndProcessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_AddMediaGetReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaGetReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaGetReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaGetReview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaGetReview(ctx, req.(*AddMediaGetReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_AddMediaConfirm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaConfirmRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaConfirm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaConfirm_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaConfirm(ctx, req.(*AddMediaConfirmRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_AddMediaCancel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaCancelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaCancel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaCancel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaCancel(ctx, req.(*AddMediaCancelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_AddMediaTakeover_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMediaTakeoverRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).AddMediaTakeover(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_AddMediaTakeover_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).AddMediaTakeover(ctx, req.(*AddMediaTakeoverRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1460,12 +1732,44 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TripService_AddMediaStart_Handler,
 		},
 		{
+			MethodName: "AddMediaRequestUploadUrls",
+			Handler:    _TripService_AddMediaRequestUploadUrls_Handler,
+		},
+		{
+			MethodName: "AddMediaCommitUpload",
+			Handler:    _TripService_AddMediaCommitUpload_Handler,
+		},
+		{
+			MethodName: "AddMediaGetSessionMedia",
+			Handler:    _TripService_AddMediaGetSessionMedia_Handler,
+		},
+		{
 			MethodName: "AddMediaProcessGrouping",
 			Handler:    _TripService_AddMediaProcessGrouping_Handler,
 		},
 		{
+			MethodName: "AddMediaGetGrouping",
+			Handler:    _TripService_AddMediaGetGrouping_Handler,
+		},
+		{
 			MethodName: "AddMediaApplyGroupsAndProcess",
 			Handler:    _TripService_AddMediaApplyGroupsAndProcess_Handler,
+		},
+		{
+			MethodName: "AddMediaGetReview",
+			Handler:    _TripService_AddMediaGetReview_Handler,
+		},
+		{
+			MethodName: "AddMediaConfirm",
+			Handler:    _TripService_AddMediaConfirm_Handler,
+		},
+		{
+			MethodName: "AddMediaCancel",
+			Handler:    _TripService_AddMediaCancel_Handler,
+		},
+		{
+			MethodName: "AddMediaTakeover",
+			Handler:    _TripService_AddMediaTakeover_Handler,
 		},
 		{
 			MethodName: "ListUserTripSummaries",

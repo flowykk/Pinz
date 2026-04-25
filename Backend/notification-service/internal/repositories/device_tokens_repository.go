@@ -51,8 +51,8 @@ func (r *DeviceTokensRepository) ListByUser(ctx context.Context, userID string) 
 	out := make([]models.DeviceToken, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, models.DeviceToken{
-			ID:        row.ID.String(),
-			UserID:    row.UserID.String(),
+			ID: row.ID.String(),
+			UserID: row.UserID.String(),
 			APNSToken: row.ApnsToken,
 			UpdatedAt: row.UpdatedAt,
 		})
@@ -79,8 +79,8 @@ func (r *DeviceTokensRepository) ListByUsers(ctx context.Context, userIDs []stri
 	out := make([]models.DeviceToken, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, models.DeviceToken{
-			ID:        row.ID.String(),
-			UserID:    row.UserID.String(),
+			ID: row.ID.String(),
+			UserID: row.UserID.String(),
 			APNSToken: row.ApnsToken,
 			UpdatedAt: row.UpdatedAt,
 		})
