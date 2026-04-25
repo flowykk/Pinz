@@ -79,11 +79,12 @@ final class PinPlaceChangeViewModelTests: XCTestCase {
         XCTAssertEqual(mockRouter.popCallCount, 1)
     }
 
-    func test_reset_restoresOriginalCoordinate() {
+    func test_reset_restoresOriginalCoordinate() throws {
         sut.currentCoordinate = CLLocationCoordinate2D(latitude: 10.0, longitude: 20.0)
         sut.dispatch(.reset)
-        XCTAssertEqual(sut.currentCoordinate?.latitude, originalCoord.latitude, accuracy: 0.0001)
-        XCTAssertEqual(sut.currentCoordinate?.longitude, originalCoord.longitude, accuracy: 0.0001)
+        let coord = try XCTUnwrap(sut.currentCoordinate)
+        XCTAssertEqual(coord.latitude, originalCoord.latitude, accuracy: 0.0001)
+        XCTAssertEqual(coord.longitude, originalCoord.longitude, accuracy: 0.0001)
     }
 
     // .update(MapCameraUpdateContext) is not directly testable since

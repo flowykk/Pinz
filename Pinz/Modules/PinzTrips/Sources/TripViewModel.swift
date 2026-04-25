@@ -149,6 +149,7 @@ final class TripViewModel {
             selectedPin = nil
             _position = nil
             shouldReloadSavedTrip = false
+            SelectedTripStorage.shared.clearSelection()
 
         case .forceReloadSavedTrip:
             shouldReloadSavedTrip = true

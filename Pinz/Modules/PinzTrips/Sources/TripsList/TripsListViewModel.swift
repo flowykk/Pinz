@@ -22,10 +22,13 @@ final class TripsListViewModel {
     var trips: [Trip] = []
     private(set) var isLoading = false
 
-    private let networkService = NetworkService.shared
+    private let networkService: NetworkServiceProtocol
     private var router: AppRouting?
 
-    init() {
+    init(trips: [Trip] = [], networkService: NetworkServiceProtocol = NetworkService.shared) {
+        self.networkService = networkService
+        let selectedTripID = SelectedTripStorage.shared.selectedTripID
+        self.trips = trips.filter { $0.id != selectedTripID }
     }
 
     func dispatch(_ intent: Intent) {

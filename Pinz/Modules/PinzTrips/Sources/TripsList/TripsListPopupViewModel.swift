@@ -9,13 +9,14 @@ final class TripsListPopupViewModel {
     var trips: [Trip] = []
     private(set) var isLoading = false
 
-    private let networkService = NetworkService.shared
+    private let networkService: NetworkServiceProtocol
 
     enum AsyncIntent {
         case fetchTrips(selectedTripId: String)
     }
 
-    init() {
+    init(networkService: NetworkServiceProtocol = NetworkService.shared) {
+        self.networkService = networkService
     }
 
     func asyncDispatch(_ intent: AsyncIntent) async throws {

@@ -6,6 +6,7 @@ import PinzDomain
 import PinzNetworking
 import UIKit
 
+@MainActor
 final class TripInfoViewModelTests: XCTestCase {
 
     private var mockRouter: MockRouter!
@@ -35,7 +36,7 @@ final class TripInfoViewModelTests: XCTestCase {
     }
 
     @MainActor
-    func test_photoBattle_startPhotoBattle_runs3RoundsAndSubmitsFinalWinner() async {
+    func test_photoBattle_startPhotoBattle_runs3RoundsAndSubmitsFinalWinner() async throws {
         let media = (1...TripInfoViewModel.requiredBattleMediaCount).map { index in
             StartBattleMediaDTO(
                 photoBattleMediaId: "m-\(index)",
@@ -53,44 +54,45 @@ final class TripInfoViewModelTests: XCTestCase {
         await sut.startPhotoBattle()
         XCTAssertTrue(sut.isPhotoBattlePresented)
         XCTAssertEqual(mockNetwork.startBattleCall, trip.id)
-        XCTAssertEqual(sut.currentRound, 1)
-        XCTAssertEqual(sut.currentPair?.0.photoBattleMediaId, "m-1")
-        XCTAssertEqual(sut.currentPair?.1.photoBattleMediaId, "m-2")
+        let battle = try XCTUnwrap(sut.photoBattleViewModel)
+        XCTAssertEqual(battle.currentRound, 1)
+        XCTAssertEqual(battle.currentPair?.0.photoBattleMediaId, "m-1")
+        XCTAssertEqual(battle.currentPair?.1.photoBattleMediaId, "m-2")
 
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        XCTAssertEqual(sut.step, 1)
-        XCTAssertEqual(sut.currentPair?.0.photoBattleMediaId, "m-3")
-        XCTAssertEqual(sut.currentPair?.1.photoBattleMediaId, "m-4")
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        XCTAssertEqual(battle.step, 1)
+        XCTAssertEqual(battle.currentPair?.0.photoBattleMediaId, "m-3")
+        XCTAssertEqual(battle.currentPair?.1.photoBattleMediaId, "m-4")
 
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        XCTAssertEqual(sut.step, 2)
-        XCTAssertEqual(sut.currentPair?.0.photoBattleMediaId, "m-5")
-        XCTAssertEqual(sut.currentPair?.1.photoBattleMediaId, "m-6")
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        XCTAssertEqual(battle.step, 2)
+        XCTAssertEqual(battle.currentPair?.0.photoBattleMediaId, "m-5")
+        XCTAssertEqual(battle.currentPair?.1.photoBattleMediaId, "m-6")
 
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        XCTAssertEqual(sut.step, 3)
-        XCTAssertEqual(sut.currentPair?.0.photoBattleMediaId, "m-7")
-        XCTAssertEqual(sut.currentPair?.1.photoBattleMediaId, "m-8")
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        XCTAssertEqual(battle.step, 3)
+        XCTAssertEqual(battle.currentPair?.0.photoBattleMediaId, "m-7")
+        XCTAssertEqual(battle.currentPair?.1.photoBattleMediaId, "m-8")
 
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        XCTAssertEqual(sut.step, 4)
-        XCTAssertEqual(sut.currentRound, 2)
-        XCTAssertEqual(sut.currentPair?.0.photoBattleMediaId, "m-1")
-        XCTAssertEqual(sut.currentPair?.1.photoBattleMediaId, "m-3")
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        XCTAssertEqual(battle.step, 4)
+        XCTAssertEqual(battle.currentRound, 2)
+        XCTAssertEqual(battle.currentPair?.0.photoBattleMediaId, "m-1")
+        XCTAssertEqual(battle.currentPair?.1.photoBattleMediaId, "m-3")
 
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        XCTAssertEqual(sut.step, 5)
-        XCTAssertEqual(sut.currentRound, 2)
-        XCTAssertEqual(sut.currentPair?.0.photoBattleMediaId, "m-5")
-        XCTAssertEqual(sut.currentPair?.1.photoBattleMediaId, "m-7")
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        XCTAssertEqual(battle.step, 5)
+        XCTAssertEqual(battle.currentRound, 2)
+        XCTAssertEqual(battle.currentPair?.0.photoBattleMediaId, "m-5")
+        XCTAssertEqual(battle.currentPair?.1.photoBattleMediaId, "m-7")
 
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        XCTAssertEqual(sut.step, 6)
-        XCTAssertEqual(sut.currentRound, 3)
-        XCTAssertEqual(sut.currentPair?.0.photoBattleMediaId, "m-1")
-        XCTAssertEqual(sut.currentPair?.1.photoBattleMediaId, "m-5")
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        XCTAssertEqual(battle.step, 6)
+        XCTAssertEqual(battle.currentRound, 3)
+        XCTAssertEqual(battle.currentPair?.0.photoBattleMediaId, "m-1")
+        XCTAssertEqual(battle.currentPair?.1.photoBattleMediaId, "m-5")
 
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
 
         for _ in 0..<80 {
             if mockNetwork.submitBattleResultCall != nil {
@@ -111,7 +113,7 @@ final class TripInfoViewModelTests: XCTestCase {
         await sut.startPhotoBattle()
 
         XCTAssertEqual(mockNetwork.startBattleCall, trip.id)
-        XCTAssertEqual(sut.battleError, "Для фото-баттла нужно минимум 8 медиа в путешествии")
+        XCTAssertEqual(sut.battleError, PinzBaseStrings.TripInfo.Message.photoBattleNeedMediaWithContext(TripInfoViewModel.requiredBattleMediaCount))
         XCTAssertFalse(sut.isPhotoBattlePresented)
     }
 
@@ -135,24 +137,23 @@ final class TripInfoViewModelTests: XCTestCase {
         await sut.startPhotoBattle()
         XCTAssertTrue(sut.isPhotoBattlePresented)
 
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
-        sut.selectPhotoBattleMedia(sut.leftMedia!)
+        let battle = sut.photoBattleViewModel!
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
+        battle.selectPhotoBattleMedia(battle.leftMedia!)
 
         for _ in 0..<80 {
-            if mockNetwork.submitBattleResultCall != nil {
-                break
-            }
+            if battle.battleError != nil { break }
             try? await Task.sleep(nanoseconds: 10_000_000)
         }
 
         XCTAssertEqual(mockNetwork.submitBattleResultCall?.battleId, "battle-001")
         XCTAssertEqual(mockNetwork.submitBattleResultCall?.winnerMediaId, "m-1")
-        XCTAssertNotNil(sut.battleError)
+        XCTAssertNotNil(battle.battleError)
         XCTAssertTrue(sut.isPhotoBattlePresented)
     }
 
@@ -183,7 +184,7 @@ final class TripInfoViewModelTests: XCTestCase {
         await smallTripViewModel.startPhotoBattle()
 
         XCTAssertFalse(smallTripViewModel.canStartPhotoBattle)
-        XCTAssertEqual(smallTripViewModel.battleError, "Для фото-баттла нужно минимум \(TripInfoViewModel.requiredBattleMediaCount) медиа")
+        XCTAssertEqual(smallTripViewModel.battleError, PinzBaseStrings.TripInfo.Message.photoBattleNeedMedia(TripInfoViewModel.requiredBattleMediaCount))
         XCTAssertNil(mockNetwork.startBattleCall)
     }
 

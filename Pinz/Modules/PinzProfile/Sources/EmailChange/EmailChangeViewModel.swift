@@ -26,7 +26,7 @@ class EmailChangeViewModel {
     var userId: String?
     var code: [String] = Array(repeating: "", count: 4)
 
-    private let networkService = NetworkService.shared
+    private let networkService: any NetworkServiceProtocol
     private var router: AppRouting?
 
     var isNextButtonDisabled: Bool {
@@ -63,10 +63,12 @@ class EmailChangeViewModel {
     public init(
         email: String,
         userId: String? = nil,
+        networkService: (any NetworkServiceProtocol)? = nil,
         successAction: @escaping (String) -> Void
     ) {
         self.email = email
         self.userId = userId
+        self.networkService = networkService ?? NetworkService.shared
         self.successAction = successAction
     }
 

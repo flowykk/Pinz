@@ -2,6 +2,7 @@ import XCTest
 @testable import PinzTrips
 import PinzBase
 
+@MainActor
 final class TripMembersViewModelTests: XCTestCase {
 
     private var mockRouter: MockRouter!

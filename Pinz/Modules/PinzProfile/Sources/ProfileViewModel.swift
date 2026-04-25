@@ -44,7 +44,7 @@ public class ProfileViewModel {
 
     var user: User
     var userImage: UIImage?
-    private let networkService = NetworkService.shared
+    private let networkService: NetworkServiceProtocol
     private var router: AppRouting?
     private var avatarUploadTask: Task<ProfileResponseDTO, Error>?
 
@@ -53,8 +53,9 @@ public class ProfileViewModel {
         case invalidUploadResponse
     }
 
-    public init(user: User) {
+    public init(user: User, networkService: NetworkServiceProtocol = NetworkService.shared) {
         self.user = user
+        self.networkService = networkService
     }
 
     public func dispatch(_ intent: Intent) {

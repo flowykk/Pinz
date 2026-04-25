@@ -96,7 +96,7 @@ extension Pin {
                     "https://i.pinimg.com/1200x/a2/aa/69/a2aa69b55a2d0119bf477c1984bb5c77.jpg",
                     "https://avatars.mds.yandex.net/i?id=d19b5e25223f5583c129bc11983be385_l-13234616-images-thumbs&n=13",
                 ]),
-                isPrivate: Bool.random(),
+                isPrivate: false,
                 tags: [
                     MediaTag(tag: "Религия"),
                     MediaTag(tag: "Достопримечательность"),
@@ -130,7 +130,7 @@ extension Pin {
                     "https://i.pinimg.com/736x/06/dc/fa/06dcfa6e1a3aaf1539724b3d48f21280.jpg",
                     "https://i.pinimg.com/736x/2f/0b/16/2f0b16ad2c349d732a53b97ae30932f2.jpg",
                 ]),
-                isPrivate: Bool.random(),
+                isPrivate: false,
                 tags: [
                     MediaTag(tag: "Достопримечательность")
                 ],
@@ -159,7 +159,7 @@ extension Pin {
                     "https://i.pinimg.com/736x/ce/ed/3a/ceed3ae1cc1c839743f3b2cb4a4a2c23.jpg",
                     "https://i.pinimg.com/1200x/e2/b4/26/e2b426206dbb0b1cc832c80e2d9259ee.jpg",
                 ]),
-                isPrivate: Bool.random(),
+                isPrivate: false,
                 tags: [
                     MediaTag(tag: "Парк")
                 ],
@@ -185,7 +185,7 @@ extension Pin {
                     "https://i.pinimg.com/736x/0c/a7/d3/0ca7d3ff242a9a7cad6176659da03017.jpg",
                     "https://i.pinimg.com/736x/b5/9f/58/b59f58fce89f9abe810b24cd7d9c8820.jpg",
                 ]),
-                isPrivate: Bool.random(),
+                isPrivate: true,
                 tags: [
                     MediaTag(tag: "Архитектура")
                 ],
@@ -215,7 +215,7 @@ extension Pin {
                          "https://ucare.timepad.ru/8d3e632c-9906-4ea5-962f-67682b51f89c/-/preview/",
                          "https://www.mos.ru/upload/newsfeed/newsfeed/tramplinGL(9).jp",
                 ]),
-                isPrivate: Bool.random(),
+                isPrivate: true,
                 tags: [
                     MediaTag(tag: "Природа")
                 ],

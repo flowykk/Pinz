@@ -4,6 +4,7 @@ import PinzBase
 import PinzDomain
 import UIKit
 
+@MainActor
 final class ProfileViewModelTests: XCTestCase {
 
     private var mockRouter: MockRouter!
@@ -127,6 +128,196 @@ final class ProfileViewModelTests: XCTestCase {
         XCTAssertEqual(sut.user.avatarUrl, "https://cdn.example.com/avatar-v2.jpg")
         XCTAssertEqual(mockRouter.currentProfileUpdateUser?.avatarUrl, "https://cdn.example.com/avatar-v2.jpg")
         XCTAssertNil(sut.userImage)
+    }
+
+    // MARK: - setImage(nil)
+
+    func test_dispatch_setImage_nil_doesNotSetUserImage() {
+        sut.dispatch(.setImage(nil))
+        XCTAssertNil(sut.userImage)
+    }
+
+    func test_dispatch_setImage_nil_doesNotStartAvatarUpload() async throws {
+        sut.dispatch(.setImage(nil))
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertNil(mockNetwork.requestAvatarUploadCall)
+    }
+
+    // MARK: - getProfile
+
+    func test_dispatch_getProfile_success_updatesUser() async throws {
+        mockNetwork.getProfileResult = .success(ProfileResponseDTO(nickname: "updated-nick", email: "new@example.com"))
+        sut.dispatch(.getProfile)
+        try await waitForNotLoading()
+        XCTAssertEqual(sut.user.nickname, "updated-nick")
+        XCTAssertEqual(sut.user.email, "new@example.com")
+    }
+
+    func test_dispatch_getProfile_success_clearsUserImage() async throws {
+        sut.userImage = makeTestImage()
+        sut.dispatch(.getProfile)
+        try await waitForNotLoading()
+        XCTAssertNil(sut.userImage)
+    }
+
+    func test_dispatch_getProfile_success_setsIsLoadingFalse() async throws {
+        sut.dispatch(.getProfile)
+        try await waitForNotLoading()
+        XCTAssertFalse(sut.isLoading)
+    }
+
+    func test_dispatch_getProfile_failure_setsIsLoadingFalse() async throws {
+        mockNetwork.getProfileResult = .failure(URLError(.badServerResponse))
+        sut.dispatch(.getProfile)
+        try await waitForNotLoading()
+        XCTAssertFalse(sut.isLoading)
+    }
+
+    func test_dispatch_getProfile_failure_keepsCurrentUser() async throws {
+        mockNetwork.getProfileResult = .failure(URLError(.badServerResponse))
+        sut.dispatch(.getProfile)
+        try await waitForNotLoading()
+        XCTAssertEqual(sut.user.nickname, testUser.nickname)
+    }
+
+    func test_dispatch_getProfile_whileLoading_isIgnored() async throws {
+        mockNetwork.getProfileResult = .success(ProfileResponseDTO(nickname: "should-not-appear"))
+        sut.isLoading = true
+        sut.dispatch(.getProfile)
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertTrue(sut.isLoading)
+        XCTAssertNotEqual(sut.user.nickname, "should-not-appear")
+    }
+
+    // MARK: - saveProfile — missing paths
+
+    func test_dispatch_saveProfile_failure_setsIsLoadingFalse() async throws {
+        mockNetwork.updateProfileResult = .failure(URLError(.badServerResponse))
+        sut.dispatch(.saveProfile)
+        try await waitForNotLoading()
+        XCTAssertFalse(sut.isLoading)
+    }
+
+    func test_dispatch_saveProfile_failure_transitionsToDefaultState() async throws {
+        mockNetwork.updateProfileResult = .failure(URLError(.badServerResponse))
+        sut.dispatch(.changeState)
+        sut.dispatch(.saveProfile)
+        try await waitForNotLoading()
+        XCTAssertEqual(sut.state, .default)
+    }
+
+    func test_dispatch_saveProfile_trimsNicknameWhitespace() async throws {
+        sut.user.nickname = "  john  "
+        sut.dispatch(.saveProfile)
+        try await waitForNotLoading()
+        XCTAssertEqual(mockNetwork.updateProfileCall, "john")
+    }
+
+    // MARK: - deleteAccount
+
+    func test_dispatch_deleteAccount_success_navigatesToMain() async throws {
+        sut.dispatch(.deleteAccount)
+        for _ in 0..<60 {
+            if mockRouter.navigatedToMain { break }
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        XCTAssertTrue(mockRouter.navigatedToMain)
+    }
+
+    func test_dispatch_deleteAccount_success_setsIsLoadingFalse() async throws {
+        sut.dispatch(.deleteAccount)
+        try await waitForNotLoading()
+        XCTAssertFalse(sut.isLoading)
+    }
+
+    func test_dispatch_deleteAccount_failure_doesNotNavigate() async throws {
+        mockNetwork.deleteAccountResult = .failure(URLError(.badServerResponse))
+        sut.dispatch(.deleteAccount)
+        try await waitForNotLoading()
+        XCTAssertFalse(mockRouter.navigatedToMain)
+    }
+
+    func test_dispatch_deleteAccount_failure_setsIsLoadingFalse() async throws {
+        mockNetwork.deleteAccountResult = .failure(URLError(.badServerResponse))
+        sut.dispatch(.deleteAccount)
+        try await waitForNotLoading()
+        XCTAssertFalse(sut.isLoading)
+    }
+
+    func test_dispatch_deleteAccount_whileLoading_isIgnored() async throws {
+        sut.isLoading = true
+        sut.dispatch(.deleteAccount)
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertTrue(sut.isLoading)
+        XCTAssertFalse(mockRouter.navigatedToMain)
+    }
+
+    // MARK: - deleteAvatar
+
+    func test_dispatch_deleteAvatar_success_updatesUser() async throws {
+        mockNetwork.deleteAvatarResult = .success(ProfileResponseDTO(nickname: "avatar-deleted-nick", email: "test@example.com"))
+        sut.dispatch(.deleteAvatar)
+        try await waitForNotLoading()
+        XCTAssertEqual(sut.user.nickname, "avatar-deleted-nick")
+    }
+
+    func test_dispatch_deleteAvatar_success_clearsUserImage() async throws {
+        sut.userImage = makeTestImage()
+        sut.dispatch(.deleteAvatar)
+        try await waitForNotLoading()
+        XCTAssertNil(sut.userImage)
+    }
+
+    func test_dispatch_deleteAvatar_success_notifiesProfileUpdate() async throws {
+        sut.dispatch(.deleteAvatar)
+        try await waitForNotLoading()
+        XCTAssertNotNil(mockRouter.currentProfileUpdateUser)
+    }
+
+    func test_dispatch_deleteAvatar_failure_setsIsLoadingFalse() async throws {
+        mockNetwork.deleteAvatarResult = .failure(URLError(.badServerResponse))
+        sut.dispatch(.deleteAvatar)
+        try await waitForNotLoading()
+        XCTAssertFalse(sut.isLoading)
+    }
+
+    func test_dispatch_deleteAvatar_failure_keepsCurrentUser() async throws {
+        mockNetwork.deleteAvatarResult = .failure(URLError(.badServerResponse))
+        sut.dispatch(.deleteAvatar)
+        try await waitForNotLoading()
+        XCTAssertEqual(sut.user.nickname, testUser.nickname)
+    }
+
+    func test_dispatch_deleteAvatar_whileLoading_isIgnored() async throws {
+        sut.isLoading = true
+        sut.dispatch(.deleteAvatar)
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertTrue(sut.isLoading)
+        XCTAssertNil(mockRouter.currentProfileUpdateUser)
+    }
+
+    // MARK: - Navigate: missing routes
+
+    func test_navigate_storageSettings_callsRouter() {
+        sut.dispatch(.navigate(.storageSettings))
+        XCTAssertTrue(mockRouter.navigatedToStorageSettings)
+    }
+
+    func test_navigate_emailChange_actionCallback_updatesUserEmailAndPopsRouter() {
+        sut.dispatch(.navigate(.emailChange))
+        mockRouter.navigatedEmailChange?.action.action("changed@example.com")
+        XCTAssertEqual(sut.user.email, "changed@example.com")
+        XCTAssertEqual(mockRouter.popCallCount, 1)
+    }
+
+    // MARK: - Helpers
+
+    private func waitForNotLoading() async throws {
+        for _ in 0..<60 {
+            if !sut.isLoading { return }
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        XCTFail("isLoading did not become false in time")
     }
 
     private func makeTestImage() -> UIImage {

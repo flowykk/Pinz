@@ -79,4 +79,54 @@ final class PinInfoViewModelTests: XCTestCase {
         XCTAssertEqual(coordinate.latitude, 10)
         XCTAssertEqual(coordinate.longitude, 20)
     }
+
+    func test_navigate_mediaInfo_callsRouter() {
+        let media = pin.medias.first!
+        sut.dispatch(.navigate(.mediaInfo(media)))
+        XCTAssertEqual(mockRouter.navigatedMediaInfo?.id, media.id)
+    }
+
+    // MARK: - onDisappear
+
+    func test_onDisappear_withUpdateAction_callsAction() {
+        var receivedPin: Pin?
+        let sut = PinInfoViewModel(pin: pin, updateAction: PinUpdateAction { receivedPin = $0 })
+        sut.onDisappear()
+        XCTAssertEqual(receivedPin?.name, pin.name)
+    }
+
+    func test_onDisappear_withoutUpdateAction_doesNotCrash() {
+        sut.onDisappear()
+    }
+
+    // MARK: - State.id / State.content
+
+    func test_stateId_returnsItself() {
+        XCTAssertEqual(PinInfoViewModel.State.info.id, .info)
+        XCTAssertEqual(PinInfoViewModel.State.gallery.id, .gallery)
+        XCTAssertEqual(PinInfoViewModel.State.editing.id, .editing)
+    }
+
+    func test_stateContent_isText() {
+        let infoContent = PinInfoViewModel.State.info.content
+        let galleryContent = PinInfoViewModel.State.gallery.content
+        let editingContent = PinInfoViewModel.State.editing.content
+
+        if case .text(let text) = infoContent {
+            XCTAssertFalse(text.isEmpty)
+        } else {
+            XCTFail("Expected .text for .info state")
+        }
+
+        if case .text(let text) = galleryContent {
+            XCTAssertFalse(text.isEmpty)
+        } else {
+            XCTFail("Expected .text for .gallery state")
+        }
+
+        if case .text = editingContent {
+        } else {
+            XCTFail("Expected .text for .editing state")
+        }
+    }
 }
