@@ -92,7 +92,21 @@ type MediaRepositoryInterface interface {
 	DeleteByIDs(ids []string) error
 	// удалить неприкреплённые медиа текущей add-media сессии.
 	DeleteOrphanSessionMedia(tripID string, existingMediaIDs []string) ([]string, error)
+	// DeleteByPinID — full delete пина (ТЗ 4.5.1): удаляет все media пина и
+	// возвращает s3_keys для S3 cleanup.
+	DeleteByPinID(pinID string) ([]string, error)
+	// ListByPinAdditionSession — media активной pin-add-media-сессии (pin_id=NULL,
+	// pin_addition_session_id=$1). Используется в Process.
+	ListByPinAdditionSession(sessionID string) ([]*models.Media, error)
+	// DeleteOrphanByPinAdditionSession — orphan-cleanup при Cancel.
+	DeleteOrphanByPinAdditionSession(sessionID string) ([]string, error)
+	// ListByPinCreationSession — media активной pin-creation сессии (pin_id=NULL,
+	// pin_creation_session_id=$1). Используется в Process / Finalize.
+	ListByPinCreationSession(sessionID string) ([]*models.Media, error)
+	// DeleteOrphanByPinCreationSession — orphan-cleanup при CancelPinCreation.
+	DeleteOrphanByPinCreationSession(sessionID string) ([]string, error)
 	SetSimilarGroupID(mediaIDs []string, groupID string) error
+	MarkNSFW(mediaIDs []string) error
 	CountByTripID(tripID string) (total int, videos int, err error)
 	ClusterIDsByLocation(tripID string, radiusMeters float64) (map[string]int, error)
 	ListByPinID(pinID string) ([]*models.Media, error)
@@ -115,12 +129,45 @@ type PinRepositoryInterface interface {
 	Create(p *models.Pin) error
 	GetByID(id string) (*models.Pin, error)
 	ListByTripID(tripID string) ([]*models.Pin, error)
+	// ListByTripIDExcludingHidden — список пинов за вычетом скрытых для userID
+	// через pin_hidden_by_user (ТЗ 4.5.2 soft-delete-for-self).
+	ListByTripIDExcludingHidden(tripID, userID string) ([]*models.Pin, error)
 	Update(p *models.Pin) error
 	Delete(id string) error
 	DeleteByTripID(tripID string) error
 	SetPrivacyLevel(pinID, level string) error
+	// IncMediaCount атомарно увеличивает/уменьшает media_count на пине.
+	// Используется AddMediaToPin (delta=+N после finalize) и RemoveMediaFromPin (delta=-1).
+	IncMediaCount(pinID string, delta int) error
 	ListPublishedPinsByTripIDs(tripIDs []string) (map[string][]*FeedPin, error)
 	SearchByUserID(userID, query string, limit, offset int32) ([]*models.Pin, error)
+}
+
+// PinHiddenRepositoryInterface — управление soft-delete-for-self записями (ТЗ 4.5.2).
+type PinHiddenRepositoryInterface interface {
+	HidePinForUser(pinID, userID string) error
+	ListHiddenPinIDsForUser(tripID, userID string) ([]string, error)
+	IsHidden(pinID, userID string) (bool, error)
+}
+
+// PinMediaAdditionSessionRepositoryInterface — sessioned add-media-в-пин (ТЗ 4.2.2 + 4.12-4.14).
+type PinMediaAdditionSessionRepositoryInterface interface {
+	Create(ctx context.Context, tripID, pinID, userID string) (sessionID string, err error)
+	GetByID(ctx context.Context, sessionID string) (*models.PinMediaAdditionSession, error)
+	GetActiveForPin(ctx context.Context, pinID string) (*models.PinMediaAdditionSession, error)
+	Touch(ctx context.Context, sessionID string) error
+	SetDraftSnapshot(ctx context.Context, sessionID string, snapshot []byte) error
+	Close(ctx context.Context, sessionID, reason string) error
+}
+
+// PinCreationSessionRepositoryInterface — sessioned создание одиночного пина (ТЗ 4.1, 4.6-4.11).
+type PinCreationSessionRepositoryInterface interface {
+	Create(ctx context.Context, tripID, userID string) (sessionID string, err error)
+	GetByID(ctx context.Context, sessionID string) (*models.PinCreationSession, error)
+	GetActiveForTrip(ctx context.Context, tripID string) (*models.PinCreationSession, error)
+	Touch(ctx context.Context, sessionID string) error
+	SetDraftSnapshot(ctx context.Context, sessionID string, snapshot []byte) error
+	Close(ctx context.Context, sessionID, reason string) error
 }
 
 type TagRepositoryInterface interface {

@@ -51,6 +51,14 @@ func (r *MediaRepository) Create(m *models.Media) error {
 		cols = append(cols, "uploaded_by")
 		vals = append(vals, *m.UploadedBy)
 	}
+	if m.PinAdditionSessionID != nil {
+		cols = append(cols, "pin_addition_session_id")
+		vals = append(vals, *m.PinAdditionSessionID)
+	}
+	if m.PinCreationSessionID != nil {
+		cols = append(cols, "pin_creation_session_id")
+		vals = append(vals, *m.PinCreationSessionID)
+	}
 	q := psq.Insert("media").Columns(cols...).Values(vals...).Suffix("RETURNING id, created_at")
 	sqlStr, args, err := q.ToSql()
 	if err != nil {
@@ -561,6 +569,176 @@ func (r *MediaRepository) TopMediaByTripIDs(tripIDs []string, limitPerTrip int) 
 		out[tripID] = append(out[tripID], &FeedMedia{ID: id, S3Key: s3Key, MediaType: mediaType})
 	}
 	return out, rows.Err()
+}
+
+// DeleteByPinID удаляет все media пина и возвращает их s3_keys для best-effort
+// S3 cleanup (ТЗ 4.5.1: full delete пина каскадит media). FK media.pin_id =
+// ON DELETE SET NULL, поэтому полагаться на cascade нельзя — удаляем явно.
+func (r *MediaRepository) DeleteByPinID(pinID string) ([]string, error) {
+	rows, err := r.db.Query(`DELETE FROM media WHERE pin_id = $1 RETURNING s3_key`, pinID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var keys []string
+	for rows.Next() {
+		var k string
+		if err := rows.Scan(&k); err != nil {
+			return nil, err
+		}
+		keys = append(keys, k)
+	}
+	return keys, rows.Err()
+}
+
+// ListByPinAdditionSession возвращает media сессии add-media-в-пин (pin_id=NULL,
+// pin_addition_session_id=$1) в хронологическом порядке. Используется в Process
+// для хеш-дедупа и расчёта pin issues.
+func (r *MediaRepository) ListByPinAdditionSession(sessionID string) ([]*models.Media, error) {
+	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, uploaded_by, pin_addition_session_id, created_at
+		FROM media WHERE pin_addition_session_id = $1
+		ORDER BY captured_at ASC NULLS LAST, created_at ASC`
+	rows, err := r.db.Query(sqlStr, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []*models.Media
+	for rows.Next() {
+		var m models.Media
+		var pinID, similarGroupID, contentHash, uploadedBy, pinAddSession sql.NullString
+		var lat, lon sql.NullFloat64
+		var capturedAt sql.NullTime
+		if err := rows.Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadedBy, &pinAddSession, &m.CreatedAt); err != nil {
+			return nil, err
+		}
+		if pinID.Valid {
+			m.PinID = &pinID.String
+		}
+		if lat.Valid {
+			m.Latitude = &lat.Float64
+		}
+		if lon.Valid {
+			m.Longitude = &lon.Float64
+		}
+		if capturedAt.Valid {
+			m.CapturedAt = &capturedAt.Time
+		}
+		if similarGroupID.Valid {
+			m.SimilarGroupID = &similarGroupID.String
+		}
+		if contentHash.Valid {
+			m.ContentHash = &contentHash.String
+		}
+		if uploadedBy.Valid {
+			m.UploadedBy = &uploadedBy.String
+		}
+		if pinAddSession.Valid {
+			m.PinAdditionSessionID = &pinAddSession.String
+		}
+		list = append(list, &m)
+	}
+	return list, rows.Err()
+}
+
+// DeleteOrphanByPinAdditionSession удаляет все media сессии добавления медиа в
+// пин (pin_id=NULL, pin_addition_session_id=$1) и возвращает s3_keys для S3
+// cleanup. Используется в CancelPinMediaAddition.
+func (r *MediaRepository) DeleteOrphanByPinAdditionSession(sessionID string) ([]string, error) {
+	rows, err := r.db.Query(
+		`DELETE FROM media WHERE pin_addition_session_id = $1 AND pin_id IS NULL RETURNING s3_key`,
+		sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var keys []string
+	for rows.Next() {
+		var k string
+		if err := rows.Scan(&k); err != nil {
+			return nil, err
+		}
+		keys = append(keys, k)
+	}
+	return keys, rows.Err()
+}
+
+// ListByPinCreationSession возвращает media активной pin-creation сессии
+// (pin_id=NULL, pin_creation_session_id=$1) в хронологическом порядке.
+// Используется в Process для хеш-дедупа и расчёта suggested-полей пина.
+func (r *MediaRepository) ListByPinCreationSession(sessionID string) ([]*models.Media, error) {
+	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, uploaded_by, pin_creation_session_id, created_at
+		FROM media WHERE pin_creation_session_id = $1
+		ORDER BY captured_at ASC NULLS LAST, created_at ASC`
+	rows, err := r.db.Query(sqlStr, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []*models.Media
+	for rows.Next() {
+		var m models.Media
+		var pinID, similarGroupID, contentHash, uploadedBy, pinCreationSession sql.NullString
+		var lat, lon sql.NullFloat64
+		var capturedAt sql.NullTime
+		if err := rows.Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadedBy, &pinCreationSession, &m.CreatedAt); err != nil {
+			return nil, err
+		}
+		if pinID.Valid {
+			m.PinID = &pinID.String
+		}
+		if lat.Valid {
+			m.Latitude = &lat.Float64
+		}
+		if lon.Valid {
+			m.Longitude = &lon.Float64
+		}
+		if capturedAt.Valid {
+			m.CapturedAt = &capturedAt.Time
+		}
+		if similarGroupID.Valid {
+			m.SimilarGroupID = &similarGroupID.String
+		}
+		if contentHash.Valid {
+			m.ContentHash = &contentHash.String
+		}
+		if uploadedBy.Valid {
+			m.UploadedBy = &uploadedBy.String
+		}
+		if pinCreationSession.Valid {
+			m.PinCreationSessionID = &pinCreationSession.String
+		}
+		list = append(list, &m)
+	}
+	return list, rows.Err()
+}
+
+// DeleteOrphanByPinCreationSession удаляет все media сессии создания пина
+// (pin_id=NULL, pin_creation_session_id=$1) и возвращает s3_keys. Используется
+// в CancelPinCreation.
+func (r *MediaRepository) DeleteOrphanByPinCreationSession(sessionID string) ([]string, error) {
+	rows, err := r.db.Query(
+		`DELETE FROM media WHERE pin_creation_session_id = $1 AND pin_id IS NULL RETURNING s3_key`,
+		sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var keys []string
+	for rows.Next() {
+		var k string
+		if err := rows.Scan(&k); err != nil {
+			return nil, err
+		}
+		keys = append(keys, k)
+	}
+	return keys, rows.Err()
 }
 
 // TopMediaByPinIDs возвращает топ-N медиа на каждый пин (sorted by battle_rating DESC, id) одним запросом.

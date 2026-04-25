@@ -206,6 +206,21 @@ func (mr *MockTripClientMockRecorder) AddMediaTakeover(ctx, req any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaTakeover", reflect.TypeOf((*MockTripClient)(nil).AddMediaTakeover), ctx, req)
 }
 
+// AddMediaToPinStart mocks base method.
+func (m *MockTripClient) AddMediaToPinStart(ctx context.Context, req *proto.AddMediaToPinStartRequest) (*proto.AddMediaToPinStartResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMediaToPinStart", ctx, req)
+	ret0, _ := ret[0].(*proto.AddMediaToPinStartResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMediaToPinStart indicates an expected call of AddMediaToPinStart.
+func (mr *MockTripClientMockRecorder) AddMediaToPinStart(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMediaToPinStart", reflect.TypeOf((*MockTripClient)(nil).AddMediaToPinStart), ctx, req)
+}
+
 // AddToFavourites mocks base method.
 func (m *MockTripClient) AddToFavourites(ctx context.Context, req *proto.AddToFavouritesRequest) (*proto.AddToFavouritesResponse, error) {
 	m.ctrl.T.Helper()
@@ -236,6 +251,66 @@ func (mr *MockTripClientMockRecorder) ApplyGroupsAndProcess(ctx, req any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyGroupsAndProcess", reflect.TypeOf((*MockTripClient)(nil).ApplyGroupsAndProcess), ctx, req)
 }
 
+// CancelPinCreation mocks base method.
+func (m *MockTripClient) CancelPinCreation(ctx context.Context, req *proto.CancelPinCreationRequest) (*proto.CancelPinCreationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CancelPinCreation", ctx, req)
+	ret0, _ := ret[0].(*proto.CancelPinCreationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CancelPinCreation indicates an expected call of CancelPinCreation.
+func (mr *MockTripClientMockRecorder) CancelPinCreation(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelPinCreation", reflect.TypeOf((*MockTripClient)(nil).CancelPinCreation), ctx, req)
+}
+
+// CancelPinMediaAddition mocks base method.
+func (m *MockTripClient) CancelPinMediaAddition(ctx context.Context, req *proto.CancelPinMediaAdditionRequest) (*proto.CancelPinMediaAdditionResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CancelPinMediaAddition", ctx, req)
+	ret0, _ := ret[0].(*proto.CancelPinMediaAdditionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CancelPinMediaAddition indicates an expected call of CancelPinMediaAddition.
+func (mr *MockTripClientMockRecorder) CancelPinMediaAddition(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelPinMediaAddition", reflect.TypeOf((*MockTripClient)(nil).CancelPinMediaAddition), ctx, req)
+}
+
+// CommitPinCreationUpload mocks base method.
+func (m *MockTripClient) CommitPinCreationUpload(ctx context.Context, req *proto.CommitPinCreationUploadRequest) (*proto.CommitPinCreationUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitPinCreationUpload", ctx, req)
+	ret0, _ := ret[0].(*proto.CommitPinCreationUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CommitPinCreationUpload indicates an expected call of CommitPinCreationUpload.
+func (mr *MockTripClientMockRecorder) CommitPinCreationUpload(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitPinCreationUpload", reflect.TypeOf((*MockTripClient)(nil).CommitPinCreationUpload), ctx, req)
+}
+
+// CommitPinMediaUpload mocks base method.
+func (m *MockTripClient) CommitPinMediaUpload(ctx context.Context, req *proto.CommitPinMediaUploadRequest) (*proto.CommitPinMediaUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitPinMediaUpload", ctx, req)
+	ret0, _ := ret[0].(*proto.CommitPinMediaUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CommitPinMediaUpload indicates an expected call of CommitPinMediaUpload.
+func (mr *MockTripClientMockRecorder) CommitPinMediaUpload(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitPinMediaUpload", reflect.TypeOf((*MockTripClient)(nil).CommitPinMediaUpload), ctx, req)
+}
+
 // ConfirmTripCoverUpload mocks base method.
 func (m *MockTripClient) ConfirmTripCoverUpload(ctx context.Context, req *proto.ConfirmTripCoverUploadRequest) (*proto.ConfirmTripCoverUploadResponse, error) {
 	m.ctrl.T.Helper()
@@ -251,6 +326,21 @@ func (mr *MockTripClientMockRecorder) ConfirmTripCoverUpload(ctx, req any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmTripCoverUpload", reflect.TypeOf((*MockTripClient)(nil).ConfirmTripCoverUpload), ctx, req)
 }
 
+// CreatePinStart mocks base method.
+func (m *MockTripClient) CreatePinStart(ctx context.Context, req *proto.CreatePinStartRequest) (*proto.CreatePinStartResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePinStart", ctx, req)
+	ret0, _ := ret[0].(*proto.CreatePinStartResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreatePinStart indicates an expected call of CreatePinStart.
+func (mr *MockTripClientMockRecorder) CreatePinStart(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePinStart", reflect.TypeOf((*MockTripClient)(nil).CreatePinStart), ctx, req)
+}
+
 // CreateTrip mocks base method.
 func (m *MockTripClient) CreateTrip(ctx context.Context, req *proto.CreateTripRequest) (*proto.CreateTripResponse, error) {
 	m.ctrl.T.Helper()
@@ -264,6 +354,21 @@ func (m *MockTripClient) CreateTrip(ctx context.Context, req *proto.CreateTripRe
 func (mr *MockTripClientMockRecorder) CreateTrip(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTrip", reflect.TypeOf((*MockTripClient)(nil).CreateTrip), ctx, req)
+}
+
+// DeletePin mocks base method.
+func (m *MockTripClient) DeletePin(ctx context.Context, req *proto.DeletePinRequest) (*proto.DeletePinResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePin", ctx, req)
+	ret0, _ := ret[0].(*proto.DeletePinResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeletePin indicates an expected call of DeletePin.
+func (mr *MockTripClientMockRecorder) DeletePin(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePin", reflect.TypeOf((*MockTripClient)(nil).DeletePin), ctx, req)
 }
 
 // DeleteTrip mocks base method.
@@ -311,6 +416,36 @@ func (mr *MockTripClientMockRecorder) DislikeTrip(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DislikeTrip", reflect.TypeOf((*MockTripClient)(nil).DislikeTrip), ctx, req)
 }
 
+// FinalizePinCreation mocks base method.
+func (m *MockTripClient) FinalizePinCreation(ctx context.Context, req *proto.FinalizePinCreationRequest) (*proto.FinalizePinCreationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FinalizePinCreation", ctx, req)
+	ret0, _ := ret[0].(*proto.FinalizePinCreationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FinalizePinCreation indicates an expected call of FinalizePinCreation.
+func (mr *MockTripClientMockRecorder) FinalizePinCreation(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinalizePinCreation", reflect.TypeOf((*MockTripClient)(nil).FinalizePinCreation), ctx, req)
+}
+
+// FinalizePinMediaAddition mocks base method.
+func (m *MockTripClient) FinalizePinMediaAddition(ctx context.Context, req *proto.FinalizePinMediaAdditionRequest) (*proto.FinalizePinMediaAdditionResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FinalizePinMediaAddition", ctx, req)
+	ret0, _ := ret[0].(*proto.FinalizePinMediaAdditionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FinalizePinMediaAddition indicates an expected call of FinalizePinMediaAddition.
+func (mr *MockTripClientMockRecorder) FinalizePinMediaAddition(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinalizePinMediaAddition", reflect.TypeOf((*MockTripClient)(nil).FinalizePinMediaAddition), ctx, req)
+}
+
 // FinalizeTrip mocks base method.
 func (m *MockTripClient) FinalizeTrip(ctx context.Context, req *proto.FinalizeTripRequest) (*proto.FinalizeTripResponse, error) {
 	m.ctrl.T.Helper()
@@ -354,6 +489,51 @@ func (m *MockTripClient) GetBestMemories(ctx context.Context, req *proto.GetBest
 func (mr *MockTripClientMockRecorder) GetBestMemories(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBestMemories", reflect.TypeOf((*MockTripClient)(nil).GetBestMemories), ctx, req)
+}
+
+// GetPin mocks base method.
+func (m *MockTripClient) GetPin(ctx context.Context, req *proto.GetPinRequest) (*proto.GetPinResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPin", ctx, req)
+	ret0, _ := ret[0].(*proto.GetPinResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPin indicates an expected call of GetPin.
+func (mr *MockTripClientMockRecorder) GetPin(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPin", reflect.TypeOf((*MockTripClient)(nil).GetPin), ctx, req)
+}
+
+// GetPinCreationReview mocks base method.
+func (m *MockTripClient) GetPinCreationReview(ctx context.Context, req *proto.GetPinCreationReviewRequest) (*proto.GetPinCreationReviewResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPinCreationReview", ctx, req)
+	ret0, _ := ret[0].(*proto.GetPinCreationReviewResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPinCreationReview indicates an expected call of GetPinCreationReview.
+func (mr *MockTripClientMockRecorder) GetPinCreationReview(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinCreationReview", reflect.TypeOf((*MockTripClient)(nil).GetPinCreationReview), ctx, req)
+}
+
+// GetPinMediaAdditionReview mocks base method.
+func (m *MockTripClient) GetPinMediaAdditionReview(ctx context.Context, req *proto.GetPinMediaAdditionReviewRequest) (*proto.GetPinMediaAdditionReviewResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPinMediaAdditionReview", ctx, req)
+	ret0, _ := ret[0].(*proto.GetPinMediaAdditionReviewResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPinMediaAdditionReview indicates an expected call of GetPinMediaAdditionReview.
+func (mr *MockTripClientMockRecorder) GetPinMediaAdditionReview(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinMediaAdditionReview", reflect.TypeOf((*MockTripClient)(nil).GetPinMediaAdditionReview), ctx, req)
 }
 
 // GetTrip mocks base method.
@@ -491,6 +671,36 @@ func (mr *MockTripClientMockRecorder) ProcessMediaGrouping(ctx, req any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessMediaGrouping", reflect.TypeOf((*MockTripClient)(nil).ProcessMediaGrouping), ctx, req)
 }
 
+// ProcessPinCreation mocks base method.
+func (m *MockTripClient) ProcessPinCreation(ctx context.Context, req *proto.ProcessPinCreationRequest) (*proto.ProcessPinCreationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProcessPinCreation", ctx, req)
+	ret0, _ := ret[0].(*proto.ProcessPinCreationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProcessPinCreation indicates an expected call of ProcessPinCreation.
+func (mr *MockTripClientMockRecorder) ProcessPinCreation(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessPinCreation", reflect.TypeOf((*MockTripClient)(nil).ProcessPinCreation), ctx, req)
+}
+
+// ProcessPinMediaAddition mocks base method.
+func (m *MockTripClient) ProcessPinMediaAddition(ctx context.Context, req *proto.ProcessPinMediaAdditionRequest) (*proto.ProcessPinMediaAdditionResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProcessPinMediaAddition", ctx, req)
+	ret0, _ := ret[0].(*proto.ProcessPinMediaAdditionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProcessPinMediaAddition indicates an expected call of ProcessPinMediaAddition.
+func (mr *MockTripClientMockRecorder) ProcessPinMediaAddition(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessPinMediaAddition", reflect.TypeOf((*MockTripClient)(nil).ProcessPinMediaAddition), ctx, req)
+}
+
 // PublishTrip mocks base method.
 func (m *MockTripClient) PublishTrip(ctx context.Context, req *proto.PublishTripRequest) (*proto.PublishTripResponse, error) {
 	m.ctrl.T.Helper()
@@ -521,6 +731,21 @@ func (mr *MockTripClientMockRecorder) RemoveFromFavourites(ctx, req any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFromFavourites", reflect.TypeOf((*MockTripClient)(nil).RemoveFromFavourites), ctx, req)
 }
 
+// RemoveMediaFromPin mocks base method.
+func (m *MockTripClient) RemoveMediaFromPin(ctx context.Context, req *proto.RemoveMediaFromPinRequest) (*proto.RemoveMediaFromPinResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveMediaFromPin", ctx, req)
+	ret0, _ := ret[0].(*proto.RemoveMediaFromPinResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveMediaFromPin indicates an expected call of RemoveMediaFromPin.
+func (mr *MockTripClientMockRecorder) RemoveMediaFromPin(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveMediaFromPin", reflect.TypeOf((*MockTripClient)(nil).RemoveMediaFromPin), ctx, req)
+}
+
 // RemoveParticipant mocks base method.
 func (m *MockTripClient) RemoveParticipant(ctx context.Context, req *proto.RemoveParticipantRequest) (*proto.RemoveParticipantResponse, error) {
 	m.ctrl.T.Helper()
@@ -534,6 +759,36 @@ func (m *MockTripClient) RemoveParticipant(ctx context.Context, req *proto.Remov
 func (mr *MockTripClientMockRecorder) RemoveParticipant(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveParticipant", reflect.TypeOf((*MockTripClient)(nil).RemoveParticipant), ctx, req)
+}
+
+// RequestPinCreationUploadUrls mocks base method.
+func (m *MockTripClient) RequestPinCreationUploadUrls(ctx context.Context, req *proto.RequestPinCreationUploadUrlsRequest) (*proto.RequestPinCreationUploadUrlsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestPinCreationUploadUrls", ctx, req)
+	ret0, _ := ret[0].(*proto.RequestPinCreationUploadUrlsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestPinCreationUploadUrls indicates an expected call of RequestPinCreationUploadUrls.
+func (mr *MockTripClientMockRecorder) RequestPinCreationUploadUrls(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestPinCreationUploadUrls", reflect.TypeOf((*MockTripClient)(nil).RequestPinCreationUploadUrls), ctx, req)
+}
+
+// RequestPinMediaUploadUrls mocks base method.
+func (m *MockTripClient) RequestPinMediaUploadUrls(ctx context.Context, req *proto.RequestPinMediaUploadUrlsRequest) (*proto.RequestPinMediaUploadUrlsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestPinMediaUploadUrls", ctx, req)
+	ret0, _ := ret[0].(*proto.RequestPinMediaUploadUrlsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestPinMediaUploadUrls indicates an expected call of RequestPinMediaUploadUrls.
+func (mr *MockTripClientMockRecorder) RequestPinMediaUploadUrls(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestPinMediaUploadUrls", reflect.TypeOf((*MockTripClient)(nil).RequestPinMediaUploadUrls), ctx, req)
 }
 
 // RequestTripCoverUpload mocks base method.
@@ -594,6 +849,21 @@ func (m *MockTripClient) SubmitBattleResult(ctx context.Context, req *proto.Subm
 func (mr *MockTripClientMockRecorder) SubmitBattleResult(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitBattleResult", reflect.TypeOf((*MockTripClient)(nil).SubmitBattleResult), ctx, req)
+}
+
+// UpdatePin mocks base method.
+func (m *MockTripClient) UpdatePin(ctx context.Context, req *proto.UpdatePinRequest) (*proto.UpdatePinResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePin", ctx, req)
+	ret0, _ := ret[0].(*proto.UpdatePinResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdatePin indicates an expected call of UpdatePin.
+func (mr *MockTripClientMockRecorder) UpdatePin(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePin", reflect.TypeOf((*MockTripClient)(nil).UpdatePin), ctx, req)
 }
 
 // UpdateTrip mocks base method.

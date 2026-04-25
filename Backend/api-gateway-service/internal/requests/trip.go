@@ -98,7 +98,9 @@ type PinUpdateInput struct {
 	Tags []string `json:"tags,omitempty"`
 }
 
-// UpdatePinRequest — Privacy задаётся per-user через PUT /trips/{trip_id}/pins/{pin_id}/privacy.
+// UpdatePinRequest — тело PATCH /api/v1/trips/{trip_id}/pins/{pin_id}.
+// Privacy задаётся per-user через PUT /trips/{trip_id}/pins/{pin_id}/privacy.
+// tags применяются как replace-all только при tags_set=true (даже пустым массивом).
 type UpdatePinRequest struct {
 	Name *string `json:"name,omitempty"`
 	Description *string `json:"description,omitempty"`
@@ -107,6 +109,68 @@ type UpdatePinRequest struct {
 	Longitude *float64 `json:"longitude,omitempty"`
 	StartTimeUnix *int64 `json:"start_time_unix,omitempty"`
 	EndTimeUnix *int64 `json:"end_time_unix,omitempty"`
+	Tags []string `json:"tags,omitempty"`
+	TagsSet bool `json:"tags_set,omitempty"`
+}
+
+// AddMediaToPinStartRequest — тело POST /api/v1/trips/{trip_id}/pins/{pin_id}/media/sessions/start.
+type AddMediaToPinStartRequest struct {
+	FilesToUpload []FileToUploadEntry `json:"files_to_upload"`
+}
+
+// RequestPinMediaUploadUrlsRequest — догрузка presigned URLs к активной сессии.
+type RequestPinMediaUploadUrlsRequest struct {
+	FilesToUpload []FileToUploadEntry `json:"files_to_upload"`
+}
+
+// CommitPinMediaUploadRequest — клиент зовёт после успешного PUT в S3.
+// Сервер создаёт media entry с pin_id=NULL и pin_addition_session_id=session.
+type CommitPinMediaUploadRequest struct {
+	S3Key string `json:"s3_key"`
+	MediaType string `json:"media_type"` // image | video
+	CapturedAtUnix *int64 `json:"captured_at_unix,omitempty"`
+	Latitude *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+}
+
+// FinalizePinMediaAdditionRequest — финализация добавления медиа в пин (ТЗ 4.13-4.14).
+type FinalizePinMediaAdditionRequest struct {
+	MediaToDelete []string `json:"media_to_delete,omitempty"`
+}
+
+// CreatePinStartRequest — старт sessioned-флоу создания пина (ТЗ 4.1, 4.6).
+type CreatePinStartRequest struct {
+	FilesToUpload []FileToUploadEntry `json:"files_to_upload"`
+}
+
+// RequestPinCreationUploadUrlsRequest — догрузка presigned URLs к активной сессии.
+type RequestPinCreationUploadUrlsRequest struct {
+	FilesToUpload []FileToUploadEntry `json:"files_to_upload"`
+}
+
+// CommitPinCreationUploadRequest — фиксация s3-загрузки в pin-creation сессию.
+type CommitPinCreationUploadRequest struct {
+	S3Key string `json:"s3_key"`
+	MediaType string `json:"media_type"` // image | video
+	CapturedAtUnix *int64 `json:"captured_at_unix,omitempty"`
+	Latitude *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+}
+
+// FinalizePinCreationRequest — финал создания пина (ТЗ 4.9-4.11).
+// Если поле nil/пусто — берётся suggested значение из snapshot ProcessPinCreation.
+// tags применяется как replace-all только при tags_set=true.
+type FinalizePinCreationRequest struct {
+	Name *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Category *string `json:"category,omitempty"`
+	Latitude *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+	StartTimeUnix *int64 `json:"start_time_unix,omitempty"`
+	EndTimeUnix *int64 `json:"end_time_unix,omitempty"`
+	Tags []string `json:"tags,omitempty"`
+	TagsSet bool `json:"tags_set,omitempty"`
+	MediaToDelete []string `json:"media_to_delete,omitempty"`
 }
 
 // UpsertPrivacyRequest — тело PUT /trips/{id}/privacy и аналогичных ручек по pin/media.
