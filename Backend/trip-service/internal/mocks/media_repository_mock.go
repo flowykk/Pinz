@@ -236,6 +236,21 @@ func (mr *MockMediaRepositoryInterfaceMockRecorder) SetSimilarGroupID(mediaIDs, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSimilarGroupID", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).SetSimilarGroupID), mediaIDs, groupID)
 }
 
+// TopMediaByPinIDs mocks base method.
+func (m *MockMediaRepositoryInterface) TopMediaByPinIDs(pinIDs []string, limitPerPin int) (map[string][]*repositories.FeedMedia, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TopMediaByPinIDs", pinIDs, limitPerPin)
+	ret0, _ := ret[0].(map[string][]*repositories.FeedMedia)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TopMediaByPinIDs indicates an expected call of TopMediaByPinIDs.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) TopMediaByPinIDs(pinIDs, limitPerPin any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TopMediaByPinIDs", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).TopMediaByPinIDs), pinIDs, limitPerPin)
+}
+
 // TopMediaByTripIDs mocks base method.
 func (m *MockMediaRepositoryInterface) TopMediaByTripIDs(tripIDs []string, limitPerTrip int) (map[string][]*repositories.FeedMedia, error) {
 	m.ctrl.T.Helper()

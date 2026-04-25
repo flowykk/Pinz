@@ -393,18 +393,19 @@ message ListFeedRequest {
  string sort_by = 6; // "date" or "rating"
 }
 
-// lightweight pin for feed card map.
-message FeedPin {
- string id = 1;
- double latitude = 2;
- double longitude = 3;
-}
-
 // lightweight media for feed card carousel (up to 8, sorted by battle_rating).
 message FeedMedia {
  string media_id = 1;
  string url = 2; // presigned GET URL
  string media_type = 3; // photo, video
+}
+
+// lightweight pin for feed card map.
+message FeedPin {
+ string id = 1;
+ double latitude = 2;
+ double longitude = 3;
+ repeated FeedMedia media = 4; // up to 10, sorted by battle_rating
 }
 
 // a single feed card with trip, pins and media.

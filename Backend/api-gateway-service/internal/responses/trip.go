@@ -38,8 +38,8 @@ type GetTripResponse struct {
 type ActiveAddMediaSession struct {
 	SessionID               string             `json:"session_id"`
 	CurrentInitiator        *PublicUserProfile `json:"current_initiator,omitempty"`
-	InitiatorAssignedAtUnix int64              `json:"initiator_assigned_at_unix,omitempty"`
-	TakeoverAvailableAtUnix int64              `json:"takeover_available_at_unix,omitempty"`
+	InitiatorAssignedAt     string             `json:"initiator_assigned_at,omitempty" example:"2026-04-25T12:00:00Z"`
+	TakeoverAvailableAt     string             `json:"takeover_available_at,omitempty" example:"2026-04-25T13:00:00Z"`
 	MediaCountInSession     int32              `json:"media_count_in_session"`
 }
 
@@ -184,18 +184,19 @@ type TripSettingsResponse struct {
 	Success bool `json:"success"`
 }
 
-// FeedPin is a lightweight pin for the feed card map view .
-type FeedPin struct {
-	ID string `json:"id"`
-	Latitude float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-}
-
 // FeedMedia is a lightweight media item for the feed card carousel .
 type FeedMedia struct {
 	MediaID string `json:"media_id"`
 	URL string `json:"url"`
 	MediaType string `json:"media_type"`
+}
+
+// FeedPin is a lightweight pin for the feed card map view .
+type FeedPin struct {
+	ID string `json:"id"`
+	Latitude float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Media []FeedMedia `json:"media"`
 }
 
 // FeedItem is a single card in the feed: trip data + pins + media .
@@ -238,7 +239,7 @@ type SessionMediaEntry struct {
 	URL string `json:"url"`
 	Type string `json:"type"`
 	ActorUserID string `json:"actor_user_id,omitempty"`
-	UploadedAtUnix int64 `json:"uploaded_at_unix"`
+	UploadedAt string `json:"uploaded_at" example:"2026-04-25T12:00:00Z"`
 }
 
 // AddMediaGetSessionMediaResponse — снимок медиа для экрана UPLOADING.
@@ -267,7 +268,7 @@ type AddMediaGetReviewResponse struct {
 	NewPinIDs               []string           `json:"new_pin_ids"`
 	ProtectedMediaIDs       []string           `json:"protected_media_ids"`
 	CurrentInitiator        *PublicUserProfile `json:"current_initiator,omitempty"`
-	TakeoverAvailableAtUnix int64              `json:"takeover_available_at_unix,omitempty"`
+	TakeoverAvailableAt     string             `json:"takeover_available_at,omitempty" example:"2026-04-25T13:00:00Z"`
 	CanEdit                 bool               `json:"can_edit"`
 }
 
@@ -286,9 +287,9 @@ type AddMediaCancelResponse struct {
 // успешном ответе (вы уже или только что стали ведущим). current_initiator
 // обогащён профилем для отображения имени/аватара.
 type AddMediaTakeoverResponse struct {
-	IsInitiator             bool               `json:"is_initiator"`
-	CurrentInitiator        *PublicUserProfile `json:"current_initiator,omitempty"`
-	TakeoverAvailableAtUnix int64              `json:"takeover_available_at_unix"`
+	IsInitiator         bool               `json:"is_initiator"`
+	CurrentInitiator    *PublicUserProfile `json:"current_initiator,omitempty"`
+	TakeoverAvailableAt string             `json:"takeover_available_at" example:"2026-04-25T13:00:00Z"`
 }
 
 // AddMediaProcessGroupingResponse is the response for POST /api/v1/trips/:id/media/add/process-grouping .

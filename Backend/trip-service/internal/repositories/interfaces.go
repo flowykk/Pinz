@@ -93,6 +93,7 @@ type MediaRepositoryInterface interface {
 	ClusterIDsByLocation(tripID string, radiusMeters float64) (map[string]int, error)
 	ListByPinID(pinID string) ([]*models.Media, error)
 	TopMediaByTripIDs(tripIDs []string, limitPerTrip int) (map[string][]*FeedMedia, error)
+	TopMediaByPinIDs(pinIDs []string, limitPerPin int) (map[string][]*FeedMedia, error)
 	PickRandomForBattle(tripID string, limit int) ([]*models.Media, error)
 	IncrementBattleRating(mediaID string) (int32, error)
 	ListWithPositiveBattleRating(tripID string) ([]*models.Media, error)
