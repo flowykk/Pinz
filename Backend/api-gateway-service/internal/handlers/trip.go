@@ -934,10 +934,19 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	for i, item := range items {
 		pins := make([]responses.FeedPin, len(item.GetPins()))
 		for j, p := range item.GetPins() {
+			pinMedia := make([]responses.FeedMedia, len(p.GetMedia()))
+			for k, m := range p.GetMedia() {
+				pinMedia[k] = responses.FeedMedia{
+					MediaID: m.GetMediaId(),
+					URL: m.GetUrl(),
+					MediaType: m.GetMediaType(),
+				}
+			}
 			pins[j] = responses.FeedPin{
 				ID: p.GetId(),
 				Latitude: p.GetLatitude(),
 				Longitude: p.GetLongitude(),
+				Media: pinMedia,
 			}
 		}
 		media := make([]responses.FeedMedia, len(item.GetMedia()))
@@ -1208,10 +1217,10 @@ func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.Get
 	// ещё users (last_actor и т.п.) — просто добавляем в общий набор и переиспользуем map.
 	if active := resp.GetActiveAddMediaSession(); active != nil {
 		rest := &responses.ActiveAddMediaSession{
-			SessionID:               active.GetSessionId(),
-			InitiatorAssignedAtUnix: active.GetInitiatorAssignedAtUnix(),
-			TakeoverAvailableAtUnix: active.GetTakeoverAvailableAtUnix(),
-			MediaCountInSession:     active.GetMediaCountInSession(),
+			SessionID:           active.GetSessionId(),
+			InitiatorAssignedAt: unixToRFC3339(active.GetInitiatorAssignedAtUnix()),
+			TakeoverAvailableAt: unixToRFC3339(active.GetTakeoverAvailableAtUnix()),
+			MediaCountInSession: active.GetMediaCountInSession(),
 		}
 		if uid := active.GetCurrentInitiatorUserId(); uid != "" {
 			profiles := h.enrichProfiles(ctx, []string{uid})
@@ -1598,7 +1607,7 @@ func (h *TripHandler) AddMediaGetSessionMedia(w http.ResponseWriter, r *http.Req
 			URL: m.GetUrl(),
 			Type: m.GetType(),
 			ActorUserID: m.GetActorUserId(),
-			UploadedAtUnix: m.GetUploadedAtUnix(),
+			UploadedAt: unixToRFC3339(m.GetUploadedAtUnix()),
 		})
 	}
 	respondJSON(w, http.StatusOK, responses.AddMediaGetSessionMediaResponse{
@@ -1692,13 +1701,13 @@ func (h *TripHandler) AddMediaGetReview(w http.ResponseWriter, r *http.Request) 
 		pins = append(pins, tripPinProtoToResponse(p))
 	}
 	out := responses.AddMediaGetReviewResponse{
-		TripID:                  resp.GetTripId(),
-		SessionID:               resp.GetSessionId(),
-		Pins:                    pins,
-		NewPinIDs:               resp.GetNewPinIds(),
-		ProtectedMediaIDs:       resp.GetProtectedMediaIds(),
-		TakeoverAvailableAtUnix: resp.GetTakeoverAvailableAtUnix(),
-		CanEdit:                 resp.GetCanEdit(),
+		TripID:              resp.GetTripId(),
+		SessionID:           resp.GetSessionId(),
+		Pins:                pins,
+		NewPinIDs:           resp.GetNewPinIds(),
+		ProtectedMediaIDs:   resp.GetProtectedMediaIds(),
+		TakeoverAvailableAt: unixToRFC3339(resp.GetTakeoverAvailableAtUnix()),
+		CanEdit:             resp.GetCanEdit(),
 	}
 	// N2: обогащение ведущего публичным профилем, чтобы клиент мог сразу
 	// показать «Алиса завершает ревью», а не резолвить user_id отдельным запросом.
@@ -1837,8 +1846,8 @@ func (h *TripHandler) AddMediaTakeover(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	out := responses.AddMediaTakeoverResponse{
-		IsInitiator:             resp.GetIsInitiator(),
-		TakeoverAvailableAtUnix: resp.GetTakeoverAvailableAtUnix(),
+		IsInitiator:         resp.GetIsInitiator(),
+		TakeoverAvailableAt: unixToRFC3339(resp.GetTakeoverAvailableAtUnix()),
 	}
 	if uid := resp.GetCurrentInitiatorUserId(); uid != "" {
 		profiles := h.enrichProfiles(ctx, []string{uid})

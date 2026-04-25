@@ -2583,12 +2583,38 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 		mediaByTrip = make(map[string][]*repositories.FeedMedia)
 	}
 
+	var pinIDs []string
+	for _, fps := range pinsByTrip {
+		for _, fp := range fps {
+			pinIDs = append(pinIDs, fp.ID)
+		}
+	}
+	mediaByPin, err := s.mediaRepo.TopMediaByPinIDs(pinIDs, 10)
+	if err != nil {
+		slog.WarnContext(ctx, "ListFeed: failed to fetch pin media", "error", err)
+		mediaByPin = make(map[string][]*repositories.FeedMedia)
+	}
+
 	items := make([]*pb.FeedItem, len(trips))
 	for i, t := range trips {
 		feedPins := pinsByTrip[t.ID]
 		protoPins := make([]*pb.FeedPin, len(feedPins))
 		for j, fp := range feedPins {
-			protoPins[j] = &pb.FeedPin{Id: fp.ID, Latitude: fp.Latitude, Longitude: fp.Longitude}
+			pinMedia := mediaByPin[fp.ID]
+			protoPinMedia := make([]*pb.FeedMedia, len(pinMedia))
+			for k, fm := range pinMedia {
+				protoPinMedia[k] = &pb.FeedMedia{
+					MediaId: fm.ID,
+					Url: s.presignedReadURL(ctx, fm.S3Key),
+					MediaType: fm.MediaType,
+				}
+			}
+			protoPins[j] = &pb.FeedPin{
+				Id: fp.ID,
+				Latitude: fp.Latitude,
+				Longitude: fp.Longitude,
+				Media: protoPinMedia,
+			}
 		}
 
 		feedMedia := mediaByTrip[t.ID]

@@ -3584,8 +3584,9 @@ const docTemplate = `{
                 "current_initiator": {
                     "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile"
                 },
-                "initiator_assigned_at_unix": {
-                    "type": "integer"
+                "initiator_assigned_at": {
+                    "type": "string",
+                    "example": "2026-04-25T12:00:00Z"
                 },
                 "media_count_in_session": {
                     "type": "integer"
@@ -3593,8 +3594,9 @@ const docTemplate = `{
                 "session_id": {
                     "type": "string"
                 },
-                "takeover_available_at_unix": {
-                    "type": "integer"
+                "takeover_available_at": {
+                    "type": "string",
+                    "example": "2026-04-25T13:00:00Z"
                 }
             }
         },
@@ -3695,8 +3697,9 @@ const docTemplate = `{
                 "session_id": {
                     "type": "string"
                 },
-                "takeover_available_at_unix": {
-                    "type": "integer"
+                "takeover_available_at": {
+                    "type": "string",
+                    "example": "2026-04-25T13:00:00Z"
                 },
                 "trip_id": {
                     "type": "string"
@@ -3786,8 +3789,9 @@ const docTemplate = `{
                 "is_initiator": {
                     "type": "boolean"
                 },
-                "takeover_available_at_unix": {
-                    "type": "integer"
+                "takeover_available_at": {
+                    "type": "string",
+                    "example": "2026-04-25T13:00:00Z"
                 }
             }
         },
@@ -4015,6 +4019,12 @@ const docTemplate = `{
                 },
                 "longitude": {
                     "type": "number"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia"
+                    }
                 }
             }
         },
@@ -4306,8 +4316,9 @@ const docTemplate = `{
                 "type": {
                     "type": "string"
                 },
-                "uploaded_at_unix": {
-                    "type": "integer"
+                "uploaded_at": {
+                    "type": "string",
+                    "example": "2026-04-25T12:00:00Z"
                 },
                 "url": {
                     "type": "string"

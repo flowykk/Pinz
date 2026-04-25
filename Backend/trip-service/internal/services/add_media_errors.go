@@ -82,7 +82,7 @@ func errNotInitiator(currentInitiator string, takeoverAvailableAt time.Time) err
 		"current_initiator_user_id": currentInitiator,
 	}
 	if !takeoverAvailableAt.IsZero() {
-		md["takeover_available_at_unix"] = strconv.FormatInt(takeoverAvailableAt.Unix(), 10)
+		md["takeover_available_at"] = takeoverAvailableAt.UTC().Format(time.RFC3339)
 	}
 	return withErrorInfo(codes.PermissionDenied,
 		"not the current initiator",

@@ -158,3 +158,12 @@ func AppleAppSiteAssociation(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(aasa))
 }
+
+// unixToRFC3339 конвертирует unix timestamp (секунды) в RFC3339-строку UTC.
+// Если unix == 0 — возвращает пустую строку (DTO с omitempty не сериализует поле).
+func unixToRFC3339(unix int64) string {
+	if unix == 0 {
+		return ""
+	}
+	return time.Unix(unix, 0).UTC().Format(time.RFC3339)
+}

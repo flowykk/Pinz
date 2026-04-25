@@ -562,3 +562,36 @@ func (r *MediaRepository) TopMediaByTripIDs(tripIDs []string, limitPerTrip int) 
 	}
 	return out, rows.Err()
 }
+
+// TopMediaByPinIDs возвращает топ-N медиа на каждый пин (sorted by battle_rating DESC, id) одним запросом.
+func (r *MediaRepository) TopMediaByPinIDs(pinIDs []string, limitPerPin int) (map[string][]*FeedMedia, error) {
+	if len(pinIDs) == 0 || limitPerPin <= 0 {
+		return nil, nil
+	}
+	placeholders := make([]string, len(pinIDs))
+	args := make([]interface{}, len(pinIDs)+1)
+	for i, id := range pinIDs {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+	args[len(pinIDs)] = limitPerPin
+	sqlStr := `SELECT id, pin_id, s3_key, media_type FROM (
+		SELECT id, pin_id, s3_key, media_type,
+			ROW_NUMBER() OVER (PARTITION BY pin_id ORDER BY battle_rating DESC, id) AS rn
+		FROM media WHERE pin_id IN (` + strings.Join(placeholders, ",") + `)
+	) sub WHERE rn <= $` + fmt.Sprintf("%d", len(pinIDs)+1)
+	rows, err := r.db.Query(sqlStr, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make(map[string][]*FeedMedia)
+	for rows.Next() {
+		var id, pinID, s3Key, mediaType string
+		if err := rows.Scan(&id, &pinID, &s3Key, &mediaType); err != nil {
+			return nil, err
+		}
+		out[pinID] = append(out[pinID], &FeedMedia{ID: id, S3Key: s3Key, MediaType: mediaType})
+	}
+	return out, rows.Err()
+}

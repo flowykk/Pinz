@@ -331,14 +331,16 @@ definitions:
     properties:
       current_initiator:
         $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile'
-      initiator_assigned_at_unix:
-        type: integer
+      initiator_assigned_at:
+        example: "2026-04-25T12:00:00Z"
+        type: string
       media_count_in_session:
         type: integer
       session_id:
         type: string
-      takeover_available_at_unix:
-        type: integer
+      takeover_available_at:
+        example: "2026-04-25T13:00:00Z"
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.AddMediaApplyGroupsAndProcessResponse:
     properties:
@@ -403,8 +405,9 @@ definitions:
         type: array
       session_id:
         type: string
-      takeover_available_at_unix:
-        type: integer
+      takeover_available_at:
+        example: "2026-04-25T13:00:00Z"
+        type: string
       trip_id:
         type: string
     type: object
@@ -462,8 +465,9 @@ definitions:
         $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile'
       is_initiator:
         type: boolean
-      takeover_available_at_unix:
-        type: integer
+      takeover_available_at:
+        example: "2026-04-25T13:00:00Z"
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse:
     properties:
@@ -615,6 +619,10 @@ definitions:
         type: number
       longitude:
         type: number
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'
+        type: array
     type: object
   pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse:
     properties:
@@ -803,8 +811,9 @@ definitions:
         type: string
       type:
         type: string
-      uploaded_at_unix:
-        type: integer
+      uploaded_at:
+        example: "2026-04-25T12:00:00Z"
+        type: string
       url:
         type: string
     type: object
