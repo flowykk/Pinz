@@ -116,6 +116,10 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Post("/{id}/cover/confirm", deps.TripHandler.ConfirmTripCoverUpload)
 				r.Delete("/{id}/cover", deps.TripHandler.DeleteTripCover)
 				r.Patch("/{id}/settings", deps.TripHandler.UpdateTripSettings)
+				// per-user приватность (ТЗ 6.4-6.7).
+				r.Put("/{id}/privacy", deps.TripHandler.UpdateTripPrivacy)
+				r.Put("/{id}/pins/{pin_id}/privacy", deps.TripHandler.UpdatePinPrivacy)
+				r.Put("/{id}/media/{media_id}/privacy", deps.TripHandler.UpdateMediaPrivacy)
 				r.Post("/{id}/invite", deps.TripHandler.GenerateInviteLink)
 				r.Post("/{id}/leave", deps.TripHandler.LeaveTrip)
 				r.Post("/{id}/publish", deps.TripHandler.PublishTrip)

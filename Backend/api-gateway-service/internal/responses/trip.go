@@ -96,6 +96,11 @@ type TripCoverUploadResponse struct {
 	S3Key string `json:"s3_key"`
 }
 
+// PrivacyResponse — ответ PUT /trips/{id}/privacy и аналогичных. privacy_level — эффективный (агрегированный) уровень после пересчёта.
+type PrivacyResponse struct {
+	PrivacyLevel string `json:"privacy_level"`
+}
+
 // GenerateInviteLinkResponse is the response for POST /api/v1/trips/:id/invite
 type GenerateInviteLinkResponse struct {
 	InviteLinkID string `json:"invite_link_id"`

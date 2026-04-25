@@ -19,6 +19,7 @@ type TripRepositoryInterface interface {
 	SetStatus(tripID, status string) error
 	SetSoftDeleted(tripID string) error
 	UpdateCoverURL(tripID, s3Key string) error
+	SetPrivacyLevel(tripID, level string) error
 	ListFeed(limit, offset int32, category, season string, locationIDs []int, sortBy string) ([]*models.Trip, error)
 	// выборки для notification-service scheduler'а.
 	ListAnniversaryCandidates(today int64) ([]*NotificationTripCandidate, error)
@@ -72,6 +73,9 @@ type TripEventPublisher interface {
 	PublishTripEventWS(ctx context.Context, tripID string, userIDs []string, eventType string, payload map[string]interface{}) error
 	// DeleteTripEventStream удаляет per-trip WS-stream (вызывается из DeleteTrip).
 	DeleteTripEventStream(ctx context.Context, tripID string) error
+	// PublishPrivacyEvent публикует событие изменения per-user приватности
+	// в pinz:trip:privacy:events для асинхронного fallback-пересчёта воркером.
+	PublishPrivacyEvent(ctx context.Context, objectType, objectID, tripID, userID, privacyLevel string) error
 }
 
 type MediaRepositoryInterface interface {
@@ -97,6 +101,7 @@ type MediaRepositoryInterface interface {
 	PickRandomForBattle(tripID string, limit int) ([]*models.Media, error)
 	IncrementBattleRating(mediaID string) (int32, error)
 	ListWithPositiveBattleRating(tripID string) ([]*models.Media, error)
+	SetPrivacyLevel(mediaID, level string) error
 }
 
 // MediaBattleRepositoryInterface — сессии фотобатла (ТЗ 8.1).
@@ -113,6 +118,7 @@ type PinRepositoryInterface interface {
 	Update(p *models.Pin) error
 	Delete(id string) error
 	DeleteByTripID(tripID string) error
+	SetPrivacyLevel(pinID, level string) error
 	ListPublishedPinsByTripIDs(tripIDs []string) (map[string][]*FeedPin, error)
 	SearchByUserID(userID, query string, limit, offset int32) ([]*models.Pin, error)
 }
@@ -142,4 +148,21 @@ type FavouriteRepositoryInterface interface {
 type GeoRegistryRepositoryInterface interface {
 	EnsureLocationByName(ctx context.Context, countryName, cityName string) (countryID, cityID *int, displayName string, err error)
 	UpsertTripLocations(ctx context.Context, tripID string, locationIDs []int) error
+}
+
+// Per-user приватность: каждый участник выставляет свой уровень для trip/pin/media.
+// Эффективный privacy_level пересчитывается из этих записей через AggregatePrivacyLevel.
+type TripPrivacyRepositoryInterface interface {
+	Upsert(ctx context.Context, tripID, userID, privacyLevel string) error
+	GetByTripID(ctx context.Context, tripID string) ([]PrivacyEntry, error)
+}
+
+type PinPrivacyRepositoryInterface interface {
+	Upsert(ctx context.Context, pinID, userID, privacyLevel string) error
+	GetByPinID(ctx context.Context, pinID string) ([]PrivacyEntry, error)
+}
+
+type MediaPrivacyRepositoryInterface interface {
+	Upsert(ctx context.Context, mediaID, userID, privacyLevel string) error
+	GetByMediaID(ctx context.Context, mediaID string) ([]PrivacyEntry, error)
 }

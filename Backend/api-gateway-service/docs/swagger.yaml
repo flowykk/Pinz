@@ -235,8 +235,6 @@ definitions:
         type: string
       pin_id:
         type: string
-      privacy_level:
-        type: string
       tags:
         items:
           type: string
@@ -313,12 +311,15 @@ definitions:
         type: integer
       name:
         type: string
-      privacy_level:
-        type: string
       season:
         type: string
       start_date_unix:
         type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.UpsertPrivacyRequest:
+    properties:
+      privacy_level:
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_requests.VerifyEmailCodeRequest:
     properties:
@@ -723,6 +724,11 @@ definitions:
       access_token:
         type: string
       refresh_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PrivacyResponse:
+    properties:
+      privacy_level:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse:
@@ -1863,9 +1869,10 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates trip metadata (name, description, category, season, dates,
-        privacy_level). Requires JWT. Any trip participant can update (ТЗ 3.2). For
-        cover use the /cover/upload + /cover/confirm endpoints.
+      description: Updates trip metadata (name, description, category, season, dates).
+        Requires JWT. Any trip participant can update (ТЗ 3.2). Обложка — через /cover/upload
+        + /cover/confirm. Приватность — через PUT /trips/{id}/privacy (per-user, ТЗ
+        6.4-6.7).
       parameters:
       - description: Trip ID
         in: path
@@ -2333,6 +2340,66 @@ paths:
       summary: Like trip
       tags:
       - trips
+  /api/v1/trips/{id}/media/{media_id}/privacy:
+    put:
+      consumes:
+      - application/json
+      description: Текущий пользователь выставляет свой уровень приватности на медиа
+        (ТЗ 6.4.3 / 5.2). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel
+        (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Media ID
+        in: path
+        name: media_id
+        required: true
+        type: string
+      - description: privacy_level (Public|Private)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpsertPrivacyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PrivacyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set per-user media privacy
+      tags:
+      - trips
   /api/v1/trips/{id}/media/add/apply-groups-and-process:
     post:
       consumes:
@@ -2695,6 +2762,121 @@ paths:
       security:
       - BearerAuth: []
       summary: Remove participant
+      tags:
+      - trips
+  /api/v1/trips/{id}/pins/{pin_id}/privacy:
+    put:
+      consumes:
+      - application/json
+      description: Текущий пользователь выставляет свой уровень приватности на пине
+        (ТЗ 6.4.2 / 4.2.10). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel
+        (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: string
+      - description: privacy_level (Public|Private)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpsertPrivacyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PrivacyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set per-user pin privacy
+      tags:
+      - trips
+  /api/v1/trips/{id}/privacy:
+    put:
+      consumes:
+      - application/json
+      description: Текущий пользователь выставляет свой уровень приватности на путешествии
+        (ТЗ 6.4.1). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel
+        (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: privacy_level (Public|Private)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpsertPrivacyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PrivacyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set per-user trip privacy
       tags:
       - trips
   /api/v1/trips/{id}/publish:

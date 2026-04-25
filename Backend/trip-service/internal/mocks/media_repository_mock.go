@@ -222,6 +222,20 @@ func (mr *MockMediaRepositoryInterfaceMockRecorder) PickRandomForBattle(tripID, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PickRandomForBattle", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).PickRandomForBattle), tripID, limit)
 }
 
+// SetPrivacyLevel mocks base method.
+func (m *MockMediaRepositoryInterface) SetPrivacyLevel(mediaID, level string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetPrivacyLevel", mediaID, level)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetPrivacyLevel indicates an expected call of SetPrivacyLevel.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) SetPrivacyLevel(mediaID, level any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPrivacyLevel", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).SetPrivacyLevel), mediaID, level)
+}
+
 // SetSimilarGroupID mocks base method.
 func (m *MockMediaRepositoryInterface) SetSimilarGroupID(mediaIDs []string, groupID string) error {
 	m.ctrl.T.Helper()

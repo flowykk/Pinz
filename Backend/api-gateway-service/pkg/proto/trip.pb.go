@@ -224,7 +224,6 @@ type CreateTripRequest struct {
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	Category      string                 `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`
 	Season        string                 `protobuf:"bytes,5,opt,name=season,proto3" json:"season,omitempty"`
-	PrivacyLevel  string                 `protobuf:"bytes,6,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
 	FilesToUpload []*FileToUpload        `protobuf:"bytes,7,rep,name=files_to_upload,json=filesToUpload,proto3" json:"files_to_upload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -291,13 +290,6 @@ func (x *CreateTripRequest) GetCategory() string {
 func (x *CreateTripRequest) GetSeason() string {
 	if x != nil {
 		return x.Season
-	}
-	return ""
-}
-
-func (x *CreateTripRequest) GetPrivacyLevel() string {
-	if x != nil {
-		return x.PrivacyLevel
 	}
 	return ""
 }
@@ -994,7 +986,6 @@ type UpdateTripRequest struct {
 	Description   *string                `protobuf:"bytes,4,opt,name=description,proto3,oneof" json:"description,omitempty"`
 	Category      *string                `protobuf:"bytes,5,opt,name=category,proto3,oneof" json:"category,omitempty"`
 	Season        *string                `protobuf:"bytes,6,opt,name=season,proto3,oneof" json:"season,omitempty"`
-	PrivacyLevel  *string                `protobuf:"bytes,7,opt,name=privacy_level,json=privacyLevel,proto3,oneof" json:"privacy_level,omitempty"`
 	StartDateUnix *int64                 `protobuf:"varint,8,opt,name=start_date_unix,json=startDateUnix,proto3,oneof" json:"start_date_unix,omitempty"`
 	EndDateUnix   *int64                 `protobuf:"varint,9,opt,name=end_date_unix,json=endDateUnix,proto3,oneof" json:"end_date_unix,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1069,13 +1060,6 @@ func (x *UpdateTripRequest) GetCategory() string {
 func (x *UpdateTripRequest) GetSeason() string {
 	if x != nil && x.Season != nil {
 		return *x.Season
-	}
-	return ""
-}
-
-func (x *UpdateTripRequest) GetPrivacyLevel() string {
-	if x != nil && x.PrivacyLevel != nil {
-		return *x.PrivacyLevel
 	}
 	return ""
 }
@@ -6606,6 +6590,225 @@ func (x *SearchPinsResponse) GetPins() []*TripPin {
 	return nil
 }
 
+// Per-user приватность: каждый участник выставляет свой уровень для trip/pin/media.
+// privacy_level — выбор пользователя (Public|Private). user_id берётся из gRPC metadata.
+type UpsertTripPrivacyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TripId        string                 `protobuf:"bytes,1,opt,name=trip_id,json=tripId,proto3" json:"trip_id,omitempty"`
+	PrivacyLevel  string                 `protobuf:"bytes,2,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertTripPrivacyRequest) Reset() {
+	*x = UpsertTripPrivacyRequest{}
+	mi := &file_trip_proto_msgTypes[112]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertTripPrivacyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertTripPrivacyRequest) ProtoMessage() {}
+
+func (x *UpsertTripPrivacyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_proto_msgTypes[112]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertTripPrivacyRequest.ProtoReflect.Descriptor instead.
+func (*UpsertTripPrivacyRequest) Descriptor() ([]byte, []int) {
+	return file_trip_proto_rawDescGZIP(), []int{112}
+}
+
+func (x *UpsertTripPrivacyRequest) GetTripId() string {
+	if x != nil {
+		return x.TripId
+	}
+	return ""
+}
+
+func (x *UpsertTripPrivacyRequest) GetPrivacyLevel() string {
+	if x != nil {
+		return x.PrivacyLevel
+	}
+	return ""
+}
+
+type UpsertPinPrivacyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TripId        string                 `protobuf:"bytes,1,opt,name=trip_id,json=tripId,proto3" json:"trip_id,omitempty"`
+	PinId         string                 `protobuf:"bytes,2,opt,name=pin_id,json=pinId,proto3" json:"pin_id,omitempty"`
+	PrivacyLevel  string                 `protobuf:"bytes,3,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertPinPrivacyRequest) Reset() {
+	*x = UpsertPinPrivacyRequest{}
+	mi := &file_trip_proto_msgTypes[113]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertPinPrivacyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertPinPrivacyRequest) ProtoMessage() {}
+
+func (x *UpsertPinPrivacyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_proto_msgTypes[113]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertPinPrivacyRequest.ProtoReflect.Descriptor instead.
+func (*UpsertPinPrivacyRequest) Descriptor() ([]byte, []int) {
+	return file_trip_proto_rawDescGZIP(), []int{113}
+}
+
+func (x *UpsertPinPrivacyRequest) GetTripId() string {
+	if x != nil {
+		return x.TripId
+	}
+	return ""
+}
+
+func (x *UpsertPinPrivacyRequest) GetPinId() string {
+	if x != nil {
+		return x.PinId
+	}
+	return ""
+}
+
+func (x *UpsertPinPrivacyRequest) GetPrivacyLevel() string {
+	if x != nil {
+		return x.PrivacyLevel
+	}
+	return ""
+}
+
+type UpsertMediaPrivacyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TripId        string                 `protobuf:"bytes,1,opt,name=trip_id,json=tripId,proto3" json:"trip_id,omitempty"`
+	MediaId       string                 `protobuf:"bytes,2,opt,name=media_id,json=mediaId,proto3" json:"media_id,omitempty"`
+	PrivacyLevel  string                 `protobuf:"bytes,3,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertMediaPrivacyRequest) Reset() {
+	*x = UpsertMediaPrivacyRequest{}
+	mi := &file_trip_proto_msgTypes[114]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertMediaPrivacyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertMediaPrivacyRequest) ProtoMessage() {}
+
+func (x *UpsertMediaPrivacyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_proto_msgTypes[114]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertMediaPrivacyRequest.ProtoReflect.Descriptor instead.
+func (*UpsertMediaPrivacyRequest) Descriptor() ([]byte, []int) {
+	return file_trip_proto_rawDescGZIP(), []int{114}
+}
+
+func (x *UpsertMediaPrivacyRequest) GetTripId() string {
+	if x != nil {
+		return x.TripId
+	}
+	return ""
+}
+
+func (x *UpsertMediaPrivacyRequest) GetMediaId() string {
+	if x != nil {
+		return x.MediaId
+	}
+	return ""
+}
+
+func (x *UpsertMediaPrivacyRequest) GetPrivacyLevel() string {
+	if x != nil {
+		return x.PrivacyLevel
+	}
+	return ""
+}
+
+// effective_privacy_level — агрегированный уровень сущности после пересчёта.
+type UpsertPrivacyResponse struct {
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	EffectivePrivacyLevel string                 `protobuf:"bytes,1,opt,name=effective_privacy_level,json=effectivePrivacyLevel,proto3" json:"effective_privacy_level,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *UpsertPrivacyResponse) Reset() {
+	*x = UpsertPrivacyResponse{}
+	mi := &file_trip_proto_msgTypes[115]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertPrivacyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertPrivacyResponse) ProtoMessage() {}
+
+func (x *UpsertPrivacyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_proto_msgTypes[115]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertPrivacyResponse.ProtoReflect.Descriptor instead.
+func (*UpsertPrivacyResponse) Descriptor() ([]byte, []int) {
+	return file_trip_proto_rawDescGZIP(), []int{115}
+}
+
+func (x *UpsertPrivacyResponse) GetEffectivePrivacyLevel() string {
+	if x != nil {
+		return x.EffectivePrivacyLevel
+	}
+	return ""
+}
+
 var File_trip_proto protoreflect.FileDescriptor
 
 const file_trip_proto_rawDesc = "" +
@@ -6636,15 +6839,14 @@ const file_trip_proto_rawDesc = "" +
 	"mediaCount\x12-\n" +
 	"\x12participants_count\x18\x13 \x01(\x05R\x11participantsCount\x12\x1d\n" +
 	"\n" +
-	"pins_count\x18\x14 \x01(\x05R\tpinsCount\"\x82\x02\n" +
+	"pins_count\x18\x14 \x01(\x05R\tpinsCount\"\xf2\x01\n" +
 	"\x11CreateTripRequest\x12\"\n" +
 	"\rowner_user_id\x18\x01 \x01(\tR\vownerUserId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1a\n" +
 	"\bcategory\x18\x04 \x01(\tR\bcategory\x12\x16\n" +
-	"\x06season\x18\x05 \x01(\tR\x06season\x12#\n" +
-	"\rprivacy_level\x18\x06 \x01(\tR\fprivacyLevel\x12:\n" +
-	"\x0ffiles_to_upload\x18\a \x03(\v2\x12.trip.FileToUploadR\rfilesToUpload\"N\n" +
+	"\x06season\x18\x05 \x01(\tR\x06season\x12:\n" +
+	"\x0ffiles_to_upload\x18\a \x03(\v2\x12.trip.FileToUploadR\rfilesToUploadJ\x04\b\x06\x10\aR\rprivacy_level\"N\n" +
 	"\fFileToUpload\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12!\n" +
 	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\"w\n" +
@@ -6706,24 +6908,22 @@ const file_trip_proto_rawDesc = "" +
 	"\x06offset\x18\x03 \x01(\x05R\x06offset\"9\n" +
 	"\x15ListUserTripsResponse\x12 \n" +
 	"\x05trips\x18\x01 \x03(\v2\n" +
-	".trip.TripR\x05trips\"\xac\x03\n" +
+	".trip.TripR\x05trips\"\x85\x03\n" +
 	"\x11UpdateTripRequest\x12\x17\n" +
 	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x17\n" +
 	"\x04name\x18\x03 \x01(\tH\x00R\x04name\x88\x01\x01\x12%\n" +
 	"\vdescription\x18\x04 \x01(\tH\x01R\vdescription\x88\x01\x01\x12\x1f\n" +
 	"\bcategory\x18\x05 \x01(\tH\x02R\bcategory\x88\x01\x01\x12\x1b\n" +
-	"\x06season\x18\x06 \x01(\tH\x03R\x06season\x88\x01\x01\x12(\n" +
-	"\rprivacy_level\x18\a \x01(\tH\x04R\fprivacyLevel\x88\x01\x01\x12+\n" +
-	"\x0fstart_date_unix\x18\b \x01(\x03H\x05R\rstartDateUnix\x88\x01\x01\x12'\n" +
-	"\rend_date_unix\x18\t \x01(\x03H\x06R\vendDateUnix\x88\x01\x01B\a\n" +
+	"\x06season\x18\x06 \x01(\tH\x03R\x06season\x88\x01\x01\x12+\n" +
+	"\x0fstart_date_unix\x18\b \x01(\x03H\x04R\rstartDateUnix\x88\x01\x01\x12'\n" +
+	"\rend_date_unix\x18\t \x01(\x03H\x05R\vendDateUnix\x88\x01\x01B\a\n" +
 	"\x05_nameB\x0e\n" +
 	"\f_descriptionB\v\n" +
 	"\t_categoryB\t\n" +
-	"\a_seasonB\x10\n" +
-	"\x0e_privacy_levelB\x12\n" +
+	"\a_seasonB\x12\n" +
 	"\x10_start_date_unixB\x10\n" +
-	"\x0e_end_date_unix\"4\n" +
+	"\x0e_end_date_unixJ\x04\b\a\x10\bR\rprivacy_level\"4\n" +
 	"\x12UpdateTripResponse\x12\x1e\n" +
 	"\x04trip\x18\x01 \x01(\v2\n" +
 	".trip.TripR\x04trip\"E\n" +
@@ -7122,7 +7322,20 @@ const file_trip_proto_rawDesc = "" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x03 \x01(\x05R\x06offset\"7\n" +
 	"\x12SearchPinsResponse\x12!\n" +
-	"\x04pins\x18\x01 \x03(\v2\r.trip.TripPinR\x04pins2\xb6\x1d\n" +
+	"\x04pins\x18\x01 \x03(\v2\r.trip.TripPinR\x04pins\"X\n" +
+	"\x18UpsertTripPrivacyRequest\x12\x17\n" +
+	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x12#\n" +
+	"\rprivacy_level\x18\x02 \x01(\tR\fprivacyLevel\"n\n" +
+	"\x17UpsertPinPrivacyRequest\x12\x17\n" +
+	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x12\x15\n" +
+	"\x06pin_id\x18\x02 \x01(\tR\x05pinId\x12#\n" +
+	"\rprivacy_level\x18\x03 \x01(\tR\fprivacyLevel\"t\n" +
+	"\x19UpsertMediaPrivacyRequest\x12\x17\n" +
+	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x12\x19\n" +
+	"\bmedia_id\x18\x02 \x01(\tR\amediaId\x12#\n" +
+	"\rprivacy_level\x18\x03 \x01(\tR\fprivacyLevel\"O\n" +
+	"\x15UpsertPrivacyResponse\x126\n" +
+	"\x17effective_privacy_level\x18\x01 \x01(\tR\x15effectivePrivacyLevel2\xac\x1f\n" +
 	"\vTripService\x12?\n" +
 	"\n" +
 	"CreateTrip\x12\x17.trip.CreateTripRequest\x1a\x18.trip.CreateTripResponse\x126\n" +
@@ -7131,7 +7344,10 @@ const file_trip_proto_rawDesc = "" +
 	"\n" +
 	"UpdateTrip\x12\x17.trip.UpdateTripRequest\x1a\x18.trip.UpdateTripResponse\x12?\n" +
 	"\n" +
-	"DeleteTrip\x12\x17.trip.DeleteTripRequest\x1a\x18.trip.DeleteTripResponse\x12c\n" +
+	"DeleteTrip\x12\x17.trip.DeleteTripRequest\x1a\x18.trip.DeleteTripResponse\x12P\n" +
+	"\x11UpsertTripPrivacy\x12\x1e.trip.UpsertTripPrivacyRequest\x1a\x1b.trip.UpsertPrivacyResponse\x12N\n" +
+	"\x10UpsertPinPrivacy\x12\x1d.trip.UpsertPinPrivacyRequest\x1a\x1b.trip.UpsertPrivacyResponse\x12R\n" +
+	"\x12UpsertMediaPrivacy\x12\x1f.trip.UpsertMediaPrivacyRequest\x1a\x1b.trip.UpsertPrivacyResponse\x12c\n" +
 	"\x16RequestTripCoverUpload\x12#.trip.RequestTripCoverUploadRequest\x1a$.trip.RequestTripCoverUploadResponse\x12c\n" +
 	"\x16ConfirmTripCoverUpload\x12#.trip.ConfirmTripCoverUploadRequest\x1a$.trip.ConfirmTripCoverUploadResponse\x12N\n" +
 	"\x0fDeleteTripCover\x12\x1c.trip.DeleteTripCoverRequest\x1a\x1d.trip.DeleteTripCoverResponse\x12W\n" +
@@ -7186,7 +7402,7 @@ func file_trip_proto_rawDescGZIP() []byte {
 	return file_trip_proto_rawDescData
 }
 
-var file_trip_proto_msgTypes = make([]protoimpl.MessageInfo, 113)
+var file_trip_proto_msgTypes = make([]protoimpl.MessageInfo, 117)
 var file_trip_proto_goTypes = []any{
 	(*Trip)(nil),                                  // 0: trip.Trip
 	(*CreateTripRequest)(nil),                     // 1: trip.CreateTripRequest
@@ -7300,7 +7516,11 @@ var file_trip_proto_goTypes = []any{
 	(*ListTripParticipantsResponse)(nil),          // 109: trip.ListTripParticipantsResponse
 	(*SearchPinsRequest)(nil),                     // 110: trip.SearchPinsRequest
 	(*SearchPinsResponse)(nil),                    // 111: trip.SearchPinsResponse
-	nil,                                           // 112: trip.GetNotificationSettingsResponse.NotificationsEnabledEntry
+	(*UpsertTripPrivacyRequest)(nil),              // 112: trip.UpsertTripPrivacyRequest
+	(*UpsertPinPrivacyRequest)(nil),               // 113: trip.UpsertPinPrivacyRequest
+	(*UpsertMediaPrivacyRequest)(nil),             // 114: trip.UpsertMediaPrivacyRequest
+	(*UpsertPrivacyResponse)(nil),                 // 115: trip.UpsertPrivacyResponse
+	nil,                                           // 116: trip.GetNotificationSettingsResponse.NotificationsEnabledEntry
 }
 var file_trip_proto_depIdxs = []int32{
 	2,   // 0: trip.CreateTripRequest.files_to_upload:type_name -> trip.FileToUpload
@@ -7341,7 +7561,7 @@ var file_trip_proto_depIdxs = []int32{
 	90,  // 35: trip.ListUserTripSummariesResponse.trips:type_name -> trip.TripSummary
 	94,  // 36: trip.StartBattleResponse.media:type_name -> trip.BattleMedia
 	99,  // 37: trip.GetBestMemoriesResponse.media:type_name -> trip.BestMemory
-	112, // 38: trip.GetNotificationSettingsResponse.notifications_enabled:type_name -> trip.GetNotificationSettingsResponse.NotificationsEnabledEntry
+	116, // 38: trip.GetNotificationSettingsResponse.notifications_enabled:type_name -> trip.GetNotificationSettingsResponse.NotificationsEnabledEntry
 	103, // 39: trip.ListAnniversaryTripsResponse.trips:type_name -> trip.NotificationTrip
 	103, // 40: trip.ListEndedMonthAgoTripsResponse.trips:type_name -> trip.NotificationTrip
 	6,   // 41: trip.SearchPinsResponse.pins:type_name -> trip.TripPin
@@ -7350,93 +7570,99 @@ var file_trip_proto_depIdxs = []int32{
 	10,  // 44: trip.TripService.ListUserTrips:input_type -> trip.ListUserTripsRequest
 	12,  // 45: trip.TripService.UpdateTrip:input_type -> trip.UpdateTripRequest
 	14,  // 46: trip.TripService.DeleteTrip:input_type -> trip.DeleteTripRequest
-	16,  // 47: trip.TripService.RequestTripCoverUpload:input_type -> trip.RequestTripCoverUploadRequest
-	18,  // 48: trip.TripService.ConfirmTripCoverUpload:input_type -> trip.ConfirmTripCoverUploadRequest
-	20,  // 49: trip.TripService.DeleteTripCover:input_type -> trip.DeleteTripCoverRequest
-	40,  // 50: trip.TripService.GenerateInviteLink:input_type -> trip.GenerateInviteLinkRequest
-	42,  // 51: trip.TripService.JoinTripByToken:input_type -> trip.JoinTripByTokenRequest
-	44,  // 52: trip.TripService.RemoveParticipant:input_type -> trip.RemoveParticipantRequest
-	46,  // 53: trip.TripService.LeaveTrip:input_type -> trip.LeaveTripRequest
-	48,  // 54: trip.TripService.TransferAdmin:input_type -> trip.TransferAdminRequest
-	24,  // 55: trip.TripService.ProcessMediaGrouping:input_type -> trip.ProcessMediaGroupingRequest
-	29,  // 56: trip.TripService.ApplyGroupsAndProcess:input_type -> trip.ApplyGroupsAndProcessRequest
-	32,  // 57: trip.TripService.GetTripReview:input_type -> trip.GetTripReviewRequest
-	37,  // 58: trip.TripService.FinalizeTrip:input_type -> trip.FinalizeTripRequest
-	22,  // 59: trip.TripService.PublishTrip:input_type -> trip.PublishTripRequest
-	50,  // 60: trip.TripService.UpdateTripSettings:input_type -> trip.UpdateTripSettingsRequest
-	52,  // 61: trip.TripService.ListFeed:input_type -> trip.ListFeedRequest
-	57,  // 62: trip.TripService.LikeTrip:input_type -> trip.LikeTripRequest
-	59,  // 63: trip.TripService.DislikeTrip:input_type -> trip.DislikeTripRequest
-	61,  // 64: trip.TripService.AddToFavourites:input_type -> trip.AddToFavouritesRequest
-	63,  // 65: trip.TripService.RemoveFromFavourites:input_type -> trip.RemoveFromFavouritesRequest
-	65,  // 66: trip.TripService.ListFavourites:input_type -> trip.ListFavouritesRequest
-	67,  // 67: trip.TripService.AddMediaStart:input_type -> trip.AddMediaStartRequest
-	69,  // 68: trip.TripService.AddMediaRequestUploadUrls:input_type -> trip.AddMediaRequestUploadUrlsRequest
-	71,  // 69: trip.TripService.AddMediaCommitUpload:input_type -> trip.AddMediaCommitUploadRequest
-	73,  // 70: trip.TripService.AddMediaGetSessionMedia:input_type -> trip.AddMediaGetSessionMediaRequest
-	76,  // 71: trip.TripService.AddMediaProcessGrouping:input_type -> trip.AddMediaProcessGroupingRequest
-	78,  // 72: trip.TripService.AddMediaGetGrouping:input_type -> trip.AddMediaGetGroupingRequest
-	80,  // 73: trip.TripService.AddMediaApplyGroupsAndProcess:input_type -> trip.AddMediaApplyGroupsAndProcessRequest
-	82,  // 74: trip.TripService.AddMediaGetReview:input_type -> trip.AddMediaGetReviewRequest
-	84,  // 75: trip.TripService.AddMediaConfirm:input_type -> trip.AddMediaConfirmRequest
-	86,  // 76: trip.TripService.AddMediaCancel:input_type -> trip.AddMediaCancelRequest
-	88,  // 77: trip.TripService.AddMediaTakeover:input_type -> trip.AddMediaTakeoverRequest
-	91,  // 78: trip.TripService.ListUserTripSummaries:input_type -> trip.ListUserTripSummariesRequest
-	93,  // 79: trip.TripService.StartBattle:input_type -> trip.StartBattleRequest
-	96,  // 80: trip.TripService.SubmitBattleResult:input_type -> trip.SubmitBattleResultRequest
-	98,  // 81: trip.TripService.GetBestMemories:input_type -> trip.GetBestMemoriesRequest
-	101, // 82: trip.TripService.GetNotificationSettings:input_type -> trip.GetNotificationSettingsRequest
-	104, // 83: trip.TripService.ListAnniversaryTrips:input_type -> trip.ListAnniversaryTripsRequest
-	106, // 84: trip.TripService.ListEndedMonthAgoTrips:input_type -> trip.ListEndedMonthAgoTripsRequest
-	108, // 85: trip.TripService.ListTripParticipants:input_type -> trip.ListTripParticipantsRequest
-	110, // 86: trip.TripService.SearchPins:input_type -> trip.SearchPinsRequest
-	3,   // 87: trip.TripService.CreateTrip:output_type -> trip.CreateTripResponse
-	8,   // 88: trip.TripService.GetTrip:output_type -> trip.GetTripResponse
-	11,  // 89: trip.TripService.ListUserTrips:output_type -> trip.ListUserTripsResponse
-	13,  // 90: trip.TripService.UpdateTrip:output_type -> trip.UpdateTripResponse
-	15,  // 91: trip.TripService.DeleteTrip:output_type -> trip.DeleteTripResponse
-	17,  // 92: trip.TripService.RequestTripCoverUpload:output_type -> trip.RequestTripCoverUploadResponse
-	19,  // 93: trip.TripService.ConfirmTripCoverUpload:output_type -> trip.ConfirmTripCoverUploadResponse
-	21,  // 94: trip.TripService.DeleteTripCover:output_type -> trip.DeleteTripCoverResponse
-	41,  // 95: trip.TripService.GenerateInviteLink:output_type -> trip.GenerateInviteLinkResponse
-	43,  // 96: trip.TripService.JoinTripByToken:output_type -> trip.JoinTripByTokenResponse
-	45,  // 97: trip.TripService.RemoveParticipant:output_type -> trip.RemoveParticipantResponse
-	47,  // 98: trip.TripService.LeaveTrip:output_type -> trip.LeaveTripResponse
-	49,  // 99: trip.TripService.TransferAdmin:output_type -> trip.TransferAdminResponse
-	26,  // 100: trip.TripService.ProcessMediaGrouping:output_type -> trip.ProcessMediaGroupingResponse
-	31,  // 101: trip.TripService.ApplyGroupsAndProcess:output_type -> trip.ApplyGroupsAndProcessResponse
-	33,  // 102: trip.TripService.GetTripReview:output_type -> trip.GetTripReviewResponse
-	39,  // 103: trip.TripService.FinalizeTrip:output_type -> trip.FinalizeTripResponse
-	23,  // 104: trip.TripService.PublishTrip:output_type -> trip.PublishTripResponse
-	51,  // 105: trip.TripService.UpdateTripSettings:output_type -> trip.UpdateTripSettingsResponse
-	56,  // 106: trip.TripService.ListFeed:output_type -> trip.ListFeedResponse
-	58,  // 107: trip.TripService.LikeTrip:output_type -> trip.LikeTripResponse
-	60,  // 108: trip.TripService.DislikeTrip:output_type -> trip.DislikeTripResponse
-	62,  // 109: trip.TripService.AddToFavourites:output_type -> trip.AddToFavouritesResponse
-	64,  // 110: trip.TripService.RemoveFromFavourites:output_type -> trip.RemoveFromFavouritesResponse
-	66,  // 111: trip.TripService.ListFavourites:output_type -> trip.ListFavouritesResponse
-	68,  // 112: trip.TripService.AddMediaStart:output_type -> trip.AddMediaStartResponse
-	70,  // 113: trip.TripService.AddMediaRequestUploadUrls:output_type -> trip.AddMediaRequestUploadUrlsResponse
-	72,  // 114: trip.TripService.AddMediaCommitUpload:output_type -> trip.AddMediaCommitUploadResponse
-	74,  // 115: trip.TripService.AddMediaGetSessionMedia:output_type -> trip.AddMediaGetSessionMediaResponse
-	77,  // 116: trip.TripService.AddMediaProcessGrouping:output_type -> trip.AddMediaProcessGroupingResponse
-	79,  // 117: trip.TripService.AddMediaGetGrouping:output_type -> trip.AddMediaGetGroupingResponse
-	81,  // 118: trip.TripService.AddMediaApplyGroupsAndProcess:output_type -> trip.AddMediaApplyGroupsAndProcessResponse
-	83,  // 119: trip.TripService.AddMediaGetReview:output_type -> trip.AddMediaGetReviewResponse
-	85,  // 120: trip.TripService.AddMediaConfirm:output_type -> trip.AddMediaConfirmResponse
-	87,  // 121: trip.TripService.AddMediaCancel:output_type -> trip.AddMediaCancelResponse
-	89,  // 122: trip.TripService.AddMediaTakeover:output_type -> trip.AddMediaTakeoverResponse
-	92,  // 123: trip.TripService.ListUserTripSummaries:output_type -> trip.ListUserTripSummariesResponse
-	95,  // 124: trip.TripService.StartBattle:output_type -> trip.StartBattleResponse
-	97,  // 125: trip.TripService.SubmitBattleResult:output_type -> trip.SubmitBattleResultResponse
-	100, // 126: trip.TripService.GetBestMemories:output_type -> trip.GetBestMemoriesResponse
-	102, // 127: trip.TripService.GetNotificationSettings:output_type -> trip.GetNotificationSettingsResponse
-	105, // 128: trip.TripService.ListAnniversaryTrips:output_type -> trip.ListAnniversaryTripsResponse
-	107, // 129: trip.TripService.ListEndedMonthAgoTrips:output_type -> trip.ListEndedMonthAgoTripsResponse
-	109, // 130: trip.TripService.ListTripParticipants:output_type -> trip.ListTripParticipantsResponse
-	111, // 131: trip.TripService.SearchPins:output_type -> trip.SearchPinsResponse
-	87,  // [87:132] is the sub-list for method output_type
-	42,  // [42:87] is the sub-list for method input_type
+	112, // 47: trip.TripService.UpsertTripPrivacy:input_type -> trip.UpsertTripPrivacyRequest
+	113, // 48: trip.TripService.UpsertPinPrivacy:input_type -> trip.UpsertPinPrivacyRequest
+	114, // 49: trip.TripService.UpsertMediaPrivacy:input_type -> trip.UpsertMediaPrivacyRequest
+	16,  // 50: trip.TripService.RequestTripCoverUpload:input_type -> trip.RequestTripCoverUploadRequest
+	18,  // 51: trip.TripService.ConfirmTripCoverUpload:input_type -> trip.ConfirmTripCoverUploadRequest
+	20,  // 52: trip.TripService.DeleteTripCover:input_type -> trip.DeleteTripCoverRequest
+	40,  // 53: trip.TripService.GenerateInviteLink:input_type -> trip.GenerateInviteLinkRequest
+	42,  // 54: trip.TripService.JoinTripByToken:input_type -> trip.JoinTripByTokenRequest
+	44,  // 55: trip.TripService.RemoveParticipant:input_type -> trip.RemoveParticipantRequest
+	46,  // 56: trip.TripService.LeaveTrip:input_type -> trip.LeaveTripRequest
+	48,  // 57: trip.TripService.TransferAdmin:input_type -> trip.TransferAdminRequest
+	24,  // 58: trip.TripService.ProcessMediaGrouping:input_type -> trip.ProcessMediaGroupingRequest
+	29,  // 59: trip.TripService.ApplyGroupsAndProcess:input_type -> trip.ApplyGroupsAndProcessRequest
+	32,  // 60: trip.TripService.GetTripReview:input_type -> trip.GetTripReviewRequest
+	37,  // 61: trip.TripService.FinalizeTrip:input_type -> trip.FinalizeTripRequest
+	22,  // 62: trip.TripService.PublishTrip:input_type -> trip.PublishTripRequest
+	50,  // 63: trip.TripService.UpdateTripSettings:input_type -> trip.UpdateTripSettingsRequest
+	52,  // 64: trip.TripService.ListFeed:input_type -> trip.ListFeedRequest
+	57,  // 65: trip.TripService.LikeTrip:input_type -> trip.LikeTripRequest
+	59,  // 66: trip.TripService.DislikeTrip:input_type -> trip.DislikeTripRequest
+	61,  // 67: trip.TripService.AddToFavourites:input_type -> trip.AddToFavouritesRequest
+	63,  // 68: trip.TripService.RemoveFromFavourites:input_type -> trip.RemoveFromFavouritesRequest
+	65,  // 69: trip.TripService.ListFavourites:input_type -> trip.ListFavouritesRequest
+	67,  // 70: trip.TripService.AddMediaStart:input_type -> trip.AddMediaStartRequest
+	69,  // 71: trip.TripService.AddMediaRequestUploadUrls:input_type -> trip.AddMediaRequestUploadUrlsRequest
+	71,  // 72: trip.TripService.AddMediaCommitUpload:input_type -> trip.AddMediaCommitUploadRequest
+	73,  // 73: trip.TripService.AddMediaGetSessionMedia:input_type -> trip.AddMediaGetSessionMediaRequest
+	76,  // 74: trip.TripService.AddMediaProcessGrouping:input_type -> trip.AddMediaProcessGroupingRequest
+	78,  // 75: trip.TripService.AddMediaGetGrouping:input_type -> trip.AddMediaGetGroupingRequest
+	80,  // 76: trip.TripService.AddMediaApplyGroupsAndProcess:input_type -> trip.AddMediaApplyGroupsAndProcessRequest
+	82,  // 77: trip.TripService.AddMediaGetReview:input_type -> trip.AddMediaGetReviewRequest
+	84,  // 78: trip.TripService.AddMediaConfirm:input_type -> trip.AddMediaConfirmRequest
+	86,  // 79: trip.TripService.AddMediaCancel:input_type -> trip.AddMediaCancelRequest
+	88,  // 80: trip.TripService.AddMediaTakeover:input_type -> trip.AddMediaTakeoverRequest
+	91,  // 81: trip.TripService.ListUserTripSummaries:input_type -> trip.ListUserTripSummariesRequest
+	93,  // 82: trip.TripService.StartBattle:input_type -> trip.StartBattleRequest
+	96,  // 83: trip.TripService.SubmitBattleResult:input_type -> trip.SubmitBattleResultRequest
+	98,  // 84: trip.TripService.GetBestMemories:input_type -> trip.GetBestMemoriesRequest
+	101, // 85: trip.TripService.GetNotificationSettings:input_type -> trip.GetNotificationSettingsRequest
+	104, // 86: trip.TripService.ListAnniversaryTrips:input_type -> trip.ListAnniversaryTripsRequest
+	106, // 87: trip.TripService.ListEndedMonthAgoTrips:input_type -> trip.ListEndedMonthAgoTripsRequest
+	108, // 88: trip.TripService.ListTripParticipants:input_type -> trip.ListTripParticipantsRequest
+	110, // 89: trip.TripService.SearchPins:input_type -> trip.SearchPinsRequest
+	3,   // 90: trip.TripService.CreateTrip:output_type -> trip.CreateTripResponse
+	8,   // 91: trip.TripService.GetTrip:output_type -> trip.GetTripResponse
+	11,  // 92: trip.TripService.ListUserTrips:output_type -> trip.ListUserTripsResponse
+	13,  // 93: trip.TripService.UpdateTrip:output_type -> trip.UpdateTripResponse
+	15,  // 94: trip.TripService.DeleteTrip:output_type -> trip.DeleteTripResponse
+	115, // 95: trip.TripService.UpsertTripPrivacy:output_type -> trip.UpsertPrivacyResponse
+	115, // 96: trip.TripService.UpsertPinPrivacy:output_type -> trip.UpsertPrivacyResponse
+	115, // 97: trip.TripService.UpsertMediaPrivacy:output_type -> trip.UpsertPrivacyResponse
+	17,  // 98: trip.TripService.RequestTripCoverUpload:output_type -> trip.RequestTripCoverUploadResponse
+	19,  // 99: trip.TripService.ConfirmTripCoverUpload:output_type -> trip.ConfirmTripCoverUploadResponse
+	21,  // 100: trip.TripService.DeleteTripCover:output_type -> trip.DeleteTripCoverResponse
+	41,  // 101: trip.TripService.GenerateInviteLink:output_type -> trip.GenerateInviteLinkResponse
+	43,  // 102: trip.TripService.JoinTripByToken:output_type -> trip.JoinTripByTokenResponse
+	45,  // 103: trip.TripService.RemoveParticipant:output_type -> trip.RemoveParticipantResponse
+	47,  // 104: trip.TripService.LeaveTrip:output_type -> trip.LeaveTripResponse
+	49,  // 105: trip.TripService.TransferAdmin:output_type -> trip.TransferAdminResponse
+	26,  // 106: trip.TripService.ProcessMediaGrouping:output_type -> trip.ProcessMediaGroupingResponse
+	31,  // 107: trip.TripService.ApplyGroupsAndProcess:output_type -> trip.ApplyGroupsAndProcessResponse
+	33,  // 108: trip.TripService.GetTripReview:output_type -> trip.GetTripReviewResponse
+	39,  // 109: trip.TripService.FinalizeTrip:output_type -> trip.FinalizeTripResponse
+	23,  // 110: trip.TripService.PublishTrip:output_type -> trip.PublishTripResponse
+	51,  // 111: trip.TripService.UpdateTripSettings:output_type -> trip.UpdateTripSettingsResponse
+	56,  // 112: trip.TripService.ListFeed:output_type -> trip.ListFeedResponse
+	58,  // 113: trip.TripService.LikeTrip:output_type -> trip.LikeTripResponse
+	60,  // 114: trip.TripService.DislikeTrip:output_type -> trip.DislikeTripResponse
+	62,  // 115: trip.TripService.AddToFavourites:output_type -> trip.AddToFavouritesResponse
+	64,  // 116: trip.TripService.RemoveFromFavourites:output_type -> trip.RemoveFromFavouritesResponse
+	66,  // 117: trip.TripService.ListFavourites:output_type -> trip.ListFavouritesResponse
+	68,  // 118: trip.TripService.AddMediaStart:output_type -> trip.AddMediaStartResponse
+	70,  // 119: trip.TripService.AddMediaRequestUploadUrls:output_type -> trip.AddMediaRequestUploadUrlsResponse
+	72,  // 120: trip.TripService.AddMediaCommitUpload:output_type -> trip.AddMediaCommitUploadResponse
+	74,  // 121: trip.TripService.AddMediaGetSessionMedia:output_type -> trip.AddMediaGetSessionMediaResponse
+	77,  // 122: trip.TripService.AddMediaProcessGrouping:output_type -> trip.AddMediaProcessGroupingResponse
+	79,  // 123: trip.TripService.AddMediaGetGrouping:output_type -> trip.AddMediaGetGroupingResponse
+	81,  // 124: trip.TripService.AddMediaApplyGroupsAndProcess:output_type -> trip.AddMediaApplyGroupsAndProcessResponse
+	83,  // 125: trip.TripService.AddMediaGetReview:output_type -> trip.AddMediaGetReviewResponse
+	85,  // 126: trip.TripService.AddMediaConfirm:output_type -> trip.AddMediaConfirmResponse
+	87,  // 127: trip.TripService.AddMediaCancel:output_type -> trip.AddMediaCancelResponse
+	89,  // 128: trip.TripService.AddMediaTakeover:output_type -> trip.AddMediaTakeoverResponse
+	92,  // 129: trip.TripService.ListUserTripSummaries:output_type -> trip.ListUserTripSummariesResponse
+	95,  // 130: trip.TripService.StartBattle:output_type -> trip.StartBattleResponse
+	97,  // 131: trip.TripService.SubmitBattleResult:output_type -> trip.SubmitBattleResultResponse
+	100, // 132: trip.TripService.GetBestMemories:output_type -> trip.GetBestMemoriesResponse
+	102, // 133: trip.TripService.GetNotificationSettings:output_type -> trip.GetNotificationSettingsResponse
+	105, // 134: trip.TripService.ListAnniversaryTrips:output_type -> trip.ListAnniversaryTripsResponse
+	107, // 135: trip.TripService.ListEndedMonthAgoTrips:output_type -> trip.ListEndedMonthAgoTripsResponse
+	109, // 136: trip.TripService.ListTripParticipants:output_type -> trip.ListTripParticipantsResponse
+	111, // 137: trip.TripService.SearchPins:output_type -> trip.SearchPinsResponse
+	90,  // [90:138] is the sub-list for method output_type
+	42,  // [42:90] is the sub-list for method input_type
 	42,  // [42:42] is the sub-list for extension type_name
 	42,  // [42:42] is the sub-list for extension extendee
 	0,   // [0:42] is the sub-list for field type_name
@@ -7462,7 +7688,7 @@ func file_trip_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trip_proto_rawDesc), len(file_trip_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   113,
+			NumMessages:   117,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

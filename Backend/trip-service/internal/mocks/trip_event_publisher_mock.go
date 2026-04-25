@@ -83,6 +83,20 @@ func (mr *MockTripEventPublisherMockRecorder) DeleteTripEventStream(ctx, tripID 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTripEventStream", reflect.TypeOf((*MockTripEventPublisher)(nil).DeleteTripEventStream), ctx, tripID)
 }
 
+// PublishPrivacyEvent mocks base method.
+func (m *MockTripEventPublisher) PublishPrivacyEvent(ctx context.Context, objectType, objectID, tripID, userID, privacyLevel string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublishPrivacyEvent", ctx, objectType, objectID, tripID, userID, privacyLevel)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PublishPrivacyEvent indicates an expected call of PublishPrivacyEvent.
+func (mr *MockTripEventPublisherMockRecorder) PublishPrivacyEvent(ctx, objectType, objectID, tripID, userID, privacyLevel any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishPrivacyEvent", reflect.TypeOf((*MockTripEventPublisher)(nil).PublishPrivacyEvent), ctx, objectType, objectID, tripID, userID, privacyLevel)
+}
+
 // PublishStatsEvent mocks base method.
 func (m *MockTripEventPublisher) PublishStatsEvent(ctx context.Context, eventType, tripID string, userIDs []string, payload map[string]any) error {
 	m.ctrl.T.Helper()
