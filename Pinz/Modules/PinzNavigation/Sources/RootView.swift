@@ -56,6 +56,8 @@ public struct RootView<Content: View>: View {
                 SelectablePinsListView(trip: trip)
             case let .postPreview(trip, selectedPins):
                 PostPreviewView(trip: trip, selectedPins: selectedPins)
+            case let .postInfo(post):
+                PostInfoView(post: post)
             }
         case let .tripCreation(tripCreationRoute):
             switch tripCreationRoute {

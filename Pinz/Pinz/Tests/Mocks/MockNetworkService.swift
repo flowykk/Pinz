@@ -20,7 +20,7 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     // MARK: - Feed / Trips
 
-    var getFeedResult: Result<[TripDTO], Error> = .success([])
+    var getFeedResult: Result<[FeedItemDTO], Error> = .success(Self.stubFeed)
     var getTripsResult: Result<[TripDTO], Error> = .success([])
     var getTripResult: Result<GetTripResponseDTO, Error> = .success(MockNetworkService.stubTripResponse)
     var requestTripCoverUploadResult: Result<TripCoverUploadResponseDTO, Error> = .success(
@@ -49,6 +49,10 @@ final class MockNetworkService: NetworkServiceProtocol {
     var likeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var dislikeTripResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
     var addTripToFavouritesResult: Result<SuccessDTO, Error> = .success(SuccessDTO(success: true))
+    var likeTripCall: String?
+    var dislikeTripCall: String?
+    var addTripToFavouritesCall: String?
+    var removeTripFromFavouritesCall: String?
     var getFavouriteTripsResult: Result<[TripDTO], Error> = .success([])
     var removeTripFromFavouritesError: Error?
 
@@ -121,7 +125,7 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     // MARK: - Feed
 
-    func getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, sortBy: String?) async throws -> [TripDTO] {
+    func getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, sortBy: String?) async throws -> [FeedItemDTO] {
         try getFeedResult.get()
     }
 
@@ -175,10 +179,20 @@ final class MockNetworkService: NetworkServiceProtocol {
         updateTripSettingsCall = (id: id, notificationsEnabled: notificationsEnabled)
         return try updateTripSettingsResult.get()
     }
-    func likeTrip(id: String) async throws -> SuccessDTO { try likeTripResult.get() }
-    func dislikeTrip(id: String) async throws -> SuccessDTO { try dislikeTripResult.get() }
-    func addTripToFavourites(id: String) async throws -> SuccessDTO { try addTripToFavouritesResult.get() }
+    func likeTrip(id: String) async throws -> SuccessDTO {
+        likeTripCall = id
+        return try likeTripResult.get()
+    }
+    func dislikeTrip(id: String) async throws -> SuccessDTO {
+        dislikeTripCall = id
+        return try dislikeTripResult.get()
+    }
+    func addTripToFavourites(id: String) async throws -> SuccessDTO {
+        addTripToFavouritesCall = id
+        return try addTripToFavouritesResult.get()
+    }
     func removeTripFromFavourites(id: String) async throws {
+        removeTripFromFavouritesCall = id
         if let error = removeTripFromFavouritesError { throw error }
     }
     func getProfile() async throws -> ProfileResponseDTO { try getProfileResult.get() }
@@ -315,5 +329,106 @@ final class MockNetworkService: NetworkServiceProtocol {
         }
     }
     private static let stubTripResponse = GetTripResponseDTO(trip: stubTrip, pins: stubTripPins)
+
+    private static let stubFeed: [FeedItemDTO] = [
+        FeedItemDTO(
+            trip: TripDTO(
+                id: "trip-feed-001",
+                name: "Парижская романтика (mock)",
+                description: "Список медиа задан у каждого пина",
+                category: "vacation",
+                season: "spring",
+                coverUrl: nil,
+                ownerUserId: "user-001",
+                privacyLevel: "public",
+                status: "published",
+                isPublished: true,
+                isGenerated: false,
+                likesCount: 42,
+                dislikesCount: 2,
+                participantsCount: 12,
+                mediaCount: 6,
+                startDateUnix: 1_700_000_000,
+                endDateUnix: 1_700_020_000,
+                createdAtUnix: 1_699_900_000,
+                updatedAtUnix: 1_699_900_000
+            ),
+            pins: [
+                FeedPinDTO(
+                    id: "pin-feed-001",
+                    latitude: 48.8584,
+                    longitude: 2.2945,
+                    media: [
+                        FeedMediaDTO(
+                            mediaId: "mock-feed-001-001",
+                            url: "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg",
+                            mediaType: "photo"
+                        ),
+                        FeedMediaDTO(
+                            mediaId: "mock-feed-001-002",
+                            url: "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg",
+                            mediaType: "photo"
+                        )
+                    ]
+                ),
+                FeedPinDTO(
+                    id: "pin-feed-002",
+                    latitude: 48.8606,
+                    longitude: 2.3352,
+                    media: [
+                        FeedMediaDTO(
+                            mediaId: "mock-feed-002-001",
+                            url: "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
+                            mediaType: "photo"
+                        ),
+                        FeedMediaDTO(
+                            mediaId: "mock-feed-002-002",
+                            url: "https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg",
+                            mediaType: "photo"
+                        )
+                    ]
+                )
+            ],
+            media: []
+        ),
+        FeedItemDTO(
+            trip: TripDTO(
+                id: "trip-feed-002",
+                name: "Горнолыжный тур в Альпы (mock)",
+                description: "Каждый pin содержит минимум по одному медиа-объекту",
+                category: "active",
+                season: "winter",
+                coverUrl: nil,
+                ownerUserId: "user-002",
+                privacyLevel: "public",
+                status: "published",
+                isPublished: true,
+                isGenerated: false,
+                likesCount: 38,
+                dislikesCount: 1,
+                participantsCount: 8,
+                mediaCount: 4,
+                startDateUnix: 1_698_000_000,
+                endDateUnix: 1_698_400_000,
+                createdAtUnix: 1_697_900_000,
+                updatedAtUnix: 1_697_950_000
+            ),
+            pins: [
+                FeedPinDTO(
+                    id: "pin-feed-003",
+                    latitude: 46.8182,
+                    longitude: 8.2275,
+                    media: [
+                        FeedMediaDTO(
+                            mediaId: "mock-feed-003-001",
+                            url: "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
+                            mediaType: "photo"
+                        )
+                    ]
+                )
+            ],
+            media: []
+        )
+    ]
 }
 // swiftlint:enable file_length

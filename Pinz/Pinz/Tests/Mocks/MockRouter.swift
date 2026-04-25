@@ -14,6 +14,7 @@ final class MockRouter: AppRouting {
     var navigatedPinsList: Trip?
     var navigatedSelectablePinsList: Trip?
     var navigatedPostPreview: (trip: Trip, pins: [Pin])?
+    var navigatedPostInfo: Post?
     var navigatedMediaInfo: MediaItem?
     var navigatedLocalMediaInfo: LoadedMedia?
     var navigatedEmailChange: (email: String, userId: String?, action: EmailChangeAction)?
@@ -71,6 +72,7 @@ final class MockRouter: AppRouting {
     func navigateToPinsList(trip: Trip) { navigatedPinsList = trip }
     func navigateToSelectablePinsList(trip: Trip) { navigatedSelectablePinsList = trip }
     func navigateToPostPreview(trip: Trip, selectedPins: [Pin]) { navigatedPostPreview = (trip, selectedPins) }
+    func navigateToPostInfo(post: Post) { navigatedPostInfo = post }
     func navigateToMediaInfo(media: MediaItem) { navigatedMediaInfo = media }
     func navigateToLocalMediaInfo(media: LoadedMedia) { navigatedLocalMediaInfo = media }
     func navigateToEmailChange(email: String, userId: String?, action: EmailChangeAction) {

@@ -4,7 +4,7 @@ import PinzUI
 import PinzDomain
 import PinzBase
 
-struct PostView: View {
+struct PostFeedItemView: View {
 
     @State private var viewModel: PostViewModel
     @State private var selection: Int = 0
@@ -24,10 +24,10 @@ struct PostView: View {
             .padding(.top, 4)
 
             TabViewProgressView(numberOfPages: viewModel.post.pins.count + 1, currentIndex: selection)
-                .padding(.top, 12)
+                .padding(.top, 8)
 
             statistics
-                .padding(.top, 8)
+                .padding(.top, 6)
                 .padding(.horizontal, 12)
         }
         .task {
@@ -35,26 +35,47 @@ struct PostView: View {
         }
     }
 
+    @ViewBuilder
     public var statistics: some View {
-        HStack(spacing: 10) {
-            StatisticView(
-                icon: "hand.thumbsup",
-                text: String(viewModel.post.likes),
-                iconSize: 16
-            )
-            StatisticView(
-                icon: "hand.thumbsdown",
-                iconSize: 16
-            )
-            StatisticView(
-                icon: "bookmark",
-                iconSize: 16
-            )
+        let iconSize: CGFloat = 18
+        HStack(spacing: 12) {
+            Button {
+                viewModel.dispatch(.like)
+            } label: {
+                StatisticView(
+                    icon: viewModel.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup",
+                    text: String(viewModel.post.likes),
+                    iconSize: iconSize,
+                    iconColor: PinzUIAsset.textPrimary
+                )
+            }.buttonStyle(.plain)
+
+            Button {
+                viewModel.dispatch(.dislike)
+            } label: {
+                StatisticView(
+                    icon: viewModel.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown",
+                    text: String(viewModel.post.dislikes),
+                    iconSize: iconSize,
+                    iconColor: PinzUIAsset.textPrimary
+                )
+            }.buttonStyle(.plain)
+
             Spacer()
+            Button {
+                viewModel.dispatch(.toggleFavourite)
+            } label: {
+                StatisticView(
+                    icon: viewModel.isFavourite ? "bookmark.fill" : "bookmark",
+                    iconSize: iconSize,
+                    iconColor: PinzUIAsset.textPrimary
+                )
+            }.buttonStyle(.plain)
             StatisticView(
                 icon: "eye",
                 text: String(viewModel.post.views),
-                iconSize: 16
+                iconSize: iconSize,
+                iconColor: PinzUIAsset.textPrimary
             )
         }
     }

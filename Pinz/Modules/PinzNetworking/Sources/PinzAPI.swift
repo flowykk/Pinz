@@ -303,27 +303,241 @@ extension PinzAPI {
         case .confirmAvatarUpload:
             json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
         case .confirmTripCoverUpload:
-            json = #"{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу","category":"vacation","season":"spring","cover_url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}"#
+            json = #"{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу","category":"vacation","season":"spring","cover_url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":false,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}"#
         case .changeEmail:
             json = #"{"success":true,"message":"Verification code sent","email":"new@example.com","expires_at_unix":1700000000}"#
         case .confirmEmailChange:
             json = #"{"success":true,"message":"Email changed","email":"new@example.com"}"#
-        case .getFeed, .getTrips, .getFavouriteTrips:
+        case .getFeed:
             json = #"""
             [
-              {"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000},
-              {"id":"trip-002","name":"Горнолыжный тур в Альпы","description":"Захватывающие спуски и потрясающие горные пейзажи в сердце Европы","category":"active","season":"winter","cover_url":null,"owner_user_id":"user-002","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":38,"dislikes_count":1,"start_date_unix":1698000000,"end_date_unix":1698400000,"created_at_unix":1697900000,"updated_at_unix":1697950000},
-              {"id":"trip-003","name":"Пляжный отпуск на Бали","description":"Тропические пляжи, рисовые террасы и древние храмы Индонезии","category":"vacation","season":"summer","cover_url":null,"owner_user_id":"user-003","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":156,"dislikes_count":5,"start_date_unix":1720000000,"end_date_unix":1720400000,"created_at_unix":1719900000,"updated_at_unix":1719950000},
-              {"id":"trip-004","name":"Культурный тур по Италии","description":"Искусство, история и изысканная кухня в Риме, Флоренции и Венеции","category":"education","season":"autumn","cover_url":null,"owner_user_id":"user-004","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":97,"dislikes_count":3,"start_date_unix":1727000000,"end_date_unix":1727400000,"created_at_unix":1726900000,"updated_at_unix":1726950000},
-              {"id":"trip-005","name":"Деловая поездка в Токио","description":"Современные небоскребы, традиционные святилища и безумный темп мегаполиса","category":"business","season":"spring","cover_url":null,"owner_user_id":"user-005","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":28,"dislikes_count":0,"start_date_unix":1710000000,"end_date_unix":1710200000,"created_at_unix":1709900000,"updated_at_unix":1709950000},
-              {"id":"trip-006","name":"Северное сияние в Норвегии","description":"Магическое северное сияние и суровая природа Арктики","category":"vacation","season":"winter","cover_url":null,"owner_user_id":"user-006","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":203,"dislikes_count":4,"start_date_unix":1704000000,"end_date_unix":1704300000,"created_at_unix":1703900000,"updated_at_unix":1703950000},
-              {"id":"trip-007","name":"Сафари в Кении","description":"Большая пятёрка, национальные парки и встреча с дикой природой","category":"active","season":"summer","cover_url":null,"owner_user_id":"user-007","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":124,"dislikes_count":2,"start_date_unix":1721000000,"end_date_unix":1721300000,"created_at_unix":1720900000,"updated_at_unix":1720950000},
-              {"id":"trip-008","name":"Морской круиз по Средиземному морю","description":"Греческие острова, итальянское побережье и кристально чистая вода","category":"vacation","season":"summer","cover_url":null,"owner_user_id":"user-008","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":91,"dislikes_count":1,"start_date_unix":1722000000,"end_date_unix":1722400000,"created_at_unix":1721900000,"updated_at_unix":1721950000}
+              {
+                "trip": {
+                  "id": "trip-001",
+                  "name": "Парижская романтика",
+                  "description": "Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу",
+                  "category": "vacation",
+                  "season": "spring",
+                  "cover_url": null,
+                  "owner_user_id": "user-001",
+                  "privacy_level": "public",
+                  "status": "published",
+                  "is_published": false,
+                  "is_generated": false,
+                  "likes_count": 42,
+                  "dislikes_count": 2,
+                  "participants_count": 12,
+                  "media_count": 36,
+                  "start_date_unix": 1700000000,
+                  "end_date_unix": 1700200000,
+                  "created_at_unix": 1699900000,
+                  "updated_at_unix": 1699900000
+                },
+                "pins": [
+                  {
+                    "id": "pin-feed-001",
+                    "latitude": 48.8584,
+                    "longitude": 2.2945,
+                    "media": [
+                      {
+                        "media_id": "feed-001-001",
+                        "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg",
+                        "media_type": "photo"
+                      },
+                      {
+                        "media_id": "feed-001-002",
+                        "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg",
+                        "media_type": "photo"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "pin-feed-002",
+                    "latitude": 48.8606,
+                    "longitude": 2.3352,
+                    "media": [
+                      {
+                        "media_id": "feed-002-001",
+                        "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
+                        "media_type": "photo"
+                      },
+                      {
+                        "media_id": "feed-002-002",
+                        "url": "https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg",
+                        "media_type": "photo"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "pin-feed-003",
+                    "latitude": 48.8530,
+                    "longitude": 2.3499,
+                    "media": [
+                      {
+                        "media_id": "feed-003-001",
+                        "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg",
+                        "media_type": "photo"
+                      },
+                      {
+                        "media_id": "feed-003-002",
+                        "url": "https://i.pinimg.com/736x/34/cb/93/34cb93114fb0cca8f020cb9c26928394.jpg",
+                        "media_type": "photo"
+                      }
+                    ]
+                  }
+                ],
+                "media": [
+                  {
+                    "media_id": "m-feed-001",
+                    "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg",
+                    "media_type": "photo"
+                  }
+                ]
+              },
+              {
+                "trip": {
+                  "id": "trip-002",
+                  "name": "Горнолыжный тур в Альпы",
+                  "description": "Захватывающие спуски и потрясающие горные пейзажи в сердце Европы",
+                  "category": "active",
+                  "season": "winter",
+                  "cover_url": null,
+                  "owner_user_id": "user-002",
+                  "privacy_level": "public",
+                  "status": "published",
+                  "is_published": true,
+                  "is_generated": false,
+                  "likes_count": 38,
+                  "dislikes_count": 1,
+                  "participants_count": 8,
+                  "media_count": 30,
+                  "start_date_unix": 1698000000,
+                  "end_date_unix": 1698400000,
+                  "created_at_unix": 1697900000,
+                  "updated_at_unix": 1697950000
+                },
+                "pins": [
+                  {
+                    "id": "pin-feed-004",
+                    "latitude": 46.8182,
+                    "longitude": 8.2275,
+                    "media": [
+                      {
+                        "media_id": "feed-004-001",
+                        "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
+                        "media_type": "photo"
+                      },
+                      {
+                        "media_id": "feed-004-002",
+                        "url": "https://i.pinimg.com/736x/59/79/59/5979594c0f0de1b583f60ce9ac15b94e.jpg",
+                        "media_type": "photo"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "pin-feed-005",
+                    "latitude": 46.9500,
+                    "longitude": 7.4474,
+                    "media": [
+                      {
+                        "media_id": "feed-005-001",
+                        "url": "https://i.pinimg.com/736x/29/9e/ff/299effcb075e97c1b4dc5ebcb7aac061.jpg",
+                        "media_type": "photo"
+                      },
+                      {
+                        "media_id": "feed-005-002",
+                        "url": "https://i.pinimg.com/736x/aa/a9/1f/aaa91f5d5b7a4d2f9c2a4d57f8f0e8e0.jpg",
+                        "media_type": "photo"
+                      }
+                    ]
+                  }
+                ],
+                "media": [
+                  {
+                    "media_id": "feed-alt-001",
+                    "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
+                    "media_type": "photo"
+                  },
+                  {
+                    "media_id": "feed-alt-002",
+                    "url": "https://i.pinimg.com/736x/59/79/59/5979594c0f0de1b583f60ce9ac15b94e.jpg",
+                    "media_type": "photo"
+                  }
+                ]
+              }
+            ]
+            """#
+        case .getTrips, .getFavouriteTrips:
+            json = #"""
+            [
+              {
+                "id": "trip-001",
+                "name": "Парижская романтика",
+                "description": "Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу",
+                "category": "vacation",
+                "season": "spring",
+                "cover_url": null,
+                "owner_user_id": "user-001",
+                "privacy_level": "public",
+                "status": "published",
+                "is_published": false,
+                "is_generated": false,
+                "likes_count": 42,
+                "dislikes_count": 2,
+                "participants_count": 12,
+                "media_count": 36,
+                "start_date_unix": 1700000000,
+                "end_date_unix": 1700200000,
+                "created_at_unix": 1699900000,
+                "updated_at_unix": 1699900000
+              },
+              {
+                "id": "trip-002",
+                "name": "Горнолыжный тур в Альпы",
+                "description": "Захватывающие спуски и потрясающие горные пейзажи в сердце Европы",
+                "category": "active",
+                "season": "winter",
+                "cover_url": null,
+                "owner_user_id": "user-002",
+                "privacy_level": "public",
+                "status": "published",
+                "is_published": true,
+                "is_generated": false,
+                "likes_count": 38,
+                "dislikes_count": 1,
+                "participants_count": 8,
+                "media_count": 30,
+                "start_date_unix": 1698000000,
+                "end_date_unix": 1698400000,
+                "created_at_unix": 1697900000,
+                "updated_at_unix": 1697950000
+              },
+              {
+                "id": "trip-003",
+                "name": "Пляжный отпуск на Бали",
+                "description": "Тропические пляжи, рисовые террасы и древние храмы Индонезии",
+                "category": "vacation",
+                "season": "summer",
+                "cover_url": null,
+                "owner_user_id": "user-003",
+                "privacy_level": "public",
+                "status": "published",
+                "is_published": true,
+                "is_generated": false,
+                "likes_count": 156,
+                "dislikes_count": 5,
+                "participants_count": 24,
+                "media_count": 52,
+                "start_date_unix": 1720000000,
+                "end_date_unix": 1720400000,
+                "created_at_unix": 1719900000,
+                "updated_at_unix": 1719950000
+              }
             ]
             """#
         case .getTrip:
             json = #"""
-            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"pins":[
+            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":false,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"pins":[
               {"id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"media":[
                 {"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"},
                 {"media_id":"m-002","url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","privacy_level":"public"},
@@ -372,7 +586,7 @@ extension PinzAPI {
             json = #"""
             {"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000}
             """#
-        case .deleteTrip, .removeParticipant, .removeTripFromFavourites:
+        case .deleteTrip, .removeParticipant:
             json = ""
         case .joinTripByToken:
             json = #"{"trip_id":"trip-001","already_joined":false}"#
@@ -382,6 +596,8 @@ extension PinzAPI {
             json = #"{"success":true,"trip_deleted":false}"#
         case .updateTripSettings, .likeTrip, .dislikeTrip, .addTripToFavourites:
             json = #"{"success":true}"#
+        case .removeTripFromFavourites:
+            json = "{}"
         case .startBattle:
             json = #"""
             {
