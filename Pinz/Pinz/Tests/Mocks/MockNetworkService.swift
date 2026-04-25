@@ -244,7 +244,7 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     private static let stubTripPins: [ReviewPinDTO] = [
         ReviewPinDTO(
-            id: "pin-1",
+            pinId: "pin-1",
             name: "Pin 1",
             category: "vacation",
             latitude: 55.75,
@@ -253,7 +253,7 @@ final class MockNetworkService: NetworkServiceProtocol {
             startTimeUnix: nil,
             endTimeUnix: nil,
             tags: ["travel", "city"],
-            issues: nil,
+            issues: [Pin.Issue.missingDates.rawValue],
             media: (1...6).map { index in
                 ReviewPinMediaDTO(
                     mediaId: "review-media-\(index)",
@@ -263,7 +263,7 @@ final class MockNetworkService: NetworkServiceProtocol {
             }
         ),
         ReviewPinDTO(
-            id: "pin-2",
+            pinId: "pin-2",
             name: "Pin 2",
             category: "vacation",
             latitude: 55.76,
@@ -272,7 +272,7 @@ final class MockNetworkService: NetworkServiceProtocol {
             startTimeUnix: nil,
             endTimeUnix: nil,
             tags: ["trip"],
-            issues: nil,
+            issues: [Pin.Issue.missingCoordinates.rawValue],
             media: (7...12).map { index in
                 ReviewPinMediaDTO(
                     mediaId: "review-media-\(index)",

@@ -65,6 +65,8 @@ public struct RootView<Content: View>: View {
                 PreprocessedRawPinsView(tripId: tripId, pins: pins)
             case .final(let tripId, let pins):
                 ReviewTripCreationView(tripId: tripId, pins: pins)
+            case .problems(let tripId, let pins):
+                TripCreationProblemsView(tripId: tripId, pins: pins)
             }
         case let .profile(profileRoute):
             switch profileRoute {

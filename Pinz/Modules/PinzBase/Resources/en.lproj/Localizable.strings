@@ -147,6 +147,10 @@
 
 // MARK: - Review Trip Creation
 "reviewTripCreation.title.main" = "Review Pins";
+"tripCreationProblems.title.main" = "Pin Problems";
+"tripCreationProblems.message.noProblems" = "No issues found";
+"tripCreationProblems.issue.missingCoordinates" = "No coordinates";
+"tripCreationProblems.issue.missingDates" = "No dates";
 
 // MARK: - Preprocessed Pins
 "preprocessedPins.button.mergePins" = "Merge Pins";

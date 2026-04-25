@@ -147,6 +147,10 @@
 
 // MARK: - Review Trip Creation
 "reviewTripCreation.title.main" = "Проверка пинов";
+"tripCreationProblems.title.main" = "Проблемы с пинами";
+"tripCreationProblems.message.noProblems" = "Проблем не найдено";
+"tripCreationProblems.issue.missingCoordinates" = "Нет координат";
+"tripCreationProblems.issue.missingDates" = "Нет дат";
 
 // MARK: - Preprocessed Pins
 "preprocessedPins.button.mergePins" = "Объединить пины";
