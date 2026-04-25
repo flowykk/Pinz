@@ -656,6 +656,12 @@ definitions:
     properties:
       active_add_media_session:
         $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ActiveAddMediaSession'
+      current_user_settings:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripSettings'
+      participants:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripParticipant'
+        type: array
       pins:
         items:
           $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
@@ -898,6 +904,20 @@ definitions:
       upload_url:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.TripParticipant:
+    properties:
+      avatar_url:
+        type: string
+      privacy_level:
+        type: string
+      role:
+        example: admin
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_responses.TripPin:
     properties:
       category:
@@ -940,6 +960,13 @@ definitions:
       privacy_level:
         type: string
       url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TripSettings:
+    properties:
+      notifications_enabled:
+        type: boolean
+      privacy_level:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.TripSettingsResponse:

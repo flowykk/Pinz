@@ -23,13 +23,34 @@ type Trip struct {
 	UpdatedAtUnix int64 `json:"updated_at_unix"`
 }
 
-// GetTripResponse is the response for GET /api/v1/trips/{id} (trip with pins and media).
+// GetTripResponse is the response for GET /api/v1/trips/{id} (trip with pins, participants and current user settings).
 // ActiveAddMediaSession — есть активная add-media-сессия (null иначе).
 // Клиент по этому полю + trip.status выбирает экран add-media флоу.
 type GetTripResponse struct {
 	Trip Trip `json:"trip"`
 	Pins []TripPin `json:"pins"`
+	Participants []TripParticipant `json:"participants"`
+	CurrentUserSettings TripSettings `json:"current_user_settings"`
 	ActiveAddMediaSession *ActiveAddMediaSession `json:"active_add_media_session,omitempty"`
+}
+
+// TripParticipant — участник трипа в ответе GetTrip.
+// privacy_level — per-user выбор этого участника ("Private" если записи нет).
+// role — "admin" | "member". username/avatar_url приходят из auth.GetUsersProfiles
+// (могут быть пустыми, если auth недоступен).
+type TripParticipant struct {
+	UserID       string `json:"user_id"`
+	Username     string `json:"username,omitempty"`
+	AvatarURL    string `json:"avatar_url,omitempty"`
+	PrivacyLevel string `json:"privacy_level"`
+	Role         string `json:"role" example:"admin"`
+}
+
+// TripSettings — per-user настройки текущего юзера на трипе. Расширяемый bag:
+// сюда добавляем новые per-user настройки (тема и т.п.) без новых эндпоинтов.
+type TripSettings struct {
+	NotificationsEnabled bool   `json:"notifications_enabled"`
+	PrivacyLevel         string `json:"privacy_level"`
 }
 
 // ActiveAddMediaSession — активная сессия добавления медиа.

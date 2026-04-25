@@ -205,7 +205,7 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 		return nil, status.Error(codes.Internal, "failed to check participant")
 	}
 	if ok {
-		resp, err := s.getTripResponseWithPins(ctx, trip)
+		resp, err := s.getTripResponseWithPins(ctx, trip, userID)
 		if err != nil {
 			return nil, err
 		}
@@ -217,7 +217,7 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 		return nil, status.Error(codes.Internal, "failed to check favourite")
 	}
 	if hasFav {
-		resp, err := s.getTripResponseWithPins(ctx, trip)
+		resp, err := s.getTripResponseWithPins(ctx, trip, userID)
 		if err != nil {
 			return nil, err
 		}
@@ -226,10 +226,11 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 	return nil, status.Error(codes.PermissionDenied, "not a participant")
 }
 
-// getTripResponseWithPins builds GetTripResponse with trip and pins (each pin with its media).
-// также догружает active_add_media_session — клиент использует его для роутинга
-// на экран сессии без дополнительных запросов.
-func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.Trip) (*pb.GetTripResponse, error) {
+// getTripResponseWithPins builds GetTripResponse with trip, pins (each pin with its media),
+// participants (с per-user privacy_level и ролью) и current_user_settings (notifications +
+// per-user privacy_level вызывающего юзера). также догружает active_add_media_session —
+// клиент использует его для роутинга на экран сессии без дополнительных запросов.
+func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.Trip, callerUserID string) (*pb.GetTripResponse, error) {
 	pins, err := s.pinRepo.ListByTripID(trip.ID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list pins")
@@ -254,11 +255,77 @@ func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.
 	if err != nil {
 		return nil, err
 	}
+	participants, settings := s.buildParticipantsAndSettings(ctx, trip.ID, callerUserID)
 	return &pb.GetTripResponse{
 		Trip: s.tripToProto(ctx, trip),
 		Pins: outPins,
 		ActiveAddMediaSession: activeProto,
+		Participants: participants,
+		CurrentUserSettings: settings,
 	}, nil
+}
+
+// buildParticipantsAndSettings — участники трипа с per-user privacy_level/role и
+// per-user настройки вызывающего юзера. Read-only сборка не должна валить GetTrip:
+// при ошибке любой из подсистем возвращаем пустой список / дефолты, лог в Warn.
+// Default privacy_level — "Private" (соответствует AggregatePrivacyLevel(empty)).
+func (s *TripService) buildParticipantsAndSettings(ctx context.Context, tripID, callerUserID string) ([]*pb.TripParticipant, *pb.TripSettings) {
+	const defaultPrivacy = "Private"
+	settings := &pb.TripSettings{NotificationsEnabled: true, PrivacyLevel: defaultPrivacy}
+
+	parts, err := s.participantRepo.GetByTripID(tripID)
+	if err != nil {
+		slog.WarnContext(ctx, "trip_service: GetByTripID participants failed", "trip_id", tripID, "err", err)
+		parts = nil
+	}
+
+	levelByUser := map[string]string{}
+	if s.tripPrivacyRepo != nil {
+		entries, err := s.tripPrivacyRepo.GetByTripID(ctx, tripID)
+		if err != nil {
+			slog.WarnContext(ctx, "trip_service: GetByTripID trip_privacy failed", "trip_id", tripID, "err", err)
+		} else {
+			for _, e := range entries {
+				levelByUser[e.UserID] = e.PrivacyLevel
+			}
+		}
+	}
+
+	out := make([]*pb.TripParticipant, 0, len(parts))
+	for _, p := range parts {
+		if p == nil {
+			continue
+		}
+		level := levelByUser[p.UserID]
+		if level == "" {
+			level = defaultPrivacy
+		}
+		role := "member"
+		if p.IsAdmin {
+			role = "admin"
+		}
+		out = append(out, &pb.TripParticipant{
+			UserId: p.UserID,
+			PrivacyLevel: level,
+			Role: role,
+		})
+	}
+
+	if callerUserID != "" {
+		if level := levelByUser[callerUserID]; level != "" {
+			settings.PrivacyLevel = level
+		}
+		if s.settingsRepo != nil {
+			settingsMap, err := s.settingsRepo.GetByTripAndUsers(tripID, []string{callerUserID})
+			if err != nil {
+				slog.WarnContext(ctx, "trip_service: GetByTripAndUsers failed", "trip_id", tripID, "user_id", callerUserID, "err", err)
+			} else if v, ok := settingsMap[callerUserID]; ok {
+				settings.NotificationsEnabled = v
+			}
+		}
+	}
+
+	return out, settings
 }
 
 // buildActiveSessionProto — в GetTrip отдаём активную add-media сессию как метаданные.

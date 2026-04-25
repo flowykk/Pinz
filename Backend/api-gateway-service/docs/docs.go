@@ -4338,6 +4338,15 @@ const docTemplate = `{
                 "active_add_media_session": {
                     "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ActiveAddMediaSession"
                 },
+                "current_user_settings": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TripSettings"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TripParticipant"
+                    }
+                },
                 "pins": {
                     "type": "array",
                     "items": {
@@ -4710,6 +4719,27 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_responses.TripParticipant": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "privacy_level": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "admin"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_responses.TripPin": {
             "type": "object",
             "properties": {
@@ -4773,6 +4803,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.TripSettings": {
+            "type": "object",
+            "properties": {
+                "notifications_enabled": {
+                    "type": "boolean"
+                },
+                "privacy_level": {
                     "type": "string"
                 }
             }

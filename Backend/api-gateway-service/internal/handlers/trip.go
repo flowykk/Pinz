@@ -1345,6 +1345,7 @@ func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.Get
 	out := responses.GetTripResponse{
 		Trip: tripProtoToResponse(resp.GetTrip()),
 		Pins: make([]responses.TripPin, 0, len(resp.GetPins())),
+		Participants: make([]responses.TripParticipant, 0, len(resp.GetParticipants())),
 	}
 	for _, p := range resp.GetPins() {
 		if p == nil {
@@ -1352,10 +1353,42 @@ func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.Get
 		}
 		out.Pins = append(out.Pins, tripPinProtoToResponse(p))
 	}
-	// Опциональная активная add-media-сессия — клиент использует для роутинга.
-	// current_initiator обогащается публичным профилем через auth.GetUsersProfiles (N2):
-	// один batched запрос на ответ, несколько user_id — в будущем, когда понадобится
-	// ещё users (last_actor и т.п.) — просто добавляем в общий набор и переиспользуем map.
+	// Один batched enrichProfiles на участников + initiator add-media сессии (N2):
+	// собираем все user_id заранее, идём в auth один раз, переиспользуем map ниже.
+	userIDs := make([]string, 0, len(resp.GetParticipants())+1)
+	for _, p := range resp.GetParticipants() {
+		if p == nil || p.GetUserId() == "" {
+			continue
+		}
+		userIDs = append(userIDs, p.GetUserId())
+	}
+	if active := resp.GetActiveAddMediaSession(); active != nil {
+		if uid := active.GetCurrentInitiatorUserId(); uid != "" {
+			userIDs = append(userIDs, uid)
+		}
+	}
+	profiles := h.enrichProfiles(ctx, userIDs)
+	for _, p := range resp.GetParticipants() {
+		if p == nil {
+			continue
+		}
+		part := responses.TripParticipant{
+			UserID: p.GetUserId(),
+			PrivacyLevel: p.GetPrivacyLevel(),
+			Role: p.GetRole(),
+		}
+		if profile, ok := profiles[p.GetUserId()]; ok {
+			part.Username = profile.Username
+			part.AvatarURL = profile.AvatarURL
+		}
+		out.Participants = append(out.Participants, part)
+	}
+	if cs := resp.GetCurrentUserSettings(); cs != nil {
+		out.CurrentUserSettings = responses.TripSettings{
+			NotificationsEnabled: cs.GetNotificationsEnabled(),
+			PrivacyLevel: cs.GetPrivacyLevel(),
+		}
+	}
 	if active := resp.GetActiveAddMediaSession(); active != nil {
 		rest := &responses.ActiveAddMediaSession{
 			SessionID:           active.GetSessionId(),
@@ -1364,7 +1397,6 @@ func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.Get
 			MediaCountInSession: active.GetMediaCountInSession(),
 		}
 		if uid := active.GetCurrentInitiatorUserId(); uid != "" {
-			profiles := h.enrichProfiles(ctx, []string{uid})
 			if p, ok := profiles[uid]; ok {
 				rest.CurrentInitiator = &p
 			} else {

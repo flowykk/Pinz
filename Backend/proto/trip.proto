@@ -152,6 +152,30 @@ message GetTripResponse {
  // если есть активная add-media-сессия, клиент получает её здесь.
  // Null, если нет. Используется клиентом для роутинга на экран сессии.
  optional ActiveAddMediaSession active_add_media_session = 3;
+ // участники трипа с per-user privacy_level и ролью; username/avatar_url
+ // дозаполняет gateway через auth.GetUsersProfiles.
+ repeated TripParticipant participants = 4;
+ // расширяемый bag per-user настроек текущего юзера (notifications_enabled,
+ // privacy_level, тема и т.д.).
+ TripSettings current_user_settings = 5;
+}
+
+// TripParticipant — участник трипа для ответа GetTrip.
+// privacy_level — выбор этого юзера из trip_privacy ("Private" если записи нет).
+// role — "admin" | "member".
+message TripParticipant {
+ string user_id = 1;
+ string username = 2;
+ string avatar_url = 3;
+ string privacy_level = 4;
+ string role = 5;
+}
+
+// TripSettings — per-user настройки текущего юзера на трипе. Расширяемый bag:
+// сюда добавляем новые per-user настройки (тема и т.п.) вместо новых эндпоинтов.
+message TripSettings {
+ bool notifications_enabled = 1;
+ string privacy_level = 2;
 }
 
 // активная add-media-сессия для трипа. Отдается в GetTripResponse.

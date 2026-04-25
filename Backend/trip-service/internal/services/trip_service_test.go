@@ -15,6 +15,7 @@ import (
 
 	"pinz/backend/trip-service/internal/mocks"
 	"pinz/backend/trip-service/internal/models"
+	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/server"
 	pb "pinz/backend/trip-service/pkg/proto"
 )
@@ -443,13 +444,28 @@ func TestGetTrip_ParticipantSuccess(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant("t1", "user-1").Return(true, nil)
 	pinRepo.EXPECT().ListByTripID("t1").Return(nil, nil)
 	tagRepo.EXPECT().GetByTripID("t1").Return(map[string][]string{}, nil)
+	participantRepo.EXPECT().GetByTripID("t1").Return([]*models.TripParticipant{
+		{TripID: "t1", UserID: "user-1", IsAdmin: true},
+	}, nil)
+	tripPrivacyRepo := mocks.NewMockTripPrivacyRepositoryInterface(ctrl)
+	tripPrivacyRepo.EXPECT().GetByTripID(gomock.Any(), "t1").Return([]repositories.PrivacyEntry{
+		{UserID: "user-1", PrivacyLevel: "Public"},
+	}, nil)
+	settingsRepo := mocks.NewMockTripSettingsRepositoryInterface(ctrl)
+	settingsRepo.EXPECT().GetByTripAndUsers("t1", []string{"user-1"}).Return(map[string]bool{"user-1": false}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, settingsRepo, nil, nil, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, nil, tripPrivacyRepo, nil, nil)
 	ctx := ctxWithUser("user-1")
 	resp, err := svc.GetTrip(ctx, &pb.GetTripRequest{TripId: "t1"})
 	require.NoError(t, err)
 	require.Equal(t, "t1", resp.GetTrip().GetId())
 	require.Equal(t, "T", resp.GetTrip().GetName())
+	require.Len(t, resp.GetParticipants(), 1)
+	require.Equal(t, "user-1", resp.GetParticipants()[0].GetUserId())
+	require.Equal(t, "admin", resp.GetParticipants()[0].GetRole())
+	require.Equal(t, "Public", resp.GetParticipants()[0].GetPrivacyLevel())
+	require.False(t, resp.GetCurrentUserSettings().GetNotificationsEnabled())
+	require.Equal(t, "Public", resp.GetCurrentUserSettings().GetPrivacyLevel())
 }
 
 func TestGetTrip_NotParticipantNorFavourite(t *testing.T) {
