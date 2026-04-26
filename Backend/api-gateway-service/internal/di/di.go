@@ -1,6 +1,8 @@
 package di
 
 import (
+	"os"
+
 	auth "pinz/backend/api-gateway-service/internal/clients/auth"
 	notification "pinz/backend/api-gateway-service/internal/clients/notification"
 	statistics "pinz/backend/api-gateway-service/internal/clients/statistics"
@@ -8,6 +10,10 @@ import (
 	"pinz/backend/api-gateway-service/internal/handlers"
 	"pinz/backend/api-gateway-service/internal/services"
 )
+
+// defaultTripShareLinkBase — production-домен Pinz; используется, если env
+// TRIP_SHARE_LINK_BASE не задана. Поведение совпадает с iOS universal-links.
+const defaultTripShareLinkBase = "https://pinz.website/trips"
 
 type Dependencies struct {
 	AuthHandler *handlers.AuthHandler
@@ -43,7 +49,11 @@ func BuildDependencies() (*Dependencies, error) {
 		}
 		return nil, err
 	}
-	tripHandler := handlers.NewTripHandler(tripClient, authClient)
+	shareLinkBase := os.Getenv("TRIP_SHARE_LINK_BASE")
+	if shareLinkBase == "" {
+		shareLinkBase = defaultTripShareLinkBase
+	}
+	tripHandler := handlers.NewTripHandler(tripClient, authClient, shareLinkBase)
 	wsHandler := handlers.NewWSHandler(redisClient, tripClient)
 
 	statsClient, err := statistics.NewClient()

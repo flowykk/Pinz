@@ -18,8 +18,12 @@ import (
 var _ = responses.ErrorResponse{}
 
 type TripHandler struct {
-	tripClient  TripClient
-	authEnricher AuthProfileEnricher
+	tripClient        TripClient
+	authEnricher      AuthProfileEnricher
+	// tripShareLinkBase — базовый URL для формирования share-ссылки (ТЗ 3.4):
+	// в ответ Trip пишется "{base}/{id}". Берётся из env TRIP_SHARE_LINK_BASE,
+	// дефолт задаётся в DI. Пустое значение → share_url остаётся пустым.
+	tripShareLinkBase string
 }
 
 // AuthProfileEnricher — минимальный контракт auth-client'а для обогащения ответов
@@ -95,8 +99,8 @@ type TripClient interface {
 	SaveRecommendation(ctx context.Context, req *proto.SaveRecommendationRequest) (*proto.SaveRecommendationResponse, error)
 }
 
-func NewTripHandler(tripClient TripClient, authEnricher AuthProfileEnricher) *TripHandler {
-	return &TripHandler{tripClient: tripClient, authEnricher: authEnricher}
+func NewTripHandler(tripClient TripClient, authEnricher AuthProfileEnricher, tripShareLinkBase string) *TripHandler {
+	return &TripHandler{tripClient: tripClient, authEnricher: authEnricher, tripShareLinkBase: tripShareLinkBase}
 }
 
 // ListTrips returns trips for the authenticated user.
@@ -131,7 +135,7 @@ func (h *TripHandler) ListTrips(w http.ResponseWriter, r *http.Request) {
 	}
 	out := make([]responses.Trip, len(resp.GetTrips()))
 	for i, t := range resp.GetTrips() {
-		out[i] = tripProtoToResponse(t)
+		out[i] = h.tripProtoToResponse(t)
 	}
 	respondJSON(w, http.StatusOK, out)
 }
@@ -190,7 +194,10 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 
 // GetTrip returns a single trip by ID with pins and media.
 // @Summary Get trip by ID
-// @Description Returns a single trip by ID with pins and media in each pin. Requires JWT. User must be a participant.
+// @Description Returns a single trip by ID with pins and media in each pin. Requires JWT.
+// @Description Доступ: участник трипа или владелец трипа в избранных получает полный ответ с participants/current_user_settings.
+// @Description Любой залогиненный пользователь может открыть опубликованный трип по share-ссылке (ТЗ 3.4); в этом случае возвращаются только публичные пины (выбранные при публикации) с публичными медиа, без participants/settings.
+// @Description Если трип не опубликован, а пользователь не участник и не имеет трип в избранных — 403.
 // @Tags trips
 // @Accept json
 // @Produce json
@@ -279,7 +286,7 @@ func (h *TripHandler) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		handleServiceError(w, r, err, "UpdateTrip")
 		return
 	}
-	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
+	respondJSON(w, http.StatusOK, h.tripProtoToResponse(resp.GetTrip()))
 }
 
 // RequestTripCoverUpload returns a presigned PUT URL for uploading a new trip cover.
@@ -373,7 +380,7 @@ func (h *TripHandler) ConfirmTripCoverUpload(w http.ResponseWriter, r *http.Requ
 		handleServiceError(w, r, err, "ConfirmTripCoverUpload")
 		return
 	}
-	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
+	respondJSON(w, http.StatusOK, h.tripProtoToResponse(resp.GetTrip()))
 }
 
 // DeleteTripCover clears the trip cover.
@@ -409,7 +416,7 @@ func (h *TripHandler) DeleteTripCover(w http.ResponseWriter, r *http.Request) {
 		handleServiceError(w, r, err, "DeleteTripCover")
 		return
 	}
-	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
+	respondJSON(w, http.StatusOK, h.tripProtoToResponse(resp.GetTrip()))
 }
 
 // DeleteTrip deletes a trip.
@@ -849,7 +856,7 @@ func (h *TripHandler) PublishTrip(w http.ResponseWriter, r *http.Request) {
 		handleServiceError(w, r, err, "PublishTrip")
 		return
 	}
-	respondJSON(w, http.StatusOK, tripProtoToResponse(resp.GetTrip()))
+	respondJSON(w, http.StatusOK, h.tripProtoToResponse(resp.GetTrip()))
 }
 
 // UpdateTripPrivacy sets the caller's per-user privacy level on a trip.
@@ -1114,7 +1121,7 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		out[i] = responses.FeedItem{
-			Trip: tripProtoToResponse(item.GetTrip()),
+			Trip: h.tripProtoToResponse(item.GetTrip()),
 			Pins: pins,
 			Media: media,
 		}
@@ -1267,7 +1274,7 @@ func (h *TripHandler) ListFavourites(w http.ResponseWriter, r *http.Request) {
 	}
 	out := make([]responses.Trip, len(resp.GetTrips()))
 	for i, t := range resp.GetTrips() {
-		out[i] = tripProtoToResponse(t)
+		out[i] = h.tripProtoToResponse(t)
 	}
 	respondJSON(w, http.StatusOK, out)
 }
@@ -1329,11 +1336,11 @@ func (h *TripHandler) SearchPins(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
-func tripProtoToResponse(t *proto.Trip) responses.Trip {
+func (h *TripHandler) tripProtoToResponse(t *proto.Trip) responses.Trip {
 	if t == nil {
 		return responses.Trip{}
 	}
-	return responses.Trip{
+	out := responses.Trip{
 		ID: t.GetId(),
 		OwnerUserID: t.GetOwnerUserId(),
 		Name: t.GetName(),
@@ -1354,11 +1361,15 @@ func tripProtoToResponse(t *proto.Trip) responses.Trip {
 		CreatedAtUnix: t.GetCreatedAtUnix(),
 		UpdatedAtUnix: t.GetUpdatedAtUnix(),
 	}
+	if h.tripShareLinkBase != "" && t.GetId() != "" {
+		out.ShareURL = h.tripShareLinkBase + "/" + t.GetId()
+	}
+	return out
 }
 
 func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.GetTripResponse) responses.GetTripResponse {
 	out := responses.GetTripResponse{
-		Trip: tripProtoToResponse(resp.GetTrip()),
+		Trip: h.tripProtoToResponse(resp.GetTrip()),
 		Pins: make([]responses.TripPin, 0, len(resp.GetPins())),
 		Participants: make([]responses.TripParticipant, 0, len(resp.GetParticipants())),
 	}
@@ -2218,7 +2229,7 @@ func (h *TripHandler) GetRecommendations(w http.ResponseWriter, r *http.Request)
 		handleServiceError(w, r, err, "GetRecommendations")
 		return
 	}
-	respondJSON(w, http.StatusOK, responses.GetRecommendationsResponse{Map: recommendedMapProtoToResponse(resp.GetMap())})
+	respondJSON(w, http.StatusOK, responses.GetRecommendationsResponse{Map: h.recommendedMapProtoToResponse(resp.GetMap())})
 }
 
 // SaveRecommendation persists the popular-places map as a generated trip in the user's favourites (ТЗ 9.4).
@@ -2253,10 +2264,10 @@ func (h *TripHandler) SaveRecommendation(w http.ResponseWriter, r *http.Request)
 		handleServiceError(w, r, err, "SaveRecommendation")
 		return
 	}
-	respondJSON(w, http.StatusOK, responses.SaveRecommendationResponse{Trip: tripProtoToResponse(resp.GetTrip())})
+	respondJSON(w, http.StatusOK, responses.SaveRecommendationResponse{Trip: h.tripProtoToResponse(resp.GetTrip())})
 }
 
-func recommendedMapProtoToResponse(m *proto.RecommendedMap) responses.RecommendedMap {
+func (h *TripHandler) recommendedMapProtoToResponse(m *proto.RecommendedMap) responses.RecommendedMap {
 	if m == nil {
 		return responses.RecommendedMap{}
 	}
@@ -2295,7 +2306,7 @@ func recommendedMapProtoToResponse(m *proto.RecommendedMap) responses.Recommende
 		RegionName: m.GetRegionName(),
 		RegionType: m.GetRegionType(),
 		Pins: pins,
-		Trip: tripProtoToResponse(m.GetTrip()),
+		Trip: h.tripProtoToResponse(m.GetTrip()),
 		Media: media,
 	}
 }

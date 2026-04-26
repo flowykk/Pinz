@@ -17,6 +17,7 @@ env:
   notificationServiceGrpcAddress: "notification-service:50054"
   redisAddr: "redis:6379"
   swaggerHost: ""
+  tripShareLinkBase: "https://pinz.website/trips"
   otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
   otelServiceName: "api-gateway-service"
   otelTracesSampler: "parentbased_traceidratio"

@@ -21,6 +21,10 @@ type Trip struct {
 	IsGenerated bool `json:"is_generated"`
 	CreatedAtUnix int64 `json:"created_at_unix"`
 	UpdatedAtUnix int64 `json:"updated_at_unix"`
+	// ShareURL — universal-link на просмотр трипа (ТЗ 3.4): копирование и
+	// отправка во внешние мессенджеры. Формируется gateway по env
+	// TRIP_SHARE_LINK_BASE; пустой, если переменная не задана.
+	ShareURL string `json:"share_url,omitempty"`
 }
 
 // GetTripResponse is the response for GET /api/v1/trips/{id} (trip with pins, participants and current user settings).

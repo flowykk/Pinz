@@ -1512,6 +1512,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/profile/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает публичные поля профиля (username, avatar, created_at) и список желаемых мест пользователя. Email и другие приватные поля не отдаются. Используется при переходе на чужой профиль из участников трипа или карточки фида.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Get public profile of another user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/recommendations": {
             "get": {
                 "security": [
@@ -2013,7 +2071,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns a single trip by ID with pins and media in each pin. Requires JWT. User must be a participant.",
+                "description": "Returns a single trip by ID with pins and media in each pin. Requires JWT.\nДоступ: участник трипа или владелец трипа в избранных получает полный ответ с participants/current_user_settings.\nЛюбой залогиненный пользователь может открыть опубликованный трип по share-ссылке (ТЗ 3.4); в этом случае возвращаются только публичные пины (выбранные при публикации) с публичными медиа, без participants/settings.\nЕсли трип не опубликован, а пользователь не участник и не имеет трип в избранных — 403.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5182,64 +5240,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/api/v1/users/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Возвращает публичные поля профиля (username, avatar, created_at) и список желаемых мест пользователя. Email и другие приватные поля не отдаются. Используется при переходе на чужой профиль из участников трипа или карточки фида.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get public profile of another user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfileResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -7248,6 +7248,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "season": {
+                    "type": "string"
+                },
+                "share_url": {
+                    "description": "ShareURL — universal-link на просмотр трипа (ТЗ 3.4): копирование и\nотправка во внешние мессенджеры. Формируется gateway по env\nTRIP_SHARE_LINK_BASE; пустой, если переменная не задана.",
                     "type": "string"
                 },
                 "start_date_unix": {

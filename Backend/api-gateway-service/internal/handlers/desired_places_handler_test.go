@@ -202,7 +202,7 @@ func TestAuthHandler_GetPublicUserProfile_Success(t *testing.T) {
 	h := NewAuthHandler(authSvc)
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("id", "other-user")
-	r := authedReq(http.MethodGet, "/api/v1/users/other-user", "")
+	r := authedReq(http.MethodGet, "/api/v1/profile/other-user", "")
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 	rr := httptest.NewRecorder()
 	h.GetPublicUserProfile(rr, r)
@@ -227,7 +227,7 @@ func TestAuthHandler_GetPublicUserProfile_NotFound(t *testing.T) {
 	h := NewAuthHandler(authSvc)
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("id", "x")
-	r := authedReq(http.MethodGet, "/api/v1/users/x", "")
+	r := authedReq(http.MethodGet, "/api/v1/profile/x", "")
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 	rr := httptest.NewRecorder()
 	h.GetPublicUserProfile(rr, r)
@@ -242,7 +242,7 @@ func TestAuthHandler_GetPublicUserProfile_Unauthorized(t *testing.T) {
 	_ = authSvc
 
 	h := NewAuthHandler(authSvc)
-	r := httptest.NewRequest(http.MethodGet, "/api/v1/users/x", nil)
+	r := httptest.NewRequest(http.MethodGet, "/api/v1/profile/x", nil)
 	rr := httptest.NewRecorder()
 	h.GetPublicUserProfile(rr, r)
 

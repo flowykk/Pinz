@@ -231,6 +231,9 @@ deploy_app() {
     # trip-service geocoding (optional; empty = use default BigDataCloud free endpoint)
     export GEOCODING_BASE_URL="${GEOCODING_BASE_URL:-}"
     export GEOCODING_API_KEY="${GEOCODING_API_KEY:-}"
+    # api-gateway: base URL used to build share_url in trip responses (ТЗ 3.4).
+    # Empty falls back to gateway's internal default (https://pinz.website/trips).
+    export TRIP_SHARE_LINK_BASE="${TRIP_SHARE_LINK_BASE:-}"
 
     cd "$PROJECT_DIR"
 
@@ -646,6 +649,7 @@ while [[ $# -gt 0 ]]; do
             echo "  S3_PRESIGN_TTL           S3 presign TTL, e.g. 15m (auth + trip, optional)"
             echo "  GEOCODING_BASE_URL       Trip service: BigDataCloud API base URL (optional)"
             echo "  GEOCODING_API_KEY        Trip service: BigDataCloud API key (optional)"
+            echo "  TRIP_SHARE_LINK_BASE     API gateway: base URL for share_url in trip responses (default: https://pinz.website/trips)"
             echo "  SKIP_PULL=true           Skip docker auth/pull (k3s pulls via containerd)"
             echo ""
             echo "Examples:"

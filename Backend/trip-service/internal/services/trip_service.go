@@ -232,7 +232,54 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 		}
 		return resp, nil
 	}
+	// ТЗ 3.4: любой залогиненный пользователь может открыть опубликованный трип
+	// по share-ссылке. Отдаём read-only view: только публичные пины (выбранные
+	// при публикации) и публичные медиа в них; participants/settings/active-сессии
+	// не передаются — они для участников.
+	if trip.IsPublished {
+		return s.getSharedTripResponse(ctx, trip)
+	}
 	return nil, status.Error(codes.PermissionDenied, "not a participant")
+}
+
+// getSharedTripResponse собирает публичную read-only выборку опубликованного трипа
+// для не-участника (ТЗ 3.4 + 6.1). В выборку попадают только пины с
+// is_published_in_feed=true и privacy_level=Public; в каждом пине — только медиа
+// с privacy_level=Public.
+func (s *TripService) getSharedTripResponse(ctx context.Context, trip *models.Trip) (*pb.GetTripResponse, error) {
+	pins, err := s.pinRepo.ListByTripID(trip.ID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list pins")
+	}
+	tagsByPin, _ := s.tagRepo.GetByTripID(trip.ID)
+	if tagsByPin == nil {
+		tagsByPin = make(map[string][]string)
+	}
+	outPins := make([]*pb.TripPin, 0, len(pins))
+	for _, pin := range pins {
+		if !pin.IsPublishedInFeed || pin.PrivacyLevel != "Public" {
+			continue
+		}
+		mediaList, err := s.mediaRepo.ListByPinID(pin.ID)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to list pin media")
+		}
+		publicMedia := make([]*models.Media, 0, len(mediaList))
+		for _, m := range mediaList {
+			if m.PrivacyLevel == "Public" {
+				publicMedia = append(publicMedia, m)
+			}
+		}
+		tags := tagsByPin[pin.ID]
+		if tags == nil {
+			tags = []string{}
+		}
+		outPins = append(outPins, s.pinWithMediaToProto(ctx, pin, publicMedia, tags))
+	}
+	return &pb.GetTripResponse{
+		Trip: s.tripToProto(ctx, trip),
+		Pins: outPins,
+	}, nil
 }
 
 // getTripResponseWithPins builds GetTripResponse with trip, pins (each pin with its media),
