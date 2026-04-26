@@ -47,6 +47,7 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 	userRepo := repositories.NewUserRepository(db)
 	credRepo := repositories.NewCredentialRepository(db)
 	redisRepo := repositories.NewRedisRepository(redisClient)
+	desiredPlaceRepo := repositories.NewDesiredPlaceRepository(db)
 	v := validator.New()
 
 	s3Client, err := s3.NewFromEnv(context.Background())
@@ -60,6 +61,6 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 		slog.Warn("S3 not configured — avatar upload will be unavailable")
 	}
 
-	authSvc := services.NewAuthService(userRepo, credRepo, redisRepo, v, wa, s3Uploader)
+	authSvc := services.NewAuthService(userRepo, credRepo, redisRepo, desiredPlaceRepo, v, wa, s3Uploader)
 	return &Dependencies{AuthService: authSvc}, nil
 }

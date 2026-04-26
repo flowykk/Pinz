@@ -28,6 +28,7 @@ type PublicUserProfile struct {
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	AvatarUrl     string                 `protobuf:"bytes,3,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
+	CreatedAtUnix int64                  `protobuf:"varint,4,opt,name=created_at_unix,json=createdAtUnix,proto3" json:"created_at_unix,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -81,6 +82,13 @@ func (x *PublicUserProfile) GetAvatarUrl() string {
 		return x.AvatarUrl
 	}
 	return ""
+}
+
+func (x *PublicUserProfile) GetCreatedAtUnix() int64 {
+	if x != nil {
+		return x.CreatedAtUnix
+	}
+	return 0
 }
 
 type GetUsersProfilesRequest struct {
@@ -1874,17 +1882,840 @@ func (x *DeleteAccountResponse) GetSuccess() bool {
 	return false
 }
 
+// image_url — presigned GET URL, пустой если картинка не загружена.
+type DesiredPlace struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	ImageUrl      string                 `protobuf:"bytes,5,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
+	CreatedAtUnix int64                  `protobuf:"varint,6,opt,name=created_at_unix,json=createdAtUnix,proto3" json:"created_at_unix,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DesiredPlace) Reset() {
+	*x = DesiredPlace{}
+	mi := &file_auth_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DesiredPlace) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DesiredPlace) ProtoMessage() {}
+
+func (x *DesiredPlace) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DesiredPlace.ProtoReflect.Descriptor instead.
+func (*DesiredPlace) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *DesiredPlace) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DesiredPlace) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *DesiredPlace) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *DesiredPlace) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *DesiredPlace) GetImageUrl() string {
+	if x != nil {
+		return x.ImageUrl
+	}
+	return ""
+}
+
+func (x *DesiredPlace) GetCreatedAtUnix() int64 {
+	if x != nil {
+		return x.CreatedAtUnix
+	}
+	return 0
+}
+
+type ListDesiredPlacesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDesiredPlacesRequest) Reset() {
+	*x = ListDesiredPlacesRequest{}
+	mi := &file_auth_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDesiredPlacesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDesiredPlacesRequest) ProtoMessage() {}
+
+func (x *ListDesiredPlacesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDesiredPlacesRequest.ProtoReflect.Descriptor instead.
+func (*ListDesiredPlacesRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *ListDesiredPlacesRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type ListDesiredPlacesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Places        []*DesiredPlace        `protobuf:"bytes,1,rep,name=places,proto3" json:"places,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDesiredPlacesResponse) Reset() {
+	*x = ListDesiredPlacesResponse{}
+	mi := &file_auth_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDesiredPlacesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDesiredPlacesResponse) ProtoMessage() {}
+
+func (x *ListDesiredPlacesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDesiredPlacesResponse.ProtoReflect.Descriptor instead.
+func (*ListDesiredPlacesResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *ListDesiredPlacesResponse) GetPlaces() []*DesiredPlace {
+	if x != nil {
+		return x.Places
+	}
+	return nil
+}
+
+// s3_key опционален: если непустой — на момент Create картинка уже загружена через
+// RequestDesiredPlaceImageUpload и записывается в image_url. Если пустой — место
+// создаётся без картинки.
+type CreateDesiredPlaceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	S3Key         string                 `protobuf:"bytes,4,opt,name=s3_key,json=s3Key,proto3" json:"s3_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateDesiredPlaceRequest) Reset() {
+	*x = CreateDesiredPlaceRequest{}
+	mi := &file_auth_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDesiredPlaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDesiredPlaceRequest) ProtoMessage() {}
+
+func (x *CreateDesiredPlaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDesiredPlaceRequest.ProtoReflect.Descriptor instead.
+func (*CreateDesiredPlaceRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *CreateDesiredPlaceRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *CreateDesiredPlaceRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateDesiredPlaceRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *CreateDesiredPlaceRequest) GetS3Key() string {
+	if x != nil {
+		return x.S3Key
+	}
+	return ""
+}
+
+type CreateDesiredPlaceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Place         *DesiredPlace          `protobuf:"bytes,1,opt,name=place,proto3" json:"place,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateDesiredPlaceResponse) Reset() {
+	*x = CreateDesiredPlaceResponse{}
+	mi := &file_auth_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDesiredPlaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDesiredPlaceResponse) ProtoMessage() {}
+
+func (x *CreateDesiredPlaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDesiredPlaceResponse.ProtoReflect.Descriptor instead.
+func (*CreateDesiredPlaceResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *CreateDesiredPlaceResponse) GetPlace() *DesiredPlace {
+	if x != nil {
+		return x.Place
+	}
+	return nil
+}
+
+// s3_key семантика на Update:
+//   - не задан в запросе (set_image_key=false) → image_url не меняется;
+//   - set_image_key=true, s3_key пустой → image сбрасывается, старый объект удаляется;
+//   - set_image_key=true, s3_key непустой → image заменяется, старый объект удаляется.
+//
+// (set_image_key — explicit signal, чтобы отличить «не менять» от «убрать»).
+type UpdateDesiredPlaceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PlaceId       string                 `protobuf:"bytes,2,opt,name=place_id,json=placeId,proto3" json:"place_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	SetImageKey   bool                   `protobuf:"varint,5,opt,name=set_image_key,json=setImageKey,proto3" json:"set_image_key,omitempty"`
+	S3Key         string                 `protobuf:"bytes,6,opt,name=s3_key,json=s3Key,proto3" json:"s3_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDesiredPlaceRequest) Reset() {
+	*x = UpdateDesiredPlaceRequest{}
+	mi := &file_auth_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDesiredPlaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDesiredPlaceRequest) ProtoMessage() {}
+
+func (x *UpdateDesiredPlaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDesiredPlaceRequest.ProtoReflect.Descriptor instead.
+func (*UpdateDesiredPlaceRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *UpdateDesiredPlaceRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateDesiredPlaceRequest) GetPlaceId() string {
+	if x != nil {
+		return x.PlaceId
+	}
+	return ""
+}
+
+func (x *UpdateDesiredPlaceRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UpdateDesiredPlaceRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *UpdateDesiredPlaceRequest) GetSetImageKey() bool {
+	if x != nil {
+		return x.SetImageKey
+	}
+	return false
+}
+
+func (x *UpdateDesiredPlaceRequest) GetS3Key() string {
+	if x != nil {
+		return x.S3Key
+	}
+	return ""
+}
+
+type UpdateDesiredPlaceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Place         *DesiredPlace          `protobuf:"bytes,1,opt,name=place,proto3" json:"place,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDesiredPlaceResponse) Reset() {
+	*x = UpdateDesiredPlaceResponse{}
+	mi := &file_auth_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDesiredPlaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDesiredPlaceResponse) ProtoMessage() {}
+
+func (x *UpdateDesiredPlaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDesiredPlaceResponse.ProtoReflect.Descriptor instead.
+func (*UpdateDesiredPlaceResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *UpdateDesiredPlaceResponse) GetPlace() *DesiredPlace {
+	if x != nil {
+		return x.Place
+	}
+	return nil
+}
+
+type DeleteDesiredPlaceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PlaceId       string                 `protobuf:"bytes,2,opt,name=place_id,json=placeId,proto3" json:"place_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDesiredPlaceRequest) Reset() {
+	*x = DeleteDesiredPlaceRequest{}
+	mi := &file_auth_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDesiredPlaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDesiredPlaceRequest) ProtoMessage() {}
+
+func (x *DeleteDesiredPlaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDesiredPlaceRequest.ProtoReflect.Descriptor instead.
+func (*DeleteDesiredPlaceRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *DeleteDesiredPlaceRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *DeleteDesiredPlaceRequest) GetPlaceId() string {
+	if x != nil {
+		return x.PlaceId
+	}
+	return ""
+}
+
+type DeleteDesiredPlaceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDesiredPlaceResponse) Reset() {
+	*x = DeleteDesiredPlaceResponse{}
+	mi := &file_auth_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDesiredPlaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDesiredPlaceResponse) ProtoMessage() {}
+
+func (x *DeleteDesiredPlaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDesiredPlaceResponse.ProtoReflect.Descriptor instead.
+func (*DeleteDesiredPlaceResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *DeleteDesiredPlaceResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type RequestDesiredPlaceImageUploadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
+	ContentType   string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestDesiredPlaceImageUploadRequest) Reset() {
+	*x = RequestDesiredPlaceImageUploadRequest{}
+	mi := &file_auth_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestDesiredPlaceImageUploadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestDesiredPlaceImageUploadRequest) ProtoMessage() {}
+
+func (x *RequestDesiredPlaceImageUploadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestDesiredPlaceImageUploadRequest.ProtoReflect.Descriptor instead.
+func (*RequestDesiredPlaceImageUploadRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *RequestDesiredPlaceImageUploadRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *RequestDesiredPlaceImageUploadRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *RequestDesiredPlaceImageUploadRequest) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+type RequestDesiredPlaceImageUploadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UploadUrl     string                 `protobuf:"bytes,1,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
+	S3Key         string                 `protobuf:"bytes,2,opt,name=s3_key,json=s3Key,proto3" json:"s3_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestDesiredPlaceImageUploadResponse) Reset() {
+	*x = RequestDesiredPlaceImageUploadResponse{}
+	mi := &file_auth_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestDesiredPlaceImageUploadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestDesiredPlaceImageUploadResponse) ProtoMessage() {}
+
+func (x *RequestDesiredPlaceImageUploadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestDesiredPlaceImageUploadResponse.ProtoReflect.Descriptor instead.
+func (*RequestDesiredPlaceImageUploadResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *RequestDesiredPlaceImageUploadResponse) GetUploadUrl() string {
+	if x != nil {
+		return x.UploadUrl
+	}
+	return ""
+}
+
+func (x *RequestDesiredPlaceImageUploadResponse) GetS3Key() string {
+	if x != nil {
+		return x.S3Key
+	}
+	return ""
+}
+
+type DeleteDesiredPlaceImageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PlaceId       string                 `protobuf:"bytes,2,opt,name=place_id,json=placeId,proto3" json:"place_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDesiredPlaceImageRequest) Reset() {
+	*x = DeleteDesiredPlaceImageRequest{}
+	mi := &file_auth_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDesiredPlaceImageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDesiredPlaceImageRequest) ProtoMessage() {}
+
+func (x *DeleteDesiredPlaceImageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDesiredPlaceImageRequest.ProtoReflect.Descriptor instead.
+func (*DeleteDesiredPlaceImageRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *DeleteDesiredPlaceImageRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *DeleteDesiredPlaceImageRequest) GetPlaceId() string {
+	if x != nil {
+		return x.PlaceId
+	}
+	return ""
+}
+
+type DeleteDesiredPlaceImageResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Place         *DesiredPlace          `protobuf:"bytes,1,opt,name=place,proto3" json:"place,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDesiredPlaceImageResponse) Reset() {
+	*x = DeleteDesiredPlaceImageResponse{}
+	mi := &file_auth_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDesiredPlaceImageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDesiredPlaceImageResponse) ProtoMessage() {}
+
+func (x *DeleteDesiredPlaceImageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[50]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDesiredPlaceImageResponse.ProtoReflect.Descriptor instead.
+func (*DeleteDesiredPlaceImageResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{50}
+}
+
+func (x *DeleteDesiredPlaceImageResponse) GetPlace() *DesiredPlace {
+	if x != nil {
+		return x.Place
+	}
+	return nil
+}
+
+type GetPublicUserProfileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPublicUserProfileRequest) Reset() {
+	*x = GetPublicUserProfileRequest{}
+	mi := &file_auth_proto_msgTypes[51]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPublicUserProfileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPublicUserProfileRequest) ProtoMessage() {}
+
+func (x *GetPublicUserProfileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[51]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPublicUserProfileRequest.ProtoReflect.Descriptor instead.
+func (*GetPublicUserProfileRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{51}
+}
+
+func (x *GetPublicUserProfileRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetPublicUserProfileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Profile       *PublicUserProfile     `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
+	DesiredPlaces []*DesiredPlace        `protobuf:"bytes,2,rep,name=desired_places,json=desiredPlaces,proto3" json:"desired_places,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPublicUserProfileResponse) Reset() {
+	*x = GetPublicUserProfileResponse{}
+	mi := &file_auth_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPublicUserProfileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPublicUserProfileResponse) ProtoMessage() {}
+
+func (x *GetPublicUserProfileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[52]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPublicUserProfileResponse.ProtoReflect.Descriptor instead.
+func (*GetPublicUserProfileResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{52}
+}
+
+func (x *GetPublicUserProfileResponse) GetProfile() *PublicUserProfile {
+	if x != nil {
+		return x.Profile
+	}
+	return nil
+}
+
+func (x *GetPublicUserProfileResponse) GetDesiredPlaces() []*DesiredPlace {
+	if x != nil {
+		return x.DesiredPlaces
+	}
+	return nil
+}
+
 var File_auth_proto protoreflect.FileDescriptor
 
 const file_auth_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"auth.proto\x12\x04auth\"g\n" +
+	"auth.proto\x12\x04auth\"\x8f\x01\n" +
 	"\x11PublicUserProfile\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
 	"\n" +
-	"avatar_url\x18\x03 \x01(\tR\tavatarUrl\"4\n" +
+	"avatar_url\x18\x03 \x01(\tR\tavatarUrl\x12&\n" +
+	"\x0fcreated_at_unix\x18\x04 \x01(\x03R\rcreatedAtUnix\"4\n" +
 	"\x17GetUsersProfilesRequest\x12\x19\n" +
 	"\buser_ids\x18\x01 \x03(\tR\auserIds\"O\n" +
 	"\x18GetUsersProfilesResponse\x123\n" +
@@ -1985,7 +2816,57 @@ const file_auth_proto_rawDesc = "" +
 	"\x14DeleteAccountRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"1\n" +
 	"\x15DeleteAccountResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xb0\v\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xb2\x01\n" +
+	"\fDesiredPlace\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\x1b\n" +
+	"\timage_url\x18\x05 \x01(\tR\bimageUrl\x12&\n" +
+	"\x0fcreated_at_unix\x18\x06 \x01(\x03R\rcreatedAtUnix\"3\n" +
+	"\x18ListDesiredPlacesRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"G\n" +
+	"\x19ListDesiredPlacesResponse\x12*\n" +
+	"\x06places\x18\x01 \x03(\v2\x12.auth.DesiredPlaceR\x06places\"\x81\x01\n" +
+	"\x19CreateDesiredPlaceRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x15\n" +
+	"\x06s3_key\x18\x04 \x01(\tR\x05s3Key\"F\n" +
+	"\x1aCreateDesiredPlaceResponse\x12(\n" +
+	"\x05place\x18\x01 \x01(\v2\x12.auth.DesiredPlaceR\x05place\"\xc0\x01\n" +
+	"\x19UpdateDesiredPlaceRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
+	"\bplace_id\x18\x02 \x01(\tR\aplaceId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\"\n" +
+	"\rset_image_key\x18\x05 \x01(\bR\vsetImageKey\x12\x15\n" +
+	"\x06s3_key\x18\x06 \x01(\tR\x05s3Key\"F\n" +
+	"\x1aUpdateDesiredPlaceResponse\x12(\n" +
+	"\x05place\x18\x01 \x01(\v2\x12.auth.DesiredPlaceR\x05place\"O\n" +
+	"\x19DeleteDesiredPlaceRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
+	"\bplace_id\x18\x02 \x01(\tR\aplaceId\"6\n" +
+	"\x1aDeleteDesiredPlaceResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x7f\n" +
+	"%RequestDesiredPlaceImageUploadRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\x12!\n" +
+	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\"^\n" +
+	"&RequestDesiredPlaceImageUploadResponse\x12\x1d\n" +
+	"\n" +
+	"upload_url\x18\x01 \x01(\tR\tuploadUrl\x12\x15\n" +
+	"\x06s3_key\x18\x02 \x01(\tR\x05s3Key\"T\n" +
+	"\x1eDeleteDesiredPlaceImageRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
+	"\bplace_id\x18\x02 \x01(\tR\aplaceId\"K\n" +
+	"\x1fDeleteDesiredPlaceImageResponse\x12(\n" +
+	"\x05place\x18\x01 \x01(\v2\x12.auth.DesiredPlaceR\x05place\"6\n" +
+	"\x1bGetPublicUserProfileRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\x8c\x01\n" +
+	"\x1cGetPublicUserProfileResponse\x121\n" +
+	"\aprofile\x18\x01 \x01(\v2\x17.auth.PublicUserProfileR\aprofile\x129\n" +
+	"\x0edesired_places\x18\x02 \x03(\v2\x12.auth.DesiredPlaceR\rdesiredPlaces2\xe3\x10\n" +
 	"\vAuthService\x12D\n" +
 	"\vSubmitEmail\x12\x18.auth.SubmitEmailRequest\x1a\x19.auth.SubmitEmailResponse\"\x00\x12P\n" +
 	"\x0fVerifyEmailCode\x12\x1c.auth.VerifyEmailCodeRequest\x1a\x1d.auth.VerifyEmailCodeResponse\"\x00\x12_\n" +
@@ -2005,7 +2886,14 @@ const file_auth_proto_rawDesc = "" +
 	"\x13ConfirmAvatarUpload\x12 .auth.ConfirmAvatarUploadRequest\x1a!.auth.ConfirmAvatarUploadResponse\"\x00\x12G\n" +
 	"\fDeleteAvatar\x12\x19.auth.DeleteAvatarRequest\x1a\x1a.auth.DeleteAvatarResponse\"\x00\x12J\n" +
 	"\rDeleteAccount\x12\x1a.auth.DeleteAccountRequest\x1a\x1b.auth.DeleteAccountResponse\"\x00\x12S\n" +
-	"\x10GetUsersProfiles\x12\x1d.auth.GetUsersProfilesRequest\x1a\x1e.auth.GetUsersProfilesResponse\"\x00B%Z#pinz/backend/auth-service/pkg/protob\x06proto3"
+	"\x10GetUsersProfiles\x12\x1d.auth.GetUsersProfilesRequest\x1a\x1e.auth.GetUsersProfilesResponse\"\x00\x12V\n" +
+	"\x11ListDesiredPlaces\x12\x1e.auth.ListDesiredPlacesRequest\x1a\x1f.auth.ListDesiredPlacesResponse\"\x00\x12Y\n" +
+	"\x12CreateDesiredPlace\x12\x1f.auth.CreateDesiredPlaceRequest\x1a .auth.CreateDesiredPlaceResponse\"\x00\x12Y\n" +
+	"\x12UpdateDesiredPlace\x12\x1f.auth.UpdateDesiredPlaceRequest\x1a .auth.UpdateDesiredPlaceResponse\"\x00\x12Y\n" +
+	"\x12DeleteDesiredPlace\x12\x1f.auth.DeleteDesiredPlaceRequest\x1a .auth.DeleteDesiredPlaceResponse\"\x00\x12}\n" +
+	"\x1eRequestDesiredPlaceImageUpload\x12+.auth.RequestDesiredPlaceImageUploadRequest\x1a,.auth.RequestDesiredPlaceImageUploadResponse\"\x00\x12h\n" +
+	"\x17DeleteDesiredPlaceImage\x12$.auth.DeleteDesiredPlaceImageRequest\x1a%.auth.DeleteDesiredPlaceImageResponse\"\x00\x12_\n" +
+	"\x14GetPublicUserProfile\x12!.auth.GetPublicUserProfileRequest\x1a\".auth.GetPublicUserProfileResponse\"\x00B%Z#pinz/backend/auth-service/pkg/protob\x06proto3"
 
 var (
 	file_auth_proto_rawDescOnce sync.Once
@@ -2019,46 +2907,61 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 53)
 var file_auth_proto_goTypes = []any{
-	(*PublicUserProfile)(nil),             // 0: auth.PublicUserProfile
-	(*GetUsersProfilesRequest)(nil),       // 1: auth.GetUsersProfilesRequest
-	(*GetUsersProfilesResponse)(nil),      // 2: auth.GetUsersProfilesResponse
-	(*User)(nil),                          // 3: auth.User
-	(*SubmitEmailRequest)(nil),            // 4: auth.SubmitEmailRequest
-	(*SubmitEmailResponse)(nil),           // 5: auth.SubmitEmailResponse
-	(*VerifyEmailCodeRequest)(nil),        // 6: auth.VerifyEmailCodeRequest
-	(*VerifyEmailCodeResponse)(nil),       // 7: auth.VerifyEmailCodeResponse
-	(*PasskeyRegisterBeginRequest)(nil),   // 8: auth.PasskeyRegisterBeginRequest
-	(*PasskeyRegisterBeginResponse)(nil),  // 9: auth.PasskeyRegisterBeginResponse
-	(*PasskeyRegisterFinishRequest)(nil),  // 10: auth.PasskeyRegisterFinishRequest
-	(*PasskeyRegisterFinishResponse)(nil), // 11: auth.PasskeyRegisterFinishResponse
-	(*PasskeyLoginBeginRequest)(nil),      // 12: auth.PasskeyLoginBeginRequest
-	(*PasskeyLoginBeginResponse)(nil),     // 13: auth.PasskeyLoginBeginResponse
-	(*PasskeyLoginFinishRequest)(nil),     // 14: auth.PasskeyLoginFinishRequest
-	(*PasskeyLoginFinishResponse)(nil),    // 15: auth.PasskeyLoginFinishResponse
-	(*RefreshTokenRequest)(nil),           // 16: auth.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),          // 17: auth.RefreshTokenResponse
-	(*LogoutRequest)(nil),                 // 18: auth.LogoutRequest
-	(*LogoutResponse)(nil),                // 19: auth.LogoutResponse
-	(*DevLoginRequest)(nil),               // 20: auth.DevLoginRequest
-	(*DevLoginResponse)(nil),              // 21: auth.DevLoginResponse
-	(*GetProfileRequest)(nil),             // 22: auth.GetProfileRequest
-	(*GetProfileResponse)(nil),            // 23: auth.GetProfileResponse
-	(*UpdateProfileRequest)(nil),          // 24: auth.UpdateProfileRequest
-	(*UpdateProfileResponse)(nil),         // 25: auth.UpdateProfileResponse
-	(*ChangeEmailRequest)(nil),            // 26: auth.ChangeEmailRequest
-	(*ChangeEmailResponse)(nil),           // 27: auth.ChangeEmailResponse
-	(*ConfirmEmailChangeRequest)(nil),     // 28: auth.ConfirmEmailChangeRequest
-	(*ConfirmEmailChangeResponse)(nil),    // 29: auth.ConfirmEmailChangeResponse
-	(*RequestAvatarUploadRequest)(nil),    // 30: auth.RequestAvatarUploadRequest
-	(*RequestAvatarUploadResponse)(nil),   // 31: auth.RequestAvatarUploadResponse
-	(*ConfirmAvatarUploadRequest)(nil),    // 32: auth.ConfirmAvatarUploadRequest
-	(*ConfirmAvatarUploadResponse)(nil),   // 33: auth.ConfirmAvatarUploadResponse
-	(*DeleteAvatarRequest)(nil),           // 34: auth.DeleteAvatarRequest
-	(*DeleteAvatarResponse)(nil),          // 35: auth.DeleteAvatarResponse
-	(*DeleteAccountRequest)(nil),          // 36: auth.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil),         // 37: auth.DeleteAccountResponse
+	(*PublicUserProfile)(nil),                      // 0: auth.PublicUserProfile
+	(*GetUsersProfilesRequest)(nil),                // 1: auth.GetUsersProfilesRequest
+	(*GetUsersProfilesResponse)(nil),               // 2: auth.GetUsersProfilesResponse
+	(*User)(nil),                                   // 3: auth.User
+	(*SubmitEmailRequest)(nil),                     // 4: auth.SubmitEmailRequest
+	(*SubmitEmailResponse)(nil),                    // 5: auth.SubmitEmailResponse
+	(*VerifyEmailCodeRequest)(nil),                 // 6: auth.VerifyEmailCodeRequest
+	(*VerifyEmailCodeResponse)(nil),                // 7: auth.VerifyEmailCodeResponse
+	(*PasskeyRegisterBeginRequest)(nil),            // 8: auth.PasskeyRegisterBeginRequest
+	(*PasskeyRegisterBeginResponse)(nil),           // 9: auth.PasskeyRegisterBeginResponse
+	(*PasskeyRegisterFinishRequest)(nil),           // 10: auth.PasskeyRegisterFinishRequest
+	(*PasskeyRegisterFinishResponse)(nil),          // 11: auth.PasskeyRegisterFinishResponse
+	(*PasskeyLoginBeginRequest)(nil),               // 12: auth.PasskeyLoginBeginRequest
+	(*PasskeyLoginBeginResponse)(nil),              // 13: auth.PasskeyLoginBeginResponse
+	(*PasskeyLoginFinishRequest)(nil),              // 14: auth.PasskeyLoginFinishRequest
+	(*PasskeyLoginFinishResponse)(nil),             // 15: auth.PasskeyLoginFinishResponse
+	(*RefreshTokenRequest)(nil),                    // 16: auth.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),                   // 17: auth.RefreshTokenResponse
+	(*LogoutRequest)(nil),                          // 18: auth.LogoutRequest
+	(*LogoutResponse)(nil),                         // 19: auth.LogoutResponse
+	(*DevLoginRequest)(nil),                        // 20: auth.DevLoginRequest
+	(*DevLoginResponse)(nil),                       // 21: auth.DevLoginResponse
+	(*GetProfileRequest)(nil),                      // 22: auth.GetProfileRequest
+	(*GetProfileResponse)(nil),                     // 23: auth.GetProfileResponse
+	(*UpdateProfileRequest)(nil),                   // 24: auth.UpdateProfileRequest
+	(*UpdateProfileResponse)(nil),                  // 25: auth.UpdateProfileResponse
+	(*ChangeEmailRequest)(nil),                     // 26: auth.ChangeEmailRequest
+	(*ChangeEmailResponse)(nil),                    // 27: auth.ChangeEmailResponse
+	(*ConfirmEmailChangeRequest)(nil),              // 28: auth.ConfirmEmailChangeRequest
+	(*ConfirmEmailChangeResponse)(nil),             // 29: auth.ConfirmEmailChangeResponse
+	(*RequestAvatarUploadRequest)(nil),             // 30: auth.RequestAvatarUploadRequest
+	(*RequestAvatarUploadResponse)(nil),            // 31: auth.RequestAvatarUploadResponse
+	(*ConfirmAvatarUploadRequest)(nil),             // 32: auth.ConfirmAvatarUploadRequest
+	(*ConfirmAvatarUploadResponse)(nil),            // 33: auth.ConfirmAvatarUploadResponse
+	(*DeleteAvatarRequest)(nil),                    // 34: auth.DeleteAvatarRequest
+	(*DeleteAvatarResponse)(nil),                   // 35: auth.DeleteAvatarResponse
+	(*DeleteAccountRequest)(nil),                   // 36: auth.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),                  // 37: auth.DeleteAccountResponse
+	(*DesiredPlace)(nil),                           // 38: auth.DesiredPlace
+	(*ListDesiredPlacesRequest)(nil),               // 39: auth.ListDesiredPlacesRequest
+	(*ListDesiredPlacesResponse)(nil),              // 40: auth.ListDesiredPlacesResponse
+	(*CreateDesiredPlaceRequest)(nil),              // 41: auth.CreateDesiredPlaceRequest
+	(*CreateDesiredPlaceResponse)(nil),             // 42: auth.CreateDesiredPlaceResponse
+	(*UpdateDesiredPlaceRequest)(nil),              // 43: auth.UpdateDesiredPlaceRequest
+	(*UpdateDesiredPlaceResponse)(nil),             // 44: auth.UpdateDesiredPlaceResponse
+	(*DeleteDesiredPlaceRequest)(nil),              // 45: auth.DeleteDesiredPlaceRequest
+	(*DeleteDesiredPlaceResponse)(nil),             // 46: auth.DeleteDesiredPlaceResponse
+	(*RequestDesiredPlaceImageUploadRequest)(nil),  // 47: auth.RequestDesiredPlaceImageUploadRequest
+	(*RequestDesiredPlaceImageUploadResponse)(nil), // 48: auth.RequestDesiredPlaceImageUploadResponse
+	(*DeleteDesiredPlaceImageRequest)(nil),         // 49: auth.DeleteDesiredPlaceImageRequest
+	(*DeleteDesiredPlaceImageResponse)(nil),        // 50: auth.DeleteDesiredPlaceImageResponse
+	(*GetPublicUserProfileRequest)(nil),            // 51: auth.GetPublicUserProfileRequest
+	(*GetPublicUserProfileResponse)(nil),           // 52: auth.GetPublicUserProfileResponse
 }
 var file_auth_proto_depIdxs = []int32{
 	0,  // 0: auth.GetUsersProfilesResponse.profiles:type_name -> auth.PublicUserProfile
@@ -2067,47 +2970,67 @@ var file_auth_proto_depIdxs = []int32{
 	3,  // 3: auth.ConfirmEmailChangeResponse.user:type_name -> auth.User
 	3,  // 4: auth.ConfirmAvatarUploadResponse.user:type_name -> auth.User
 	3,  // 5: auth.DeleteAvatarResponse.user:type_name -> auth.User
-	4,  // 6: auth.AuthService.SubmitEmail:input_type -> auth.SubmitEmailRequest
-	6,  // 7: auth.AuthService.VerifyEmailCode:input_type -> auth.VerifyEmailCodeRequest
-	8,  // 8: auth.AuthService.PasskeyRegisterBegin:input_type -> auth.PasskeyRegisterBeginRequest
-	10, // 9: auth.AuthService.PasskeyRegisterFinish:input_type -> auth.PasskeyRegisterFinishRequest
-	12, // 10: auth.AuthService.PasskeyLoginBegin:input_type -> auth.PasskeyLoginBeginRequest
-	14, // 11: auth.AuthService.PasskeyLoginFinish:input_type -> auth.PasskeyLoginFinishRequest
-	16, // 12: auth.AuthService.RefreshToken:input_type -> auth.RefreshTokenRequest
-	18, // 13: auth.AuthService.Logout:input_type -> auth.LogoutRequest
-	20, // 14: auth.AuthService.DevLogin:input_type -> auth.DevLoginRequest
-	22, // 15: auth.AuthService.GetProfile:input_type -> auth.GetProfileRequest
-	24, // 16: auth.AuthService.UpdateProfile:input_type -> auth.UpdateProfileRequest
-	26, // 17: auth.AuthService.ChangeEmail:input_type -> auth.ChangeEmailRequest
-	28, // 18: auth.AuthService.ConfirmEmailChange:input_type -> auth.ConfirmEmailChangeRequest
-	30, // 19: auth.AuthService.RequestAvatarUpload:input_type -> auth.RequestAvatarUploadRequest
-	32, // 20: auth.AuthService.ConfirmAvatarUpload:input_type -> auth.ConfirmAvatarUploadRequest
-	34, // 21: auth.AuthService.DeleteAvatar:input_type -> auth.DeleteAvatarRequest
-	36, // 22: auth.AuthService.DeleteAccount:input_type -> auth.DeleteAccountRequest
-	1,  // 23: auth.AuthService.GetUsersProfiles:input_type -> auth.GetUsersProfilesRequest
-	5,  // 24: auth.AuthService.SubmitEmail:output_type -> auth.SubmitEmailResponse
-	7,  // 25: auth.AuthService.VerifyEmailCode:output_type -> auth.VerifyEmailCodeResponse
-	9,  // 26: auth.AuthService.PasskeyRegisterBegin:output_type -> auth.PasskeyRegisterBeginResponse
-	11, // 27: auth.AuthService.PasskeyRegisterFinish:output_type -> auth.PasskeyRegisterFinishResponse
-	13, // 28: auth.AuthService.PasskeyLoginBegin:output_type -> auth.PasskeyLoginBeginResponse
-	15, // 29: auth.AuthService.PasskeyLoginFinish:output_type -> auth.PasskeyLoginFinishResponse
-	17, // 30: auth.AuthService.RefreshToken:output_type -> auth.RefreshTokenResponse
-	19, // 31: auth.AuthService.Logout:output_type -> auth.LogoutResponse
-	21, // 32: auth.AuthService.DevLogin:output_type -> auth.DevLoginResponse
-	23, // 33: auth.AuthService.GetProfile:output_type -> auth.GetProfileResponse
-	25, // 34: auth.AuthService.UpdateProfile:output_type -> auth.UpdateProfileResponse
-	27, // 35: auth.AuthService.ChangeEmail:output_type -> auth.ChangeEmailResponse
-	29, // 36: auth.AuthService.ConfirmEmailChange:output_type -> auth.ConfirmEmailChangeResponse
-	31, // 37: auth.AuthService.RequestAvatarUpload:output_type -> auth.RequestAvatarUploadResponse
-	33, // 38: auth.AuthService.ConfirmAvatarUpload:output_type -> auth.ConfirmAvatarUploadResponse
-	35, // 39: auth.AuthService.DeleteAvatar:output_type -> auth.DeleteAvatarResponse
-	37, // 40: auth.AuthService.DeleteAccount:output_type -> auth.DeleteAccountResponse
-	2,  // 41: auth.AuthService.GetUsersProfiles:output_type -> auth.GetUsersProfilesResponse
-	24, // [24:42] is the sub-list for method output_type
-	6,  // [6:24] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	38, // 6: auth.ListDesiredPlacesResponse.places:type_name -> auth.DesiredPlace
+	38, // 7: auth.CreateDesiredPlaceResponse.place:type_name -> auth.DesiredPlace
+	38, // 8: auth.UpdateDesiredPlaceResponse.place:type_name -> auth.DesiredPlace
+	38, // 9: auth.DeleteDesiredPlaceImageResponse.place:type_name -> auth.DesiredPlace
+	0,  // 10: auth.GetPublicUserProfileResponse.profile:type_name -> auth.PublicUserProfile
+	38, // 11: auth.GetPublicUserProfileResponse.desired_places:type_name -> auth.DesiredPlace
+	4,  // 12: auth.AuthService.SubmitEmail:input_type -> auth.SubmitEmailRequest
+	6,  // 13: auth.AuthService.VerifyEmailCode:input_type -> auth.VerifyEmailCodeRequest
+	8,  // 14: auth.AuthService.PasskeyRegisterBegin:input_type -> auth.PasskeyRegisterBeginRequest
+	10, // 15: auth.AuthService.PasskeyRegisterFinish:input_type -> auth.PasskeyRegisterFinishRequest
+	12, // 16: auth.AuthService.PasskeyLoginBegin:input_type -> auth.PasskeyLoginBeginRequest
+	14, // 17: auth.AuthService.PasskeyLoginFinish:input_type -> auth.PasskeyLoginFinishRequest
+	16, // 18: auth.AuthService.RefreshToken:input_type -> auth.RefreshTokenRequest
+	18, // 19: auth.AuthService.Logout:input_type -> auth.LogoutRequest
+	20, // 20: auth.AuthService.DevLogin:input_type -> auth.DevLoginRequest
+	22, // 21: auth.AuthService.GetProfile:input_type -> auth.GetProfileRequest
+	24, // 22: auth.AuthService.UpdateProfile:input_type -> auth.UpdateProfileRequest
+	26, // 23: auth.AuthService.ChangeEmail:input_type -> auth.ChangeEmailRequest
+	28, // 24: auth.AuthService.ConfirmEmailChange:input_type -> auth.ConfirmEmailChangeRequest
+	30, // 25: auth.AuthService.RequestAvatarUpload:input_type -> auth.RequestAvatarUploadRequest
+	32, // 26: auth.AuthService.ConfirmAvatarUpload:input_type -> auth.ConfirmAvatarUploadRequest
+	34, // 27: auth.AuthService.DeleteAvatar:input_type -> auth.DeleteAvatarRequest
+	36, // 28: auth.AuthService.DeleteAccount:input_type -> auth.DeleteAccountRequest
+	1,  // 29: auth.AuthService.GetUsersProfiles:input_type -> auth.GetUsersProfilesRequest
+	39, // 30: auth.AuthService.ListDesiredPlaces:input_type -> auth.ListDesiredPlacesRequest
+	41, // 31: auth.AuthService.CreateDesiredPlace:input_type -> auth.CreateDesiredPlaceRequest
+	43, // 32: auth.AuthService.UpdateDesiredPlace:input_type -> auth.UpdateDesiredPlaceRequest
+	45, // 33: auth.AuthService.DeleteDesiredPlace:input_type -> auth.DeleteDesiredPlaceRequest
+	47, // 34: auth.AuthService.RequestDesiredPlaceImageUpload:input_type -> auth.RequestDesiredPlaceImageUploadRequest
+	49, // 35: auth.AuthService.DeleteDesiredPlaceImage:input_type -> auth.DeleteDesiredPlaceImageRequest
+	51, // 36: auth.AuthService.GetPublicUserProfile:input_type -> auth.GetPublicUserProfileRequest
+	5,  // 37: auth.AuthService.SubmitEmail:output_type -> auth.SubmitEmailResponse
+	7,  // 38: auth.AuthService.VerifyEmailCode:output_type -> auth.VerifyEmailCodeResponse
+	9,  // 39: auth.AuthService.PasskeyRegisterBegin:output_type -> auth.PasskeyRegisterBeginResponse
+	11, // 40: auth.AuthService.PasskeyRegisterFinish:output_type -> auth.PasskeyRegisterFinishResponse
+	13, // 41: auth.AuthService.PasskeyLoginBegin:output_type -> auth.PasskeyLoginBeginResponse
+	15, // 42: auth.AuthService.PasskeyLoginFinish:output_type -> auth.PasskeyLoginFinishResponse
+	17, // 43: auth.AuthService.RefreshToken:output_type -> auth.RefreshTokenResponse
+	19, // 44: auth.AuthService.Logout:output_type -> auth.LogoutResponse
+	21, // 45: auth.AuthService.DevLogin:output_type -> auth.DevLoginResponse
+	23, // 46: auth.AuthService.GetProfile:output_type -> auth.GetProfileResponse
+	25, // 47: auth.AuthService.UpdateProfile:output_type -> auth.UpdateProfileResponse
+	27, // 48: auth.AuthService.ChangeEmail:output_type -> auth.ChangeEmailResponse
+	29, // 49: auth.AuthService.ConfirmEmailChange:output_type -> auth.ConfirmEmailChangeResponse
+	31, // 50: auth.AuthService.RequestAvatarUpload:output_type -> auth.RequestAvatarUploadResponse
+	33, // 51: auth.AuthService.ConfirmAvatarUpload:output_type -> auth.ConfirmAvatarUploadResponse
+	35, // 52: auth.AuthService.DeleteAvatar:output_type -> auth.DeleteAvatarResponse
+	37, // 53: auth.AuthService.DeleteAccount:output_type -> auth.DeleteAccountResponse
+	2,  // 54: auth.AuthService.GetUsersProfiles:output_type -> auth.GetUsersProfilesResponse
+	40, // 55: auth.AuthService.ListDesiredPlaces:output_type -> auth.ListDesiredPlacesResponse
+	42, // 56: auth.AuthService.CreateDesiredPlace:output_type -> auth.CreateDesiredPlaceResponse
+	44, // 57: auth.AuthService.UpdateDesiredPlace:output_type -> auth.UpdateDesiredPlaceResponse
+	46, // 58: auth.AuthService.DeleteDesiredPlace:output_type -> auth.DeleteDesiredPlaceResponse
+	48, // 59: auth.AuthService.RequestDesiredPlaceImageUpload:output_type -> auth.RequestDesiredPlaceImageUploadResponse
+	50, // 60: auth.AuthService.DeleteDesiredPlaceImage:output_type -> auth.DeleteDesiredPlaceImageResponse
+	52, // 61: auth.AuthService.GetPublicUserProfile:output_type -> auth.GetPublicUserProfileResponse
+	37, // [37:62] is the sub-list for method output_type
+	12, // [12:37] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_auth_proto_init() }
@@ -2121,7 +3044,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_proto_rawDesc), len(file_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   38,
+			NumMessages:   53,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

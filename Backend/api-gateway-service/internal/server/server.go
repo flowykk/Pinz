@@ -95,6 +95,19 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Get("/visited-locations", deps.StatisticsHandler.GetProfileVisitedLocations)
 				r.Post("/device-tokens", deps.NotificationHandler.RegisterDeviceToken)
 				r.Delete("/device-tokens", deps.NotificationHandler.UnregisterDeviceToken)
+				// Желаемые места (ТЗ 1.13).
+				r.Get("/desired-places", deps.AuthHandler.ListDesiredPlaces)
+				r.Post("/desired-places", deps.AuthHandler.CreateDesiredPlace)
+				r.Post("/desired-places/upload-url", deps.AuthHandler.RequestDesiredPlaceImageUpload)
+				r.Patch("/desired-places/{place_id}", deps.AuthHandler.UpdateDesiredPlace)
+				r.Delete("/desired-places/{place_id}", deps.AuthHandler.DeleteDesiredPlace)
+				r.Delete("/desired-places/{place_id}/image", deps.AuthHandler.DeleteDesiredPlaceImage)
+			})
+
+			// Публичный профиль другого пользователя (ТЗ 1.7.2): username, avatar, created_at + wishlist.
+			r.Route("/users", func(r chi.Router) {
+				r.Use(middleware.RequireJWT)
+				r.Get("/{id}", deps.AuthHandler.GetPublicUserProfile)
 			})
 
 			// Основные операции над путешествиями.

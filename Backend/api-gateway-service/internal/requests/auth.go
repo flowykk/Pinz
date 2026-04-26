@@ -64,3 +64,23 @@ type RequestAvatarUploadRequest struct {
 type ConfirmAvatarUploadRequest struct {
 	S3Key string `json:"s3_key"`
 }
+
+type CreateDesiredPlaceRequest struct {
+	Name        string `json:"name" example:"Eiffel Tower"`
+	Description string `json:"description" example:"Want to visit"`
+	S3Key       string `json:"s3_key,omitempty" example:"desired-places/{user_id}/{uuid}.jpg"`
+}
+
+// UpdateDesiredPlaceRequest. ImageUpdate указывается явно, чтобы отличить
+// «не менять картинку» от «убрать»: если ImageUpdate==nil — image_url не трогается;
+// если *ImageUpdate=="" — картинка сбрасывается; иначе — заменяется на этот s3_key.
+type UpdateDesiredPlaceRequest struct {
+	Name        string  `json:"name" example:"Eiffel Tower"`
+	Description string  `json:"description" example:"Want to visit"`
+	ImageUpdate *string `json:"image_s3_key,omitempty"`
+}
+
+type RequestDesiredPlaceImageUploadRequest struct {
+	Filename    string `json:"filename" example:"photo.jpg"`
+	ContentType string `json:"content_type" example:"image/jpeg"`
+}

@@ -12,6 +12,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type DesiredPlace struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	Name        string
+	Description string
+	ImageUrl    sql.NullString
+	CreatedAt   time.Time
+}
+
 type PasskeyCredential struct {
 	ID             uuid.UUID
 	UserID         uuid.UUID

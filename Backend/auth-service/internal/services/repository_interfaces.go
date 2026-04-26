@@ -45,3 +45,15 @@ type CredentialRepositoryInterface interface {
 	GetCredentialsByUserID(userID string) ([]webauthn.Credential, error)
 	UpdateCredential(cred *webauthn.Credential) error
 }
+
+// DesiredPlaceRepositoryInterface — CRUD для желаемых мест (ТЗ 1.13).
+// *repositories.DesiredPlaceRepository implements this interface.
+type DesiredPlaceRepositoryInterface interface {
+	Create(p *models.DesiredPlace) (*models.DesiredPlace, error)
+	GetByID(placeID string) (*models.DesiredPlace, error)
+	ListByUserID(userID string) ([]*models.DesiredPlace, error)
+	Update(placeID, name, description, imageURL string) (*models.DesiredPlace, error)
+	UpdateContent(placeID, name, description string) (*models.DesiredPlace, error)
+	ClearImage(placeID string) (*models.DesiredPlace, error)
+	Delete(placeID string) error
+}

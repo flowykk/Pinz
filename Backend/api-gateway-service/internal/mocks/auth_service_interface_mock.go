@@ -86,6 +86,21 @@ func (mr *MockAuthServiceInterfaceMockRecorder) ConfirmEmailChange(ctx, userID, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmEmailChange", reflect.TypeOf((*MockAuthServiceInterface)(nil).ConfirmEmailChange), ctx, userID, code)
 }
 
+// CreateDesiredPlace mocks base method.
+func (m *MockAuthServiceInterface) CreateDesiredPlace(ctx context.Context, userID, name, description, s3Key string) (*proto.CreateDesiredPlaceResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDesiredPlace", ctx, userID, name, description, s3Key)
+	ret0, _ := ret[0].(*proto.CreateDesiredPlaceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateDesiredPlace indicates an expected call of CreateDesiredPlace.
+func (mr *MockAuthServiceInterfaceMockRecorder) CreateDesiredPlace(ctx, userID, name, description, s3Key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDesiredPlace", reflect.TypeOf((*MockAuthServiceInterface)(nil).CreateDesiredPlace), ctx, userID, name, description, s3Key)
+}
+
 // DeleteAccount mocks base method.
 func (m *MockAuthServiceInterface) DeleteAccount(ctx context.Context, userID string) (*proto.DeleteAccountResponse, error) {
 	m.ctrl.T.Helper()
@@ -116,6 +131,36 @@ func (mr *MockAuthServiceInterfaceMockRecorder) DeleteAvatar(ctx, userID any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAvatar", reflect.TypeOf((*MockAuthServiceInterface)(nil).DeleteAvatar), ctx, userID)
 }
 
+// DeleteDesiredPlace mocks base method.
+func (m *MockAuthServiceInterface) DeleteDesiredPlace(ctx context.Context, userID, placeID string) (*proto.DeleteDesiredPlaceResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDesiredPlace", ctx, userID, placeID)
+	ret0, _ := ret[0].(*proto.DeleteDesiredPlaceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteDesiredPlace indicates an expected call of DeleteDesiredPlace.
+func (mr *MockAuthServiceInterfaceMockRecorder) DeleteDesiredPlace(ctx, userID, placeID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDesiredPlace", reflect.TypeOf((*MockAuthServiceInterface)(nil).DeleteDesiredPlace), ctx, userID, placeID)
+}
+
+// DeleteDesiredPlaceImage mocks base method.
+func (m *MockAuthServiceInterface) DeleteDesiredPlaceImage(ctx context.Context, userID, placeID string) (*proto.DeleteDesiredPlaceImageResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDesiredPlaceImage", ctx, userID, placeID)
+	ret0, _ := ret[0].(*proto.DeleteDesiredPlaceImageResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteDesiredPlaceImage indicates an expected call of DeleteDesiredPlaceImage.
+func (mr *MockAuthServiceInterfaceMockRecorder) DeleteDesiredPlaceImage(ctx, userID, placeID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDesiredPlaceImage", reflect.TypeOf((*MockAuthServiceInterface)(nil).DeleteDesiredPlaceImage), ctx, userID, placeID)
+}
+
 // DevLogin mocks base method.
 func (m *MockAuthServiceInterface) DevLogin(ctx context.Context, email string) (*proto.DevLoginResponse, error) {
 	m.ctrl.T.Helper()
@@ -144,6 +189,36 @@ func (m *MockAuthServiceInterface) GetProfile(ctx context.Context, userID string
 func (mr *MockAuthServiceInterfaceMockRecorder) GetProfile(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfile", reflect.TypeOf((*MockAuthServiceInterface)(nil).GetProfile), ctx, userID)
+}
+
+// GetPublicUserProfile mocks base method.
+func (m *MockAuthServiceInterface) GetPublicUserProfile(ctx context.Context, userID string) (*proto.GetPublicUserProfileResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPublicUserProfile", ctx, userID)
+	ret0, _ := ret[0].(*proto.GetPublicUserProfileResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPublicUserProfile indicates an expected call of GetPublicUserProfile.
+func (mr *MockAuthServiceInterfaceMockRecorder) GetPublicUserProfile(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicUserProfile", reflect.TypeOf((*MockAuthServiceInterface)(nil).GetPublicUserProfile), ctx, userID)
+}
+
+// ListDesiredPlaces mocks base method.
+func (m *MockAuthServiceInterface) ListDesiredPlaces(ctx context.Context, userID string) (*proto.ListDesiredPlacesResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDesiredPlaces", ctx, userID)
+	ret0, _ := ret[0].(*proto.ListDesiredPlacesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDesiredPlaces indicates an expected call of ListDesiredPlaces.
+func (mr *MockAuthServiceInterfaceMockRecorder) ListDesiredPlaces(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDesiredPlaces", reflect.TypeOf((*MockAuthServiceInterface)(nil).ListDesiredPlaces), ctx, userID)
 }
 
 // Logout mocks base method.
@@ -251,6 +326,21 @@ func (mr *MockAuthServiceInterfaceMockRecorder) RequestAvatarUpload(ctx, userID,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestAvatarUpload", reflect.TypeOf((*MockAuthServiceInterface)(nil).RequestAvatarUpload), ctx, userID, filename, contentType)
 }
 
+// RequestDesiredPlaceImageUpload mocks base method.
+func (m *MockAuthServiceInterface) RequestDesiredPlaceImageUpload(ctx context.Context, userID, filename, contentType string) (*proto.RequestDesiredPlaceImageUploadResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestDesiredPlaceImageUpload", ctx, userID, filename, contentType)
+	ret0, _ := ret[0].(*proto.RequestDesiredPlaceImageUploadResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestDesiredPlaceImageUpload indicates an expected call of RequestDesiredPlaceImageUpload.
+func (mr *MockAuthServiceInterfaceMockRecorder) RequestDesiredPlaceImageUpload(ctx, userID, filename, contentType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestDesiredPlaceImageUpload", reflect.TypeOf((*MockAuthServiceInterface)(nil).RequestDesiredPlaceImageUpload), ctx, userID, filename, contentType)
+}
+
 // SubmitEmail mocks base method.
 func (m *MockAuthServiceInterface) SubmitEmail(ctx context.Context, email string) (*proto.SubmitEmailResponse, error) {
 	m.ctrl.T.Helper()
@@ -264,6 +354,21 @@ func (m *MockAuthServiceInterface) SubmitEmail(ctx context.Context, email string
 func (mr *MockAuthServiceInterfaceMockRecorder) SubmitEmail(ctx, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitEmail", reflect.TypeOf((*MockAuthServiceInterface)(nil).SubmitEmail), ctx, email)
+}
+
+// UpdateDesiredPlace mocks base method.
+func (m *MockAuthServiceInterface) UpdateDesiredPlace(ctx context.Context, userID, placeID, name, description string, setImageKey bool, s3Key string) (*proto.UpdateDesiredPlaceResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDesiredPlace", ctx, userID, placeID, name, description, setImageKey, s3Key)
+	ret0, _ := ret[0].(*proto.UpdateDesiredPlaceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateDesiredPlace indicates an expected call of UpdateDesiredPlace.
+func (mr *MockAuthServiceInterfaceMockRecorder) UpdateDesiredPlace(ctx, userID, placeID, name, description, setImageKey, s3Key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDesiredPlace", reflect.TypeOf((*MockAuthServiceInterface)(nil).UpdateDesiredPlace), ctx, userID, placeID, name, description, setImageKey, s3Key)
 }
 
 // UpdateProfile mocks base method.

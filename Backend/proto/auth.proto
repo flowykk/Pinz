@@ -27,6 +27,17 @@ service AuthService {
  // Batched публичные профили по списку user_id. Используется api-gateway для
  // обогащения ответов списками участников (current_initiator, authors и т.п.).
  rpc GetUsersProfiles(GetUsersProfilesRequest) returns (GetUsersProfilesResponse) {}
+
+ // Желаемые места (ТЗ 1.13, 1.12.5). CRUD от лица текущего юзера.
+ rpc ListDesiredPlaces(ListDesiredPlacesRequest) returns (ListDesiredPlacesResponse) {}
+ rpc CreateDesiredPlace(CreateDesiredPlaceRequest) returns (CreateDesiredPlaceResponse) {}
+ rpc UpdateDesiredPlace(UpdateDesiredPlaceRequest) returns (UpdateDesiredPlaceResponse) {}
+ rpc DeleteDesiredPlace(DeleteDesiredPlaceRequest) returns (DeleteDesiredPlaceResponse) {}
+ rpc RequestDesiredPlaceImageUpload(RequestDesiredPlaceImageUploadRequest) returns (RequestDesiredPlaceImageUploadResponse) {}
+ rpc DeleteDesiredPlaceImage(DeleteDesiredPlaceImageRequest) returns (DeleteDesiredPlaceImageResponse) {}
+
+ // Публичный профиль другого пользователя + его список желаемых мест (ТЗ 1.7.2).
+ rpc GetPublicUserProfile(GetPublicUserProfileRequest) returns (GetPublicUserProfileResponse) {}
 }
 
 // Публичный профиль пользователя — подмножество User без приватных полей (email).
@@ -35,6 +46,7 @@ message PublicUserProfile {
  string user_id = 1;
  string username = 2;
  string avatar_url = 3;
+ int64 created_at_unix = 4;
 }
 
 message GetUsersProfilesRequest {
@@ -206,4 +218,100 @@ message DeleteAccountRequest {
 
 message DeleteAccountResponse {
  bool success = 1;
+}
+
+// =============================================================================
+// Желаемые места (ТЗ 1.13)
+// =============================================================================
+
+// image_url — presigned GET URL, пустой если картинка не загружена.
+message DesiredPlace {
+ string id = 1;
+ string user_id = 2;
+ string name = 3;
+ string description = 4;
+ string image_url = 5;
+ int64 created_at_unix = 6;
+}
+
+message ListDesiredPlacesRequest {
+ string user_id = 1;
+}
+
+message ListDesiredPlacesResponse {
+ repeated DesiredPlace places = 1;
+}
+
+// s3_key опционален: если непустой — на момент Create картинка уже загружена через
+// RequestDesiredPlaceImageUpload и записывается в image_url. Если пустой — место
+// создаётся без картинки.
+message CreateDesiredPlaceRequest {
+ string user_id = 1;
+ string name = 2;
+ string description = 3;
+ string s3_key = 4;
+}
+
+message CreateDesiredPlaceResponse {
+ DesiredPlace place = 1;
+}
+
+// s3_key семантика на Update:
+//  - не задан в запросе (set_image_key=false) → image_url не меняется;
+//  - set_image_key=true, s3_key пустой → image сбрасывается, старый объект удаляется;
+//  - set_image_key=true, s3_key непустой → image заменяется, старый объект удаляется.
+// (set_image_key — explicit signal, чтобы отличить «не менять» от «убрать»).
+message UpdateDesiredPlaceRequest {
+ string user_id = 1;
+ string place_id = 2;
+ string name = 3;
+ string description = 4;
+ bool set_image_key = 5;
+ string s3_key = 6;
+}
+
+message UpdateDesiredPlaceResponse {
+ DesiredPlace place = 1;
+}
+
+message DeleteDesiredPlaceRequest {
+ string user_id = 1;
+ string place_id = 2;
+}
+
+message DeleteDesiredPlaceResponse {
+ bool success = 1;
+}
+
+message RequestDesiredPlaceImageUploadRequest {
+ string user_id = 1;
+ string filename = 2;
+ string content_type = 3;
+}
+
+message RequestDesiredPlaceImageUploadResponse {
+ string upload_url = 1;
+ string s3_key = 2;
+}
+
+message DeleteDesiredPlaceImageRequest {
+ string user_id = 1;
+ string place_id = 2;
+}
+
+message DeleteDesiredPlaceImageResponse {
+ DesiredPlace place = 1;
+}
+
+// =============================================================================
+// Публичный профиль (ТЗ 1.7.2)
+// =============================================================================
+
+message GetPublicUserProfileRequest {
+ string user_id = 1;
+}
+
+message GetPublicUserProfileResponse {
+ PublicUserProfile profile = 1;
+ repeated DesiredPlace desired_places = 2;
 }

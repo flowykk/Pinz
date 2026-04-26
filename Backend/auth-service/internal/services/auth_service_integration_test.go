@@ -37,7 +37,7 @@ func TestAuthService_Integration(t *testing.T) {
 	}
 	require.NoError(t, userRepo.CreateUser(u))
 
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 
 	env := &struct {
