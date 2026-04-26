@@ -104,7 +104,7 @@
 "trips.empty.noSelection" = "You haven't selected a trip yet";
 "trips.empty.noSelectionHint" = "Tap [chevron.down] to select from existing or create a new one";
 "trips.button.viewDetails" = "View Details";
-"trips.header.membersAndPrivacy" = "Members and Privacy";
+"trips.header.membersAndPrivacy" = "Privacy";
 "trips.hint.privateMode" = "Trip won't appear in the general feed";
 "trips.hint.publicMode" = "Trip will appear in the general feed";
 

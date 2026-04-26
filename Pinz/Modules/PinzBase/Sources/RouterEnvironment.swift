@@ -24,7 +24,7 @@ public protocol AppRouting {
     func navigateToPostPreview(trip: Trip, selectedPins: [Pin])
     func navigateToPostInfo(post: Post)
 
-    func navigateToMediaInfo(media: MediaItem)
+    func navigateToMediaInfo(media: MediaItem, updateAction: MediaUpdateAction?)
     func navigateToLocalMediaInfo(media: LoadedMedia)
 
     func navigateToEmailChange(email: String, userId: String?, action: EmailChangeAction)

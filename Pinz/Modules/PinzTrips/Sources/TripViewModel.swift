@@ -112,7 +112,10 @@ final class TripViewModel {
             case .feed:
                 router?.navigateToFeed()
             case .pinInfo(let pin):
-                router?.navigateToPinInfo(pin: pin, updateAction: nil)
+                router?.navigateToPinInfo(pin: pin, updateAction: PinUpdateAction { [weak self] updatedPin in
+                    guard let self, let idx = trip?.pins.firstIndex(where: { $0.serverId == updatedPin.serverId }) else { return }
+                    trip?.pins[idx] = updatedPin
+                })
             case .pinCreation:
                 router?.navigateToPinCreation()
             case .members:
@@ -277,7 +280,7 @@ final class TripViewModel {
                         .group
                     )
                 }
-                trip.pins = response.pins.enumerated().map { index, dto in dto.toPin(index: index) }
+                trip.pins = response.pins.enumerated().map { index, dto in dto.toPin(index: index, tripId: trip.id) }
                 lastFetchedTripId = tripId
                 dispatch(.selectTrip(trip))
                 shouldReloadSavedTrip = false

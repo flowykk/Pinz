@@ -40,7 +40,7 @@ public struct MediaItemThumbnailView: View {
         .contextMenu {
             Button {
                 if dismissBeforeMediaInfo { dismiss() }
-                router?.navigateToMediaInfo(media: mediaItem)
+                router?.navigateToMediaInfo(media: mediaItem, updateAction: nil)
             } label: {
                 Label(PinzBaseStrings.Common.Button.details, systemImage: "eye.fill")
             }

@@ -272,6 +272,6 @@ struct PinStoryCardView: View {
 
     private func navigateToMediaInfo(media: MediaItem) {
         dismiss()
-        router?.navigateToMediaInfo(media: media)
+        router?.navigateToMediaInfo(media: media, updateAction: nil)
     }
 }

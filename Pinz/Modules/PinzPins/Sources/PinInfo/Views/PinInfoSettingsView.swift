@@ -117,7 +117,10 @@ extension PinInfoView {
     }
 
     private var privacy: some View {
-        PrivacySection(members: TripMember.stubs())
+        PrivacySection(
+            initialSelection: PrivacyIcon.from(isPrivate: viewModel.pin.isPrivate),
+            onSelectionChanged: { [viewModel] in viewModel.dispatch(.updatePrivacy($0)) }
+        )
     }
 
     var map: some View {

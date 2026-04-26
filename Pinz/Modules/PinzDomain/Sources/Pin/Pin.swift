@@ -9,6 +9,7 @@ public struct Pin: Hashable, Identifiable {
 
     public var id: String { name }
     public let serverId: String?
+    public let tripId: String?
     
     public var name: String
     public var description: String?
@@ -36,6 +37,7 @@ public struct Pin: Hashable, Identifiable {
         tags: [MediaTag],
         issues: [String] = [],
         serverId: String? = nil,
+        tripId: String? = nil,
         coordinates: CLLocationCoordinate2D? = nil
     ) {
         self.name = name
@@ -48,6 +50,7 @@ public struct Pin: Hashable, Identifiable {
         self.tags = tags
         self.issues = issues
         self.serverId = serverId
+        self.tripId = tripId
         self.coordinates = coordinates
     }
 }

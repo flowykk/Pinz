@@ -2,28 +2,35 @@ import SwiftUI
 import PinzBase
 import PinzDomain
 
-enum PrivacyIcon: String, Setting.Icon, SegmentedItem {
-    case lockOpened = "lock.fill"
-    case lockClosed = "lock.open.fill"
+public enum PrivacyIcon: String, Setting.Icon, SegmentedItem {
+    case lockOpened = "lock.open.fill"
+    case lockClosed = "lock.fill"
 
-    var id: Self { self }
+    public var id: Self { self }
 
-    var content: SegmentedItemContent {
+    public var content: SegmentedItemContent {
         switch self {
         case .lockOpened: .icon(rawValue, PinzUIAsset.accentGreen.swiftUIColor)
         case .lockClosed: .icon(rawValue, PinzUIAsset.accentRed.swiftUIColor)
         }
     }
+
+    public var apiValue: String { self == .lockOpened ? "Public" : "Private" }
+
+    public static func from(isPrivate: Bool) -> PrivacyIcon { isPrivate ? .lockClosed : .lockOpened }
 }
 
 public struct PrivacySection: View {
 
-    let members: [TripMember]
+    let onSelectionChanged: ((PrivacyIcon) -> Void)?
+    @State private var privacySelection: PrivacyIcon
 
-    @State var privacySelection: PrivacyIcon = .lockClosed
-
-    public init(members: [TripMember]) {
-        self.members = members
+    public init(
+        initialSelection: PrivacyIcon = .lockClosed,
+        onSelectionChanged: ((PrivacyIcon) -> Void)? = nil
+    ) {
+        self._privacySelection = State(initialValue: initialSelection)
+        self.onSelectionChanged = onSelectionChanged
     }
 
     public var body: some View {
@@ -32,34 +39,7 @@ public struct PrivacySection: View {
                 .padding(.leading, 12)
 
             SegmentedPicker(selection: $privacySelection, items: [.lockOpened, .lockClosed])
-
-            VStack(spacing: 0) {
-                SettingsGroup(settings: members.map { member in
-                    .default(Setting.DefaultSetting(
-                        id: "privacy\(member.username)",
-                        leading: .imageTitle(member.avatar, member.username),
-                        trailing: .values([
-                            member.isPrivate
-                                ? .icon(PrivacyIcon.lockClosed, PinzUIAsset.accentRed.swiftUIColor)
-                                : .icon(PrivacyIcon.lockOpened, PinzUIAsset.accentGreen.swiftUIColor)
-                        ])
-                    ))
-                })
-            }
-            .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
-            .cornerRadius(26)
-
-            SettingSubtitle(
-                privacySelection == .lockClosed
-                    ? PinzBaseStrings.Trips.Hint.privateMode
-                    : PinzBaseStrings.Trips.Hint.publicMode
-            )
-            .padding(.top, -2)
-            .padding(.leading, 12)
+                .onChange(of: privacySelection) { _, new in onSelectionChanged?(new) }
         }
-    }
-
-    private func isTotallyPrivate() -> Bool {
-        members.allSatisfy(\.isPrivate)
     }
 }

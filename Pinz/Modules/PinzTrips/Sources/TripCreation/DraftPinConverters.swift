@@ -21,8 +21,43 @@ extension DraftPinMediaDTO {
     }
 }
 
+extension TripPinDTO {
+    func toPin(index: Int, tripId fallbackTripId: String? = nil) -> Pin {
+        let resolvedTripId = tripId ?? fallbackTripId
+        let coordinates: CLLocationCoordinate2D?
+        if let latitude, let longitude {
+            coordinates = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        } else {
+            coordinates = nil
+        }
+
+        return Pin(
+            name: name ?? PinzBaseStrings.Common.Label.pinNumber(index + 1),
+            category: category?.toPinCategory() ?? .custom(nil),
+            medias: (media ?? []).enumerated().map { offset, m in
+                MediaItem(
+                    id: offset + 1,
+                    isPrivate: m.privacyLevel != nil && m.privacyLevel != "public",
+                    type: m.mediaType == "video" ? .video : .image,
+                    mediaURL: URL(string: m.url),
+                    tripId: resolvedTripId,
+                    mediaId: m.mediaId
+                )
+            },
+            isPrivate: privacyLevel != nil && privacyLevel != "public",
+            startDate: startTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
+            endDate: endTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
+            tags: (tags ?? []).map { MediaTag(tag: $0) },
+            issues: [],
+            serverId: id,
+            tripId: resolvedTripId,
+            coordinates: coordinates
+        )
+    }
+}
+
 extension ReviewPinDTO {
-    func toPin(index: Int) -> Pin {
+    func toPin(index: Int, tripId: String? = nil) -> Pin {
         let coordinates: CLLocationCoordinate2D?
         if let latitude, let longitude {
             coordinates = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
@@ -38,7 +73,9 @@ extension ReviewPinDTO {
                     id: offset + 1,
                     isPrivate: m.privacyLevel != nil && m.privacyLevel != "public",
                     type: m.url.lowercased().contains(".mp4") || m.url.lowercased().contains(".mov") ? .video : .image,
-                    mediaURL: URL(string: m.url)
+                    mediaURL: URL(string: m.url),
+                    tripId: tripId,
+                    mediaId: m.mediaId
                 )
             },
             isPrivate: false,
@@ -47,6 +84,7 @@ extension ReviewPinDTO {
             tags: (tags ?? []).map { MediaTag(tag: $0) },
             issues: issues ?? [],
             serverId: pinId,
+            tripId: tripId,
             coordinates: coordinates
         )
     }

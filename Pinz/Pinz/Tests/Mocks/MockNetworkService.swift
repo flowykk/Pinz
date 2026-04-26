@@ -278,42 +278,48 @@ final class MockNetworkService: NetworkServiceProtocol {
         startDateUnix: nil, endDateUnix: nil, createdAtUnix: 1_700_000_000, updatedAtUnix: 1_700_000_000
     )
 
-    private static let stubTripPins: [ReviewPinDTO] = [
-        ReviewPinDTO(
-            pinId: "pin-1",
+    private static let stubTripPins: [TripPinDTO] = [
+        TripPinDTO(
+            id: "pin-1",
+            tripId: "trip-001",
             name: "Pin 1",
+            description: nil,
             category: "vacation",
             latitude: 55.75,
             longitude: 37.62,
-            locationName: "Москва",
             startTimeUnix: nil,
             endTimeUnix: nil,
             tags: ["travel", "city"],
-            issues: [Pin.Issue.missingDates.rawValue],
+            privacyLevel: "public",
             media: (1...6).map { index in
-                ReviewPinMediaDTO(
+                TripPinMediaDTO(
                     mediaId: "review-media-\(index)",
                     url: "https://example.com/review-\(index).jpg",
-                    privacyLevel: "public"
+                    mediaType: "image",
+                    privacyLevel: "public",
+                    capturedAtUnix: nil
                 )
             }
         ),
-        ReviewPinDTO(
-            pinId: "pin-2",
+        TripPinDTO(
+            id: "pin-2",
+            tripId: "trip-001",
             name: "Pin 2",
+            description: nil,
             category: "vacation",
             latitude: 55.76,
             longitude: 37.64,
-            locationName: "Сад",
             startTimeUnix: nil,
             endTimeUnix: nil,
             tags: ["trip"],
-            issues: [Pin.Issue.missingCoordinates.rawValue],
+            privacyLevel: "public",
             media: (7...12).map { index in
-                ReviewPinMediaDTO(
+                TripPinMediaDTO(
                     mediaId: "review-media-\(index)",
                     url: "https://example.com/review-\(index).jpg",
-                    privacyLevel: "public"
+                    mediaType: "image",
+                    privacyLevel: "public",
+                    capturedAtUnix: nil
                 )
             }
         )
@@ -328,7 +334,7 @@ final class MockNetworkService: NetworkServiceProtocol {
             )
         }
     }
-    private static let stubTripResponse = GetTripResponseDTO(trip: stubTrip, pins: stubTripPins)
+    private static let stubTripResponse = GetTripResponseDTO(trip: stubTrip, pins: stubTripPins, participants: [])
 
     private static let stubFeed: [FeedItemDTO] = [
         FeedItemDTO(
