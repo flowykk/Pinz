@@ -15,19 +15,22 @@ public struct MediasPinShortInfo: View {
     let selectable: Bool
     let hideMediaBadges: Bool
     let dismissBeforeMediaInfo: Bool
+    let onMediaUpdated: ((MediaItem) -> Void)?
 
     public init(
         pin: Pin,
         maxMedias: Int = 6,
         selectable: Bool = false,
         hideMediaBadges: Bool = false,
-        dismissBeforeMediaInfo: Bool = false
+        dismissBeforeMediaInfo: Bool = false,
+        onMediaUpdated: ((MediaItem) -> Void)? = nil
     ) {
         self.pin = pin
         self.maxMedias = maxMedias
         self.selectable = selectable
         self.hideMediaBadges = hideMediaBadges
         self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
+        self.onMediaUpdated = onMediaUpdated
     }
     
     public var body: some View {
@@ -41,7 +44,8 @@ public struct MediasPinShortInfo: View {
                         contentMode: .fit,
                         cornerRadius: 14,
                         hideBadges: selectable || hideMediaBadges,
-                        dismissBeforeMediaInfo: dismissBeforeMediaInfo
+                        dismissBeforeMediaInfo: dismissBeforeMediaInfo,
+                        onMediaUpdated: onMediaUpdated
                     )
                     .frame(height: 96)
                     .opacity(selectable && media.isPrivate ? 0.5 : 1)

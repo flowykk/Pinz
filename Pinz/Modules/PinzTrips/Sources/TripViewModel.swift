@@ -112,6 +112,10 @@ final class TripViewModel {
             case .feed:
                 router?.navigateToFeed()
             case .pinInfo(let pin):
+                print("[TripViewModel] navigating to PinInfo pin=\(pin.serverId ?? "nil") isPrivate=\(pin.isPrivate)")
+                for media in pin.medias {
+                    print("[TripViewModel]   media \(media.mediaId ?? "nil") isPrivate=\(media.isPrivate)")
+                }
                 router?.navigateToPinInfo(pin: pin, updateAction: PinUpdateAction { [weak self] updatedPin in
                     guard let self, let idx = trip?.pins.firstIndex(where: { $0.serverId == updatedPin.serverId }) else { return }
                     trip?.pins[idx] = updatedPin

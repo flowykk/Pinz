@@ -9,6 +9,7 @@ public struct MediaItemThumbnailView: View {
     private let cornerRadius: CGFloat
     private let hideBadges: Bool
     private let dismissBeforeMediaInfo: Bool
+    private let onMediaUpdated: ((MediaItem) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appRouter) private var router
@@ -18,13 +19,15 @@ public struct MediaItemThumbnailView: View {
         contentMode: ContentMode,
         cornerRadius: CGFloat,
         hideBadges: Bool = false,
-        dismissBeforeMediaInfo: Bool = false
+        dismissBeforeMediaInfo: Bool = false,
+        onMediaUpdated: ((MediaItem) -> Void)? = nil
     ) {
         self.mediaItem = mediaItem
         self.contentMode = contentMode
         self.cornerRadius = cornerRadius
         self.hideBadges = hideBadges
         self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
+        self.onMediaUpdated = onMediaUpdated
     }
 
     public var body: some View {
@@ -40,7 +43,7 @@ public struct MediaItemThumbnailView: View {
         .contextMenu {
             Button {
                 if dismissBeforeMediaInfo { dismiss() }
-                router?.navigateToMediaInfo(media: mediaItem, updateAction: nil)
+                router?.navigateToMediaInfo(media: mediaItem, updateAction: onMediaUpdated.map { MediaUpdateAction(action: $0) })
             } label: {
                 Label(PinzBaseStrings.Common.Button.details, systemImage: "eye.fill")
             }

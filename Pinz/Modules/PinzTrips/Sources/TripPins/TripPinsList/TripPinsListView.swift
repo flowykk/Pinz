@@ -49,6 +49,11 @@ public struct TripPinsListView: View {
                 pinTapped: { pin in
                     viewModel.dispatch(.navigate(.pinInfo(pin)))
                 },
+                onMediaUpdated: { updatedMedia, pin in
+                    guard let pinIdx = viewModel.trip.pins.firstIndex(where: { $0.serverId == pin.serverId }),
+                          let mediaIdx = viewModel.trip.pins[pinIdx].medias.firstIndex(where: { $0.mediaId == updatedMedia.mediaId }) else { return }
+                    viewModel.trip.pins[pinIdx].medias[mediaIdx] = updatedMedia
+                }
             ).padding(.bottom, 90)
         }
     }

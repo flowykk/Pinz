@@ -397,12 +397,18 @@ public final class NetworkService: NetworkServiceProtocol {
     public func getTrip(
         id: String
     ) async throws -> GetTripResponseDTO {
-        try await provider.request(
-            .getTrip(
-                id: id
-            ),
+        let response = try await provider.request(
+            .getTrip(id: id),
             type: GetTripResponseDTO.self
         )
+        print("[getTrip] decoded \(response.pins.count) pins")
+        for pin in response.pins {
+            print("[getTrip]   pin \(pin.id) privacy_level=\(pin.privacyLevel ?? "nil")")
+            for media in pin.media ?? [] {
+                print("[getTrip]     media \(media.mediaId) privacy_level=\(media.privacyLevel ?? "nil")")
+            }
+        }
+        return response
     }
 
     public func updateTrip(

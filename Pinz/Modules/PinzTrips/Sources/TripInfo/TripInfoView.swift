@@ -311,7 +311,7 @@ public struct TripInfoView: View {
 
     private var privacy: some View {
         PrivacySection(
-            initialSelection: PrivacyIcon.from(isPrivate: viewModel.trip.privacyLevel?.lowercased() != "public"),
+            initialSelection: PrivacyIcon.from(isPrivate: viewModel.trip.privacyLevel?.lowercased() == "private"),
             onSelectionChanged: { [viewModel] in viewModel.dispatch(.updatePrivacy($0)) }
         )
     }

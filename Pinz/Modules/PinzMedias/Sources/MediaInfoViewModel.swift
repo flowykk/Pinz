@@ -36,7 +36,7 @@ public class MediaInfoViewModel {
                     mediaId: mediaId,
                     privacyLevel: selection.apiValue
                 ) else { return }
-                media.isPrivate = response.privacyLevel.lowercased() != "public"
+                media.isPrivate = response.privacyLevel.lowercased() == "private"
                 updateAction?.action(media)
             }
         }

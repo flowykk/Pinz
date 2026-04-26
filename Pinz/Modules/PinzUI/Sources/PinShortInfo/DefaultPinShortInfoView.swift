@@ -8,6 +8,7 @@ public struct DefaultPinShortInfoView: View {
     private let hideMediaBadges: Bool
     private let dismissBeforeMediaInfo: Bool
     private let pinTapped: (Pin) -> Void
+    private let onMediaUpdated: ((MediaItem) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -17,12 +18,14 @@ public struct DefaultPinShortInfoView: View {
         hideMediaBadges: Bool = false,
         dismissBeforeMediaInfo: Bool = false,
         pinTapped: @escaping (Pin) -> Void,
+        onMediaUpdated: ((MediaItem) -> Void)? = nil
     ) {
         self.pin = pin
         self.hideTags = hideTags
         self.hideMediaBadges = hideMediaBadges
         self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
         self.pinTapped = pinTapped
+        self.onMediaUpdated = onMediaUpdated
     }
 
     public var body: some View {
@@ -48,7 +51,8 @@ public struct DefaultPinShortInfoView: View {
             pin: pin,
             maxMedias: 15,
             hideMediaBadges: hideMediaBadges,
-            dismissBeforeMediaInfo: dismissBeforeMediaInfo
+            dismissBeforeMediaInfo: dismissBeforeMediaInfo,
+            onMediaUpdated: onMediaUpdated
         )
     }
 }

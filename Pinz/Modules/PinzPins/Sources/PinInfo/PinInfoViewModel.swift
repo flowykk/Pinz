@@ -96,7 +96,7 @@ public class PinInfoViewModel {
                       let tripId = pin.tripId,
                       let pinId = pin.serverId else { return }
                 guard let response = try? await networkService.setPinPrivacy(tripId: tripId, pinId: pinId, privacyLevel: selection.apiValue) else { return }
-                pin.isPrivate = response.privacyLevel.lowercased() != "public"
+                pin.isPrivate = response.privacyLevel.lowercased() == "private"
                 updateAction?.action(pin)
             }
         }
