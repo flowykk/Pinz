@@ -102,11 +102,9 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Patch("/desired-places/{place_id}", deps.AuthHandler.UpdateDesiredPlace)
 				r.Delete("/desired-places/{place_id}", deps.AuthHandler.DeleteDesiredPlace)
 				r.Delete("/desired-places/{place_id}/image", deps.AuthHandler.DeleteDesiredPlaceImage)
-			})
-
-			// Публичный профиль другого пользователя (ТЗ 1.7.2): username, avatar, created_at + wishlist.
-			r.Route("/users", func(r chi.Router) {
-				r.Use(middleware.RequireJWT)
+				// Публичный профиль другого пользователя (ТЗ 1.7.2): username, avatar,
+				// created_at + wishlist. Регистрируется здесь, а не в отдельном /users,
+				// чтобы клиент работал с одним префиксом /profile для всех профилей.
 				r.Get("/{id}", deps.AuthHandler.GetPublicUserProfile)
 			})
 

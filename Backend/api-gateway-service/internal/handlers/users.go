@@ -11,7 +11,7 @@ import (
 
 // @Summary Get public profile of another user
 // @Description Возвращает публичные поля профиля (username, avatar, created_at) и список желаемых мест пользователя. Email и другие приватные поля не отдаются. Используется при переходе на чужой профиль из участников трипа или карточки фида.
-// @Tags users
+// @Tags profile
 // @Produce json
 // @Param id path string true "User ID"
 // @Success 200 {object} responses.PublicUserProfileResponse
@@ -20,7 +20,7 @@ import (
 // @Failure 404 {object} responses.ErrorResponse
 // @Failure 500 {object} responses.ErrorResponse
 // @Security BearerAuth
-// @Router /api/v1/users/{id} [get]
+// @Router /api/v1/profile/{id} [get]
 func (h *AuthHandler) GetPublicUserProfile(w http.ResponseWriter, r *http.Request) {
 	if middleware.UserIDFromContext(r.Context()) == "" {
 		respondError(w, http.StatusUnauthorized, "unauthorized")

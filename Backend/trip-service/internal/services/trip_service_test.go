@@ -488,6 +488,50 @@ func TestGetTrip_NotParticipantNorFavourite(t *testing.T) {
 	require.Equal(t, codes.PermissionDenied, st.Code())
 }
 
+func TestGetTrip_PublicSharedAccess_Published(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	trip := &models.Trip{
+		ID: "t1", OwnerUserID: "u1", Name: "Shared", Category: "Отпуск", Season: "Лето",
+		Status: "READY", PrivacyLevel: "Public", IsPublished: true,
+		CreatedAt: time.Unix(1000, 0), UpdatedAt: time.Unix(1000, 0),
+	}
+	publicPin := &models.Pin{ID: "p-pub", TripID: "t1", Name: "Public pin", Category: "Достопримечательность", PrivacyLevel: "Public", IsPublishedInFeed: true}
+	hiddenPin := &models.Pin{ID: "p-priv", TripID: "t1", Name: "Private pin", Category: "Жилье", PrivacyLevel: "Private", IsPublishedInFeed: true}
+	notPublishedPin := &models.Pin{ID: "p-unpub", TripID: "t1", Name: "Not in feed", Category: "Еда и напитки", PrivacyLevel: "Public", IsPublishedInFeed: false}
+
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+	favRepo := mocks.NewMockFavouriteRepositoryInterface(ctrl)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+	tagRepo := mocks.NewMockTagRepositoryInterface(ctrl)
+	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+
+	tripRepo.EXPECT().GetByID("t1").Return(trip, nil)
+	participantRepo.EXPECT().IsParticipant("t1", "stranger").Return(false, nil)
+	favRepo.EXPECT().HasFavourite("stranger", "t1").Return(false, nil)
+	pinRepo.EXPECT().ListByTripID("t1").Return([]*models.Pin{publicPin, hiddenPin, notPublishedPin}, nil)
+	tagRepo.EXPECT().GetByTripID("t1").Return(map[string][]string{"p-pub": {"sea"}}, nil)
+	mediaRepo.EXPECT().ListByPinID("p-pub").Return([]*models.Media{
+		{ID: "m1", S3Key: "s1", MediaType: "image", PrivacyLevel: "Public"},
+		{ID: "m2", S3Key: "s2", MediaType: "image", PrivacyLevel: "Private"},
+	}, nil)
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	ctx := ctxWithUser("stranger")
+	resp, err := svc.GetTrip(ctx, &pb.GetTripRequest{TripId: "t1"})
+	require.NoError(t, err)
+	require.Equal(t, "t1", resp.GetTrip().GetId())
+	require.True(t, resp.GetTrip().GetIsPublished())
+	require.Len(t, resp.GetPins(), 1, "only public pin published in feed should be returned")
+	require.Equal(t, "p-pub", resp.GetPins()[0].GetId())
+	require.Equal(t, []string{"sea"}, resp.GetPins()[0].GetTags())
+	require.Len(t, resp.GetPins()[0].GetMedia(), 1, "only Public media should be returned")
+	require.Equal(t, "m1", resp.GetPins()[0].GetMedia()[0].GetMediaId())
+	require.Empty(t, resp.GetParticipants(), "shared view does not expose participants")
+	require.Nil(t, resp.GetCurrentUserSettings(), "shared view does not expose per-user settings")
+	require.Nil(t, resp.GetActiveAddMediaSession())
+}
+
 func TestUpdateTrip_NotParticipant(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	trip := &models.Trip{ID: "t1", OwnerUserID: "u1", Name: "T"}

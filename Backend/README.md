@@ -335,6 +335,10 @@ export S3_PRESIGN_TTL=15m
 # Geocoding (trip-service, BigDataCloud reverse geocode)
 export GEOCODING_BASE_URL=https://api.bigdatacloud.net/data/reverse-geocode-client  # optional, default shown
 export GEOCODING_API_KEY=                                                            # optional, free tier works without key
+
+# Share-link (api-gateway): база для поля share_url в ответах с трипом (ТЗ 3.4).
+# Пустая → используется внутренний дефолт https://pinz.website/trips.
+export TRIP_SHARE_LINK_BASE=https://pinz.website/trips
 ```
 
 ### SSL/TLS (Let's Encrypt)

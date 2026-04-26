@@ -70,6 +70,8 @@ spec:
               value: {{ .Values.env.redisAddr | quote }}
             - name: SWAGGER_HOST
               value: {{ .Values.env.swaggerHost | default "" | quote }}
+            - name: TRIP_SHARE_LINK_BASE
+              value: {{ .Values.env.tripShareLinkBase | default "" | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.env.otelExporterEndpoint | quote }}
             - name: OTEL_SERVICE_NAME

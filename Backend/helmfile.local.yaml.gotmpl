@@ -137,6 +137,7 @@ releases:
           notificationServiceGrpcAddress: notification-service.default.svc.cluster.local:50054
           redisAddr: host.docker.internal:6379
           swaggerHost: "localhost:8080"
+          tripShareLinkBase: '{{ env "TRIP_SHARE_LINK_BASE" | default "https://pinz.website/trips" }}'
           otelExporterEndpoint: "otel-collector:4317"
           otelServiceName: "api-gateway-service"
           otelTracesSampler: "parentbased_always_on"
