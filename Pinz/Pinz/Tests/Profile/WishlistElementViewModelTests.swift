@@ -7,12 +7,16 @@ import PinzDomain
 final class WishlistElementViewModelTests: XCTestCase {
 
     private var mockRouter: MockRouter!
+    private var mockService: MockNetworkService!
     private var sut: WishlistElementViewModel!
+
+    private let stubElement = DesiredPlace(id: "1", name: "Мачу-Пикчу", description: "Древний город в горах Перу.")
 
     override func setUp() {
         super.setUp()
         mockRouter = MockRouter()
-        sut = WishlistElementViewModel(element: WishlistElement.stubs[0])
+        mockService = MockNetworkService()
+        sut = WishlistElementViewModel(element: stubElement, networkService: mockService)
         sut.setRouter(mockRouter)
     }
 
@@ -38,6 +42,48 @@ final class WishlistElementViewModelTests: XCTestCase {
 
     func test_navigate_back_callsPop() {
         sut.dispatch(.navigate(.back))
+        XCTAssertEqual(mockRouter.popCallCount, 1)
+    }
+
+    func test_endEdit_callsUpdateDesiredPlace() async throws {
+        let expectation = expectation(description: "updateDesiredPlace called")
+        mockService.updateDesiredPlaceResult = .success(
+            DesiredPlaceDTO(id: stubElement.id, name: "Updated", description: "Updated desc", imageUrl: nil, createdAt: 0)
+        )
+
+        sut.dispatch(.edit)
+        sut.dispatch(.endEdit)
+
+        Task {
+            while mockService.updateDesiredPlaceCall == nil {
+                await Task.yield()
+            }
+            expectation.fulfill()
+        }
+
+        await fulfillment(of: [expectation], timeout: 2.0)
+
+        XCTAssertNotNil(mockService.updateDesiredPlaceCall)
+        XCTAssertEqual(mockService.updateDesiredPlaceCall?.placeId, stubElement.id)
+        XCTAssertEqual(mockService.updateDesiredPlaceCall?.name, stubElement.name)
+        XCTAssertNil(mockService.updateDesiredPlaceCall?.imageS3Key)
+    }
+
+    func test_delete_callsDeleteAndPops() async throws {
+        let expectation = expectation(description: "delete and pop called")
+
+        sut.dispatch(.delete)
+
+        Task {
+            while mockService.deleteDesiredPlaceCall == nil {
+                await Task.yield()
+            }
+            expectation.fulfill()
+        }
+
+        await fulfillment(of: [expectation], timeout: 2.0)
+
+        XCTAssertEqual(mockService.deleteDesiredPlaceCall, stubElement.id)
         XCTAssertEqual(mockRouter.popCallCount, 1)
     }
 }

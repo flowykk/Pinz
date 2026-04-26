@@ -11,7 +11,7 @@ final class TripMembersViewModelTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockRouter = MockRouter()
-        sut = TripMembersViewModel()
+        sut = TripMembersViewModel(participants: [], currentUserId: nil)
         sut.setRouter(mockRouter)
     }
 

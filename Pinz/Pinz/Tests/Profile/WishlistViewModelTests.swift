@@ -7,12 +7,19 @@ import PinzDomain
 final class WishlistViewModelTests: XCTestCase {
 
     private var mockRouter: MockRouter!
+    private var mockService: MockNetworkService!
     private var sut: WishlistViewModel!
+
+    private let stubPlaces: [DesiredPlace] = [
+        DesiredPlace(id: "1", name: "Мачу-Пикчу", description: "Древний город в горах Перу."),
+        DesiredPlace(id: "2", name: "Киото", description: "Японские сады и сакура."),
+    ]
 
     override func setUp() {
         super.setUp()
         mockRouter = MockRouter()
-        sut = WishlistViewModel(wishlist: WishlistElement.stubs)
+        mockService = MockNetworkService()
+        sut = WishlistViewModel(wishlist: stubPlaces, networkService: mockService)
         sut.setRouter(mockRouter)
     }
 
@@ -22,7 +29,7 @@ final class WishlistViewModelTests: XCTestCase {
     }
 
     func test_init_loadsWishlist() {
-        XCTAssertEqual(sut.wishlist.count, WishlistElement.stubs.count)
+        XCTAssertEqual(sut.wishlist.count, stubPlaces.count)
     }
 
     func test_navigate_back_callsPop() {
@@ -31,7 +38,7 @@ final class WishlistViewModelTests: XCTestCase {
     }
 
     func test_navigate_wishlistElement_callsRouter() {
-        let element = WishlistElement.stubs[0]
+        let element = stubPlaces[0]
         sut.dispatch(.navigate(.wishlistElement(element)))
         XCTAssertNotNil(mockRouter.navigatedWishlistElement)
     }
@@ -41,8 +48,29 @@ final class WishlistViewModelTests: XCTestCase {
         sut.dispatch(.navigate(.wishlistElementCreation))
         let action = mockRouter.navigatedWishlistElementCreation
         XCTAssertNotNil(action)
-        let newElement = WishlistElement(image: UIImage(), title: "New", description: "Desc")
+        let newElement = DesiredPlace(id: "99", name: "New", description: "Desc")
         action?.action(newElement)
         XCTAssertEqual(sut.wishlist.count, initialCount + 1)
+    }
+
+    func test_loadWishlist_populatesWishlist() async {
+        let dto1 = DesiredPlaceDTO(id: "dp-1", name: "Токио", description: "Мечта", imageUrl: nil, createdAt: 0)
+        let dto2 = DesiredPlaceDTO(id: "dp-2", name: "Рим", description: "Вечный город", imageUrl: nil, createdAt: 0)
+        mockService.getDesiredPlacesResult = .success([dto1, dto2])
+        sut = WishlistViewModel(networkService: mockService)
+
+        await sut.loadWishlist()
+
+        XCTAssertEqual(sut.wishlist.count, 2)
+        XCTAssertEqual(sut.wishlist[0].name, "Токио")
+        XCTAssertEqual(sut.wishlist[1].name, "Рим")
+    }
+
+    func test_loadWishlist_onNetworkError_keepsPreviousWishlist() async {
+        mockService.getDesiredPlacesResult = .failure(URLError(.notConnectedToInternet))
+
+        await sut.loadWishlist()
+
+        XCTAssertEqual(sut.wishlist.count, stubPlaces.count)
     }
 }

@@ -10,6 +10,9 @@ final class MockRouter: AppRouting {
     var navigatedPinUpdateAction: PinUpdateAction?
     var navigatedToPinCreation = false
     var navigatedToTripMembers = false
+    var navigatedToTripMembersParticipants: [TripParticipantDTO] = []
+    var navigatedToTripMembersCurrentUserId: String?
+    var navigatedToPublicProfileUserId: String?
     var navigatedToFeed = false
     var navigatedPinsList: Trip?
     var navigatedSelectablePinsList: Trip?
@@ -26,8 +29,9 @@ final class MockRouter: AppRouting {
     var navigatedToAppearance = false
     var navigatedToStorageSettings = false
     var navigatedPinPlaceChange: (pin: Pin, action: PlaceSaveAction)?
-    var navigatedWishlistElement: WishlistElement?
+    var navigatedWishlistElement: DesiredPlace?
     var navigatedWishlistElementCreation: WishlistCreationAction?
+    var navigatedPublicWishlistPlaces: [DesiredPlace]?
 
     // Trip creation
     var navigatedToTripCreationInitial = false
@@ -67,7 +71,12 @@ final class MockRouter: AppRouting {
         navigatedPinUpdateAction = updateAction
     }
     func navigateToPinCreation() { navigatedToPinCreation = true }
-    func navigateToTripMembers() { navigatedToTripMembers = true }
+    func navigateToTripMembers(participants: [TripParticipantDTO], currentUserId: String?) {
+        navigatedToTripMembers = true
+        navigatedToTripMembersParticipants = participants
+        navigatedToTripMembersCurrentUserId = currentUserId
+    }
+    func navigateToPublicProfile(userId: String) { navigatedToPublicProfileUserId = userId }
     func navigateToFeed() { navigatedToFeed = true }
     func navigateToPinsList(trip: Trip) { navigatedPinsList = trip }
     func navigateToSelectablePinsList(trip: Trip) { navigatedSelectablePinsList = trip }
@@ -86,8 +95,9 @@ final class MockRouter: AppRouting {
     func navigateToNotifications() { navigatedToNotifications = true }
     func navigateToAppearance() { navigatedToAppearance = true }
     func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction) { navigatedPinPlaceChange = (pin, action) }
-    func navigateToWishlistElement(element: WishlistElement) { navigatedWishlistElement = element }
+    func navigateToWishlistElement(element: DesiredPlace) { navigatedWishlistElement = element }
     func navigateToWishlistElementCreation(action: WishlistCreationAction) { navigatedWishlistElementCreation = action }
+    func navigateToPublicWishlist(places: [DesiredPlace]) { navigatedPublicWishlistPlaces = places }
 
     // Trip creation
     func navigateToTripCreationInitial() { navigatedToTripCreationInitial = true }

@@ -19,7 +19,7 @@ public struct WishlistElementView: View {
 
     @Environment(\.appRouter) private var router
 
-    public init(element: WishlistElement) {
+    public init(element: DesiredPlace) {
         viewModel = WishlistElementViewModel(element: element)
     }
 
@@ -57,7 +57,7 @@ public struct WishlistElementView: View {
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
             }, centerView: {
-                HeaderTitle(viewModel.element.title)
+                HeaderTitle(viewModel.element.name)
             }, rightView: {
                 PinzButton(
                     type: .icon(.pencil),
@@ -102,7 +102,7 @@ public struct WishlistElementView: View {
                     isPhotoPickerPresented = true
                 }
             } label: {
-                CollapsibleImageView(image: viewModel.element.image)
+                imageContent
             }
             .buttonStyle(.plain)
 
@@ -113,12 +113,45 @@ public struct WishlistElementView: View {
         }
     }
 
+    @ViewBuilder
+    private var imageContent: some View {
+        if let localImage = viewModel.localImage {
+            CollapsibleImageView(image: localImage)
+        } else if let urlString = viewModel.element.imageUrl, let url = URL(string: urlString) {
+            LoadableImageThumbnail(url: url) { state in
+                remoteImageContent(for: state)
+            }
+        } else {
+            collapsiblePlaceholder
+        }
+    }
+
+    @ViewBuilder
+    private func remoteImageContent(for state: LoadableMediaState) -> some View {
+        switch state {
+        case .empty:
+            collapsiblePlaceholder
+        case .ready(let img):
+            CollapsibleImageView(image: img)
+        case .failure:
+            collapsiblePlaceholder
+        }
+    }
+
+    private var collapsiblePlaceholder: some View {
+        Rectangle()
+            .fill(Color.gray.opacity(0.3))
+            .cornerRadius(24)
+            .frame(maxWidth: .infinity)
+            .frame(height: 200)
+    }
+
     private var nameEditing: some View {
         SettingsGroup(
             settings: [
                 .textField(Setting.TextFieldSetting(
                     id: "wishlistElementNameTextField",
-                    text: $viewModel.element.title,
+                    text: $viewModel.element.name,
                     placeholder: PinzBaseStrings.WishlistElement.Label.title
                 )),
             ],
@@ -154,7 +187,7 @@ public struct WishlistElementView: View {
                 leading: .iconTitle(WishlistElementIcon.trash, PinzBaseStrings.WishlistElement.Button.delete),
                 trailing: .icon(WishlistElementIcon.chevronRight),
                 style: .destructive,
-                action: .plain { }
+                action: .plain { viewModel.dispatch(.delete) }
             ))
         ])
     }

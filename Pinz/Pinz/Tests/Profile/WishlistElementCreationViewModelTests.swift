@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 @testable import PinzProfile
 import PinzBase
 import PinzDomain
@@ -7,15 +8,17 @@ import PinzDomain
 final class WishlistElementCreationViewModelTests: XCTestCase {
 
     private var mockRouter: MockRouter!
+    private var mockService: MockNetworkService!
     private var sut: WishlistElementCreationViewModel!
-    private var createdElement: WishlistElement?
+    private var createdElement: DesiredPlace?
 
     override func setUp() {
         super.setUp()
         mockRouter = MockRouter()
-        sut = WishlistElementCreationViewModel { [weak self] element in
+        mockService = MockNetworkService()
+        sut = WishlistElementCreationViewModel(onCreated: { [weak self] element in
             self?.createdElement = element
-        }
+        }, networkService: mockService)
         sut.setRouter(mockRouter)
     }
 
@@ -69,18 +72,33 @@ final class WishlistElementCreationViewModelTests: XCTestCase {
         XCTAssertTrue(sut.isCompleteButtonDisabled)
     }
 
-    func test_continue_fromPhoto_withImage_callsOnCreatedAndPops() {
+    func test_continue_fromPhoto_withImage_callsOnCreatedAndPops() async throws {
+        let expectation = expectation(description: "onCreated called")
+        sut = WishlistElementCreationViewModel(onCreated: { [weak self] element in
+            self?.createdElement = element
+            expectation.fulfill()
+        }, networkService: mockService)
+        sut.setRouter(mockRouter)
+
         sut.name = "Paris"
         sut.dispatch(.continue)
         sut.description = "Beautiful city"
         sut.dispatch(.continue)
-        sut.image = UIImage()
+
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 1, height: 1))
+        sut.image = renderer.image { ctx in
+            UIColor.red.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 1, height: 1))
+        }
         sut.dispatch(.continue)
 
-        XCTAssertNotNil(createdElement)
-        XCTAssertEqual(createdElement?.title, "Paris")
-        XCTAssertEqual(createdElement?.description, "Beautiful city")
+        await fulfillment(of: [expectation], timeout: 2.0)
+
+        XCTAssertEqual(createdElement?.name, MockNetworkService.stubDesiredPlace.name)
         XCTAssertEqual(mockRouter.popCallCount, 1)
+        XCTAssertNotNil(mockService.createDesiredPlaceCall)
+        XCTAssertEqual(mockService.createDesiredPlaceCall?.name, "Paris")
+        XCTAssertNotNil(mockService.requestDesiredPlaceImageUploadCall)
     }
 
     func test_navigate_back_callsPop() {

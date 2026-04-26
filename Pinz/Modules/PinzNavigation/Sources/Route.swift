@@ -6,7 +6,9 @@ public enum TripRoute: Hashable {
     case profile(user: User)
     case pinInfo(pin: Pin, updateAction: PinUpdateAction?)
     case pinCreation
-    case members
+    case members(participants: [TripParticipantDTO], currentUserId: String?)
+    case publicProfile(userId: String)
+    case publicWishlist(places: [DesiredPlace])
     case feed
 }
 
@@ -48,7 +50,7 @@ public enum MediaRoute: Hashable {
 }
 
 public enum WishlistRoute: Hashable {
-    case element(element: WishlistElement)
+    case element(element: DesiredPlace)
     case creation(action: WishlistCreationAction)
 }
 

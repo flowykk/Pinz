@@ -1,4 +1,4 @@
-public struct TripParticipantDTO: Codable {
+public struct TripParticipantDTO: Codable, Hashable {
     public let userId: String
     public let username: String
     public let avatarUrl: String?

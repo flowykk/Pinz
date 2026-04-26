@@ -28,9 +28,10 @@ final class WishlistElementCreationViewModel {
     var image: UIImage?
     var name: String = ""
     var description: String = ""
+    var isLoading = false
 
-    private let onCreated: (WishlistElement) -> Void
-    private let networkService = NetworkService.shared
+    private let onCreated: (DesiredPlace) -> Void
+    private let networkService: any NetworkServiceProtocol
     private var router: AppRouting?
 
     var isCompleteButtonDisabled: Bool {
@@ -44,8 +45,9 @@ final class WishlistElementCreationViewModel {
         }
     }
 
-    init(onCreated: @escaping (WishlistElement) -> Void) {
+    init(onCreated: @escaping (DesiredPlace) -> Void, networkService: any NetworkServiceProtocol = NetworkService.shared) {
         self.onCreated = onCreated
+        self.networkService = networkService
     }
 
     func dispatch(_ intent: Intent) {
@@ -56,8 +58,23 @@ final class WishlistElementCreationViewModel {
             case .description: changeState(to: .photo)
             case .photo:
                 guard let image else { return }
-                onCreated(WishlistElement(image: image, title: name, description: description))
-                router?.pop()
+                isLoading = true
+                Task {
+                    defer { isLoading = false }
+                    do {
+                        let uploadResp = try await networkService.requestDesiredPlaceImageUpload(
+                            filename: "place_\(UUID().uuidString).jpg",
+                            contentType: "image/jpeg"
+                        )
+                        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+                        try await networkService.uploadToS3(url: uploadResp.uploadUrl, data: data, contentType: "image/jpeg")
+                        let dto = try await networkService.createDesiredPlace(
+                            name: name, description: description, s3Key: uploadResp.s3Key
+                        )
+                        onCreated(dto.toDesiredPlace())
+                        router?.pop()
+                    } catch {}
+                }
             }
         case let .selectPhoto(item):
             Task {
