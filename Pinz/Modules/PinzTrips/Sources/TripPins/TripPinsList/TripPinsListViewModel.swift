@@ -16,7 +16,7 @@ final class TripPinsListViewModel {
         case navigate(Route)
     }
 
-    let trip: Trip
+    var trip: Trip
 
     private let networkService = NetworkService.shared
     private var router: AppRouting?
@@ -30,7 +30,10 @@ final class TripPinsListViewModel {
         case let .navigate(route):
             switch route {
             case let .pinInfo(pin):
-                router?.navigateToPinInfo(pin: pin, updateAction: nil)
+                router?.navigateToPinInfo(pin: pin, updateAction: PinUpdateAction { [weak self] updatedPin in
+                    guard let self, let idx = trip.pins.firstIndex(where: { $0.serverId == updatedPin.serverId }) else { return }
+                    trip.pins[idx] = updatedPin
+                })
             case .pinCreation:
                 router?.navigateToPinCreation()
             case .back:

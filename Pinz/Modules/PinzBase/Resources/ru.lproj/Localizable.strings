@@ -104,7 +104,7 @@
 "trips.empty.noSelection" = "Ты ещё не выбрал путешествие";
 "trips.empty.noSelectionHint" = "Нажми на [chevron.down], чтобы выбрать из существующих или создать новое";
 "trips.button.viewDetails" = "Посмотреть детали";
-"trips.header.membersAndPrivacy" = "Участники и приватность";
+"trips.header.membersAndPrivacy" = "Приватность";
 "trips.hint.privateMode" = "Путешествие не будет отображаться в общей ленте";
 "trips.hint.publicMode" = "Путешествие будет отображаться в общей ленте";
 

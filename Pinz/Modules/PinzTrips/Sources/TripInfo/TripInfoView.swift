@@ -310,8 +310,10 @@ public struct TripInfoView: View {
     }
 
     private var privacy: some View {
-        EmptyView()
-//        PrivacySection(members: viewModel.trip.members)
+        PrivacySection(
+            initialSelection: PrivacyIcon.from(isPrivate: viewModel.trip.privacyLevel?.lowercased() == "private"),
+            onSelectionChanged: { [viewModel] in viewModel.dispatch(.updatePrivacy($0)) }
+        )
     }
 
     private var description: some View {

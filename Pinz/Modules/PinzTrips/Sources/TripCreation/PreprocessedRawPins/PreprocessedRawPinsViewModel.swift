@@ -121,7 +121,7 @@ final class PreprocessedRawPinsViewModel {
                 throw error
             }
 
-            let pins = reviewResponse.pins.enumerated().map { index, dto in dto.toPin(index: index) }
+            let pins = reviewResponse.pins.enumerated().map { index, dto in dto.toPin(index: index, tripId: tripId) }
             dispatch(.navigate(.review(tripId: tripId, pins: pins)))
         }
     }

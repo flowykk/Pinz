@@ -3,6 +3,7 @@ import Foundation
 import PinzDomain
 import PinzBase
 import PinzNetworking
+import PinzUI
 
 @MainActor
 @Observable
@@ -23,6 +24,7 @@ final class TripInfoViewModel {
         case changeState
         case setImage(UIImage?)
         case navigate(Route)
+        case updatePrivacy(PrivacyIcon)
     }
 
     enum AsyncIntent {
@@ -81,6 +83,14 @@ final class TripInfoViewModel {
                 router?.navigateToSelectablePinsList(trip: trip)
             case .back:
                 router?.pop()
+            }
+        case let .updatePrivacy(selection):
+            let tripId = trip.id
+            Task { [weak self] in
+                guard let self else { return }
+                guard let response = try? await networkService.setTripPrivacy(tripId: tripId, privacyLevel: selection.apiValue) else { return }
+                trip.privacyLevel = response.privacyLevel
+                onTripUpdated?()
             }
         }
     }

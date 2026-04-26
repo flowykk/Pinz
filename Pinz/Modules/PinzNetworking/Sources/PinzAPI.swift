@@ -66,6 +66,11 @@ enum PinzAPI {
     // Photo battles
     case startBattle(tripId: String)
     case submitBattleResult(tripId: String, battleId: String, winnerMediaId: String)
+
+    // Privacy
+    case setTripPrivacy(tripId: String, privacyLevel: String)
+    case setPinPrivacy(tripId: String, pinId: String, privacyLevel: String)
+    case setMediaPrivacy(tripId: String, mediaId: String, privacyLevel: String)
 }
 
 // MARK: - TargetType
@@ -120,6 +125,9 @@ extension PinzAPI: TargetType {
         case .removeTripFromFavourites(let id): endpointPath = "/trips/\(id)/favourite"
         case .startBattle(let tripId): endpointPath = "/trips/\(tripId)/battles"
         case let .submitBattleResult(tripId, battleId, _): endpointPath = "/trips/\(tripId)/battles/\(battleId)/result"
+        case .setTripPrivacy(let tripId, _): endpointPath = "/trips/\(tripId)/privacy"
+        case let .setPinPrivacy(tripId, pinId, _): endpointPath = "/trips/\(tripId)/pins/\(pinId)/privacy"
+        case let .setMediaPrivacy(tripId, mediaId, _): endpointPath = "/trips/\(tripId)/media/\(mediaId)/privacy"
         case .createTrip: endpointPath = "/trips/creation/start"
         case .processMediaGrouping(let tripId, _): endpointPath = "/trips/creation/\(tripId)/media/process-grouping"
         case .applyGroupsAndProcess(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/apply-groups-and-process"
@@ -139,6 +147,8 @@ extension PinzAPI: TargetType {
             return .delete
         case .updateTrip, .updateTripSettings, .updateProfile:
             return .patch
+        case .setTripPrivacy, .setPinPrivacy, .setMediaPrivacy:
+            return .put
         case .deleteTrip, .removeParticipant, .deleteAccount, .removeTripFromFavourites:
             return .delete
         default:
@@ -241,6 +251,10 @@ extension PinzAPI: TargetType {
             struct Body: Encodable { let pin_updates: [PinUpdateInputJSON]; let media_to_delete: [String] }
             return .requestJSONEncodable(Body(pin_updates: updates.map(PinUpdateInputJSON.init), media_to_delete: toDelete))
 
+        case .setTripPrivacy(_, let level),
+             .setPinPrivacy(_, _, let level),
+             .setMediaPrivacy(_, _, let level):
+            return jsonParams(["privacy_level": level])
         }
     }
 
@@ -748,6 +762,8 @@ extension PinzAPI {
             """#
         case .finalizeTrip:
             json = #"{"trip_id":"trip-001","status":"finalized","message":"Trip finalized successfully"}"#
+        case .setTripPrivacy, .setPinPrivacy, .setMediaPrivacy:
+            json = #"{"privacy_level":"Public"}"#
         }
         return json.data(using: .utf8) ?? Data()
     }

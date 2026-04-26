@@ -106,6 +106,11 @@ public protocol NetworkServiceProtocol {
         battleId: String,
         winnerMediaId: String
     ) async throws -> SubmitBattleResultResponseDTO
+
+    // Privacy
+    func setTripPrivacy(tripId: String, privacyLevel: String) async throws -> PrivacyResponseDTO
+    func setPinPrivacy(tripId: String, pinId: String, privacyLevel: String) async throws -> PrivacyResponseDTO
+    func setMediaPrivacy(tripId: String, mediaId: String, privacyLevel: String) async throws -> PrivacyResponseDTO
 }
 
 // MARK: - Implementation
@@ -117,7 +122,7 @@ public final class NetworkService: NetworkServiceProtocol {
     private let tripCreationWebSocketClient: TripCreationWebSocketClient
 
     public init() {
-        let stub: Bool = true
+        let stub: Bool = false
         self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: 0.5)
         self.tripCreationWebSocketClient = TripCreationWebSocketClient()
     }
@@ -392,12 +397,18 @@ public final class NetworkService: NetworkServiceProtocol {
     public func getTrip(
         id: String
     ) async throws -> GetTripResponseDTO {
-        try await provider.request(
-            .getTrip(
-                id: id
-            ),
+        let response = try await provider.request(
+            .getTrip(id: id),
             type: GetTripResponseDTO.self
         )
+        print("[getTrip] decoded \(response.pins.count) pins")
+        for pin in response.pins {
+            print("[getTrip]   pin \(pin.id) privacy_level=\(pin.privacyLevel ?? "nil")")
+            for media in pin.media ?? [] {
+                print("[getTrip]     media \(media.mediaId) privacy_level=\(media.privacyLevel ?? "nil")")
+            }
+        }
+        return response
     }
 
     public func updateTrip(
@@ -705,6 +716,29 @@ public final class NetworkService: NetworkServiceProtocol {
                 winnerMediaId: winnerMediaId
             ),
             type: SubmitBattleResultResponseDTO.self
+        )
+    }
+
+    // MARK: Privacy
+
+    public func setTripPrivacy(tripId: String, privacyLevel: String) async throws -> PrivacyResponseDTO {
+        try await provider.request(
+            .setTripPrivacy(tripId: tripId, privacyLevel: privacyLevel),
+            type: PrivacyResponseDTO.self
+        )
+    }
+
+    public func setPinPrivacy(tripId: String, pinId: String, privacyLevel: String) async throws -> PrivacyResponseDTO {
+        try await provider.request(
+            .setPinPrivacy(tripId: tripId, pinId: pinId, privacyLevel: privacyLevel),
+            type: PrivacyResponseDTO.self
+        )
+    }
+
+    public func setMediaPrivacy(tripId: String, mediaId: String, privacyLevel: String) async throws -> PrivacyResponseDTO {
+        try await provider.request(
+            .setMediaPrivacy(tripId: tripId, mediaId: mediaId, privacyLevel: privacyLevel),
+            type: PrivacyResponseDTO.self
         )
     }
 }

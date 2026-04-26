@@ -40,6 +40,7 @@ public class PinInfoViewModel {
         case deleteTag(MediaTag)
 
         case navigate(Route)
+        case updatePrivacy(PrivacyIcon)
     }
 
     var state: State = .info
@@ -77,7 +78,10 @@ public class PinInfoViewModel {
         case let .navigate(route):
             switch route {
             case let .mediaInfo(media):
-                router?.navigateToMediaInfo(media: media)
+                router?.navigateToMediaInfo(media: media, updateAction: MediaUpdateAction { [weak self] updatedMedia in
+                    guard let self, let idx = pin.medias.firstIndex(where: { $0.mediaId == updatedMedia.mediaId }) else { return }
+                    pin.medias[idx] = updatedMedia
+                })
             case .changePlace:
                 let action = PlaceSaveAction { [weak self] coordinate in
                     self?.pin.coordinates = coordinate
@@ -85,6 +89,15 @@ public class PinInfoViewModel {
                 router?.navigateToPinPlaceChange(pin: pin, action: action)
             case .back:
                 router?.pop()
+            }
+        case let .updatePrivacy(selection):
+            Task { [weak self] in
+                guard let self,
+                      let tripId = pin.tripId,
+                      let pinId = pin.serverId else { return }
+                guard let response = try? await networkService.setPinPrivacy(tripId: tripId, pinId: pinId, privacyLevel: selection.apiValue) else { return }
+                pin.isPrivate = response.privacyLevel.lowercased() == "private"
+                updateAction?.action(pin)
             }
         }
     }

@@ -85,6 +85,10 @@ public struct TripView: View {
                 } createPinTapped: {
                     isPinsListPresented = false
                     viewModel.dispatch(.navigate(.pinCreation))
+                } onMediaUpdated: { updatedMedia, pin in
+                    guard let pinIdx = viewModel.trip?.pins.firstIndex(where: { $0.serverId == pin.serverId }),
+                          let mediaIdx = viewModel.trip?.pins[pinIdx].medias.firstIndex(where: { $0.mediaId == updatedMedia.mediaId }) else { return }
+                    viewModel.trip?.pins[pinIdx].medias[mediaIdx] = updatedMedia
                 }
                 .pinzSheet()
                 .presentationDetents([.medium, .large])

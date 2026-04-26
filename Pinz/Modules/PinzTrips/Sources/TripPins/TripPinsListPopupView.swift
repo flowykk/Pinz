@@ -9,15 +9,18 @@ struct TripPinsListPopupView: View {
     let pins: [Pin]
     let pinTapped: (Pin) -> Void
     let createPinTapped: () -> Void
+    let onMediaUpdated: ((MediaItem, Pin) -> Void)?
 
     init(
         pins: [Pin],
         pinTapped: @escaping (Pin) -> Void,
-        createPinTapped: @escaping () -> Void
+        createPinTapped: @escaping () -> Void,
+        onMediaUpdated: ((MediaItem, Pin) -> Void)? = nil
     ) {
         self.pins = pins
         self.pinTapped = pinTapped
         self.createPinTapped = createPinTapped
+        self.onMediaUpdated = onMediaUpdated
     }
 
     var body: some View {
@@ -42,6 +45,7 @@ struct TripPinsListPopupView: View {
                     pins: pins,
                     dismissBeforeMediaInfo: true,
                     pinTapped: pinTapped,
+                    onMediaUpdated: onMediaUpdated
                 ).padding(.top, 60).padding(.bottom, 90)
             }
             .scrollIndicators(.hidden)

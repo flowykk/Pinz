@@ -20,9 +20,11 @@ public struct MediaInfoView: View {
 
     @Environment(\.appRouter) private var router
     @State private var playerController: VideoPlayerController?
+    @State private var mediaViewModel: MediaInfoViewModel?
 
-    public init(media: MediaItem) {
+    public init(media: MediaItem, updateAction: MediaUpdateAction? = nil) {
         self.source = .remote(media)
+        self._mediaViewModel = State(initialValue: MediaInfoViewModel(media: media, updateAction: updateAction))
     }
 
     public init(localMedia: LoadedMedia) {
@@ -168,7 +170,14 @@ public struct MediaInfoView: View {
     }
 
     private var privacy: some View {
-        PrivacySection(members: TripMember.stubs())
+        if let vm = mediaViewModel {
+            PrivacySection(
+                initialSelection: vm.initialPrivacySelection,
+                onSelectionChanged: { [vm] in vm.dispatch(.updatePrivacy($0)) }
+            )
+        } else {
+            PrivacySection()
+        }
     }
 
     private var delete: some View {
