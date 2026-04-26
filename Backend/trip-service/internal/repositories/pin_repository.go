@@ -383,8 +383,13 @@ type RecommendationPinCandidate struct {
 // ListRecommendationCandidates — выборка для ТЗ 9.2:
 //   - топ-50 опубликованных трипов региона за 2 года по score = likes - dislikes;
 //   - все их пины, опубликованные в фид и с координатами;
-//   - кластеризация ST_ClusterDBSCAN по координатам, eps в метрах (через ST_Transform → 3857),
-//     отдельные кластеры на каждую категорию (PARTITION BY p.category).
+//   - кластеризация ST_ClusterDBSCAN по координатам, eps в метрах через AEQD-проекцию,
+//     отцентрованную на centroid кандидатов (тот же подход, что и в
+//     MediaRepository.ClusterIDsByLocation для creation flow): AEQD сохраняет расстояния
+//     с искажением <10 м на нескольких тысячах километров — Web Mercator (3857) даёт
+//     1/cos(φ)-искажение по широте и для Москвы (φ≈55°) превратит eps=50 м в ~29 м.
+//   - PARTITION BY p.category — пины разных категорий в одной точке остаются разными
+//     кластерами (ТЗ 9.2.3 «по координатам и категориям»).
 //
 // epsMeters: 50 (ТЗ 9.2.3.a) или 500 (9.2.3.b).
 func (r *PinRepository) ListRecommendationCandidates(locationID int, epsMeters float64) ([]*RecommendationPinCandidate, error) {
@@ -409,13 +414,24 @@ candidates AS (
  FROM pins p
  JOIN top_trips tt ON tt.id = p.trip_id
  WHERE p.is_published_in_feed = true AND p.location IS NOT NULL
+),
+centroid AS (
+ SELECT ST_Y(ST_Centroid(ST_Collect(location))) AS lat0,
+        ST_X(ST_Centroid(ST_Collect(location))) AS lon0
+ FROM candidates
 )
-SELECT id, trip_id, name, description, category, location_name, media_count,
- lat, lon,
- ST_ClusterDBSCAN(ST_Transform(location, 3857), eps := $2, minpoints := 1)
-  OVER (PARTITION BY category) AS cluster_id,
- score
-FROM candidates`
+SELECT c.id, c.trip_id, c.name, c.description, c.category, c.location_name, c.media_count,
+ c.lat, c.lon,
+ ST_ClusterDBSCAN(
+  ST_Transform(
+   c.location,
+   format('+proj=aeqd +lat_0=%s +lon_0=%s +ellps=WGS84 +units=m +no_defs', cn.lat0, cn.lon0)
+  ),
+  eps := $2,
+  minpoints := 1
+ ) OVER (PARTITION BY c.category) AS cluster_id,
+ c.score
+FROM candidates c CROSS JOIN centroid cn`
 	rows, err := r.db.Query(sqlStr, locationID, epsMeters)
 	if err != nil {
 		return nil, err
