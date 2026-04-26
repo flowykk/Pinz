@@ -1040,7 +1040,8 @@ func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request)
 // @Param offset query int false "offset"
 // @Param category query string false "category"
 // @Param season query string false "season"
-// @Param location_id query int false "location_id"
+// @Param city query string false "city name (mutually exclusive with country, city wins)"
+// @Param country query string false "country name (mutually exclusive with city)"
 // @Param sort_by query string false "date|rating"
 // @Success 200 {array} responses.FeedItem
 // @Router /api/v1/feed [get]
@@ -1069,23 +1070,15 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	if sortBy == "" {
 		sortBy = "date"
 	}
-	locationIDs := make([]int32, 0, 4)
-	if lid := r.URL.Query().Get("location_id"); lid != "" {
-		if n, err := parseInt(lid); err == nil {
-			locationIDs = append(locationIDs, int32(n))
-		}
-	}
-	for _, raw := range r.URL.Query()["location_ids"] {
-		if n, err := parseInt(raw); err == nil {
-			locationIDs = append(locationIDs, int32(n))
-		}
-	}
+	city := r.URL.Query().Get("city")
+	country := r.URL.Query().Get("country")
 	resp, err := h.tripClient.ListFeed(ctx, &proto.ListFeedRequest{
 		Limit: limit,
 		Offset: offset,
 		Category: category,
 		Season: season,
-		LocationIds: locationIDs,
+		City: city,
+		Country: country,
 		SortBy: sortBy,
 	})
 	if err != nil {

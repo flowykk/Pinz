@@ -2810,12 +2810,14 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 	if sortBy != "rating" && sortBy != "date" {
 		sortBy = "date"
 	}
-	locationProtoIDs := req.GetLocationIds()
-	locationIDs := make([]int, 0, len(locationProtoIDs))
-	for _, id := range locationProtoIDs {
-		if id > 0 {
-			locationIDs = append(locationIDs, int(id))
-		}
+	// ТЗ 7.9.3: фильтр по месту принимает имя города/страны строкой; резолвим в geo_registry.
+	// Если регион не найден — лента возвращает пустой результат (не ошибку).
+	locationIDs, ok, err := s.resolveFeedLocationIDs(ctx, req.GetCity(), req.GetCountry())
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to resolve location filter")
+	}
+	if !ok {
+		return &pb.ListFeedResponse{}, nil
 	}
 	trips, err := s.tripRepo.ListFeed(limit, offset, req.GetCategory(), req.GetSeason(), locationIDs, sortBy)
 	if err != nil {
@@ -2893,6 +2895,37 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 		}
 	}
 	return &pb.ListFeedResponse{Items: items}, nil
+}
+
+// resolveFeedLocationIDs — ТЗ 7.9.3: фильтр по строковому city/country.
+// Возвращает (ids, ok, err): ok=false означает «регион указан, но не найден» —
+// лента в этом случае возвращает пустой список (а не 500). Если оба параметра
+// заданы, приоритет у города (он более узкий фильтр).
+func (s *TripService) resolveFeedLocationIDs(ctx context.Context, city, country string) ([]int, bool, error) {
+	city = strings.TrimSpace(city)
+	country = strings.TrimSpace(country)
+	if city == "" && country == "" {
+		return nil, true, nil
+	}
+	if s.geoRepo == nil {
+		return nil, true, nil
+	}
+	var (
+		id int
+		err error
+	)
+	if city != "" {
+		id, err = s.geoRepo.FindCityByName(ctx, city)
+	} else {
+		id, err = s.geoRepo.FindCountryByName(ctx, country)
+	}
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return []int{id}, true, nil
 }
 
 // LikeTrip — поставить лайк трипу в ленте .

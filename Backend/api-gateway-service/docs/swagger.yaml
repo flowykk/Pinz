@@ -1708,10 +1708,14 @@ paths:
         in: query
         name: season
         type: string
-      - description: location_id
+      - description: city name (mutually exclusive with country, city wins)
         in: query
-        name: location_id
-        type: integer
+        name: city
+        type: string
+      - description: country name (mutually exclusive with city)
+        in: query
+        name: country
+        type: string
       - description: date|rating
         in: query
         name: sort_by

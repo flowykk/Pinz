@@ -519,9 +519,15 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "location_id",
-                        "name": "location_id",
+                        "type": "string",
+                        "description": "city name (mutually exclusive with country, city wins)",
+                        "name": "city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "country name (mutually exclusive with city)",
+                        "name": "country",
                         "in": "query"
                     },
                     {

@@ -3398,15 +3398,18 @@ func (x *UpdateTripSettingsResponse) GetSuccess() bool {
 	return false
 }
 
-// лента опубликованных трипов
+// лента опубликованных трипов (ТЗ 7.9-7.10).
+// Фильтры city/country принимают точные имена; сервер резолвит их в geo_registry.
+// Если регион не найден — лента возвращает пустой результат без ошибки.
 type ListFeedRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
 	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
-	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`                                  // optional filter
-	Season        string                 `protobuf:"bytes,4,opt,name=season,proto3" json:"season,omitempty"`                                      // optional filter
-	LocationIds   []int32                `protobuf:"varint,5,rep,packed,name=location_ids,json=locationIds,proto3" json:"location_ids,omitempty"` // optional filter (geo_registry ids)
-	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"`                        // "date" or "rating"
+	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`           // ТЗ 7.9.1
+	Season        string                 `protobuf:"bytes,4,opt,name=season,proto3" json:"season,omitempty"`               // ТЗ 7.9.2
+	City          string                 `protobuf:"bytes,7,opt,name=city,proto3" json:"city,omitempty"`                   // ТЗ 7.9.3 — точное имя города
+	Country       string                 `protobuf:"bytes,8,opt,name=country,proto3" json:"country,omitempty"`             // ТЗ 7.9.3 — точное имя страны
+	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"` // "date" (ТЗ 7.10.1) или "rating" (ТЗ 7.10.2)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3469,11 +3472,18 @@ func (x *ListFeedRequest) GetSeason() string {
 	return ""
 }
 
-func (x *ListFeedRequest) GetLocationIds() []int32 {
+func (x *ListFeedRequest) GetCity() string {
 	if x != nil {
-		return x.LocationIds
+		return x.City
 	}
-	return nil
+	return ""
+}
+
+func (x *ListFeedRequest) GetCountry() string {
+	if x != nil {
+		return x.Country
+	}
+	return ""
 }
 
 func (x *ListFeedRequest) GetSortBy() string {
@@ -10004,14 +10014,15 @@ const file_trip_proto_rawDesc = "" +
 	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x123\n" +
 	"\x15notifications_enabled\x18\x02 \x01(\bR\x14notificationsEnabled\"6\n" +
 	"\x1aUpdateTripSettingsResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xaf\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xce\x01\n" +
 	"\x0fListFeedRequest\x12\x14\n" +
 	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x1a\n" +
 	"\bcategory\x18\x03 \x01(\tR\bcategory\x12\x16\n" +
-	"\x06season\x18\x04 \x01(\tR\x06season\x12!\n" +
-	"\flocation_ids\x18\x05 \x03(\x05R\vlocationIds\x12\x17\n" +
-	"\asort_by\x18\x06 \x01(\tR\x06sortBy\"W\n" +
+	"\x06season\x18\x04 \x01(\tR\x06season\x12\x12\n" +
+	"\x04city\x18\a \x01(\tR\x04city\x12\x18\n" +
+	"\acountry\x18\b \x01(\tR\acountry\x12\x17\n" +
+	"\asort_by\x18\x06 \x01(\tR\x06sortByJ\x04\b\x05\x10\x06R\flocation_ids\"W\n" +
 	"\tFeedMedia\x12\x19\n" +
 	"\bmedia_id\x18\x01 \x01(\tR\amediaId\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1d\n" +
