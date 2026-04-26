@@ -105,6 +105,10 @@ extension AppRouter {
     public func navigateToPostInfo(post: Post) {
         navigate(to: .tripInfo(.postInfo(post: post)))
     }
+
+    public func navigateToSavedTripDetail(trip: Trip) {
+        navigate(to: .tripInfo(.savedTrip(trip: trip)))
+    }
 }
 
 // MARK: - TripCreation Routing

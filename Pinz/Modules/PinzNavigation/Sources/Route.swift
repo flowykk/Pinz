@@ -17,6 +17,7 @@ public enum TripInfoRoute: Hashable {
     case selectablePinsList(trip: Trip)
     case postPreview(trip: Trip, selectedPins: [Pin])
     case postInfo(post: Post)
+    case savedTrip(trip: Trip)
 }
 
 public enum TripCreationRoute: Hashable {
