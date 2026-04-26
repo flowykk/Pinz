@@ -257,6 +257,58 @@ final class MockNetworkService: NetworkServiceProtocol {
         return try submitBattleResultResult.get()
     }
 
+    // MARK: - Public profile
+
+    var getPublicUserProfileResult: Result<PublicUserProfileResponseDTO, Error> = .success(
+        PublicUserProfileResponseDTO(id: "user-public", username: "publicUser", avatarUrl: nil, createdAt: 0, desiredPlaces: [])
+    )
+    func getPublicUserProfile(id: String) async throws -> PublicUserProfileResponseDTO { try getPublicUserProfileResult.get() }
+
+    // MARK: - Privacy
+
+    var setTripPrivacyResult: Result<PrivacyResponseDTO, Error> = .success(PrivacyResponseDTO(privacyLevel: "public"))
+    var setPinPrivacyResult: Result<PrivacyResponseDTO, Error> = .success(PrivacyResponseDTO(privacyLevel: "public"))
+    var setMediaPrivacyResult: Result<PrivacyResponseDTO, Error> = .success(PrivacyResponseDTO(privacyLevel: "public"))
+    func setTripPrivacy(tripId: String, privacyLevel: String) async throws -> PrivacyResponseDTO { try setTripPrivacyResult.get() }
+    func setPinPrivacy(tripId: String, pinId: String, privacyLevel: String) async throws -> PrivacyResponseDTO { try setPinPrivacyResult.get() }
+    func setMediaPrivacy(tripId: String, mediaId: String, privacyLevel: String) async throws -> PrivacyResponseDTO { try setMediaPrivacyResult.get() }
+
+    // MARK: - Desired Places
+
+    var getDesiredPlacesResult: Result<[DesiredPlaceDTO], Error> = .success([])
+    var createDesiredPlaceResult: Result<DesiredPlaceDTO, Error> = .success(MockNetworkService.stubDesiredPlace)
+    var requestDesiredPlaceImageUploadResult: Result<DesiredPlaceImageUploadResponseDTO, Error> = .success(
+        DesiredPlaceImageUploadResponseDTO(uploadUrl: "https://s3.example.com/upload", s3Key: "places/mock.jpg")
+    )
+    var updateDesiredPlaceResult: Result<DesiredPlaceDTO, Error> = .success(MockNetworkService.stubDesiredPlace)
+    var deleteDesiredPlaceError: Error?
+    var deleteDesiredPlaceImageResult: Result<DesiredPlaceDTO, Error> = .success(MockNetworkService.stubDesiredPlace)
+
+    var createDesiredPlaceCall: (name: String, description: String, s3Key: String?)?
+    var updateDesiredPlaceCall: (placeId: String, name: String, description: String, imageS3Key: String?)?
+    var deleteDesiredPlaceCall: String?
+    var requestDesiredPlaceImageUploadCall: (filename: String, contentType: String)?
+
+    func getDesiredPlaces() async throws -> [DesiredPlaceDTO] { try getDesiredPlacesResult.get() }
+    func createDesiredPlace(name: String, description: String, s3Key: String?) async throws -> DesiredPlaceDTO {
+        createDesiredPlaceCall = (name, description, s3Key)
+        return try createDesiredPlaceResult.get()
+    }
+    func requestDesiredPlaceImageUpload(filename: String, contentType: String) async throws -> DesiredPlaceImageUploadResponseDTO {
+        requestDesiredPlaceImageUploadCall = (filename, contentType)
+        return try requestDesiredPlaceImageUploadResult.get()
+    }
+    func updateDesiredPlace(placeId: String, name: String, description: String, imageS3Key: String?) async throws -> DesiredPlaceDTO {
+        updateDesiredPlaceCall = (placeId, name, description, imageS3Key)
+        return try updateDesiredPlaceResult.get()
+    }
+    func deleteDesiredPlace(placeId: String) async throws -> SuccessDTO {
+        deleteDesiredPlaceCall = placeId
+        if let deleteDesiredPlaceError { throw deleteDesiredPlaceError }
+        return SuccessDTO(success: true)
+    }
+    func deleteDesiredPlaceImage(placeId: String) async throws -> DesiredPlaceDTO { try deleteDesiredPlaceImageResult.get() }
+
     // MARK: - Stub data
 
     struct UpdateTripCall: Equatable {
@@ -270,6 +322,10 @@ final class MockNetworkService: NetworkServiceProtocol {
         let startDateUnix: Int?
         let endDateUnix: Int?
     }
+
+    static let stubDesiredPlace = DesiredPlaceDTO(
+        id: "dp-001", name: "Test Place", description: "Desc", imageUrl: nil, createdAt: 1_700_000_000
+    )
 
     private static let stubTrip = TripDTO(
         id: "trip-001", name: "Test Trip", description: nil, category: nil, season: nil,

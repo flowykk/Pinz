@@ -18,7 +18,7 @@ public struct WishlistElementCreationView: View {
 
     @Environment(\.appRouter) private var router
 
-    public init(onCreated: @escaping (WishlistElement) -> Void) {
+    public init(onCreated: @escaping (DesiredPlace) -> Void) {
         viewModel = WishlistElementCreationViewModel(onCreated: onCreated)
     }
 
@@ -129,8 +129,8 @@ public struct WishlistElementCreationView: View {
                 disabled: false,
                 action: .plain { viewModel.dispatch(.continue) }
             )
-            .disabledWithOpacity(viewModel.isCompleteButtonDisabled)
-            .animation(.easeInOut(duration: 0.3), value: viewModel.isCompleteButtonDisabled)
+            .disabledWithOpacity(viewModel.isCompleteButtonDisabled || viewModel.isLoading)
+            .animation(.easeInOut(duration: 0.3), value: viewModel.isCompleteButtonDisabled || viewModel.isLoading)
         }
     }
 }

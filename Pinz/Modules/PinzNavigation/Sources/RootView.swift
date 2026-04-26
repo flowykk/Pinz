@@ -43,8 +43,12 @@ public struct RootView<Content: View>: View {
                 PinInfoView(pin: pin, updateAction: updateAction)
             case .pinCreation:
                 PinCreationView()
-            case .members:
-                TripMembersView()
+            case .members(let participants, let currentUserId):
+                TripMembersView(participants: participants, currentUserId: currentUserId)
+            case .publicProfile(let userId):
+                PublicProfileView(userId: userId)
+            case .publicWishlist(let places):
+                WishlistView(places: places, isReadOnly: true)
             case .feed:
                 FeedView()
             }
@@ -108,6 +112,7 @@ public struct RootView<Content: View>: View {
             case let .creation(action):
                 WishlistElementCreationView(onCreated: action.action)
             }
+
         }
     }
 

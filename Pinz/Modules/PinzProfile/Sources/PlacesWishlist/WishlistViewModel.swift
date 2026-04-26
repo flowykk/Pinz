@@ -7,7 +7,7 @@ import PinzDomain
 final class WishlistViewModel {
 
     enum Route {
-        case wishlistElement(WishlistElement)
+        case wishlistElement(DesiredPlace)
         case wishlistElementCreation
         case back
     }
@@ -16,13 +16,15 @@ final class WishlistViewModel {
         case navigate(Route)
     }
 
-    var wishlist: [WishlistElement]
+    var wishlist: [DesiredPlace]
+    var isLoading = false
 
-    private let networkService = NetworkService.shared
+    private let networkService: any NetworkServiceProtocol
     private var router: AppRouting?
 
-    init(wishlist: [WishlistElement] = WishlistElement.stubs) {
+    init(wishlist: [DesiredPlace] = [], networkService: any NetworkServiceProtocol = NetworkService.shared) {
         self.wishlist = wishlist
+        self.networkService = networkService
     }
 
     func dispatch(_ intent: Intent) {
@@ -39,6 +41,15 @@ final class WishlistViewModel {
                 router?.pop()
             }
         }
+    }
+
+    func loadWishlist() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let places = try await networkService.getDesiredPlaces()
+            wishlist = places.map { $0.toDesiredPlace() }
+        } catch {}
     }
 
     public func setRouter(_ router: AppRouting?) {

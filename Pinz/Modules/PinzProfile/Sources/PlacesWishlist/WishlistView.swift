@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzBase
+import PinzDomain
 
 public struct WishlistView: View {
 
@@ -8,8 +9,11 @@ public struct WishlistView: View {
 
     @Environment(\.appRouter) private var router
 
-    public init() {
-        viewModel = WishlistViewModel()
+    private let isReadOnly: Bool
+
+    public init(places: [DesiredPlace] = [], isReadOnly: Bool = false) {
+        viewModel = WishlistViewModel(wishlist: places)
+        self.isReadOnly = isReadOnly
     }
 
     public var body: some View {
@@ -30,6 +34,11 @@ public struct WishlistView: View {
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
+        .task {
+            if !isReadOnly {
+                await viewModel.loadWishlist()
+            }
+        }
     }
 
     private var header: some View {
@@ -42,11 +51,13 @@ public struct WishlistView: View {
         }, centerView: {
             HeaderTitle(PinzBaseStrings.Wishlist.Title.main)
         }, rightView: {
-            PinzButton(
-                type: .icon(.plus),
-                tint: PinzUIAsset.textPrimary.swiftUIColor,
-                action: .plain { viewModel.dispatch(.navigate(.wishlistElementCreation)) }
-            )
+            if !isReadOnly {
+                PinzButton(
+                    type: .icon(.plus),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.navigate(.wishlistElementCreation)) }
+                )
+            }
         })
     }
 }

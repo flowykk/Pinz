@@ -8,7 +8,8 @@ public protocol AppRouting {
     func navigateToProfile(user: User)
     func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction?)
     func navigateToPinCreation()
-    func navigateToTripMembers()
+    func navigateToTripMembers(participants: [TripParticipantDTO], currentUserId: String?)
+    func navigateToPublicProfile(userId: String)
     func navigateToFeed()
 
     func navigateToTripCreationInitial()
@@ -42,8 +43,9 @@ public protocol AppRouting {
 
     func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction)
 
-    func navigateToWishlistElement(element: WishlistElement)
+    func navigateToWishlistElement(element: DesiredPlace)
     func navigateToWishlistElementCreation(action: WishlistCreationAction)
+    func navigateToPublicWishlist(places: [DesiredPlace])
 
     func pop()
     func pop(by count: Int)

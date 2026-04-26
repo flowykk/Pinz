@@ -2,9 +2,9 @@ import Foundation
 
 public struct WishlistCreationAction: Equatable, Hashable {
     public let id = UUID()
-    public let action: (WishlistElement) -> Void
+    public let action: (DesiredPlace) -> Void
 
-    public init(action: @escaping (WishlistElement) -> Void) {
+    public init(action: @escaping (DesiredPlace) -> Void) {
         self.action = action
     }
 

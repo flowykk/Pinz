@@ -21,6 +21,7 @@ public protocol NetworkServiceProtocol {
     // Profile
     func getProfile() async throws -> ProfileResponseDTO
     func getProfileStats() async throws -> UserStatsResponseDTO
+    func getPublicUserProfile(id: String) async throws -> PublicUserProfileResponseDTO
     func getVisitedLocations(type: String?) async throws -> VisitedLocationsResponseDTO
     func updateProfile(username: String) async throws -> ProfileResponseDTO
     func deleteAvatar() async throws -> ProfileResponseDTO
@@ -111,6 +112,14 @@ public protocol NetworkServiceProtocol {
     func setTripPrivacy(tripId: String, privacyLevel: String) async throws -> PrivacyResponseDTO
     func setPinPrivacy(tripId: String, pinId: String, privacyLevel: String) async throws -> PrivacyResponseDTO
     func setMediaPrivacy(tripId: String, mediaId: String, privacyLevel: String) async throws -> PrivacyResponseDTO
+
+    // Desired places
+    func getDesiredPlaces() async throws -> [DesiredPlaceDTO]
+    func createDesiredPlace(name: String, description: String, s3Key: String?) async throws -> DesiredPlaceDTO
+    func requestDesiredPlaceImageUpload(filename: String, contentType: String) async throws -> DesiredPlaceImageUploadResponseDTO
+    func updateDesiredPlace(placeId: String, name: String, description: String, imageS3Key: String?) async throws -> DesiredPlaceDTO
+    func deleteDesiredPlace(placeId: String) async throws -> SuccessDTO
+    func deleteDesiredPlaceImage(placeId: String) async throws -> DesiredPlaceDTO
 }
 
 // MARK: - Implementation
@@ -249,6 +258,13 @@ public final class NetworkService: NetworkServiceProtocol {
         try await provider.request(
             .getProfileStats,
             type: UserStatsResponseDTO.self
+        )
+    }
+
+    public func getPublicUserProfile(id: String) async throws -> PublicUserProfileResponseDTO {
+        try await provider.request(
+            .getPublicUserProfile(id: id),
+            type: PublicUserProfileResponseDTO.self
         )
     }
 
@@ -740,6 +756,40 @@ public final class NetworkService: NetworkServiceProtocol {
             .setMediaPrivacy(tripId: tripId, mediaId: mediaId, privacyLevel: privacyLevel),
             type: PrivacyResponseDTO.self
         )
+    }
+
+    public func getDesiredPlaces() async throws -> [DesiredPlaceDTO] {
+        let response = try await provider.request(.getDesiredPlaces, type: DesiredPlacesListResponseDTO.self)
+        return response.places
+    }
+
+    public func createDesiredPlace(name: String, description: String, s3Key: String?) async throws -> DesiredPlaceDTO {
+        try await provider.request(
+            .createDesiredPlace(name: name, description: description, s3Key: s3Key),
+            type: DesiredPlaceDTO.self
+        )
+    }
+
+    public func requestDesiredPlaceImageUpload(filename: String, contentType: String) async throws -> DesiredPlaceImageUploadResponseDTO {
+        try await provider.request(
+            .requestDesiredPlaceImageUpload(filename: filename, contentType: contentType),
+            type: DesiredPlaceImageUploadResponseDTO.self
+        )
+    }
+
+    public func updateDesiredPlace(placeId: String, name: String, description: String, imageS3Key: String?) async throws -> DesiredPlaceDTO {
+        try await provider.request(
+            .updateDesiredPlace(placeId: placeId, name: name, description: description, imageS3Key: imageS3Key),
+            type: DesiredPlaceDTO.self
+        )
+    }
+
+    public func deleteDesiredPlace(placeId: String) async throws -> SuccessDTO {
+        try await provider.request(.deleteDesiredPlace(placeId: placeId), type: SuccessDTO.self)
+    }
+
+    public func deleteDesiredPlaceImage(placeId: String) async throws -> DesiredPlaceDTO {
+        try await provider.request(.deleteDesiredPlaceImage(placeId: placeId), type: DesiredPlaceDTO.self)
     }
 }
 // swiftlint:enable file_length function_parameter_count

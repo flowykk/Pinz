@@ -74,8 +74,12 @@ extension AppRouter {
         navigate(to: .trip(.pinCreation))
     }
 
-    public func navigateToTripMembers() {
-        navigate(to: .trip(.members))
+    public func navigateToTripMembers(participants: [TripParticipantDTO], currentUserId: String?) {
+        navigate(to: .trip(.members(participants: participants, currentUserId: currentUserId)))
+    }
+
+    public func navigateToPublicProfile(userId: String) {
+        navigate(to: .trip(.publicProfile(userId: userId)))
     }
 
     public func navigateToFeed() {
@@ -185,12 +189,16 @@ extension AppRouter {
 // MARK: - Wishlist Routing
 
 extension AppRouter {
-    public func navigateToWishlistElement(element: WishlistElement) {
+    public func navigateToWishlistElement(element: DesiredPlace) {
         navigate(to: .wishlist(.element(element: element)))
     }
 
     public func navigateToWishlistElementCreation(action: WishlistCreationAction) {
         navigate(to: .wishlist(.creation(action: action)))
+    }
+
+    public func navigateToPublicWishlist(places: [DesiredPlace]) {
+        navigate(to: .trip(.publicWishlist(places: places)))
     }
 }
 

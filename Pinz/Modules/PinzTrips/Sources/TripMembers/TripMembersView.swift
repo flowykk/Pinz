@@ -1,6 +1,12 @@
 import SwiftUI
 import PinzUI
 import PinzBase
+import PinzDomain
+
+private enum TripMemberIcon: String, Setting.Icon {
+    case adminStar = "star.fill"
+    case chevronRight = "chevron.right"
+}
 
 public struct TripMembersView: View {
 
@@ -8,8 +14,8 @@ public struct TripMembersView: View {
 
     @Environment(\.appRouter) private var router
 
-    public init() {
-        viewModel = TripMembersViewModel()
+    public init(participants: [TripParticipantDTO], currentUserId: String?) {
+        viewModel = TripMembersViewModel(participants: participants, currentUserId: currentUserId)
     }
 
     public var body: some View {
@@ -31,7 +37,9 @@ public struct TripMembersView: View {
                     SettingsGroup(settings: viewModel.filteredMembers.map { member in
                         .default(Setting.DefaultSetting(
                             id: member.id,
-                            leading: .imageTitle(member.avatar, member.username)
+                            leading: .imageTitle(member.avatar, member.username),
+                            trailing: trailing(for: member),
+                            action: isSelf(member) ? nil : .plain { viewModel.dispatch(.openProfile(member)) }
                         ))
                     }).animation(.default, value: viewModel.filteredMembers)
                 }
@@ -43,6 +51,21 @@ public struct TripMembersView: View {
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
+    }
+
+    private func isSelf(_ member: TripMember) -> Bool {
+        member.id == viewModel.currentUserId
+    }
+
+    private func trailing(for member: TripMember) -> Setting.Trailing? {
+        let isAdmin = member.role == .admin
+        if isSelf(member) {
+            return isAdmin ? .icon(TripMemberIcon.adminStar) : nil
+        } else {
+            return isAdmin
+                ? .valuesIcon([.icon(TripMemberIcon.adminStar, .yellow)], TripMemberIcon.chevronRight)
+                : .icon(TripMemberIcon.chevronRight)
+        }
     }
 
     private var header: some View {

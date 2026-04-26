@@ -19,6 +19,7 @@ enum PinzAPI {
     // Profile
     case getProfile
     case getProfileStats
+    case getPublicUserProfile(id: String)
     case getVisitedLocations(type: String?)
     case deleteAccount
     case deleteAvatar
@@ -71,6 +72,14 @@ enum PinzAPI {
     case setTripPrivacy(tripId: String, privacyLevel: String)
     case setPinPrivacy(tripId: String, pinId: String, privacyLevel: String)
     case setMediaPrivacy(tripId: String, mediaId: String, privacyLevel: String)
+
+    // Desired places
+    case getDesiredPlaces
+    case createDesiredPlace(name: String, description: String, s3Key: String?)
+    case requestDesiredPlaceImageUpload(filename: String, contentType: String)
+    case updateDesiredPlace(placeId: String, name: String, description: String, imageS3Key: String?)
+    case deleteDesiredPlace(placeId: String)
+    case deleteDesiredPlaceImage(placeId: String)
 }
 
 // MARK: - TargetType
@@ -98,6 +107,7 @@ extension PinzAPI: TargetType {
         case .getProfile: endpointPath = "/profile"
         case .deleteAccount: endpointPath = "/profile"
         case .getProfileStats: endpointPath = "/profile/stats"
+        case .getPublicUserProfile(let id): endpointPath = "/users/\(id)"
         case .getVisitedLocations: endpointPath = "/profile/visited-locations"
         case .deleteAvatar: endpointPath = "/profile/avatar"
         case .updateProfile: endpointPath = "/profile"
@@ -128,6 +138,12 @@ extension PinzAPI: TargetType {
         case .setTripPrivacy(let tripId, _): endpointPath = "/trips/\(tripId)/privacy"
         case let .setPinPrivacy(tripId, pinId, _): endpointPath = "/trips/\(tripId)/pins/\(pinId)/privacy"
         case let .setMediaPrivacy(tripId, mediaId, _): endpointPath = "/trips/\(tripId)/media/\(mediaId)/privacy"
+        case .getDesiredPlaces: endpointPath = "/profile/desired-places"
+        case .createDesiredPlace: endpointPath = "/profile/desired-places"
+        case .requestDesiredPlaceImageUpload: endpointPath = "/profile/desired-places/upload-url"
+        case let .updateDesiredPlace(placeId, _, _, _): endpointPath = "/profile/desired-places/\(placeId)"
+        case let .deleteDesiredPlace(placeId): endpointPath = "/profile/desired-places/\(placeId)"
+        case let .deleteDesiredPlaceImage(placeId): endpointPath = "/profile/desired-places/\(placeId)/image"
         case .createTrip: endpointPath = "/trips/creation/start"
         case .processMediaGrouping(let tripId, _): endpointPath = "/trips/creation/\(tripId)/media/process-grouping"
         case .applyGroupsAndProcess(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/apply-groups-and-process"
@@ -141,16 +157,19 @@ extension PinzAPI: TargetType {
         switch self {
         case .getFeed, .getTrips, .getFavouriteTrips, .getTrip, .getTripReview:
             return .get
-        case .getProfile, .getProfileStats, .getVisitedLocations:
+        case .getProfile, .getProfileStats, .getVisitedLocations, .getPublicUserProfile:
             return .get
         case .deleteAvatar:
             return .delete
-        case .updateTrip, .updateTripSettings, .updateProfile:
+        case .updateTrip, .updateTripSettings, .updateProfile, .updateDesiredPlace:
             return .patch
         case .setTripPrivacy, .setPinPrivacy, .setMediaPrivacy:
             return .put
-        case .deleteTrip, .removeParticipant, .deleteAccount, .removeTripFromFavourites:
+        case .deleteTrip, .removeParticipant, .deleteAccount, .removeTripFromFavourites,
+             .deleteDesiredPlace, .deleteDesiredPlaceImage:
             return .delete
+        case .getDesiredPlaces:
+            return .get
         default:
             return .post
         }
@@ -162,7 +181,7 @@ extension PinzAPI: TargetType {
         case .getTrips, .getTrip, .getTripReview, .deleteTrip, .removeParticipant,
              .leaveTrip, .likeTrip, .dislikeTrip, .addTripToFavourites, .removeTripFromFavourites:
             return .requestPlain
-        case .getProfile, .getProfileStats:
+        case .getProfile, .getProfileStats, .getPublicUserProfile:
             return .requestPlain
         case let .getVisitedLocations(type):
             var params: [String: Any] = [:]
@@ -255,6 +274,22 @@ extension PinzAPI: TargetType {
              .setPinPrivacy(_, _, let level),
              .setMediaPrivacy(_, _, let level):
             return jsonParams(["privacy_level": level])
+
+        case .getDesiredPlaces, .deleteDesiredPlace, .deleteDesiredPlaceImage:
+            return .requestPlain
+
+        case let .createDesiredPlace(name, description, s3Key):
+            var params: [String: Any] = ["name": name, "description": description]
+            if let s3Key { params["s3_key"] = s3Key }
+            return jsonParams(params)
+
+        case let .requestDesiredPlaceImageUpload(filename, contentType):
+            return jsonParams(["filename": filename, "content_type": contentType])
+
+        case let .updateDesiredPlace(_, name, description, imageS3Key):
+            var params: [String: Any] = ["name": name, "description": description]
+            if let imageS3Key { params["image_s3_key"] = imageS3Key }
+            return jsonParams(params)
         }
     }
 
@@ -549,9 +584,23 @@ extension PinzAPI {
               }
             ]
             """#
+        case .getPublicUserProfile:
+            json = #"""
+            {
+              "id": "user-002",
+              "username": "maria_k",
+              "avatar_url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg",
+              "created_at": 1699900000,
+              "desired_places": [
+                {"id": "dp-001", "name": "Токио", "description": "Мечтаю посетить японскую столицу, попробовать настоящую японскую кухню и увидеть Фудзияму.", "image_url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg", "created_at": 1699900001},
+                {"id": "dp-002", "name": "Исландия", "description": "Хочу увидеть северное сияние и поплавать в Голубой лагуне.", "image_url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg", "created_at": 1699900002},
+                {"id": "dp-003", "name": "Патагония", "description": "Дикая природа Южной Америки, ледники и горы Анд.", "image_url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg", "created_at": 1699900003}
+              ]
+            }
+            """#
         case .getTrip:
             json = #"""
-            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":false,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"pins":[
+            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":false,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"participants":[{"user_id":"user-001","username":"flowykk","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg","role":"admin","privacy_level":"public"},{"user_id":"user-002","username":"maria_k","avatar_url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","role":"member","privacy_level":"public"},{"user_id":"user-003","username":"den_explore","avatar_url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","role":"member","privacy_level":"public"}],"current_user_settings":{"notifications_enabled":true},"active_add_media_session":null,"pins":[
               {"id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"media":[
                 {"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"},
                 {"media_id":"m-002","url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","privacy_level":"public"},
@@ -764,6 +813,14 @@ extension PinzAPI {
             json = #"{"trip_id":"trip-001","status":"finalized","message":"Trip finalized successfully"}"#
         case .setTripPrivacy, .setPinPrivacy, .setMediaPrivacy:
             json = #"{"privacy_level":"Public"}"#
+        case .getDesiredPlaces:
+            json = #"{"places":[{"id":"dp-001","name":"Токио","description":"Мечтаю посетить японскую столицу","image_url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","created_at":1699900001},{"id":"dp-002","name":"Исландия","description":"Хочу увидеть северное сияние","image_url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","created_at":1699900002}]}"#
+        case .createDesiredPlace, .updateDesiredPlace:
+            json = #"{"id":"dp-new","name":"Новое место","description":"Описание","image_url":null,"created_at":1700000000}"#
+        case .requestDesiredPlaceImageUpload:
+            json = #"{"upload_url":"https://pinz.s3.example.com/upload","s3_key":"desired-places/user-001/stub.jpg"}"#
+        case .deleteDesiredPlace, .deleteDesiredPlaceImage:
+            json = #"{"success":true}"#
         }
         return json.data(using: .utf8) ?? Data()
     }

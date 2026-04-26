@@ -62,6 +62,7 @@ final class TripViewModel {
     var trip: Trip?
     var _position: MapCameraPosition?
     var selectedPin: Pin?
+    private var participants: [TripParticipantDTO] = []
     private var router: AppRouting?
     private let networkService = NetworkService.shared
 
@@ -123,7 +124,7 @@ final class TripViewModel {
             case .pinCreation:
                 router?.navigateToPinCreation()
             case .members:
-                router?.navigateToTripMembers()
+                router?.navigateToTripMembers(participants: participants, currentUserId: currentUser?.profileId)
             }
         case let .selectPin(pin):
             selectedPin = pin
@@ -285,6 +286,7 @@ final class TripViewModel {
                     )
                 }
                 trip.pins = response.pins.enumerated().map { index, dto in dto.toPin(index: index, tripId: trip.id) }
+                participants = response.participants
                 lastFetchedTripId = tripId
                 dispatch(.selectTrip(trip))
                 shouldReloadSavedTrip = false
