@@ -43,8 +43,8 @@ public struct RootView<Content: View>: View {
                 PinInfoView(pin: pin, updateAction: updateAction, deleteAction: deleteAction)
             case .pinCreation:
                 PinCreationView()
-            case .members(let participants, let currentUserId):
-                TripMembersView(participants: participants, currentUserId: currentUserId)
+            case let .members(tripId, participants, currentUserId):
+                TripMembersView(tripId: tripId, participants: participants, currentUserId: currentUserId)
             case .publicProfile(let userId):
                 PublicProfileView(userId: userId)
             case .publicWishlist(let places):

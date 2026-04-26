@@ -27,7 +27,6 @@ public struct ProfileView: View {
 
     @State var imageEditingDialogShown = false
     @State var photoPickerShown = false
-    @State var isAddPersonPresented = false
     @Environment(\.appRouter) private var router
 
     var accountDeleteSetting: Setting {
@@ -98,9 +97,6 @@ public struct ProfileView: View {
         } set: { newImage in
             viewModel.dispatch(.setImage(newImage))
         })
-        .fullScreenCover(isPresented: $isAddPersonPresented) {
-            AddPersonView()
-        }
         .alert(PinzBaseStrings.Alert.DeleteAccount.title, isPresented: $showDeleteAccountAlert) {
             Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) { }
             Button(PinzBaseStrings.Alert.DeleteAccount.confirm, role: .destructive) {
@@ -124,20 +120,12 @@ public struct ProfileView: View {
                     )
                 },
                 rightView: {
-                    HStack(spacing: 4) {
-                        PinzButton(
-                            type: .icon(.personAdd),
-                            tint: PinzUIAsset.textPrimary.swiftUIColor,
-                            action: .plain { isAddPersonPresented = true }
-                        )
-                        .disabledWithOpacity(viewModel.isLoading)
-                        PinzButton(
-                            type: .icon(.pencil),
-                            tint: PinzUIAsset.textPrimary.swiftUIColor,
-                            action: .plain { viewModel.dispatch(.changeState) }
-                        )
-                        .disabledWithOpacity(viewModel.isLoading)
-                    }
+                    PinzButton(
+                        type: .icon(.pencil),
+                        tint: PinzUIAsset.textPrimary.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.changeState) }
+                    )
+                    .disabledWithOpacity(viewModel.isLoading)
                 }
             )
         case .editing:

@@ -74,8 +74,8 @@ extension AppRouter {
         navigate(to: .trip(.pinCreation))
     }
 
-    public func navigateToTripMembers(participants: [TripParticipantDTO], currentUserId: String?) {
-        navigate(to: .trip(.members(participants: participants, currentUserId: currentUserId)))
+    public func navigateToTripMembers(tripId: String, participants: [TripParticipantDTO], currentUserId: String?) {
+        navigate(to: .trip(.members(tripId: tripId, participants: participants, currentUserId: currentUserId)))
     }
 
     public func navigateToPublicProfile(userId: String) {

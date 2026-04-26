@@ -6,7 +6,7 @@ public enum TripRoute: Hashable {
     case profile(user: User)
     case pinInfo(pin: Pin, updateAction: PinUpdateAction?, deleteAction: PinDeleteAction?)
     case pinCreation
-    case members(participants: [TripParticipantDTO], currentUserId: String?)
+    case members(tripId: String, participants: [TripParticipantDTO], currentUserId: String?)
     case publicProfile(userId: String)
     case publicWishlist(places: [DesiredPlace])
     case feed

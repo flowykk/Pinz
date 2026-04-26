@@ -8,7 +8,7 @@ public protocol AppRouting {
     func navigateToProfile(user: User)
     func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction?, deleteAction: PinDeleteAction?)
     func navigateToPinCreation()
-    func navigateToTripMembers(participants: [TripParticipantDTO], currentUserId: String?)
+    func navigateToTripMembers(tripId: String, participants: [TripParticipantDTO], currentUserId: String?)
     func navigateToPublicProfile(userId: String)
     func navigateToFeed()
 

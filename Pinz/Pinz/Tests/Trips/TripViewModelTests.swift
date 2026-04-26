@@ -287,8 +287,11 @@ final class TripViewModelTests: XCTestCase {
     }
 
     func test_navigate_members_callsRouter() {
+        let trip = Trip.stub()
+        sut.dispatch(.selectTrip(trip))
         sut.dispatch(.navigate(.members))
         XCTAssertTrue(mockRouter.navigatedToTripMembers)
+        XCTAssertEqual(mockRouter.navigatedToTripMembersTripId, trip.id)
     }
 
     func test_navigate_pinCreation_callsRouter() {

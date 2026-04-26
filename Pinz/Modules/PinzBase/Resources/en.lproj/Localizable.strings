@@ -167,7 +167,11 @@
 
 // MARK: - Trip Members
 "tripMembers.title.main" = "Trip Members";
+"tripMembers.title.invite" = "Invite to trip";
 "tripMembers.placeholder.search" = "Search Members";
+"tripMembers.button.shareLink" = "Share link";
+"tripMembers.button.copyLink" = "Copy link";
+"tripMembers.invite.error" = "Couldn’t create invite. Try again.";
 
 // MARK: - Pin Creation
 "pinCreation.title.main" = "Create Pin";
