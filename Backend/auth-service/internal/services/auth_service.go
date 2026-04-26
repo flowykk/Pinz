@@ -79,6 +79,7 @@ type AuthService struct {
 	userRepo UserRepositoryInterface
 	credRepo CredentialRepositoryInterface
 	redisRepo RedisRepositoryInterface
+	desiredPlaceRepo DesiredPlaceRepositoryInterface
 	validator *validator.Validate
 	wa *webauthn.WebAuthn
 	s3 S3Uploader
@@ -93,6 +94,7 @@ func NewAuthService(
 	userRepo UserRepositoryInterface,
 	credRepo CredentialRepositoryInterface,
 	redisRepo RedisRepositoryInterface,
+	desiredPlaceRepo DesiredPlaceRepositoryInterface,
 	validator *validator.Validate,
 	wa *webauthn.WebAuthn,
 	s3 S3Uploader,
@@ -114,6 +116,7 @@ func NewAuthService(
 		userRepo: userRepo,
 		credRepo: credRepo,
 		redisRepo: redisRepo,
+		desiredPlaceRepo: desiredPlaceRepo,
 		validator: validator,
 		wa: wa,
 		s3: s3,
@@ -694,12 +697,59 @@ func (s *AuthService) GetUsersProfiles(ctx context.Context, req *pb.GetUsersProf
 			}
 		}
 		profiles = append(profiles, &pb.PublicUserProfile{
-			UserId:    u.ID,
-			Username:  u.Username,
-			AvatarUrl: avatar,
+			UserId:        u.ID,
+			Username:      u.Username,
+			AvatarUrl:     avatar,
+			CreatedAtUnix: u.CreatedAt.Unix(),
 		})
 	}
 	return &pb.GetUsersProfilesResponse{Profiles: profiles}, nil
+}
+
+// GetPublicUserProfile возвращает публичный профиль другого пользователя (без email)
+// и его список желаемых мест за один gRPC round-trip (decomp #16, ТЗ 1.7.2).
+// Не используем GetProfile, чтобы email не покидал auth-service для публичного запроса.
+func (s *AuthService) GetPublicUserProfile(ctx context.Context, req *pb.GetPublicUserProfileRequest) (*pb.GetPublicUserProfileResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "AuthService.GetPublicUserProfile")
+	defer span.End()
+
+	userID := req.GetUserId()
+	if userID == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	u, err := s.userRepo.GetUserByID(userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+	if err != nil {
+		slog.ErrorContext(ctx, "GetPublicUserProfile: get user", "error", err)
+		return nil, status.Error(codes.Internal, "failed to get user")
+	}
+
+	avatar := ""
+	if u.AvatarURL != "" && s.s3 != nil {
+		if url, perr := s.s3.ReadURL(ctx, u.AvatarURL); perr == nil {
+			avatar = url
+		} else {
+			slog.WarnContext(ctx, "GetPublicUserProfile: presign avatar", "key", u.AvatarURL, "error", perr)
+		}
+	}
+
+	places, err := s.listDesiredPlacesProto(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetPublicUserProfileResponse{
+		Profile: &pb.PublicUserProfile{
+			UserId:        u.ID,
+			Username:      u.Username,
+			AvatarUrl:     avatar,
+			CreatedAtUnix: u.CreatedAt.Unix(),
+		},
+		DesiredPlaces: places,
+	}, nil
 }
 
 func (s *AuthService) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {

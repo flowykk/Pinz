@@ -109,6 +109,34 @@ func (c *Client) GetUsersProfiles(ctx context.Context, req *pb.GetUsersProfilesR
 	return c.client.GetUsersProfiles(ctx, req)
 }
 
+func (c *Client) ListDesiredPlaces(ctx context.Context, req *pb.ListDesiredPlacesRequest) (*pb.ListDesiredPlacesResponse, error) {
+	return c.client.ListDesiredPlaces(ctx, req)
+}
+
+func (c *Client) CreateDesiredPlace(ctx context.Context, req *pb.CreateDesiredPlaceRequest) (*pb.CreateDesiredPlaceResponse, error) {
+	return c.client.CreateDesiredPlace(ctx, req)
+}
+
+func (c *Client) UpdateDesiredPlace(ctx context.Context, req *pb.UpdateDesiredPlaceRequest) (*pb.UpdateDesiredPlaceResponse, error) {
+	return c.client.UpdateDesiredPlace(ctx, req)
+}
+
+func (c *Client) DeleteDesiredPlace(ctx context.Context, req *pb.DeleteDesiredPlaceRequest) (*pb.DeleteDesiredPlaceResponse, error) {
+	return c.client.DeleteDesiredPlace(ctx, req)
+}
+
+func (c *Client) RequestDesiredPlaceImageUpload(ctx context.Context, req *pb.RequestDesiredPlaceImageUploadRequest) (*pb.RequestDesiredPlaceImageUploadResponse, error) {
+	return c.client.RequestDesiredPlaceImageUpload(ctx, req)
+}
+
+func (c *Client) DeleteDesiredPlaceImage(ctx context.Context, req *pb.DeleteDesiredPlaceImageRequest) (*pb.DeleteDesiredPlaceImageResponse, error) {
+	return c.client.DeleteDesiredPlaceImage(ctx, req)
+}
+
+func (c *Client) GetPublicUserProfile(ctx context.Context, req *pb.GetPublicUserProfileRequest) (*pb.GetPublicUserProfileResponse, error) {
+	return c.client.GetPublicUserProfile(ctx, req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

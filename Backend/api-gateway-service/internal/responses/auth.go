@@ -62,3 +62,32 @@ type AvatarUploadResponse struct {
 type DeleteAccountResponse struct {
 	Success bool `json:"success"`
 }
+
+type DesiredPlaceResponse struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ImageURL    string `json:"image_url,omitempty"`
+	CreatedAt   int64  `json:"created_at"`
+}
+
+type DesiredPlacesListResponse struct {
+	Places []DesiredPlaceResponse `json:"places"`
+}
+
+type DesiredPlaceImageUploadResponse struct {
+	UploadURL string `json:"upload_url"`
+	S3Key     string `json:"s3_key"`
+}
+
+type DeleteDesiredPlaceResponse struct {
+	Success bool `json:"success"`
+}
+
+type PublicUserProfileResponse struct {
+	ID            string                 `json:"id"`
+	Username      string                 `json:"username"`
+	AvatarURL     string                 `json:"avatar_url,omitempty"`
+	CreatedAt     int64                  `json:"created_at"`
+	DesiredPlaces []DesiredPlaceResponse `json:"desired_places"`
+}

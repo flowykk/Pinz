@@ -41,7 +41,7 @@ func TestIsUniqueViolation(t *testing.T) {
 // authServiceForValidation returns AuthService with nil repos; only validation paths are tested.
 func authServiceForValidation(t *testing.T) *AuthService {
 	t.Helper()
-	return NewAuthService(nil, nil, nil, validator.New(), nil, nil)
+	return NewAuthService(nil, nil, nil, nil, validator.New(), nil, nil)
 }
 
 func TestDevLogin_ValidationErrors(t *testing.T) {
@@ -279,7 +279,7 @@ func TestSubmitEmail_user_exists(t *testing.T) {
 	existingUser := &models.User{ID: "u1", Email: "existing@example.com", Username: "user"}
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 	userRepo.EXPECT().GetUserByEmail(existingUser.Email).Return(existingUser, nil)
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 
 	resp, err := svc.SubmitEmail(ctx, &pb.SubmitEmailRequest{Email: existingUser.Email})
@@ -296,7 +296,7 @@ func TestRefreshToken_expired(t *testing.T) {
 		ID: "rt1", UserID: "u1", Token: "some-token",
 		ExpiresAt: time.Now().Add(-time.Hour),
 	}, nil)
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 
 	_, err := svc.RefreshToken(ctx, &pb.RefreshTokenRequest{RefreshToken: "some-token"})
@@ -310,7 +310,7 @@ func TestRefreshToken_invalid(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 	userRepo.EXPECT().GetRefreshToken("invalid-token").Return(nil, sql.ErrNoRows)
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 
 	_, err := svc.RefreshToken(ctx, &pb.RefreshTokenRequest{RefreshToken: "invalid-token"})
@@ -324,7 +324,7 @@ func TestLogout_token_not_found(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 	userRepo.EXPECT().GetRefreshToken("missing-token").Return(nil, sql.ErrNoRows)
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 
 	resp, err := svc.Logout(ctx, &pb.LogoutRequest{RefreshToken: "missing-token"})
@@ -343,7 +343,7 @@ func TestSubmitEmail_new_user_returns_registration_key(t *testing.T) {
 	redisRepo.EXPECT().Expire(gomock.Any(), gomock.Any(), 15*time.Minute).Return(nil)
 	redisRepo.EXPECT().XAdd(gomock.Any(), "pinz:auth:email:tasks", gomock.Any()).Return(nil)
 
-	svc := NewAuthService(userRepo, nil, redisRepo, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, redisRepo, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 	resp, err := svc.SubmitEmail(ctx, &pb.SubmitEmailRequest{Email: "new@example.com"})
 	require.NoError(t, err)
@@ -360,7 +360,7 @@ func TestSubmitEmail_email_enqueue_failure_still_succeeds(t *testing.T) {
 	redisRepo.EXPECT().Expire(gomock.Any(), gomock.Any(), 15*time.Minute).Return(nil)
 	redisRepo.EXPECT().XAdd(gomock.Any(), "pinz:auth:email:tasks", gomock.Any()).Return(errors.New("redis connection refused"))
 
-	svc := NewAuthService(userRepo, nil, redisRepo, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, redisRepo, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 	resp, err := svc.SubmitEmail(ctx, &pb.SubmitEmailRequest{Email: "new@example.com"})
 	require.NoError(t, err)
@@ -373,7 +373,7 @@ func TestSubmitEmail_db_error_returns_internal(t *testing.T) {
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 	userRepo.EXPECT().GetUserByEmail("x@example.com").Return(nil, errors.New("db connection refused"))
 
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 	_, err := svc.SubmitEmail(ctx, &pb.SubmitEmailRequest{Email: "x@example.com"})
 	require.Error(t, err)
@@ -392,7 +392,7 @@ func TestRefreshToken_success_returns_new_access_token(t *testing.T) {
 	}, nil)
 	userRepo.EXPECT().GetUserByID("u1").Return(&models.User{ID: "u1", Email: "u@example.com", Username: "user"}, nil)
 
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 	resp, err := svc.RefreshToken(ctx, &pb.RefreshTokenRequest{RefreshToken: "valid-token"})
 	require.NoError(t, err)
@@ -404,7 +404,7 @@ func TestDevLogin_user_not_found(t *testing.T) {
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 	userRepo.EXPECT().GetUserByEmail("nobody@example.com").Return(nil, sql.ErrNoRows)
 
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 	_, err := svc.DevLogin(ctx, &pb.DevLoginRequest{Email: "nobody@example.com"})
 	require.Error(t, err)
@@ -463,7 +463,7 @@ func TestDeleteAvatar_WithAvatar(t *testing.T) {
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 	s3Mock := mocks.NewMockS3Uploader(ctrl)
 
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, s3Mock)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, s3Mock)
 	ctx := context.Background()
 
 	userWithAvatar := &models.User{
@@ -494,7 +494,7 @@ func TestDeleteAvatar_WithoutAvatar(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 
 	user := &models.User{
@@ -517,7 +517,7 @@ func TestDeleteAvatar_UserNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 
-	svc := NewAuthService(userRepo, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
 	ctx := context.Background()
 
 	userRepo.EXPECT().GetUserByID("user-1").Return(nil, sql.ErrNoRows)

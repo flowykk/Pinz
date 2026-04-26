@@ -19,24 +19,31 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_SubmitEmail_FullMethodName           = "/auth.AuthService/SubmitEmail"
-	AuthService_VerifyEmailCode_FullMethodName       = "/auth.AuthService/VerifyEmailCode"
-	AuthService_PasskeyRegisterBegin_FullMethodName  = "/auth.AuthService/PasskeyRegisterBegin"
-	AuthService_PasskeyRegisterFinish_FullMethodName = "/auth.AuthService/PasskeyRegisterFinish"
-	AuthService_PasskeyLoginBegin_FullMethodName     = "/auth.AuthService/PasskeyLoginBegin"
-	AuthService_PasskeyLoginFinish_FullMethodName    = "/auth.AuthService/PasskeyLoginFinish"
-	AuthService_RefreshToken_FullMethodName          = "/auth.AuthService/RefreshToken"
-	AuthService_Logout_FullMethodName                = "/auth.AuthService/Logout"
-	AuthService_DevLogin_FullMethodName              = "/auth.AuthService/DevLogin"
-	AuthService_GetProfile_FullMethodName            = "/auth.AuthService/GetProfile"
-	AuthService_UpdateProfile_FullMethodName         = "/auth.AuthService/UpdateProfile"
-	AuthService_ChangeEmail_FullMethodName           = "/auth.AuthService/ChangeEmail"
-	AuthService_ConfirmEmailChange_FullMethodName    = "/auth.AuthService/ConfirmEmailChange"
-	AuthService_RequestAvatarUpload_FullMethodName   = "/auth.AuthService/RequestAvatarUpload"
-	AuthService_ConfirmAvatarUpload_FullMethodName   = "/auth.AuthService/ConfirmAvatarUpload"
-	AuthService_DeleteAvatar_FullMethodName          = "/auth.AuthService/DeleteAvatar"
-	AuthService_DeleteAccount_FullMethodName         = "/auth.AuthService/DeleteAccount"
-	AuthService_GetUsersProfiles_FullMethodName      = "/auth.AuthService/GetUsersProfiles"
+	AuthService_SubmitEmail_FullMethodName                    = "/auth.AuthService/SubmitEmail"
+	AuthService_VerifyEmailCode_FullMethodName                = "/auth.AuthService/VerifyEmailCode"
+	AuthService_PasskeyRegisterBegin_FullMethodName           = "/auth.AuthService/PasskeyRegisterBegin"
+	AuthService_PasskeyRegisterFinish_FullMethodName          = "/auth.AuthService/PasskeyRegisterFinish"
+	AuthService_PasskeyLoginBegin_FullMethodName              = "/auth.AuthService/PasskeyLoginBegin"
+	AuthService_PasskeyLoginFinish_FullMethodName             = "/auth.AuthService/PasskeyLoginFinish"
+	AuthService_RefreshToken_FullMethodName                   = "/auth.AuthService/RefreshToken"
+	AuthService_Logout_FullMethodName                         = "/auth.AuthService/Logout"
+	AuthService_DevLogin_FullMethodName                       = "/auth.AuthService/DevLogin"
+	AuthService_GetProfile_FullMethodName                     = "/auth.AuthService/GetProfile"
+	AuthService_UpdateProfile_FullMethodName                  = "/auth.AuthService/UpdateProfile"
+	AuthService_ChangeEmail_FullMethodName                    = "/auth.AuthService/ChangeEmail"
+	AuthService_ConfirmEmailChange_FullMethodName             = "/auth.AuthService/ConfirmEmailChange"
+	AuthService_RequestAvatarUpload_FullMethodName            = "/auth.AuthService/RequestAvatarUpload"
+	AuthService_ConfirmAvatarUpload_FullMethodName            = "/auth.AuthService/ConfirmAvatarUpload"
+	AuthService_DeleteAvatar_FullMethodName                   = "/auth.AuthService/DeleteAvatar"
+	AuthService_DeleteAccount_FullMethodName                  = "/auth.AuthService/DeleteAccount"
+	AuthService_GetUsersProfiles_FullMethodName               = "/auth.AuthService/GetUsersProfiles"
+	AuthService_ListDesiredPlaces_FullMethodName              = "/auth.AuthService/ListDesiredPlaces"
+	AuthService_CreateDesiredPlace_FullMethodName             = "/auth.AuthService/CreateDesiredPlace"
+	AuthService_UpdateDesiredPlace_FullMethodName             = "/auth.AuthService/UpdateDesiredPlace"
+	AuthService_DeleteDesiredPlace_FullMethodName             = "/auth.AuthService/DeleteDesiredPlace"
+	AuthService_RequestDesiredPlaceImageUpload_FullMethodName = "/auth.AuthService/RequestDesiredPlaceImageUpload"
+	AuthService_DeleteDesiredPlaceImage_FullMethodName        = "/auth.AuthService/DeleteDesiredPlaceImage"
+	AuthService_GetPublicUserProfile_FullMethodName           = "/auth.AuthService/GetPublicUserProfile"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -63,6 +70,15 @@ type AuthServiceClient interface {
 	// Batched публичные профили по списку user_id. Используется api-gateway для
 	// обогащения ответов списками участников (current_initiator, authors и т.п.).
 	GetUsersProfiles(ctx context.Context, in *GetUsersProfilesRequest, opts ...grpc.CallOption) (*GetUsersProfilesResponse, error)
+	// Желаемые места (ТЗ 1.13, 1.12.5). CRUD от лица текущего юзера.
+	ListDesiredPlaces(ctx context.Context, in *ListDesiredPlacesRequest, opts ...grpc.CallOption) (*ListDesiredPlacesResponse, error)
+	CreateDesiredPlace(ctx context.Context, in *CreateDesiredPlaceRequest, opts ...grpc.CallOption) (*CreateDesiredPlaceResponse, error)
+	UpdateDesiredPlace(ctx context.Context, in *UpdateDesiredPlaceRequest, opts ...grpc.CallOption) (*UpdateDesiredPlaceResponse, error)
+	DeleteDesiredPlace(ctx context.Context, in *DeleteDesiredPlaceRequest, opts ...grpc.CallOption) (*DeleteDesiredPlaceResponse, error)
+	RequestDesiredPlaceImageUpload(ctx context.Context, in *RequestDesiredPlaceImageUploadRequest, opts ...grpc.CallOption) (*RequestDesiredPlaceImageUploadResponse, error)
+	DeleteDesiredPlaceImage(ctx context.Context, in *DeleteDesiredPlaceImageRequest, opts ...grpc.CallOption) (*DeleteDesiredPlaceImageResponse, error)
+	// Публичный профиль другого пользователя + его список желаемых мест (ТЗ 1.7.2).
+	GetPublicUserProfile(ctx context.Context, in *GetPublicUserProfileRequest, opts ...grpc.CallOption) (*GetPublicUserProfileResponse, error)
 }
 
 type authServiceClient struct {
@@ -253,6 +269,76 @@ func (c *authServiceClient) GetUsersProfiles(ctx context.Context, in *GetUsersPr
 	return out, nil
 }
 
+func (c *authServiceClient) ListDesiredPlaces(ctx context.Context, in *ListDesiredPlacesRequest, opts ...grpc.CallOption) (*ListDesiredPlacesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDesiredPlacesResponse)
+	err := c.cc.Invoke(ctx, AuthService_ListDesiredPlaces_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) CreateDesiredPlace(ctx context.Context, in *CreateDesiredPlaceRequest, opts ...grpc.CallOption) (*CreateDesiredPlaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateDesiredPlaceResponse)
+	err := c.cc.Invoke(ctx, AuthService_CreateDesiredPlace_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) UpdateDesiredPlace(ctx context.Context, in *UpdateDesiredPlaceRequest, opts ...grpc.CallOption) (*UpdateDesiredPlaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateDesiredPlaceResponse)
+	err := c.cc.Invoke(ctx, AuthService_UpdateDesiredPlace_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) DeleteDesiredPlace(ctx context.Context, in *DeleteDesiredPlaceRequest, opts ...grpc.CallOption) (*DeleteDesiredPlaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteDesiredPlaceResponse)
+	err := c.cc.Invoke(ctx, AuthService_DeleteDesiredPlace_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) RequestDesiredPlaceImageUpload(ctx context.Context, in *RequestDesiredPlaceImageUploadRequest, opts ...grpc.CallOption) (*RequestDesiredPlaceImageUploadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RequestDesiredPlaceImageUploadResponse)
+	err := c.cc.Invoke(ctx, AuthService_RequestDesiredPlaceImageUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) DeleteDesiredPlaceImage(ctx context.Context, in *DeleteDesiredPlaceImageRequest, opts ...grpc.CallOption) (*DeleteDesiredPlaceImageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteDesiredPlaceImageResponse)
+	err := c.cc.Invoke(ctx, AuthService_DeleteDesiredPlaceImage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) GetPublicUserProfile(ctx context.Context, in *GetPublicUserProfileRequest, opts ...grpc.CallOption) (*GetPublicUserProfileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPublicUserProfileResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetPublicUserProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -277,6 +363,15 @@ type AuthServiceServer interface {
 	// Batched публичные профили по списку user_id. Используется api-gateway для
 	// обогащения ответов списками участников (current_initiator, authors и т.п.).
 	GetUsersProfiles(context.Context, *GetUsersProfilesRequest) (*GetUsersProfilesResponse, error)
+	// Желаемые места (ТЗ 1.13, 1.12.5). CRUD от лица текущего юзера.
+	ListDesiredPlaces(context.Context, *ListDesiredPlacesRequest) (*ListDesiredPlacesResponse, error)
+	CreateDesiredPlace(context.Context, *CreateDesiredPlaceRequest) (*CreateDesiredPlaceResponse, error)
+	UpdateDesiredPlace(context.Context, *UpdateDesiredPlaceRequest) (*UpdateDesiredPlaceResponse, error)
+	DeleteDesiredPlace(context.Context, *DeleteDesiredPlaceRequest) (*DeleteDesiredPlaceResponse, error)
+	RequestDesiredPlaceImageUpload(context.Context, *RequestDesiredPlaceImageUploadRequest) (*RequestDesiredPlaceImageUploadResponse, error)
+	DeleteDesiredPlaceImage(context.Context, *DeleteDesiredPlaceImageRequest) (*DeleteDesiredPlaceImageResponse, error)
+	// Публичный профиль другого пользователя + его список желаемых мест (ТЗ 1.7.2).
+	GetPublicUserProfile(context.Context, *GetPublicUserProfileRequest) (*GetPublicUserProfileResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -340,6 +435,27 @@ func (UnimplementedAuthServiceServer) DeleteAccount(context.Context, *DeleteAcco
 }
 func (UnimplementedAuthServiceServer) GetUsersProfiles(context.Context, *GetUsersProfilesRequest) (*GetUsersProfilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersProfiles not implemented")
+}
+func (UnimplementedAuthServiceServer) ListDesiredPlaces(context.Context, *ListDesiredPlacesRequest) (*ListDesiredPlacesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListDesiredPlaces not implemented")
+}
+func (UnimplementedAuthServiceServer) CreateDesiredPlace(context.Context, *CreateDesiredPlaceRequest) (*CreateDesiredPlaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateDesiredPlace not implemented")
+}
+func (UnimplementedAuthServiceServer) UpdateDesiredPlace(context.Context, *UpdateDesiredPlaceRequest) (*UpdateDesiredPlaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateDesiredPlace not implemented")
+}
+func (UnimplementedAuthServiceServer) DeleteDesiredPlace(context.Context, *DeleteDesiredPlaceRequest) (*DeleteDesiredPlaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDesiredPlace not implemented")
+}
+func (UnimplementedAuthServiceServer) RequestDesiredPlaceImageUpload(context.Context, *RequestDesiredPlaceImageUploadRequest) (*RequestDesiredPlaceImageUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestDesiredPlaceImageUpload not implemented")
+}
+func (UnimplementedAuthServiceServer) DeleteDesiredPlaceImage(context.Context, *DeleteDesiredPlaceImageRequest) (*DeleteDesiredPlaceImageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDesiredPlaceImage not implemented")
+}
+func (UnimplementedAuthServiceServer) GetPublicUserProfile(context.Context, *GetPublicUserProfileRequest) (*GetPublicUserProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPublicUserProfile not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -686,6 +802,132 @@ func _AuthService_GetUsersProfiles_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_ListDesiredPlaces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDesiredPlacesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ListDesiredPlaces(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ListDesiredPlaces_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ListDesiredPlaces(ctx, req.(*ListDesiredPlacesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_CreateDesiredPlace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDesiredPlaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).CreateDesiredPlace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_CreateDesiredPlace_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).CreateDesiredPlace(ctx, req.(*CreateDesiredPlaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_UpdateDesiredPlace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateDesiredPlaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).UpdateDesiredPlace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_UpdateDesiredPlace_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).UpdateDesiredPlace(ctx, req.(*UpdateDesiredPlaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_DeleteDesiredPlace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDesiredPlaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).DeleteDesiredPlace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_DeleteDesiredPlace_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).DeleteDesiredPlace(ctx, req.(*DeleteDesiredPlaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_RequestDesiredPlaceImageUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestDesiredPlaceImageUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).RequestDesiredPlaceImageUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_RequestDesiredPlaceImageUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).RequestDesiredPlaceImageUpload(ctx, req.(*RequestDesiredPlaceImageUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_DeleteDesiredPlaceImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDesiredPlaceImageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).DeleteDesiredPlaceImage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_DeleteDesiredPlaceImage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).DeleteDesiredPlaceImage(ctx, req.(*DeleteDesiredPlaceImageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_GetPublicUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPublicUserProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetPublicUserProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetPublicUserProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetPublicUserProfile(ctx, req.(*GetPublicUserProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -764,6 +1006,34 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUsersProfiles",
 			Handler:    _AuthService_GetUsersProfiles_Handler,
+		},
+		{
+			MethodName: "ListDesiredPlaces",
+			Handler:    _AuthService_ListDesiredPlaces_Handler,
+		},
+		{
+			MethodName: "CreateDesiredPlace",
+			Handler:    _AuthService_CreateDesiredPlace_Handler,
+		},
+		{
+			MethodName: "UpdateDesiredPlace",
+			Handler:    _AuthService_UpdateDesiredPlace_Handler,
+		},
+		{
+			MethodName: "DeleteDesiredPlace",
+			Handler:    _AuthService_DeleteDesiredPlace_Handler,
+		},
+		{
+			MethodName: "RequestDesiredPlaceImageUpload",
+			Handler:    _AuthService_RequestDesiredPlaceImageUpload_Handler,
+		},
+		{
+			MethodName: "DeleteDesiredPlaceImage",
+			Handler:    _AuthService_DeleteDesiredPlaceImage_Handler,
+		},
+		{
+			MethodName: "GetPublicUserProfile",
+			Handler:    _AuthService_GetPublicUserProfile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

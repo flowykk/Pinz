@@ -24,6 +24,14 @@ type AuthServiceInterface interface {
 	ConfirmAvatarUpload(ctx context.Context, userID, s3Key string) (*pb.ConfirmAvatarUploadResponse, error)
 	DeleteAvatar(ctx context.Context, userID string) (*pb.DeleteAvatarResponse, error)
 	DeleteAccount(ctx context.Context, userID string) (*pb.DeleteAccountResponse, error)
+
+	ListDesiredPlaces(ctx context.Context, userID string) (*pb.ListDesiredPlacesResponse, error)
+	CreateDesiredPlace(ctx context.Context, userID, name, description, s3Key string) (*pb.CreateDesiredPlaceResponse, error)
+	UpdateDesiredPlace(ctx context.Context, userID, placeID, name, description string, setImageKey bool, s3Key string) (*pb.UpdateDesiredPlaceResponse, error)
+	DeleteDesiredPlace(ctx context.Context, userID, placeID string) (*pb.DeleteDesiredPlaceResponse, error)
+	RequestDesiredPlaceImageUpload(ctx context.Context, userID, filename, contentType string) (*pb.RequestDesiredPlaceImageUploadResponse, error)
+	DeleteDesiredPlaceImage(ctx context.Context, userID, placeID string) (*pb.DeleteDesiredPlaceImageResponse, error)
+	GetPublicUserProfile(ctx context.Context, userID string) (*pb.GetPublicUserProfileResponse, error)
 }
 
 type AuthClient interface {
@@ -44,6 +52,14 @@ type AuthClient interface {
 	ConfirmAvatarUpload(ctx context.Context, req *pb.ConfirmAvatarUploadRequest) (*pb.ConfirmAvatarUploadResponse, error)
 	DeleteAvatar(ctx context.Context, req *pb.DeleteAvatarRequest) (*pb.DeleteAvatarResponse, error)
 	DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error)
+	GetUsersProfiles(ctx context.Context, req *pb.GetUsersProfilesRequest) (*pb.GetUsersProfilesResponse, error)
+	ListDesiredPlaces(ctx context.Context, req *pb.ListDesiredPlacesRequest) (*pb.ListDesiredPlacesResponse, error)
+	CreateDesiredPlace(ctx context.Context, req *pb.CreateDesiredPlaceRequest) (*pb.CreateDesiredPlaceResponse, error)
+	UpdateDesiredPlace(ctx context.Context, req *pb.UpdateDesiredPlaceRequest) (*pb.UpdateDesiredPlaceResponse, error)
+	DeleteDesiredPlace(ctx context.Context, req *pb.DeleteDesiredPlaceRequest) (*pb.DeleteDesiredPlaceResponse, error)
+	RequestDesiredPlaceImageUpload(ctx context.Context, req *pb.RequestDesiredPlaceImageUploadRequest) (*pb.RequestDesiredPlaceImageUploadResponse, error)
+	DeleteDesiredPlaceImage(ctx context.Context, req *pb.DeleteDesiredPlaceImageRequest) (*pb.DeleteDesiredPlaceImageResponse, error)
+	GetPublicUserProfile(ctx context.Context, req *pb.GetPublicUserProfileRequest) (*pb.GetPublicUserProfileResponse, error)
 }
 
 type AuthService struct {
@@ -136,4 +152,48 @@ func (s *AuthService) DeleteAvatar(ctx context.Context, userID string) (*pb.Dele
 
 func (s *AuthService) DeleteAccount(ctx context.Context, userID string) (*pb.DeleteAccountResponse, error) {
 	return s.authClient.DeleteAccount(ctx, &pb.DeleteAccountRequest{UserId: userID})
+}
+
+func (s *AuthService) ListDesiredPlaces(ctx context.Context, userID string) (*pb.ListDesiredPlacesResponse, error) {
+	return s.authClient.ListDesiredPlaces(ctx, &pb.ListDesiredPlacesRequest{UserId: userID})
+}
+
+func (s *AuthService) CreateDesiredPlace(ctx context.Context, userID, name, description, s3Key string) (*pb.CreateDesiredPlaceResponse, error) {
+	return s.authClient.CreateDesiredPlace(ctx, &pb.CreateDesiredPlaceRequest{
+		UserId:      userID,
+		Name:        name,
+		Description: description,
+		S3Key:       s3Key,
+	})
+}
+
+func (s *AuthService) UpdateDesiredPlace(ctx context.Context, userID, placeID, name, description string, setImageKey bool, s3Key string) (*pb.UpdateDesiredPlaceResponse, error) {
+	return s.authClient.UpdateDesiredPlace(ctx, &pb.UpdateDesiredPlaceRequest{
+		UserId:      userID,
+		PlaceId:     placeID,
+		Name:        name,
+		Description: description,
+		SetImageKey: setImageKey,
+		S3Key:       s3Key,
+	})
+}
+
+func (s *AuthService) DeleteDesiredPlace(ctx context.Context, userID, placeID string) (*pb.DeleteDesiredPlaceResponse, error) {
+	return s.authClient.DeleteDesiredPlace(ctx, &pb.DeleteDesiredPlaceRequest{UserId: userID, PlaceId: placeID})
+}
+
+func (s *AuthService) RequestDesiredPlaceImageUpload(ctx context.Context, userID, filename, contentType string) (*pb.RequestDesiredPlaceImageUploadResponse, error) {
+	return s.authClient.RequestDesiredPlaceImageUpload(ctx, &pb.RequestDesiredPlaceImageUploadRequest{
+		UserId:      userID,
+		Filename:    filename,
+		ContentType: contentType,
+	})
+}
+
+func (s *AuthService) DeleteDesiredPlaceImage(ctx context.Context, userID, placeID string) (*pb.DeleteDesiredPlaceImageResponse, error) {
+	return s.authClient.DeleteDesiredPlaceImage(ctx, &pb.DeleteDesiredPlaceImageRequest{UserId: userID, PlaceId: placeID})
+}
+
+func (s *AuthService) GetPublicUserProfile(ctx context.Context, userID string) (*pb.GetPublicUserProfileResponse, error) {
+	return s.authClient.GetPublicUserProfile(ctx, &pb.GetPublicUserProfileRequest{UserId: userID})
 }
