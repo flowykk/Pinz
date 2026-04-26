@@ -843,6 +843,11 @@ definitions:
           type: array
         type: array
     type: object
+  pinz_backend_api-gateway-service_internal_responses.GetRecommendationsResponse:
+    properties:
+      map:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.RecommendedMap'
+    type: object
   pinz_backend_api-gateway-service_internal_responses.GetTripResponse:
     properties:
       active_add_media_session:
@@ -1046,6 +1051,53 @@ definitions:
       username:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_responses.RecommendedMap:
+    properties:
+      media:
+        description: Топ-8 медиа всей карты (карусель в карточке ленты).
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'
+        type: array
+      pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.RecommendedPin'
+        type: array
+      region_name:
+        type: string
+      region_type:
+        type: string
+      trip:
+        allOf:
+        - $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+        description: |-
+          Виртуальный трип-обёртка с name/description/dates/cover/счётчиками.
+          trip.id пуст до вызова SaveRecommendation.
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.RecommendedPin:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      location_name:
+        type: string
+      longitude:
+        type: number
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'
+        type: array
+      media_count:
+        type: integer
+      name:
+        type: string
+      trip_id:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_responses.RefreshTokenResponse:
     properties:
       access_token:
@@ -1104,6 +1156,11 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SaveRecommendationResponse:
+    properties:
+      trip:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
     type: object
   pinz_backend_api-gateway-service_internal_responses.SessionMediaEntry:
     properties:
@@ -2080,6 +2137,76 @@ paths:
       summary: Get current user's visited locations
       tags:
       - statistics
+  /api/v1/recommendations:
+    get:
+      parameters:
+      - description: city name (mutually exclusive with country)
+        in: query
+        name: city
+        type: string
+      - description: country name (mutually exclusive with city)
+        in: query
+        name: country
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetRecommendationsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get recommendations
+      tags:
+      - recommendations
+  /api/v1/recommendations/save:
+    post:
+      parameters:
+      - description: city name (mutually exclusive with country)
+        in: query
+        name: city
+        type: string
+      - description: country name (mutually exclusive with city)
+        in: query
+        name: country
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SaveRecommendationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Save recommendation as trip
+      tags:
+      - recommendations
   /api/v1/trips:
     get:
       consumes:

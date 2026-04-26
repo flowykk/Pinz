@@ -171,6 +171,13 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Get("/", deps.TripHandler.ListFeed)
 			})
 
+			// рекомендательная система (ТЗ 9): карта популярных мест по городу/стране.
+			r.Route("/recommendations", func(r chi.Router) {
+				r.Use(middleware.RequireJWT)
+				r.Get("/", deps.TripHandler.GetRecommendations)
+				r.Post("/save", deps.TripHandler.SaveRecommendation)
+			})
+
 			// текстовый поиск пинов в трипах авторизованного пользователя.
 			r.Route("/pins", func(r chi.Router) {
 				r.Use(middleware.RequireJWT)

@@ -361,3 +361,82 @@ func (r *PinRepository) IncMediaCount(pinID string, delta int) error {
 	}
 	return nil
 }
+
+// RecommendationPinCandidate — пин-кандидат для рекомендательной выборки (ТЗ 9):
+// результат CTE с ST_ClusterDBSCAN, партиционированной по category. ClusterID=-1
+// проставляется на случай NULL (DBSCAN-edge-cases при minpoints=1 не должен давать
+// NULL, но защищаемся sql.NullInt64).
+type RecommendationPinCandidate struct {
+	ID string
+	TripID string
+	Name string
+	Description string
+	Category string
+	LocationName string
+	MediaCount int32
+	Latitude float64
+	Longitude float64
+	ClusterID int32
+	TripScore int32
+}
+
+// ListRecommendationCandidates — выборка для ТЗ 9.2:
+//   - топ-50 опубликованных трипов региона за 2 года по score = likes - dislikes;
+//   - все их пины, опубликованные в фид и с координатами;
+//   - кластеризация ST_ClusterDBSCAN по координатам, eps в метрах (через ST_Transform → 3857),
+//     отдельные кластеры на каждую категорию (PARTITION BY p.category).
+//
+// epsMeters: 50 (ТЗ 9.2.3.a) или 500 (9.2.3.b).
+func (r *PinRepository) ListRecommendationCandidates(locationID int, epsMeters float64) ([]*RecommendationPinCandidate, error) {
+	const sqlStr = `
+WITH top_trips AS (
+ SELECT t.id, (t.likes_count - t.dislikes_count)::int AS score
+ FROM trips t
+ JOIN trip_locations tl ON tl.trip_id = t.id
+ WHERE tl.location_id = $1
+  AND t.is_published = true
+  AND t.is_soft_deleted = false
+  AND t.privacy_level = 'Public'
+  AND COALESCE(t.end_date, t.start_date) >= NOW() - INTERVAL '2 years'
+ ORDER BY score DESC
+ LIMIT 50
+),
+candidates AS (
+ SELECT p.id, p.trip_id, p.name, COALESCE(p.description, '') AS description,
+  p.category, p.location_name, p.media_count,
+  ST_Y(p.location)::float AS lat, ST_X(p.location)::float AS lon,
+  p.location, tt.score
+ FROM pins p
+ JOIN top_trips tt ON tt.id = p.trip_id
+ WHERE p.is_published_in_feed = true AND p.location IS NOT NULL
+)
+SELECT id, trip_id, name, description, category, location_name, media_count,
+ lat, lon,
+ ST_ClusterDBSCAN(ST_Transform(location, 3857), eps := $2, minpoints := 1)
+  OVER (PARTITION BY category) AS cluster_id,
+ score
+FROM candidates`
+	rows, err := r.db.Query(sqlStr, locationID, epsMeters)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*RecommendationPinCandidate
+	for rows.Next() {
+		var c RecommendationPinCandidate
+		var cluster sql.NullInt64
+		if err := rows.Scan(
+			&c.ID, &c.TripID, &c.Name, &c.Description, &c.Category, &c.LocationName, &c.MediaCount,
+			&c.Latitude, &c.Longitude, &cluster, &c.TripScore,
+		); err != nil {
+			return nil, err
+		}
+		if cluster.Valid {
+			c.ClusterID = int32(cluster.Int64)
+		} else {
+			c.ClusterID = -1
+		}
+		out = append(out, &c)
+	}
+	return out, rows.Err()
+}

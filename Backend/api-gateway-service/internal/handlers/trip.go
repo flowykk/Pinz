@@ -91,6 +91,8 @@ type TripClient interface {
 	GetPinCreationReview(ctx context.Context, req *proto.GetPinCreationReviewRequest) (*proto.GetPinCreationReviewResponse, error)
 	FinalizePinCreation(ctx context.Context, req *proto.FinalizePinCreationRequest) (*proto.FinalizePinCreationResponse, error)
 	CancelPinCreation(ctx context.Context, req *proto.CancelPinCreationRequest) (*proto.CancelPinCreationResponse, error)
+	GetRecommendations(ctx context.Context, req *proto.GetRecommendationsRequest) (*proto.GetRecommendationsResponse, error)
+	SaveRecommendation(ctx context.Context, req *proto.SaveRecommendationRequest) (*proto.SaveRecommendationResponse, error)
 }
 
 func NewTripHandler(tripClient TripClient, authEnricher AuthProfileEnricher) *TripHandler {
@@ -2189,4 +2191,118 @@ func (h *TripHandler) GetBestMemories(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	respondJSON(w, http.StatusOK, responses.GetBestMemoriesResponse{Media: media})
+}
+
+// GetRecommendations returns a popular-places map for the requested city or country (ТЗ 9.1-9.3).
+// @Summary Get recommendations
+// @Tags recommendations
+// @Produce json
+// @Security BearerAuth
+// @Param city query string false "city name (mutually exclusive with country)"
+// @Param country query string false "country name (mutually exclusive with city)"
+// @Success 200 {object} responses.GetRecommendationsResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Router /api/v1/recommendations [get]
+func (h *TripHandler) GetRecommendations(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if middleware.UserIDFromContext(ctx) == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	city := r.URL.Query().Get("city")
+	country := r.URL.Query().Get("country")
+	if (city == "") == (country == "") {
+		respondError(w, http.StatusBadRequest, "exactly one of city or country must be provided")
+		return
+	}
+	resp, err := h.tripClient.GetRecommendations(ctx, &proto.GetRecommendationsRequest{
+		City: city,
+		Country: country,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "GetRecommendations")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.GetRecommendationsResponse{Map: recommendedMapProtoToResponse(resp.GetMap())})
+}
+
+// SaveRecommendation persists the popular-places map as a generated trip in the user's favourites (ТЗ 9.4).
+// @Summary Save recommendation as trip
+// @Tags recommendations
+// @Produce json
+// @Security BearerAuth
+// @Param city query string false "city name (mutually exclusive with country)"
+// @Param country query string false "country name (mutually exclusive with city)"
+// @Success 200 {object} responses.SaveRecommendationResponse
+// @Failure 400 {object} responses.ErrorResponse
+// @Failure 401 {object} responses.ErrorResponse
+// @Failure 404 {object} responses.ErrorResponse
+// @Router /api/v1/recommendations/save [post]
+func (h *TripHandler) SaveRecommendation(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if middleware.UserIDFromContext(ctx) == "" {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	city := r.URL.Query().Get("city")
+	country := r.URL.Query().Get("country")
+	if (city == "") == (country == "") {
+		respondError(w, http.StatusBadRequest, "exactly one of city or country must be provided")
+		return
+	}
+	resp, err := h.tripClient.SaveRecommendation(ctx, &proto.SaveRecommendationRequest{
+		City: city,
+		Country: country,
+	})
+	if err != nil {
+		handleServiceError(w, r, err, "SaveRecommendation")
+		return
+	}
+	respondJSON(w, http.StatusOK, responses.SaveRecommendationResponse{Trip: tripProtoToResponse(resp.GetTrip())})
+}
+
+func recommendedMapProtoToResponse(m *proto.RecommendedMap) responses.RecommendedMap {
+	if m == nil {
+		return responses.RecommendedMap{}
+	}
+	pins := make([]responses.RecommendedPin, len(m.GetPins()))
+	for i, p := range m.GetPins() {
+		media := make([]responses.FeedMedia, len(p.GetMedia()))
+		for j, fm := range p.GetMedia() {
+			media[j] = responses.FeedMedia{
+				MediaID: fm.GetMediaId(),
+				URL: fm.GetUrl(),
+				MediaType: fm.GetMediaType(),
+			}
+		}
+		pins[i] = responses.RecommendedPin{
+			ID: p.GetId(),
+			TripID: p.GetTripId(),
+			Latitude: p.GetLatitude(),
+			Longitude: p.GetLongitude(),
+			Name: p.GetName(),
+			Description: p.GetDescription(),
+			Category: p.GetCategory(),
+			LocationName: p.GetLocationName(),
+			MediaCount: p.GetMediaCount(),
+			Media: media,
+		}
+	}
+	media := make([]responses.FeedMedia, len(m.GetMedia()))
+	for i, fm := range m.GetMedia() {
+		media[i] = responses.FeedMedia{
+			MediaID: fm.GetMediaId(),
+			URL: fm.GetUrl(),
+			MediaType: fm.GetMediaType(),
+		}
+	}
+	return responses.RecommendedMap{
+		RegionName: m.GetRegionName(),
+		RegionType: m.GetRegionType(),
+		Pins: pins,
+		Trip: tripProtoToResponse(m.GetTrip()),
+		Media: media,
+	}
 }

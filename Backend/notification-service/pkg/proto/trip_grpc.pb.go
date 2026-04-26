@@ -85,6 +85,8 @@ const (
 	TripService_GetPinCreationReview_FullMethodName          = "/trip.TripService/GetPinCreationReview"
 	TripService_FinalizePinCreation_FullMethodName           = "/trip.TripService/FinalizePinCreation"
 	TripService_CancelPinCreation_FullMethodName             = "/trip.TripService/CancelPinCreation"
+	TripService_GetRecommendations_FullMethodName            = "/trip.TripService/GetRecommendations"
+	TripService_SaveRecommendation_FullMethodName            = "/trip.TripService/SaveRecommendation"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -173,6 +175,10 @@ type TripServiceClient interface {
 	GetPinCreationReview(ctx context.Context, in *GetPinCreationReviewRequest, opts ...grpc.CallOption) (*GetPinCreationReviewResponse, error)
 	FinalizePinCreation(ctx context.Context, in *FinalizePinCreationRequest, opts ...grpc.CallOption) (*FinalizePinCreationResponse, error)
 	CancelPinCreation(ctx context.Context, in *CancelPinCreationRequest, opts ...grpc.CallOption) (*CancelPinCreationResponse, error)
+	// Рекомендации (ТЗ 9): карта популярных мест по городу/стране и
+	// материализация её как сохранённого трипа.
+	GetRecommendations(ctx context.Context, in *GetRecommendationsRequest, opts ...grpc.CallOption) (*GetRecommendationsResponse, error)
+	SaveRecommendation(ctx context.Context, in *SaveRecommendationRequest, opts ...grpc.CallOption) (*SaveRecommendationResponse, error)
 }
 
 type tripServiceClient struct {
@@ -843,6 +849,26 @@ func (c *tripServiceClient) CancelPinCreation(ctx context.Context, in *CancelPin
 	return out, nil
 }
 
+func (c *tripServiceClient) GetRecommendations(ctx context.Context, in *GetRecommendationsRequest, opts ...grpc.CallOption) (*GetRecommendationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetRecommendationsResponse)
+	err := c.cc.Invoke(ctx, TripService_GetRecommendations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tripServiceClient) SaveRecommendation(ctx context.Context, in *SaveRecommendationRequest, opts ...grpc.CallOption) (*SaveRecommendationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveRecommendationResponse)
+	err := c.cc.Invoke(ctx, TripService_SaveRecommendation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TripServiceServer is the server API for TripService service.
 // All implementations must embed UnimplementedTripServiceServer
 // for forward compatibility.
@@ -929,6 +955,10 @@ type TripServiceServer interface {
 	GetPinCreationReview(context.Context, *GetPinCreationReviewRequest) (*GetPinCreationReviewResponse, error)
 	FinalizePinCreation(context.Context, *FinalizePinCreationRequest) (*FinalizePinCreationResponse, error)
 	CancelPinCreation(context.Context, *CancelPinCreationRequest) (*CancelPinCreationResponse, error)
+	// Рекомендации (ТЗ 9): карта популярных мест по городу/стране и
+	// материализация её как сохранённого трипа.
+	GetRecommendations(context.Context, *GetRecommendationsRequest) (*GetRecommendationsResponse, error)
+	SaveRecommendation(context.Context, *SaveRecommendationRequest) (*SaveRecommendationResponse, error)
 	mustEmbedUnimplementedTripServiceServer()
 }
 
@@ -1136,6 +1166,12 @@ func (UnimplementedTripServiceServer) FinalizePinCreation(context.Context, *Fina
 }
 func (UnimplementedTripServiceServer) CancelPinCreation(context.Context, *CancelPinCreationRequest) (*CancelPinCreationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelPinCreation not implemented")
+}
+func (UnimplementedTripServiceServer) GetRecommendations(context.Context, *GetRecommendationsRequest) (*GetRecommendationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRecommendations not implemented")
+}
+func (UnimplementedTripServiceServer) SaveRecommendation(context.Context, *SaveRecommendationRequest) (*SaveRecommendationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveRecommendation not implemented")
 }
 func (UnimplementedTripServiceServer) mustEmbedUnimplementedTripServiceServer() {}
 func (UnimplementedTripServiceServer) testEmbeddedByValue()                     {}
@@ -2346,6 +2382,42 @@ func _TripService_CancelPinCreation_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TripService_GetRecommendations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRecommendationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).GetRecommendations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_GetRecommendations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).GetRecommendations(ctx, req.(*GetRecommendationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TripService_SaveRecommendation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveRecommendationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TripServiceServer).SaveRecommendation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TripService_SaveRecommendation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TripServiceServer).SaveRecommendation(ctx, req.(*SaveRecommendationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TripService_ServiceDesc is the grpc.ServiceDesc for TripService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2616,6 +2688,14 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelPinCreation",
 			Handler:    _TripService_CancelPinCreation_Handler,
+		},
+		{
+			MethodName: "GetRecommendations",
+			Handler:    _TripService_GetRecommendations_Handler,
+		},
+		{
+			MethodName: "SaveRecommendation",
+			Handler:    _TripService_SaveRecommendation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

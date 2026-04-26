@@ -87,6 +87,10 @@ service TripService {
  rpc GetPinCreationReview(GetPinCreationReviewRequest) returns (GetPinCreationReviewResponse);
  rpc FinalizePinCreation(FinalizePinCreationRequest) returns (FinalizePinCreationResponse);
  rpc CancelPinCreation(CancelPinCreationRequest) returns (CancelPinCreationResponse);
+ // Рекомендации (ТЗ 9): карта популярных мест по городу/стране и
+ // материализация её как сохранённого трипа.
+ rpc GetRecommendations(GetRecommendationsRequest) returns (GetRecommendationsResponse);
+ rpc SaveRecommendation(SaveRecommendationRequest) returns (SaveRecommendationResponse);
 }
 
 message Trip {
@@ -1037,4 +1041,53 @@ message CancelPinCreationRequest {
 }
 message CancelPinCreationResponse {
  string status = 1;
+}
+
+// Рекомендации (ТЗ 9): запрос принимает либо city, либо country (XOR).
+// Радиус кластеризации выбирается на сервере: 50 м для города, 500 м для страны.
+message GetRecommendationsRequest {
+ string city = 1;
+ string country = 2;
+}
+
+// RecommendedPin — пин-кандидат из топ-трипов региона. ID и trip_id указывают
+// на исходный пин/трип (для возможной навигации клиента); при сохранении
+// рекомендации (SaveRecommendation) пины копируются в новый generated-трип.
+message RecommendedPin {
+ string id = 1;
+ string trip_id = 2;
+ double latitude = 3;
+ double longitude = 4;
+ string name = 5;
+ string description = 6;
+ string category = 7;
+ string location_name = 8;
+ int32 media_count = 9;
+ repeated FeedMedia media = 10;
+}
+
+message RecommendedMap {
+ string region_name = 1;
+ string region_type = 2; // "City" | "Country"
+ repeated RecommendedPin pins = 3;
+ // Виртуальный трип-обёртка с заполненными name/description/cover/счётчиками,
+ // чтобы карта могла встраиваться в общую ленту как обычный FeedItem.
+ // trip.id пустой до вызова SaveRecommendation.
+ Trip trip = 4;
+ // Топ-8 медиа из всех выбранных пинов (для карусели в карточке ленты),
+ // отсортированы по battle_rating DESC.
+ repeated FeedMedia media = 5;
+}
+
+message GetRecommendationsResponse {
+ RecommendedMap map = 1;
+}
+
+message SaveRecommendationRequest {
+ string city = 1;
+ string country = 2;
+}
+
+message SaveRecommendationResponse {
+ Trip trip = 1;
 }
