@@ -40,4 +40,30 @@ public enum TripCategory: PickerItem {
         default: return false
         }
     }
+
+    public var apiValue: String? {
+        switch self {
+        case .none:       return nil
+        case .vacation:   return "vacation"
+        case .holidays:   return "holidays"
+        case .business:   return "business"
+        case .education:  return "education"
+        case .active:     return "active"
+        case .custom:     return "custom"
+        }
+    }
+}
+
+extension TripCategory: Equatable {
+    public static func == (lhs: TripCategory, rhs: TripCategory) -> Bool {
+        switch (lhs, rhs) {
+        case (.none, .none), (.vacation, .vacation), (.holidays, .holidays),
+             (.business, .business), (.education, .education), (.active, .active):
+            return true
+        case (.custom(let a), .custom(let b)):
+            return a == b
+        default:
+            return false
+        }
+    }
 }

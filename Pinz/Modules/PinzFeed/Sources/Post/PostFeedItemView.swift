@@ -72,12 +72,6 @@ struct PostFeedItemView: View {
                     iconColor: PinzUIAsset.textPrimary
                 )
             }.buttonStyle(.plain)
-            StatisticView(
-                icon: "eye",
-                text: String(viewModel.post.views),
-                iconSize: iconSize,
-                iconColor: PinzUIAsset.textPrimary
-            )
         }
     }
 

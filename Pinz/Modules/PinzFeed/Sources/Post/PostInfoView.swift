@@ -29,7 +29,6 @@ public struct PostInfoView: View {
                     hideMediaBadges: true,
                     pinTapped: { _ in }
                 )
-                .padding(.horizontal, 12)
                 .padding(.bottom, 20)
             }
             .padding(.top, 8)
@@ -96,12 +95,6 @@ public struct PostInfoView: View {
                 )
             }
             .buttonStyle(.plain)
-            StatisticView(
-                icon: "eye",
-                text: String(viewModel.post.views),
-                iconSize: iconSize,
-                iconColor: PinzUIAsset.textPrimary
-            )
         }
     }
 
