@@ -24,6 +24,7 @@ public protocol AppRouting {
     func navigateToSelectablePinsList(trip: Trip)
     func navigateToPostPreview(trip: Trip, selectedPins: [Pin])
     func navigateToPostInfo(post: Post)
+    func navigateToSavedTripDetail(trip: Trip)
 
     func navigateToMediaInfo(media: MediaItem, updateAction: MediaUpdateAction?)
     func navigateToLocalMediaInfo(media: LoadedMedia)

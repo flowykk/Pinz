@@ -218,6 +218,7 @@
 "postPreview.title.main" = "Post Preview";
 "postPreview.button.publish" = "Publish Trip";
 "postPreview.error.publishFailed" = "Failed to publish trip. Please try again.";
+"savedTrip.error.load" = "Couldn’t load trip. Please try again.";
 
 // MARK: - Move Media
 "moveMedia.label.instructions" = "Choose a pin to\nmove the media to";

@@ -62,6 +62,8 @@ public struct RootView<Content: View>: View {
                 PostPreviewView(trip: trip, selectedPins: selectedPins)
             case let .postInfo(post):
                 PostInfoView(post: post)
+            case let .savedTrip(trip):
+                SavedTripView(trip: trip)
             }
         case let .tripCreation(tripCreationRoute):
             switch tripCreationRoute {

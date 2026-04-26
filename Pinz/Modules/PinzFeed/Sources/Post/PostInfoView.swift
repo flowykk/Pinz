@@ -101,7 +101,6 @@ public struct PostInfoView: View {
     private var tripMap: some View {
         TripMapView(position: $viewModel.position, pins: viewModel.post.pins)
             .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 26))
             .disabled(true)
             .overlay {
                 VStack {
@@ -110,6 +109,6 @@ public struct PostInfoView: View {
                 }
                 .padding(.bottom, -85)
             }
-            .cornerRadius(10)
+            .clipShape(RoundedRectangle(cornerRadius: 26))
     }
 }
