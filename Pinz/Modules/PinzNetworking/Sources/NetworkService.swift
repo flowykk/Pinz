@@ -121,6 +121,24 @@ public protocol NetworkServiceProtocol {
     func updateDesiredPlace(placeId: String, name: String, description: String, imageS3Key: String?) async throws -> DesiredPlaceDTO
     func deleteDesiredPlace(placeId: String) async throws -> SuccessDTO
     func deleteDesiredPlaceImage(placeId: String) async throws -> DesiredPlaceDTO
+
+    // Pins CRUD
+    func getPin(tripId: String, pinId: String) async throws -> PinResponseDTO
+    func deletePin(tripId: String, pinId: String) async throws -> DeletePinResponseDTO
+    func updatePin(
+        tripId: String,
+        pinId: String,
+        name: String?,
+        description: String?,
+        category: String?,
+        latitude: Double?,
+        longitude: Double?,
+        startTimeUnix: Int?,
+        endTimeUnix: Int?,
+        tags: [String]?,
+        tagsSet: Bool?
+    ) async throws -> PinResponseDTO
+    func searchPins(q: String, limit: Int?, offset: Int?) async throws -> [TripPinDTO]
 }
 
 // MARK: - Implementation
@@ -132,7 +150,7 @@ public final class NetworkService: NetworkServiceProtocol {
     private let tripCreationWebSocketClient: TripCreationWebSocketClient
 
     public init() {
-        let stub: Bool = true
+        let stub: Bool = false
         self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: 0.5)
         self.tripCreationWebSocketClient = TripCreationWebSocketClient()
     }
@@ -793,6 +811,45 @@ public final class NetworkService: NetworkServiceProtocol {
 
     public func deleteDesiredPlaceImage(placeId: String) async throws -> DesiredPlaceDTO {
         try await provider.request(.deleteDesiredPlaceImage(placeId: placeId), type: DesiredPlaceDTO.self)
+    }
+
+    // MARK: Pins CRUD
+
+    public func getPin(tripId: String, pinId: String) async throws -> PinResponseDTO {
+        try await provider.request(.getPin(tripId: tripId, pinId: pinId), type: PinResponseDTO.self)
+    }
+
+    public func deletePin(tripId: String, pinId: String) async throws -> DeletePinResponseDTO {
+        try await provider.request(.deletePin(tripId: tripId, pinId: pinId), type: DeletePinResponseDTO.self)
+    }
+
+    public func updatePin(
+        tripId: String,
+        pinId: String,
+        name: String? = nil,
+        description: String? = nil,
+        category: String? = nil,
+        latitude: Double? = nil,
+        longitude: Double? = nil,
+        startTimeUnix: Int? = nil,
+        endTimeUnix: Int? = nil,
+        tags: [String]? = nil,
+        tagsSet: Bool? = nil
+    ) async throws -> PinResponseDTO {
+        try await provider.request(
+            .updatePin(
+                tripId: tripId, pinId: pinId,
+                name: name, description: description, category: category,
+                latitude: latitude, longitude: longitude,
+                startTimeUnix: startTimeUnix, endTimeUnix: endTimeUnix,
+                tags: tags, tagsSet: tagsSet
+            ),
+            type: PinResponseDTO.self
+        )
+    }
+
+    public func searchPins(q: String, limit: Int? = nil, offset: Int? = nil) async throws -> [TripPinDTO] {
+        try await provider.request(.searchPins(q: q, limit: limit, offset: offset), type: [TripPinDTO].self)
     }
 }
 // swiftlint:enable file_length function_parameter_count

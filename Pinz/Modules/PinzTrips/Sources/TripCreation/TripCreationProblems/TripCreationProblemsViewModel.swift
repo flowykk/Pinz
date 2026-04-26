@@ -66,7 +66,8 @@ final class TripCreationProblemsViewModel {
                     self?.pins[pinProblem.pinIndex] = fixedPin
                     self?.syncDraftPins()
                 }
-            }
+            },
+            deleteAction: nil
         )
     }
 

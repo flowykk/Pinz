@@ -309,6 +309,66 @@ final class MockNetworkService: NetworkServiceProtocol {
     }
     func deleteDesiredPlaceImage(placeId: String) async throws -> DesiredPlaceDTO { try deleteDesiredPlaceImageResult.get() }
 
+    // MARK: - Pins
+
+    var getPinResult: Result<PinResponseDTO, Error> = .success(
+        PinResponseDTO(pin: MockNetworkService.stubTripPins[0])
+    )
+    var updatePinResult: Result<PinResponseDTO, Error> = .success(
+        PinResponseDTO(pin: MockNetworkService.stubTripPins[0])
+    )
+    var deletePinResult: Result<DeletePinResponseDTO, Error> = .success(
+        DeletePinResponseDTO(deletionMode: "full")
+    )
+    var searchPinsResult: Result<[TripPinDTO], Error> = .success([])
+
+    var getPinCall: (tripId: String, pinId: String)?
+    var updatePinCall: (
+        tripId: String,
+        pinId: String,
+        name: String?,
+        description: String?,
+        category: String?,
+        latitude: Double?,
+        longitude: Double?,
+        startTimeUnix: Int?,
+        endTimeUnix: Int?,
+        tags: [String]?,
+        tagsSet: Bool?
+    )?
+    var deletePinCall: (tripId: String, pinId: String)?
+
+    func getPin(tripId: String, pinId: String) async throws -> PinResponseDTO {
+        getPinCall = (tripId, pinId)
+        return try getPinResult.get()
+    }
+
+    func updatePin(
+        tripId: String,
+        pinId: String,
+        name: String?,
+        description: String?,
+        category: String?,
+        latitude: Double?,
+        longitude: Double?,
+        startTimeUnix: Int?,
+        endTimeUnix: Int?,
+        tags: [String]?,
+        tagsSet: Bool?
+    ) async throws -> PinResponseDTO {
+        updatePinCall = (tripId, pinId, name, description, category, latitude, longitude, startTimeUnix, endTimeUnix, tags, tagsSet)
+        return try updatePinResult.get()
+    }
+
+    func deletePin(tripId: String, pinId: String) async throws -> DeletePinResponseDTO {
+        deletePinCall = (tripId, pinId)
+        return try deletePinResult.get()
+    }
+
+    func searchPins(q: String, limit: Int?, offset: Int?) async throws -> [TripPinDTO] {
+        try searchPinsResult.get()
+    }
+
     // MARK: - Stub data
 
     struct UpdateTripCall: Equatable {

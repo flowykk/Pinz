@@ -8,7 +8,7 @@ extension PinInfoView {
         VStack(spacing: 12) {
             if viewModel.isEditing { nameEditing }
             general
-            if !viewModel.pin.tags.isEmpty { tags }
+            if !viewModel.pin.tags.isEmpty || viewModel.isEditing { tags }
             if viewModel.isEditing {
                 descriptionEditing
                 delete
@@ -138,7 +138,7 @@ extension PinInfoView {
                 leading: .iconTitle(PinInfoIcon.trash, PinzBaseStrings.PinInfo.Button.delete),
                 trailing: .icon(PinInfoIcon.chevronRight),
                 style: .destructive,
-                action: .plain { }
+                action: .plain { showDeletePinAlert = true }
             ))
         ])
     }

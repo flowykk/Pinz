@@ -3,7 +3,9 @@ import CoreLocation
 @testable import PinzPins
 import PinzBase
 import PinzDomain
+import PinzNetworking
 
+@MainActor
 final class PinInfoViewModelTests: XCTestCase {
 
     private var mockRouter: MockRouter!
@@ -35,14 +37,14 @@ final class PinInfoViewModelTests: XCTestCase {
 
     func test_edit_remembersPreviousState() {
         sut.dispatch(.edit)
-        sut.dispatch(.endEdit)
+        sut.dispatch(.cancelEdit)
         XCTAssertEqual(sut.state, .info)
     }
 
     func test_editFromGallery_returnsToGallery() {
         sut.state = .gallery
         sut.dispatch(.edit)
-        sut.dispatch(.endEdit)
+        sut.dispatch(.cancelEdit)
         XCTAssertEqual(sut.state, .gallery)
     }
 
@@ -97,6 +99,40 @@ final class PinInfoViewModelTests: XCTestCase {
 
     func test_onDisappear_withoutUpdateAction_doesNotCrash() {
         sut.onDisappear()
+    }
+
+    func test_cancelEdit_restoresSnapshot() {
+        let original = sut.pin
+        sut.dispatch(.edit)
+        var edited = original
+        edited.name = "EditedName"
+        sut.pin = edited
+        XCTAssertEqual(sut.pin.name, "EditedName")
+        sut.dispatch(.cancelEdit)
+        XCTAssertEqual(sut.pin.name, original.name)
+        XCTAssertNotEqual(sut.state, .editing)
+    }
+
+    func test_saveEdits_withMockNetwork_callsUpdatePin() async {
+        let serverPin = Pin(
+            name: "Test",
+            description: "d",
+            category: .nature,
+            medias: [],
+            isPrivate: false,
+            tags: [],
+            serverId: "pin-1",
+            tripId: "trip-1",
+            coordinates: nil
+        )
+        let mock = MockNetworkService()
+        let sut = PinInfoViewModel(pin: serverPin, networkService: mock)
+        sut.setRouter(mockRouter)
+        sut.dispatch(.edit)
+        sut.pin.name = "New name"
+        try? await sut.asyncDispatch(.saveEdits, onError: { _ in })
+        XCTAssertNotNil(mock.updatePinCall)
+        XCTAssertEqual(mock.updatePinCall?.name, "New name")
     }
 
     // MARK: - State.id / State.content

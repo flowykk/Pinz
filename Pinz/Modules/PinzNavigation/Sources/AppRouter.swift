@@ -66,8 +66,8 @@ extension AppRouter {
         navigate(to: .trip(.profile(user: user)))
     }
 
-    public func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction? = nil) {
-        navigate(to: .trip(.pinInfo(pin: pin, updateAction: updateAction)))
+    public func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction? = nil, deleteAction: PinDeleteAction? = nil) {
+        navigate(to: .trip(.pinInfo(pin: pin, updateAction: updateAction, deleteAction: deleteAction)))
     }
 
     public func navigateToPinCreation() {

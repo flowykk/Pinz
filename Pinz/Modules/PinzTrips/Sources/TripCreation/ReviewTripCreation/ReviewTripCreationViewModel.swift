@@ -57,7 +57,8 @@ final class ReviewTripCreationViewModel {
                 fixedPin.issues = self?.normalizeIssues(for: updatedPin) ?? []
                 self?.pins[index] = fixedPin
                 self?.syncDraftPins()
-            }
+            },
+            deleteAction: nil
         )
     }
 

@@ -179,6 +179,9 @@
 
 // MARK: - Pin Info
 "pinInfo.button.delete" = "Delete Pin";
+"pinInfo.alert.deletePin.title" = "Delete Pin?";
+"pinInfo.alert.deletePin.message" = "This action will permanently delete this pin and all its media.";
+"pinInfo.alert.deletePin.confirm" = "Delete";
 "pinInfo.label.location" = "Location";
 "pinInfo.label.category" = "Category";
 "pinInfo.label.dates" = "Dates";

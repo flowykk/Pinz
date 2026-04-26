@@ -28,6 +28,7 @@ public struct PinInfoView: View {
     @State private var galleryColumns = 3
     @State private var magnificationScale: CGFloat = 1.0
     @State private var isStoriesPresented = false
+    @State var showDeletePinAlert = false
 
     let gallerySpacing: CGFloat = 4
 
@@ -41,8 +42,8 @@ public struct PinInfoView: View {
         }
     }
 
-    public init(pin: Pin, updateAction: PinUpdateAction? = nil) {
-        viewModel = PinInfoViewModel(pin: pin, updateAction: updateAction)
+    public init(pin: Pin, updateAction: PinUpdateAction? = nil, deleteAction: PinDeleteAction? = nil) {
+        viewModel = PinInfoViewModel(pin: pin, updateAction: updateAction, deleteAction: deleteAction)
     }
 
     public var body: some View {
@@ -96,6 +97,14 @@ public struct PinInfoView: View {
         .fullScreenCover(isPresented: $isStoriesPresented) {
             PinStoryView(pins: [viewModel.pin])
         }
+        .alert(PinzBaseStrings.PinInfo.Alert.DeletePin.title, isPresented: $showDeletePinAlert) {
+            Button(PinzBaseStrings.PinInfo.Alert.DeletePin.confirm, role: .destructive) {
+                viewModel.dispatch(.deletePin)
+            }
+            Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) {}
+        } message: {
+            Text(PinzBaseStrings.PinInfo.Alert.DeletePin.message)
+        }
     }
 
     @ViewBuilder
@@ -129,12 +138,20 @@ public struct PinInfoView: View {
             Header {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.cancel),
-                    action: .plain { viewModel.dispatch(.endEdit) }
+                    action: .plain { viewModel.dispatch(.cancelEdit) }
                 )
             } rightView: {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.done),
-                    action: .plain { viewModel.dispatch(.endEdit) }
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    disabled: viewModel.isSaving,
+                    action: .async {
+                        await viewModel.asyncDispatch(.saveEdits) { error in
+                            #if DEBUG
+                            print("[PinInfo] save pin failed: \(error)")
+                            #endif
+                        }
+                    }
                 )
             }
         }

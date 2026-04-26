@@ -4,7 +4,7 @@ import PinzDomain
 public enum TripRoute: Hashable {
     case info(trip: Trip)
     case profile(user: User)
-    case pinInfo(pin: Pin, updateAction: PinUpdateAction?)
+    case pinInfo(pin: Pin, updateAction: PinUpdateAction?, deleteAction: PinDeleteAction?)
     case pinCreation
     case members(participants: [TripParticipantDTO], currentUserId: String?)
     case publicProfile(userId: String)

@@ -30,10 +30,17 @@ final class TripPinsListViewModel {
         case let .navigate(route):
             switch route {
             case let .pinInfo(pin):
-                router?.navigateToPinInfo(pin: pin, updateAction: PinUpdateAction { [weak self] updatedPin in
-                    guard let self, let idx = trip.pins.firstIndex(where: { $0.serverId == updatedPin.serverId }) else { return }
-                    trip.pins[idx] = updatedPin
-                })
+                router?.navigateToPinInfo(
+                    pin: pin,
+                    updateAction: PinUpdateAction { [weak self] updatedPin in
+                        guard let self, let idx = trip.pins.firstIndex(where: { $0.serverId == updatedPin.serverId }) else { return }
+                        trip.pins[idx] = updatedPin
+                    },
+                    deleteAction: PinDeleteAction { [weak self] deletedPin in
+                        guard let self else { return }
+                        trip.pins.removeAll { $0.serverId == deletedPin.serverId }
+                    }
+                )
             case .pinCreation:
                 router?.navigateToPinCreation()
             case .back:

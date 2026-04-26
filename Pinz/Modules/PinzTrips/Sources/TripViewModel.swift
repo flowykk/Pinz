@@ -117,10 +117,17 @@ final class TripViewModel {
                 for media in pin.medias {
                     print("[TripViewModel]   media \(media.mediaId ?? "nil") isPrivate=\(media.isPrivate)")
                 }
-                router?.navigateToPinInfo(pin: pin, updateAction: PinUpdateAction { [weak self] updatedPin in
-                    guard let self, let idx = trip?.pins.firstIndex(where: { $0.serverId == updatedPin.serverId }) else { return }
-                    trip?.pins[idx] = updatedPin
-                })
+                router?.navigateToPinInfo(
+                    pin: pin,
+                    updateAction: PinUpdateAction { [weak self] updatedPin in
+                        guard let self, let idx = trip?.pins.firstIndex(where: { $0.serverId == updatedPin.serverId }) else { return }
+                        trip?.pins[idx] = updatedPin
+                    },
+                    deleteAction: PinDeleteAction { [weak self] deletedPin in
+                        guard let self else { return }
+                        trip?.pins.removeAll { $0.serverId == deletedPin.serverId }
+                    }
+                )
             case .pinCreation:
                 router?.navigateToPinCreation()
             case .members:
@@ -285,7 +292,13 @@ final class TripViewModel {
                         .group
                     )
                 }
-                trip.pins = response.pins.enumerated().map { index, dto in dto.toPin(index: index, tripId: trip.id) }
+                trip.pins = response.pins.enumerated().map { index, dto in
+                    dto.toPin(
+                        index: index,
+                        tripId: trip.id,
+                        nameIfMissing: PinzBaseStrings.Common.Label.pinNumber(index + 1)
+                    )
+                }
                 participants = response.participants
                 lastFetchedTripId = tripId
                 dispatch(.selectTrip(trip))
