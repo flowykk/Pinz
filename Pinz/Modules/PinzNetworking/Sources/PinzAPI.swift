@@ -80,6 +80,18 @@ enum PinzAPI {
     case updateDesiredPlace(placeId: String, name: String, description: String, imageS3Key: String?)
     case deleteDesiredPlace(placeId: String)
     case deleteDesiredPlaceImage(placeId: String)
+
+    // Pins CRUD
+    case getPin(tripId: String, pinId: String)
+    case deletePin(tripId: String, pinId: String)
+    case updatePin(
+        tripId: String, pinId: String,
+        name: String?, description: String?, category: String?,
+        latitude: Double?, longitude: Double?,
+        startTimeUnix: Int?, endTimeUnix: Int?,
+        tags: [String]?, tagsSet: Bool?
+    )
+    case searchPins(q: String, limit: Int?, offset: Int?)
 }
 
 // MARK: - TargetType
@@ -144,6 +156,10 @@ extension PinzAPI: TargetType {
         case let .updateDesiredPlace(placeId, _, _, _): endpointPath = "/profile/desired-places/\(placeId)"
         case let .deleteDesiredPlace(placeId): endpointPath = "/profile/desired-places/\(placeId)"
         case let .deleteDesiredPlaceImage(placeId): endpointPath = "/profile/desired-places/\(placeId)/image"
+        case let .getPin(tripId, pinId): endpointPath = "/trips/\(tripId)/pins/\(pinId)"
+        case let .deletePin(tripId, pinId): endpointPath = "/trips/\(tripId)/pins/\(pinId)"
+        case let .updatePin(tripId, pinId, _, _, _, _, _, _, _, _, _): endpointPath = "/trips/\(tripId)/pins/\(pinId)"
+        case .searchPins: endpointPath = "/pins/search"
         case .createTrip: endpointPath = "/trips/creation/start"
         case .processMediaGrouping(let tripId, _): endpointPath = "/trips/creation/\(tripId)/media/process-grouping"
         case .applyGroupsAndProcess(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/apply-groups-and-process"
@@ -159,14 +175,16 @@ extension PinzAPI: TargetType {
             return .get
         case .getProfile, .getProfileStats, .getVisitedLocations, .getPublicUserProfile:
             return .get
+        case .getPin, .searchPins:
+            return .get
         case .deleteAvatar:
             return .delete
-        case .updateTrip, .updateTripSettings, .updateProfile, .updateDesiredPlace:
+        case .updateTrip, .updateTripSettings, .updateProfile, .updateDesiredPlace, .updatePin:
             return .patch
         case .setTripPrivacy, .setPinPrivacy, .setMediaPrivacy:
             return .put
         case .deleteTrip, .removeParticipant, .deleteAccount, .removeTripFromFavourites,
-             .deleteDesiredPlace, .deleteDesiredPlaceImage:
+             .deleteDesiredPlace, .deleteDesiredPlaceImage, .deletePin:
             return .delete
         case .getDesiredPlaces:
             return .get
@@ -290,6 +308,28 @@ extension PinzAPI: TargetType {
         case let .updateDesiredPlace(_, name, description, imageS3Key):
             var params: [String: Any] = ["name": name, "description": description]
             if let imageS3Key { params["image_s3_key"] = imageS3Key }
+            return jsonParams(params)
+
+        case .getPin, .deletePin:
+            return .requestPlain
+
+        case let .searchPins(q, limit, offset):
+            var params: [String: Any] = ["q": q]
+            if let limit  { params["limit"]  = limit  }
+            if let offset { params["offset"] = offset }
+            return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
+
+        case let .updatePin(_, _, name, desc, cat, lat, lon, start, end, tags, tagsSet):
+            var params: [String: Any] = [:]
+            if let name    { params["name"]            = name    }
+            if let desc    { params["description"]     = desc    }
+            if let cat     { params["category"]        = cat     }
+            if let lat     { params["latitude"]        = lat     }
+            if let lon     { params["longitude"]       = lon     }
+            if let start   { params["start_time_unix"] = start   }
+            if let end     { params["end_time_unix"]   = end     }
+            if let tags    { params["tags"]            = tags    }
+            if let tagsSet { params["tags_set"]        = tagsSet }
             return jsonParams(params)
         }
     }
@@ -818,6 +858,14 @@ extension PinzAPI {
             json = #"{"upload_url":"https://pinz.s3.example.com/upload","s3_key":"desired-places/user-001/stub.jpg"}"#
         case .deleteDesiredPlace, .deleteDesiredPlaceImage:
             json = #"{"success":true}"#
+        case .getPin:
+            json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"photo","privacy_level":"public"}]}}"#
+        case .deletePin:
+            json = #"{"deletion_mode":"full"}"#
+        case .updatePin:
+            json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Обновлённый пин","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"photo","privacy_level":"public"}]}}"#
+        case .searchPins:
+            json = #"[{"id":"pin-001","trip_id":"trip-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[]}]"#
         }
         return json.data(using: .utf8) ?? Data()
     }

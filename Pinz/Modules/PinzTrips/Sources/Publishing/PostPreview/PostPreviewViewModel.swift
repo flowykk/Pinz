@@ -59,7 +59,7 @@ final class PostPreviewViewModel {
         case let .navigate(route):
             switch route {
             case let .pinInfo(pin):
-                router?.navigateToPinInfo(pin: pin, updateAction: nil)
+                router?.navigateToPinInfo(pin: pin, updateAction: nil, deleteAction: nil)
             case let .back(depth):
                 router?.pop(by: depth)
             }

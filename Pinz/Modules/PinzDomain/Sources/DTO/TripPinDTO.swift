@@ -1,3 +1,6 @@
+import Foundation
+import CoreLocation
+
 public struct TripPinDTO: Codable {
     public let id: String
     public let tripId: String?
@@ -18,5 +21,52 @@ public struct TripPinDTO: Codable {
         case startTimeUnix = "start_time_unix"
         case endTimeUnix = "end_time_unix"
         case privacyLevel = "privacy_level"
+    }
+}
+
+public extension TripPinDTO {
+    /// Creates a `Pin` from a trip/pin DTO. Pass a fallback title when the API returns no `name`.
+    func toPin(index: Int, tripId fallbackTripId: String? = nil, nameIfMissing: String) -> Pin {
+        let resolvedTripId = tripId ?? fallbackTripId
+        let coordinates: CLLocationCoordinate2D?
+        if let latitude, let longitude {
+            coordinates = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        } else {
+            coordinates = nil
+        }
+
+        let title: String
+        if let n = name, !n.isEmpty {
+            title = n
+        } else {
+            title = nameIfMissing
+        }
+
+        let pinIsPrivate = privacyLevel?.lowercased() == "private"
+        let mappedMedias: [MediaItem] = (media ?? []).enumerated().map { offset, m in
+            let mediaIsPrivate = m.privacyLevel?.lowercased() == "private"
+            return MediaItem(
+                id: offset + 1,
+                isPrivate: mediaIsPrivate,
+                type: m.mediaType == "video" ? .video : .image,
+                mediaURL: URL(string: m.url),
+                tripId: resolvedTripId,
+                mediaId: m.mediaId
+            )
+        }
+        return Pin(
+            name: title,
+            description: description,
+            category: category?.toPinCategory() ?? .custom(nil),
+            medias: mappedMedias,
+            isPrivate: pinIsPrivate,
+            startDate: startTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
+            endDate: endTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
+            tags: (tags ?? []).map { MediaTag(tag: $0) },
+            issues: [],
+            serverId: id,
+            tripId: resolvedTripId,
+            coordinates: coordinates
+        )
     }
 }

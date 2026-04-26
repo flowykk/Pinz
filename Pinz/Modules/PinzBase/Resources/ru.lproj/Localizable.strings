@@ -179,6 +179,9 @@
 
 // MARK: - Pin Info
 "pinInfo.button.delete" = "Удалить пин";
+"pinInfo.alert.deletePin.title" = "Удалить пин?";
+"pinInfo.alert.deletePin.message" = "Это действие необратимо. Пин и все его медиафайлы будут удалены.";
+"pinInfo.alert.deletePin.confirm" = "Удалить";
 "pinInfo.label.location" = "Местоположение";
 "pinInfo.label.category" = "Категория";
 "pinInfo.label.dates" = "Даты";

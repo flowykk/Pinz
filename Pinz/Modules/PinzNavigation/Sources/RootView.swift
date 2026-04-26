@@ -39,8 +39,8 @@ public struct RootView<Content: View>: View {
                 TripInfoView(trip: trip, onTripUpdated: consumeTripInfoUpdateHandler())
             case let .profile(user):
                 ProfileView(user: user)
-            case let .pinInfo(pin, updateAction):
-                PinInfoView(pin: pin, updateAction: updateAction)
+            case let .pinInfo(pin, updateAction, deleteAction):
+                PinInfoView(pin: pin, updateAction: updateAction, deleteAction: deleteAction)
             case .pinCreation:
                 PinCreationView()
             case .members(let participants, let currentUserId):
