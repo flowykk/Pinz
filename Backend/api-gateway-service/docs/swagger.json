@@ -985,6 +985,327 @@
                 }
             }
         },
+        "/api/v1/profile/desired-places": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает список желаемых мест текущего пользователя в порядке от новых к старым. image_url — presigned GET URL, пустой если картинка не загружена.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "desired-places"
+                ],
+                "summary": "List desired places of current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlacesListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создаёт новое желаемое место. s3_key опционален — передаётся, если клиент уже загрузил картинку через /profile/desired-places/upload-url.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "desired-places"
+                ],
+                "summary": "Create desired place",
+                "parameters": [
+                    {
+                        "description": "Place payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.CreateDesiredPlaceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profile/desired-places/upload-url": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает presigned PUT URL и s3_key. После загрузки клиент передаёт s3_key в Create или Update.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "desired-places"
+                ],
+                "summary": "Request presigned URL for desired place image upload",
+                "parameters": [
+                    {
+                        "description": "Filename and content type",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestDesiredPlaceImageUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceImageUploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profile/desired-places/{place_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удаляет желаемое место и связанный S3-объект (если есть).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "desired-places"
+                ],
+                "summary": "Delete desired place",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Place ID",
+                        "name": "place_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DeleteDesiredPlaceResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Изменение name/description, опционально картинки. image_s3_key (опц): не передан — картинка не меняется; пустая строка — картинка сбрасывается; иначе — заменяется.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "desired-places"
+                ],
+                "summary": "Update desired place",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Place ID",
+                        "name": "place_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.UpdateDesiredPlaceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profile/desired-places/{place_id}/image": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Сбрасывает картинку у желаемого места и удаляет S3-объект.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "desired-places"
+                ],
+                "summary": "Delete desired place image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Place ID",
+                        "name": "place_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/profile/device-tokens": {
             "post": {
                 "security": [
@@ -4855,6 +5176,64 @@
                     }
                 }
             }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает публичные поля профиля (username, avatar, created_at) и список желаемых мест пользователя. Email и другие приватные поля не отдаются. Используется при переходе на чужой профиль из участников трипа или карточки фида.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get public profile of another user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -5074,6 +5453,23 @@
             "properties": {
                 "s3_key": {
                     "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.CreateDesiredPlaceRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Want to visit"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Eiffel Tower"
+                },
+                "s3_key": {
+                    "type": "string",
+                    "example": "desired-places/{user_id}/{uuid}.jpg"
                 }
             }
         },
@@ -5385,6 +5781,19 @@
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_requests.RequestDesiredPlaceImageUploadRequest": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "example": "image/jpeg"
+                },
+                "filename": {
+                    "type": "string",
+                    "example": "photo.jpg"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_requests.RequestPinCreationUploadUrlsRequest": {
             "type": "object",
             "properties": {
@@ -5442,6 +5851,22 @@
             "properties": {
                 "notifications_enabled": {
                     "type": "boolean"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_requests.UpdateDesiredPlaceRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Want to visit"
+                },
+                "image_s3_key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Eiffel Tower"
                 }
             }
         },
@@ -5908,12 +6333,62 @@
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_responses.DeleteDesiredPlaceResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_responses.DeletePinResponse": {
             "type": "object",
             "properties": {
                 "deletion_mode": {
                     "type": "string",
                     "example": "full"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.DesiredPlaceImageUploadResponse": {
+            "type": "object",
+            "properties": {
+                "s3_key": {
+                    "type": "string"
+                },
+                "upload_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.DesiredPlacesListResponse": {
+            "type": "object",
+            "properties": {
+                "places": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse"
+                    }
                 }
             }
         },
@@ -6456,6 +6931,29 @@
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.PublicUserProfileResponse": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "integer"
+                },
+                "desired_places": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse"
+                    }
+                },
+                "id": {
                     "type": "string"
                 },
                 "username": {

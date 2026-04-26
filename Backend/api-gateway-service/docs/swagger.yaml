@@ -142,6 +142,18 @@ definitions:
       s3_key:
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.CreateDesiredPlaceRequest:
+    properties:
+      description:
+        example: Want to visit
+        type: string
+      name:
+        example: Eiffel Tower
+        type: string
+      s3_key:
+        example: desired-places/{user_id}/{uuid}.jpg
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.CreatePinStartRequest:
     properties:
       files_to_upload:
@@ -346,6 +358,15 @@ definitions:
         example: avatar.jpg
         type: string
     type: object
+  pinz_backend_api-gateway-service_internal_requests.RequestDesiredPlaceImageUploadRequest:
+    properties:
+      content_type:
+        example: image/jpeg
+        type: string
+      filename:
+        example: photo.jpg
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.RequestPinCreationUploadUrlsRequest:
     properties:
       files_to_upload:
@@ -384,6 +405,17 @@ definitions:
     properties:
       notifications_enabled:
         type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.UpdateDesiredPlaceRequest:
+    properties:
+      description:
+        example: Want to visit
+        type: string
+      image_s3_key:
+        type: string
+      name:
+        example: Eiffel Tower
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_requests.UpdatePinRequest:
     properties:
@@ -686,11 +718,43 @@ definitions:
       success:
         type: boolean
     type: object
+  pinz_backend_api-gateway-service_internal_responses.DeleteDesiredPlaceResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
   pinz_backend_api-gateway-service_internal_responses.DeletePinResponse:
     properties:
       deletion_mode:
         example: full
         type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DesiredPlaceImageUploadResponse:
+    properties:
+      s3_key:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse:
+    properties:
+      created_at:
+        type: integer
+      description:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DesiredPlacesListResponse:
+    properties:
+      places:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        type: array
     type: object
   pinz_backend_api-gateway-service_internal_responses.DevLoginResponse:
     properties:
@@ -1047,6 +1111,21 @@ definitions:
       avatar_url:
         type: string
       user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PublicUserProfileResponse:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: integer
+      desired_places:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        type: array
+      id:
         type: string
       username:
         type: string
@@ -2013,6 +2092,216 @@ paths:
       summary: Confirm email change with verification code
       tags:
       - profile
+  /api/v1/profile/desired-places:
+    get:
+      description: Возвращает список желаемых мест текущего пользователя в порядке
+        от новых к старым. image_url — presigned GET URL, пустой если картинка не
+        загружена.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlacesListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List desired places of current user
+      tags:
+      - desired-places
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новое желаемое место. s3_key опционален — передаётся, если
+        клиент уже загрузил картинку через /profile/desired-places/upload-url.
+      parameters:
+      - description: Place payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.CreateDesiredPlaceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create desired place
+      tags:
+      - desired-places
+  /api/v1/profile/desired-places/{place_id}:
+    delete:
+      description: Удаляет желаемое место и связанный S3-объект (если есть).
+      parameters:
+      - description: Place ID
+        in: path
+        name: place_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DeleteDesiredPlaceResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete desired place
+      tags:
+      - desired-places
+    patch:
+      consumes:
+      - application/json
+      description: 'Изменение name/description, опционально картинки. image_s3_key
+        (опц): не передан — картинка не меняется; пустая строка — картинка сбрасывается;
+        иначе — заменяется.'
+      parameters:
+      - description: Place ID
+        in: path
+        name: place_id
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpdateDesiredPlaceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update desired place
+      tags:
+      - desired-places
+  /api/v1/profile/desired-places/{place_id}/image:
+    delete:
+      description: Сбрасывает картинку у желаемого места и удаляет S3-объект.
+      parameters:
+      - description: Place ID
+        in: path
+        name: place_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete desired place image
+      tags:
+      - desired-places
+  /api/v1/profile/desired-places/upload-url:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает presigned PUT URL и s3_key. После загрузки клиент передаёт
+        s3_key в Create или Update.
+      parameters:
+      - description: Filename and content type
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestDesiredPlaceImageUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceImageUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request presigned URL for desired place image upload
+      tags:
+      - desired-places
   /api/v1/profile/device-tokens:
     delete:
       consumes:
@@ -4540,6 +4829,46 @@ paths:
       summary: Join trip by token
       tags:
       - trips
+  /api/v1/users/{id}:
+    get:
+      description: Возвращает публичные поля профиля (username, avatar, created_at)
+        и список желаемых мест пользователя. Email и другие приватные поля не отдаются.
+        Используется при переходе на чужой профиль из участников трипа или карточки
+        фида.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get public profile of another user
+      tags:
+      - users
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and the JWT access token.

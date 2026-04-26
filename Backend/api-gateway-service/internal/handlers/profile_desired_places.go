@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"pinz/backend/api-gateway-service/internal/middleware"
-	pb "pinz/backend/api-gateway-service/internal/requests"
+	"pinz/backend/api-gateway-service/internal/requests"
 	"pinz/backend/api-gateway-service/internal/responses"
 	pbproto "pinz/backend/api-gateway-service/pkg/proto"
 )
@@ -53,7 +53,7 @@ func (h *AuthHandler) ListDesiredPlaces(w http.ResponseWriter, r *http.Request) 
 // @Security BearerAuth
 // @Router /api/v1/profile/desired-places [post]
 func (h *AuthHandler) CreateDesiredPlace(w http.ResponseWriter, r *http.Request) {
-	var req pb.CreateDesiredPlaceRequest
+	var req requests.CreateDesiredPlaceRequest
 	if err := decodeJSONBody(r, &req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 		return
@@ -91,7 +91,7 @@ func (h *AuthHandler) UpdateDesiredPlace(w http.ResponseWriter, r *http.Request)
 		respondError(w, http.StatusBadRequest, "place_id is required")
 		return
 	}
-	var req pb.UpdateDesiredPlaceRequest
+	var req requests.UpdateDesiredPlaceRequest
 	if err := decodeJSONBody(r, &req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 		return
@@ -157,7 +157,7 @@ func (h *AuthHandler) DeleteDesiredPlace(w http.ResponseWriter, r *http.Request)
 // @Security BearerAuth
 // @Router /api/v1/profile/desired-places/upload-url [post]
 func (h *AuthHandler) RequestDesiredPlaceImageUpload(w http.ResponseWriter, r *http.Request) {
-	var req pb.RequestDesiredPlaceImageUploadRequest
+	var req requests.RequestDesiredPlaceImageUploadRequest
 	if err := decodeJSONBody(r, &req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 		return
