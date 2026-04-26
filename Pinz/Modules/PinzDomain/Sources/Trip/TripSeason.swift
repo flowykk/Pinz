@@ -32,4 +32,14 @@ public enum TripSeason: PickerItem {
     ]
 
     public var isCustomizable: Bool { false }
+
+    public var apiValue: String? {
+        switch self {
+        case .none:   return nil
+        case .summer: return "summer"
+        case .autumn: return "autumn"
+        case .winter: return "winter"
+        case .spring: return "spring"
+        }
+    }
 }

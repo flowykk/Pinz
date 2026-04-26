@@ -30,7 +30,7 @@ enum PinzAPI {
     case confirmEmailChange(verificationCode: String)
 
     // Feed
-    case getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, sortBy: String?)
+    case getFeed(limit: Int?, offset: Int?, category: String?, season: String?, city: String?, country: String?, sortBy: String?)
 
     // Trips CRUD
     case getTrips
@@ -188,13 +188,14 @@ extension PinzAPI: TargetType {
             if let type { params["type"] = type }
             return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
 
-        case let .getFeed(limit, offset, category, season, locationId, sortBy):
+        case let .getFeed(limit, offset, category, season, city, country, sortBy):
             var params: [String: Any] = [:]
             if let limit { params["limit"] = limit }
             if let offset { params["offset"] = offset }
             if let category { params["category"] = category }
             if let season { params["season"] = season }
-            if let locationId { params["location_id"] = locationId }
+            if let city { params["city"] = city }
+            if let country { params["country"] = country }
             if let sortBy { params["sort_by"] = sortBy }
             return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
 
@@ -357,165 +358,161 @@ extension PinzAPI {
             json = #"{"success":true,"message":"Verification code sent","email":"new@example.com","expires_at_unix":1700000000}"#
         case .confirmEmailChange:
             json = #"{"success":true,"message":"Email changed","email":"new@example.com"}"#
-        case .getFeed:
-            json = #"""
-            [
-              {
-                "trip": {
-                  "id": "trip-001",
-                  "name": "Парижская романтика",
-                  "description": "Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу",
-                  "category": "vacation",
-                  "season": "spring",
-                  "cover_url": null,
-                  "owner_user_id": "user-001",
-                  "privacy_level": "public",
-                  "status": "published",
-                  "is_published": false,
-                  "is_generated": false,
-                  "likes_count": 42,
-                  "dislikes_count": 2,
-                  "participants_count": 12,
-                  "media_count": 36,
-                  "start_date_unix": 1700000000,
-                  "end_date_unix": 1700200000,
-                  "created_at_unix": 1699900000,
-                  "updated_at_unix": 1699900000
-                },
-                "pins": [
+        case let .getFeed(_, offset, _, _, _, _, _):
+            switch offset ?? 0 {
+            case 0:
+                // Page 1: 2 items
+                json = #"""
+                [
                   {
-                    "id": "pin-feed-001",
-                    "latitude": 48.8584,
-                    "longitude": 2.2945,
+                    "trip": {
+                      "id": "trip-001",
+                      "name": "Парижская романтика",
+                      "description": "Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу",
+                      "category": "vacation",
+                      "season": "spring",
+                      "cover_url": null,
+                      "owner_user_id": "user-001",
+                      "privacy_level": "public",
+                      "status": "published",
+                      "is_published": false,
+                      "is_generated": false,
+                      "likes_count": 42,
+                      "dislikes_count": 2,
+                      "participants_count": 12,
+                      "media_count": 36,
+                      "start_date_unix": 1700000000,
+                      "end_date_unix": 1700200000,
+                      "created_at_unix": 1699900000,
+                      "updated_at_unix": 1699900000
+                    },
+                    "pins": [
+                      {
+                        "id": "pin-feed-001",
+                        "latitude": 48.8584,
+                        "longitude": 2.2945,
+                        "media": [
+                          {
+                            "media_id": "feed-001-001",
+                            "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg",
+                            "media_type": "photo"
+                          },
+                          {
+                            "media_id": "feed-001-002",
+                            "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg",
+                            "media_type": "photo"
+                          }
+                        ]
+                      }
+                    ],
                     "media": [
                       {
-                        "media_id": "feed-001-001",
+                        "media_id": "m-feed-001",
                         "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg",
                         "media_type": "photo"
-                      },
-                      {
-                        "media_id": "feed-001-002",
-                        "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg",
-                        "media_type": "photo"
                       }
                     ]
                   },
                   {
-                    "id": "pin-feed-002",
-                    "latitude": 48.8606,
-                    "longitude": 2.3352,
+                    "trip": {
+                      "id": "trip-002",
+                      "name": "Горнолыжный тур в Альпы",
+                      "description": "Захватывающие спуски и потрясающие горные пейзажи в сердце Европы",
+                      "category": "active",
+                      "season": "winter",
+                      "cover_url": null,
+                      "owner_user_id": "user-002",
+                      "privacy_level": "public",
+                      "status": "published",
+                      "is_published": true,
+                      "is_generated": false,
+                      "likes_count": 38,
+                      "dislikes_count": 1,
+                      "participants_count": 8,
+                      "media_count": 30,
+                      "start_date_unix": 1698000000,
+                      "end_date_unix": 1698400000,
+                      "created_at_unix": 1697900000,
+                      "updated_at_unix": 1697950000
+                    },
+                    "pins": [
+                      {
+                        "id": "pin-feed-004",
+                        "latitude": 46.8182,
+                        "longitude": 8.2275,
+                        "media": [
+                          {
+                            "media_id": "feed-004-001",
+                            "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
+                            "media_type": "photo"
+                          }
+                        ]
+                      }
+                    ],
                     "media": [
                       {
-                        "media_id": "feed-002-001",
+                        "media_id": "feed-alt-001",
                         "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
                         "media_type": "photo"
-                      },
-                      {
-                        "media_id": "feed-002-002",
-                        "url": "https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg",
-                        "media_type": "photo"
                       }
                     ]
-                  },
+                  }
+                ]
+                """#
+            case 2:
+                // Page 2: 1 item (< pageSize=2 → triggers hasReachedEnd)
+                json = #"""
+                [
                   {
-                    "id": "pin-feed-003",
-                    "latitude": 48.8530,
-                    "longitude": 2.3499,
+                    "trip": {
+                      "id": "trip-003",
+                      "name": "Сафари в Кении",
+                      "description": "Удивительный мир дикой природы Африки",
+                      "category": "active",
+                      "season": "summer",
+                      "cover_url": null,
+                      "owner_user_id": "user-003",
+                      "privacy_level": "public",
+                      "status": "published",
+                      "is_published": true,
+                      "is_generated": false,
+                      "likes_count": 91,
+                      "dislikes_count": 3,
+                      "participants_count": 4,
+                      "media_count": 15,
+                      "start_date_unix": 1695000000,
+                      "end_date_unix": 1695600000,
+                      "created_at_unix": 1694900000,
+                      "updated_at_unix": 1694950000
+                    },
+                    "pins": [
+                      {
+                        "id": "pin-feed-007",
+                        "latitude": -1.2921,
+                        "longitude": 36.8219,
+                        "media": [
+                          {
+                            "media_id": "feed-007-001",
+                            "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg",
+                            "media_type": "photo"
+                          }
+                        ]
+                      }
+                    ],
                     "media": [
                       {
-                        "media_id": "feed-003-001",
+                        "media_id": "m-feed-007",
                         "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg",
                         "media_type": "photo"
-                      },
-                      {
-                        "media_id": "feed-003-002",
-                        "url": "https://i.pinimg.com/736x/34/cb/93/34cb93114fb0cca8f020cb9c26928394.jpg",
-                        "media_type": "photo"
                       }
                     ]
-                  }
-                ],
-                "media": [
-                  {
-                    "media_id": "m-feed-001",
-                    "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg",
-                    "media_type": "photo"
                   }
                 ]
-              },
-              {
-                "trip": {
-                  "id": "trip-002",
-                  "name": "Горнолыжный тур в Альпы",
-                  "description": "Захватывающие спуски и потрясающие горные пейзажи в сердце Европы",
-                  "category": "active",
-                  "season": "winter",
-                  "cover_url": null,
-                  "owner_user_id": "user-002",
-                  "privacy_level": "public",
-                  "status": "published",
-                  "is_published": true,
-                  "is_generated": false,
-                  "likes_count": 38,
-                  "dislikes_count": 1,
-                  "participants_count": 8,
-                  "media_count": 30,
-                  "start_date_unix": 1698000000,
-                  "end_date_unix": 1698400000,
-                  "created_at_unix": 1697900000,
-                  "updated_at_unix": 1697950000
-                },
-                "pins": [
-                  {
-                    "id": "pin-feed-004",
-                    "latitude": 46.8182,
-                    "longitude": 8.2275,
-                    "media": [
-                      {
-                        "media_id": "feed-004-001",
-                        "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
-                        "media_type": "photo"
-                      },
-                      {
-                        "media_id": "feed-004-002",
-                        "url": "https://i.pinimg.com/736x/59/79/59/5979594c0f0de1b583f60ce9ac15b94e.jpg",
-                        "media_type": "photo"
-                      }
-                    ]
-                  },
-                  {
-                    "id": "pin-feed-005",
-                    "latitude": 46.9500,
-                    "longitude": 7.4474,
-                    "media": [
-                      {
-                        "media_id": "feed-005-001",
-                        "url": "https://i.pinimg.com/736x/29/9e/ff/299effcb075e97c1b4dc5ebcb7aac061.jpg",
-                        "media_type": "photo"
-                      },
-                      {
-                        "media_id": "feed-005-002",
-                        "url": "https://i.pinimg.com/736x/aa/a9/1f/aaa91f5d5b7a4d2f9c2a4d57f8f0e8e0.jpg",
-                        "media_type": "photo"
-                      }
-                    ]
-                  }
-                ],
-                "media": [
-                  {
-                    "media_id": "feed-alt-001",
-                    "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
-                    "media_type": "photo"
-                  },
-                  {
-                    "media_id": "feed-alt-002",
-                    "url": "https://i.pinimg.com/736x/59/79/59/5979594c0f0de1b583f60ce9ac15b94e.jpg",
-                    "media_type": "photo"
-                  }
-                ]
-              }
-            ]
-            """#
+                """#
+            default:
+                // No more items
+                json = "[]"
+            }
         case .getTrips, .getFavouriteTrips:
             json = #"""
             [

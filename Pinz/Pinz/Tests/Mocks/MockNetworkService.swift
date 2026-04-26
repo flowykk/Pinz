@@ -125,7 +125,7 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     // MARK: - Feed
 
-    func getFeed(limit: Int?, offset: Int?, category: String?, season: String?, locationId: Int?, sortBy: String?) async throws -> [FeedItemDTO] {
+    func getFeed(limit: Int?, offset: Int?, category: String?, season: String?, city: String?, country: String?, sortBy: String?) async throws -> [FeedItemDTO] {
         try getFeedResult.get()
     }
 

@@ -16,7 +16,12 @@ final class FeedViewModel {
         case navigate(Route)
     }
 
+    private let pageSize = 2 // TODO: change back to 20 after testing pagination
     private(set) var posts: [Post] = []
+    private(set) var isLoading = false
+    private(set) var hasReachedEnd = false
+    private var currentOffset = 0
+    var filters: FeedFilterModel = FeedFilterModel()
 
     private var router: AppRouting?
 
@@ -36,25 +41,43 @@ final class FeedViewModel {
         }
     }
 
-    func fetchFeed(
-        limit: Int? = nil,
-        offset: Int? = nil,
-        category: String? = nil,
-        season: String? = nil,
-        locationId: Int? = nil,
-        sortBy: String? = nil
-    ) async {
+    func applyFilters(_ newFilters: FeedFilterModel) async {
+        filters = newFilters
+        await fetchFeed()
+    }
+
+    func resetFilters() async {
+        filters = FeedFilterModel()
+        await fetchFeed()
+    }
+
+    func fetchFeed() async {
+        currentOffset = 0
+        hasReachedEnd = false
+        posts = []
+        await loadPage(replacing: true)
+    }
+
+    func loadMore() async {
+        guard !isLoading, !hasReachedEnd else { return }
+        await loadPage(replacing: false)
+    }
+
+    private func loadPage(replacing: Bool) async {
+        isLoading = true
+        defer { isLoading = false }
         do {
             let feed = try await networkService.getFeed(
-                limit: limit,
-                offset: offset,
-                category: category,
-                season: season,
-                locationId: locationId,
-                sortBy: sortBy
+                limit:    pageSize,
+                offset:   currentOffset,
+                category: filters.categoryParam,
+                season:   filters.seasonParam,
+                city:     filters.cityParam,
+                country:  filters.countryParam,
+                sortBy:   filters.sortByParam
             )
 
-            posts = feed.map { item -> Post in
+            let newPosts = feed.map { item -> Post in
                 let trip = item.trip
                 let tripMedia = item.media.enumerated().compactMap { index, media in
                     media.toMediaItem(id: index + 1)
@@ -95,6 +118,14 @@ final class FeedViewModel {
                     media: postMedia
                 )
             }
+
+            if replacing {
+                posts = newPosts
+            } else {
+                posts.append(contentsOf: newPosts)
+            }
+            currentOffset += feed.count
+            hasReachedEnd = feed.count < pageSize
         } catch {
             print(error)
         }
