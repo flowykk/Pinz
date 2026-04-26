@@ -474,3 +474,42 @@ type GetPinCreationReviewResponse struct {
 type CancelPinCreationResponse struct {
 	Status string `json:"status" example:"cancelled"`
 }
+
+// RecommendedPin — пин в карте популярных мест (ТЗ 9.3): один на кластер
+// из топ-трипов региона, с превью-медиа из исходного пина.
+type RecommendedPin struct {
+	ID string `json:"id"`
+	TripID string `json:"trip_id"`
+	Latitude float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Name string `json:"name"`
+	Description string `json:"description"`
+	Category string `json:"category"`
+	LocationName string `json:"location_name"`
+	MediaCount int32 `json:"media_count"`
+	Media []FeedMedia `json:"media"`
+}
+
+// RecommendedMap — карта популярных мест региона. Поля trip и media заполнены так,
+// чтобы карта могла отрисовываться в общей ленте как обычный FeedItem.
+type RecommendedMap struct {
+	RegionName string `json:"region_name"`
+	RegionType string `json:"region_type"`
+	Pins []RecommendedPin `json:"pins"`
+	// Виртуальный трип-обёртка с name/description/dates/cover/счётчиками.
+	// trip.id пуст до вызова SaveRecommendation.
+	Trip Trip `json:"trip"`
+	// Топ-8 медиа всей карты (карусель в карточке ленты).
+	Media []FeedMedia `json:"media"`
+}
+
+// GetRecommendationsResponse — ответ GET /api/v1/recommendations.
+type GetRecommendationsResponse struct {
+	Map RecommendedMap `json:"map"`
+}
+
+// SaveRecommendationResponse — ответ POST /api/v1/recommendations/save.
+// Возвращает созданный generated-трип, добавленный в favourites.
+type SaveRecommendationResponse struct {
+	Trip Trip `json:"trip"`
+}

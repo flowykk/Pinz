@@ -298,6 +298,14 @@ func (c *Client) CancelPinCreation(ctx context.Context, req *pb.CancelPinCreatio
 	return c.client.CancelPinCreation(withUserIDMetadata(ctx), req)
 }
 
+func (c *Client) GetRecommendations(ctx context.Context, req *pb.GetRecommendationsRequest) (*pb.GetRecommendationsResponse, error) {
+	return c.client.GetRecommendations(withUserIDMetadata(ctx), req)
+}
+
+func (c *Client) SaveRecommendation(ctx context.Context, req *pb.SaveRecommendationRequest) (*pb.SaveRecommendationResponse, error) {
+	return c.client.SaveRecommendation(withUserIDMetadata(ctx), req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

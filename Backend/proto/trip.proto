@@ -87,6 +87,10 @@ service TripService {
  rpc GetPinCreationReview(GetPinCreationReviewRequest) returns (GetPinCreationReviewResponse);
  rpc FinalizePinCreation(FinalizePinCreationRequest) returns (FinalizePinCreationResponse);
  rpc CancelPinCreation(CancelPinCreationRequest) returns (CancelPinCreationResponse);
+ // Рекомендации (ТЗ 9): карта популярных мест по городу/стране и
+ // материализация её как сохранённого трипа.
+ rpc GetRecommendations(GetRecommendationsRequest) returns (GetRecommendationsResponse);
+ rpc SaveRecommendation(SaveRecommendationRequest) returns (SaveRecommendationResponse);
 }
 
 message Trip {
@@ -436,14 +440,19 @@ message UpdateTripSettingsResponse {
  bool success = 1;
 }
 
-// лента опубликованных трипов
+// лента опубликованных трипов (ТЗ 7.9-7.10).
+// Фильтры city/country принимают точные имена; сервер резолвит их в geo_registry.
+// Если регион не найден — лента возвращает пустой результат без ошибки.
 message ListFeedRequest {
  int32 limit = 1;
  int32 offset = 2;
- string category = 3; // optional filter
- string season = 4; // optional filter
- repeated int32 location_ids = 5; // optional filter (geo_registry ids)
- string sort_by = 6; // "date" or "rating"
+ string category = 3; // ТЗ 7.9.1
+ string season = 4; // ТЗ 7.9.2
+ string city = 7; // ТЗ 7.9.3 — точное имя города
+ string country = 8; // ТЗ 7.9.3 — точное имя страны
+ string sort_by = 6; // "date" (ТЗ 7.10.1) или "rating" (ТЗ 7.10.2)
+ reserved 5;
+ reserved "location_ids";
 }
 
 // lightweight media for feed card carousel (up to 8, sorted by battle_rating).
@@ -1037,4 +1046,53 @@ message CancelPinCreationRequest {
 }
 message CancelPinCreationResponse {
  string status = 1;
+}
+
+// Рекомендации (ТЗ 9): запрос принимает либо city, либо country (XOR).
+// Радиус кластеризации выбирается на сервере: 50 м для города, 500 м для страны.
+message GetRecommendationsRequest {
+ string city = 1;
+ string country = 2;
+}
+
+// RecommendedPin — пин-кандидат из топ-трипов региона. ID и trip_id указывают
+// на исходный пин/трип (для возможной навигации клиента); при сохранении
+// рекомендации (SaveRecommendation) пины копируются в новый generated-трип.
+message RecommendedPin {
+ string id = 1;
+ string trip_id = 2;
+ double latitude = 3;
+ double longitude = 4;
+ string name = 5;
+ string description = 6;
+ string category = 7;
+ string location_name = 8;
+ int32 media_count = 9;
+ repeated FeedMedia media = 10;
+}
+
+message RecommendedMap {
+ string region_name = 1;
+ string region_type = 2; // "City" | "Country"
+ repeated RecommendedPin pins = 3;
+ // Виртуальный трип-обёртка с заполненными name/description/cover/счётчиками,
+ // чтобы карта могла встраиваться в общую ленту как обычный FeedItem.
+ // trip.id пустой до вызова SaveRecommendation.
+ Trip trip = 4;
+ // Топ-8 медиа из всех выбранных пинов (для карусели в карточке ленты),
+ // отсортированы по battle_rating DESC.
+ repeated FeedMedia media = 5;
+}
+
+message GetRecommendationsResponse {
+ RecommendedMap map = 1;
+}
+
+message SaveRecommendationRequest {
+ string city = 1;
+ string country = 2;
+}
+
+message SaveRecommendationResponse {
+ Trip trip = 1;
 }

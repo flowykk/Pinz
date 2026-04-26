@@ -141,6 +141,10 @@ type PinRepositoryInterface interface {
 	IncMediaCount(pinID string, delta int) error
 	ListPublishedPinsByTripIDs(tripIDs []string) (map[string][]*FeedPin, error)
 	SearchByUserID(userID, query string, limit, offset int32) ([]*models.Pin, error)
+	// ListRecommendationCandidates — выборка кандидатов для рекомендательной системы (ТЗ 9):
+	// топ-50 опубликованных трипов региона за 2 года, их пины с координатами и
+	// cluster_id из ST_ClusterDBSCAN (партиция по category, eps в метрах).
+	ListRecommendationCandidates(locationID int, epsMeters float64) ([]*RecommendationPinCandidate, error)
 }
 
 // PinHiddenRepositoryInterface — управление soft-delete-for-self записями (ТЗ 4.5.2).
@@ -195,6 +199,10 @@ type FavouriteRepositoryInterface interface {
 type GeoRegistryRepositoryInterface interface {
 	EnsureLocationByName(ctx context.Context, countryName, cityName string) (countryID, cityID *int, displayName string, err error)
 	UpsertTripLocations(ctx context.Context, tripID string, locationIDs []int) error
+	// Используется рекомендательной системой (ТЗ 9): резолв страны/города по точному имени.
+	FindCountryByName(ctx context.Context, name string) (int, error)
+	FindCityByName(ctx context.Context, name string) (int, error)
+	GetLocations(ctx context.Context, ids []int) ([]GeoLocation, error)
 }
 
 // Per-user приватность: каждый участник выставляет свой уровень для trip/pin/media.

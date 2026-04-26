@@ -519,9 +519,15 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "location_id",
-                        "name": "location_id",
+                        "type": "string",
+                        "description": "city name (mutually exclusive with country, city wins)",
+                        "name": "city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "country name (mutually exclusive with city)",
+                        "name": "country",
                         "in": "query"
                     },
                     {
@@ -1178,6 +1184,118 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recommendations"
+                ],
+                "summary": "Get recommendations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "city name (mutually exclusive with country)",
+                        "name": "city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "country name (mutually exclusive with city)",
+                        "name": "country",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.GetRecommendationsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendations/save": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recommendations"
+                ],
+                "summary": "Save recommendation as trip",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "city name (mutually exclusive with country)",
+                        "name": "city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "country name (mutually exclusive with city)",
+                        "name": "country",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.SaveRecommendationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -6031,6 +6149,14 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_responses.GetRecommendationsResponse": {
+            "type": "object",
+            "properties": {
+                "map": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.RecommendedMap"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_responses.GetTripResponse": {
             "type": "object",
             "properties": {
@@ -6343,6 +6469,76 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_responses.RecommendedMap": {
+            "type": "object",
+            "properties": {
+                "media": {
+                    "description": "Топ-8 медиа всей карты (карусель в карточке ленты).",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia"
+                    }
+                },
+                "pins": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.RecommendedPin"
+                    }
+                },
+                "region_name": {
+                    "type": "string"
+                },
+                "region_type": {
+                    "type": "string"
+                },
+                "trip": {
+                    "description": "Виртуальный трип-обёртка с name/description/dates/cover/счётчиками.\ntrip.id пуст до вызова SaveRecommendation.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
+                        }
+                    ]
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.RecommendedPin": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "location_name": {
+                    "type": "string"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia"
+                    }
+                },
+                "media_count": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "string"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_responses.RefreshTokenResponse": {
             "type": "object",
             "properties": {
@@ -6431,6 +6627,14 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.SaveRecommendationResponse": {
+            "type": "object",
+            "properties": {
+                "trip": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip"
                 }
             }
         },

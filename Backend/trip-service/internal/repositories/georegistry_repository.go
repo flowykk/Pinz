@@ -95,6 +95,26 @@ func (r *GeoRegistryRepository) EnsureLocationByName(ctx context.Context, countr
 	return cID, cityIDPtr, name, nil
 }
 
+// FindCountryByName — точный поиск страны по имени. Возвращает sql.ErrNoRows, если не найдено.
+// Используется рекомендательной системой (ТЗ 9), где регион принимается строкой.
+func (r *GeoRegistryRepository) FindCountryByName(ctx context.Context, name string) (int, error) {
+	id, err := r.q.GeoRegistryFindCountryByName(ctx, name)
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
+}
+
+// FindCityByName — точный поиск города по имени без указания страны. Возвращает первое совпадение.
+// Используется рекомендательной системой (ТЗ 9).
+func (r *GeoRegistryRepository) FindCityByName(ctx context.Context, name string) (int, error) {
+	id, err := r.q.GeoRegistryFindCityByNameNoParent(ctx, name)
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
+}
+
 // FindLocationIDsByName returns geo_registry ids matching name (country or city). Case-insensitive partial match.
 func (r *GeoRegistryRepository) FindLocationIDsByName(ctx context.Context, name string) ([]int, error) {
 	if name == "" {

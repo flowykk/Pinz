@@ -536,6 +536,21 @@ func (mr *MockTripClientMockRecorder) GetPinMediaAdditionReview(ctx, req any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinMediaAdditionReview", reflect.TypeOf((*MockTripClient)(nil).GetPinMediaAdditionReview), ctx, req)
 }
 
+// GetRecommendations mocks base method.
+func (m *MockTripClient) GetRecommendations(ctx context.Context, req *proto.GetRecommendationsRequest) (*proto.GetRecommendationsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRecommendations", ctx, req)
+	ret0, _ := ret[0].(*proto.GetRecommendationsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRecommendations indicates an expected call of GetRecommendations.
+func (mr *MockTripClientMockRecorder) GetRecommendations(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecommendations", reflect.TypeOf((*MockTripClient)(nil).GetRecommendations), ctx, req)
+}
+
 // GetTrip mocks base method.
 func (m *MockTripClient) GetTrip(ctx context.Context, req *proto.GetTripRequest) (*proto.GetTripResponse, error) {
 	m.ctrl.T.Helper()
@@ -804,6 +819,21 @@ func (m *MockTripClient) RequestTripCoverUpload(ctx context.Context, req *proto.
 func (mr *MockTripClientMockRecorder) RequestTripCoverUpload(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestTripCoverUpload", reflect.TypeOf((*MockTripClient)(nil).RequestTripCoverUpload), ctx, req)
+}
+
+// SaveRecommendation mocks base method.
+func (m *MockTripClient) SaveRecommendation(ctx context.Context, req *proto.SaveRecommendationRequest) (*proto.SaveRecommendationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveRecommendation", ctx, req)
+	ret0, _ := ret[0].(*proto.SaveRecommendationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SaveRecommendation indicates an expected call of SaveRecommendation.
+func (mr *MockTripClientMockRecorder) SaveRecommendation(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveRecommendation", reflect.TypeOf((*MockTripClient)(nil).SaveRecommendation), ctx, req)
 }
 
 // SearchPins mocks base method.
