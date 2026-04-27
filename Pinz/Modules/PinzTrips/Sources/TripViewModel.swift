@@ -131,7 +131,12 @@ final class TripViewModel {
             case .pinCreation:
                 router?.navigateToPinCreation()
             case .members:
-                router?.navigateToTripMembers(participants: participants, currentUserId: currentUser?.profileId)
+                guard let trip else { return }
+                router?.navigateToTripMembers(
+                    tripId: trip.id,
+                    participants: participants,
+                    currentUserId: currentUser?.profileId
+                )
             }
         case let .selectPin(pin):
             selectedPin = pin

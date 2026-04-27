@@ -1,10 +1,17 @@
 public struct GenerateInviteLinkDTO: Codable {
     public let inviteLinkId: String
-    public let inviteUrl: String
+    /// Omitted by some API deployments; use ``effectiveInviteUrl`` for display / sharing.
+    public let inviteUrl: String?
     public let token: String
     public let expiresAtUnix: Int?
 
-    public init(inviteLinkId: String, inviteUrl: String, token: String, expiresAtUnix: Int?) {
+    /// When the server omits `invite_url`, builds `https://pinz.website/join/{token}` (same path shape as the networking stub for this endpoint).
+    public var effectiveInviteUrl: String {
+        if let inviteUrl, !inviteUrl.isEmpty { return inviteUrl }
+        return "https://pinz.website/join/\(token)"
+    }
+
+    public init(inviteLinkId: String, inviteUrl: String? = nil, token: String, expiresAtUnix: Int?) {
         self.inviteLinkId = inviteLinkId
         self.inviteUrl = inviteUrl
         self.token = token

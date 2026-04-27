@@ -167,7 +167,11 @@
 
 // MARK: - Trip Members
 "tripMembers.title.main" = "Участники путешествия";
+"tripMembers.title.invite" = "Приглашение в поездку";
 "tripMembers.placeholder.search" = "Поиск по участникам";
+"tripMembers.button.shareLink" = "Поделиться ссылкой";
+"tripMembers.button.copyLink" = "Скопировать ссылку";
+"tripMembers.invite.error" = "Не удалось создать ссылку. Попробуйте снова.";
 
 // MARK: - Pin Creation
 "pinCreation.title.main" = "Создание пина";

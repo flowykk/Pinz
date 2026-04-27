@@ -40,6 +40,9 @@ final class MockNetworkService: NetworkServiceProtocol {
     var generateInviteLinkResult: Result<GenerateInviteLinkDTO, Error> = .success(
         GenerateInviteLinkDTO(inviteLinkId: "link-001", inviteUrl: "https://pinz.website/join/token", token: "token", expiresAtUnix: nil)
     )
+    var generateInviteLinkCallCount = 0
+    var lastGenerateInviteLinkTripId: String?
+    var lastGenerateInviteExpires: Int?
     var leaveTripResult: Result<LeaveTripDTO, Error> = .success(LeaveTripDTO(success: true, tripDeleted: false))
     var leaveTripCall: String?
     var removeParticipantError: Error?
@@ -162,7 +165,12 @@ final class MockNetworkService: NetworkServiceProtocol {
     // MARK: - Trip actions
 
     func joinTripByToken(token: String) async throws -> JoinTripByTokenDTO { try joinTripByTokenResult.get() }
-    func generateInviteLink(tripId: String, expiresInSeconds: Int?) async throws -> GenerateInviteLinkDTO { try generateInviteLinkResult.get() }
+    func generateInviteLink(tripId: String, expiresInSeconds: Int?) async throws -> GenerateInviteLinkDTO {
+        generateInviteLinkCallCount += 1
+        lastGenerateInviteLinkTripId = tripId
+        lastGenerateInviteExpires = expiresInSeconds
+        return try generateInviteLinkResult.get()
+    }
     func leaveTrip(id: String) async throws -> LeaveTripDTO {
         leaveTripCall = id
         return try leaveTripResult.get()

@@ -11,10 +11,14 @@ private enum TripMemberIcon: String, Setting.Icon {
 public struct TripMembersView: View {
 
     @State private var viewModel: TripMembersViewModel
+    @State private var isInvitePresented = false
 
     @Environment(\.appRouter) private var router
 
-    public init(participants: [TripParticipantDTO], currentUserId: String?) {
+    private let tripId: String
+
+    public init(tripId: String, participants: [TripParticipantDTO], currentUserId: String?) {
+        self.tripId = tripId
         viewModel = TripMembersViewModel(participants: participants, currentUserId: currentUserId)
     }
 
@@ -51,6 +55,9 @@ public struct TripMembersView: View {
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { viewModel.setRouter(router) }
+        .fullScreenCover(isPresented: $isInvitePresented) {
+            TripInviteView(tripId: tripId)
+        }
     }
 
     private func isSelf(_ member: TripMember) -> Bool {
@@ -69,14 +76,25 @@ public struct TripMembersView: View {
     }
 
     private var header: some View {
-        Header(leftView: {
-            PinzButton(
-                type: .icon(.chevronLeft),
-                tint: PinzUIAsset.textPrimary.swiftUIColor,
-                action: .plain { viewModel.dispatch(.navigate(.back)) }
-            )
-        }, centerView: {
-            HeaderTitle(PinzBaseStrings.TripMembers.Title.main)
-        })
+        Header(
+            leftView: {
+                PinzButton(
+                    type: .icon(.chevronLeft),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { viewModel.dispatch(.navigate(.back)) }
+                )
+            },
+            centerView: {
+                HeaderTitle(PinzBaseStrings.TripMembers.Title.main)
+            },
+            rightView: {
+                PinzButton(
+                    type: .icon(.personAdd),
+                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    action: .plain { isInvitePresented = true }
+                )
+                .disabledWithOpacity(viewModel.isLoading)
+            }
+        )
     }
 }

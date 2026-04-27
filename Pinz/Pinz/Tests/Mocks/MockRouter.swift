@@ -10,6 +10,7 @@ final class MockRouter: AppRouting {
     var navigatedPinUpdateAction: PinUpdateAction?
     var navigatedToPinCreation = false
     var navigatedToTripMembers = false
+    var navigatedToTripMembersTripId: String?
     var navigatedToTripMembersParticipants: [TripParticipantDTO] = []
     var navigatedToTripMembersCurrentUserId: String?
     var navigatedToPublicProfileUserId: String?
@@ -72,8 +73,9 @@ final class MockRouter: AppRouting {
         navigatedPinUpdateAction = updateAction
     }
     func navigateToPinCreation() { navigatedToPinCreation = true }
-    func navigateToTripMembers(participants: [TripParticipantDTO], currentUserId: String?) {
+    func navigateToTripMembers(tripId: String, participants: [TripParticipantDTO], currentUserId: String?) {
         navigatedToTripMembers = true
+        navigatedToTripMembersTripId = tripId
         navigatedToTripMembersParticipants = participants
         navigatedToTripMembersCurrentUserId = currentUserId
     }
