@@ -377,7 +377,7 @@ extension PinzAPI {
         case .getProfile:
             json = #"{"user_id":"user-001","username":"flowykk","nickname":"Flow","email":"flowykk@example.com","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}"#
         case .getProfileStats:
-            json = #"{"trips_count":12,"pins_count":42,"media_count":77,"likes_count":128,"dislikes_count":4,"battles_count":3}"#
+            json = #"{"total_trips":12,"total_pins":42,"total_media":77,"total_likes":128,"total_dislikes":4,"battles_finished":3}"#
         case .getVisitedLocations:
             json = #"[{"parent_id":null,"location_id":"ru","name":"Россия","last_visited_at_unix":1700000000,"visits_count":12},{"parent_id":null,"location_id":"fr","name":"Франция","last_visited_at_unix":1698000000,"visits_count":5}]"#
         case .deleteAccount:

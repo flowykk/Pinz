@@ -22,12 +22,12 @@ final class StatisticsViewModel {
 
     var isLoading = false
 
-    private(set) var tripsCount = 0
-    private(set) var pinsCount = 0
-    private(set) var mediaCount = 0
-    private(set) var likesCount = 0
-    private(set) var dislikesCount = 0
-    private(set) var battlesCount = 0
+    private(set) var totalTrips = 0
+    private(set) var totalPins = 0
+    private(set) var totalMedia = 0
+    private(set) var totalLikes = 0
+    private(set) var totalDislikes = 0
+    private(set) var battlesFinished = 0
     private(set) var visitedCountries: [VisitedLocationDTO] = []
     private(set) var visitedCities: [VisitedLocationDTO] = []
 
@@ -66,23 +66,23 @@ final class StatisticsViewModel {
             isLoading = false
         }
 
-        tripsCount = 0
-        pinsCount = 0
-        mediaCount = 0
-        likesCount = 0
-        dislikesCount = 0
-        battlesCount = 0
+        totalTrips = 0
+        totalPins = 0
+        totalMedia = 0
+        totalLikes = 0
+        totalDislikes = 0
+        battlesFinished = 0
         visitedCountries = []
         visitedCities = []
 
         do {
             let response = try await networkService.getProfileStats()
-            tripsCount = response.tripsCount ?? 0
-            pinsCount = response.pinsCount ?? 0
-            mediaCount = response.mediaCount ?? 0
-            likesCount = response.likesCount ?? 0
-            dislikesCount = response.dislikesCount ?? 0
-            battlesCount = response.battlesCount ?? 0
+            totalTrips = response.totalTrips ?? 0
+            totalPins = response.totalPins ?? 0
+            totalMedia = response.totalMedia ?? 0
+            totalLikes = response.totalLikes ?? 0
+            totalDislikes = response.totalDislikes ?? 0
+            battlesFinished = response.battlesFinished ?? 0
         } catch {
             print("[Statistics] Failed to load stats: \(error)")
         }

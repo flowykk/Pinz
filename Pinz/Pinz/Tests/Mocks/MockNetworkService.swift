@@ -70,7 +70,7 @@ final class MockNetworkService: NetworkServiceProtocol {
     var getVisitedLocationsCityResult: Result<VisitedLocationsResponseDTO, Error>?
     var getVisitedLocationsCallTypes: [String] = []
     var getProfileStatsResult: Result<UserStatsResponseDTO, Error> = .success(
-        UserStatsResponseDTO(tripsCount: 0, pinsCount: 0, mediaCount: 0, likesCount: 0, dislikesCount: 0, battlesCount: 0)
+        UserStatsResponseDTO(totalTrips: 0, totalPins: 0, totalMedia: 0, totalLikes: 0, totalDislikes: 0, battlesFinished: 0)
     )
     var getProfileStatsCallCount = 0
     var requestAvatarUploadResult: Result<AvatarUploadResponseDTO, Error> = .success(

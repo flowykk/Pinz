@@ -1,35 +1,35 @@
 import Foundation
 
 public struct UserStatsResponseDTO: Codable {
-    public let tripsCount: Int?
-    public let pinsCount: Int?
-    public let mediaCount: Int?
-    public let likesCount: Int?
-    public let dislikesCount: Int?
-    public let battlesCount: Int?
+    public let totalTrips: Int?
+    public let totalPins: Int?
+    public let totalMedia: Int?
+    public let totalLikes: Int?
+    public let totalDislikes: Int?
+    public let battlesFinished: Int?
 
     public init(
-        tripsCount: Int? = nil,
-        pinsCount: Int? = nil,
-        mediaCount: Int? = nil,
-        likesCount: Int? = nil,
-        dislikesCount: Int? = nil,
-        battlesCount: Int? = nil
+        totalTrips: Int? = nil,
+        totalPins: Int? = nil,
+        totalMedia: Int? = nil,
+        totalLikes: Int? = nil,
+        totalDislikes: Int? = nil,
+        battlesFinished: Int? = nil
     ) {
-        self.tripsCount = tripsCount
-        self.pinsCount = pinsCount
-        self.mediaCount = mediaCount
-        self.likesCount = likesCount
-        self.dislikesCount = dislikesCount
-        self.battlesCount = battlesCount
+        self.totalTrips = totalTrips
+        self.totalPins = totalPins
+        self.totalMedia = totalMedia
+        self.totalLikes = totalLikes
+        self.totalDislikes = totalDislikes
+        self.battlesFinished = battlesFinished
     }
 
     enum CodingKeys: String, CodingKey {
-        case tripsCount = "trips_count"
-        case pinsCount = "pins_count"
-        case mediaCount = "media_count"
-        case likesCount = "likes_count"
-        case dislikesCount = "dislikes_count"
-        case battlesCount = "battles_count"
+        case totalTrips = "total_trips"
+        case totalPins = "total_pins"
+        case totalMedia = "total_media"
+        case totalLikes = "total_likes"
+        case totalDislikes = "total_dislikes"
+        case battlesFinished = "battles_finished"
     }
 }
