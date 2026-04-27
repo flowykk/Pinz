@@ -35,18 +35,18 @@ final class StatisticsViewModelTests: XCTestCase {
 
     func test_dispatch_loadStats_success_setsAllCounts() async throws {
         mockNetwork.getProfileStatsResult = .success(
-            UserStatsResponseDTO(tripsCount: 5, pinsCount: 10, mediaCount: 20, likesCount: 3, dislikesCount: 1, battlesCount: 7)
+            UserStatsResponseDTO(totalTrips: 5, totalPins: 10, totalMedia: 20, totalLikes: 3, totalDislikes: 1, battlesFinished: 7)
         )
 
         sut.dispatch(.loadStats)
         try await waitForNotLoading()
 
-        XCTAssertEqual(sut.tripsCount, 5)
-        XCTAssertEqual(sut.pinsCount, 10)
-        XCTAssertEqual(sut.mediaCount, 20)
-        XCTAssertEqual(sut.likesCount, 3)
-        XCTAssertEqual(sut.dislikesCount, 1)
-        XCTAssertEqual(sut.battlesCount, 7)
+        XCTAssertEqual(sut.totalTrips, 5)
+        XCTAssertEqual(sut.totalPins, 10)
+        XCTAssertEqual(sut.totalMedia, 20)
+        XCTAssertEqual(sut.totalLikes, 3)
+        XCTAssertEqual(sut.totalDislikes, 1)
+        XCTAssertEqual(sut.battlesFinished, 7)
     }
 
     func test_dispatch_loadStats_nilStatsValues_defaultsToZero() async throws {
@@ -55,12 +55,12 @@ final class StatisticsViewModelTests: XCTestCase {
         sut.dispatch(.loadStats)
         try await waitForNotLoading()
 
-        XCTAssertEqual(sut.tripsCount, 0)
-        XCTAssertEqual(sut.pinsCount, 0)
-        XCTAssertEqual(sut.mediaCount, 0)
-        XCTAssertEqual(sut.likesCount, 0)
-        XCTAssertEqual(sut.dislikesCount, 0)
-        XCTAssertEqual(sut.battlesCount, 0)
+        XCTAssertEqual(sut.totalTrips, 0)
+        XCTAssertEqual(sut.totalPins, 0)
+        XCTAssertEqual(sut.totalMedia, 0)
+        XCTAssertEqual(sut.totalLikes, 0)
+        XCTAssertEqual(sut.totalDislikes, 0)
+        XCTAssertEqual(sut.battlesFinished, 0)
     }
 
     func test_dispatch_loadStats_success_setsVisitedCountries() async throws {
@@ -137,12 +137,12 @@ final class StatisticsViewModelTests: XCTestCase {
         sut.dispatch(.loadStats)
         try await waitForNotLoading()
 
-        XCTAssertEqual(sut.tripsCount, 0)
-        XCTAssertEqual(sut.pinsCount, 0)
-        XCTAssertEqual(sut.mediaCount, 0)
-        XCTAssertEqual(sut.likesCount, 0)
-        XCTAssertEqual(sut.dislikesCount, 0)
-        XCTAssertEqual(sut.battlesCount, 0)
+        XCTAssertEqual(sut.totalTrips, 0)
+        XCTAssertEqual(sut.totalPins, 0)
+        XCTAssertEqual(sut.totalMedia, 0)
+        XCTAssertEqual(sut.totalLikes, 0)
+        XCTAssertEqual(sut.totalDislikes, 0)
+        XCTAssertEqual(sut.battlesFinished, 0)
     }
 
     func test_dispatch_loadStats_countriesFailure_setsEmptyArray() async throws {

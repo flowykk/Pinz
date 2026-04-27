@@ -45,32 +45,32 @@ public struct StatisticsView: View {
                                     .default(Setting.DefaultSetting(
                                         id: "statsTrips",
                                         leading: .iconTitle(StatisticsIcon.globe, PinzBaseStrings.Statistics.Label.trips),
-                                        trailing: .values([.text(String(viewModel.tripsCount))])
+                                        trailing: .values([.text(String(viewModel.totalTrips))])
                                     )),
                                     .default(Setting.DefaultSetting(
                                         id: "statsPins",
                                         leading: .iconTitle(StatisticsIcon.pin, PinzBaseStrings.Statistics.Label.pins),
-                                        trailing: .values([.text(String(viewModel.pinsCount))])
+                                        trailing: .values([.text(String(viewModel.totalPins))])
                                     )),
                                     .default(Setting.DefaultSetting(
                                         id: "statsMedia",
                                         leading: .iconTitle(StatisticsIcon.media, PinzBaseStrings.Statistics.Label.media),
-                                        trailing: .values([.text(String(viewModel.mediaCount))])
+                                        trailing: .values([.text(String(viewModel.totalMedia))])
                                     )),
                                     .default(Setting.DefaultSetting(
                                         id: "statsLikes",
                                         leading: .iconTitle(StatisticsIcon.handThumbsup, PinzBaseStrings.Statistics.Label.likes),
-                                        trailing: .values([.text(String(viewModel.likesCount))])
+                                        trailing: .values([.text(String(viewModel.totalLikes))])
                                     )),
                                     .default(Setting.DefaultSetting(
                                         id: "statsDislikes",
                                         leading: .iconTitle(StatisticsIcon.handThumbsdown, PinzBaseStrings.Statistics.Label.dislikes),
-                                        trailing: .values([.text(String(viewModel.dislikesCount))])
+                                        trailing: .values([.text(String(viewModel.totalDislikes))])
                                     )),
                                     .default(Setting.DefaultSetting(
                                         id: "statsBattles",
                                         leading: .iconTitle(StatisticsIcon.shield, PinzBaseStrings.Statistics.Label.battles),
-                                        trailing: .values([.text(String(viewModel.battlesCount))])
+                                        trailing: .values([.text(String(viewModel.battlesFinished))])
                                     )),
                                 ]
                             )
