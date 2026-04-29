@@ -11,31 +11,35 @@ import (
 
 	"pinz/backend/statistics-service/internal/models"
 	"pinz/backend/statistics-service/internal/repositories"
+	"pinz/backend/statistics-service/internal/services"
 )
 
 const (
-	StreamName = "pinz:stats:events"
+	StreamName    = "pinz:stats:events"
 	consumerGroup = "statistics-service-worker"
-	consumerName = "stats-worker-1"
+	consumerName  = "stats-worker-1"
 )
 
-// Event types — соответствуют publisher'у trip-service (RedisRepository.PublishStatsEvent).
+// Event types — соответствуют publisher'у trip-service.
 const (
-	EventTripDeleted = "TRIP_DELETED" // cleanup trip_locations_mirror
-	EventTripLocationsAdded = "TRIP_LOCATIONS_ADDED" // upsert mirror
-	EventLikeAdded = "LIKE_ADDED"
-	EventLikeRemoved = "LIKE_REMOVED"
-	EventDislikeAdded = "DISLIKE_ADDED"
-	EventDislikeRemoved = "DISLIKE_REMOVED"
-	EventBattleFinished = "BATTLE_FINISHED"
+	EventTripDeleted          = "TRIP_DELETED"
+	EventLikeAdded            = "LIKE_ADDED"
+	EventLikeRemoved          = "LIKE_REMOVED"
+	EventDislikeAdded         = "DISLIKE_ADDED"
+	EventDislikeRemoved       = "DISLIKE_REMOVED"
+	EventBattleFinished       = "BATTLE_FINISHED"
+	EventPinLocationsRequest  = "PIN_LOCATIONS_REQUESTED"
+	EventPinLocationsResolved = "PIN_LOCATIONS_RESOLVED"
 )
 
 type Deps struct {
-	Redis *redis.Client
-	UserStats repositories.UserStatsRepositoryInterface
-	GeoRegistry repositories.GeoRegistryRepositoryInterface
+	Redis         *redis.Client
+	UserStats     repositories.UserStatsRepositoryInterface
+	GeoRegistry   repositories.GeoRegistryRepositoryInterface
 	TripLocations repositories.TripLocationsRepositoryInterface
-	EventLog repositories.EventLogRepositoryInterface
+	EventLog      repositories.EventLogRepositoryInterface
+	Geocoder      services.LocationResolver
+	GeoPublisher  repositories.GeoEventPublisher
 }
 
 // Run запускает consumer-loop Redis Streams до отмены ctx.
@@ -59,11 +63,11 @@ func Run(ctx context.Context, d Deps) error {
 		}
 
 		streams, err := d.Redis.XReadGroup(ctx, &redis.XReadGroupArgs{
-			Group: consumerGroup,
+			Group:    consumerGroup,
 			Consumer: consumerName,
-			Streams: []string{StreamName, ">"},
-			Count: 50,
-			Block: 2 * time.Second,
+			Streams:  []string{StreamName, ">"},
+			Count:    50,
+			Block:    2 * time.Second,
 		}).Result()
 		if err != nil && err != redis.Nil {
 			if ctx.Err() != nil {
@@ -128,8 +132,8 @@ func handleMessage(ctx context.Context, d Deps, msg redis.XMessage) error {
 
 func applyEvent(ctx context.Context, d Deps, eventType, tripID string, userIDs []string, payload map[string]any) error {
 	switch eventType {
-	case EventTripLocationsAdded:
-		return applyTripLocations(ctx, d, tripID, payload)
+	case EventPinLocationsRequest:
+		return handlePinLocationsRequested(ctx, d, tripID, payload)
 	case EventTripDeleted:
 		if tripID == "" {
 			return nil
@@ -163,53 +167,136 @@ func applyIncrement(ctx context.Context, inc func(context.Context, string, int32
 	return nil
 }
 
-func applyTripLocations(ctx context.Context, d Deps, tripID string, payload map[string]any) error {
+// handlePinLocationsRequested резолвит координаты пинов трипа через BigDataCloud,
+// upsert'ит master geo_registry + trip_locations и публикует ответ
+// PIN_LOCATIONS_RESOLVED в pinz:trip:geo_events для trip-service.
+//
+// Геокодинг — некритичный путь: ошибка на одной точке логируется warning'ом
+// и не валит обработку остальных. Если ни одна точка не разрешилась — событие
+// считается обработанным, ничего не публикуем (trip-service оставит location_name
+// пустым).
+func handlePinLocationsRequested(ctx context.Context, d Deps, tripID string, payload map[string]any) error {
 	if tripID == "" {
 		return nil
 	}
-	raw, ok := payload["locations"]
-	if !ok {
+	pinsRaw, _ := payload["pins"].([]any)
+	if len(pinsRaw) == 0 {
 		return nil
 	}
-	list, ok := raw.([]any)
-	if !ok {
-		return nil
+
+	type resolvedPin struct {
+		PinID        string
+		LocationName string
+		CountryID    int32
+		CityID       int32
 	}
-	for _, item := range list {
+	resolvedPins := make([]resolvedPin, 0, len(pinsRaw))
+	geoRows := make(map[int32]*models.GeoLocation)
+
+	for _, item := range pinsRaw {
 		m, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		loc := parseLocation(m)
-		if loc == nil || loc.ID == 0 {
+		pinID, _ := m["pin_id"].(string)
+		lat, latOk := readFloat(m["latitude"])
+		lon, lonOk := readFloat(m["longitude"])
+		if pinID == "" || !latOk || !lonOk {
 			continue
 		}
-		if err := d.GeoRegistry.Upsert(ctx, loc); err != nil {
-			return err
+
+		country, city, name, err := d.Geocoder.ResolveLocation(ctx, lat, lon)
+		if err != nil {
+			slog.WarnContext(ctx, "worker: geocoding failed", "trip_id", tripID, "pin_id", pinID, "error", err)
+			continue
 		}
-		if err := d.TripLocations.Upsert(ctx, tripID, loc.ID); err != nil {
+		if name == "" {
+			continue
+		}
+
+		countryRow, cityRow, err := d.GeoRegistry.EnsureByName(ctx, country, city)
+		if err != nil {
+			slog.WarnContext(ctx, "worker: EnsureByName failed", "trip_id", tripID, "pin_id", pinID, "error", err)
+			continue
+		}
+
+		rp := resolvedPin{PinID: pinID, LocationName: name}
+		if countryRow != nil {
+			geoRows[countryRow.ID] = countryRow
+			rp.CountryID = countryRow.ID
+			if err := d.TripLocations.Upsert(ctx, tripID, countryRow.ID); err != nil {
+				slog.WarnContext(ctx, "worker: TripLocations.Upsert(country) failed", "trip_id", tripID, "error", err)
+			}
+		}
+		if cityRow != nil {
+			geoRows[cityRow.ID] = cityRow
+			rp.CityID = cityRow.ID
+			if err := d.TripLocations.Upsert(ctx, tripID, cityRow.ID); err != nil {
+				slog.WarnContext(ctx, "worker: TripLocations.Upsert(city) failed", "trip_id", tripID, "error", err)
+			}
+		}
+		resolvedPins = append(resolvedPins, rp)
+	}
+
+	if len(resolvedPins) == 0 {
+		return nil
+	}
+
+	// Сборка обратного payload.
+	geoRowList := make([]map[string]any, 0, len(geoRows))
+	for _, row := range geoRows {
+		entry := map[string]any{"id": row.ID, "name": row.Name, "type": row.Type}
+		if row.ParentID != nil {
+			entry["parent_id"] = *row.ParentID
+		}
+		geoRowList = append(geoRowList, entry)
+	}
+	pinList := make([]map[string]any, 0, len(resolvedPins))
+	for _, rp := range resolvedPins {
+		entry := map[string]any{
+			"pin_id":        rp.PinID,
+			"location_name": rp.LocationName,
+		}
+		if rp.CountryID != 0 {
+			entry["country_id"] = rp.CountryID
+		}
+		if rp.CityID != 0 {
+			entry["city_id"] = rp.CityID
+		}
+		pinList = append(pinList, entry)
+	}
+	out := map[string]any{
+		"geo_rows": geoRowList,
+		"pins":     pinList,
+	}
+	if d.GeoPublisher != nil {
+		if err := d.GeoPublisher.PublishGeoEvent(ctx, EventPinLocationsResolved, tripID, out); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func parseLocation(m map[string]any) *models.GeoLocation {
-	loc := &models.GeoLocation{}
-	if v, ok := m["id"].(float64); ok {
-		loc.ID = int32(v)
+func readFloat(v any) (float64, bool) {
+	switch x := v.(type) {
+	case float64:
+		return x, true
+	case float32:
+		return float64(x), true
+	case int:
+		return float64(x), true
+	case int32:
+		return float64(x), true
+	case int64:
+		return float64(x), true
+	case json.Number:
+		f, err := x.Float64()
+		if err != nil {
+			return 0, false
+		}
+		return f, true
 	}
-	if v, ok := m["parent_id"].(float64); ok && v > 0 {
-		p := int32(v)
-		loc.ParentID = &p
-	}
-	if v, ok := m["name"].(string); ok {
-		loc.Name = v
-	}
-	if v, ok := m["type"].(string); ok {
-		loc.Type = v
-	}
-	return loc
+	return 0, false
 }
 
 func parseUserIDs(raw any) []string {

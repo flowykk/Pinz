@@ -76,6 +76,13 @@ spec:
               value: {{ .Values.env.otelTracesSampler | quote }}
             - name: OTEL_TRACES_SAMPLER_ARG
               value: {{ .Values.env.otelTracesSamplerArg | quote }}
+            - name: GEOCODING_BASE_URL
+              value: {{ .Values.env.geocodingBaseUrl | quote }}
+            - name: GEOCODING_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: statistics-service-secret
+                  key: geocoding-api-key
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}

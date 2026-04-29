@@ -94,13 +94,6 @@ spec:
                 secretKeyRef:
                   name: trip-service-secret
                   key: s3-secret-key
-            - name: GEOCODING_BASE_URL
-              value: {{ .Values.env.geocodingBaseUrl | quote }}
-            - name: GEOCODING_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: trip-service-secret
-                  key: geocoding-api-key
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}

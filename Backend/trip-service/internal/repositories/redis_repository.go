@@ -119,6 +119,37 @@ func (r *RedisRepository) PublishStatsEvent(ctx context.Context, eventType, trip
 	return nil
 }
 
+// PublishGeoRequest публикует PIN_LOCATIONS_REQUESTED в pinz:stats:events.
+// statistics-service consumer'ит это событие, идёт в BigDataCloud, заполняет
+// master geo_registry/trip_locations и публикует PIN_LOCATIONS_RESOLVED
+// в pinz:trip:geo_events (см. vkr.txt §2.5.4).
+//
+// Геокодинг — некритичный путь: при недоступности Redis/statistics событие
+// просто остаётся в стриме, трип создаётся с пустым location_name.
+func (r *RedisRepository) PublishGeoRequest(ctx context.Context, tripID string, pins []GeoRequestPin) error {
+	if r == nil || r.client == nil {
+		return nil
+	}
+	if tripID == "" || len(pins) == 0 {
+		return nil
+	}
+	payload := map[string]any{"pins": pins}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	vals := map[string]any{
+		"event_type": "PIN_LOCATIONS_REQUESTED",
+		"trip_id":    tripID,
+		"payload":    string(b),
+	}
+	if err := r.client.XAdd(ctx, &redis.XAddArgs{Stream: statsEventsStream, Values: vals}).Err(); err != nil {
+		slog.WarnContext(ctx, "PublishGeoRequest failed", "trip_id", tripID, "error", err)
+		return err
+	}
+	return nil
+}
+
 // PublishTripEvent adds an event to the trip events stream for Notification/Statistics services.
 func (r *RedisRepository) PublishTripEvent(ctx context.Context, eventType string, tripID, userID string) error {
 	vals := map[string]interface{}{

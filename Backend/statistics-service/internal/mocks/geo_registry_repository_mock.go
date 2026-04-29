@@ -41,6 +41,22 @@ func (m *MockGeoRegistryRepositoryInterface) EXPECT() *MockGeoRegistryRepository
 	return m.recorder
 }
 
+// EnsureByName mocks base method.
+func (m *MockGeoRegistryRepositoryInterface) EnsureByName(ctx context.Context, countryName, cityName string) (*models.GeoLocation, *models.GeoLocation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureByName", ctx, countryName, cityName)
+	ret0, _ := ret[0].(*models.GeoLocation)
+	ret1, _ := ret[1].(*models.GeoLocation)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EnsureByName indicates an expected call of EnsureByName.
+func (mr *MockGeoRegistryRepositoryInterfaceMockRecorder) EnsureByName(ctx, countryName, cityName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureByName", reflect.TypeOf((*MockGeoRegistryRepositoryInterface)(nil).EnsureByName), ctx, countryName, cityName)
+}
+
 // GetByID mocks base method.
 func (m *MockGeoRegistryRepositoryInterface) GetByID(ctx context.Context, id int32) (*models.GeoLocation, error) {
 	m.ctrl.T.Helper()

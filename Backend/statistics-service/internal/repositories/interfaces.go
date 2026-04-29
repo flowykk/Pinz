@@ -16,6 +16,7 @@ type UserStatsRepositoryInterface interface {
 type GeoRegistryRepositoryInterface interface {
 	Upsert(ctx context.Context, loc *models.GeoLocation) error
 	GetByID(ctx context.Context, id int32) (*models.GeoLocation, error)
+	EnsureByName(ctx context.Context, countryName, cityName string) (*models.GeoLocation, *models.GeoLocation, error)
 }
 
 type TripLocationsRepositoryInterface interface {

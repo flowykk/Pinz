@@ -31,6 +31,12 @@ type Favourite struct {
 	CreatedAt time.Time
 }
 
+type GeoEventLog struct {
+	EventID     string
+	EventType   string
+	ProcessedAt time.Time
+}
+
 type GeoRegistry struct {
 	ID       int32
 	ParentID sql.NullInt32

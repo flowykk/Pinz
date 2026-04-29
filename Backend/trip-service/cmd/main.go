@@ -71,8 +71,15 @@ func main() {
 
 	// Start worker as a background goroutine.
 	go func() {
-		if err := worker.Run(ctx, deps.RedisClient, deps.TripRepo, deps.ParticipantRepo, deps.GeoRepo, deps.MediaRepo, deps.TagRepo, deps.PinRepo, deps.EventRepo, deps.TripPrivacyRepo, deps.PinPrivacyRepo, deps.MediaPrivacyRepo, deps.Geocoder); err != nil {
+		if err := worker.Run(ctx, deps.RedisClient, deps.TripRepo, deps.ParticipantRepo, deps.MediaRepo, deps.TagRepo, deps.PinRepo, deps.EventRepo, deps.TripPrivacyRepo, deps.PinPrivacyRepo, deps.MediaPrivacyRepo); err != nil {
 			slog.Error("worker stopped with error", "error", err)
+		}
+	}()
+
+	// Geo consumer: pinz:trip:geo_events ← statistics-service (PIN_LOCATIONS_RESOLVED).
+	go func() {
+		if err := worker.RunGeoConsumer(ctx, deps.RedisClient, deps.GeoRepo, deps.PinRepo, deps.GeoEventLogRepo); err != nil {
+			slog.Error("geo consumer stopped with error", "error", err)
 		}
 	}()
 

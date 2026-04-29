@@ -27,7 +27,7 @@ func TestCreatePinStart_NotParticipant_PermissionDenied(t *testing.T) {
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(false, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.CreatePinStart(ctxWithUser(userID), &pb.CreatePinStartRequest{
 		TripId: tripID,
 		FilesToUpload: []*pb.FileToUpload{{ClientId: "c1", ContentType: "image/jpeg"}},
@@ -46,7 +46,7 @@ func TestCreatePinStart_TripNotReady_FailedPrecondition(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
 	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusAddMediaUploading}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.CreatePinStart(ctxWithUser(userID), &pb.CreatePinStartRequest{
 		TripId: tripID,
 		FilesToUpload: []*pb.FileToUpload{{ClientId: "c1", ContentType: "image/jpeg"}},
@@ -67,7 +67,7 @@ func TestCreatePinStart_LimitExceeded_ResourceExhausted(t *testing.T) {
 	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusReady}, nil)
 	mediaRepo.EXPECT().CountByTripID(tripID).Return(MaxMediaPerTrip, 0, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.CreatePinStart(ctxWithUser(userID), &pb.CreatePinStartRequest{
 		TripId: tripID,
 		FilesToUpload: []*pb.FileToUpload{{ClientId: "c1", ContentType: "image/jpeg"}},
@@ -90,7 +90,7 @@ func TestCreatePinStart_ConflictExistingSession_FailedPrecondition(t *testing.T)
 	mediaRepo.EXPECT().CountByTripID(tripID).Return(0, 0, nil)
 	sessionRepo.EXPECT().Create(gomock.Any(), tripID, userID).Return("", repositories.ErrPinCreationSessionActive)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
 	_, err := svc.CreatePinStart(ctxWithUser(userID), &pb.CreatePinStartRequest{
 		TripId: tripID,
 		FilesToUpload: []*pb.FileToUpload{{ClientId: "c1", ContentType: "image/jpeg"}},
@@ -129,7 +129,7 @@ func TestCommitPinCreationUpload_Success(t *testing.T) {
 	sessionRepo.EXPECT().Touch(gomock.Any(), sessionID).Return(nil)
 	mediaRepo.EXPECT().ListByPinCreationSession(sessionID).Return([]*models.Media{{ID: "media-new"}}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
 	resp, err := svc.CommitPinCreationUpload(ctxWithUser(userID), &pb.CommitPinCreationUploadRequest{
 		TripId: tripID, SessionId: sessionID,
 		S3Key: "trips/trip-1/pins/c1.jpg", MediaType: "image",
@@ -183,7 +183,7 @@ func TestProcessPinCreation_HashDedup_AndSuggestedFields(t *testing.T) {
 			return nil
 		})
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
 	resp, err := svc.ProcessPinCreation(ctxWithUser(userID), &pb.ProcessPinCreationRequest{
 		TripId: tripID, SessionId: sessionID,
 	})
@@ -222,7 +222,7 @@ func TestProcessPinCreation_PinIssues_MissingCoordsAndDates(t *testing.T) {
 	mediaRepo.EXPECT().ListByPinCreationSession(sessionID).Return(media, nil).Times(2)
 	sessionRepo.EXPECT().SetDraftSnapshot(gomock.Any(), sessionID, gomock.Any()).Return(nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
 	resp, err := svc.ProcessPinCreation(ctxWithUser(userID), &pb.ProcessPinCreationRequest{
 		TripId: tripID, SessionId: sessionID,
 	})
@@ -293,7 +293,7 @@ func TestFinalizePinCreation_HappyPath_CreatesPinAndPublishesEvent(t *testing.T)
 	// Финальный сбор.
 	tagRepo.EXPECT().GetByPinID("pin-new").Return([]string{"sea", "summer"}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, eventRepo, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, eventRepo, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
 	name := "Кафе у моря"
 	resp, err := svc.FinalizePinCreation(ctxWithUser(userID), &pb.FinalizePinCreationRequest{
 		TripId: tripID, SessionId: sessionID,
@@ -324,7 +324,7 @@ func TestFinalizePinCreation_EmptyMedia_FailedPrecondition(t *testing.T) {
 	// Все media были удалены / нет.
 	mediaRepo.EXPECT().ListByPinCreationSession(sessionID).Return(nil, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
 	_, err := svc.FinalizePinCreation(ctxWithUser(userID), &pb.FinalizePinCreationRequest{
 		TripId: tripID, SessionId: sessionID,
 	})
@@ -352,7 +352,7 @@ func TestCancelPinCreation_RemovesOrphans(t *testing.T) {
 	mediaRepo.EXPECT().DeleteOrphanByPinCreationSession(sessionID).Return([]string{"k1", "k2"}, nil)
 	sessionRepo.EXPECT().Close(gomock.Any(), sessionID, models.PinCreationSessionCloseReasonCancelled).Return(nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, sessionRepo)
 	resp, err := svc.CancelPinCreation(ctxWithUser(userID), &pb.CancelPinCreationRequest{
 		TripId: tripID, SessionId: sessionID,
 	})

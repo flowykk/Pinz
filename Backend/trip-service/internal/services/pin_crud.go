@@ -215,29 +215,12 @@ func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (
 			return nil, status.Error(codes.Internal, "failed to update pin tags")
 		}
 	}
-	if coordsChanged && s.geocoder != nil && pin.Latitude != nil && pin.Longitude != nil {
-		country, city, displayName, gerr := s.geocoder.ResolveLocation(ctx, *pin.Latitude, *pin.Longitude)
-		if gerr != nil {
-			slog.WarnContext(ctx, "UpdatePin: reverse geocoding failed", "pin_id", pinID, "err", gerr)
-		} else if displayName != "" {
-			pin.LocationName = displayName
-			_ = s.pinRepo.Update(pin)
-			if s.geoRepo != nil {
-				countryID, cityID, _, ensureErr := s.geoRepo.EnsureLocationByName(ctx, country, city)
-				if ensureErr != nil {
-					slog.WarnContext(ctx, "UpdatePin: geo registry ensure failed", "pin_id", pinID, "err", ensureErr)
-				} else {
-					var locIDs []int
-					if countryID != nil {
-						locIDs = append(locIDs, *countryID)
-					}
-					if cityID != nil {
-						locIDs = append(locIDs, *cityID)
-					}
-					_ = s.geoRepo.UpsertTripLocations(ctx, tripID, locIDs)
-				}
-			}
-		}
+	if coordsChanged && pin.Latitude != nil && pin.Longitude != nil && s.eventRepo != nil {
+		_ = s.eventRepo.PublishGeoRequest(ctx, tripID, []repositories.GeoRequestPin{{
+			PinID:     pinID,
+			Latitude:  *pin.Latitude,
+			Longitude: *pin.Longitude,
+		}})
 	}
 	mediaList, err := s.mediaRepo.ListByPinID(pinID)
 	if err != nil {
@@ -707,27 +690,15 @@ func (s *TripService) FinalizePinMediaAddition(ctx context.Context, req *pb.Fina
 		updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pinID)
 	}
 
-	// 3. Reverse geocoding если у пина теперь есть координаты, и они изменились.
+	// 3. Reverse geocoding если у пина теперь есть координаты впервые. Async через
+	// statistics-service: PIN_LOCATIONS_REQUESTED → PIN_LOCATIONS_RESOLVED.
 	pin, err = s.pinRepo.GetByID(pinID)
-	if err == nil && pin.Latitude != nil && pin.Longitude != nil && !prevHadCoords && s.geocoder != nil {
-		country, city, displayName, gerr := s.geocoder.ResolveLocation(ctx, *pin.Latitude, *pin.Longitude)
-		if gerr == nil && displayName != "" {
-			pin.LocationName = displayName
-			_ = s.pinRepo.Update(pin)
-			if s.geoRepo != nil {
-				countryID, cityID, _, ensureErr := s.geoRepo.EnsureLocationByName(ctx, country, city)
-				if ensureErr == nil {
-					var locIDs []int
-					if countryID != nil {
-						locIDs = append(locIDs, *countryID)
-					}
-					if cityID != nil {
-						locIDs = append(locIDs, *cityID)
-					}
-					_ = s.geoRepo.UpsertTripLocations(ctx, tripID, locIDs)
-				}
-			}
-		}
+	if err == nil && pin.Latitude != nil && pin.Longitude != nil && !prevHadCoords && s.eventRepo != nil {
+		_ = s.eventRepo.PublishGeoRequest(ctx, tripID, []repositories.GeoRequestPin{{
+			PinID:     pinID,
+			Latitude:  *pin.Latitude,
+			Longitude: *pin.Longitude,
+		}})
 	}
 
 	// 4. Закрыть сессию.

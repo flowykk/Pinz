@@ -29,7 +29,7 @@ func TestGetPin_HiddenForUser_ReturnsNotFound(t *testing.T) {
 	hiddenRepo := mocks.NewMockPinHiddenRepositoryInterface(ctrl)
 	hiddenRepo.EXPECT().IsHidden(pinID, userID).Return(true, nil)
 
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
 	_, err := svc.GetPin(ctxWithUser(userID), &pb.GetPinRequest{TripId: tripID, PinId: pinID})
 	require.Error(t, err)
 	require.Equal(t, codes.NotFound, status.Code(err))
@@ -49,7 +49,7 @@ func TestGetPin_NotParticipant_NotInFavourites_PermissionDenied(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(false, nil)
 	favRepo.EXPECT().HasFavourite(userID, tripID).Return(false, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
 	_, err := svc.GetPin(ctxWithUser(userID), &pb.GetPinRequest{TripId: tripID, PinId: pinID})
 	require.Error(t, err)
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
@@ -69,7 +69,7 @@ func TestGetPin_PinFromAnotherTrip_NotFound(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
 	pinRepo.EXPECT().GetByID(pinID).Return(&models.Pin{ID: pinID, TripID: "trip-OTHER"}, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
 	_, err := svc.GetPin(ctxWithUser(userID), &pb.GetPinRequest{TripId: tripID, PinId: pinID})
 	require.Error(t, err)
 	require.Equal(t, codes.NotFound, status.Code(err))
@@ -95,7 +95,7 @@ func TestGetPin_HappyPath(t *testing.T) {
 	mediaRepo.EXPECT().ListByPinID(pinID).Return(nil, nil)
 	tagRepo.EXPECT().GetByPinID(pinID).Return([]string{"food", "coffee"}, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
 	resp, err := svc.GetPin(ctxWithUser(userID), &pb.GetPinRequest{TripId: tripID, PinId: pinID})
 	require.NoError(t, err)
 	require.Equal(t, pinID, resp.GetPin().GetId())
@@ -124,7 +124,7 @@ func TestUpdatePin_ValidationErrors(t *testing.T) {
 	}
 
 	mkSvc := func(participantRepo *mocks.MockTripParticipantRepositoryInterface, tripRepo *mocks.MockTripRepositoryInterface, pinRepo *mocks.MockPinRepositoryInterface) *TripService {
-		return NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		return NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	}
 
 	t.Run("name_too_long", func(t *testing.T) {
@@ -198,7 +198,7 @@ func TestUpdatePin_NotParticipant_PermissionDenied(t *testing.T) {
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(false, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.UpdatePin(ctxWithUser(userID), &pb.UpdatePinRequest{TripId: tripID, PinId: pinID})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 }
@@ -215,7 +215,7 @@ func TestUpdatePin_TripNotReady_FailedPrecondition(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
 	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusAddMediaUploading}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.UpdatePin(ctxWithUser(userID), &pb.UpdatePinRequest{TripId: tripID, PinId: pinID})
 	require.Equal(t, codes.FailedPrecondition, status.Code(err))
 }
@@ -241,7 +241,7 @@ func TestUpdatePin_HappyPath_TagsReplace(t *testing.T) {
 	tagRepo.EXPECT().GetByPinID(pinID).Return([]string{"a", "b"}, nil)
 
 	newName := "Кафе"
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.UpdatePin(ctxWithUser(userID), &pb.UpdatePinRequest{
 		TripId: tripID, PinId: pinID, Name: &newName, Tags: []string{"a", "b"}, TagsSet: true,
 	})
@@ -271,7 +271,7 @@ func TestUpdatePin_TagsSetFalse_NotTouched(t *testing.T) {
 	tagRepo.EXPECT().GetByPinID(pinID).Return([]string{"existing"}, nil)
 
 	desc := "new"
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.UpdatePin(ctxWithUser(userID), &pb.UpdatePinRequest{
 		TripId: tripID, PinId: pinID, Description: &desc,
 		Tags: []string{"ignored"}, TagsSet: false,
@@ -297,7 +297,7 @@ func TestDeletePin_ActiveSession_FailedPrecondition(t *testing.T) {
 	pinRepo.EXPECT().GetByID(pinID).Return(&models.Pin{ID: pinID, TripID: tripID}, nil)
 	pinAddSessionRepo.EXPECT().GetActiveForPin(gomock.Any(), pinID).Return(&models.PinMediaAdditionSession{SessionID: "sess-1"}, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
 	_, err := svc.DeletePin(ctxWithUser(userID), &pb.DeletePinRequest{TripId: tripID, PinId: pinID})
 	require.Equal(t, codes.FailedPrecondition, status.Code(err))
 }
@@ -323,7 +323,7 @@ func TestDeletePin_FullDelete(t *testing.T) {
 	tagRepo.EXPECT().DeleteForPin(pinID).Return(nil)
 	pinRepo.EXPECT().Delete(pinID).Return(nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
 	resp, err := svc.DeletePin(ctxWithUser(userID), &pb.DeletePinRequest{TripId: tripID, PinId: pinID})
 	require.NoError(t, err)
 	require.Equal(t, "full", resp.GetDeletionMode())
@@ -347,7 +347,7 @@ func TestDeletePin_SoftDeleteForSelf(t *testing.T) {
 	favRepo.EXPECT().HasFavouritesByOtherUsers(tripID, userID).Return(true, nil)
 	hiddenRepo.EXPECT().HidePinForUser(pinID, userID).Return(nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, pinAddSessionRepo, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, hiddenRepo, pinAddSessionRepo, nil)
 	resp, err := svc.DeletePin(ctxWithUser(userID), &pb.DeletePinRequest{TripId: tripID, PinId: pinID})
 	require.NoError(t, err)
 	require.Equal(t, "soft_for_user", resp.GetDeletionMode())
@@ -375,7 +375,7 @@ func TestAddMediaToPinStart_ConflictExistingSession(t *testing.T) {
 	mediaRepo.EXPECT().CountByTripID(tripID).Return(0, 0, nil)
 	pinAddSessionRepo.EXPECT().Create(gomock.Any(), tripID, pinID, userID).Return("", repositories.ErrPinAdditionSessionActive)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
 	_, err := svc.AddMediaToPinStart(ctxWithUser(userID), &pb.AddMediaToPinStartRequest{
 		TripId: tripID, PinId: pinID,
 		FilesToUpload: []*pb.FileToUpload{{ClientId: "c1", ContentType: "image/jpeg"}},
@@ -399,7 +399,7 @@ func TestAddMediaToPinStart_LimitExceeded(t *testing.T) {
 	pinRepo.EXPECT().GetByID(pinID).Return(&models.Pin{ID: pinID, TripID: tripID}, nil)
 	mediaRepo.EXPECT().CountByTripID(tripID).Return(MaxMediaPerTrip, 0, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.AddMediaToPinStart(ctxWithUser(userID), &pb.AddMediaToPinStartRequest{
 		TripId: tripID, PinId: pinID,
 		FilesToUpload: []*pb.FileToUpload{{ClientId: "c1", ContentType: "image/jpeg"}},
@@ -435,7 +435,7 @@ func TestCommitPinMediaUpload_Success(t *testing.T) {
 	pinAddSessionRepo.EXPECT().Touch(gomock.Any(), sessionID).Return(nil)
 	mediaRepo.EXPECT().ListByPinAdditionSession(sessionID).Return([]*models.Media{{ID: "media-new"}}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
 	resp, err := svc.CommitPinMediaUpload(ctxWithUser(userID), &pb.CommitPinMediaUploadRequest{
 		TripId: tripID, PinId: pinID, SessionId: sessionID,
 		S3Key: "trips/trip-1/pins/c1.jpg", MediaType: "image",
@@ -481,7 +481,7 @@ func TestProcessPinMediaAddition_HashDedup(t *testing.T) {
 	}, nil)
 	pinAddSessionRepo.EXPECT().SetDraftSnapshot(gomock.Any(), sessionID, gomock.Any()).Return(nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
 	resp, err := svc.ProcessPinMediaAddition(ctxWithUser(userID), &pb.ProcessPinMediaAdditionRequest{
 		TripId: tripID, PinId: pinID, SessionId: sessionID,
 	})
@@ -516,7 +516,7 @@ func TestProcessPinMediaAddition_PinIssues(t *testing.T) {
 	mediaRepo.EXPECT().ListByPinAdditionSession(sessionID).Return([]*models.Media{{ID: "m1"}}, nil)
 	pinAddSessionRepo.EXPECT().SetDraftSnapshot(gomock.Any(), sessionID, gomock.Any()).Return(nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
 	resp, err := svc.ProcessPinMediaAddition(ctxWithUser(userID), &pb.ProcessPinMediaAdditionRequest{
 		TripId: tripID, PinId: pinID, SessionId: sessionID,
 	})
@@ -544,7 +544,7 @@ func TestCancelPinMediaAddition_RemovesOrphans(t *testing.T) {
 	mediaRepo.EXPECT().DeleteOrphanByPinAdditionSession(sessionID).Return([]string{"k1"}, nil)
 	pinAddSessionRepo.EXPECT().Close(gomock.Any(), sessionID, models.PinMediaAdditionSessionCloseReasonCancelled).Return(nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, pinAddSessionRepo, nil)
 	resp, err := svc.CancelPinMediaAddition(ctxWithUser(userID), &pb.CancelPinMediaAdditionRequest{
 		TripId: tripID, PinId: pinID, SessionId: sessionID,
 	})
@@ -577,7 +577,7 @@ func TestRemoveMediaFromPin_LastMedia_FailedPrecondition(t *testing.T) {
 	}, nil)
 	mediaRepo.EXPECT().ListByPinID(pinID).Return([]*models.Media{{ID: mediaID}}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.RemoveMediaFromPin(ctxWithUser(userID), &pb.RemoveMediaFromPinRequest{
 		TripId: tripID, PinId: pinID, MediaId: mediaID,
 	})
@@ -615,7 +615,7 @@ func TestRemoveMediaFromPin_HappyPath(t *testing.T) {
 	pinRepo.EXPECT().Update(gomock.Any()).Return(nil)
 	tagRepo.EXPECT().GetByPinID(pinID).Return(nil, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.RemoveMediaFromPin(ctxWithUser(userID), &pb.RemoveMediaFromPinRequest{
 		TripId: tripID, PinId: pinID, MediaId: mediaID,
 	})
@@ -641,7 +641,7 @@ func TestUpdatePin_PinFromAnotherTrip_NotFound(t *testing.T) {
 	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusReady}, nil)
 	pinRepo.EXPECT().GetByID(pinID).Return(&models.Pin{ID: pinID, TripID: "trip-OTHER"}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.UpdatePin(ctxWithUser(userID), &pb.UpdatePinRequest{TripId: tripID, PinId: pinID})
 	require.Equal(t, codes.NotFound, status.Code(err))
 }
@@ -661,7 +661,7 @@ func TestGetPin_PinNotInDB_NotFound(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
 	pinRepo.EXPECT().GetByID(pinID).Return(nil, sql.ErrNoRows)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, hiddenRepo, nil, nil)
 	_, err := svc.GetPin(ctxWithUser(userID), &pb.GetPinRequest{TripId: tripID, PinId: pinID})
 	require.Equal(t, codes.NotFound, status.Code(err))
 }
