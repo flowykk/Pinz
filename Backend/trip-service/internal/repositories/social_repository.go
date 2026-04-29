@@ -71,6 +71,43 @@ func (r *SocialRepository) SetReaction(userID, tripID, reaction string) (oldReac
 	return oldReaction, tx.Commit()
 }
 
+// GetReactionsByUserAndTrips bulk-фетч реакций пользователя по списку trip_id.
+// Возвращает map[tripID]reaction только для трипов, по которым у пользователя есть запись.
+// Невалидные UUID в tripIDs пропускаются. На пустом входе — пустая мапа без ошибки.
+func (r *SocialRepository) GetReactionsByUserAndTrips(userID string, tripIDs []string) (map[string]string, error) {
+	out := make(map[string]string, len(tripIDs))
+	if len(tripIDs) == 0 {
+		return out, nil
+	}
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return out, err
+	}
+	tids := make([]uuid.UUID, 0, len(tripIDs))
+	for _, id := range tripIDs {
+		tid, perr := uuid.Parse(id)
+		if perr != nil {
+			continue
+		}
+		tids = append(tids, tid)
+	}
+	if len(tids) == 0 {
+		return out, nil
+	}
+	q := sqlcdb.New(r.db)
+	rows, err := q.SocialGetReactionsByUserAndTrips(context.Background(), sqlcdb.SocialGetReactionsByUserAndTripsParams{
+		UserID: uid,
+		Column2: tids,
+	})
+	if err != nil {
+		return out, err
+	}
+	for _, row := range rows {
+		out[row.TripID.String()] = row.Reaction
+	}
+	return out, nil
+}
+
 // GetReaction returns the user's reaction for the trip ("", "Like", or "Dislike").
 func (r *SocialRepository) GetReaction(userID, tripID string) (string, error) {
 	uid, err := uuid.Parse(userID)

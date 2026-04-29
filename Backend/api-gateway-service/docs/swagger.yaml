@@ -821,6 +821,12 @@ definitions:
     type: object
   pinz_backend_api-gateway-service_internal_responses.FeedItem:
     properties:
+      is_disliked:
+        type: boolean
+      is_liked:
+        type: boolean
+      is_saved:
+        type: boolean
       media:
         items:
           $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'

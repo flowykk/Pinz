@@ -91,6 +91,41 @@ func (r *FavouriteRepository) HasFavouritesByOtherUsers(tripID, excludeUserID st
 	return true, nil
 }
 
+// FavouritesByUserAndTrips bulk-проверка: какие из tripIDs сохранены пользователем.
+// Невалидные UUID в tripIDs пропускаются. На пустом входе — пустой набор без ошибки.
+func (r *FavouriteRepository) FavouritesByUserAndTrips(userID string, tripIDs []string) (map[string]struct{}, error) {
+	out := make(map[string]struct{}, len(tripIDs))
+	if len(tripIDs) == 0 {
+		return out, nil
+	}
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return out, err
+	}
+	tids := make([]uuid.UUID, 0, len(tripIDs))
+	for _, id := range tripIDs {
+		tid, perr := uuid.Parse(id)
+		if perr != nil {
+			continue
+		}
+		tids = append(tids, tid)
+	}
+	if len(tids) == 0 {
+		return out, nil
+	}
+	rows, err := r.q.FavouriteListTripIDsByUserAndTrips(context.Background(), sqlcdb.FavouriteListTripIDsByUserAndTripsParams{
+		UserID: uid,
+		Column2: tids,
+	})
+	if err != nil {
+		return out, err
+	}
+	for _, id := range rows {
+		out[id.String()] = struct{}{}
+	}
+	return out, nil
+}
+
 // ListTripIDsByUserID returns trip IDs for the user's favourites, ordered by created_at DESC (newest first).
 func (r *FavouriteRepository) ListTripIDsByUserID(userID string, limit, offset int32) ([]string, error) {
 	if limit <= 0 || limit > 100 {

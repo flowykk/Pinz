@@ -977,3 +977,98 @@ func TestSearchPins_RepoError(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, codes.Internal, status.Code(err))
 }
+
+func TestListFeed_Unauthenticated(t *testing.T) {
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := svc.ListFeed(context.Background(), &pb.ListFeedRequest{})
+	require.Error(t, err)
+	require.Equal(t, codes.Unauthenticated, status.Code(err))
+}
+
+func TestListFeed_EmptyResultDoesNotQueryUserState(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	// no calls to socialRepo / favouriteRepo expected when 0 trips returned
+	tripRepo.EXPECT().ListFeed(int32(20), int32(0), "", "", []int(nil), "date").Return(nil, nil)
+
+	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	resp, err := svc.ListFeed(ctxWithUser("u1"), &pb.ListFeedRequest{})
+	require.NoError(t, err)
+	require.Empty(t, resp.GetItems())
+}
+
+func TestListFeed_PerUserFlags(t *testing.T) {
+	cases := map[string]struct {
+		reactions  map[string]string
+		favourites map[string]struct{}
+		wantLiked  bool
+		wantDisl   bool
+		wantSaved  bool
+	}{
+		"no_state":         {nil, nil, false, false, false},
+		"like_only":        {map[string]string{"trip-1": "Like"}, nil, true, false, false},
+		"dislike_only":     {map[string]string{"trip-1": "Dislike"}, nil, false, true, false},
+		"saved_only":       {nil, map[string]struct{}{"trip-1": {}}, false, false, true},
+		"like_and_saved":   {map[string]string{"trip-1": "Like"}, map[string]struct{}{"trip-1": {}}, true, false, true},
+		"unknown_reaction": {map[string]string{"trip-1": "Wat"}, nil, false, false, false},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+			pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+			mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+			socialRepo := mocks.NewMockSocialRepositoryInterface(ctrl)
+			favRepo := mocks.NewMockFavouriteRepositoryInterface(ctrl)
+
+			now := time.Unix(1000, 0)
+			trips := []*models.Trip{{
+				ID: "trip-1", OwnerUserID: "owner", Name: "T", Category: "Отпуск", Season: "Лето",
+				Status: "READY", PrivacyLevel: "Public", IsPublished: true, CreatedAt: now, UpdatedAt: now,
+			}}
+			tripRepo.EXPECT().ListFeed(int32(20), int32(0), "", "", []int(nil), "date").Return(trips, nil)
+			socialRepo.EXPECT().GetReactionsByUserAndTrips("u1", []string{"trip-1"}).Return(tc.reactions, nil)
+			favRepo.EXPECT().FavouritesByUserAndTrips("u1", []string{"trip-1"}).Return(tc.favourites, nil)
+			pinRepo.EXPECT().ListPublishedPinsByTripIDs([]string{"trip-1"}).Return(map[string][]*repositories.FeedPin{}, nil)
+			mediaRepo.EXPECT().TopMediaByTripIDs([]string{"trip-1"}, 8).Return(map[string][]*repositories.FeedMedia{}, nil)
+			mediaRepo.EXPECT().TopMediaByPinIDs(gomock.Any(), 10).Return(map[string][]*repositories.FeedMedia{}, nil)
+
+			svc := NewTripService(tripRepo, nil, nil, nil, nil, mediaRepo, nil, pinRepo, nil, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+			resp, err := svc.ListFeed(ctxWithUser("u1"), &pb.ListFeedRequest{})
+			require.NoError(t, err)
+			require.Len(t, resp.GetItems(), 1)
+			require.Equal(t, tc.wantLiked, resp.GetItems()[0].GetIsLiked())
+			require.Equal(t, tc.wantDisl, resp.GetItems()[0].GetIsDisliked())
+			require.Equal(t, tc.wantSaved, resp.GetItems()[0].GetIsSaved())
+		})
+	}
+}
+
+func TestListFeed_DegradesOnUserStateRepoError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+	socialRepo := mocks.NewMockSocialRepositoryInterface(ctrl)
+	favRepo := mocks.NewMockFavouriteRepositoryInterface(ctrl)
+
+	now := time.Unix(1000, 0)
+	trips := []*models.Trip{{
+		ID: "trip-1", OwnerUserID: "owner", Name: "T", Category: "Отпуск", Season: "Лето",
+		Status: "READY", PrivacyLevel: "Public", IsPublished: true, CreatedAt: now, UpdatedAt: now,
+	}}
+	tripRepo.EXPECT().ListFeed(int32(20), int32(0), "", "", []int(nil), "date").Return(trips, nil)
+	socialRepo.EXPECT().GetReactionsByUserAndTrips("u1", []string{"trip-1"}).Return(nil, sql.ErrConnDone)
+	favRepo.EXPECT().FavouritesByUserAndTrips("u1", []string{"trip-1"}).Return(nil, sql.ErrConnDone)
+	pinRepo.EXPECT().ListPublishedPinsByTripIDs([]string{"trip-1"}).Return(map[string][]*repositories.FeedPin{}, nil)
+	mediaRepo.EXPECT().TopMediaByTripIDs([]string{"trip-1"}, 8).Return(map[string][]*repositories.FeedMedia{}, nil)
+	mediaRepo.EXPECT().TopMediaByPinIDs(gomock.Any(), 10).Return(map[string][]*repositories.FeedMedia{}, nil)
+
+	svc := NewTripService(tripRepo, nil, nil, nil, nil, mediaRepo, nil, pinRepo, nil, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	resp, err := svc.ListFeed(ctxWithUser("u1"), &pb.ListFeedRequest{})
+	require.NoError(t, err)
+	require.Len(t, resp.GetItems(), 1)
+	require.False(t, resp.GetItems()[0].GetIsLiked())
+	require.False(t, resp.GetItems()[0].GetIsDisliked())
+	require.False(t, resp.GetItems()[0].GetIsSaved())
+}

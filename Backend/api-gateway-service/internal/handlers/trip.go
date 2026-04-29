@@ -1124,6 +1124,9 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 			Trip: h.tripProtoToResponse(item.GetTrip()),
 			Pins: pins,
 			Media: media,
+			IsLiked: item.GetIsLiked(),
+			IsDisliked: item.GetIsDisliked(),
+			IsSaved: item.GetIsSaved(),
 		}
 	}
 	respondJSON(w, http.StatusOK, out)

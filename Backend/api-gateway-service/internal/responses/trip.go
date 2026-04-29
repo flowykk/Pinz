@@ -230,10 +230,14 @@ type FeedPin struct {
 }
 
 // FeedItem is a single card in the feed: trip data + pins + media .
+// is_liked / is_disliked / is_saved — per-user state текущего пользователя (ТЗ 7.5, 7.6).
 type FeedItem struct {
 	Trip Trip `json:"trip"`
 	Pins []FeedPin `json:"pins"`
 	Media []FeedMedia `json:"media"`
+	IsLiked bool `json:"is_liked"`
+	IsDisliked bool `json:"is_disliked"`
+	IsSaved bool `json:"is_saved"`
 }
 
 // SuccessResponse is a generic success response for like/dislike/favourite.

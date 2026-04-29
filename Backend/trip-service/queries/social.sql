@@ -1,6 +1,11 @@
 -- name: SocialGetReaction :one
 SELECT reaction FROM social WHERE user_id = $1 AND trip_id = $2;
 
+-- name: SocialGetReactionsByUserAndTrips :many
+SELECT trip_id, reaction
+FROM social
+WHERE user_id = $1 AND trip_id = ANY($2::uuid[]);
+
 -- name: SocialUpsert :exec
 INSERT INTO social (user_id, trip_id, reaction) VALUES ($1, $2, $3)
 ON CONFLICT (user_id, trip_id) DO UPDATE SET reaction = $3;
