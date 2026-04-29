@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const socialGetReaction = `-- name: SocialGetReaction :one
@@ -25,6 +26,45 @@ func (q *Queries) SocialGetReaction(ctx context.Context, arg SocialGetReactionPa
 	var reaction string
 	err := row.Scan(&reaction)
 	return reaction, err
+}
+
+const socialGetReactionsByUserAndTrips = `-- name: SocialGetReactionsByUserAndTrips :many
+SELECT trip_id, reaction
+FROM social
+WHERE user_id = $1 AND trip_id = ANY($2::uuid[])
+`
+
+type SocialGetReactionsByUserAndTripsParams struct {
+	UserID  uuid.UUID
+	Column2 []uuid.UUID
+}
+
+type SocialGetReactionsByUserAndTripsRow struct {
+	TripID   uuid.UUID
+	Reaction string
+}
+
+func (q *Queries) SocialGetReactionsByUserAndTrips(ctx context.Context, arg SocialGetReactionsByUserAndTripsParams) ([]SocialGetReactionsByUserAndTripsRow, error) {
+	rows, err := q.db.QueryContext(ctx, socialGetReactionsByUserAndTrips, arg.UserID, pq.Array(arg.Column2))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SocialGetReactionsByUserAndTripsRow{}
+	for rows.Next() {
+		var i SocialGetReactionsByUserAndTripsRow
+		if err := rows.Scan(&i.TripID, &i.Reaction); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const socialUpsert = `-- name: SocialUpsert :exec

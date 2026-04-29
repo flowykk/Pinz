@@ -3624,11 +3624,15 @@ func (x *FeedPin) GetMedia() []*FeedMedia {
 }
 
 // a single feed card with trip, pins and media.
+// is_liked / is_disliked / is_saved — per-user view-state for caller (ТЗ 7.5, 7.6).
 type FeedItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Trip          *Trip                  `protobuf:"bytes,1,opt,name=trip,proto3" json:"trip,omitempty"`
 	Pins          []*FeedPin             `protobuf:"bytes,2,rep,name=pins,proto3" json:"pins,omitempty"`
 	Media         []*FeedMedia           `protobuf:"bytes,3,rep,name=media,proto3" json:"media,omitempty"`
+	IsLiked       bool                   `protobuf:"varint,4,opt,name=is_liked,json=isLiked,proto3" json:"is_liked,omitempty"`
+	IsDisliked    bool                   `protobuf:"varint,5,opt,name=is_disliked,json=isDisliked,proto3" json:"is_disliked,omitempty"`
+	IsSaved       bool                   `protobuf:"varint,6,opt,name=is_saved,json=isSaved,proto3" json:"is_saved,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3682,6 +3686,27 @@ func (x *FeedItem) GetMedia() []*FeedMedia {
 		return x.Media
 	}
 	return nil
+}
+
+func (x *FeedItem) GetIsLiked() bool {
+	if x != nil {
+		return x.IsLiked
+	}
+	return false
+}
+
+func (x *FeedItem) GetIsDisliked() bool {
+	if x != nil {
+		return x.IsDisliked
+	}
+	return false
+}
+
+func (x *FeedItem) GetIsSaved() bool {
+	if x != nil {
+		return x.IsSaved
+	}
+	return false
 }
 
 type ListFeedResponse struct {
@@ -10032,12 +10057,16 @@ const file_trip_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x1c\n" +
 	"\tlongitude\x18\x03 \x01(\x01R\tlongitude\x12%\n" +
-	"\x05media\x18\x04 \x03(\v2\x0f.trip.FeedMediaR\x05media\"t\n" +
+	"\x05media\x18\x04 \x03(\v2\x0f.trip.FeedMediaR\x05media\"\xcb\x01\n" +
 	"\bFeedItem\x12\x1e\n" +
 	"\x04trip\x18\x01 \x01(\v2\n" +
 	".trip.TripR\x04trip\x12!\n" +
 	"\x04pins\x18\x02 \x03(\v2\r.trip.FeedPinR\x04pins\x12%\n" +
-	"\x05media\x18\x03 \x03(\v2\x0f.trip.FeedMediaR\x05media\"8\n" +
+	"\x05media\x18\x03 \x03(\v2\x0f.trip.FeedMediaR\x05media\x12\x19\n" +
+	"\bis_liked\x18\x04 \x01(\bR\aisLiked\x12\x1f\n" +
+	"\vis_disliked\x18\x05 \x01(\bR\n" +
+	"isDisliked\x12\x19\n" +
+	"\bis_saved\x18\x06 \x01(\bR\aisSaved\"8\n" +
 	"\x10ListFeedResponse\x12$\n" +
 	"\x05items\x18\x01 \x03(\v2\x0e.trip.FeedItemR\x05items\"*\n" +
 	"\x0fLikeTripRequest\x12\x17\n" +

@@ -54,6 +54,21 @@ func (mr *MockSocialRepositoryInterfaceMockRecorder) GetReaction(userID, tripID 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReaction", reflect.TypeOf((*MockSocialRepositoryInterface)(nil).GetReaction), userID, tripID)
 }
 
+// GetReactionsByUserAndTrips mocks base method.
+func (m *MockSocialRepositoryInterface) GetReactionsByUserAndTrips(userID string, tripIDs []string) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReactionsByUserAndTrips", userID, tripIDs)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReactionsByUserAndTrips indicates an expected call of GetReactionsByUserAndTrips.
+func (mr *MockSocialRepositoryInterfaceMockRecorder) GetReactionsByUserAndTrips(userID, tripIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReactionsByUserAndTrips", reflect.TypeOf((*MockSocialRepositoryInterface)(nil).GetReactionsByUserAndTrips), userID, tripIDs)
+}
+
 // SetReaction mocks base method.
 func (m *MockSocialRepositoryInterface) SetReaction(userID, tripID, reaction string) (string, error) {
 	m.ctrl.T.Helper()

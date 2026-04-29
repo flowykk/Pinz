@@ -198,6 +198,9 @@ type SocialRepositoryInterface interface {
 	// Возвращает oldReaction ("", "Like", "Dislike") — для публикации статистических событий.
 	SetReaction(userID, tripID, reaction string) (oldReaction string, err error)
 	GetReaction(userID, tripID string) (string, error)
+	// GetReactionsByUserAndTrips bulk-фетч реакций пользователя по списку trip_id.
+	// В мапе только те трипы, по которым у пользователя есть запись; reaction — "Like" или "Dislike".
+	GetReactionsByUserAndTrips(userID string, tripIDs []string) (map[string]string, error)
 }
 
 type FavouriteRepositoryInterface interface {
@@ -206,6 +209,9 @@ type FavouriteRepositoryInterface interface {
 	HasFavourite(userID, tripID string) (bool, error)
 	HasFavouritesByOtherUsers(tripID, excludeUserID string) (bool, error)
 	ListTripIDsByUserID(userID string, limit, offset int32) ([]string, error)
+	// FavouritesByUserAndTrips возвращает множество tripIDs из переданного списка,
+	// которые сохранены пользователем. Для O(1) проверки в ленте.
+	FavouritesByUserAndTrips(userID string, tripIDs []string) (map[string]struct{}, error)
 }
 
 type GeoRegistryRepositoryInterface interface {

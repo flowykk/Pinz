@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const favouriteAdd = `-- name: FavouriteAdd :exec
@@ -70,6 +71,40 @@ type FavouriteListTripIDsByUserParams struct {
 
 func (q *Queries) FavouriteListTripIDsByUser(ctx context.Context, arg FavouriteListTripIDsByUserParams) ([]uuid.UUID, error) {
 	rows, err := q.db.QueryContext(ctx, favouriteListTripIDsByUser, arg.UserID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []uuid.UUID{}
+	for rows.Next() {
+		var trip_id uuid.UUID
+		if err := rows.Scan(&trip_id); err != nil {
+			return nil, err
+		}
+		items = append(items, trip_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const favouriteListTripIDsByUserAndTrips = `-- name: FavouriteListTripIDsByUserAndTrips :many
+SELECT trip_id
+FROM favourite
+WHERE user_id = $1 AND trip_id = ANY($2::uuid[])
+`
+
+type FavouriteListTripIDsByUserAndTripsParams struct {
+	UserID  uuid.UUID
+	Column2 []uuid.UUID
+}
+
+func (q *Queries) FavouriteListTripIDsByUserAndTrips(ctx context.Context, arg FavouriteListTripIDsByUserAndTripsParams) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, favouriteListTripIDsByUserAndTrips, arg.UserID, pq.Array(arg.Column2))
 	if err != nil {
 		return nil, err
 	}

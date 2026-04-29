@@ -53,6 +53,21 @@ func (mr *MockFavouriteRepositoryInterfaceMockRecorder) Add(userID, tripID any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockFavouriteRepositoryInterface)(nil).Add), userID, tripID)
 }
 
+// FavouritesByUserAndTrips mocks base method.
+func (m *MockFavouriteRepositoryInterface) FavouritesByUserAndTrips(userID string, tripIDs []string) (map[string]struct{}, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FavouritesByUserAndTrips", userID, tripIDs)
+	ret0, _ := ret[0].(map[string]struct{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FavouritesByUserAndTrips indicates an expected call of FavouritesByUserAndTrips.
+func (mr *MockFavouriteRepositoryInterfaceMockRecorder) FavouritesByUserAndTrips(userID, tripIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FavouritesByUserAndTrips", reflect.TypeOf((*MockFavouriteRepositoryInterface)(nil).FavouritesByUserAndTrips), userID, tripIDs)
+}
+
 // HasFavourite mocks base method.
 func (m *MockFavouriteRepositoryInterface) HasFavourite(userID, tripID string) (bool, error) {
 	m.ctrl.T.Helper()

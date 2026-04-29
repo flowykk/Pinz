@@ -402,3 +402,83 @@ func TestTripHandler_SearchPins_ServiceError(t *testing.T) {
 
 	require.Equal(t, http.StatusInternalServerError, rr.Code)
 }
+
+func TestTripHandler_ListFeed_WithoutJWT(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripClient := mocks.NewMockTripClient(ctrl)
+
+	h := NewTripHandler(tripClient, nil, "")
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/feed", nil)
+	rr := httptest.NewRecorder()
+
+	h.ListFeed(rr, req)
+
+	require.Equal(t, http.StatusUnauthorized, rr.Code)
+}
+
+func TestTripHandler_ListFeed_MapsPerUserFlags(t *testing.T) {
+	cases := map[string]struct {
+		liked, disliked, saved bool
+	}{
+		"all_false":     {false, false, false},
+		"liked_only":    {true, false, false},
+		"disliked_only": {false, true, false},
+		"saved_only":    {false, false, true},
+		"liked_saved":   {true, false, true},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			tripClient := mocks.NewMockTripClient(ctrl)
+			tripClient.EXPECT().
+				ListFeed(gomock.Any(), gomock.Any()).
+				Return(&proto.ListFeedResponse{
+					Items: []*proto.FeedItem{
+						{
+							Trip: &proto.Trip{
+								Id: "trip-1", OwnerUserId: "owner", Name: "T",
+								Category: "Отпуск", Season: "Лето", Status: "READY",
+								PrivacyLevel: "Public", IsPublished: true,
+								CreatedAtUnix: 1000, UpdatedAtUnix: 1000,
+							},
+							IsLiked: tc.liked,
+							IsDisliked: tc.disliked,
+							IsSaved: tc.saved,
+						},
+					},
+				}, nil)
+
+			h := NewTripHandler(tripClient, nil, "")
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/feed", nil)
+			req = req.WithContext(ctxWithUserID("user-1"))
+			rr := httptest.NewRecorder()
+
+			h.ListFeed(rr, req)
+
+			require.Equal(t, http.StatusOK, rr.Code)
+			var items []responses.FeedItem
+			require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &items))
+			require.Len(t, items, 1)
+			require.Equal(t, tc.liked, items[0].IsLiked)
+			require.Equal(t, tc.disliked, items[0].IsDisliked)
+			require.Equal(t, tc.saved, items[0].IsSaved)
+		})
+	}
+}
+
+func TestTripHandler_ListFeed_ClientError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripClient := mocks.NewMockTripClient(ctrl)
+	tripClient.EXPECT().
+		ListFeed(gomock.Any(), gomock.Any()).
+		Return(nil, status.Error(codes.Internal, "db error"))
+
+	h := NewTripHandler(tripClient, nil, "")
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/feed", nil)
+	req = req.WithContext(ctxWithUserID("user-1"))
+	rr := httptest.NewRecorder()
+
+	h.ListFeed(rr, req)
+
+	require.Equal(t, http.StatusInternalServerError, rr.Code)
+}

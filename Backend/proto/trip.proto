@@ -471,10 +471,14 @@ message FeedPin {
 }
 
 // a single feed card with trip, pins and media.
+// is_liked / is_disliked / is_saved — per-user view-state for caller (ТЗ 7.5, 7.6).
 message FeedItem {
  Trip trip = 1;
  repeated FeedPin pins = 2;
  repeated FeedMedia media = 3;
+ bool is_liked = 4;
+ bool is_disliked = 5;
+ bool is_saved = 6;
 }
 
 message ListFeedResponse {

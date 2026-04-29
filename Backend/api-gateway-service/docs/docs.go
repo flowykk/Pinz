@@ -6491,6 +6491,15 @@ const docTemplate = `{
         "pinz_backend_api-gateway-service_internal_responses.FeedItem": {
             "type": "object",
             "properties": {
+                "is_disliked": {
+                    "type": "boolean"
+                },
+                "is_liked": {
+                    "type": "boolean"
+                },
+                "is_saved": {
+                    "type": "boolean"
+                },
                 "media": {
                     "type": "array",
                     "items": {

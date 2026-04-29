@@ -2821,7 +2821,7 @@ func (s *TripService) UpdateTripSettings(ctx context.Context, req *pb.UpdateTrip
 
 // ListFeed — лента опубликованных трипов . Пагинация 20, фильтры category/season/location, сортировка date|rating.
 func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*pb.ListFeedResponse, error) {
-	_, ok := server.UserIDFromContext(ctx)
+	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user_id required")
 	}
@@ -2857,6 +2857,19 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 	tripIDs := make([]string, len(trips))
 	for i, t := range trips {
 		tripIDs[i] = t.ID
+	}
+
+	// per-user state для карточек ленты (ТЗ 7.5, 7.6). Degrade soft: при сбое
+	// лукапа лента не 500-ит, флаги остаются false — это эквивалент «нет реакции/нет save».
+	reactionsByTrip, err := s.socialRepo.GetReactionsByUserAndTrips(userID, tripIDs)
+	if err != nil {
+		slog.WarnContext(ctx, "ListFeed: failed to fetch reactions", "error", err)
+		reactionsByTrip = map[string]string{}
+	}
+	favouritesByTrip, err := s.favouriteRepo.FavouritesByUserAndTrips(userID, tripIDs)
+	if err != nil {
+		slog.WarnContext(ctx, "ListFeed: failed to fetch favourites", "error", err)
+		favouritesByTrip = map[string]struct{}{}
 	}
 
 	pinsByTrip, err := s.pinRepo.ListPublishedPinsByTripIDs(tripIDs)
@@ -2915,10 +2928,15 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 			}
 		}
 
+		reaction := reactionsByTrip[t.ID]
+		_, saved := favouritesByTrip[t.ID]
 		items[i] = &pb.FeedItem{
 			Trip: s.tripToProto(ctx, t),
 			Pins: protoPins,
 			Media: protoMedia,
+			IsLiked: reaction == "Like",
+			IsDisliked: reaction == "Dislike",
+			IsSaved: saved,
 		}
 	}
 	return &pb.ListFeedResponse{Items: items}, nil
