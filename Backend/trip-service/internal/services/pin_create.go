@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -532,28 +531,15 @@ func (s *TripService) FinalizePinCreation(ctx context.Context, req *pb.FinalizeP
 		updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pin.ID)
 	}
 
-	// 9. Reverse-geocoding.
-	if pin.Latitude != nil && pin.Longitude != nil && s.geocoder != nil {
-		country, city, displayName, gerr := s.geocoder.ResolveLocation(ctx, *pin.Latitude, *pin.Longitude)
-		if gerr != nil {
-			slog.WarnContext(ctx, "FinalizePinCreation: reverse geocoding failed", "pin_id", pin.ID, "err", gerr)
-		} else if displayName != "" {
-			pin.LocationName = displayName
-			_ = s.pinRepo.Update(pin)
-			if s.geoRepo != nil {
-				countryID, cityID, _, ensureErr := s.geoRepo.EnsureLocationByName(ctx, country, city)
-				if ensureErr == nil {
-					var locIDs []int
-					if countryID != nil {
-						locIDs = append(locIDs, *countryID)
-					}
-					if cityID != nil {
-						locIDs = append(locIDs, *cityID)
-					}
-					_ = s.geoRepo.UpsertTripLocations(ctx, tripID, locIDs)
-				}
-			}
-		}
+	// 9. Reverse-geocoding — асинхронно через statistics-service (vkr.txt §2.5.4):
+	// публикуем PIN_LOCATIONS_REQUESTED, statistics резолвит координаты и пришлёт
+	// PIN_LOCATIONS_RESOLVED обратно — geo consumer заполнит pin.location_name.
+	if pin.Latitude != nil && pin.Longitude != nil && s.eventRepo != nil {
+		_ = s.eventRepo.PublishGeoRequest(ctx, tripID, []repositories.GeoRequestPin{{
+			PinID:     pin.ID,
+			Latitude:  *pin.Latitude,
+			Longitude: *pin.Longitude,
+		}})
 	}
 
 	// 10. PIN_ADDED (ТЗ 11.2.1).

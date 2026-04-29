@@ -11,19 +11,15 @@ SELECT id FROM geo_registry WHERE name = $1 AND type = 'City' LIMIT 1;
 SELECT id FROM geo_registry
 WHERE name ILIKE $1 AND (type = 'Country' OR type = 'City');
 
--- name: GeoRegistryUpsertCountry :one
-INSERT INTO geo_registry (name, type)
-VALUES ($1, 'Country')
-ON CONFLICT (name, type) WHERE parent_id IS NULL
-DO UPDATE SET name = EXCLUDED.name
-RETURNING id;
-
--- name: GeoRegistryUpsertCity :one
-INSERT INTO geo_registry (name, type, parent_id)
-VALUES ($1, 'City', $2)
-ON CONFLICT (name, type, parent_id) WHERE parent_id IS NOT NULL
-DO UPDATE SET name = EXCLUDED.name
-RETURNING id;
+-- name: GeoRegistryMirrorByID :exec
+-- Зеркалит запись master geo_registry из statistics-service в локальную реплику.
+-- id приходит от master, поэтому мы вставляем фиксированный id и обновляем поля.
+INSERT INTO geo_registry (id, parent_id, name, type)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (id) DO UPDATE SET
+ parent_id = EXCLUDED.parent_id,
+ name = EXCLUDED.name,
+ type = EXCLUDED.type;
 
 -- name: TripLocationInsert :exec
 INSERT INTO trip_locations (trip_id, location_id) VALUES ($1, $2)

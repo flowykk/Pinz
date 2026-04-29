@@ -111,39 +111,32 @@ func (q *Queries) GeoRegistryGetByIDs(ctx context.Context, dollar_1 []int32) ([]
 	return items, nil
 }
 
-const geoRegistryUpsertCity = `-- name: GeoRegistryUpsertCity :one
-INSERT INTO geo_registry (name, type, parent_id)
-VALUES ($1, 'City', $2)
-ON CONFLICT (name, type, parent_id) WHERE parent_id IS NOT NULL
-DO UPDATE SET name = EXCLUDED.name
-RETURNING id
+const geoRegistryMirrorByID = `-- name: GeoRegistryMirrorByID :exec
+INSERT INTO geo_registry (id, parent_id, name, type)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (id) DO UPDATE SET
+ parent_id = EXCLUDED.parent_id,
+ name = EXCLUDED.name,
+ type = EXCLUDED.type
 `
 
-type GeoRegistryUpsertCityParams struct {
-	Name     string
+type GeoRegistryMirrorByIDParams struct {
+	ID       int32
 	ParentID sql.NullInt32
+	Name     string
+	Type     string
 }
 
-func (q *Queries) GeoRegistryUpsertCity(ctx context.Context, arg GeoRegistryUpsertCityParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, geoRegistryUpsertCity, arg.Name, arg.ParentID)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
-}
-
-const geoRegistryUpsertCountry = `-- name: GeoRegistryUpsertCountry :one
-INSERT INTO geo_registry (name, type)
-VALUES ($1, 'Country')
-ON CONFLICT (name, type) WHERE parent_id IS NULL
-DO UPDATE SET name = EXCLUDED.name
-RETURNING id
-`
-
-func (q *Queries) GeoRegistryUpsertCountry(ctx context.Context, name string) (int32, error) {
-	row := q.db.QueryRowContext(ctx, geoRegistryUpsertCountry, name)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
+// Зеркалит запись master geo_registry из statistics-service в локальную реплику.
+// id приходит от master, поэтому мы вставляем фиксированный id и обновляем поля.
+func (q *Queries) GeoRegistryMirrorByID(ctx context.Context, arg GeoRegistryMirrorByIDParams) error {
+	_, err := q.db.ExecContext(ctx, geoRegistryMirrorByID,
+		arg.ID,
+		arg.ParentID,
+		arg.Name,
+		arg.Type,
+	)
+	return err
 }
 
 const tripLocationInsert = `-- name: TripLocationInsert :exec

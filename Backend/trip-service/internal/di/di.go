@@ -30,7 +30,7 @@ type Dependencies struct {
 	MediaPrivacyRepo *repositories.MediaPrivacyRepository
 	AddMediaSessionRepo *repositories.AddMediaSessionRepository
 	BattleRepo *repositories.MediaBattleRepository
-	Geocoder services.LocationResolver
+	GeoEventLogRepo *repositories.GeoEventLogRepository
 	MediaURLs services.MediaURLResolver
 }
 
@@ -45,7 +45,7 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	socialRepo := repositories.NewSocialRepository(db)
 	favouriteRepo := repositories.NewFavouriteRepository(db)
 	geoRepo := repositories.NewGeoRegistryRepository(db)
-	geocoder := services.NewGeocodingClientFromEnv()
+	geoEventLogRepo := repositories.NewGeoEventLogRepository(db)
 
 	var eventPub repositories.TripEventPublisher
 	var eventRepo *repositories.RedisRepository
@@ -75,7 +75,7 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	pinAddSessionRepo := repositories.NewPinMediaAdditionSessionRepository(db)
 	pinCreationSessionRepo := repositories.NewPinCreationSessionRepository(db)
 
-	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geocoder, geoRepo, addMediaSessionRepo, battleRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo, pinHiddenRepo, pinAddSessionRepo, pinCreationSessionRepo)
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geoRepo, addMediaSessionRepo, battleRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo, pinHiddenRepo, pinAddSessionRepo, pinCreationSessionRepo)
 	return &Dependencies{
 		TripService: tripSvc,
 		RedisClient: redisClient,
@@ -91,7 +91,7 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 		MediaPrivacyRepo: mediaPrivacyRepo,
 		AddMediaSessionRepo: addMediaSessionRepo,
 		BattleRepo: battleRepo,
-		Geocoder: geocoder,
+		GeoEventLogRepo: geoEventLogRepo,
 		MediaURLs: mediaURLs,
 	}, nil
 }

@@ -10,59 +10,62 @@ import (
 	"time"
 )
 
+// GeocodingClient — клиент BigDataCloud Reverse Geocoding API.
+// Statistics-service единственный владелец интеграции (vkr.txt §2.4.6.3, §2.5.4):
+// trip-service отправляет события PIN_LOCATIONS_REQUESTED, statistics резолвит
+// координаты и возвращает результат событием PIN_LOCATIONS_RESOLVED.
 type GeocodingClient struct {
 	httpClient *http.Client
-	baseURL string
-	apiKey string
-	language string
+	baseURL    string
+	apiKey     string
+	language   string
 }
 
-// geocodingResponse — структура ответа BigDataCloud Reverse Geocoding API.
-// Docs: https://www.bigdatacloud.com/docs/reverse-geocoding
 type geocodingResponse struct {
-	CountryName string `json:"countryName"`
-	CountryCode string `json:"countryCode"`
+	CountryName          string `json:"countryName"`
+	CountryCode          string `json:"countryCode"`
 	PrincipalSubdivision string `json:"principalSubdivision"`
-	City string `json:"city"`
-	Locality string `json:"locality"`
-	Postcode string `json:"postcode"`
-	Continent string `json:"continent"`
-	ContinentCode string `json:"continentCode"`
-	LocalityLanguageReq string `json:"localityLanguageRequested"`
+	City                 string `json:"city"`
+	Locality             string `json:"locality"`
+	Postcode             string `json:"postcode"`
+	Continent            string `json:"continent"`
+	ContinentCode        string `json:"continentCode"`
+	LocalityLanguageReq  string `json:"localityLanguageRequested"`
 }
 
 func NewGeocodingClientFromEnv() *GeocodingClient {
 	baseURL := os.Getenv("GEOCODING_BASE_URL")
 	apiKey := os.Getenv("GEOCODING_API_KEY")
 	if baseURL == "" {
-		// Server-side endpoint (требует API key, но безопасен для вызова с бэкенда).
-		// Client-side endpoint (reverse-geocode-client) запрещён для серверных вызовов (HTTP 402).
-		baseURL = "https://api.bigdatacloud.net/data/reverse-geocode"
+		// Client-side endpoint бесплатный без API key (free tier).
+		// Server-side /reverse-geocode требует ключ; используется только если
+		// явно задан GEOCODING_BASE_URL + GEOCODING_API_KEY.
+		baseURL = "https://api.bigdatacloud.net/data/reverse-geocode-client"
 	}
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			Timeout: 3 * time.Second,
+			Timeout:   3 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
-		MaxIdleConns: 10,
-		IdleConnTimeout: 30 * time.Second,
+		MaxIdleConns:        10,
+		IdleConnTimeout:     30 * time.Second,
 		TLSHandshakeTimeout: 3 * time.Second,
 	}
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout:   5 * time.Second,
 		Transport: transport,
 	}
 	return &GeocodingClient{
 		httpClient: client,
-		baseURL: baseURL,
-		apiKey: apiKey,
-		language: "ru",
+		baseURL:    baseURL,
+		apiKey:     apiKey,
+		language:   "ru",
 	}
 }
 
-// ResolveLocation выполняет reverse geocoding по координатам.
-// Возвращает страну, город и display name. Ошибки некритичны: при неуспехе возвращаем пустые значения.
+// ResolveLocation возвращает страну, город и display name по координатам.
+// Ошибки некритичны: вызывающий код логирует и идёт дальше.
 func (c *GeocodingClient) ResolveLocation(ctx context.Context, lat, lon float64) (countryName, cityName, displayName string, err error) {
 	if c == nil || c.httpClient == nil {
 		return "", "", "", nil
@@ -98,7 +101,6 @@ func (c *GeocodingClient) ResolveLocation(ctx context.Context, lat, lon float64)
 	}
 
 	country := body.CountryName
-	// Город: city → locality → principalSubdivision (регион/область) как fallback.
 	city := body.City
 	if city == "" {
 		city = body.Locality
@@ -107,7 +109,6 @@ func (c *GeocodingClient) ResolveLocation(ctx context.Context, lat, lon float64)
 		city = body.PrincipalSubdivision
 	}
 
-	// Display name: "Страна, Город" (как в tripCreationFlow: "Россия, Алтай").
 	var name string
 	switch {
 	case country != "" && city != "":
@@ -119,4 +120,9 @@ func (c *GeocodingClient) ResolveLocation(ctx context.Context, lat, lon float64)
 	}
 
 	return country, city, name, nil
+}
+
+// LocationResolver описывает интерфейс geocoder для подстановки моков в тестах.
+type LocationResolver interface {
+	ResolveLocation(ctx context.Context, lat, lon float64) (countryName, cityName, displayName string, err error)
 }

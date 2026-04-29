@@ -60,6 +60,13 @@ type TripSettingsRepositoryInterface interface {
 	GetByTripAndUsers(tripID string, userIDs []string) (map[string]bool, error)
 }
 
+// GeoRequestPin — координаты пина для PIN_LOCATIONS_REQUESTED.
+type GeoRequestPin struct {
+	PinID     string  `json:"pin_id"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
 // TripEventPublisher — методы RedisRepository, используемые TripService (eventRepo может быть nil-интерфейсом).
 type TripEventPublisher interface {
 	PublishTripEvent(ctx context.Context, eventType string, tripID, userID string) error
@@ -67,8 +74,13 @@ type TripEventPublisher interface {
 	// add-media flow: помечает контекст трипа, чтобы worker пропустил авто-теги для существующих пинов (ТЗ 5.3.4).
 	SetMLContext(ctx context.Context, tripID, flow string, newPinIDs []string, ttl time.Duration) error
 	AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error
-	// statistics-service consumer — публикация в pinz:stats:events.
+	// statistics-service consumer — публикация в pinz:stats:events (LIKE/DISLIKE/TRIP_DELETED/BATTLE_FINISHED).
 	PublishStatsEvent(ctx context.Context, eventType, tripID string, userIDs []string, payload map[string]any) error
+	// PublishGeoRequest публикует PIN_LOCATIONS_REQUESTED — обратное направление
+	// репликации: statistics-service вызовет BigDataCloud, заполнит master
+	// geo_registry/trip_locations и пришлёт PIN_LOCATIONS_RESOLVED обратно
+	// в pinz:trip:geo_events. См. vkr.txt §2.5.4.
+	PublishGeoRequest(ctx context.Context, tripID string, pins []GeoRequestPin) error
 	// Fan-out WS-события в pinz:trip:{id}:events и pinz:user:{uid}:events.
 	PublishTripEventWS(ctx context.Context, tripID string, userIDs []string, eventType string, payload map[string]interface{}) error
 	// DeleteTripEventStream удаляет per-trip WS-stream (вызывается из DeleteTrip).
@@ -197,7 +209,11 @@ type FavouriteRepositoryInterface interface {
 }
 
 type GeoRegistryRepositoryInterface interface {
-	EnsureLocationByName(ctx context.Context, countryName, cityName string) (countryID, cityID *int, displayName string, err error)
+	// MirrorByID идемпотентно зеркалит запись master geo_registry в локальную
+	// реплику trip-service (по id из statistics-service).
+	MirrorByID(ctx context.Context, row GeoLocation) error
+	// UpsertTripLocations пишет факт «trip T содержит локацию L» в локальную
+	// реплику trip_locations (нужно для read-heavy фильтрации ленты).
 	UpsertTripLocations(ctx context.Context, tripID string, locationIDs []int) error
 	// Используется рекомендательной системой (ТЗ 9): резолв страны/города по точному имени.
 	FindCountryByName(ctx context.Context, name string) (int, error)

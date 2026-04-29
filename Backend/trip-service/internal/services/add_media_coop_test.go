@@ -26,7 +26,7 @@ func buildService(tripRepo repositories.TripRepositoryInterface,
 	return NewTripService(
 		tripRepo, participantRepo, nil, nil,
 		eventRepo, mediaRepo, nil, pinRepo, tagRepo,
-		nil, nil, nil, nil, sessionRepo, nil,
+		nil, nil, nil, sessionRepo, nil,
 		nil, nil, nil, nil, nil, nil,
 	)
 }

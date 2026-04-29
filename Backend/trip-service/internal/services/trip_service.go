@@ -27,11 +27,6 @@ const defaultInviteExpiresInSec = 86400 // 24 hours
 // Cron порог 72 часа для abandoned-sessions живёт в worker/session_cleanup.go.
 const initiatorTakeoverTimeout = time.Hour
 
-// LocationResolver выполняет reverse geocoding по координатам.
-type LocationResolver interface {
-	ResolveLocation(ctx context.Context, lat, lon float64) (countryName, cityName, displayName string, err error)
-}
-
 type TripService struct {
 	pb.UnimplementedTripServiceServer
 	tripRepo repositories.TripRepositoryInterface
@@ -45,7 +40,6 @@ type TripService struct {
 	tagRepo repositories.TagRepositoryInterface
 	socialRepo repositories.SocialRepositoryInterface
 	favouriteRepo repositories.FavouriteRepositoryInterface
-	geocoder LocationResolver
 	geoRepo repositories.GeoRegistryRepositoryInterface
 	addMediaSessionRepo repositories.AddMediaSessionRepositoryInterface
 	battleRepo repositories.MediaBattleRepositoryInterface
@@ -69,7 +63,6 @@ func NewTripService(
 	tagRepo repositories.TagRepositoryInterface,
 	socialRepo repositories.SocialRepositoryInterface,
 	favouriteRepo repositories.FavouriteRepositoryInterface,
-	geocoder LocationResolver,
 	geoRepo repositories.GeoRegistryRepositoryInterface,
 	addMediaSessionRepo repositories.AddMediaSessionRepositoryInterface,
 	battleRepo repositories.MediaBattleRepositoryInterface,
@@ -92,7 +85,6 @@ func NewTripService(
 		tagRepo: tagRepo,
 		socialRepo: socialRepo,
 		favouriteRepo: favouriteRepo,
-		geocoder: geocoder,
 		geoRepo: geoRepo,
 		addMediaSessionRepo: addMediaSessionRepo,
 		battleRepo: battleRepo,
@@ -1517,11 +1509,14 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 }
 
 // applyReviewEdits — общая логика финализации ревью (creation FinalizeTrip и
-// add-media Confirm): применяет pin_updates (name, lat/lon + reverse geocoding),
-// удаляет media_to_delete (ТЗ 3.15.1 — «похожие»), агрегирует cover_url + start/end
-// dates по состоянию пинов/медиа. Статус трипа меняет вызывающая сторона.
+// add-media Confirm): применяет pin_updates (name, lat/lon), удаляет
+// media_to_delete (ТЗ 3.15.1 — «похожие»), агрегирует cover_url + start/end
+// dates по состоянию пинов/медиа. Reverse geocoding запускается асинхронно
+// через PIN_LOCATIONS_REQUESTED для всех пинов с обновлёнными координатами
+// (vkr.txt §2.5.4). Статус трипа меняет вызывающая сторона.
 func (s *TripService) applyReviewEdits(ctx context.Context, trip *models.Trip, pinUpdates []*pb.PinUpdate, mediaToDelete []string) error {
 	tripID := trip.ID
+	geoPins := make([]repositories.GeoRequestPin, 0, len(pinUpdates))
 	for _, pu := range pinUpdates {
 		pin, err := s.pinRepo.GetByID(pu.GetPinId())
 		if err != nil {
@@ -1539,31 +1534,16 @@ func (s *TripService) applyReviewEdits(ctx context.Context, trip *models.Trip, p
 			pin.Longitude = pu.Longitude
 		}
 		_ = s.pinRepo.Update(pin)
-		// Reverse-geocoding для вручную выставленных координат.
-		if pu.Latitude != nil && pu.Longitude != nil && s.geocoder != nil {
-			country, city, displayName, geoErr := s.geocoder.ResolveLocation(ctx, *pin.Latitude, *pin.Longitude)
-			if geoErr != nil {
-				slog.WarnContext(ctx, "geocoding failed for manually set pin", "pin_id", pin.ID, "error", geoErr)
-			} else if displayName != "" {
-				pin.LocationName = displayName
-				_ = s.pinRepo.Update(pin)
-				if s.geoRepo != nil {
-					countryID, cityID, _, ensureErr := s.geoRepo.EnsureLocationByName(ctx, country, city)
-					if ensureErr != nil {
-						slog.WarnContext(ctx, "geo registry ensure failed", "pin_id", pin.ID, "error", ensureErr)
-					} else {
-						var locIDs []int
-						if countryID != nil {
-							locIDs = append(locIDs, *countryID)
-						}
-						if cityID != nil {
-							locIDs = append(locIDs, *cityID)
-						}
-						_ = s.geoRepo.UpsertTripLocations(ctx, tripID, locIDs)
-					}
-				}
-			}
+		if pu.Latitude != nil && pu.Longitude != nil {
+			geoPins = append(geoPins, repositories.GeoRequestPin{
+				PinID:     pin.ID,
+				Latitude:  *pin.Latitude,
+				Longitude: *pin.Longitude,
+			})
 		}
+	}
+	if len(geoPins) > 0 && s.eventRepo != nil {
+		_ = s.eventRepo.PublishGeoRequest(ctx, tripID, geoPins)
 	}
 	// Удаление media из БД + best-effort S3 cleanup.
 	if len(mediaToDelete) > 0 {

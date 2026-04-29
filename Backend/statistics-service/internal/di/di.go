@@ -21,17 +21,25 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 	geoRegistry := repositories.NewGeoRegistryRepository(db)
 	tripLocations := repositories.NewTripLocationsRepository(db)
 	eventLog := repositories.NewEventLogRepository(db)
+	geocoder := services.NewGeocodingClientFromEnv()
+
+	var geoPublisher repositories.GeoEventPublisher
+	if redisClient != nil {
+		geoPublisher = repositories.NewRedisGeoPublisher(redisClient)
+	}
 
 	statsSvc := services.NewStatisticsService(userStats, tripLocations)
 
 	return &Dependencies{
 		StatisticsService: statsSvc,
 		WorkerDeps: worker.Deps{
-			Redis: redisClient,
-			UserStats: userStats,
-			GeoRegistry: geoRegistry,
+			Redis:         redisClient,
+			UserStats:     userStats,
+			GeoRegistry:   geoRegistry,
 			TripLocations: tripLocations,
-			EventLog: eventLog,
+			EventLog:      eventLog,
+			Geocoder:      geocoder,
+			GeoPublisher:  geoPublisher,
 		},
 	}, nil
 }

@@ -143,7 +143,7 @@ Sessioned флоу: один пользователь ведёт сессию о
 | POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/commit-upload` | Регистрация s3-загруженного файла: создаётся `media` с `pin_id=NULL` и `pin_creation_session_id=$session`. |
 | POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/process` | Синхронный ML-stub: хеш-дедуп (4.7.6.a), NSFW (4.7.5, заглушка), similar (4.7.7, заглушка), suggested поля пина — имя/категория/теги/координаты/start-end (4.7.2.a-f), pin issues (4.7.3-4.7.4 — `MISSING_COORDINATES` / `MISSING_DATES`). Snapshot сохраняется в `pin_creation_sessions.draft_snapshot` (JSONB). |
 | GET | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/review` | Чтение snapshot Process: suggested-поля, медиа (с presigned GET URLs), issues, similar groups. |
-| POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/finalize` | Финал (ТЗ 4.9-4.11): применение `media_to_delete`, создание записи `pins` с финальными полями (правки клиента поверх ML-suggested), привязка media (`UpdatePinIDByIDs`), теги, reverse-geocoding, публикация `PIN_ADDED` (notification-service шлёт push остальным участникам, ТЗ 11.2.1), закрытие сессии. |
+| POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/finalize` | Финал (ТЗ 4.9-4.11): применение `media_to_delete`, создание записи `pins` с финальными полями (правки клиента поверх ML-suggested), привязка media (`UpdatePinIDByIDs`), теги, асинхронный reverse-geocoding через statistics-service (PIN_LOCATIONS_REQUESTED), публикация `PIN_ADDED` (notification-service шлёт push остальным участникам, ТЗ 11.2.1), закрытие сессии. |
 | POST | `/api/v1/trips/{id}/pins/creation/sessions/{sid}/cancel` | Удаляет orphan media сессии + S3 cleanup, закрывает сессию. Идемпотентен. |
 
 Состояние сессии — таблица `pin_creation_sessions` (`trip-service/internal/db/migrations/00006_pin_creation_sessions.sql`) с UNIQUE-индексом `idx_pin_creation_sessions_active_per_trip`. Связь media с draft-сессией — колонка `media.pin_creation_session_id` с `ON DELETE SET NULL`.
@@ -153,14 +153,14 @@ Sessioned флоу: один пользователь ведёт сессию о
 | Метод | Путь | Описание |
 |---|---|---|
 | GET | `/api/v1/trips/{id}/pins/{pin_id}` | Все поля пина: media + tags + privacy_level (ТЗ 4.3). Доступ — participant трипа или favourite-юзер. Если пин скрыт для caller'а через `pin_hidden_by_user` (soft-delete-for-self) → 404. |
-| PATCH | `/api/v1/trips/{id}/pins/{pin_id}` | Изменение полей: name (≤100), description (≤5000), category (из ТЗ 2.2.4), latitude/longitude, start/end_time_unix, tags (replace-all при `tags_set=true`). Любой participant. Trip должен быть в READY. При смене координат — reverse-geocoding и обновление `trip_locations` для статистики. |
+| PATCH | `/api/v1/trips/{id}/pins/{pin_id}` | Изменение полей: name (≤100), description (≤5000), category (из ТЗ 2.2.4), latitude/longitude, start/end_time_unix, tags (replace-all при `tags_set=true`). Любой participant. Trip должен быть в READY. При смене координат — асинхронный reverse-geocoding через statistics-service и обновление `trip_locations` для статистики. |
 | DELETE | `/api/v1/trips/{id}/pins/{pin_id}` | Удаление пина. Если трип в избранном у других пользователей — soft-delete-for-self через запись в `pin_hidden_by_user` (ТЗ 4.5.2): пин остаётся видимым другим участникам и favourite-юзерам, но автору удаления больше не возвращается; `deletion_mode = "soft_for_user"`. Иначе full delete (`deletion_mode = "full"`): удаляются media (явный каскад через `mediaRepo.DeleteByPinID` + S3 cleanup), теги (FK CASCADE дублируется явным `tagRepo.DeleteForPin`), сам пин (FK CASCADE для `pin_privacy` и `pin_hidden_by_user`). Защита: запрет удаления при активной сессии добавления медиа в этот пин (`pin_media_addition_sessions`). |
 | POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/start` | Старт sessioned-флоу добавления медиа в существующий пин (ТЗ 4.2.2 + 4.12-4.14): создаёт сессию (UNIQUE per-pin) и выдаёт presigned PUT URLs. Если для пина уже идёт сессия — `412 FailedPrecondition`. |
 | POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/upload-urls` | Догрузка дополнительных presigned URLs к активной сессии. |
 | POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/commit-upload` | Регистрация s3-загруженного файла: создаётся `media` с `pin_id=NULL` и `pin_addition_session_id=$session`. Лимиты трипа (≤500 media, ≤50 video) учитываются включая draft media — это защищает от over-upload в S3. |
 | POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/process` | Синхронный ML-stub: хеш-дедупликация (4.7.6.a — дубликаты удаляются физически), NSFW (4.7.5 — заглушка до подключения ML), similar groups (4.7.7 — заглушка), pin issues (4.7.3-4.7.4 — `MISSING_COORDINATES` / `MISSING_DATES`). Snapshot сохраняется в `pin_media_addition_sessions.draft_snapshot`. |
 | GET | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/review` | Чтение snapshot Process: список новых медиа (с presigned GET URLs), pin issues, similar groups. |
-| POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/finalize` | Применение `media_to_delete` (orphan-cleanup), привязка оставшихся media к пину (`UpdatePinIDByIDs`), пересчёт start/end/lat/lon (`updatePinTimesAndLocation`), reverse-geocoding (если у пина появились координаты), закрытие сессии. |
+| POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/finalize` | Применение `media_to_delete` (orphan-cleanup), привязка оставшихся media к пину (`UpdatePinIDByIDs`), пересчёт start/end/lat/lon (`updatePinTimesAndLocation`), асинхронный reverse-geocoding через statistics-service (если у пина появились координаты), закрытие сессии. |
 | POST | `/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/cancel` | Удаление orphan media сессии (`DeleteOrphanByPinAdditionSession` + S3 cleanup), закрытие сессии. Идемпотентен. |
 | DELETE | `/api/v1/trips/{id}/pins/{pin_id}/media/{media_id}` | Sessionless удаление одного медиа из пина с пересчётом агрегатов и S3 cleanup. Защита: пин не может остаться без медиа (ТЗ 2.2.9). |
 
@@ -332,9 +332,12 @@ export S3_ACCESS_KEY=your-access-key
 export S3_SECRET_KEY=your-secret-key
 export S3_PRESIGN_TTL=15m
 
-# Geocoding (trip-service, BigDataCloud reverse geocode)
+# Geocoding (statistics-service, BigDataCloud reverse geocode).
+# Trip-service публикует PIN_LOCATIONS_REQUESTED (pinz:stats:events) → statistics
+# резолвит координаты и пришлёт PIN_LOCATIONS_RESOLVED в pinz:trip:geo_events
+# для mirror'а в реплику trip-service (vkr.txt §2.5.4).
 export GEOCODING_BASE_URL=https://api.bigdatacloud.net/data/reverse-geocode-client  # optional, default shown
-export GEOCODING_API_KEY=                                                            # optional, free tier works without key
+export GEOCODING_API_KEY=                                                     # optional, free tier works without key
 
 # Share-link (api-gateway): база для поля share_url в ответах с трипом (ТЗ 3.4).
 # Пустая → используется внутренний дефолт https://pinz.website/trips.

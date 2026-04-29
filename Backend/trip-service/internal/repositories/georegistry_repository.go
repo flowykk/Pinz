@@ -1,23 +1,21 @@
 package repositories
 
-// TODO: Trip Service временно владеет записью в geo_registry, т.к. Statistics Service ещё не реализован.
-// Целевое решение (vkr.txt 2.5.4): Statistics Service — единственный владелец GEO_REGISTRY,
-// Trip Service хранит read-only реплику. При реализации statistics-service:
-// 1. Перенести вызов BigDataCloud и INSERT в geo_registry в statistics-service.
-// 2. Настроить синхронизацию geo_registry из statistics-service → trip-service (CDC/events).
-// 3. Убрать Upsert-методы из trip-service, оставить только read-запросы.
+// Trip-service хранит read-only реплику GEO_REGISTRY (vkr.txt §2.5.4).
+// Master живёт в statistics-service: stats консумит PIN_LOCATIONS_REQUESTED
+// (pinz:stats:events), резолвит координаты через BigDataCloud, upsert'ит
+// собственный geo_registry/trip_locations и публикует PIN_LOCATIONS_RESOLVED
+// в pinz:trip:geo_events. Trip-service consumer mirror'ит строки сюда через
+// MirrorByID (id приходит от master).
 
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/google/uuid"
 
 	"pinz/backend/trip-service/internal/db/sqlcdb"
 )
 
-// GeoRegistryRepository работает с локальной репликой GEO_REGISTRY и связью TRIP_LOCATIONS.
 type GeoRegistryRepository struct {
 	q *sqlcdb.Queries
 }
@@ -26,73 +24,30 @@ func NewGeoRegistryRepository(db *sql.DB) *GeoRegistryRepository {
 	return &GeoRegistryRepository{q: sqlcdb.New(db)}
 }
 
-func (r *GeoRegistryRepository) EnsureLocationByName(ctx context.Context, countryName, cityName string) (countryID, cityID *int, displayName string, err error) {
-	if countryName == "" && cityName == "" {
-		return nil, nil, "", nil
-	}
+// GeoLocation — DTO для кросс-сервисной передачи (statistics-service).
+type GeoLocation struct {
+	ID       int
+	ParentID *int
+	Name     string
+	Type     string
+}
 
-	var cID *int
-	if countryName != "" {
-		// Сначала ищем существующую запись; если нет — вставляем (upsert).
-		id, err := r.q.GeoRegistryFindCountryByName(ctx, countryName)
-		if err != nil {
-			if !errors.Is(err, sql.ErrNoRows) {
-				return nil, nil, "", err
-			}
-			// Не найдено — вставляем.
-			id, err = r.q.GeoRegistryUpsertCountry(ctx, countryName)
-			if err != nil {
-				return nil, nil, "", err
-			}
-		}
-		v := int(id)
-		cID = &v
+// MirrorByID идемпотентно зеркалит запись master geo_registry в локальную
+// реплику. id назначается master'ом (statistics-service).
+func (r *GeoRegistryRepository) MirrorByID(ctx context.Context, row GeoLocation) error {
+	if row.ID == 0 {
+		return nil
 	}
-
-	var cityIDPtr *int
-	if cityName != "" {
-		var id int32
-		var err error
-		if cID != nil {
-			id, err = r.q.GeoRegistryFindCityByNameAndParent(ctx, sqlcdb.GeoRegistryFindCityByNameAndParentParams{
-				Name: cityName,
-				ParentID: sql.NullInt32{Int32: int32(*cID), Valid: true},
-			})
-		} else {
-			id, err = r.q.GeoRegistryFindCityByNameNoParent(ctx, cityName)
-		}
-		if err != nil {
-			if !errors.Is(err, sql.ErrNoRows) {
-				return nil, nil, "", err
-			}
-			// Не найдено — вставляем.
-			parentID := sql.NullInt32{}
-			if cID != nil {
-				parentID = sql.NullInt32{Int32: int32(*cID), Valid: true}
-			}
-			id, err = r.q.GeoRegistryUpsertCity(ctx, sqlcdb.GeoRegistryUpsertCityParams{
-				Name: cityName,
-				ParentID: parentID,
-			})
-			if err != nil {
-				return nil, nil, "", err
-			}
-		}
-		v := int(id)
-		cityIDPtr = &v
+	parent := sql.NullInt32{}
+	if row.ParentID != nil {
+		parent = sql.NullInt32{Int32: int32(*row.ParentID), Valid: true}
 	}
-
-	var name string
-	switch {
-	case cityName != "" && countryName != "":
-		name = countryName + ", " + cityName
-	case cityName != "":
-		name = cityName
-	case countryName != "":
-		name = countryName
-	}
-
-	return cID, cityIDPtr, name, nil
+	return r.q.GeoRegistryMirrorByID(ctx, sqlcdb.GeoRegistryMirrorByIDParams{
+		ID:       int32(row.ID),
+		ParentID: parent,
+		Name:     row.Name,
+		Type:     row.Type,
+	})
 }
 
 // FindCountryByName — точный поиск страны по имени. Возвращает sql.ErrNoRows, если не найдено.
@@ -105,8 +60,7 @@ func (r *GeoRegistryRepository) FindCountryByName(ctx context.Context, name stri
 	return int(id), nil
 }
 
-// FindCityByName — точный поиск города по имени без указания страны. Возвращает первое совпадение.
-// Используется рекомендательной системой (ТЗ 9).
+// FindCityByName — точный поиск города по имени без указания страны.
 func (r *GeoRegistryRepository) FindCityByName(ctx context.Context, name string) (int, error) {
 	id, err := r.q.GeoRegistryFindCityByNameNoParent(ctx, name)
 	if err != nil {
@@ -132,16 +86,7 @@ func (r *GeoRegistryRepository) FindLocationIDsByName(ctx context.Context, name 
 	return ids, nil
 }
 
-// GeoLocation — DTO для кросс-сервисной передачи (statistics-service).
-type GeoLocation struct {
-	ID int
-	ParentID *int
-	Name string
-	Type string
-}
-
-// GetLocations возвращает записи geo_registry по набору id (для обогащения
-// TRIP_LOCATIONS_ADDED stats-события полями name/type/parent_id).
+// GetLocations возвращает записи geo_registry по набору id (для DTO recommendations и fallback'ов).
 func (r *GeoRegistryRepository) GetLocations(ctx context.Context, ids []int) ([]GeoLocation, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -166,7 +111,9 @@ func (r *GeoRegistryRepository) GetLocations(ctx context.Context, ids []int) ([]
 	return out, nil
 }
 
-// UpsertTripLocations заполняет TRIP_LOCATIONS для трипа по списку locationID (страна/город).
+// UpsertTripLocations пишет связи trip↔location в локальную реплику.
+// Используется как из geo consumer'а (mirror события PIN_LOCATIONS_RESOLVED),
+// так и из рекомендательной системы (рекомендации по региону).
 func (r *GeoRegistryRepository) UpsertTripLocations(ctx context.Context, tripID string, locationIDs []int) error {
 	if tripID == "" || len(locationIDs) == 0 {
 		return nil
@@ -177,7 +124,7 @@ func (r *GeoRegistryRepository) UpsertTripLocations(ctx context.Context, tripID 
 	}
 	for _, id := range locationIDs {
 		if err := r.q.TripLocationInsert(ctx, sqlcdb.TripLocationInsertParams{
-			TripID: tid,
+			TripID:     tid,
 			LocationID: int32(id),
 		}); err != nil {
 			return err

@@ -43,7 +43,7 @@ func TestStartBattle_HappyPath(t *testing.T) {
 		return nil
 	})
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.StartBattle(ctxWithUser("u1"), &pb.StartBattleRequest{TripId: "trip-1"})
 	require.NoError(t, err)
 	require.Equal(t, "battle-1", resp.GetBattleId())
@@ -53,13 +53,13 @@ func TestStartBattle_HappyPath(t *testing.T) {
 
 func TestStartBattle_ValidationAndAccess(t *testing.T) {
 	t.Run("missing_user", func(t *testing.T) {
-		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		_, err := svc.StartBattle(t.Context(), &pb.StartBattleRequest{TripId: "trip-1"})
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.Unauthenticated, st.Code())
 	})
 	t.Run("empty_trip_id", func(t *testing.T) {
-		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		_, err := svc.StartBattle(ctxWithUser("u1"), &pb.StartBattleRequest{TripId: ""})
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.InvalidArgument, st.Code())
@@ -68,7 +68,7 @@ func TestStartBattle_ValidationAndAccess(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
 		participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(false, nil)
-		svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		_, err := svc.StartBattle(ctxWithUser("u1"), &pb.StartBattleRequest{TripId: "trip-1"})
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.PermissionDenied, st.Code())
@@ -82,7 +82,7 @@ func TestStartBattle_NotEnoughMedia(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
 	mediaRepo.EXPECT().CountByTripID("trip-1").Return(7, 0, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.StartBattle(ctxWithUser("u1"), &pb.StartBattleRequest{TripId: "trip-1"})
 	st, _ := status.FromError(err)
 	require.Equal(t, codes.FailedPrecondition, st.Code())
@@ -97,7 +97,7 @@ func TestStartBattle_NotEnoughAvailableAfterRestrictedFilter(t *testing.T) {
 	// Половина Restricted — PickRandomForBattle вернёт меньше 8.
 	mediaRepo.EXPECT().PickRandomForBattle("trip-1", battleSize).Return(buildBattleMedia("trip-1")[:5], nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.StartBattle(ctxWithUser("u1"), &pb.StartBattleRequest{TripId: "trip-1"})
 	st, _ := status.FromError(err)
 	require.Equal(t, codes.FailedPrecondition, st.Code())
@@ -117,7 +117,7 @@ func TestSubmitBattleResult_HappyPath(t *testing.T) {
 	battleRepo.EXPECT().SetWinner("battle-1", "m-3").Return(nil)
 	mediaRepo.EXPECT().IncrementBattleRating("m-3").Return(int32(1), nil)
 
-	svc := NewTripService(nil, nil, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.SubmitBattleResult(ctxWithUser("u1"), &pb.SubmitBattleResultRequest{
 		BattleId: "battle-1",
 		WinnerMediaId: "m-3",
@@ -131,7 +131,7 @@ func TestSubmitBattleResult_Errors(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		battleRepo := mocks.NewMockMediaBattleRepositoryInterface(ctrl)
 		battleRepo.EXPECT().GetByID("battle-x").Return(nil, sql.ErrNoRows)
-		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
+		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
 		_, err := svc.SubmitBattleResult(ctxWithUser("u1"), &pb.SubmitBattleResultRequest{BattleId: "battle-x", WinnerMediaId: "m-0"})
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.NotFound, st.Code())
@@ -142,7 +142,7 @@ func TestSubmitBattleResult_Errors(t *testing.T) {
 		battleRepo.EXPECT().GetByID("battle-1").Return(&models.MediaBattle{
 			ID: "battle-1", UserID: "other", MediaIDs: []string{"m-0"},
 		}, nil)
-		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
+		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
 		_, err := svc.SubmitBattleResult(ctxWithUser("u1"), &pb.SubmitBattleResultRequest{BattleId: "battle-1", WinnerMediaId: "m-0"})
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.PermissionDenied, st.Code())
@@ -154,7 +154,7 @@ func TestSubmitBattleResult_Errors(t *testing.T) {
 		battleRepo.EXPECT().GetByID("battle-1").Return(&models.MediaBattle{
 			ID: "battle-1", UserID: "u1", MediaIDs: []string{"m-0"}, FinishedAt: &finished,
 		}, nil)
-		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
+		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
 		_, err := svc.SubmitBattleResult(ctxWithUser("u1"), &pb.SubmitBattleResultRequest{BattleId: "battle-1", WinnerMediaId: "m-0"})
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.FailedPrecondition, st.Code())
@@ -165,7 +165,7 @@ func TestSubmitBattleResult_Errors(t *testing.T) {
 		battleRepo.EXPECT().GetByID("battle-1").Return(&models.MediaBattle{
 			ID: "battle-1", UserID: "u1", MediaIDs: []string{"m-0", "m-1"},
 		}, nil)
-		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
+		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
 		_, err := svc.SubmitBattleResult(ctxWithUser("u1"), &pb.SubmitBattleResultRequest{BattleId: "battle-1", WinnerMediaId: "intruder"})
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.InvalidArgument, st.Code())
@@ -178,13 +178,13 @@ func TestSubmitBattleResult_Errors(t *testing.T) {
 		}, nil)
 		// Параллельный запрос уже закрыл батл — SetWinner возвращает ErrNoRows; инкремент не выполняется.
 		battleRepo.EXPECT().SetWinner("battle-1", "m-0").Return(sql.ErrNoRows)
-		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
+		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, battleRepo, nil, nil, nil, nil, nil, nil)
 		_, err := svc.SubmitBattleResult(ctxWithUser("u1"), &pb.SubmitBattleResultRequest{BattleId: "battle-1", WinnerMediaId: "m-0"})
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.FailedPrecondition, st.Code())
 	})
 	t.Run("missing_fields", func(t *testing.T) {
-		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		_, err := svc.SubmitBattleResult(ctxWithUser("u1"), &pb.SubmitBattleResultRequest{})
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.InvalidArgument, st.Code())
@@ -208,7 +208,7 @@ func TestGetBestMemories_OnlyPositiveRating(t *testing.T) {
 		{ID: "pin-A", TripID: "trip-1", Name: "Эйфелева башня"},
 	}, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.GetBestMemories(ctxWithUser("u1"), &pb.GetBestMemoriesRequest{TripId: "trip-1"})
 	require.NoError(t, err)
 	require.Len(t, resp.GetMedia(), 2)
@@ -226,7 +226,7 @@ func TestGetBestMemories_EmptyOk(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
 	mediaRepo.EXPECT().ListWithPositiveBattleRating("trip-1").Return(nil, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.GetBestMemories(ctxWithUser("u1"), &pb.GetBestMemoriesRequest{TripId: "trip-1"})
 	require.NoError(t, err)
 	require.Empty(t, resp.GetMedia())

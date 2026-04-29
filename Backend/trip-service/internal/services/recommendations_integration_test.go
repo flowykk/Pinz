@@ -44,7 +44,7 @@ func TestRecommendations_Integration(t *testing.T) {
 	favRepo := repositories.NewFavouriteRepository(sqlDB)
 	geoRepo := repositories.NewGeoRegistryRepository(sqlDB)
 
-	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, nil, geoRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, nil, mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo, geoRepo, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	ownerID := uuid.New().String()
 

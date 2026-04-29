@@ -169,6 +169,20 @@ func (r *PinRepository) Update(p *models.Pin) error {
 	return nil
 }
 
+// UpdateLocationName проставляет pins.location_name (вызывается geo consumer'ом
+// при обработке PIN_LOCATIONS_RESOLVED от statistics-service).
+func (r *PinRepository) UpdateLocationName(pinID, name string) error {
+	res, err := r.db.Exec(`UPDATE pins SET location_name = $1 WHERE id = $2`, name, pinID)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 // SetPrivacyLevel updates only pin privacy_level (used by privacy aggregation worker).
 // SQL guard: never overwrite Restricted ("permanently private", ТЗ 6.3) with a lower level.
 func (r *PinRepository) SetPrivacyLevel(pinID, level string) error {

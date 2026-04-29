@@ -44,7 +44,7 @@ func TestPinCreate_Integration_HappyPath(t *testing.T) {
 	svc := NewTripService(
 		tripRepo, participantRepo, inviteRepo, settingsRepo, nil,
 		mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo,
-		nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil,
 		pinHiddenRepo, pinAddSessionRepo, pinCreationSessionRepo,
 	)
 

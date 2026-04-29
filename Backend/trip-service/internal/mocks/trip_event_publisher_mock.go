@@ -11,6 +11,7 @@ package mocks
 
 import (
 	context "context"
+	repositories "pinz/backend/trip-service/internal/repositories"
 	reflect "reflect"
 	time "time"
 
@@ -81,6 +82,20 @@ func (m *MockTripEventPublisher) DeleteTripEventStream(ctx context.Context, trip
 func (mr *MockTripEventPublisherMockRecorder) DeleteTripEventStream(ctx, tripID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTripEventStream", reflect.TypeOf((*MockTripEventPublisher)(nil).DeleteTripEventStream), ctx, tripID)
+}
+
+// PublishGeoRequest mocks base method.
+func (m *MockTripEventPublisher) PublishGeoRequest(ctx context.Context, tripID string, pins []repositories.GeoRequestPin) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublishGeoRequest", ctx, tripID, pins)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PublishGeoRequest indicates an expected call of PublishGeoRequest.
+func (mr *MockTripEventPublisherMockRecorder) PublishGeoRequest(ctx, tripID, pins any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishGeoRequest", reflect.TypeOf((*MockTripEventPublisher)(nil).PublishGeoRequest), ctx, tripID, pins)
 }
 
 // PublishPrivacyEvent mocks base method.
