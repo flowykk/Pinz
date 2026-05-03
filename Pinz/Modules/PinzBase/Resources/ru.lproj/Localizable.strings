@@ -160,6 +160,10 @@
 "tripPins.button.addMedia" = "Добавить медиа";
 "tripPins.button.addPin" = "Добавить пин";
 "tripPins.empty.noPins" = "В этом путешествии пока нет пинов";
+"tripPins.status.uploading" = "Другой участник загружает медиа";
+"tripPins.status.groupingReview" = "Другой участник группирует медиа";
+"tripPins.status.processing" = "Медиа обрабатывается";
+"tripPins.status.draftFinalReview" = "Другой участник проверяет медиа";
 
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "Твои путешествия";

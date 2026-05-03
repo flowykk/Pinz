@@ -48,8 +48,15 @@ public protocol AppRouting {
     func navigateToWishlistElementCreation(action: WishlistCreationAction)
     func navigateToPublicWishlist(places: [DesiredPlace])
 
+    func navigateToAddMediaStart(tripId: String)
+    func navigateToAddMediaUploading(tripId: String, sessionId: String)
+    func navigateToAddMediaGrouping(tripId: String, sessionId: String)
+    func navigateToAddMediaProcessing(tripId: String, sessionId: String)
+    func navigateToAddMediaReview(tripId: String, sessionId: String)
+
     func pop()
     func pop(by count: Int)
+    func popToRoot()
 }
 
 private struct AppRouterKey: EnvironmentKey {

@@ -245,11 +245,6 @@ public struct TripInfoView: View {
                 .cornerRadius(60)
                 .clipped()
 
-            if let battleHint = viewModel.photoBattleAvailabilityMessage {
-                Text(battleHint)
-                    .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
-            }
-
             if viewModel.state == .editing {
                 Button {
                     imageEditingDialogShown = true

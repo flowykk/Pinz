@@ -64,6 +64,19 @@ enum PinzAPI {
     case getTripReview(tripId: String)
     case finalizeTrip(tripId: String, pinUpdates: [PinUpdateInputDTO], mediaToDelete: [String])
 
+    // Trip add-media flow
+    case addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO])
+    case addMediaRequestUploadUrls(tripId: String, sessionId: String, filesToUpload: [FileToUploadDTO])
+    case addMediaCommitUpload(tripId: String, sessionId: String, s3Key: String, mediaType: String, capturedAt: String?, latitude: Double?, longitude: Double?)
+    case addMediaGetSessionMedia(tripId: String, sessionId: String)
+    case addMediaProcessGrouping(tripId: String, sessionId: String, addMore: Bool)
+    case addMediaGetGrouping(tripId: String, sessionId: String)
+    case addMediaApplyGroupsAndProcess(tripId: String, sessionId: String, draftPins: [DraftPinInputDTO], deletedMediaIds: [String])
+    case addMediaGetReview(tripId: String, sessionId: String)
+    case addMediaConfirm(tripId: String, sessionId: String, pinUpdates: [PinUpdateInputDTO], mediaToDelete: [String])
+    case addMediaCancel(tripId: String, sessionId: String)
+    case addMediaTakeover(tripId: String, sessionId: String)
+
     // Photo battles
     case startBattle(tripId: String)
     case submitBattleResult(tripId: String, battleId: String, winnerMediaId: String)
@@ -165,6 +178,17 @@ extension PinzAPI: TargetType {
         case .applyGroupsAndProcess(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/apply-groups-and-process"
         case .getTripReview(let tripId): endpointPath = "/trips/creation/\(tripId)/review"
         case .finalizeTrip(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/finalize"
+        case .addMediaStart(let tripId, _): endpointPath = "/trips/\(tripId)/media/add/start"
+        case .addMediaRequestUploadUrls(let tripId, _, _): endpointPath = "/trips/\(tripId)/media/add/request-upload-urls"
+        case .addMediaCommitUpload(let tripId, _, _, _, _, _, _): endpointPath = "/trips/\(tripId)/media/add/commit-upload"
+        case .addMediaGetSessionMedia(let tripId, _): endpointPath = "/trips/\(tripId)/media/add/session-media"
+        case .addMediaProcessGrouping(let tripId, _, _): endpointPath = "/trips/\(tripId)/media/add/process-grouping"
+        case .addMediaGetGrouping(let tripId, _): endpointPath = "/trips/\(tripId)/media/add/grouping"
+        case .addMediaApplyGroupsAndProcess(let tripId, _, _, _): endpointPath = "/trips/\(tripId)/media/add/apply-groups-and-process"
+        case .addMediaGetReview(let tripId, _): endpointPath = "/trips/\(tripId)/media/add/review"
+        case .addMediaConfirm(let tripId, _, _, _): endpointPath = "/trips/\(tripId)/media/add/confirm"
+        case .addMediaCancel(let tripId, _): endpointPath = "/trips/\(tripId)/media/add/cancel"
+        case .addMediaTakeover(let tripId, _): endpointPath = "/trips/\(tripId)/media/add/takeover"
         }
         return "/api/v1\(endpointPath)"
     }
@@ -176,6 +200,8 @@ extension PinzAPI: TargetType {
         case .getProfile, .getProfileStats, .getVisitedLocations, .getPublicUserProfile:
             return .get
         case .getPin, .searchPins:
+            return .get
+        case .addMediaGetSessionMedia, .addMediaGetGrouping, .addMediaGetReview:
             return .get
         case .deleteAvatar:
             return .delete
@@ -288,6 +314,47 @@ extension PinzAPI: TargetType {
         case let .finalizeTrip(_, updates, toDelete):
             struct Body: Encodable { let pin_updates: [PinUpdateInputJSON]; let media_to_delete: [String] }
             return .requestJSONEncodable(Body(pin_updates: updates.map(PinUpdateInputJSON.init), media_to_delete: toDelete))
+
+        case let .addMediaStart(_, files):
+            struct AddMediaStartBody: Encodable { let files_to_upload: [FileToUploadJSON] }
+            return .requestJSONEncodable(AddMediaStartBody(files_to_upload: files.map(FileToUploadJSON.init)))
+
+        case let .addMediaRequestUploadUrls(_, sessionId, files):
+            struct AddMediaRequestUploadUrlsBody: Encodable { let session_id: String; let files_to_upload: [FileToUploadJSON] }
+            return .requestJSONEncodable(AddMediaRequestUploadUrlsBody(session_id: sessionId, files_to_upload: files.map(FileToUploadJSON.init)))
+
+        case let .addMediaCommitUpload(_, sessionId, s3Key, mediaType, capturedAt, lat, lon):
+            var params: [String: Any] = ["session_id": sessionId, "s3_key": s3Key, "media_type": mediaType]
+            if let capturedAt { params["captured_at"] = capturedAt }
+            if let lat { params["latitude"] = lat }
+            if let lon { params["longitude"] = lon }
+            return jsonParams(params)
+
+        case let .addMediaGetSessionMedia(_, sessionId):
+            return .requestParameters(parameters: ["session_id": sessionId], encoding: URLEncoding.queryString)
+
+        case let .addMediaProcessGrouping(_, sessionId, addMore):
+            return jsonParams(["session_id": sessionId, "add_more": addMore])
+
+        case let .addMediaGetGrouping(_, sessionId):
+            return .requestParameters(parameters: ["session_id": sessionId], encoding: URLEncoding.queryString)
+
+        case let .addMediaApplyGroupsAndProcess(_, sessionId, pins, deleted):
+            struct AddMediaApplyBody: Encodable { let session_id: String; let draft_pins: [DraftPinInputJSON]; let deleted_media_ids: [String] }
+            return .requestJSONEncodable(AddMediaApplyBody(session_id: sessionId, draft_pins: pins.map(DraftPinInputJSON.init), deleted_media_ids: deleted))
+
+        case let .addMediaGetReview(_, sessionId):
+            return .requestParameters(parameters: ["session_id": sessionId], encoding: URLEncoding.queryString)
+
+        case let .addMediaConfirm(_, sessionId, updates, toDelete):
+            struct AddMediaConfirmBody: Encodable { let session_id: String; let pin_updates: [PinUpdateInputJSON]; let media_to_delete: [String] }
+            return .requestJSONEncodable(AddMediaConfirmBody(session_id: sessionId, pin_updates: updates.map(PinUpdateInputJSON.init), media_to_delete: toDelete))
+
+        case let .addMediaCancel(_, sessionId):
+            return jsonParams(["session_id": sessionId])
+
+        case let .addMediaTakeover(_, sessionId):
+            return jsonParams(["session_id": sessionId])
 
         case .setTripPrivacy(_, let level),
              .setPinPrivacy(_, _, let level),
@@ -866,6 +933,26 @@ extension PinzAPI {
             json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Обновлённый пин","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"photo","privacy_level":"public"}]}}"#
         case .searchPins:
             json = #"[{"id":"pin-001","trip_id":"trip-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[]}]"#
+        case .addMediaStart:
+            json = #"{"session_id":"session-001","status":"ADD_MEDIA_UPLOADING","joined":false,"upload_urls":[{"client_id":"photo1","s3_key":"trips/trip-001/photo1.jpg","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"}]}"#
+        case .addMediaRequestUploadUrls:
+            json = #"{"upload_urls":[{"client_id":"photo2","s3_key":"trips/trip-001/photo2.jpg","url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg"}]}"#
+        case .addMediaCommitUpload:
+            json = #"{"media_id":"media-new-001","media_count_in_session":3,"remaining_slots":497}"#
+        case .addMediaGetSessionMedia:
+            json = #"{"session_id":"session-001","media":[{"media_id":"media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","type":"image","actor_user_id":"user-001","uploaded_at":"2026-04-15T12:30:00Z"}],"media_count_in_session":1}"#
+        case .addMediaProcessGrouping, .addMediaGetGrouping:
+            json = #"{"trip_id":"trip-001","session_id":"session-001","status":"ADD_MEDIA_GROUPING_REVIEW","draft_pins":[{"draft_pin_id":"cluster-1","media":[{"media_id":"media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","type":"image"}]}],"existing_media_ids":[]}"#
+        case .addMediaApplyGroupsAndProcess:
+            json = #"{"message":"Processing started","status":"ADD_MEDIA_PROCESSING"}"#
+        case .addMediaGetReview:
+            json = #"{"trip_id":"trip-001","session_id":"session-001","pins":[{"id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":[],"issues":[],"media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"}]}],"new_pin_ids":["pin-001"],"protected_media_ids":[],"current_initiator":{"user_id":"user-001","username":"flowykk","avatar_url":null},"takeover_available_at":"2026-04-25T13:00:00Z","can_edit":true}"#
+        case .addMediaConfirm:
+            json = #"{"status":"READY","already_confirmed":false}"#
+        case .addMediaCancel:
+            json = #"{"status":"READY"}"#
+        case .addMediaTakeover:
+            json = #"{"is_initiator":true,"current_initiator":{"user_id":"user-001","username":"flowykk","avatar_url":null},"takeover_available_at":"2026-04-25T14:00:00Z"}"#
         }
         return json.data(using: .utf8) ?? Data()
     }
