@@ -174,6 +174,6 @@ struct PostFeedItemView: View {
             }
             .padding(.horizontal, 14)
             .padding(.top, 10)
-        }
+        }.cornerRadius(10)
     }
 }

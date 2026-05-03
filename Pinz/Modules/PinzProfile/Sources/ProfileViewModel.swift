@@ -44,6 +44,7 @@ public class ProfileViewModel {
 
     var user: User
     var userImage: UIImage?
+    private var showToast: ((String) -> Void)?
     private let networkService: NetworkServiceProtocol
     private var router: AppRouting?
     private var avatarUploadTask: Task<ProfileResponseDTO, Error>?
@@ -81,7 +82,20 @@ public class ProfileViewModel {
                 await loadProfile()
             }
         case .saveProfile:
-            guard !isLoading else {
+            guard !isLoading else { return }
+
+            let trimmed = user.nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else {
+                showToast?(PinzBaseStrings.Profile.Toast.nicknameEmpty)
+                return
+            }
+            guard trimmed.count >= 4, trimmed.count <= 20 else {
+                showToast?(PinzBaseStrings.Profile.Toast.nicknameLengthInvalid)
+                return
+            }
+            let allowedChars = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
+            guard trimmed.unicodeScalars.allSatisfy({ allowedChars.contains($0) }) else {
+                showToast?(PinzBaseStrings.Profile.Toast.nicknameInvalidChars)
                 return
             }
 
@@ -142,6 +156,10 @@ public class ProfileViewModel {
         self.router = router
     }
 
+    public func setToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
+    }
+
     private func loadProfile() async {
         withAnimation(.easeInOut(duration: 0.3)) {
             isLoading = true
@@ -158,6 +176,7 @@ public class ProfileViewModel {
             userImage = nil
         } catch {
             print("[Profile] Failed to get profile: \(error)")
+            showToast?(PinzBaseStrings.Profile.Toast.loadFailed)
         }
     }
 
@@ -180,6 +199,7 @@ public class ProfileViewModel {
                     print("[Profile] Avatar upload canceled")
                 } catch {
                     print("[Profile] Failed to upload avatar before save: \(error)")
+                    showToast?(PinzBaseStrings.Profile.Toast.avatarUploadFailed)
                 }
                 avatarUploadTask = nil
             }
@@ -191,6 +211,7 @@ public class ProfileViewModel {
             router?.notifyCurrentProfileUpdated(user)
         } catch {
             print("[Profile] Failed to update profile: \(error)")
+            showToast?(PinzBaseStrings.Profile.Toast.saveFailed)
         }
     }
 
@@ -255,6 +276,7 @@ public class ProfileViewModel {
             router?.navigateToMain()
         } catch {
             print("[Profile] Failed to delete account: \(error)")
+            showToast?(PinzBaseStrings.Profile.Toast.accountDeleteFailed)
         }
     }
 
@@ -276,6 +298,7 @@ public class ProfileViewModel {
             router?.notifyCurrentProfileUpdated(user)
         } catch {
             print("[Profile] Failed to delete avatar: \(error)")
+            showToast?(PinzBaseStrings.Profile.Toast.avatarDeleteFailed)
         }
     }
 

@@ -50,6 +50,16 @@
 "profile.placeholder.name" = "Имя";
 "profile.hint.nicknameRules" = "Имя пользователя должно состоять из букв, цифр, точки и подчёркивания";
 
+// MARK: - Profile Toasts
+"profile.toast.nicknameEmpty" = "Имя пользователя не может быть пустым";
+"profile.toast.nicknameLengthInvalid" = "Имя пользователя должно быть от 4 до 20 символов";
+"profile.toast.nicknameInvalidChars" = "Имя пользователя может содержать только буквы, цифры, _ и -";
+"profile.toast.loadFailed" = "Не удалось загрузить профиль";
+"profile.toast.saveFailed" = "Не удалось сохранить изменения";
+"profile.toast.avatarUploadFailed" = "Не удалось загрузить фото профиля";
+"profile.toast.avatarDeleteFailed" = "Не удалось удалить фото";
+"profile.toast.accountDeleteFailed" = "Не удалось удалить аккаунт";
+
 // MARK: - Appearance
 "appearance.title.main" = "Оформление";
 "appearance.header.appIcon" = "Иконка приложения";
@@ -78,6 +88,11 @@
 "emailChange.placeholder.email" = "example@example.com";
 "emailChange.description.verificationCode" = "Теперь введи код, который пришёл на новый email";
 "emailChange.button.receiveCode" = "Получить код";
+
+// MARK: - Email Change Toasts
+"emailChange.toast.invalidEmail" = "Введите корректный email";
+"emailChange.toast.codeSendFailed" = "Не удалось отправить код подтверждения";
+"emailChange.toast.confirmFailed" = "Неверный код или срок его действия истёк";
 
 // MARK: - Saved Maps
 "savedMaps.title.main" = "Сохранённые карты";

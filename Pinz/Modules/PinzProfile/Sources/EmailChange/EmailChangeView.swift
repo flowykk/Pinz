@@ -8,6 +8,7 @@ public struct EmailChangeView: View {
     @FocusState private var emailFocused: Bool
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     var codeTextFieldStyle = CodeInputTextField.Style(
         segmentsCount: 4,
@@ -60,6 +61,7 @@ public struct EmailChangeView: View {
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear {
             viewModel.setRouter(router)
+            viewModel.setToast(showToast)
             emailFocused = true
         }
     }
