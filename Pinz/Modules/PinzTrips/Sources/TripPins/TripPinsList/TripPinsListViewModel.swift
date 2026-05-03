@@ -9,11 +9,16 @@ final class TripPinsListViewModel {
     enum Route {
         case pinInfo(Pin)
         case pinCreation
+        case addMedia
         case back
     }
 
     enum Intent {
         case navigate(Route)
+    }
+
+    enum AsyncIntent {
+        case addMedia
     }
 
     var trip: Trip
@@ -43,8 +48,32 @@ final class TripPinsListViewModel {
                 )
             case .pinCreation:
                 router?.navigateToPinCreation()
+            case .addMedia:
+                router?.navigateToAddMediaStart(tripId: trip.id)
             case .back:
                 router?.pop()
+            }
+        }
+    }
+
+    func asyncDispatch(_ intent: AsyncIntent) async throws {
+        switch intent {
+        case .addMedia:
+            let response = try await networkService.getTrip(id: trip.id)
+            let sessionId = response.activeAddMediaSession?.sessionId
+            switch response.trip.status ?? "" {
+            case "READY":
+                dispatch(.navigate(.addMedia))
+            case "ADD_MEDIA_UPLOADING":
+                if let sessionId { router?.navigateToAddMediaUploading(tripId: trip.id, sessionId: sessionId) }
+            case "ADD_MEDIA_GROUPING_REVIEW":
+                if let sessionId { router?.navigateToAddMediaGrouping(tripId: trip.id, sessionId: sessionId) }
+            case "ADD_MEDIA_PROCESSING":
+                if let sessionId { router?.navigateToAddMediaProcessing(tripId: trip.id, sessionId: sessionId) }
+            case "ADD_MEDIA_DRAFT_FINAL_REVIEW":
+                if let sessionId { router?.navigateToAddMediaReview(tripId: trip.id, sessionId: sessionId) }
+            default:
+                break
             }
         }
     }

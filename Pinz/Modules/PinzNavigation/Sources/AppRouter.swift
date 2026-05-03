@@ -35,6 +35,10 @@ public final class AppRouter: AppRouting {
         guard count > 0, count <= path.count else { return }
         path.removeLast(count)
     }
+
+    public func popToRoot() {
+        path = [.main]
+    }
 }
 
 // MARK: - Profile update callbacks
@@ -203,6 +207,30 @@ extension AppRouter {
 
     public func navigateToPublicWishlist(places: [DesiredPlace]) {
         navigate(to: .trip(.publicWishlist(places: places)))
+    }
+}
+
+// MARK: - AddMedia Routing
+
+extension AppRouter {
+    public func navigateToAddMediaStart(tripId: String) {
+        navigate(to: .tripAddMedia(.start(tripId: tripId)))
+    }
+
+    public func navigateToAddMediaUploading(tripId: String, sessionId: String) {
+        navigate(to: .tripAddMedia(.uploading(tripId: tripId, sessionId: sessionId)))
+    }
+
+    public func navigateToAddMediaGrouping(tripId: String, sessionId: String) {
+        navigate(to: .tripAddMedia(.grouping(tripId: tripId, sessionId: sessionId)))
+    }
+
+    public func navigateToAddMediaProcessing(tripId: String, sessionId: String) {
+        navigate(to: .tripAddMedia(.processing(tripId: tripId, sessionId: sessionId)))
+    }
+
+    public func navigateToAddMediaReview(tripId: String, sessionId: String) {
+        navigate(to: .tripAddMedia(.review(tripId: tripId, sessionId: sessionId)))
     }
 }
 

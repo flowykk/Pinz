@@ -46,6 +46,7 @@ final class TripViewModel {
     enum AsyncIntent {
         case loadSavedTrip
         case loadCurrentProfile
+        case addMedia
     }
 
     var state: State = .default
@@ -314,6 +315,25 @@ final class TripViewModel {
             } catch {
                 throw error
             }
+        case .addMedia:
+            guard let tripId = trip?.id else { return }
+            let response = try await networkService.getTrip(id: tripId)
+            let sessionId = response.activeAddMediaSession?.sessionId
+            switch response.trip.status ?? "" {
+            case "READY":
+                router?.navigateToAddMediaStart(tripId: tripId)
+            case "ADD_MEDIA_UPLOADING":
+                if let sessionId { router?.navigateToAddMediaUploading(tripId: tripId, sessionId: sessionId) }
+            case "ADD_MEDIA_GROUPING_REVIEW":
+                if let sessionId { router?.navigateToAddMediaGrouping(tripId: tripId, sessionId: sessionId) }
+            case "ADD_MEDIA_PROCESSING":
+                if let sessionId { router?.navigateToAddMediaProcessing(tripId: tripId, sessionId: sessionId) }
+            case "ADD_MEDIA_DRAFT_FINAL_REVIEW":
+                if let sessionId { router?.navigateToAddMediaReview(tripId: tripId, sessionId: sessionId) }
+            default:
+                break
+            }
+
         case .loadCurrentProfile:
             guard !hasLoadedProfile else {
                 return

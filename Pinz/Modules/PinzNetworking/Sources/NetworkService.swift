@@ -102,6 +102,37 @@ public protocol NetworkServiceProtocol {
         mediaToDelete: [String]
     ) async throws -> FinalizeTripDTO
 
+    // Trip add-media flow
+    func addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO]) async throws -> AddMediaStartDTO
+    func addMediaRequestUploadUrls(tripId: String, sessionId: String, filesToUpload: [FileToUploadDTO]) async throws -> [UploadURLDTO]
+    func addMediaCommitUpload(
+        tripId: String,
+        sessionId: String,
+        s3Key: String,
+        mediaType: String,
+        capturedAt: String?,
+        latitude: Double?,
+        longitude: Double?
+    ) async throws -> AddMediaCommitUploadDTO
+    func addMediaGetSessionMedia(tripId: String, sessionId: String) async throws -> AddMediaSessionMediaDTO
+    func addMediaProcessGrouping(tripId: String, sessionId: String, addMore: Bool) async throws -> AddMediaGroupingDTO
+    func addMediaGetGrouping(tripId: String, sessionId: String) async throws -> AddMediaGroupingDTO
+    func addMediaApplyGroupsAndProcess(
+        tripId: String,
+        sessionId: String,
+        draftPins: [DraftPinInputDTO],
+        deletedMediaIds: [String]
+    ) async throws
+    func addMediaGetReview(tripId: String, sessionId: String) async throws -> AddMediaReviewDTO
+    func addMediaConfirm(
+        tripId: String,
+        sessionId: String,
+        pinUpdates: [PinUpdateInputDTO],
+        mediaToDelete: [String]
+    ) async throws -> AddMediaConfirmDTO
+    func addMediaCancel(tripId: String, sessionId: String) async throws
+    func addMediaTakeover(tripId: String, sessionId: String) async throws -> AddMediaTakeoverDTO
+
     // Photo battles
     func startBattle(tripId: String) async throws -> StartBattleResponseDTO
     func submitBattleResult(
@@ -753,6 +784,125 @@ public final class NetworkService: NetworkServiceProtocol {
             ),
             type: FinalizeTripDTO.self
         )
+    }
+
+    // MARK: Trip add-media flow
+
+    public func addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO]) async throws -> AddMediaStartDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(.addMediaStart(tripId: tripId, filesToUpload: filesToUpload), type: AddMediaStartDTO.self)
+        }
+    }
+
+    public func addMediaRequestUploadUrls(
+        tripId: String,
+        sessionId: String,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> [UploadURLDTO] {
+        struct Response: Decodable {
+            let upload_urls: [UploadURLDTO]
+        }
+        let response = try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .addMediaRequestUploadUrls(tripId: tripId, sessionId: sessionId, filesToUpload: filesToUpload),
+                type: Response.self
+            )
+        }
+        return response.upload_urls
+    }
+
+    public func addMediaCommitUpload(
+        tripId: String,
+        sessionId: String,
+        s3Key: String,
+        mediaType: String,
+        capturedAt: String?,
+        latitude: Double?,
+        longitude: Double?
+    ) async throws -> AddMediaCommitUploadDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .addMediaCommitUpload(
+                    tripId: tripId,
+                    sessionId: sessionId,
+                    s3Key: s3Key,
+                    mediaType: mediaType,
+                    capturedAt: capturedAt,
+                    latitude: latitude,
+                    longitude: longitude
+                ),
+                type: AddMediaCommitUploadDTO.self
+            )
+        }
+    }
+
+    public func addMediaGetSessionMedia(tripId: String, sessionId: String) async throws -> AddMediaSessionMediaDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(.addMediaGetSessionMedia(tripId: tripId, sessionId: sessionId), type: AddMediaSessionMediaDTO.self)
+        }
+    }
+
+    public func addMediaProcessGrouping(tripId: String, sessionId: String, addMore: Bool) async throws -> AddMediaGroupingDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(.addMediaProcessGrouping(tripId: tripId, sessionId: sessionId, addMore: addMore), type: AddMediaGroupingDTO.self)
+        }
+    }
+
+    public func addMediaGetGrouping(tripId: String, sessionId: String) async throws -> AddMediaGroupingDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(.addMediaGetGrouping(tripId: tripId, sessionId: sessionId), type: AddMediaGroupingDTO.self)
+        }
+    }
+
+    public func addMediaApplyGroupsAndProcess(
+        tripId: String,
+        sessionId: String,
+        draftPins: [DraftPinInputDTO],
+        deletedMediaIds: [String]
+    ) async throws {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .addMediaApplyGroupsAndProcess(
+                    tripId: tripId,
+                    sessionId: sessionId,
+                    draftPins: draftPins,
+                    deletedMediaIds: deletedMediaIds
+                ),
+                type: ApplyGroupsAndProcessDTO.self
+            )
+        }
+    }
+
+    public func addMediaGetReview(tripId: String, sessionId: String) async throws -> AddMediaReviewDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(.addMediaGetReview(tripId: tripId, sessionId: sessionId), type: AddMediaReviewDTO.self)
+        }
+    }
+
+    public func addMediaConfirm(
+        tripId: String,
+        sessionId: String,
+        pinUpdates: [PinUpdateInputDTO],
+        mediaToDelete: [String]
+    ) async throws -> AddMediaConfirmDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .addMediaConfirm(tripId: tripId, sessionId: sessionId, pinUpdates: pinUpdates, mediaToDelete: mediaToDelete),
+                type: AddMediaConfirmDTO.self
+            )
+        }
+    }
+
+    public func addMediaCancel(tripId: String, sessionId: String) async throws {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(.addMediaCancel(tripId: tripId, sessionId: sessionId), type: AddMediaCancelDTO.self)
+        }
+    }
+
+    public func addMediaTakeover(tripId: String, sessionId: String) async throws -> AddMediaTakeoverDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(.addMediaTakeover(tripId: tripId, sessionId: sessionId), type: AddMediaTakeoverDTO.self)
+        }
     }
 
     public func startBattle(

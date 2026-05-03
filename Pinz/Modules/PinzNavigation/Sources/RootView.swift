@@ -114,7 +114,19 @@ public struct RootView<Content: View>: View {
             case let .creation(action):
                 WishlistElementCreationView(onCreated: action.action)
             }
-
+        case let .tripAddMedia(addMediaRoute):
+            switch addMediaRoute {
+            case .start(let tripId):
+                AddMediaStartView(tripId: tripId)
+            case .uploading(let tripId, let sessionId):
+                AddMediaUploadingView(tripId: tripId, sessionId: sessionId)
+            case .grouping(let tripId, let sessionId):
+                AddMediaGroupingView(tripId: tripId, sessionId: sessionId)
+            case .processing(let tripId, let sessionId):
+                AddMediaProcessingView(tripId: tripId, sessionId: sessionId)
+            case .review(let tripId, let sessionId):
+                AddMediaReviewView(tripId: tripId, sessionId: sessionId)
+            }
         }
     }
 
