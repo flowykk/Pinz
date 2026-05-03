@@ -15,6 +15,7 @@ struct PinzApp: App {
     @State private var router = AppRouter(
         initialPath: TokenStorage.shared.isAuthenticated ? [.main] : []
     )
+    @State private var toastController = ToastController()
 
     var body: some Scene {
         WindowGroup {
@@ -22,6 +23,10 @@ struct PinzApp: App {
                 RootView(router: router) {
                     AuthFlowView()
                 }
+                .setupToast(toastController: toastController)
+                .environment(\.showToast, {
+                    toastController.present(with: $0)
+                })
             }
         }
     }
@@ -60,4 +65,12 @@ struct PinzApp: App {
         .allowsHitTesting(true)
     }
 #endif
+}
+
+extension View {
+    fileprivate func setupToast(toastController: ToastController) -> some View {
+        self.overlay {
+            ToastView(controller: toastController)
+        }
+    }
 }
