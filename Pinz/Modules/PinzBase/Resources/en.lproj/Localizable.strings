@@ -50,6 +50,16 @@
 "profile.placeholder.name" = "Name";
 "profile.hint.nicknameRules" = "Username must contain only letters, digits, dots and underscores";
 
+// MARK: - Profile Toasts
+"profile.toast.nicknameEmpty" = "Username cannot be empty";
+"profile.toast.nicknameLengthInvalid" = "Username must be 4 to 20 characters";
+"profile.toast.nicknameInvalidChars" = "Username can only contain letters, digits, _ and -";
+"profile.toast.loadFailed" = "Failed to load profile";
+"profile.toast.saveFailed" = "Failed to save changes";
+"profile.toast.avatarUploadFailed" = "Failed to upload profile photo";
+"profile.toast.avatarDeleteFailed" = "Failed to delete photo";
+"profile.toast.accountDeleteFailed" = "Failed to delete account";
+
 // MARK: - Appearance
 "appearance.title.main" = "Appearance";
 "appearance.header.appIcon" = "App Icon";
@@ -78,6 +88,11 @@
 "emailChange.placeholder.email" = "example@example.com";
 "emailChange.description.verificationCode" = "Now enter the code sent to the new email";
 "emailChange.button.receiveCode" = "Receive Code";
+
+// MARK: - Email Change Toasts
+"emailChange.toast.invalidEmail" = "Enter a valid email";
+"emailChange.toast.codeSendFailed" = "Failed to send verification code";
+"emailChange.toast.confirmFailed" = "Invalid code or it has expired";
 
 // MARK: - Saved Maps
 "savedMaps.title.main" = "Saved Maps";

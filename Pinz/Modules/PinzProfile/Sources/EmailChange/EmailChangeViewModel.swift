@@ -26,6 +26,7 @@ class EmailChangeViewModel {
     var userId: String?
     var code: [String] = Array(repeating: "", count: 4)
 
+    private var showToast: ((String) -> Void)?
     private let networkService: any NetworkServiceProtocol
     private var router: AppRouting?
 
@@ -99,16 +100,21 @@ class EmailChangeViewModel {
         self.router = router
     }
 
+    public func setToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
+    }
+
     private func requestCode() async {
         let targetEmail = normalizedEmail
-        guard !targetEmail.isEmpty else {
+        guard !targetEmail.isEmpty else { return }
+
+        guard targetEmail.isValidEmail else {
+            showToast?(PinzBaseStrings.EmailChange.Toast.invalidEmail)
             return
         }
 
         setLoading(true)
-        defer {
-            setLoading(false)
-        }
+        defer { setLoading(false) }
 
         do {
             _ = try await networkService.changeEmail(userId: requestUserId, newEmail: targetEmail)
@@ -117,6 +123,7 @@ class EmailChangeViewModel {
             changeState(to: .code)
         } catch {
             print("[EmailChange] Failed to request email change: \(error)")
+            showToast?(PinzBaseStrings.EmailChange.Toast.codeSendFailed)
         }
     }
 
@@ -136,6 +143,7 @@ class EmailChangeViewModel {
             successAction(response.email ?? email)
         } catch {
             print("[EmailChange] Failed to confirm email change: \(error)")
+            showToast?(PinzBaseStrings.EmailChange.Toast.confirmFailed)
         }
     }
 

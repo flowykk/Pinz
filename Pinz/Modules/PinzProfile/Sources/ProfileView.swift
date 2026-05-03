@@ -28,6 +28,7 @@ public struct ProfileView: View {
     @State var imageEditingDialogShown = false
     @State var photoPickerShown = false
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     var accountDeleteSetting: Setting {
         .default(Setting.DefaultSetting(
@@ -77,6 +78,7 @@ public struct ProfileView: View {
         }
         .onAppear {
             viewModel.setRouter(router)
+            viewModel.setToast(showToast)
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .transition(.opacity)
