@@ -140,6 +140,7 @@ class EmailChangeViewModel {
 
         do {
             let response = try await networkService.confirmEmailChange(verificationCode: codeToConfirm)
+            showToast?(PinzBaseStrings.EmailChange.Toast.emailChanged)
             successAction(response.email ?? email)
         } catch {
             print("[EmailChange] Failed to confirm email change: \(error)")

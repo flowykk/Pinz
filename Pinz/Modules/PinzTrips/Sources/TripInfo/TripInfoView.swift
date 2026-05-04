@@ -49,6 +49,7 @@ public struct TripInfoView: View {
     @State private var areNotificationsEnabled = false
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     var datesSettingValue: String {
         if let startDate = viewModel.trip.startDate, let endDate = viewModel.trip.endDate {
@@ -93,12 +94,14 @@ public struct TripInfoView: View {
 
             Spacer()
         }
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setToast(showToast)
+        }
         .onChange(of: areNotificationsEnabled) { oldValue, newValue in
             Task {
                 await viewModel.asyncDispatch(.updateNotifications(enabled: newValue)) { _ in
                     areNotificationsEnabled = oldValue
-                    print("[TripInfo] failed to update notifications setting for trip id=\(viewModel.trip.id)")
                 }
             }
         }
@@ -127,6 +130,12 @@ public struct TripInfoView: View {
             date: $viewModel.trip.endDate,
             pickerHeight: $datePickerHeight
         )
+        .onChange(of: isStartDatePickerPresented) { _, isPresented in
+            if !isPresented, let error = viewModel.validateDates() { showToast(error) }
+        }
+        .onChange(of: isEndDatePickerPresented) { _, isPresented in
+            if !isPresented, let error = viewModel.validateDates() { showToast(error) }
+        }
         .fullScreenCover(isPresented: $isStoriesPresented) {
             PinStoryView(pins: viewModel.trip.pins)
         }
@@ -155,14 +164,7 @@ public struct TripInfoView: View {
                 showDeleteTripAlert = false
             }
             Button(PinzBaseStrings.TripInfo.Alert.DeleteTrip.confirm, role: .destructive) {
-                Task {
-                    do {
-                        try await viewModel.deleteTrip()
-                        viewModel.dispatch(.navigate(.back))
-                    } catch {
-                        print("[TripInfo] failed to delete trip with id=\(viewModel.trip.id): \(error)")
-                    }
-                }
+                Task { await viewModel.deleteTrip() }
             }
         } message: {
             Text(PinzBaseStrings.TripInfo.Alert.DeleteTrip.message)
@@ -172,26 +174,10 @@ public struct TripInfoView: View {
                 showLeaveTripAlert = false
             }
             Button(PinzBaseStrings.TripInfo.Alert.LeaveTrip.confirm, role: .destructive) {
-                Task {
-                    await viewModel.asyncDispatch(.leaveTrip) { error in
-                        print("[TripInfo] failed to leave trip with id=\(viewModel.trip.id): \(error)")
-                    }
-                }
+                Task { await viewModel.asyncDispatch(.leaveTrip) }
             }
         } message: {
             Text(PinzBaseStrings.TripInfo.Alert.LeaveTrip.message)
-        }
-        .alert(PinzBaseStrings.TripInfo.Button.photoBattle, isPresented: Binding(
-            get: { viewModel.battleError != nil && !viewModel.isPhotoBattlePresented },
-            set: { isPresented in
-                if !isPresented { viewModel.clearPhotoBattleError() }
-            }
-        )) {
-            Button(PinzBaseStrings.Common.Button.ok) {
-                viewModel.clearPhotoBattleError()
-            }
-        } message: {
-            Text(viewModel.battleError ?? "")
         }
     }
 
@@ -229,9 +215,7 @@ public struct TripInfoView: View {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.done),
                     action: .async {
-                        await viewModel.asyncDispatch(.editTrip) { error in
-                            print("[TripInfo] failed to update trip with id=\(viewModel.trip.id): \(error)")
-                        }
+                        await viewModel.asyncDispatch(.editTrip)
                     }
                 )
             }
@@ -505,6 +489,7 @@ public struct TripInfoView: View {
     private var descriptionEditing: some View {
         DescriptionEditingView(
             title: PinzBaseStrings.Common.Label.description,
+            subtitle: PinzBaseStrings.TripInfo.Hint.descriptionLimit,
             text: Binding(get: {
                 viewModel.trip.description ?? ""
             }, set: { value in
