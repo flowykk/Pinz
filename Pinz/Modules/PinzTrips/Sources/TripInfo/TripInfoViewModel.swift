@@ -41,11 +41,11 @@ final class TripInfoViewModel {
     private let networkService: any NetworkServiceProtocol
     private let onTripUpdated: (() -> Void)?
     private var tripCoverUploadTask: Task<TripDTO, Error>?
+    private var showToast: ((String) -> Void)?
 
     static let requiredBattleMediaCount = PhotoBattleViewModel.requiredBattleMediaCount
     var isPhotoBattlePresented = false
     var isStartingBattle = false
-    var battleError: String?
     var photoBattleViewModel: PhotoBattleViewModel?
 
     private enum TripCoverUploadFlowError: Error {
@@ -88,9 +88,13 @@ final class TripInfoViewModel {
             let tripId = trip.id
             Task { [weak self] in
                 guard let self else { return }
-                guard let response = try? await networkService.setTripPrivacy(tripId: tripId, privacyLevel: selection.apiValue) else { return }
-                trip.privacyLevel = response.privacyLevel
-                onTripUpdated?()
+                do {
+                    let response = try await networkService.setTripPrivacy(tripId: tripId, privacyLevel: selection.apiValue)
+                    trip.privacyLevel = response.privacyLevel
+                    onTripUpdated?()
+                } catch {
+                    showToast?(PinzBaseStrings.TripInfo.Toast.privacyFailed)
+                }
             }
         }
     }
@@ -121,9 +125,24 @@ final class TripInfoViewModel {
         self.router = router
     }
 
-    func deleteTrip() async throws {
-        try await networkService.deleteTrip(id: trip.id)
-        SelectedTripStorage.shared.clearSelection()
+    func setToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
+    }
+
+    func validateDates() -> String? {
+        guard let start = trip.startDate, let end = trip.endDate, start > end else { return nil }
+        return PinzBaseStrings.TripInfo.Toast.startDateAfterEndDate
+    }
+
+    func deleteTrip() async {
+        do {
+            try await networkService.deleteTrip(id: trip.id)
+            SelectedTripStorage.shared.clearSelection()
+            showToast?(PinzBaseStrings.TripInfo.Toast.tripDeleted)
+            dispatch(.navigate(.back))
+        } catch {
+            showToast?(PinzBaseStrings.TripInfo.Toast.deleteFailed)
+        }
     }
 
     var tripMediaCount: Int {
@@ -144,12 +163,11 @@ final class TripInfoViewModel {
         }
 
         guard canStartPhotoBattle else {
-            battleError = photoBattleAvailabilityMessage
+            showToast?(photoBattleAvailabilityMessage ?? "")
             return
         }
 
         isStartingBattle = true
-        clearPhotoBattleError()
         closePhotoBattle()
 
         defer {
@@ -162,7 +180,7 @@ final class TripInfoViewModel {
             let battleMedia = Array(parsedMedia.prefix(Self.requiredBattleMediaCount))
 
             guard battleMedia.count == Self.requiredBattleMediaCount else {
-                battleError = PinzBaseStrings.TripInfo.Message.photoBattleStartFailed
+                showToast?(PinzBaseStrings.TripInfo.Message.photoBattleStartFailed)
                 return
             }
 
@@ -181,9 +199,9 @@ final class TripInfoViewModel {
                 await photoBattleViewModel?.preloadBattleMedia()
             }
         } catch let error as HTTPError where error == .preconditionFailed {
-            battleError = PinzBaseStrings.TripInfo.Message.photoBattleNeedMediaWithContext(Self.requiredBattleMediaCount)
+            showToast?(PinzBaseStrings.TripInfo.Message.photoBattleNeedMediaWithContext(Self.requiredBattleMediaCount))
         } catch {
-            battleError = PinzBaseStrings.TripInfo.Message.photoBattleStartFailedGeneric
+            showToast?(PinzBaseStrings.TripInfo.Message.photoBattleStartFailedGeneric)
         }
     }
 
@@ -194,10 +212,6 @@ final class TripInfoViewModel {
     private func closePhotoBattle() {
         isPhotoBattlePresented = false
         photoBattleViewModel = nil
-    }
-
-    func clearPhotoBattleError() {
-        battleError = nil
     }
 
     private static func mapToBattleMedia(from dto: StartBattleMediaDTO) -> PhotoBattleMedia? {
@@ -211,37 +225,52 @@ final class TripInfoViewModel {
     }
 
     private func editTrip() async throws {
+        if let dateError = validateDates() {
+            showToast?(dateError)
+            return
+        }
+
+        if let desc = trip.description, desc.count > 5000 {
+            showToast?(PinzBaseStrings.TripInfo.Toast.descriptionTooLong)
+            return
+        }
+
         if let uploadTask = tripCoverUploadTask {
             do {
                 _ = try await uploadTask.value
             } catch is CancellationError {
-                print("[TripInfo] Trip cover upload canceled")
+                // silent
             } catch {
-                print("[TripInfo] Failed to upload trip cover before save: \(error)")
+                showToast?(PinzBaseStrings.TripInfo.Toast.coverUploadFailed)
             }
             tripCoverUploadTask = nil
         }
 
-        let updatedTrip = try await networkService.updateTrip(
-            id: trip.id,
-            name: trip.name,
-            description: trip.description,
-            category: mapCategory(trip.category),
-            season: mapSeason(trip.season),
-            privacyLevel: trip.privacyLevel,
-            coverUrl: trip.coverUrl,
-            startDateUnix: trip.startDate.flatMap { Int($0.timeIntervalSince1970) },
-            endDateUnix: trip.endDate.flatMap { Int($0.timeIntervalSince1970) }
-        )
-
-        let oldTripImage = trip.image
-        let oldPins = trip.pins
-        trip = updatedTrip.toTrip()
-        trip.image = oldTripImage
-        trip.pins = oldPins
-        onTripUpdated?()
-        changeState(to: .default)
-        editingSnapshot = nil
+        do {
+            let updatedTrip = try await networkService.updateTrip(
+                id: trip.id,
+                name: trip.name,
+                description: trip.description,
+                category: mapCategory(trip.category),
+                season: mapSeason(trip.season),
+                privacyLevel: trip.privacyLevel,
+                coverUrl: trip.coverUrl,
+                startDateUnix: trip.startDate.flatMap { Int($0.timeIntervalSince1970) },
+                endDateUnix: trip.endDate.flatMap { Int($0.timeIntervalSince1970) }
+            )
+            let oldTripImage = trip.image
+            let oldPins = trip.pins
+            trip = updatedTrip.toTrip()
+            trip.image = oldTripImage
+            trip.pins = oldPins
+            onTripUpdated?()
+            showToast?(PinzBaseStrings.TripInfo.Toast.tripSaved)
+            changeState(to: .default)
+            editingSnapshot = nil
+        } catch {
+            showToast?(PinzBaseStrings.TripInfo.Toast.saveFailed)
+            throw error
+        }
     }
 
     private func uploadTripCoverTask(with image: UIImage) {
@@ -298,16 +327,25 @@ final class TripInfoViewModel {
     }
 
     private func updateNotifications(_ enabled: Bool) async throws {
-        _ = try await networkService.updateTripSettings(
-            id: trip.id,
-            notificationsEnabled: enabled
-        )
+        do {
+            _ = try await networkService.updateTripSettings(id: trip.id, notificationsEnabled: enabled)
+            showToast?(PinzBaseStrings.TripInfo.Toast.notificationsUpdated)
+        } catch {
+            showToast?(PinzBaseStrings.TripInfo.Toast.notificationsFailed)
+            throw error
+        }
     }
 
     private func leaveCurrentTrip() async throws {
-        _ = try await networkService.leaveTrip(id: trip.id)
-        SelectedTripStorage.shared.clearSelection()
-        dispatch(.navigate(.back))
+        do {
+            _ = try await networkService.leaveTrip(id: trip.id)
+            SelectedTripStorage.shared.clearSelection()
+            showToast?(PinzBaseStrings.TripInfo.Toast.tripLeft)
+            dispatch(.navigate(.back))
+        } catch {
+            showToast?(PinzBaseStrings.TripInfo.Toast.leaveFailed)
+            throw error
+        }
     }
 
     private func mapCategory(_ category: TripCategory) -> String? {

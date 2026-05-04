@@ -209,6 +209,7 @@ public class ProfileViewModel {
             user = response.toUser()
             userImage = nil
             router?.notifyCurrentProfileUpdated(user)
+            showToast?(PinzBaseStrings.Profile.Toast.profileSaved)
         } catch {
             print("[Profile] Failed to update profile: \(error)")
             showToast?(PinzBaseStrings.Profile.Toast.saveFailed)

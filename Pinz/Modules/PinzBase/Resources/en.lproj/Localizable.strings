@@ -59,6 +59,7 @@
 "profile.toast.avatarUploadFailed" = "Failed to upload profile photo";
 "profile.toast.avatarDeleteFailed" = "Failed to delete photo";
 "profile.toast.accountDeleteFailed" = "Failed to delete account";
+"profile.toast.profileSaved" = "Profile saved";
 
 // MARK: - Appearance
 "appearance.title.main" = "Appearance";
@@ -93,6 +94,7 @@
 "emailChange.toast.invalidEmail" = "Enter a valid email";
 "emailChange.toast.codeSendFailed" = "Failed to send verification code";
 "emailChange.toast.confirmFailed" = "Invalid code or it has expired";
+"emailChange.toast.emailChanged" = "Email updated";
 
 // MARK: - Saved Maps
 "savedMaps.title.main" = "Saved Maps";
@@ -148,6 +150,7 @@
 "tripInfo.button.photoBattle" = "Photo battle";
 "tripInfo.placeholder.name" = "Trip Name";
 "tripInfo.hint.tripNameRules" = "Trip name must contain only letters, digits, dots and underscores";
+"tripInfo.hint.descriptionLimit" = "Max 5000 characters";
 "tripInfo.placeholder.description" = "Trip Description";
 "tripInfo.button.delete" = "Delete Trip";
 "tripInfo.button.leave" = "Leave trip";
@@ -159,6 +162,20 @@
 "tripInfo.alert.deleteTrip.title" = "Delete Trip?";
 "tripInfo.alert.deleteTrip.message" = "This action will permanently delete this trip and all its related data.";
 "tripInfo.alert.deleteTrip.confirm" = "Delete";
+
+// MARK: - Trip Info Toasts
+"tripInfo.toast.tripSaved" = "Trip saved";
+"tripInfo.toast.saveFailed" = "Failed to save trip";
+"tripInfo.toast.coverUploadFailed" = "Failed to upload cover photo";
+"tripInfo.toast.descriptionTooLong" = "Description must not exceed 5000 characters";
+"tripInfo.toast.startDateAfterEndDate" = "Start date cannot be after end date";
+"tripInfo.toast.tripLeft" = "You left the trip";
+"tripInfo.toast.leaveFailed" = "Failed to leave trip";
+"tripInfo.toast.tripDeleted" = "Trip deleted";
+"tripInfo.toast.deleteFailed" = "Failed to delete trip";
+"tripInfo.toast.notificationsUpdated" = "Notifications updated";
+"tripInfo.toast.notificationsFailed" = "Failed to update notifications";
+"tripInfo.toast.privacyFailed" = "Failed to update privacy";
 
 // MARK: - Review Trip Creation
 "reviewTripCreation.title.main" = "Review Pins";

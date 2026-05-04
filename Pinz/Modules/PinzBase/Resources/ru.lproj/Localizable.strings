@@ -59,6 +59,7 @@
 "profile.toast.avatarUploadFailed" = "Не удалось загрузить фото профиля";
 "profile.toast.avatarDeleteFailed" = "Не удалось удалить фото";
 "profile.toast.accountDeleteFailed" = "Не удалось удалить аккаунт";
+"profile.toast.profileSaved" = "Профиль сохранён";
 
 // MARK: - Appearance
 "appearance.title.main" = "Оформление";
@@ -93,6 +94,7 @@
 "emailChange.toast.invalidEmail" = "Введите корректный email";
 "emailChange.toast.codeSendFailed" = "Не удалось отправить код подтверждения";
 "emailChange.toast.confirmFailed" = "Неверный код или срок его действия истёк";
+"emailChange.toast.emailChanged" = "Email обновлён";
 
 // MARK: - Saved Maps
 "savedMaps.title.main" = "Сохранённые карты";
@@ -148,6 +150,7 @@
 "tripInfo.button.photoBattle" = "Фото-баттл";
 "tripInfo.placeholder.name" = "Название путешествия";
 "tripInfo.hint.tripNameRules" = "Название путешествия должно состоять из букв, цифр, точки и подчёркивания";
+"tripInfo.hint.descriptionLimit" = "Максимум 5000 символов";
 "tripInfo.placeholder.description" = "Описание путешествия";
 "tripInfo.button.delete" = "Удалить путешествие";
 "tripInfo.button.leave" = "Выйти";
@@ -159,6 +162,20 @@
 "tripInfo.alert.deleteTrip.title" = "Удалить путешествие?";
 "tripInfo.alert.deleteTrip.message" = "Это действие необратимо. Путешествие и все его пины будут удалены.";
 "tripInfo.alert.deleteTrip.confirm" = "Удалить";
+
+// MARK: - Trip Info Toasts
+"tripInfo.toast.tripSaved" = "Путешествие сохранено";
+"tripInfo.toast.saveFailed" = "Не удалось сохранить путешествие";
+"tripInfo.toast.coverUploadFailed" = "Не удалось загрузить фото обложки";
+"tripInfo.toast.descriptionTooLong" = "Описание не должно превышать 5000 символов";
+"tripInfo.toast.startDateAfterEndDate" = "Дата начала не может быть позже даты конца";
+"tripInfo.toast.tripLeft" = "Вы вышли из путешествия";
+"tripInfo.toast.leaveFailed" = "Не удалось выйти из путешествия";
+"tripInfo.toast.tripDeleted" = "Путешествие удалено";
+"tripInfo.toast.deleteFailed" = "Не удалось удалить путешествие";
+"tripInfo.toast.notificationsUpdated" = "Уведомления обновлены";
+"tripInfo.toast.notificationsFailed" = "Не удалось обновить уведомления";
+"tripInfo.toast.privacyFailed" = "Не удалось обновить настройки приватности";
 
 // MARK: - Review Trip Creation
 "reviewTripCreation.title.main" = "Проверка пинов";
