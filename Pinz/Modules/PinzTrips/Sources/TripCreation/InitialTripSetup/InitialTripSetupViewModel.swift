@@ -1,10 +1,11 @@
 import SwiftUI
 import PhotosUI
-import PinzUI
 import PinzNetworking
 import PinzBase
 import PinzDomain
+import PinzUI
 
+@MainActor
 @Observable
 final class InitialTripSetupViewModel {
 
@@ -51,21 +52,32 @@ final class InitialTripSetupViewModel {
         }
     }
 
+    static let tripNameMaxLength = 50
+    static let tripDescriptionMaxLength = 5000
+
+    /// Trip name: letters (Latin/Cyrillic), digits, dots, underscores (see `tripCreation.hint.tripNameRules`).
+    private static let tripNameValidationPattern = #"^[A-Za-zА-Яа-яЁё0-9._]+$"#
+
     var state: State = .info
     private(set) var isLoading: Bool = false
     private(set) var loadingStatus: LoadingStatus?
 
     var name: String = "name"
     var description: String? = "descr"
-    var category: TripCategory = .active //.none
+    var category: TripCategory = .active // .none
     var season: TripSeason = .spring // .none
     var medias: [LoadedMedia] = []
 
     private let networkService: NetworkServiceProtocol
     private var router: AppRouting?
+    private var showToast: ((String) -> Void)?
 
     init(networkService: NetworkServiceProtocol = NetworkService.shared) {
         self.networkService = networkService
+    }
+
+    func setToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
     }
 
     func dispatch(_ intent: Intent) {
@@ -83,6 +95,7 @@ final class InitialTripSetupViewModel {
             medias.append(contentsOf: placeholders)
 
             Task {
+                var hadLoadFailure = false
                 await withTaskGroup(of: (UUID, LoadedMedia?).self) { group in
                     for (index, item) in items.enumerated() {
                         let id = placeholderIds[index]
@@ -98,8 +111,12 @@ final class InitialTripSetupViewModel {
                             medias[idx] = loaded
                         } else {
                             medias.removeAll { $0.id == id }
+                            hadLoadFailure = true
                         }
                     }
+                }
+                if hadLoadFailure {
+                    showToast?(PinzBaseStrings.TripCreation.Toast.mediaLoadFailed)
                 }
             }
         case let .deleteMedia(mediaId):
@@ -107,31 +124,89 @@ final class InitialTripSetupViewModel {
         }
     }
 
+    func validateForContinue() -> String? {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedName.isEmpty {
+            return PinzBaseStrings.TripCreation.Toast.nameEmpty
+        }
+        if trimmedName.count > Self.tripNameMaxLength {
+            return PinzBaseStrings.TripCreation.Toast.nameTooLong(Self.tripNameMaxLength)
+        }
+        if trimmedName.range(of: Self.tripNameValidationPattern, options: .regularExpression) == nil {
+            return PinzBaseStrings.TripCreation.Toast.nameInvalidChars
+        }
+        if category == .none {
+            return PinzBaseStrings.TripCreation.Toast.categoryNotSelected
+        }
+        if season == .none {
+            return PinzBaseStrings.TripCreation.Toast.seasonNotSelected
+        }
+        if medias.isEmpty {
+            return PinzBaseStrings.TripCreation.Toast.mediasEmpty
+        }
+        if medias.contains(where: { if case .loading = $0.content { true } else { false } }) {
+            return PinzBaseStrings.TripCreation.Toast.mediaLoadingInProgress
+        }
+        if let desc = description, desc.count > Self.tripDescriptionMaxLength {
+            return PinzBaseStrings.TripCreation.Toast.descriptionTooLong(Self.tripDescriptionMaxLength)
+        }
+        return nil
+    }
+
     func asyncDispatch(_ intent: AsyncIntent) async throws {
         switch intent {
         case .continue:
+            guard !isLoading else { return }
+
+            if let validationError = validateForContinue() {
+                showToast?(validationError)
+                return
+            }
+
             changeLoading(to: true, status: .uploadingMedia)
+            defer { changeLoading(to: false, status: nil) }
 
-            let response = try await networkService.createTrip(
-                name: name,
-                description: description,
-                category: category == .none ? nil : category.value,
-                season: season == .none ? nil : season.value,
-                filesToUpload: buildFilesToUpload()
-            )
+            let response: CreateTripDTO
+            do {
+                response = try await networkService.createTrip(
+                    name: name,
+                    description: description,
+                    category: category == .none ? nil : category.value,
+                    season: season == .none ? nil : season.value,
+                    filesToUpload: buildFilesToUpload()
+                )
+            } catch {
+                showToast?(PinzBaseStrings.TripCreation.Toast.createTripFailed)
+                throw error
+            }
 
-            try await uploadMedia(response: response)
+            do {
+                try await uploadMedia(response: response)
+            } catch {
+                showToast?(PinzBaseStrings.TripCreation.Toast.uploadMediaFailed)
+                throw error
+            }
 
             changeLoadingStatus(to: .formingPins)
 
-            let groupingResponse = try await networkService.processMediaGrouping(
-                tripId: response.tripId,
-                media: buildMediaEntries(from: response)
-            )
+            let groupingResponse: ProcessMediaGroupingDTO
+            do {
+                groupingResponse = try await networkService.processMediaGrouping(
+                    tripId: response.tripId,
+                    media: buildMediaEntries(from: response)
+                )
+            } catch {
+                showToast?(PinzBaseStrings.TripCreation.Toast.groupingFailed)
+                throw error
+            }
+
+            if groupingResponse.draftPins.isEmpty {
+                showToast?(PinzBaseStrings.TripCreation.Toast.noPinsGenerated)
+                return
+            }
 
             let pins = RawPins(pins: groupingResponse.draftPins.map { $0.toRawPin() })
             dispatch(.navigate(.preprocessedPins(tripId: response.tripId, pins: pins)))
-            changeLoading(to: false, status: nil)
         }
     }
 
@@ -187,12 +262,6 @@ final class InitialTripSetupViewModel {
     private func changeLoadingStatus(to status: LoadingStatus) {
         withAnimation(.easeInOut(duration: 0.3)) {
             self.loadingStatus = status
-        }
-    }
-
-    private func changeState(to state: State) {
-        withAnimation(.easeInOut(duration: 0.3)) {
-            self.state = state
         }
     }
 }

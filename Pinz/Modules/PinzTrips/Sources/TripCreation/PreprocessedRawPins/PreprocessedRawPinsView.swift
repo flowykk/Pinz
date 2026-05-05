@@ -10,6 +10,7 @@ public struct PreprocessedRawPinsView: View {
     @State private var isMergePickerPresented = false
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     public init(tripId: String, pins: RawPins) {
         viewModel = PreprocessedRawPinsViewModel(tripId: tripId, pins: pins)
@@ -32,7 +33,10 @@ public struct PreprocessedRawPinsView: View {
             }
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setToast(showToast)
+        }
         .mergePinsSheet(isPresented: $isMergePickerPresented, pins: viewModel.pins.pins) { first, second in
             viewModel.dispatch(.mergePins(firstIndex: first, secondIndex: second))
         }

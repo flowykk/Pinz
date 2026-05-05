@@ -18,6 +18,7 @@ public struct InitialTripSetupView: View {
     let gallerySpacing: CGFloat = 4
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     public init() {
         viewModel = InitialTripSetupViewModel()
@@ -45,7 +46,10 @@ public struct InitialTripSetupView: View {
             }
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setToast(showToast)
+        }
         .itemsPickerSheet(
             isPresented: $isSeasonPickerPresented,
             items: TripSeason.allCases,

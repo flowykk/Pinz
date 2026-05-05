@@ -24,6 +24,7 @@ final class ReviewTripCreationViewModel {
 
     private var router: AppRouting?
     private let networkService: NetworkServiceProtocol
+    private var showToast: ((String) -> Void)?
 
     var pinsHaveIssues: Bool {
         return pins.contains(where: { !$0.issueKinds.isEmpty })
@@ -73,10 +74,18 @@ final class ReviewTripCreationViewModel {
         }
     }
 
+    func setToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
+    }
+
     func asyncDispatch(_ intent: AsyncIntent) async throws {
         switch intent {
         case .finalize:
             let pinsForFinalize = router?.tripCreationDraftPins(for: tripId) ?? pins
+            if pinsForFinalize.contains(where: { !$0.issueKinds.isEmpty }) {
+                showToast?(PinzBaseStrings.ReviewTripCreation.Toast.fixIssuesFirst)
+                return
+            }
             let pinUpdates = pinsForFinalize.map { pin -> PinUpdateInputDTO in
                 let pinId = pin.serverId ?? pin.id
 
@@ -94,15 +103,19 @@ final class ReviewTripCreationViewModel {
                 )
             }
 
-            _ = try await networkService.finalizeTrip(
-                tripId: tripId,
-                pinUpdates: pinUpdates,
-                mediaToDelete: []
-            )
-
-            router?.clearTripCreationDraftPins(for: tripId)
-
-            router?.pop(by: 3)
+            do {
+                _ = try await networkService.finalizeTrip(
+                    tripId: tripId,
+                    pinUpdates: pinUpdates,
+                    mediaToDelete: []
+                )
+                showToast?(PinzBaseStrings.ReviewTripCreation.Toast.tripCreated)
+                router?.clearTripCreationDraftPins(for: tripId)
+                router?.pop(by: 3)
+            } catch {
+                showToast?(PinzBaseStrings.ReviewTripCreation.Toast.finalizeFailed)
+                throw error
+            }
         }
     }
 

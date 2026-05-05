@@ -157,6 +157,21 @@
 "tripCreation.hint.tripNameRules" = "Trip name must contain only letters, digits, dots and underscores";
 "tripCreation.button.generatePins" = "Generate Pins";
 
+// MARK: - Trip Creation Toasts
+"tripCreation.toast.nameEmpty" = "Enter the trip name";
+"tripCreation.toast.nameTooLong" = "Trip name must not exceed %d characters";
+"tripCreation.toast.nameInvalidChars" = "Trip name can only contain letters, digits, dots and underscores";
+"tripCreation.toast.descriptionTooLong" = "Description must not exceed %d characters";
+"tripCreation.toast.categoryNotSelected" = "Pick a trip category";
+"tripCreation.toast.seasonNotSelected" = "Pick a season";
+"tripCreation.toast.mediasEmpty" = "Add at least one media file";
+"tripCreation.toast.mediaLoadingInProgress" = "Wait for media to finish loading";
+"tripCreation.toast.mediaLoadFailed" = "Couldn't process the selected media";
+"tripCreation.toast.createTripFailed" = "Couldn't create trip. Try again";
+"tripCreation.toast.uploadMediaFailed" = "Couldn't upload media. Check your connection";
+"tripCreation.toast.groupingFailed" = "Couldn't generate pins. Try again";
+"tripCreation.toast.noPinsGenerated" = "Couldn't form any pins from the uploaded media";
+
 // MARK: - Trip Info
 "tripInfo.header.general" = "General Information";
 "tripInfo.label.season" = "Season";
@@ -202,6 +217,11 @@
 
 // MARK: - Review Trip Creation
 "reviewTripCreation.title.main" = "Review Pins";
+
+// MARK: - Review Trip Creation Toasts
+"reviewTripCreation.toast.fixIssuesFirst" = "Fix pin issues before continuing";
+"reviewTripCreation.toast.tripCreated" = "Trip created";
+"reviewTripCreation.toast.finalizeFailed" = "Couldn't finalize trip creation";
 "tripCreationProblems.title.main" = "Pin Problems";
 "tripCreationProblems.message.noProblems" = "No issues found";
 "tripCreationProblems.issue.missingCoordinates" = "No coordinates";
@@ -209,6 +229,14 @@
 
 // MARK: - Preprocessed Pins
 "preprocessedPins.button.mergePins" = "Merge Pins";
+
+// MARK: - Preprocessed Pins Toasts
+"preprocessedPins.toast.noPins" = "Add at least one pin";
+"preprocessedPins.toast.emptyPin" = "Pin %d is empty. Remove it or add media";
+"preprocessedPins.toast.applyFailed" = "Couldn't save grouping. Try again";
+"preprocessedPins.toast.processingTimeout" = "Server is taking too long to process. Try again later";
+"preprocessedPins.toast.reviewFetchFailed" = "Couldn't load processed pins";
+"preprocessedPins.toast.unexpectedStatus" = "Server returned an unexpected processing status";
 
 // MARK: - Trip Pins
 "tripPins.title" = "Trip Pins";
