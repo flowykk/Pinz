@@ -50,6 +50,11 @@ public class PinInfoViewModel {
         case saveEdits
     }
 
+    static let tagMaxLength = 15
+    static let pinTagsMaxCount = 10
+    static let pinNameMaxLength = 50
+    static let pinDescriptionMaxLength = 5000
+
     var state: State = .info
     var previousState: State = .info
 
@@ -59,6 +64,7 @@ public class PinInfoViewModel {
     private let deleteAction: PinDeleteAction?
     private let networkService: any NetworkServiceProtocol
     private var router: AppRouting?
+    private var showToast: ((String) -> Void)?
 
     /// True while a save request is in flight (disables Done, like Profile `isLoading` on save).
     private(set) var isSaving = false
@@ -106,8 +112,25 @@ public class PinInfoViewModel {
         case .cancelEdit:
             restorePinFromSnapshot()
             changeState(to: previousState)
-        case let .addTag(tag):
-            pin.tags.append(tag)
+        case let .addTag(newTag):
+            let trimmed = newTag.tag.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty {
+                showToast?(PinzBaseStrings.PinInfo.Toast.tagEmpty)
+                return
+            }
+            if trimmed.count > Self.tagMaxLength {
+                showToast?(PinzBaseStrings.PinInfo.Toast.tagTooLong(Self.tagMaxLength))
+                return
+            }
+            if pin.tags.contains(where: { $0.tag.caseInsensitiveCompare(trimmed) == .orderedSame }) {
+                showToast?(PinzBaseStrings.PinInfo.Toast.tagAlreadyExists)
+                return
+            }
+            if pin.tags.count >= Self.pinTagsMaxCount {
+                showToast?(PinzBaseStrings.PinInfo.Toast.tagLimitReached(Self.pinTagsMaxCount))
+                return
+            }
+            pin.tags.append(MediaTag(tag: trimmed))
         case let .deleteTag(tag):
             pin.tags.removeAll { $0.tag == tag.tag }
         case let .navigate(route):
@@ -130,23 +153,32 @@ public class PinInfoViewModel {
                 guard let self,
                       let tripId = pin.tripId,
                       let pinId = pin.serverId else { return }
-                guard let response = try? await networkService.setPinPrivacy(
-                    tripId: tripId,
-                    pinId: pinId,
-                    privacyLevel: selection.apiValue
-                ) else { return }
-                pin.isPrivate = response.privacyLevel.lowercased() == "private"
-                updateAction?.action(pin)
+                do {
+                    let response = try await networkService.setPinPrivacy(
+                        tripId: tripId,
+                        pinId: pinId,
+                        privacyLevel: selection.apiValue
+                    )
+                    pin.isPrivate = response.privacyLevel.lowercased() == "private"
+                    updateAction?.action(pin)
+                } catch {
+                    showToast?(PinzBaseStrings.PinInfo.Toast.privacyFailed)
+                }
             }
         case .deletePin:
             Task { [weak self] in
                 guard let self,
                       let tripId = pin.tripId,
                       let pinId = pin.serverId else { return }
-                _ = try? await networkService.deletePin(tripId: tripId, pinId: pinId)
-                let deletedPin = pin
-                router?.pop()
-                deleteAction?.action(deletedPin)
+                do {
+                    _ = try await networkService.deletePin(tripId: tripId, pinId: pinId)
+                    let deletedPin = pin
+                    showToast?(PinzBaseStrings.PinInfo.Toast.pinDeleted)
+                    router?.pop()
+                    deleteAction?.action(deletedPin)
+                } catch {
+                    showToast?(PinzBaseStrings.PinInfo.Toast.deleteFailed)
+                }
             }
         }
     }
@@ -155,10 +187,38 @@ public class PinInfoViewModel {
         self.router = router
     }
 
+    public func setToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
+    }
+
+    // MARK: - Validation
+
+    func validateDates() -> String? {
+        guard let start = pin.startDate, let end = pin.endDate, start > end else { return nil }
+        return PinzBaseStrings.PinInfo.Toast.startDateAfterEndDate
+    }
+
+    private func validateForSave() -> String? {
+        let trimmedName = pin.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedName.isEmpty { return PinzBaseStrings.PinInfo.Toast.nameEmpty }
+        if trimmedName.count > Self.pinNameMaxLength { return PinzBaseStrings.PinInfo.Toast.nameTooLong }
+        if let description = pin.description, description.count > Self.pinDescriptionMaxLength {
+            return PinzBaseStrings.PinInfo.Toast.descriptionTooLong
+        }
+        if let dateError = validateDates() { return dateError }
+        return nil
+    }
+
     // MARK: - Save
 
     private func saveEdits() async throws {
         guard let snapshot = editingSnapshot else { return }
+
+        if let validationError = validateForSave() {
+            showToast?(validationError)
+            return
+        }
+
         let tripId = pin.tripId
         let pinId = pin.serverId
 
@@ -177,22 +237,28 @@ public class PinInfoViewModel {
         isSaving = true
         defer { isSaving = false }
 
-        let response = try await networkService.updatePin(
-            tripId: tripId!,
-            pinId: pinId!,
-            name: diff.name,
-            description: diff.description,
-            category: diff.category,
-            latitude: diff.latitude,
-            longitude: diff.longitude,
-            startTimeUnix: diff.startTimeUnix,
-            endTimeUnix: diff.endTimeUnix,
-            tags: diff.tags,
-            tagsSet: diff.tagsSet
-        )
+        do {
+            let response = try await networkService.updatePin(
+                tripId: tripId!,
+                pinId: pinId!,
+                name: diff.name,
+                description: diff.description,
+                category: diff.category,
+                latitude: diff.latitude,
+                longitude: diff.longitude,
+                startTimeUnix: diff.startTimeUnix,
+                endTimeUnix: diff.endTimeUnix,
+                tags: diff.tags,
+                tagsSet: diff.tagsSet
+            )
 
-        applyPinFromResponse(response, tripId: tripId!)
-        applyExitFromEditAfterSuccessKeepingCurrentPin()
+            applyPinFromResponse(response, tripId: tripId!)
+            applyExitFromEditAfterSuccessKeepingCurrentPin()
+            showToast?(PinzBaseStrings.PinInfo.Toast.pinSaved)
+        } catch {
+            showToast?(PinzBaseStrings.PinInfo.Toast.saveFailed)
+            throw error
+        }
     }
 
     private func applyPinFromResponse(_ response: PinResponseDTO, tripId: String) {
@@ -243,11 +309,10 @@ public class PinInfoViewModel {
                 tagsSet: nil
             )
             applyPinFromResponse(response, tripId: tripId)
+            showToast?(PinzBaseStrings.PinInfo.Toast.locationUpdated)
         } catch {
             pin.coordinates = previous
-            #if DEBUG
-            print("[PinInfo] PATCH location failed: \(error)")
-            #endif
+            showToast?(PinzBaseStrings.PinInfo.Toast.locationFailed)
         }
     }
 

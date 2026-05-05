@@ -33,6 +33,7 @@ public struct PinInfoView: View {
     let gallerySpacing: CGFloat = 4
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     var datesSettingValue: String {
         if let startDate = viewModel.pin.startDate, let endDate = viewModel.pin.endDate {
@@ -72,7 +73,10 @@ public struct PinInfoView: View {
                     .padding(.horizontal, gallerySpacing)
             }
         }
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setToast(showToast)
+        }
         .onDisappear { viewModel.onDisappear() }
         .background(PinzUIAsset.background.swiftUIColor)
         .itemsPickerSheet(
@@ -94,6 +98,12 @@ public struct PinInfoView: View {
             date: $viewModel.pin.endDate,
             pickerHeight: $datePickerHeight
         )
+        .onChange(of: isStartDatePickerPresented) { _, isPresented in
+            if !isPresented, let error = viewModel.validateDates() { showToast(error) }
+        }
+        .onChange(of: isEndDatePickerPresented) { _, isPresented in
+            if !isPresented, let error = viewModel.validateDates() { showToast(error) }
+        }
         .fullScreenCover(isPresented: $isStoriesPresented) {
             PinStoryView(pins: [viewModel.pin])
         }
@@ -146,11 +156,7 @@ public struct PinInfoView: View {
                     tint: PinzUIAsset.textPrimary.swiftUIColor,
                     disabled: viewModel.isSaving,
                     action: .async {
-                        await viewModel.asyncDispatch(.saveEdits) { error in
-                            #if DEBUG
-                            print("[PinInfo] save pin failed: \(error)")
-                            #endif
-                        }
+                        await viewModel.asyncDispatch(.saveEdits)
                     }
                 )
             }

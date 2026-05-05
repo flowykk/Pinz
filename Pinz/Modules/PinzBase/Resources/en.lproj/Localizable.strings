@@ -224,6 +224,23 @@
 "pinInfo.button.addLocation" = "Add location";
 "pinInfo.hint.changeLocation" = "Tap to change pin location";
 
+// MARK: - Pin Info Toasts
+"pinInfo.toast.pinSaved" = "Pin saved";
+"pinInfo.toast.saveFailed" = "Failed to save pin";
+"pinInfo.toast.pinDeleted" = "Pin deleted";
+"pinInfo.toast.deleteFailed" = "Failed to delete pin";
+"pinInfo.toast.privacyFailed" = "Failed to update privacy";
+"pinInfo.toast.locationUpdated" = "Location updated";
+"pinInfo.toast.locationFailed" = "Failed to update location";
+"pinInfo.toast.startDateAfterEndDate" = "Start date cannot be after end date";
+"pinInfo.toast.descriptionTooLong" = "Description must not exceed 5000 characters";
+"pinInfo.toast.nameEmpty" = "Pin name cannot be empty";
+"pinInfo.toast.nameTooLong" = "Pin name must not exceed 50 characters";
+"pinInfo.toast.tagEmpty" = "Tag cannot be empty";
+"pinInfo.toast.tagTooLong" = "Tag must not exceed %d characters";
+"pinInfo.toast.tagAlreadyExists" = "This tag is already added";
+"pinInfo.toast.tagLimitReached" = "Tag limit reached (max %d)";
+
 // MARK: - Raw Pin
 "rawPin.button.move" = "Move";
 
