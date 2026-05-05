@@ -10,7 +10,7 @@ final class WishlistElementViewModelTests: XCTestCase {
     private var mockService: MockNetworkService!
     private var sut: WishlistElementViewModel!
 
-    private let stubElement = DesiredPlace(id: "1", name: "Мачу-Пикчу", description: "Древний город в горах Перу.")
+    private let stubElement = DesiredPlace(id: "1", name: "Мачу Пикчу", description: "Древний город в горах Перу.")
 
     override func setUp() {
         super.setUp()
@@ -38,6 +38,26 @@ final class WishlistElementViewModelTests: XCTestCase {
         sut.dispatch(.edit)
         sut.dispatch(.endEdit)
         XCTAssertEqual(sut.state, .default)
+    }
+
+    func test_endEdit_withWhitespaceName_showsToastAndStaysEditing() {
+        var toasts: [String] = []
+        sut.setToast { toasts.append($0) }
+        sut.dispatch(.edit)
+        sut.element.name = "   "
+        sut.dispatch(.endEdit)
+        XCTAssertEqual(sut.state, .editing)
+        XCTAssertEqual(toasts, [PinzBaseStrings.WishlistElement.Toast.nameEmpty])
+    }
+
+    func test_endEdit_withInvalidNameCharacters_showsToastAndStaysEditing() {
+        var toasts: [String] = []
+        sut.setToast { toasts.append($0) }
+        sut.dispatch(.edit)
+        sut.element.name = "Place_with_underscore"
+        sut.dispatch(.endEdit)
+        XCTAssertEqual(sut.state, .editing)
+        XCTAssertEqual(toasts, [PinzBaseStrings.WishlistElement.Toast.nameInvalidChars])
     }
 
     func test_navigate_back_callsPop() {
@@ -85,5 +105,41 @@ final class WishlistElementViewModelTests: XCTestCase {
 
         XCTAssertEqual(mockService.deleteDesiredPlaceCall, stubElement.id)
         XCTAssertEqual(mockRouter.popCallCount, 1)
+    }
+
+    func test_endEdit_onUpdateFailure_showsToast() async {
+        var toasts: [String] = []
+        sut.setToast { toasts.append($0) }
+        mockService.updateDesiredPlaceResult = .failure(URLError(.notConnectedToInternet))
+
+        sut.dispatch(.edit)
+        sut.dispatch(.endEdit)
+
+        let exp = expectation(description: "toast")
+        Task {
+            while toasts.isEmpty { await Task.yield() }
+            exp.fulfill()
+        }
+        await fulfillment(of: [exp], timeout: 2.0)
+
+        XCTAssertEqual(toasts, [PinzBaseStrings.WishlistElement.Toast.updateFailed])
+    }
+
+    func test_delete_onFailure_showsToastAndDoesNotPop() async {
+        var toasts: [String] = []
+        sut.setToast { toasts.append($0) }
+        mockService.deleteDesiredPlaceError = URLError(.notConnectedToInternet)
+
+        sut.dispatch(.delete)
+
+        let exp = expectation(description: "toast")
+        Task {
+            while toasts.isEmpty { await Task.yield() }
+            exp.fulfill()
+        }
+        await fulfillment(of: [exp], timeout: 2.0)
+
+        XCTAssertEqual(toasts, [PinzBaseStrings.WishlistElement.Toast.deleteFailed])
+        XCTAssertEqual(mockRouter.popCallCount, 0)
     }
 }

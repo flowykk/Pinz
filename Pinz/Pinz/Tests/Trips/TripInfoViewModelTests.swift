@@ -103,17 +103,19 @@ final class TripInfoViewModelTests: XCTestCase {
 
         XCTAssertEqual(mockNetwork.submitBattleResultCall?.battleId, "battle-001")
         XCTAssertEqual(mockNetwork.submitBattleResultCall?.winnerMediaId, "m-1")
-        XCTAssertNil(sut.battleError)
+        XCTAssertNil(sut.photoBattleViewModel?.battleError)
     }
 
     @MainActor
     func test_photoBattle_startPhotoBattle_preconditionFailureShowsError() async {
+        var toasts: [String] = []
+        sut.setToast { toasts.append($0) }
         mockNetwork.startBattleResult = .failure(HTTPError.preconditionFailed)
 
         await sut.startPhotoBattle()
 
         XCTAssertEqual(mockNetwork.startBattleCall, trip.id)
-        XCTAssertEqual(sut.battleError, PinzBaseStrings.TripInfo.Message.photoBattleNeedMediaWithContext(TripInfoViewModel.requiredBattleMediaCount))
+        XCTAssertEqual(toasts, [PinzBaseStrings.TripInfo.Message.photoBattleNeedMediaWithContext(TripInfoViewModel.requiredBattleMediaCount)])
         XCTAssertFalse(sut.isPhotoBattlePresented)
     }
 
@@ -179,12 +181,14 @@ final class TripInfoViewModelTests: XCTestCase {
             season: .summer,
             category: .vacation
         )
+        var toasts: [String] = []
         let smallTripViewModel = TripInfoViewModel(trip: smallTrip, networkService: mockNetwork)
+        smallTripViewModel.setToast { toasts.append($0) }
 
         await smallTripViewModel.startPhotoBattle()
 
         XCTAssertFalse(smallTripViewModel.canStartPhotoBattle)
-        XCTAssertEqual(smallTripViewModel.battleError, PinzBaseStrings.TripInfo.Message.photoBattleNeedMedia(TripInfoViewModel.requiredBattleMediaCount))
+        XCTAssertEqual(toasts, [PinzBaseStrings.TripInfo.Message.photoBattleNeedMedia(TripInfoViewModel.requiredBattleMediaCount)])
         XCTAssertNil(mockNetwork.startBattleCall)
     }
 

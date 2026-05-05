@@ -15,6 +15,34 @@ public struct TripPinDTO: Codable {
     public let privacyLevel: String?
     public let media: [TripPinMediaDTO]?
 
+    public init(
+        id: String,
+        tripId: String?,
+        name: String?,
+        description: String?,
+        category: String?,
+        latitude: Double?,
+        longitude: Double?,
+        startTimeUnix: Int?,
+        endTimeUnix: Int?,
+        tags: [String]?,
+        privacyLevel: String?,
+        media: [TripPinMediaDTO]?
+    ) {
+        self.id = id
+        self.tripId = tripId
+        self.name = name
+        self.description = description
+        self.category = category
+        self.latitude = latitude
+        self.longitude = longitude
+        self.startTimeUnix = startTimeUnix
+        self.endTimeUnix = endTimeUnix
+        self.tags = tags
+        self.privacyLevel = privacyLevel
+        self.media = media
+    }
+
     enum CodingKeys: String, CodingKey {
         case id, name, description, category, latitude, longitude, tags, media
         case tripId = "trip_id"
