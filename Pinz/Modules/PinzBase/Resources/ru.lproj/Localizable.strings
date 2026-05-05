@@ -157,6 +157,21 @@
 "tripCreation.hint.tripNameRules" = "Название путешествия должно состоять из букв, цифр, точки и подчёркивания";
 "tripCreation.button.generatePins" = "Сформировать пины";
 
+// MARK: - Trip Creation Toasts
+"tripCreation.toast.nameEmpty" = "Введи название путешествия";
+"tripCreation.toast.nameTooLong" = "Название не должно превышать %d символов";
+"tripCreation.toast.nameInvalidChars" = "Название может содержать только буквы, цифры, точки и подчёркивания";
+"tripCreation.toast.descriptionTooLong" = "Описание не должно превышать %d символов";
+"tripCreation.toast.categoryNotSelected" = "Выбери категорию путешествия";
+"tripCreation.toast.seasonNotSelected" = "Выбери сезон";
+"tripCreation.toast.mediasEmpty" = "Добавь хотя бы одно медиа";
+"tripCreation.toast.mediaLoadingInProgress" = "Дождись окончания загрузки медиа";
+"tripCreation.toast.mediaLoadFailed" = "Не удалось обработать выбранное медиа";
+"tripCreation.toast.createTripFailed" = "Не удалось создать путешествие. Попробуй ещё раз";
+"tripCreation.toast.uploadMediaFailed" = "Не удалось загрузить медиа. Проверь соединение";
+"tripCreation.toast.groupingFailed" = "Не удалось сформировать пины. Попробуй ещё раз";
+"tripCreation.toast.noPinsGenerated" = "Не получилось сформировать пины из загруженных медиа";
+
 // MARK: - Trip Info
 "tripInfo.header.general" = "Общая информация";
 "tripInfo.label.season" = "Сезон";
@@ -202,6 +217,11 @@
 
 // MARK: - Review Trip Creation
 "reviewTripCreation.title.main" = "Проверка пинов";
+
+// MARK: - Review Trip Creation Toasts
+"reviewTripCreation.toast.fixIssuesFirst" = "Исправь проблемы у пинов перед публикацией";
+"reviewTripCreation.toast.tripCreated" = "Путешествие создано";
+"reviewTripCreation.toast.finalizeFailed" = "Не удалось завершить создание путешествия";
 "tripCreationProblems.title.main" = "Проблемы с пинами";
 "tripCreationProblems.message.noProblems" = "Проблем не найдено";
 "tripCreationProblems.issue.missingCoordinates" = "Нет координат";
@@ -209,6 +229,14 @@
 
 // MARK: - Preprocessed Pins
 "preprocessedPins.button.mergePins" = "Объединить пины";
+
+// MARK: - Preprocessed Pins Toasts
+"preprocessedPins.toast.noPins" = "Добавь хотя бы один пин";
+"preprocessedPins.toast.emptyPin" = "Пин %d пуст. Удали его или добавь медиа";
+"preprocessedPins.toast.applyFailed" = "Не удалось сохранить группировку. Попробуй ещё раз";
+"preprocessedPins.toast.processingTimeout" = "Сервер слишком долго обрабатывает данные. Попробуй позже";
+"preprocessedPins.toast.reviewFetchFailed" = "Не удалось получить готовые пины";
+"preprocessedPins.toast.unexpectedStatus" = "Сервер вернул неожиданный статус обработки";
 
 // MARK: - Trip Pins
 "tripPins.title" = "Пины путешествия";

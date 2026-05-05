@@ -8,6 +8,7 @@ public struct ReviewTripCreationView: View {
     @State private var viewModel: ReviewTripCreationViewModel
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     public init(tripId: String, pins: [Pin]) {
         viewModel = ReviewTripCreationViewModel(tripId: tripId, pins: pins)
@@ -37,7 +38,10 @@ public struct ReviewTripCreationView: View {
             gradientWithButtons
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setToast(showToast)
+        }
     }
 
     @ViewBuilder

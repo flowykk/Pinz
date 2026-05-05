@@ -31,6 +31,7 @@ final class PreprocessedRawPinsViewModel {
     private let networkService: NetworkServiceProtocol
     private var router: AppRouting?
     private var deletedMediaIds: [String] = []
+    private var showToast: ((String) -> Void)?
 
     init(tripId: String, pins: RawPins, networkService: NetworkServiceProtocol = NetworkService.shared) {
         self.tripId = tripId
@@ -81,6 +82,15 @@ final class PreprocessedRawPinsViewModel {
     func asyncDispatch(_ intent: AsyncIntent) async throws {
         switch intent {
         case .continue:
+            if pins.pins.isEmpty {
+                showToast?(PinzBaseStrings.PreprocessedPins.Toast.noPins)
+                return
+            }
+            if let emptyIdx = pins.pins.firstIndex(where: { $0.medias.isEmpty }) {
+                showToast?(PinzBaseStrings.PreprocessedPins.Toast.emptyPin(emptyIdx + 1))
+                return
+            }
+
             changeLoading(to: true)
             defer { changeLoading(to: false) }
 
@@ -100,6 +110,7 @@ final class PreprocessedRawPinsViewModel {
                 )
             } catch {
                 waitTask.cancel()
+                showToast?(PinzBaseStrings.PreprocessedPins.Toast.applyFailed)
                 throw error
             }
 
@@ -109,15 +120,31 @@ final class PreprocessedRawPinsViewModel {
                 try await waitTask.value
                 reviewResponse = try await networkService.getTripReview(tripId: tripId)
             } catch TripReviewWaitError.timeout {
-                reviewResponse = try await Self.waitForReviewAfterTimeout(
-                    tripId: tripId,
-                    networkService: networkService
-                )
+                do {
+                    reviewResponse = try await Self.waitForReviewAfterTimeout(
+                        tripId: tripId,
+                        networkService: networkService
+                    )
+                } catch TripReviewWaitError.timeout {
+                    showToast?(PinzBaseStrings.PreprocessedPins.Toast.processingTimeout)
+                    throw TripReviewWaitError.timeout
+                }
                 let reviewStatus = Self.normalizedReviewStatus(reviewResponse.status)
                 guard reviewStatus == "PROCESSING" || reviewStatus == "DRAFT_FINAL_REVIEW" else {
+                    showToast?(PinzBaseStrings.PreprocessedPins.Toast.unexpectedStatus)
                     throw TripReviewWaitError.webSocket(message: "unexpected review status: \(reviewStatus)")
                 }
             } catch {
+                if case TripReviewWaitError.cancelled = error {
+                    throw error
+                }
+                if case TripReviewWaitError.timeout = error {
+                    throw error
+                }
+                if case TripReviewWaitError.webSocket = error {
+                    throw error
+                }
+                showToast?(PinzBaseStrings.PreprocessedPins.Toast.reviewFetchFailed)
                 throw error
             }
 
@@ -128,6 +155,10 @@ final class PreprocessedRawPinsViewModel {
 
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+    }
+
+    func setToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
     }
 
     private func changeLoading(to isLoading: Bool) {
