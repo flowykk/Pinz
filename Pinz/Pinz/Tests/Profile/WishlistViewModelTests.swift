@@ -73,4 +73,14 @@ final class WishlistViewModelTests: XCTestCase {
 
         XCTAssertEqual(sut.wishlist.count, stubPlaces.count)
     }
+
+    func test_loadWishlist_onNetworkError_showsToast() async {
+        var toasts: [String] = []
+        sut.setToast { toasts.append($0) }
+        mockService.getDesiredPlacesResult = .failure(URLError(.notConnectedToInternet))
+
+        await sut.loadWishlist()
+
+        XCTAssertEqual(toasts, [PinzBaseStrings.Wishlist.Toast.loadFailed])
+    }
 }

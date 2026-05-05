@@ -20,7 +20,7 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     // MARK: - Feed / Trips
 
-    var getFeedResult: Result<[FeedItemDTO], Error> = .success(Self.stubFeed)
+    var getFeedResult: Result<[FeedItemDTO], Error> = .success(MockNetworkService.stubFeed)
     var getTripsResult: Result<[TripDTO], Error> = .success([])
     var getTripResult: Result<GetTripResponseDTO, Error> = .success(MockNetworkService.stubTripResponse)
     var requestTripCoverUploadResult: Result<TripCoverUploadResponseDTO, Error> = .success(

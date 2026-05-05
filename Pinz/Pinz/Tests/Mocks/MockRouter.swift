@@ -68,7 +68,7 @@ final class MockRouter: AppRouting {
         currentProfileUpdateAction = nil
         currentProfileUpdateUser = nil
     }
-    func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction?) {
+    func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction?, deleteAction: PinDeleteAction?) {
         navigatedPinInfo = pin
         navigatedPinUpdateAction = updateAction
     }
@@ -86,7 +86,9 @@ final class MockRouter: AppRouting {
     func navigateToPostPreview(trip: Trip, selectedPins: [Pin]) { navigatedPostPreview = (trip, selectedPins) }
     func navigateToPostInfo(post: Post) { navigatedPostInfo = post }
     func navigateToSavedTripDetail(trip: Trip) { navigatedSavedTrip = trip }
-    func navigateToMediaInfo(media: MediaItem) { navigatedMediaInfo = media }
+    func navigateToMediaInfo(media: MediaItem, updateAction: MediaUpdateAction?) {
+        navigatedMediaInfo = media
+    }
     func navigateToLocalMediaInfo(media: LoadedMedia) { navigatedLocalMediaInfo = media }
     func navigateToEmailChange(email: String, userId: String?, action: EmailChangeAction) {
         navigatedEmailChange = (email, userId, action)

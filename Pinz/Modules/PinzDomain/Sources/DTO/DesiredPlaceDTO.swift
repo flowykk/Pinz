@@ -5,6 +5,14 @@ public struct DesiredPlaceDTO: Codable {
     public let imageUrl: String?
     public let createdAt: Int
 
+    public init(id: String, name: String, description: String, imageUrl: String?, createdAt: Int) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.imageUrl = imageUrl
+        self.createdAt = createdAt
+    }
+
     enum CodingKeys: String, CodingKey {
         case id, name, description
         case imageUrl = "image_url"

@@ -102,16 +102,39 @@
 // MARK: - Wishlist
 "wishlist.title.main" = "Wishlist";
 "wishlist.placeholder.placeName" = "Place Name";
-"wishlist.hint.placeNameRules" = "Place name must contain only letters, digits, dots and underscores";
+"wishlist.hint.placeNameRules" = "Use only Latin or Cyrillic letters, numbers, and spaces";
 "wishlist.placeholder.placeDescription" = "Place Description";
 "wishlist.label.uploadPhoto" = "Upload Place Photo";
+"wishlist.button.addNewPlace" = "Add new place to wishlist";
 "wishlist.hint.changePhoto" = "Tap the photo to change it";
 "wishlistElement.label.title" = "Place Name";
-"wishlistElement.hint.titleRules" = "Place name must contain only letters, digits, dots and underscores";
+"wishlistElement.hint.titleRules" = "Use only Latin or Cyrillic letters, numbers, and spaces";
 "wishlistElement.label.description" = "Description";
 "wishlistElement.placeholder.description" = "Place Description";
 "wishlistElement.hint.changePhoto" = "Tap the photo to change it";
 "wishlistElement.button.delete" = "Delete Place";
+
+// MARK: - Wishlist Toasts
+"wishlist.toast.loadFailed" = "Couldn't load wishlist";
+"wishlist.toast.placeCreated" = "Place added to wishlist";
+"wishlist.toast.createFailed" = "Couldn't add place. Try again.";
+"wishlist.toast.imageUploadFailed" = "Couldn't upload photo";
+"wishlist.toast.imagePrepareFailed" = "Couldn't process photo";
+"wishlist.toast.photoLoadFailed" = "Couldn't load the selected photo";
+"wishlist.toast.nameInvalidChars" = "Use only Latin or Cyrillic letters, numbers, and spaces";
+
+// MARK: - Wishlist Element Toasts
+"wishlistElement.toast.placeUpdated" = "Place updated";
+"wishlistElement.toast.placeDeleted" = "Place removed from wishlist";
+"wishlistElement.toast.updateFailed" = "Couldn't save changes";
+"wishlistElement.toast.deleteFailed" = "Couldn't delete place";
+"wishlistElement.toast.imageUploadFailed" = "Couldn't upload photo";
+"wishlistElement.toast.imagePrepareFailed" = "Couldn't process photo";
+"wishlistElement.toast.photoLoadFailed" = "Couldn't load the selected photo";
+"wishlistElement.toast.nameEmpty" = "Place name can't be empty";
+"wishlistElement.toast.nameInvalidChars" = "Use only Latin or Cyrillic letters, numbers, and spaces";
+"wishlistElement.toast.nameTooLong" = "Place name must not exceed %d characters";
+"wishlistElement.toast.descriptionTooLong" = "Description must not exceed %d characters";
 
 // MARK: - Feed
 "feed.title.main" = "Feed";

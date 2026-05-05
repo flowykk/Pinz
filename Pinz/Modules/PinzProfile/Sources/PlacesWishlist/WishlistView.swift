@@ -8,6 +8,7 @@ public struct WishlistView: View {
     @State private var viewModel: WishlistViewModel
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     private let isReadOnly: Bool
 
@@ -17,23 +18,30 @@ public struct WishlistView: View {
     }
 
     public var body: some View {
-        CollapsibleHeader(needsBlur: true) {
-            header
-        } content: {
-            VStack {
-                let wishlist = viewModel.wishlist
-                ForEach(wishlist.indices, id: \.self) { index in
-                    WishlistElementShortInfoView(element: wishlist[index]) { element in
-                        viewModel.dispatch(.navigate(.wishlistElement(element)))
-                    }.padding(.horizontal, 12)
-                    if index != wishlist.count - 1 {
-                        Divider().padding(.leading, 12)
+        ZStack {
+            CollapsibleHeader(needsBlur: true) {
+                header
+            } content: {
+                VStack {
+                    let wishlist = viewModel.wishlist
+                    ForEach(wishlist.indices, id: \.self) { index in
+                        WishlistElementShortInfoView(element: wishlist[index]) { element in
+                            viewModel.dispatch(.navigate(.wishlistElement(element)))
+                        }.padding(.horizontal, 12)
+                        if index != wishlist.count - 1 {
+                            Divider().padding(.leading, 12)
+                        }
                     }
                 }
             }
+
+            gradientWithButtons
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setToast(showToast)
+        }
         .task {
             if !isReadOnly {
                 await viewModel.loadWishlist()
@@ -50,14 +58,19 @@ public struct WishlistView: View {
             )
         }, centerView: {
             HeaderTitle(PinzBaseStrings.Wishlist.Title.main)
-        }, rightView: {
-            if !isReadOnly {
+        })
+    }
+
+    @ViewBuilder
+    private var gradientWithButtons: some View {
+        if !isReadOnly {
+            BottomGradientWithButtons {
                 PinzButton(
-                    type: .icon(.plus),
-                    tint: PinzUIAsset.textPrimary.swiftUIColor,
+                    type: .slot(style: .primary, title: PinzBaseStrings.Wishlist.Button.addNewPlace),
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.navigate(.wishlistElementCreation)) }
                 )
             }
-        })
+        }
     }
 }

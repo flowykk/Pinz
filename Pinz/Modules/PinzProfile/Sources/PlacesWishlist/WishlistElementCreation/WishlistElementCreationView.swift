@@ -17,6 +17,7 @@ public struct WishlistElementCreationView: View {
     @State private var pickerItems: [PhotosPickerItem] = []
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     public init(onCreated: @escaping (DesiredPlace) -> Void) {
         viewModel = WishlistElementCreationViewModel(onCreated: onCreated)
@@ -50,7 +51,10 @@ public struct WishlistElementCreationView: View {
             }.padding(.horizontal, 12)
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setToast(showToast)
+        }
         .photosPicker(
             isPresented: $isPhotoPickerPresented,
             selection: $pickerItems,

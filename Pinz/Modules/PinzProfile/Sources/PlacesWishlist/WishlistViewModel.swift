@@ -21,6 +21,7 @@ final class WishlistViewModel {
 
     private let networkService: any NetworkServiceProtocol
     private var router: AppRouting?
+    private var showToast: ((String) -> Void)?
 
     init(wishlist: [DesiredPlace] = [], networkService: any NetworkServiceProtocol = NetworkService.shared) {
         self.wishlist = wishlist
@@ -49,10 +50,16 @@ final class WishlistViewModel {
         do {
             let places = try await networkService.getDesiredPlaces()
             wishlist = places.map { $0.toDesiredPlace() }
-        } catch {}
+        } catch {
+            showToast?(PinzBaseStrings.Wishlist.Toast.loadFailed)
+        }
     }
 
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+    }
+
+    public func setToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
     }
 }

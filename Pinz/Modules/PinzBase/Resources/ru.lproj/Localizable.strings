@@ -102,16 +102,39 @@
 // MARK: - Wishlist
 "wishlist.title.main" = "Желанные места";
 "wishlist.placeholder.placeName" = "Название места";
-"wishlist.hint.placeNameRules" = "Название места должно состоять из букв, цифр, точки и подчёркивания";
+"wishlist.hint.placeNameRules" = "Только буквы латиницы или кириллицы, цифры и пробелы";
 "wishlist.placeholder.placeDescription" = "Описание места";
 "wishlist.label.uploadPhoto" = "Загрузи фотографию места";
+"wishlist.button.addNewPlace" = "Добавить новое место в список желаний";
 "wishlist.hint.changePhoto" = "Нажми на фото, чтобы поменять его";
 "wishlistElement.label.title" = "Название места";
-"wishlistElement.hint.titleRules" = "Название места должно состоять из букв, цифр, точки и подчёркивания";
+"wishlistElement.hint.titleRules" = "Только буквы латиницы или кириллицы, цифры и пробелы";
 "wishlistElement.label.description" = "Описание";
 "wishlistElement.placeholder.description" = "Описание места";
 "wishlistElement.hint.changePhoto" = "Нажми на фото, чтобы поменять его";
 "wishlistElement.button.delete" = "Удалить место";
+
+// MARK: - Wishlist Toasts
+"wishlist.toast.loadFailed" = "Не удалось загрузить список желанных мест";
+"wishlist.toast.placeCreated" = "Место добавлено в список";
+"wishlist.toast.createFailed" = "Не удалось добавить место. Попробуй ещё раз.";
+"wishlist.toast.imageUploadFailed" = "Не удалось загрузить фото";
+"wishlist.toast.imagePrepareFailed" = "Не удалось обработать фото";
+"wishlist.toast.photoLoadFailed" = "Не удалось загрузить выбранное фото";
+"wishlist.toast.nameInvalidChars" = "Допустимы только буквы латиницы или кириллицы, цифры и пробелы";
+
+// MARK: - Wishlist Element Toasts
+"wishlistElement.toast.placeUpdated" = "Место обновлено";
+"wishlistElement.toast.placeDeleted" = "Место удалено из списка";
+"wishlistElement.toast.updateFailed" = "Не удалось сохранить изменения";
+"wishlistElement.toast.deleteFailed" = "Не удалось удалить место";
+"wishlistElement.toast.imageUploadFailed" = "Не удалось загрузить фото";
+"wishlistElement.toast.imagePrepareFailed" = "Не удалось обработать фото";
+"wishlistElement.toast.photoLoadFailed" = "Не удалось загрузить выбранное фото";
+"wishlistElement.toast.nameEmpty" = "Название места не может быть пустым";
+"wishlistElement.toast.nameInvalidChars" = "Допустимы только буквы латиницы или кириллицы, цифры и пробелы";
+"wishlistElement.toast.nameTooLong" = "Название места не должно превышать %d символов";
+"wishlistElement.toast.descriptionTooLong" = "Описание не должно превышать %d символов";
 
 // MARK: - Feed
 "feed.title.main" = "Лента";

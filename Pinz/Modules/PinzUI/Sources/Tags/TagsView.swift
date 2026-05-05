@@ -97,8 +97,9 @@ public struct TagsView: View {
                             return lastWidth
                         }
                         .alignmentGuide(.top) { _ in return lastHeight }
-                        .disabledWithOpacity(maxTags.map { tags.count >= $0 } ?? false)
-                }.buttonStyle(.plain)
+                }
+                .buttonStyle(.plain)
+                .disabledWithOpacity(maxTags.map { tags.count >= $0 } ?? false)
             }
         }
         .onGeometryChange(for: CGSize.self) { proxy in
