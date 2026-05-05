@@ -10,9 +10,6 @@ final class PostFeedItemViewModel {
 
     private(set) var post: Post
     private(set) var images: [Int: UIImage] = [:]
-    var isLiked = false
-    var isDisliked = false
-    var isFavourite = false
     var position: MapCameraPosition
 
     private let networkService: NetworkServiceProtocol
@@ -65,14 +62,14 @@ final class PostFeedItemViewModel {
     }
 
     private func toggleLike() async {
-        if isLiked {
-            isLiked = false
+        if post.isLiked {
+            post.isLiked = false
             post.likes = max(post.likes - 1, 0)
         } else {
-            isLiked = true
+            post.isLiked = true
             post.likes += 1
-            if isDisliked {
-                isDisliked = false
+            if post.isDisliked {
+                post.isDisliked = false
                 post.dislikes = max(post.dislikes - 1, 0)
             }
         }
@@ -85,14 +82,14 @@ final class PostFeedItemViewModel {
     }
 
     private func toggleDislike() async {
-        if isDisliked {
-            isDisliked = false
+        if post.isDisliked {
+            post.isDisliked = false
             post.dislikes = max(post.dislikes - 1, 0)
         } else {
-            isDisliked = true
+            post.isDisliked = true
             post.dislikes += 1
-            if isLiked {
-                isLiked = false
+            if post.isLiked {
+                post.isLiked = false
                 post.likes = max(post.likes - 1, 0)
             }
         }
@@ -105,8 +102,8 @@ final class PostFeedItemViewModel {
     }
 
     private func toggleFavourite() async {
-        if isFavourite {
-            isFavourite = false
+        if post.isSaved {
+            post.isSaved = false
             post.favorites = max(post.favorites - 1, 0)
             do {
                 try await networkService.removeTripFromFavourites(id: post.id)
@@ -114,7 +111,7 @@ final class PostFeedItemViewModel {
                 print(error)
             }
         } else {
-            isFavourite = true
+            post.isSaved = true
             post.favorites += 1
             do {
                 _ = try await networkService.addTripToFavourites(id: post.id)
