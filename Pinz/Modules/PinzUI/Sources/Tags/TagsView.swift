@@ -13,6 +13,7 @@ public struct TagsView: View {
     let onTagAdd: ((MediaTag) -> Void)?
     let onTagDelete: ((MediaTag) -> Void)?
     let style: Style
+    let maxTags: Int?
 
     @State private var isAddTagPresented: Bool = false
     @State private var height: CGFloat = 0
@@ -23,12 +24,14 @@ public struct TagsView: View {
         onTagAdd: ((MediaTag) -> Void)?,
         onTagDelete: ((MediaTag) -> Void)?,
         style: Style,
+        maxTags: Int? = nil,
     ) {
         self.tags = tags
         self.totalHeight = totalHeight
         self.onTagAdd = onTagAdd
         self.onTagDelete = onTagDelete
         self.style = style
+        self.maxTags = maxTags
     }
 
     public var body: some View {
@@ -94,7 +97,7 @@ public struct TagsView: View {
                             return lastWidth
                         }
                         .alignmentGuide(.top) { _ in return lastHeight }
-//                        .disabledWithOpacity(tags.count >= maxTags)
+                        .disabledWithOpacity(maxTags.map { tags.count >= $0 } ?? false)
                 }.buttonStyle(.plain)
             }
         }

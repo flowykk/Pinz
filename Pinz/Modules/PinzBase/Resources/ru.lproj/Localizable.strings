@@ -224,6 +224,23 @@
 "pinInfo.button.addLocation" = "Добавить местоположение";
 "pinInfo.hint.changeLocation" = "Нажми, чтобы изменить местоположение пина";
 
+// MARK: - Pin Info Toasts
+"pinInfo.toast.pinSaved" = "Пин сохранён";
+"pinInfo.toast.saveFailed" = "Не удалось сохранить пин";
+"pinInfo.toast.pinDeleted" = "Пин удалён";
+"pinInfo.toast.deleteFailed" = "Не удалось удалить пин";
+"pinInfo.toast.privacyFailed" = "Не удалось обновить настройки приватности";
+"pinInfo.toast.locationUpdated" = "Местоположение обновлено";
+"pinInfo.toast.locationFailed" = "Не удалось обновить местоположение";
+"pinInfo.toast.startDateAfterEndDate" = "Дата начала не может быть позже даты конца";
+"pinInfo.toast.descriptionTooLong" = "Описание не должно превышать 5000 символов";
+"pinInfo.toast.nameEmpty" = "Название пина не может быть пустым";
+"pinInfo.toast.nameTooLong" = "Название пина не должно превышать 50 символов";
+"pinInfo.toast.tagEmpty" = "Тег не может быть пустым";
+"pinInfo.toast.tagTooLong" = "Тег не должен превышать %d символов";
+"pinInfo.toast.tagAlreadyExists" = "Такой тег уже добавлен";
+"pinInfo.toast.tagLimitReached" = "Достигнут лимит тегов (макс. %d)";
+
 // MARK: - Raw Pin
 "rawPin.button.move" = "Переместить";
 

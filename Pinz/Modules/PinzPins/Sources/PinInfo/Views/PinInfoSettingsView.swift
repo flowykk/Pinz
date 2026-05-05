@@ -90,7 +90,8 @@ extension PinInfoView {
                 onTagDelete: { tag in
                     viewModel.dispatch(.deleteTag(tag))
                 },
-                style: viewModel.isEditing ? .editable : .default
+                style: viewModel.isEditing ? .editable : .default,
+                maxTags: PinInfoViewModel.pinTagsMaxCount
             ).padding(.top, 2)
         }
     }
