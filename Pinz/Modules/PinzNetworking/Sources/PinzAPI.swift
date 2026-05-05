@@ -405,6 +405,9 @@ extension PinzAPI {
                 json = #"""
                 [
                   {
+                    "is_liked": true,
+                    "is_disliked": false,
+                    "is_saved": false,
                     "trip": {
                       "id": "trip-001",
                       "name": "Парижская романтика",
@@ -454,6 +457,9 @@ extension PinzAPI {
                     ]
                   },
                   {
+                    "is_liked": false,
+                    "is_disliked": true,
+                    "is_saved": true,
                     "trip": {
                       "id": "trip-002",
                       "name": "Горнолыжный тур в Альпы",
@@ -504,6 +510,9 @@ extension PinzAPI {
                 json = #"""
                 [
                   {
+                    "is_liked": false,
+                    "is_disliked": false,
+                    "is_saved": false,
                     "trip": {
                       "id": "trip-003",
                       "name": "Сафари в Кении",

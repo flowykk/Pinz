@@ -114,6 +114,9 @@ final class FeedViewModel {
                     dislikes: trip.dislikesCount,
                     favorites: 0,
                     views: 0,
+                    isLiked: item.isLiked,
+                    isDisliked: item.isDisliked,
+                    isSaved: item.isSaved,
                     pins: pins,
                     media: postMedia
                 )

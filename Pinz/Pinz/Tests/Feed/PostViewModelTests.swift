@@ -28,10 +28,31 @@ final class PostViewModelTests: XCTestCase {
     // MARK: - Initial state
 
     func test_initialState() {
-        XCTAssertFalse(sut.isLiked)
-        XCTAssertFalse(sut.isDisliked)
-        XCTAssertFalse(sut.isFavourite)
+        XCTAssertFalse(sut.post.isLiked)
+        XCTAssertFalse(sut.post.isDisliked)
+        XCTAssertFalse(sut.post.isSaved)
         XCTAssertTrue(sut.images.isEmpty)
+    }
+
+    func test_initialState_reflectsPostViewerFlags() {
+        post = Post(
+            id: "flag-trip",
+            name: "T",
+            participants: 1,
+            likes: 1,
+            dislikes: 1,
+            favorites: 0,
+            views: 0,
+            isLiked: true,
+            isDisliked: false,
+            isSaved: true,
+            pins: [],
+            media: []
+        )
+        sut = PostFeedItemViewModel(post: post, networkService: mockNetwork)
+        XCTAssertTrue(sut.post.isLiked)
+        XCTAssertFalse(sut.post.isDisliked)
+        XCTAssertTrue(sut.post.isSaved)
     }
 
     func test_initialLikeCount_matchesPost() {
@@ -44,7 +65,7 @@ final class PostViewModelTests: XCTestCase {
         let initial = sut.post.likes
         sut.dispatch(.like)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertTrue(sut.isLiked)
+        XCTAssertTrue(sut.post.isLiked)
         XCTAssertEqual(sut.post.likes, initial + 1)
     }
 
@@ -60,19 +81,19 @@ final class PostViewModelTests: XCTestCase {
         let liked = sut.post.likes
         sut.dispatch(.like)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertFalse(sut.isLiked)
+        XCTAssertFalse(sut.post.isLiked)
         XCTAssertEqual(sut.post.likes, liked - 1)
     }
 
     func test_like_whenDisliked_removesDislike() async throws {
         sut.dispatch(.dislike)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertTrue(sut.isDisliked)
+        XCTAssertTrue(sut.post.isDisliked)
 
         sut.dispatch(.like)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertTrue(sut.isLiked)
-        XCTAssertFalse(sut.isDisliked)
+        XCTAssertTrue(sut.post.isLiked)
+        XCTAssertFalse(sut.post.isDisliked)
     }
 
     // MARK: - Dislike
@@ -81,7 +102,7 @@ final class PostViewModelTests: XCTestCase {
         let initial = sut.post.dislikes
         sut.dispatch(.dislike)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertTrue(sut.isDisliked)
+        XCTAssertTrue(sut.post.isDisliked)
         XCTAssertEqual(sut.post.dislikes, initial + 1)
     }
 
@@ -97,19 +118,19 @@ final class PostViewModelTests: XCTestCase {
         let disliked = sut.post.dislikes
         sut.dispatch(.dislike)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertFalse(sut.isDisliked)
+        XCTAssertFalse(sut.post.isDisliked)
         XCTAssertEqual(sut.post.dislikes, disliked - 1)
     }
 
     func test_dislike_whenLiked_removesLike() async throws {
         sut.dispatch(.like)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertTrue(sut.isLiked)
+        XCTAssertTrue(sut.post.isLiked)
 
         sut.dispatch(.dislike)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertTrue(sut.isDisliked)
-        XCTAssertFalse(sut.isLiked)
+        XCTAssertTrue(sut.post.isDisliked)
+        XCTAssertFalse(sut.post.isLiked)
     }
 
     // MARK: - Favourite
@@ -118,7 +139,7 @@ final class PostViewModelTests: XCTestCase {
         let initial = sut.post.favorites
         sut.dispatch(.toggleFavourite)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertTrue(sut.isFavourite)
+        XCTAssertTrue(sut.post.isSaved)
         XCTAssertEqual(sut.post.favorites, initial + 1)
     }
 
@@ -134,7 +155,7 @@ final class PostViewModelTests: XCTestCase {
         let faved = sut.post.favorites
         sut.dispatch(.toggleFavourite)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertFalse(sut.isFavourite)
+        XCTAssertFalse(sut.post.isSaved)
         XCTAssertEqual(sut.post.favorites, faved - 1)
     }
 

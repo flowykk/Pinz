@@ -44,7 +44,7 @@ struct PostFeedItemView: View {
                 viewModel.dispatch(.like)
             } label: {
                 StatisticView(
-                    icon: viewModel.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup",
+                    icon: viewModel.post.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup",
                     text: String(viewModel.post.likes),
                     iconSize: iconSize,
                     iconColor: PinzUIAsset.textPrimary
@@ -55,7 +55,7 @@ struct PostFeedItemView: View {
                 viewModel.dispatch(.dislike)
             } label: {
                 StatisticView(
-                    icon: viewModel.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown",
+                    icon: viewModel.post.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown",
                     text: String(viewModel.post.dislikes),
                     iconSize: iconSize,
                     iconColor: PinzUIAsset.textPrimary
@@ -67,7 +67,7 @@ struct PostFeedItemView: View {
                 viewModel.dispatch(.toggleFavourite)
             } label: {
                 StatisticView(
-                    icon: viewModel.isFavourite ? "bookmark.fill" : "bookmark",
+                    icon: viewModel.post.isSaved ? "bookmark.fill" : "bookmark",
                     iconSize: iconSize,
                     iconColor: PinzUIAsset.textPrimary
                 )

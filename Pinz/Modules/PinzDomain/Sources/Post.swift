@@ -9,6 +9,9 @@ public struct Post: Equatable, Identifiable, Hashable {
     public var dislikes: Int
     public var favorites: Int
     public var views: Int
+    public var isLiked: Bool
+    public var isDisliked: Bool
+    public var isSaved: Bool
     public var pins: [Pin]
     public var media: [MediaItem]
 
@@ -21,6 +24,9 @@ public struct Post: Equatable, Identifiable, Hashable {
         dislikes: Int,
         favorites: Int,
         views: Int,
+        isLiked: Bool = false,
+        isDisliked: Bool = false,
+        isSaved: Bool = false,
         pins: [Pin],
         media: [MediaItem] = []
     ) {
@@ -32,6 +38,9 @@ public struct Post: Equatable, Identifiable, Hashable {
         self.dislikes = dislikes
         self.favorites = favorites
         self.views = views
+        self.isLiked = isLiked
+        self.isDisliked = isDisliked
+        self.isSaved = isSaved
         self.pins = pins
         self.media = media
     }
