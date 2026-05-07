@@ -87,6 +87,8 @@ final class ReviewTripCreationViewModelTests: XCTestCase {
     // MARK: - asyncDispatch finalize
 
     func test_asyncDispatch_finalize_success_popsBy3() async throws {
+        let cleanPins = issueFreePins(count: 3)
+        sut = ReviewTripCreationViewModel(tripId: tripId, pins: cleanPins, networkService: mockNetwork)
         sut.setRouter(mockRouter)
         mockNetwork.finalizeTripResult = .success(
             FinalizeTripDTO(tripId: tripId, status: "finalized", message: "done")
@@ -97,8 +99,10 @@ final class ReviewTripCreationViewModelTests: XCTestCase {
     }
 
     func test_asyncDispatch_finalize_clearsDraftPins() async throws {
+        let cleanPins = issueFreePins(count: 3)
+        sut = ReviewTripCreationViewModel(tripId: tripId, pins: cleanPins, networkService: mockNetwork)
         sut.setRouter(mockRouter)
-        mockRouter.setTripCreationDraftPins(pins, for: tripId)
+        mockRouter.setTripCreationDraftPins(cleanPins, for: tripId)
         mockNetwork.finalizeTripResult = .success(
             FinalizeTripDTO(tripId: tripId, status: "finalized", message: "done")
         )
@@ -107,6 +111,8 @@ final class ReviewTripCreationViewModelTests: XCTestCase {
     }
 
     func test_asyncDispatch_finalize_failure_throws() async {
+        let cleanPins = issueFreePins(count: 1)
+        sut = ReviewTripCreationViewModel(tripId: tripId, pins: cleanPins, networkService: mockNetwork)
         sut.setRouter(mockRouter)
         struct FinalizeError: Error {}
         mockNetwork.finalizeTripResult = .failure(FinalizeError())
@@ -163,5 +169,9 @@ final class ReviewTripCreationViewModelTests: XCTestCase {
             serverId: UUID().uuidString,
             coordinates: coordinates
         )
+    }
+
+    private func issueFreePins(count: Int) -> [Pin] {
+        (0..<count).map { makePin(name: "Pin \($0)", issues: []) }
     }
 }

@@ -142,11 +142,19 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_success_navigatesToPreprocessedPins() async throws {
+        let mediaId = UUID()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+        ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-new", status: "created", uploadUrls: [])
         )
         mockNetwork.processMediaGroupingResult = .success(
-            ProcessMediaGroupingDTO(tripId: "trip-new", status: "processed", draftPins: [])
+            ProcessMediaGroupingDTO(
+                tripId: "trip-new",
+                status: "processed",
+                draftPins: [DraftPinDTO(draftPinId: "pin-1", media: [])]
+            )
         )
 
         try await sut.asyncDispatch(.continue)
@@ -157,6 +165,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_mapsNonEmptyDraftPins() async throws {
+        let mediaId = UUID()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+        ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-x", status: "created", uploadUrls: [])
         )
@@ -188,7 +200,11 @@ final class InitialTripSetupViewModelTests: XCTestCase {
             CreateTripDTO(tripId: "trip-y", status: "created", uploadUrls: [])
         )
         mockNetwork.processMediaGroupingResult = .success(
-            ProcessMediaGroupingDTO(tripId: "trip-y", status: "processed", draftPins: [])
+            ProcessMediaGroupingDTO(
+                tripId: "trip-y",
+                status: "processed",
+                draftPins: [DraftPinDTO(draftPinId: "pin-1", media: [])]
+            )
         )
 
         try await sut.asyncDispatch(.continue)
@@ -239,6 +255,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_createTripFailure_throws() async {
+        let mediaId = UUID()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+        ]
         struct CreateError: Error {}
         mockNetwork.createTripResult = .failure(CreateError())
 
@@ -252,6 +272,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_processGroupingFailure_throws() async {
+        let mediaId = UUID()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+        ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-x", status: "created", uploadUrls: [])
         )
