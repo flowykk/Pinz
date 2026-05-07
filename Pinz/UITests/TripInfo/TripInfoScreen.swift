@@ -79,6 +79,15 @@ struct TripInfoScreen {
         app.staticTexts.matching(identifier: PinzElement.trip(.row(.description)).accessibilityID)
     }
 
+    private var pinsButton: XCUIElement {
+        let identifier = PinzElement.trip(.row(.pins)).accessibilityID
+        let button = app.buttons[identifier]
+        if button.exists { return button }
+        let other = app.otherElements[identifier]
+        if other.exists { return other }
+        return app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
     @discardableResult
     func openTrip(timeout: TimeInterval = 8) -> Bool {
         let openButton = app.buttons[PinzElement.trip(.button(.openTripInfo)).accessibilityID]
@@ -152,6 +161,15 @@ struct TripInfoScreen {
             "Удалить"
         ]
         return tapDialogButton(labels, timeout: timeout)
+    }
+
+    @discardableResult
+    func tapPins(timeout: TimeInterval = 6) -> Bool {
+        guard pinsButton.waitForExistence(timeout: timeout) else {
+            return false
+        }
+        pinsButton.tap()
+        return true
     }
 
     func setName(_ value: String) {

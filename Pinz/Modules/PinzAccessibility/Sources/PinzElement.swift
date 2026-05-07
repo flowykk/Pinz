@@ -198,6 +198,7 @@ public enum PinzElement {
     }
 
     case trip(Trip)
+    case pin(Pin)
     case profile(Profile)
     case settings(SettingsRow)
     case wishlist(Wishlist)
@@ -206,6 +207,8 @@ public enum PinzElement {
         switch self {
         case let .trip(trip):
             return "trip.\(trip.rawValue)"
+        case let .pin(pin):
+            return "pin.\(pin.rawValue)"
         case let .profile(profile):
             return "profile.\(profile.rawValue)"
         case let .settings(setting):
@@ -259,6 +262,12 @@ public enum PinzElement {
             return .trip(.input(.endDatePicker))
         case "tripPins":
             return .trip(.row(.pins))
+        case "pinNameTextField":
+            return .pin(.input(.name))
+        case "pinDescriptionEditingTextField":
+            return .pin(.input(.description))
+        case "pinDelete":
+            return .pin(.button(.delete))
         case "profileEmail":
             return .settings(.profileEmail)
         case "tripLeave":
@@ -279,6 +288,41 @@ public enum PinzElement {
             }
 
             return nil
+        }
+    }
+}
+
+public extension PinzElement {
+    enum Pin {
+        case button(Button)
+        case input(Input)
+        case row(Row)
+
+        public enum Button: String {
+            case edit
+            case cancel
+            case done
+            case delete
+        }
+
+        public enum Input: String {
+            case name
+            case description
+        }
+
+        public enum Row: String {
+            case headerTitleDetail
+        }
+
+        var rawValue: String {
+            switch self {
+            case let .button(button):
+                return "button.\(button.rawValue)"
+            case let .input(input):
+                return "input.\(input.rawValue)"
+            case let .row(row):
+                return "row.\(row.rawValue)"
+            }
         }
     }
 }

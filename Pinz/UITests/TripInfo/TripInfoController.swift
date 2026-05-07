@@ -11,6 +11,7 @@ struct TripInfoController: RouteCollection {
         api.get(":tripId", use: getTrip)
         api.patch(":tripId", use: patchTrip)
         api.patch(":tripId", "pins", ":pinId", use: patchPin)
+        api.delete(":tripId", "pins", ":pinId", use: deletePin)
         api.delete(":tripId", use: deleteTrip)
         api.post(":tripId", "leave", use: leaveTrip)
     }
@@ -42,6 +43,12 @@ struct TripInfoController: RouteCollection {
     private func deleteTrip(_ req: Request) async -> Response {
         let tripId = req.parameters.get("tripId") ?? ""
         return await responseFactory.deleteTrip(tripId: tripId)
+    }
+
+    private func deletePin(_ req: Request) async -> Response {
+        let tripId = req.parameters.get("tripId") ?? ""
+        let pinId = req.parameters.get("pinId") ?? ""
+        return await responseFactory.deletePin(tripId: tripId, pinId: pinId)
     }
 
     private func leaveTrip(_ req: Request) async -> Response {

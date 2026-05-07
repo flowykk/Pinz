@@ -4,6 +4,7 @@ import PinzDomain
 
 extension TripDTO: Content {}
 extension LeaveTripDTO: Content {}
+extension DeletePinResponseDTO: Content {}
 
 struct MockTripInfoSnapshot {
     let id: String
@@ -103,10 +104,12 @@ actor MockTripInfoState {
     private var getTripCount = 0
     private var patchTripCount = 0
     private var patchPinCount = 0
+    private var deletePinCount = 0
     private var deleteTripCount = 0
     private var leaveTripCount = 0
     private var lastPatchBody: MockUpdateTripRequest?
     private var lastPinPatchBody: MockUpdatePinRequest?
+    private var lastDeletedPinId: String?
 
     init(
         initialTrip: MockTripInfoSnapshot,
@@ -219,6 +222,24 @@ actor MockTripInfoState {
         return tripDeleteResponse()
     }
 
+    func deletePin(tripId: String, pinId: String) async -> Response {
+        deletePinCount += 1
+        lastDeletedPinId = pinId
+
+        guard tripIdMatchesExpected(tripId: tripId) else {
+            return Response(status: .notFound)
+        }
+
+        guard let idx = snapshot.initialPins.firstIndex(where: { $0.id == pinId }) else {
+            return Response(status: .notFound)
+        }
+
+        snapshot.initialPins.remove(at: idx)
+        let response = Response(status: .ok)
+        try? response.content.encode(DeletePinResponseDTO(deletionMode: "full"))
+        return response
+    }
+
     func leaveTrip(tripId: String) async -> Response {
         leaveTripCount += 1
 
@@ -241,6 +262,10 @@ actor MockTripInfoState {
         patchPinCount
     }
 
+    func deletePinCount() async -> Int {
+        deletePinCount
+    }
+
     func deleteTripCount() async -> Int {
         deleteTripCount
     }
@@ -255,6 +280,10 @@ actor MockTripInfoState {
 
     func lastPinPatchBody() async -> MockUpdatePinRequest? {
         lastPinPatchBody
+    }
+
+    func lastDeletedPinId() async -> String? {
+        lastDeletedPinId
     }
 
     private func tripIdMatchesExpected(tripId: String) -> Bool {
@@ -409,6 +438,10 @@ struct TripInfoResponseFactory {
         await state.patchPin(tripId: tripId, pinId: pinId, request: request)
     }
 
+    func deletePin(tripId: String, pinId: String) async -> Response {
+        await state.deletePin(tripId: tripId, pinId: pinId)
+    }
+
     func deleteTrip(tripId: String) async -> Response {
         await state.deleteTrip(tripId: tripId)
     }
@@ -429,6 +462,10 @@ struct TripInfoResponseFactory {
         await state.patchPinCount()
     }
 
+    func deletePinCount() async -> Int {
+        await state.deletePinCount()
+    }
+
     func deleteTripCount() async -> Int {
         await state.deleteTripCount()
     }
@@ -443,5 +480,9 @@ struct TripInfoResponseFactory {
 
     func lastPinPatchBody() async -> MockUpdatePinRequest? {
         await state.lastPinPatchBody()
+    }
+
+    func lastDeletedPinId() async -> String? {
+        await state.lastDeletedPinId()
     }
 }
