@@ -11,6 +11,7 @@ public struct DescriptionView: View {
     private let title: String
     private let description: String?
     private let collapseButtonText: (collapsed: String, expanded: String)
+    private let contentAccessibilityIdentifier: String?
     private let onTapAction: (() -> Void)?
 
     @State private var isCollapsed: Bool = true
@@ -18,6 +19,7 @@ public struct DescriptionView: View {
     public init(
         title: String = PinzBaseStrings.Common.Label.description,
         description: String?,
+        contentAccessibilityIdentifier: String? = nil,
         collapseButtonText: (collapsed: String, expanded: String) = (
             PinzBaseStrings.Common.Button.expand,
             PinzBaseStrings.Common.Button.collapse
@@ -26,6 +28,7 @@ public struct DescriptionView: View {
     ) {
         self.title = title
         self.description = description
+        self.contentAccessibilityIdentifier = contentAccessibilityIdentifier
         self.collapseButtonText = collapseButtonText
         self.onTapAction = onAddAction
     }
@@ -57,6 +60,9 @@ public struct DescriptionView: View {
             if let description, !description.isEmpty {
                 VStack(spacing: 0) {
                     Text(description)
+                        .ifLet(contentAccessibilityIdentifier) { view, identifier in
+                            view.accessibilityIdentifier(identifier)
+                        }
                         .roundedFont(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
                         .lineLimit(isCollapsed ? 5 : nil)
                         .frame(maxWidth: .infinity, alignment: .leading)

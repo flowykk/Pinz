@@ -17,6 +17,10 @@ struct PinzApp: App {
     )
     @State private var toastController = ToastController()
 
+    init() {
+        PinzLaunchArgs.apply()
+    }
+
     var body: some Scene {
         WindowGroup {
             ZStack {

@@ -98,8 +98,8 @@ enum PinzAPI {
 
 extension PinzAPI: TargetType {
     var baseURL: URL {
-        if CommandLine.arguments.contains("-useLocalhost") {
-            return URL(string: "http://localhost:8080")!
+        if let url = URL(string: PinzLaunchArgs.baseURL) {
+            return url
         }
         return URL(string: "https://pinz.website")!
     }

@@ -2,6 +2,7 @@ import SwiftUI
 import PinzUI
 import PinzBase
 import PinzDomain
+import PinzAccessibility
 
 public struct WishlistView: View {
 
@@ -56,6 +57,7 @@ public struct WishlistView: View {
                 tint: PinzUIAsset.textPrimary.swiftUIColor,
                 action: .plain { viewModel.dispatch(.navigate(.back)) }
             )
+            .pinzA11y(.wishlist(.button(.back)))
         }, centerView: {
             HeaderTitle(PinzBaseStrings.Wishlist.Title.main)
         })
@@ -70,6 +72,7 @@ public struct WishlistView: View {
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.navigate(.wishlistElementCreation)) }
                 )
+                .pinzA11y(.wishlist(.button(.add)))
             }
         }
     }

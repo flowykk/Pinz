@@ -12,21 +12,36 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        mockRouter = MockRouter()
-        mockNetwork = MockNetworkService()
-        sut = InitialTripSetupViewModel(networkService: mockNetwork)
-        sut.setRouter(mockRouter)
+        let expectation = expectation(description: "setup main actor")
+        Task {
+            await MainActor.run {
+                self.mockRouter = MockRouter()
+                self.mockNetwork = MockNetworkService()
+                self.sut = InitialTripSetupViewModel(networkService: self.mockNetwork)
+                self.sut.setRouter(self.mockRouter)
+                expectation.fulfill()
+            }
+        }
+        wait(for: [expectation], timeout: 1.0)
     }
 
     override func tearDown() {
-        mockRouter = nil
-        mockNetwork = nil
-        sut = nil
+        let expectation = expectation(description: "teardown main actor")
+        Task {
+            await MainActor.run {
+                self.mockRouter = nil
+                self.mockNetwork = nil
+                self.sut = nil
+                expectation.fulfill()
+            }
+        }
+        wait(for: [expectation], timeout: 1.0)
         super.tearDown()
     }
 
     // MARK: - Default state
 
+    @MainActor
     func test_defaultState() {
         XCTAssertEqual(sut.state, .info)
         XCTAssertFalse(sut.isLoading)
@@ -34,6 +49,7 @@ final class InitialTripSetupViewModelTests: XCTestCase {
         XCTAssertTrue(sut.medias.isEmpty)
     }
 
+    @MainActor
     func test_defaultName_isSet() {
         XCTAssertFalse(sut.name.isEmpty)
     }
@@ -85,6 +101,7 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     // MARK: - deleteMedia
 
+    @MainActor
     func test_dispatch_deleteMedia_removesMedia() {
         let id1 = UUID()
         let id2 = UUID()
@@ -97,6 +114,7 @@ final class InitialTripSetupViewModelTests: XCTestCase {
         XCTAssertEqual(sut.medias[0].id, id2)
     }
 
+    @MainActor
     func test_dispatch_deleteMedia_unknownId_doesNothing() {
         let id = UUID()
         sut.medias = [LoadedMedia(id: id, content: .loading)]
@@ -106,11 +124,13 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     // MARK: - Navigation
 
+    @MainActor
     func test_dispatch_navigate_back_callsPop() {
         sut.dispatch(.navigate(.back))
         XCTAssertEqual(mockRouter.popCallCount, 1)
     }
 
+    @MainActor
     func test_dispatch_navigate_preprocessedPins_callsRouter() {
         let pins = RawPins(pins: [RawPin(id: "p1", medias: [])])
         sut.dispatch(.navigate(.preprocessedPins(tripId: "trip-1", pins: pins)))
@@ -122,11 +142,19 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_success_navigatesToPreprocessedPins() async throws {
+        let mediaId = UUID()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+        ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-new", status: "created", uploadUrls: [])
         )
         mockNetwork.processMediaGroupingResult = .success(
-            ProcessMediaGroupingDTO(tripId: "trip-new", status: "processed", draftPins: [])
+            ProcessMediaGroupingDTO(
+                tripId: "trip-new",
+                status: "processed",
+                draftPins: [DraftPinDTO(draftPinId: "pin-1", media: [])]
+            )
         )
 
         try await sut.asyncDispatch(.continue)
@@ -137,6 +165,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_mapsNonEmptyDraftPins() async throws {
+        let mediaId = UUID()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+        ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-x", status: "created", uploadUrls: [])
         )
@@ -168,7 +200,11 @@ final class InitialTripSetupViewModelTests: XCTestCase {
             CreateTripDTO(tripId: "trip-y", status: "created", uploadUrls: [])
         )
         mockNetwork.processMediaGroupingResult = .success(
-            ProcessMediaGroupingDTO(tripId: "trip-y", status: "processed", draftPins: [])
+            ProcessMediaGroupingDTO(
+                tripId: "trip-y",
+                status: "processed",
+                draftPins: [DraftPinDTO(draftPinId: "pin-1", media: [])]
+            )
         )
 
         try await sut.asyncDispatch(.continue)
@@ -219,6 +255,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_createTripFailure_throws() async {
+        let mediaId = UUID()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+        ]
         struct CreateError: Error {}
         mockNetwork.createTripResult = .failure(CreateError())
 
@@ -232,6 +272,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_processGroupingFailure_throws() async {
+        let mediaId = UUID()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+        ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-x", status: "created", uploadUrls: [])
         )

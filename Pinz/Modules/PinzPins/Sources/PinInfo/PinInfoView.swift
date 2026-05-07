@@ -2,6 +2,7 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 import PinzBase
+import PinzAccessibility
 
 enum PinInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -129,6 +130,7 @@ public struct PinInfoView: View {
                 )
             }, centerView: {
                 HeaderTitle(viewModel.pin.name, subtitle: viewModel.pin.category.value)
+                    .pinzA11y(.pin(.row(.headerTitleDetail)))
             }, rightView: {
                 PinzButton(
                     type: .icon(.stories),
@@ -143,6 +145,7 @@ public struct PinInfoView: View {
                     tint: PinzUIAsset.textPrimary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.edit) }
                 )
+                .pinzA11y(.pin(.button(.edit)))
             })
         case .editing:
             Header {
@@ -150,6 +153,7 @@ public struct PinInfoView: View {
                     type: .text(PinzBaseStrings.Common.Button.cancel),
                     action: .plain { viewModel.dispatch(.cancelEdit) }
                 )
+                .pinzA11y(.pin(.button(.cancel)))
             } rightView: {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.done),
@@ -159,6 +163,7 @@ public struct PinInfoView: View {
                         await viewModel.asyncDispatch(.saveEdits)
                     }
                 )
+                .pinzA11y(.pin(.button(.done)))
             }
         }
     }

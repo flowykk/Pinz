@@ -113,7 +113,8 @@ extension PinInfoView {
             }, set: { value in
                 viewModel.pin.description = value
             }),
-            placeholder: PinzBaseStrings.PinCreation.Placeholder.description
+            placeholder: PinzBaseStrings.PinCreation.Placeholder.description,
+            textFieldId: "pinDescriptionEditingTextField"
         )
     }
 

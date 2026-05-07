@@ -152,8 +152,8 @@ final class TripCreationWebSocketClient {
     }
 
     private func commandLineHostURL() -> URL {
-        if CommandLine.arguments.contains("-useLocalhost") {
-            return URL(string: "ws://localhost:8080")!
+        if let url = URL(string: PinzLaunchArgs.websocketURLString) {
+            return url
         }
         return URL(string: "wss://pinz.website")!
     }

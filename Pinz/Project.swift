@@ -33,6 +33,7 @@ let project = Project(
                 .project(target: "PinzAuthentication", path: "Modules/PinzAuthentication"),
                 .project(target: "PinzProfile", path: "Modules/PinzProfile"),
                 .project(target: "PinzNetworking", path: "Modules/PinzNetworking"),
+                .project(target: "PinzAccessibility", path: "Modules/PinzAccessibility"),
                 .project(target: "PinzUI", path: "Modules/PinzUI"),
                 .project(target: "PinzNavigation", path: "Modules/PinzNavigation"),
                 .project(target: "PinzTrips", path: "Modules/PinzTrips"),
@@ -68,9 +69,14 @@ let project = Project(
             bundleId: "io.tuist.PinzUITests",
             deploymentTargets: .iOS("18.0"),
             infoPlist: .default,
-            sources: ["Pinz/UITests/**"],
+            sources: ["UITests/**"],
             resources: [],
-            dependencies: [.target(name: "Pinz")]
+            dependencies: [
+                .target(name: "Pinz"),
+                .external(name: "Vapor"),
+                .project(target: "PinzBase", path: "Modules/PinzBase"),
+                .project(target: "PinzAccessibility", path: "Modules/PinzAccessibility")
+            ]
         )
     ],
     schemes: [

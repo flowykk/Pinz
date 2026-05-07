@@ -8,6 +8,7 @@ public struct CodeDigitTextFieldAdapter: UIViewRepresentable {
     var cornerRadius: CGFloat
     var fontSize: CGFloat
     var index: Int
+    var accessibilityIdentifierPrefix: String?
 
     public init(
         code: Binding<[String]>,
@@ -15,7 +16,8 @@ public struct CodeDigitTextFieldAdapter: UIViewRepresentable {
         background: UIColor,
         cornerRadius: CGFloat,
         fontSize: CGFloat,
-        tag: Int
+        tag: Int,
+        accessibilityIdentifierPrefix: String? = nil
     ) {
         self._code = code
         self._focusedField = focusedField
@@ -23,6 +25,7 @@ public struct CodeDigitTextFieldAdapter: UIViewRepresentable {
         self.cornerRadius = cornerRadius
         self.fontSize = fontSize
         self.index = tag
+        self.accessibilityIdentifierPrefix = accessibilityIdentifierPrefix
     }
 
     public func makeUIView(context: Context) -> CodeDigitTextField {
@@ -42,6 +45,9 @@ public struct CodeDigitTextFieldAdapter: UIViewRepresentable {
             if targetIndex < code.count {
                 code[targetIndex] = ""
             }
+        }
+        if let accessibilityIdentifierPrefix {
+            textField.accessibilityIdentifier = "\(accessibilityIdentifierPrefix).\(index)"
         }
         return textField
     }

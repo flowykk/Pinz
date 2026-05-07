@@ -5,18 +5,21 @@ public struct DescriptionEditingView: View {
     private let title: String?
     private let subtitle: String?
     private let placeholder: String
+    private let textFieldId: String
     @Binding private var text: String
 
     public init(
         title: String? = nil,
         subtitle: String? = nil,
         text: Binding<String>,
-        placeholder: String
+        placeholder: String,
+        textFieldId: String = "descriptionEditingTextField"
     ) {
         self.title = title
         self.subtitle = subtitle
         self._text = text
         self.placeholder = placeholder
+        self.textFieldId = textFieldId
     }
 
     public var body: some View {
@@ -30,7 +33,7 @@ public struct DescriptionEditingView: View {
             SettingsGroup(
                 settings: [
                     .textField(Setting.TextFieldSetting(
-                        id: "descriptionEditingTextField",
+                        id: textFieldId,
                         text: $text,
                         placeholder: placeholder,
                         style: .multiline
