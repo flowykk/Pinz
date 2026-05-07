@@ -49,6 +49,9 @@ final class WishlistElementCreationViewModel {
     init(onCreated: @escaping (DesiredPlace) -> Void, networkService: any NetworkServiceProtocol = NetworkService.shared) {
         self.onCreated = onCreated
         self.networkService = networkService
+        if PinzLaunchArgs.testingWishlist {
+            image = UIImage(systemName: "photo")
+        }
     }
 
     func dispatch(_ intent: Intent) {
@@ -67,6 +70,19 @@ final class WishlistElementCreationViewModel {
                 isLoading = true
                 Task {
                     defer { isLoading = false }
+                    if PinzLaunchArgs.testingWishlist {
+                        do {
+                            let dto = try await networkService.createDesiredPlace(
+                                name: name, description: description, s3Key: nil
+                            )
+                            showToast?(PinzBaseStrings.Wishlist.Toast.placeCreated)
+                            onCreated(dto.toDesiredPlace())
+                            router?.pop()
+                        } catch {
+                            showToast?(PinzBaseStrings.Wishlist.Toast.createFailed)
+                        }
+                        return
+                    }
                     guard let data = image.jpegData(compressionQuality: 0.8) else {
                         showToast?(PinzBaseStrings.Wishlist.Toast.imagePrepareFailed)
                         return

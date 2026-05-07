@@ -2,6 +2,7 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 import PinzBase
+import PinzAccessibility
 
 enum ProfileIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -127,6 +128,7 @@ public struct ProfileView: View {
                         tint: PinzUIAsset.textPrimary.swiftUIColor,
                         action: .plain { viewModel.dispatch(.changeState) }
                     )
+                    .pinzA11y(.profile(.button(.edit)))
                     .disabledWithOpacity(viewModel.isLoading)
                 }
             )
@@ -136,6 +138,7 @@ public struct ProfileView: View {
                     type: .text(PinzBaseStrings.Common.Button.cancel),
                     action: .plain { viewModel.dispatch(.changeState) }
                 )
+                .pinzA11y(.profile(.button(.cancel)))
             } centerView: {
                 HeaderTitle(PinzBaseStrings.Profile.Title.editProfile)
             } rightView: {
@@ -143,6 +146,7 @@ public struct ProfileView: View {
                     type: .text(PinzBaseStrings.Common.Button.done),
                     action: .plain { viewModel.dispatch(.saveProfile) }
                 ).disabledWithOpacity(viewModel.isLoading)
+                .pinzA11y(.profile(.button(.done)))
             }
         }
     }
@@ -155,6 +159,7 @@ public struct ProfileView: View {
                 switch viewModel.state {
                 case .default:
                     Text("\(viewModel.user.nickname) • \(viewModel.user.email)")
+                        .pinzA11y(.profile(.row(.headerNickname)))
                 case .editing:
                     Button {
                         imageEditingDialogShown = true

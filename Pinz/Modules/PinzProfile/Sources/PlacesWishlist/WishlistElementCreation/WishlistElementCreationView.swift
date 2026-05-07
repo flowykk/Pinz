@@ -3,6 +3,7 @@ import PhotosUI
 import PinzUI
 import PinzDomain
 import PinzBase
+import PinzAccessibility
 
 enum WishlistCreationIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -32,6 +33,7 @@ public struct WishlistElementCreationView: View {
                         tint: PinzUIAsset.textPrimary.swiftUIColor,
                         action: .plain { viewModel.dispatch(.navigate(.back)) }
                     )
+                    .pinzA11y(.wishlist(.button(.back)))
                 })
                 Spacer()
                 gradientWithButtons
@@ -133,6 +135,7 @@ public struct WishlistElementCreationView: View {
                 disabled: false,
                 action: .plain { viewModel.dispatch(.continue) }
             )
+            .pinzA11y(.wishlist(.button(.done)))
             .disabledWithOpacity(viewModel.isCompleteButtonDisabled || viewModel.isLoading)
             .animation(.easeInOut(duration: 0.3), value: viewModel.isCompleteButtonDisabled || viewModel.isLoading)
         }

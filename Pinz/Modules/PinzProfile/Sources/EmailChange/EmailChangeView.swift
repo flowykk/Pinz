@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzBase
+import PinzAccessibility
 
 public struct EmailChangeView: View {
 
@@ -35,6 +36,7 @@ public struct EmailChangeView: View {
                     tint: PinzUIAsset.textPrimary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
+                .pinzA11y(.profile(.button(.back)))
             }, centerView: {
                 HeaderTitle(PinzBaseStrings.EmailChange.Title.main)
             })
@@ -55,6 +57,7 @@ public struct EmailChangeView: View {
                 disabled: viewModel.isNextButtonDisabled || viewModel.isLoading,
                 action: .async { await viewModel.continueTapped() }
             )
+            .pinzA11y(.profile(.button(.done)))
             .padding(.horizontal, 12)
             .padding(.bottom, 16)
         }
@@ -96,6 +99,7 @@ public struct EmailChangeView: View {
             CodeInputTextField(
                 code: $viewModel.code,
                 style: codeTextFieldStyle,
+                accessibilityIdentifierPrefix: PinzElement.profile(.input(.verificationCode())).accessibilityID,
                 onCodeFilled: {}
             )
         }

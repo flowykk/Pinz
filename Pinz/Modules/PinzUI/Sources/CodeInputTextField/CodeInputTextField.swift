@@ -30,6 +30,7 @@ public struct CodeInputTextField: View {
     var code: [String]
     var style: Style
     var onCodeFilled: () -> Void
+    var accessibilityIdentifierPrefix: String?
 
     @State
     private var focusedField: Int = -1
@@ -37,10 +38,12 @@ public struct CodeInputTextField: View {
     public init(
         code: Binding<[String]>,
         style: Style,
+        accessibilityIdentifierPrefix: String? = nil,
         onCodeFilled: @escaping () -> Void
     ) {
         self._code = code
         self.style = style
+        self.accessibilityIdentifierPrefix = accessibilityIdentifierPrefix
         self.onCodeFilled = onCodeFilled
     }
 
@@ -57,7 +60,8 @@ public struct CodeInputTextField: View {
                     background: style.background,
                     cornerRadius: style.cornerRadius,
                     fontSize: style.fontSize,
-                    tag: index
+                    tag: index,
+                    accessibilityIdentifierPrefix: accessibilityIdentifierPrefix
                 )
                 .frame(
                     maxWidth: style.width == nil ? .infinity : style.width,

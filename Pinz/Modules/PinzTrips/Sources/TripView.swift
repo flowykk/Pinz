@@ -2,6 +2,7 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 import PinzBase
+import PinzAccessibility
 
 public struct TripView: View {
 
@@ -65,8 +66,8 @@ public struct TripView: View {
                 try? await viewModel.asyncDispatch(.loadCurrentProfile)
             }
 //            TokenStorage.shared.save(
-//                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Nzc1Mjk5OTksImlhdCI6MTc3NDkzNzk5OSwidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoidXNlciJ9.hhE9dSMOkata-Zw14hii9OBAybfwLapTOSzNIFobKMI",
-//                refreshToken: "AVdEMNK7JAYPqE8qkWLVjJHnoVQcLu447hP3PCyilxQ="
+//                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODA3MjQ3MDcsImlhdCI6MTc3ODEzMjcwNywidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoiRGRkZHNkZnNkZnNkZiJ9.TdAIQHPOLINQHWy9bjhF3vsfQHEEyIugarUtqHIRgnY",
+//                refreshToken: "T0GHHTt4m3jbQVfTl47ZFFXcJdSC2380/k4UPMvy6cg="
 //            )
         }
         .onChange(of: viewModel.trip?.id) { _, _ in
@@ -167,6 +168,7 @@ public struct TripView: View {
                             viewModel.dispatch(.navigate(.profile(user)))
                         }
                     }
+                    .pinzA11y(.trip(.button(.openProfile)))
                     .disabledWithOpacity(viewModel.isProfileLoading || viewModel.currentUser == nil)
                     if let selectedTrip {
                         button(.icon("list.bullet")) {
@@ -196,13 +198,13 @@ public struct TripView: View {
             .padding(.leading, 6)
             .padding(.trailing, 10)
             .frame(height: Constants.buttonsSize)
-            .background(
-                RoundedRectangle(cornerRadius: Constants.buttonsCornerRadius)
-                    .strokeBorder(PinzUIAsset.backgroundSecondary.swiftUIColor, lineWidth: 2)
-                    .background(PinzUIAsset.background.swiftUIColor)
-                    .cornerRadius(Constants.buttonsCornerRadius)
-            )
-        }.buttonStyle(.plain)
+                .background(
+                    RoundedRectangle(cornerRadius: Constants.buttonsCornerRadius)
+                        .strokeBorder(PinzUIAsset.backgroundSecondary.swiftUIColor, lineWidth: 2)
+                        .background(PinzUIAsset.background.swiftUIColor)
+                        .cornerRadius(Constants.buttonsCornerRadius)
+                )
+        }.pinzA11y(.trip(.button(.openTripInfo))).buttonStyle(.plain)
     }
 
     private func hasDisplayablePins(for trip: Trip?) -> Bool {

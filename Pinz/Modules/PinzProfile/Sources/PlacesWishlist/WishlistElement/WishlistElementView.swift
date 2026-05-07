@@ -3,6 +3,7 @@ import PhotosUI
 import PinzUI
 import PinzDomain
 import PinzBase
+import PinzAccessibility
 
 enum WishlistElementIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -60,6 +61,7 @@ public struct WishlistElementView: View {
                     tint: PinzUIAsset.textPrimary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.navigate(.back)) }
                 )
+                .pinzA11y(.wishlist(.button(.back)))
             }, centerView: {
                 HeaderTitle(viewModel.element.name)
             }, rightView: {
@@ -68,6 +70,7 @@ public struct WishlistElementView: View {
                     tint: PinzUIAsset.textPrimary.swiftUIColor,
                     action: .plain { viewModel.dispatch(.edit) }
                 )
+                .pinzA11y(.wishlist(.button(.edit)))
             })
         case .editing:
             Header {
@@ -75,11 +78,13 @@ public struct WishlistElementView: View {
                     type: .text(PinzBaseStrings.Common.Button.cancel),
                     action: .plain { viewModel.dispatch(.endEdit) }
                 )
+                .pinzA11y(.wishlist(.button(.cancel)))
             } rightView: {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.done),
                     action: .plain { viewModel.dispatch(.endEdit) }
                 )
+                .pinzA11y(.wishlist(.button(.done)))
             }
         }
     }
@@ -109,6 +114,7 @@ public struct WishlistElementView: View {
                 imageContent
             }
             .buttonStyle(.plain)
+            .pinzA11y(.wishlist(.button(.edit)))
 
             if viewModel.state == .editing {
                 SettingSubtitle(PinzBaseStrings.WishlistElement.Hint.changePhoto)

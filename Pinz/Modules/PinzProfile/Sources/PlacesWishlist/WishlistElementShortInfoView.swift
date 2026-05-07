@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzAccessibility
 
 struct WishlistElementShortInfoView: View {
 
@@ -38,6 +39,7 @@ struct WishlistElementShortInfoView: View {
             }
         }
         .buttonStyle(.plain)
+        .pinzA11y(.wishlist(.row(.item(element.id))))
         .frame(height: Constants.elementHeight)
     }
 

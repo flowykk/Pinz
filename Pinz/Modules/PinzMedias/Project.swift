@@ -14,6 +14,7 @@ let project = Project(
             dependencies: [
                 .project(target: "PinzBase", path: "../PinzBase"),
                 .project(target: "PinzDomain", path: "../PinzDomain"),
+                .project(target: "PinzNetworking", path: "../PinzNetworking"),
                 .project(target: "PinzUI", path: "../PinzUI"),
             ]
         )

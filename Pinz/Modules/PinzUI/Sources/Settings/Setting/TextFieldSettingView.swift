@@ -1,9 +1,11 @@
 import SwiftUI
+import PinzAccessibility
 
 extension Setting.TextFieldSetting {
     public var view: some View {
         textField
             .roundedFont(size: 16, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+            .applyPinzAccessibility(PinzElement.setting(for: id))
     }
 
     @ViewBuilder

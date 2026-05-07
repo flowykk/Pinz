@@ -1,4 +1,5 @@
 import SwiftUI
+import PinzAccessibility
 
 extension Setting.DefaultSetting {
     var titleColor: Color {
@@ -23,7 +24,7 @@ extension Setting.DefaultSetting {
     }
 
     @ViewBuilder
-    var view: some View {
+    private var settingContent: some View {
         if let action {
             Button {
                 handle(action)
@@ -33,6 +34,12 @@ extension Setting.DefaultSetting {
         } else {
             settingView
         }
+    }
+
+    @ViewBuilder
+    var view: some View {
+        settingContent
+            .applyPinzAccessibility(PinzElement.setting(for: id))
     }
 
     private var settingView: some View {

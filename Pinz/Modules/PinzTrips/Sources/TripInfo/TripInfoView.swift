@@ -2,6 +2,7 @@ import SwiftUI
 import PinzUI
 import PinzDomain
 import PinzBase
+import PinzAccessibility
 
 enum TripInfoIcon: String, Setting.Icon {
     case chevronRight = "chevron.right"
@@ -196,6 +197,7 @@ public struct TripInfoView: View {
                     viewModel.trip.name,
                     subtitle: "\(viewModel.trip.category.value), \(viewModel.trip.season.value)"
                 )
+                .pinzA11y(.trip(.row(.headerTitleDetail)))
             }, rightView: {
                 HStack(spacing: 10) {
                     PinzButton(
@@ -203,6 +205,7 @@ public struct TripInfoView: View {
                         tint: PinzUIAsset.textPrimary.swiftUIColor,
                         action: .plain { viewModel.dispatch(.changeState) }
                     )
+                    .pinzA11y(.trip(.button(.edit)))
                 }
             })
         case .editing:
@@ -211,6 +214,7 @@ public struct TripInfoView: View {
                     type: .text(PinzBaseStrings.Common.Button.cancel),
                     action: .plain { viewModel.dispatch(.changeState) }
                 )
+                .pinzA11y(.trip(.button(.cancel)))
             } rightView: {
                 PinzButton(
                     type: .text(PinzBaseStrings.Common.Button.done),
@@ -218,6 +222,7 @@ public struct TripInfoView: View {
                         await viewModel.asyncDispatch(.editTrip)
                     }
                 )
+                .pinzA11y(.trip(.button(.done)))
             }
         }
     }
@@ -303,6 +308,7 @@ public struct TripInfoView: View {
     private var description: some View {
         DescriptionView(
             description: viewModel.trip.description,
+            contentAccessibilityIdentifier: PinzElement.trip(.row(.description)).accessibilityID,
             onAddAction: {
                 viewModel.dispatch(.changeState)
             }
@@ -477,7 +483,7 @@ public struct TripInfoView: View {
         SettingsGroup(
             settings: [
                 .textField(Setting.TextFieldSetting(
-                    id: "nicknameTextField",
+                    id: "tripNameTextField",
                     text: $viewModel.trip.name,
                     placeholder: PinzBaseStrings.TripInfo.Placeholder.name
                 )),
@@ -495,7 +501,8 @@ public struct TripInfoView: View {
             }, set: { value in
                 viewModel.trip.description = value
             }),
-            placeholder: PinzBaseStrings.TripInfo.Placeholder.description
+            placeholder: PinzBaseStrings.TripInfo.Placeholder.description,
+            textFieldId: "tripDescriptionEditingTextField"
         )
     }
 
