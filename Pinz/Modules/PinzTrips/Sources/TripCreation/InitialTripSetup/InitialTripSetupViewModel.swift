@@ -183,7 +183,13 @@ final class InitialTripSetupViewModel {
             do {
                 try await uploadMedia(response: response)
             } catch {
-                showToast?(PinzBaseStrings.TripCreation.Toast.uploadMediaFailed)
+                if let mediaError = error as? MediaUploadError {
+                    if case let .limitExceeded(kind, _, _) = mediaError {
+                        showToast?(MediaUploadPreprocessor.localizedLimitMessage(for: kind))
+                    }
+                } else {
+                    showToast?(PinzBaseStrings.TripCreation.Toast.uploadMediaFailed)
+                }
                 throw error
             }
 
@@ -222,15 +228,57 @@ final class InitialTripSetupViewModel {
     private func uploadMedia(response: CreateTripDTO) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for uploadURL in response.uploadUrls {
-                guard let media = medias.first(where: { $0.id.uuidString == uploadURL.clientId }),
-                      let data = await media.uploadData() else { continue }
-                let contentType = media.uploadContentType
+                guard let media = medias.first(where: { $0.id.uuidString == uploadURL.clientId }) else {
+                    continue
+                }
                 group.addTask { [weak self] in
                     guard let self else { return }
-                    try await networkService.uploadToS3(url: uploadURL.url, data: data, contentType: contentType)
+                    let prepared = try await self.prepareUpload(
+                        for: media,
+                        uploadURL: uploadURL.url,
+                        context: "initial_trip_setup"
+                    )
+                    switch prepared.body {
+                    case let .data(data):
+                        try await self.networkService.uploadToS3(
+                            url: uploadURL.url,
+                            data: data,
+                            contentType: prepared.contentType
+                        )
+                    case let .file(fileURL):
+                        try await self.networkService.uploadToS3(
+                            url: uploadURL.url,
+                            fileURL: fileURL,
+                            contentType: prepared.contentType
+                        )
+                    }
                 }
             }
             try await group.waitForAll()
+        }
+    }
+
+    private func prepareUpload(
+        for media: LoadedMedia,
+        uploadURL: String?,
+        context: String
+    ) async throws -> PreparedUpload {
+        switch media.content {
+        case .image(let image):
+            return try await MediaUploadPreprocessor.shared.prepareImage(
+                image,
+                contentType: media.uploadContentType,
+                uploadURL: uploadURL,
+                context: context
+            )
+        case let .video(url: url, _):
+            return try await MediaUploadPreprocessor.shared.prepareVideo(
+                from: url,
+                uploadURL: uploadURL,
+                context: context
+            )
+        case .loading:
+            throw MediaUploadError.invalidImageData
         }
     }
 

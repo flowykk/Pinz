@@ -84,6 +84,7 @@ final class MockNetworkService: NetworkServiceProtocol {
     var requestAvatarUploadCall: (filename: String, contentType: String)?
     var confirmAvatarUploadCall: String?
     var uploadToS3Call: (url: String, dataBytes: Int, contentType: String)?
+    var uploadToS3FileURLCall: (url: String, fileURL: String, contentType: String)?
 
     // MARK: - Trip creation / add-media
 
@@ -243,6 +244,11 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     func uploadToS3(url: String, data: Data, contentType: String) async throws {
         uploadToS3Call = (url, data.count, contentType)
+        if let uploadToS3Error { throw uploadToS3Error }
+    }
+
+    func uploadToS3(url: String, fileURL: URL, contentType: String) async throws {
+        uploadToS3FileURLCall = (url, fileURL.absoluteString, contentType)
         if let uploadToS3Error { throw uploadToS3Error }
     }
 

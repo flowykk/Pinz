@@ -206,6 +206,32 @@ final class ProfileViewModelTests: XCTestCase {
         XCTAssertEqual(sut.state, .default)
     }
 
+    @MainActor
+    func test_dispatch_saveProfile_withAvatarLimitError_showsToastAndSkipsProfileSave() async {
+        var toasts: [String] = []
+        sut.setToast { toasts.append($0) }
+
+        mockNetwork.uploadToS3Error = MediaUploadError.limitExceeded(
+            kind: .image,
+            originalBytes: 11_000_000,
+            maxBytes: 10_000_000
+        )
+
+        sut.user.nickname = "updated-name"
+        sut.dispatch(.setImage(makeTestImage()))
+        sut.dispatch(.saveProfile)
+
+        for _ in 0..<60 {
+            if !toasts.isEmpty && mockNetwork.updateProfileCall == nil {
+                break
+            }
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+
+        XCTAssertEqual(toasts, [MediaUploadPreprocessor.localizedLimitMessage(for: .image)])
+        XCTAssertNil(mockNetwork.updateProfileCall)
+    }
+
     func test_dispatch_saveProfile_trimsNicknameWhitespace() async throws {
         sut.user.nickname = "  john  "
         sut.dispatch(.saveProfile)

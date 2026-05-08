@@ -197,9 +197,19 @@ public class ProfileViewModel {
                     _ = try await uploadTask.value
                 } catch is CancellationError {
                     print("[Profile] Avatar upload canceled")
+                } catch let error as MediaUploadError {
+                    switch error {
+                    case .limitExceeded(let kind, _, _) where kind == .image:
+                        showToast?(MediaUploadPreprocessor.localizedLimitMessage(for: kind))
+                        return
+                    default:
+                        showToast?(PinzBaseStrings.Profile.Toast.avatarUploadFailed)
+                        return
+                    }
                 } catch {
                     print("[Profile] Failed to upload avatar before save: \(error)")
                     showToast?(PinzBaseStrings.Profile.Toast.avatarUploadFailed)
+                    return
                 }
                 avatarUploadTask = nil
             }
@@ -239,14 +249,11 @@ public class ProfileViewModel {
 
     private func uploadAvatarFlow(image: UIImage) async throws -> ProfileResponseDTO {
         let contentType: String
-        let data: Data
 
         if let jpegData = image.jpegData(compressionQuality: 0.85) {
             contentType = "image/jpeg"
-            data = jpegData
         } else if let pngData = image.pngData() {
             contentType = "image/png"
-            data = pngData
         } else {
             throw AvatarUploadFlowError.missingImageData
         }
@@ -261,7 +268,18 @@ public class ProfileViewModel {
             throw AvatarUploadFlowError.invalidUploadResponse
         }
 
-        try await networkService.uploadToS3(url: uploadUrl, data: data, contentType: contentType)
+        let prepared = try await MediaUploadPreprocessor.shared.prepareImage(
+            image,
+            contentType: contentType,
+            uploadURL: uploadUrl,
+            context: "avatar"
+        )
+        switch prepared.body {
+        case let .data(data):
+            try await networkService.uploadToS3(url: uploadUrl, data: data, contentType: prepared.contentType)
+        case .file:
+            throw AvatarUploadFlowError.invalidUploadResponse
+        }
         return try await networkService.confirmAvatarUpload(s3Key: s3Key)
     }
 

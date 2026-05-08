@@ -294,7 +294,9 @@ final class TripViewModel {
                 if let coverUrl = trip.coverUrl {
                     trip.image = await ImageProvider.loadOrGetImage(
                         for: coverUrl,
-                        .group
+                        .group,
+                        cacheVariant: .thumbnail,
+                        targetPixel: 560
                     )
                 }
                 trip.pins = response.pins.enumerated().map { index, dto in
@@ -344,7 +346,12 @@ final class TripViewModel {
             FileManagerImageStorage.shared.deleteImage(url: avatarUrl)
         }
 
-        currentUserAvatarImage = await ImageProvider.loadOrGetImage(for: avatarUrl, .user)
+        currentUserAvatarImage = await ImageProvider.loadOrGetImage(
+            for: avatarUrl,
+            .user,
+            cacheVariant: .thumbnail,
+            targetPixel: 120
+        )
     }
 
     private func loadCurrentUserAvatar(for user: User) async {

@@ -216,9 +216,8 @@ final class InitialTripSetupViewModelTests: XCTestCase {
     @MainActor
     func test_asyncDispatch_continue_withMatchingUploadUrl_uploadsToS3() async throws {
         let mediaId = UUID()
-        let imageData = Data([1, 2, 3, 4])
         sut.medias = [
-            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: imageData, contentType: "image/jpeg")
+            LoadedMedia(id: mediaId, content: makeTestImage(), imageFileData: Data([1, 2, 3, 4]), contentType: "image/jpeg")
         ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(
@@ -236,7 +235,7 @@ final class InitialTripSetupViewModelTests: XCTestCase {
         try await sut.asyncDispatch(.continue)
 
         XCTAssertEqual(mockNetwork.uploadToS3Call?.url, "https://s3.example.com/upload")
-        XCTAssertEqual(mockNetwork.uploadToS3Call?.dataBytes, imageData.count)
+        XCTAssertGreaterThan((mockNetwork.uploadToS3Call?.dataBytes ?? 0), 0)
         XCTAssertFalse(sut.isLoading)
     }
 
@@ -311,5 +310,91 @@ final class InitialTripSetupViewModelTests: XCTestCase {
         } catch {
             XCTAssertTrue(error is URLError)
         }
+    }
+
+    @MainActor
+    func test_asyncDispatch_continue_uploadMediaLimitExceededShowsToastAndThrows() async {
+        var toasts: [String] = []
+        sut.setToast { toasts.append($0) }
+
+        let mediaId = UUID()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1, 2, 3]), contentType: "image/jpeg")
+        ]
+        mockNetwork.createTripResult = .success(
+            CreateTripDTO(
+                tripId: "trip-over-limit",
+                status: "created",
+                uploadUrls: [
+                    UploadURLDTO(
+                        clientId: mediaId.uuidString,
+                        s3Key: "s3-key",
+                        url: "https://s3.example.com/over-limit"
+                    )
+                ]
+            )
+        )
+        mockNetwork.uploadToS3Error = MediaUploadError.limitExceeded(
+            kind: .image,
+            originalBytes: 11_000_000,
+            maxBytes: 10_000_000
+        )
+
+        do {
+            try await sut.asyncDispatch(.continue)
+            XCTFail("Expected error")
+        } catch {
+            XCTAssertTrue(error is MediaUploadError)
+        }
+
+        XCTAssertEqual(toasts, [MediaUploadPreprocessor.localizedLimitMessage(for: .image)])
+    }
+
+    @MainActor
+    func test_asyncDispatch_continue_videoUsesUploadToS3FileAPI() async throws {
+        let mediaId = UUID()
+        let videoURL = makeTempMediaFile(data: Data([1, 2, 3]), filename: "temp-video")
+        let firstFrame = makeTestImage()
+        sut.medias = [
+            LoadedMedia(id: mediaId, content: .video(url: videoURL, firstFrame: firstFrame))
+        ]
+        mockNetwork.createTripResult = .success(
+            CreateTripDTO(
+                tripId: "trip-video",
+                status: "created",
+                uploadUrls: [
+                    UploadURLDTO(
+                        clientId: mediaId.uuidString,
+                        s3Key: "video-key",
+                        url: "https://s3.example.com/video-upload"
+                    )
+                ]
+            )
+        )
+        mockNetwork.processMediaGroupingResult = .success(
+            ProcessMediaGroupingDTO(tripId: "trip-video", status: "processed", draftPins: [DraftPinDTO(draftPinId: "pin-1", media: [])])
+        )
+
+        try await sut.asyncDispatch(.continue)
+
+        XCTAssertEqual(mockNetwork.uploadToS3FileURLCall?.url, "https://s3.example.com/video-upload")
+        XCTAssertEqual(mockNetwork.uploadToS3FileURLCall?.contentType, "video/mp4")
+    }
+
+    private func makeTestImage() -> UIImage {
+        let size = CGSize(width: 16, height: 16)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { context in
+            UIColor.systemBlue.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+        }
+    }
+
+    private func makeTempMediaFile(data: Data, filename: String) -> URL {
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(filename)
+            .appendingPathExtension("mp4")
+        try? data.write(to: fileURL, options: .atomic)
+        return fileURL
     }
 }

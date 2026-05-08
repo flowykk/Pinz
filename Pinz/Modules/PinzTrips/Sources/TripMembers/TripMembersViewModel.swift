@@ -53,7 +53,12 @@ final class TripMembersViewModel {
     private func loadAvatars(for participants: [TripParticipantDTO]) async {
         for participant in participants {
             guard let url = participant.avatarUrl else { continue }
-            guard let image = await ImageProvider.loadOrGetImage(for: url, .user) else { continue }
+            guard let image = await ImageProvider.loadOrGetImage(
+                for: url,
+                .user,
+                cacheVariant: .thumbnail,
+                targetPixel: 120
+            ) else { continue }
             guard let idx = members.firstIndex(where: { $0.id == participant.userId }) else { continue }
             members[idx] = TripMember(id: participant.userId, username: participant.username, avatar: image, role: TripMemberRole(rawValue: participant.role ?? ""))
         }

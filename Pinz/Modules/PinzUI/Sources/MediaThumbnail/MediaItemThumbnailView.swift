@@ -9,6 +9,8 @@ public struct MediaItemThumbnailView: View {
     private let cornerRadius: CGFloat
     private let hideBadges: Bool
     private let dismissBeforeMediaInfo: Bool
+    private let cacheVariant: MediaCacheVariant
+    private let cacheTargetPixel: Int
     private let onMediaUpdated: ((MediaItem) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -20,6 +22,8 @@ public struct MediaItemThumbnailView: View {
         cornerRadius: CGFloat,
         hideBadges: Bool = false,
         dismissBeforeMediaInfo: Bool = false,
+        cacheVariant: MediaCacheVariant = .thumbnail,
+        cacheTargetPixel: Int = 560,
         onMediaUpdated: ((MediaItem) -> Void)? = nil
     ) {
         self.mediaItem = mediaItem
@@ -27,6 +31,8 @@ public struct MediaItemThumbnailView: View {
         self.cornerRadius = cornerRadius
         self.hideBadges = hideBadges
         self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
+        self.cacheVariant = cacheVariant
+        self.cacheTargetPixel = cacheTargetPixel
         self.onMediaUpdated = onMediaUpdated
     }
 
@@ -35,7 +41,9 @@ public struct MediaItemThumbnailView: View {
             url: mediaItem.mediaURL,
             type: mediaItem.type,
             contentMode: contentMode,
-            cornerRadius: cornerRadius
+            cornerRadius: cornerRadius,
+            cacheVariant: cacheVariant,
+            cacheTargetPixel: cacheTargetPixel
         )
         .if(!hideBadges) { view in
             view.overlay { PrivateVideoMediaBadgesView(media: mediaItem).padding(4) }

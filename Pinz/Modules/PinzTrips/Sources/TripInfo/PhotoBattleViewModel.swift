@@ -183,7 +183,12 @@ public final class PhotoBattleViewModel: Identifiable {
                     if item.kind == .video {
                         _ = await ImageProvider.loadOrGetVideoThumbnail(for: url)
                     } else {
-                        await ImageProvider.loadAndCacheImage(for: url, .media)
+                        await ImageProvider.loadAndCacheImage(
+                            for: url,
+                            .media,
+                            cacheVariant: .thumbnail,
+                            targetPixel: 560
+                        )
                     }
                 }
             }

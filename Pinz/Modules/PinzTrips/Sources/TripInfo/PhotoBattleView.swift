@@ -304,7 +304,12 @@ private struct BattleMediaPanel: View {
         }
 
         playerController?.stop()
-        playerController = VideoPlayerController(url: url)
+        Task {
+            let cachedURL = await VideoFileStorage.shared.cacheVideoFullIfNeeded(from: url)
+            await MainActor.run {
+                playerController = VideoPlayerController(url: cachedURL)
+            }
+        }
     }
 
     private func resetController() {

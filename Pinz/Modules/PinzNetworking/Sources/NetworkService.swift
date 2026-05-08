@@ -75,6 +75,7 @@ public protocol NetworkServiceProtocol {
 
     // S3 upload
     func uploadToS3(url: String, data: Data, contentType: String) async throws
+    func uploadToS3(url: String, fileURL: URL, contentType: String) async throws
 
     // Trip creation flow
     func createTrip(
@@ -623,11 +624,35 @@ public final class NetworkService: NetworkServiceProtocol {
     // MARK: S3 Upload
 
     public func uploadToS3(url: String, data: Data, contentType: String) async throws {
+        try await uploadToS3(url: url, data: data, fileURL: nil, contentType: contentType)
+    }
+
+    public func uploadToS3(url: String, fileURL: URL, contentType: String) async throws {
+        try await uploadToS3(url: url, data: nil, fileURL: fileURL, contentType: contentType)
+    }
+
+    private func uploadToS3(
+        url: String,
+        data: Data?,
+        fileURL: URL?,
+        contentType: String
+    ) async throws {
         guard let uploadURL = URL(string: url) else { throw URLError(.badURL) }
         var request = URLRequest(url: uploadURL)
         request.httpMethod = "PUT"
         request.setValue(contentType, forHTTPHeaderField: "Content-Type")
-        let (_, response) = try await URLSession.shared.upload(for: request, from: data)
+
+        let (_, response): (Data, URLResponse)
+        if let payload = data, fileURL == nil {
+            let result = try await URLSession.shared.upload(for: request, from: payload)
+            (_, response) = (result.0, result.1)
+        } else if let uploadFile = fileURL, data == nil {
+            let result = try await URLSession.shared.upload(for: request, fromFile: uploadFile)
+            (_, response) = (result.0, result.1)
+        } else {
+            throw URLError(.badServerResponse)
+        }
+
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }

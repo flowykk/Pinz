@@ -51,7 +51,12 @@ final class PostFeedItemViewModel {
                 guard post.media[index].type == .image,
                       let url = post.media[index].mediaURL else { continue }
                 group.addTask {
-                    let image = await ImageProvider.loadOrGetImage(for: url.absoluteString, .media)
+                    let image = await ImageProvider.loadOrGetImage(
+                        for: url.absoluteString,
+                        .media,
+                        cacheVariant: .thumbnail,
+                        targetPixel: 420
+                    )
                     return (index, image)
                 }
             }

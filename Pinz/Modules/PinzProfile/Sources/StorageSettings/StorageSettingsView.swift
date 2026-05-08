@@ -10,7 +10,7 @@ enum StorageSettingsIcon: String, Setting.Icon {
 
 public struct StorageSettingsView: View {
     @AppStorage(FileManagerImageStorage.cacheEnabledKey) private var isImageCachingEnabled = true
-    @State private var cacheSize = ""
+    @State private var cacheSize = "0 B"
     @State private var showClearCacheAlert = false
 
     @Environment(\.appRouter) private var router
@@ -42,18 +42,14 @@ public struct StorageSettingsView: View {
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear {
             FileManagerImageStorage.shared.isCachingEnabled = isImageCachingEnabled
-            if isImageCachingEnabled {
-                refreshCacheSize()
-            } else {
-                cacheSize = "0 B"
-            }
+            refreshCacheSize()
         }
         .onChange(of: isImageCachingEnabled) { _, isEnabled in
             FileManagerImageStorage.shared.isCachingEnabled = isEnabled
 
             if !isEnabled {
                 FileManagerImageStorage.shared.clear()
-                cacheSize = "0 B"
+                refreshCacheSize()
             } else {
                 refreshCacheSize()
             }
@@ -61,8 +57,7 @@ public struct StorageSettingsView: View {
         .alert(PinzBaseStrings.Alert.ClearCache.title, isPresented: $showClearCacheAlert) {
             Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) { }
             Button(PinzBaseStrings.Alert.ClearCache.confirm, role: .destructive) {
-                FileManagerImageStorage.shared.clear()
-                cacheSize = "0 B"
+                clearCache()
             }
         } message: {
             Text(PinzBaseStrings.Alert.ClearCache.message)
@@ -94,16 +89,26 @@ public struct StorageSettingsView: View {
                             PinzBaseStrings.Profile.Label.clearCache
                         ),
                         trailing: .valuesIcon([.text(cacheSize)], StorageSettingsIcon.chevronRight),
-                        action: .plain { showClearCacheAlert = true }
+                        action: .plain {
+                            showClearCacheAlert = true
+                        }
                     )),
                 ]
             )
         }
     }
 
+    private func clearCache() {
+        FileManagerImageStorage.shared.clear()
+        refreshCacheSize()
+    }
+
     private func refreshCacheSize() {
-        FileManagerImageStorage.shared.isCachingEnabled = isImageCachingEnabled
-        cacheSize = FileManagerImageStorage.shared.getCacheSize()
+        if isImageCachingEnabled {
+            cacheSize = FileManagerImageStorage.shared.getCacheSize()
+        } else {
+            cacheSize = "0 B"
+        }
     }
 }
 
