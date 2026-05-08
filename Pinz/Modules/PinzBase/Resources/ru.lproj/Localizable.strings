@@ -33,6 +33,10 @@
 "auth.placeholder.nickname" = "cool guy";
 "auth.message.passkeyPrompt" = "Подтверди при помощи Face ID";
 
+// MARK: - Media upload
+"mediaUpload.toast.imageTooLarge" = "Фото не загружено: > 10 МБ и не удалось сжать";
+"mediaUpload.toast.videoTooLarge" = "Видео не загружено: > 50 МБ и не удалось сжать";
+
 // MARK: - Profile
 "profile.title.editProfile" = "Редактирование профиля";
 "profile.button.deleteAccount" = "Удалить аккаунт";

@@ -282,6 +282,31 @@ final class TripInfoViewModelTests: XCTestCase {
     }
 
     @MainActor
+    func test_setImage_withCoverLimitError_staysInEditingAndShowsToast() async {
+        var toasts: [String] = []
+        sut.setToast { toasts.append($0) }
+
+        mockNetwork.uploadToS3Error = MediaUploadError.limitExceeded(
+            kind: .image,
+            originalBytes: 11_000_000,
+            maxBytes: 10_000_000
+        )
+        sut.dispatch(.changeState)
+        sut.dispatch(.setImage(makeTestImage()))
+
+        for _ in 0..<60 {
+            if mockNetwork.requestTripCoverUploadCall != nil { break }
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+
+        await sut.asyncDispatch(.editTrip)
+
+        XCTAssertEqual(toasts, [MediaUploadPreprocessor.localizedLimitMessage(for: .image)])
+        XCTAssertNil(mockNetwork.updateTripCall)
+        XCTAssertEqual(sut.state, .editing)
+    }
+
+    @MainActor
     func test_editTrip_usesUploadedTripCoverUrl() async throws {
         mockNetwork.requestTripCoverUploadResult = .success(
             TripCoverUploadResponseDTO(
@@ -344,7 +369,7 @@ final class TripInfoViewModelTests: XCTestCase {
     }
 
     @MainActor
-    func test_editTrip_stillSavesTripIfUploadFlowFails() async {
+    func test_editTrip_doesNotSaveTripIfUploadFlowFails() async {
         mockNetwork.requestTripCoverUploadResult = .failure(URLError(.badServerResponse))
         mockNetwork.updateTripResult = .success(
             TripDTO(
@@ -375,13 +400,12 @@ final class TripInfoViewModelTests: XCTestCase {
 
         XCTAssertEqual(mockNetwork.requestTripCoverUploadCall?.id, trip.id)
         XCTAssertNil(mockNetwork.confirmTripCoverUploadCall)
-        XCTAssertNotNil(mockNetwork.updateTripCall)
-        XCTAssertEqual(mockNetwork.updateTripCall?.coverUrl, nil)
-        XCTAssertEqual(sut.state, .default)
+        XCTAssertNil(mockNetwork.updateTripCall)
+        XCTAssertEqual(sut.state, .editing)
     }
 
     @MainActor
-    func test_editTrip_stillSavesTripIfUploadFlowConfirmFails() async {
+    func test_editTrip_doesNotSaveTripIfUploadFlowConfirmFails() async {
         mockNetwork.requestTripCoverUploadResult = .success(
             TripCoverUploadResponseDTO(
                 uploadUrl: "https://storage.example.com/trip-cover-upload",
@@ -418,9 +442,8 @@ final class TripInfoViewModelTests: XCTestCase {
 
         XCTAssertEqual(mockNetwork.requestTripCoverUploadCall?.id, trip.id)
         XCTAssertEqual(mockNetwork.confirmTripCoverUploadCall?.id, trip.id)
-        XCTAssertNotNil(mockNetwork.updateTripCall)
-        XCTAssertNil(mockNetwork.updateTripCall?.coverUrl)
-        XCTAssertEqual(sut.state, .default)
+        XCTAssertNil(mockNetwork.updateTripCall)
+        XCTAssertEqual(sut.state, .editing)
     }
 
     func test_navigate_back_callsPop() {

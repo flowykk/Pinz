@@ -65,10 +65,10 @@ public struct TripView: View {
                 try? await viewModel.asyncDispatch(.loadSavedTrip)
                 try? await viewModel.asyncDispatch(.loadCurrentProfile)
             }
-//            TokenStorage.shared.save(
-//                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODA3MjQ3MDcsImlhdCI6MTc3ODEzMjcwNywidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoiRGRkZHNkZnNkZnNkZiJ9.TdAIQHPOLINQHWy9bjhF3vsfQHEEyIugarUtqHIRgnY",
-//                refreshToken: "T0GHHTt4m3jbQVfTl47ZFFXcJdSC2380/k4UPMvy6cg="
-//            )
+            TokenStorage.shared.save(
+                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODA4MTUzNjcsImlhdCI6MTc3ODIyMzM2NywidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoiRGRkZHNkZnNkZnNkZiJ9.ddmUVg68ALNczQxFMlOViogCR-npgrTS_w0ZHh-0__g",
+                refreshToken: "LPBJkrruM/Cumvlg6Pe+7/JhKgsSBRdQEfUJcRWHotw="
+            )
         }
         .onChange(of: viewModel.trip?.id) { _, _ in
             Task { try? await viewModel.asyncDispatch(.loadSavedTrip) }

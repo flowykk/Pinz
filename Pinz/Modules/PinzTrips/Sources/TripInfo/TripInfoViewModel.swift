@@ -240,8 +240,19 @@ final class TripInfoViewModel {
                 _ = try await uploadTask.value
             } catch is CancellationError {
                 // silent
+            } catch let error as MediaUploadError {
+                switch error {
+                case .limitExceeded(let kind, _, _) where kind == .image:
+                    showToast?(MediaUploadPreprocessor.localizedLimitMessage(for: kind))
+                default:
+                    showToast?(PinzBaseStrings.TripInfo.Toast.coverUploadFailed)
+                }
+                tripCoverUploadTask = nil
+                return
             } catch {
                 showToast?(PinzBaseStrings.TripInfo.Toast.coverUploadFailed)
+                tripCoverUploadTask = nil
+                return
             }
             tripCoverUploadTask = nil
         }
@@ -293,14 +304,11 @@ final class TripInfoViewModel {
 
     private func uploadTripCoverFlow(image: UIImage) async throws -> TripDTO {
         let contentType: String
-        let data: Data
 
         if let jpegData = image.jpegData(compressionQuality: 0.85) {
             contentType = "image/jpeg"
-            data = jpegData
         } else if let pngData = image.pngData() {
             contentType = "image/png"
-            data = pngData
         } else {
             throw TripCoverUploadFlowError.missingImageData
         }
@@ -319,7 +327,18 @@ final class TripInfoViewModel {
             throw TripCoverUploadFlowError.invalidUploadResponse
         }
 
-        try await networkService.uploadToS3(url: uploadUrl, data: data, contentType: contentType)
+        let prepared = try await MediaUploadPreprocessor.shared.prepareImage(
+            image,
+            contentType: contentType,
+            uploadURL: uploadUrl,
+            context: "trip_cover"
+        )
+        switch prepared.body {
+        case let .data(data):
+            try await networkService.uploadToS3(url: uploadUrl, data: data, contentType: prepared.contentType)
+        case .file:
+            throw TripCoverUploadFlowError.invalidUploadResponse
+        }
         return try await networkService.confirmTripCoverUpload(
             id: trip.id,
             s3Key: s3Key

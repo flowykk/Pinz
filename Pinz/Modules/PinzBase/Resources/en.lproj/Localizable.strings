@@ -33,6 +33,10 @@
 "auth.placeholder.nickname" = "cool guy";
 "auth.message.passkeyPrompt" = "Confirm with Face ID";
 
+// MARK: - Media upload
+"mediaUpload.toast.imageTooLarge" = "Photo upload failed: file exceeds 10 MB and could not be compressed";
+"mediaUpload.toast.videoTooLarge" = "Video upload failed: file exceeds 50 MB and could not be compressed";
+
 // MARK: - Profile
 "profile.title.editProfile" = "Edit Profile";
 "profile.button.deleteAccount" = "Delete Account";
