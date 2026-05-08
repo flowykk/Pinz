@@ -21,6 +21,7 @@ public struct MediaInfoView: View {
     @Environment(\.appRouter) private var router
     @State private var playerController: VideoPlayerController?
     @State private var mediaViewModel: MediaInfoViewModel?
+    @State private var playerSetupTask: Task<Void, Never>?
 
     public init(media: MediaItem, updateAction: MediaUpdateAction? = nil) {
         self.source = .remote(media)
@@ -50,20 +51,34 @@ public struct MediaInfoView: View {
         .background(PinzUIAsset.background.swiftUIColor)
         .onAppear { setupPlayer() }
         .onDisappear {
+            playerSetupTask?.cancel()
+            playerSetupTask = nil
             playerController?.stop()
             playerController = nil
         }
     }
 
     private func setupPlayer() {
+        playerSetupTask?.cancel()
+        playerSetupTask = Task {
+            await setupPlayerAsync()
+        }
+    }
+
+    private func setupPlayerAsync() async {
         switch source {
         case .remote(let media):
-            if media.type == .video, let url = media.mediaURL {
-                playerController = VideoPlayerController(url: url)
+            if media.type == .video, let remoteURL = media.mediaURL {
+                let localURL = await VideoFileStorage.shared.cacheVideoFullIfNeeded(from: remoteURL)
+                await MainActor.run {
+                    playerController = VideoPlayerController(url: localURL)
+                }
             }
         case .local(let media):
             if case .video(let url, _) = media.content {
-                playerController = VideoPlayerController(url: url)
+                await MainActor.run {
+                    playerController = VideoPlayerController(url: url)
+                }
             }
         }
     }
@@ -74,7 +89,11 @@ public struct MediaInfoView: View {
         case .remote(let media):
             switch media.type {
             case .image:
-                LoadableImageThumbnail(url: media.mediaURL) { state in mediaView(for: state) }
+                LoadableImageThumbnail(
+                    url: media.mediaURL,
+                    cacheVariant: .full,
+                    content: mediaView
+                )
             case .video:
                 videoPlayerSection
             }

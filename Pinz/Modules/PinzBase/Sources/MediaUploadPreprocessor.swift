@@ -163,9 +163,7 @@ public actor MediaUploadPreprocessor {
             AVAssetExportPreset960x540,
             AVAssetExportPreset640x480,
             AVAssetExportPresetMediumQuality,
-            AVAssetExportPresetLowQuality,
-            "AVAssetExportPreset1280x720WithAppleProRes422",
-            "AVAssetExportPreset1920x1080WithAppleProRes422"
+            AVAssetExportPresetLowQuality
         ]
         let compatiblePresets = AVAssetExportSession.exportPresets(compatibleWith: asset)
 

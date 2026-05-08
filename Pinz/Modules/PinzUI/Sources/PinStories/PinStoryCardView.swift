@@ -228,12 +228,17 @@ struct PinStoryCardView: View {
         // Сначала загружаем первое медиа с приоритетом
         if let firstMedia = pin.medias.first,
            let urlString = firstMedia.mediaURL?.absoluteString {
-            let image = switch firstMedia.type {
-            case .image:
-                await ImageProvider.loadOrGetImage(for: urlString, .media)
-            case .video:
-                await ImageProvider.loadOrGetVideoThumbnail(for: urlString)
-            }
+                    let image = switch firstMedia.type {
+                    case .image:
+                        await ImageProvider.loadOrGetImage(
+                            for: urlString,
+                            .media,
+                            cacheVariant: .thumbnail,
+                            targetPixel: 560
+                        )
+                    case .video:
+                        await ImageProvider.loadOrGetVideoThumbnail(for: urlString)
+                    }
 
             if let image {
                 cachedImages[firstMedia.id] = image
@@ -244,17 +249,22 @@ struct PinStoryCardView: View {
         // Потом загружаем остальные параллельно
         await withTaskGroup(of: (Int, UIImage?).self) { group in
             for media in pin.medias.dropFirst() {
-                guard let urlString = media.mediaURL?.absoluteString else { continue }
+                    guard let urlString = media.mediaURL?.absoluteString else { continue }
 
-                group.addTask {
-                    let image = switch media.type {
-                    case .image:
-                        await ImageProvider.loadOrGetImage(for: urlString, .media)
-                    case .video:
-                        await ImageProvider.loadOrGetVideoThumbnail(for: urlString)
+                    group.addTask {
+                        let image = switch media.type {
+                        case .image:
+                            await ImageProvider.loadOrGetImage(
+                                for: urlString,
+                                .media,
+                                cacheVariant: .thumbnail,
+                                targetPixel: 560
+                            )
+                        case .video:
+                            await ImageProvider.loadOrGetVideoThumbnail(for: urlString)
+                        }
+                        return (media.id, image)
                     }
-                    return (media.id, image)
-                }
             }
 
             for await (id, image) in group {

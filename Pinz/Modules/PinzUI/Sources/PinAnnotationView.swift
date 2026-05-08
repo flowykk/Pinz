@@ -89,7 +89,12 @@ public struct PinAnnotationView: View {
                 guard let url = media.mediaURL else { continue }
                 
                 group.addTask {
-                    let image = await ImageProvider.loadOrGetImage(for: url.absoluteString, .media)
+                    let image = await ImageProvider.loadOrGetImage(
+                        for: url.absoluteString,
+                        .media,
+                        cacheVariant: .thumbnail,
+                        targetPixel: 300
+                    )
                     return (index, image)
                 }
             }

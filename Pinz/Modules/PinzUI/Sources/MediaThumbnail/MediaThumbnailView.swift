@@ -9,25 +9,36 @@ public struct MediaThumbnailView: View {
     private let contentMode: ContentMode
     private let cornerRadius: CGFloat
     private let square: Bool
+    private let cacheVariant: MediaCacheVariant
+    private let cacheTargetPixel: Int
 
     public init(
         url: URL?,
         type: MediaType,
         contentMode: ContentMode,
         cornerRadius: CGFloat,
-        square: Bool = false
+        square: Bool = false,
+        cacheVariant: MediaCacheVariant = .thumbnail,
+        cacheTargetPixel: Int = 560
     ) {
         self.url = url
         self.type = type
         self.contentMode = contentMode
         self.cornerRadius = cornerRadius
         self.square = square
+        self.cacheVariant = cacheVariant
+        self.cacheTargetPixel = cacheTargetPixel
     }
 
     public var body: some View {
         switch type {
         case .image:
-            LoadableImageThumbnail(url: url, content: contentBuilder)
+            LoadableImageThumbnail(
+                url: url,
+                cacheVariant: cacheVariant,
+                cacheTargetPixel: cacheTargetPixel,
+                content: contentBuilder
+            )
         case .video:
             LoadableVideoThumbnail(url: url, content: contentBuilder)
         }

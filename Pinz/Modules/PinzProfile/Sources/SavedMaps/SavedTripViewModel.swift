@@ -49,7 +49,9 @@ final class SavedTripViewModel {
             if let coverUrl = loaded.coverUrl {
                 loaded.image = await ImageProvider.loadOrGetImage(
                     for: coverUrl,
-                    .group
+                    .group,
+                    cacheVariant: .thumbnail,
+                    targetPixel: 560
                 )
             }
             let mappedPins: [Pin] = response.pins.enumerated().map { index, dto in
