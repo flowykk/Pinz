@@ -12,6 +12,8 @@ public struct Post: Equatable, Identifiable, Hashable {
     public var isLiked: Bool
     public var isDisliked: Bool
     public var isSaved: Bool
+    public var isRecommended: Bool
+    public var recommendedBadge: String?
     public var pins: [Pin]
     public var media: [MediaItem]
 
@@ -27,6 +29,8 @@ public struct Post: Equatable, Identifiable, Hashable {
         isLiked: Bool = false,
         isDisliked: Bool = false,
         isSaved: Bool = false,
+        isRecommended: Bool = false,
+        recommendedBadge: String? = nil,
         pins: [Pin],
         media: [MediaItem] = []
     ) {
@@ -41,6 +45,8 @@ public struct Post: Equatable, Identifiable, Hashable {
         self.isLiked = isLiked
         self.isDisliked = isDisliked
         self.isSaved = isSaved
+        self.isRecommended = isRecommended
+        self.recommendedBadge = recommendedBadge
         self.pins = pins
         self.media = media
     }

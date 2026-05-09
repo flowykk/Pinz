@@ -13,7 +13,7 @@ struct PostFeedItemView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        let card = VStack(spacing: 0) {
             TabView(selection: $selection.animation()) {
                 if hasMap {
                     map.tag(0)
@@ -34,6 +34,12 @@ struct PostFeedItemView: View {
         .task {
             await viewModel.loadImages()
         }
+        let cell = card
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        RecommendationPostCard(
+            isRecommended: viewModel.post.isRecommended,
+            badge: viewModel.post.recommendedBadge
+        ) { cell }
     }
 
     @ViewBuilder
