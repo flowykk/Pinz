@@ -35,6 +35,13 @@ final class MockRouter: AppRouting {
     var navigatedWishlistElementCreation: WishlistCreationAction?
     var navigatedPublicWishlistPlaces: [DesiredPlace]?
 
+    // Add media
+    var navigatedToAddMediaStartTripId: String?
+    var navigatedToAddMediaUploading: (tripId: String, sessionId: String)?
+    var navigatedToAddMediaGrouping: (tripId: String, sessionId: String)?
+    var navigatedToAddMediaProcessing: (tripId: String, sessionId: String)?
+    var navigatedToAddMediaReview: (tripId: String, sessionId: String)?
+
     // Trip creation
     var navigatedToTripCreationInitial = false
     var navigatedTripCreationPreprocessedPins: (tripId: String, pins: RawPins)?
@@ -44,6 +51,7 @@ final class MockRouter: AppRouting {
 
     var popCallCount = 0
     var lastPopByCount = 0
+    var didCallPopToRoot = false
     var tripInfoUpdateHandler: (() -> Void)?
     var currentProfileUpdateUser: User?
     var currentProfileUpdateCallCount: Int = 0
@@ -105,6 +113,13 @@ final class MockRouter: AppRouting {
     func navigateToWishlistElementCreation(action: WishlistCreationAction) { navigatedWishlistElementCreation = action }
     func navigateToPublicWishlist(places: [DesiredPlace]) { navigatedPublicWishlistPlaces = places }
 
+    // Add media
+    func navigateToAddMediaStart(tripId: String) { navigatedToAddMediaStartTripId = tripId }
+    func navigateToAddMediaUploading(tripId: String, sessionId: String) { navigatedToAddMediaUploading = (tripId, sessionId) }
+    func navigateToAddMediaGrouping(tripId: String, sessionId: String) { navigatedToAddMediaGrouping = (tripId, sessionId) }
+    func navigateToAddMediaProcessing(tripId: String, sessionId: String) { navigatedToAddMediaProcessing = (tripId, sessionId) }
+    func navigateToAddMediaReview(tripId: String, sessionId: String) { navigatedToAddMediaReview = (tripId, sessionId) }
+
     // Trip creation
     func navigateToTripCreationInitial() { navigatedToTripCreationInitial = true }
     func navigateToTripCreationPreprocessedPins(tripId: String, pins: RawPins) {
@@ -134,5 +149,9 @@ final class MockRouter: AppRouting {
     func pop(by count: Int) {
         popCallCount += 1
         lastPopByCount = count
+    }
+
+    func popToRoot() {
+        didCallPopToRoot = true
     }
 }

@@ -80,12 +80,15 @@ public struct TripView: View {
         })
         .ifLet(viewModel.trip) { view, selectedTrip in
             view.sheet(isPresented: $isPinsListPresented) {
-                TripPinsListPopupView(pins: selectedTrip.pins) { pin in
+                TripPinsListPopupView(pins: selectedTrip.pins, tripStatus: selectedTrip.status) { pin in
                     isPinsListPresented = false
                     viewModel.dispatch(.navigate(.pinInfo(pin)))
                 } createPinTapped: {
                     isPinsListPresented = false
                     viewModel.dispatch(.navigate(.pinCreation))
+                } addMediaTapped: {
+                    isPinsListPresented = false
+                    Task { try? await viewModel.asyncDispatch(.addMedia) }
                 } onMediaUpdated: { updatedMedia, pin in
                     guard let pinIdx = viewModel.trip?.pins.firstIndex(where: { $0.serverId == pin.serverId }),
                           let mediaIdx = viewModel.trip?.pins[pinIdx].medias.firstIndex(where: { $0.mediaId == updatedMedia.mediaId }) else { return }

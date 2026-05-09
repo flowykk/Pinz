@@ -55,11 +55,20 @@ public enum WishlistRoute: Hashable {
     case creation(action: WishlistCreationAction)
 }
 
+public enum TripAddMediaRoute: Hashable {
+    case start(tripId: String)
+    case uploading(tripId: String, sessionId: String)
+    case grouping(tripId: String, sessionId: String)
+    case processing(tripId: String, sessionId: String)
+    case review(tripId: String, sessionId: String)
+}
+
 public enum Route: Hashable {
     case main
     case trip(TripRoute)
     case tripInfo(TripInfoRoute)
     case tripCreation(TripCreationRoute)
+    case tripAddMedia(TripAddMediaRoute)
     case profile(ProfileRoute)
     case pinInfo(PinInfoRoute)
     case media(MediaRoute)

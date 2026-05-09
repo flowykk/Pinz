@@ -247,6 +247,10 @@
 "tripPins.button.addMedia" = "Add Media";
 "tripPins.button.addPin" = "Add Pin";
 "tripPins.empty.noPins" = "There are no pins in this trip yet";
+"tripPins.status.uploading" = "Another participant is uploading media";
+"tripPins.status.groupingReview" = "Another participant is grouping media";
+"tripPins.status.processing" = "Media is being processed";
+"tripPins.status.draftFinalReview" = "Another participant is reviewing media";
 
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "My Trips";
