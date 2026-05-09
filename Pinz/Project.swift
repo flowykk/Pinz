@@ -15,13 +15,21 @@ let project = Project(
                         "UIColorName": "",
                         "UIImageName": "",
                     ],
+                    "CFBundleURLTypes": [
+                        [
+                            "CFBundleURLName": "io.tuist.Pinz.invite",
+                            "CFBundleURLSchemes": ["pinz"],
+                            "CFBundleTypeRole": "Editor",
+                        ],
+                    ],
                 ]
             ),
             sources: ["Pinz/Sources/**"],
             resources: ["Pinz/Resources/**"],
             entitlements: .dictionary([
                 "com.apple.developer.associated-domains": .array([
-                    .string("webcredentials:pinz.website")
+                    .string("webcredentials:pinz.website"),
+                    .string("applinks:pinz.website"),
                 ]),
                 "keychain-access-groups": .array([
                     .string("$(AppIdentifierPrefix)io.tuist.Pinz")

@@ -31,6 +31,28 @@ struct PinzApp: App {
                 .environment(\.showToast, {
                     toastController.present(with: $0)
                 })
+                .onOpenURL { url in
+                    Task {
+                        await TripInviteDeepLinkCoordinator(
+                            router: router,
+                            showToast: { toastController.present(with: $0) }
+                        ).handleIncomingURL(url)
+                    }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .pinzDidAuthenticate)) { _ in
+                    Task {
+                        await TripInviteDeepLinkCoordinator(
+                            router: router,
+                            showToast: { toastController.present(with: $0) }
+                        ).processPendingInviteIfNeeded()
+                    }
+                }
+                .task {
+                    await TripInviteDeepLinkCoordinator(
+                        router: router,
+                        showToast: { toastController.present(with: $0) }
+                    ).processPendingInviteIfNeeded()
+                }
             }
         }
     }
@@ -52,6 +74,7 @@ struct PinzApp: App {
                 .alert("Сбросить данные?", isPresented: $showResetConfirmation) {
                     Button("Сбросить", role: .destructive) {
                         TokenStorage.shared.clear()
+                        PendingTripInviteStorage.shared.clear()
                         UserDefaults.standard.removePersistentDomain(
                             forName: Bundle.main.bundleIdentifier ?? ""
                         )

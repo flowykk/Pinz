@@ -263,6 +263,7 @@
 "tripMembers.button.shareLink" = "Поделиться ссылкой";
 "tripMembers.button.copyLink" = "Скопировать ссылку";
 "tripMembers.invite.error" = "Не удалось создать ссылку. Попробуйте снова.";
+"tripMembers.invite.deepLinkJoinFailed" = "Не удалось открыть приглашение. Попробуйте снова.";
 
 // MARK: - Pin Creation
 "pinCreation.title.main" = "Создание пина";

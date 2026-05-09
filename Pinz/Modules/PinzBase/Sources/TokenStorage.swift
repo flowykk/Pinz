@@ -11,8 +11,7 @@ public final class TokenStorage {
     }
 
     public var isAuthenticated: Bool {
-        true
-//        accessToken != nil
+        accessToken != nil
     }
 
     public var accessToken: String? {

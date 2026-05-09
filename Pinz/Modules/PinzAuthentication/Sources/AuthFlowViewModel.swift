@@ -229,6 +229,7 @@ final class AuthFlowViewModel {
 #if targetEnvironment(simulator)
         TokenStorage.shared.save(accessToken: "sim_access_token", refreshToken: "sim_refresh_token")
         router?.navigateToMain()
+        NotificationCenter.default.post(name: .pinzDidAuthenticate, object: nil)
         return
 #endif
         do {
@@ -237,6 +238,7 @@ final class AuthFlowViewModel {
             let tokens = try await networkService.passkeyLoginFinish(email: email, credentialJSON: credentialJSON)
             TokenStorage.shared.save(accessToken: tokens.accessToken, refreshToken: tokens.refreshToken)
             router?.navigateToMain()
+            NotificationCenter.default.post(name: .pinzDidAuthenticate, object: nil)
         } catch {
             print("[AuthFlow] Login failed: \(error)")
             state = .login(.passkeyPrompt)
@@ -248,6 +250,7 @@ final class AuthFlowViewModel {
 #if targetEnvironment(simulator)
         TokenStorage.shared.save(accessToken: "sim_access_token", refreshToken: "sim_refresh_token")
         router?.navigateToMain()
+        NotificationCenter.default.post(name: .pinzDidAuthenticate, object: nil)
         return
 #endif
         let options = try await networkService.passkeyRegisterBegin(
@@ -261,6 +264,7 @@ final class AuthFlowViewModel {
         )
         TokenStorage.shared.save(accessToken: tokens.accessToken, refreshToken: tokens.refreshToken)
         router?.navigateToMain()
+        NotificationCenter.default.post(name: .pinzDidAuthenticate, object: nil)
     }
 
     private func back() {

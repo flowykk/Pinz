@@ -263,6 +263,7 @@
 "tripMembers.button.shareLink" = "Share link";
 "tripMembers.button.copyLink" = "Copy link";
 "tripMembers.invite.error" = "Couldn’t create invite. Try again.";
+"tripMembers.invite.deepLinkJoinFailed" = "Couldn't open invite. Try again.";
 
 // MARK: - Pin Creation
 "pinCreation.title.main" = "Create Pin";
