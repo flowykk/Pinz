@@ -69,7 +69,7 @@ let project = Project(
             bundleId: "io.tuist.PinzUITests",
             deploymentTargets: .iOS("18.0"),
             infoPlist: .default,
-            sources: ["UITests/**"],
+            sources: ["Pinz/UITests/**"],
             resources: [],
             dependencies: [
                 .target(name: "Pinz"),

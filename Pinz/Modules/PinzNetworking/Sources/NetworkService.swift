@@ -41,6 +41,8 @@ public protocol NetworkServiceProtocol {
         country: String?,
         sortBy: String?
     ) async throws -> [FeedItemDTO]
+    func getRecommendations(city: String?, country: String?) async throws -> GetRecommendationsResponseDTO
+    func saveRecommendation(city: String?, country: String?) async throws -> SaveRecommendationResponseDTO
 
     // Trips CRUD
     func getTrips() async throws -> [TripDTO]
@@ -176,14 +178,17 @@ public protocol NetworkServiceProtocol {
 // MARK: - Implementation
 
 public final class NetworkService: NetworkServiceProtocol {
-    public static let shared = NetworkService()
+    public static let shared = NetworkService(stub: PinzLaunchArgs.useNetworkStub)
+    public static let stubbed = NetworkService(stub: true, stubDelay: 0.5)
 
     private let provider: NetworkProvider<PinzAPI>
     private let tripCreationWebSocketClient: TripCreationWebSocketClient
 
-    public init() {
-        let stub: Bool = false
-        self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: 0.5)
+    public init(
+        stub: Bool = false,
+        stubDelay: TimeInterval = 0.5
+    ) {
+        self.provider = NetworkProvider<PinzAPI>(stub: true, stubDelay: stubDelay)
         self.tripCreationWebSocketClient = TripCreationWebSocketClient()
     }
 
@@ -439,6 +444,32 @@ public final class NetworkService: NetworkServiceProtocol {
                 sortBy: sortBy
             ),
             type: [FeedItemDTO].self
+        )
+    }
+
+    public func getRecommendations(
+        city: String? = nil,
+        country: String? = nil
+    ) async throws -> GetRecommendationsResponseDTO {
+        try await provider.request(
+            .getRecommendations(
+                city: city,
+                country: country
+            ),
+            type: GetRecommendationsResponseDTO.self
+        )
+    }
+
+    public func saveRecommendation(
+        city: String? = nil,
+        country: String? = nil
+    ) async throws -> SaveRecommendationResponseDTO {
+        try await provider.request(
+            .saveRecommendation(
+                city: city,
+                country: country
+            ),
+            type: SaveRecommendationResponseDTO.self
         )
     }
     

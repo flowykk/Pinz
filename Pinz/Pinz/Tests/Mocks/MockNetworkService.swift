@@ -21,6 +21,10 @@ final class MockNetworkService: NetworkServiceProtocol {
     // MARK: - Feed / Trips
 
     var getFeedResult: Result<[FeedItemDTO], Error> = .success(MockNetworkService.stubFeed)
+    var getRecommendationsResult: Result<GetRecommendationsResponseDTO, Error> = .success(MockNetworkService.stubGetRecommendationsResponse)
+    var saveRecommendationResult: Result<SaveRecommendationResponseDTO, Error> = .success(MockNetworkService.stubSaveRecommendationResponse)
+    var getRecommendationsCall: (city: String?, country: String?)?
+    var saveRecommendationCall: (city: String?, country: String?)?
     var getTripsResult: Result<[TripDTO], Error> = .success([])
     var getTripResult: Result<GetTripResponseDTO, Error> = .success(MockNetworkService.stubTripResponse)
     var requestTripCoverUploadResult: Result<TripCoverUploadResponseDTO, Error> = .success(
@@ -131,6 +135,16 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     func getFeed(limit: Int?, offset: Int?, category: String?, season: String?, city: String?, country: String?, sortBy: String?) async throws -> [FeedItemDTO] {
         try getFeedResult.get()
+    }
+
+    func getRecommendations(city: String?, country: String?) async throws -> GetRecommendationsResponseDTO {
+        getRecommendationsCall = (city, country)
+        return try getRecommendationsResult.get()
+    }
+
+    func saveRecommendation(city: String?, country: String?) async throws -> SaveRecommendationResponseDTO {
+        saveRecommendationCall = (city, country)
+        return try saveRecommendationResult.get()
     }
 
     // MARK: - Trips CRUD
@@ -464,6 +478,89 @@ final class MockNetworkService: NetworkServiceProtocol {
             )
         }
     }
+
+    private static let stubRecommendedTrip = TripDTO(
+        id: "trip-rec-001",
+        name: "Рекомендованный маршрут",
+        description: "Собранный маршрут по выбранной локации с акцентом на лучшие точки.",
+        category: "vacation",
+        season: "spring",
+        coverUrl: nil,
+        ownerUserId: "user-rec-001",
+        privacyLevel: "public",
+        status: "published",
+        isPublished: true,
+        isGenerated: true,
+        likesCount: 73,
+        dislikesCount: 1,
+        participantsCount: 2,
+        mediaCount: 4,
+        startDateUnix: 1_700_000_000,
+        endDateUnix: 1_700_020_000,
+        createdAtUnix: 1_699_990_000,
+        updatedAtUnix: 1_699_990_000
+    )
+
+    private static let stubRecommendationPins: [RecommendedPinDTO] = [
+        RecommendedPinDTO(
+            id: "rec-pin-001",
+            tripId: "trip-rec-001",
+            name: "Тайная улица",
+            description: "Лучшее место для фото на закате и спокойных прогулок.",
+            category: "vacation",
+            latitude: 39.9042,
+            longitude: 116.4074,
+            locationName: "Пекин",
+            mediaCount: 2,
+            media: [
+                FeedMediaDTO(
+                    mediaId: "rec-pin-media-001",
+                    url: "https://example.com/rec-pin-001.jpg",
+                    mediaType: "photo"
+                ),
+                FeedMediaDTO(
+                    mediaId: "rec-pin-media-002",
+                    url: "https://example.com/rec-pin-002.jpg",
+                    mediaType: "photo"
+                )
+            ]
+        ),
+        RecommendedPinDTO(
+            id: "rec-pin-002",
+            tripId: "trip-rec-001",
+            name: "Скрытый дворик",
+            description: "Уютный локальный уголок для короткой остановки и кофе.",
+            category: "vacation",
+            latitude: 39.9052,
+            longitude: 116.4082,
+            locationName: "Пекин",
+            mediaCount: 1,
+            media: [
+                FeedMediaDTO(
+                    mediaId: "rec-pin-media-003",
+                    url: "https://example.com/rec-pin-003.jpg",
+                    mediaType: "photo"
+                )
+            ]
+        )
+    ]
+
+    private static let stubRecommendationMap = RecommendedMapDTO(
+        media: [
+            FeedMediaDTO(
+                mediaId: "rec-media-001",
+                url: "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg",
+                mediaType: "photo"
+            )
+        ],
+        pins: stubRecommendationPins,
+        regionName: "Пекин",
+        regionType: "city",
+        trip: stubRecommendedTrip
+    )
+    private static let stubGetRecommendationsResponse = GetRecommendationsResponseDTO(map: stubRecommendationMap)
+    private static let stubSaveRecommendationResponse = SaveRecommendationResponseDTO(trip: stubRecommendedTrip)
+
     private static let stubTripResponse = GetTripResponseDTO(trip: stubTrip, pins: stubTripPins, participants: [])
 
     private static let stubFeed: [FeedItemDTO] = [

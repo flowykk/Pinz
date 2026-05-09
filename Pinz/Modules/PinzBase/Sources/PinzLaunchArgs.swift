@@ -2,6 +2,7 @@ import Foundation
 
 public enum PinzLaunchArg {
     public static let useLocalhost = "-useLocalhost"
+    public static let networkStub = "-networkStub"
     public static let fakeTokens = "-fakeTokens"
     public static let testingProfile = "-testingProfile"
     public static let testingWishlist = "-testingWishlist"
@@ -38,6 +39,10 @@ public enum PinzLaunchArgs {
 
     public static var useLocalhost: Bool {
         CommandLine.arguments.contains(PinzLaunchArg.useLocalhost)
+    }
+
+    public static var useNetworkStub: Bool {
+        CommandLine.arguments.contains(PinzLaunchArg.networkStub)
     }
 
     public static var baseURL: String {

@@ -9,6 +9,7 @@ public struct FeedView: View {
     @State private var isFilterPresented = false
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     public init() {
         viewModel = FeedViewModel()
@@ -19,8 +20,13 @@ public struct FeedView: View {
             header
         } content: {
             LazyVStack(spacing: 24) {
+                if viewModel.shouldShowRecommendationButton {
+                    SettingsGroup(settings: [recommendationSetting])
+                        .padding(.horizontal, 12)
+                }
                 ForEach(viewModel.posts) { post in
                     PostFeedItemView(post: post)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                         .contentShape(Rectangle())
                         .onTapGesture {
                             viewModel.dispatch(.navigate(.openPost(post)))
@@ -31,6 +37,9 @@ public struct FeedView: View {
                             }
                         }
                 }
+                .animation(.spring(response: 0.35, dampingFraction: 0.9), value: viewModel.posts)
+                .padding(.top, -12)
+
                 if viewModel.isLoading && !viewModel.posts.isEmpty {
                     ProgressView()
                         .padding(.vertical, 16)
@@ -44,9 +53,12 @@ public struct FeedView: View {
             }.padding(.vertical, 12)
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { viewModel.setRouter(router) }
-        .task {
-            await viewModel.fetchFeed()
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setToast(showToast)
+            Task {
+                await viewModel.loadIfNeededOnAppear()
+            }
         }
         .sheet(isPresented: $isFilterPresented) {
             FeedFilterView(
@@ -86,4 +98,25 @@ public struct FeedView: View {
             }
         })
     }
+
+    private var recommendationSetting: Setting {
+        .default(Setting.DefaultSetting(
+            id: "feed_recommendation",
+            leading: .iconTitle(
+                FeedRecommendationIcon.sparkles,
+                "Рекомендация",
+            ),
+            trailing: viewModel.isRecommendationsLoading
+                ? .values([.text("Загрузка...")])
+                : .icon(FeedRecommendationIcon.chevronRight, PinzUIAsset.textSecondary.swiftUIColor),
+            action: viewModel.isRecommendationsLoading ? nil : .plain {
+                viewModel.requestRecommendationsButtonTapped()
+            }
+        ))
+    }
+}
+
+private enum FeedRecommendationIcon: String, Setting.Icon {
+    case sparkles = "wand.and.sparkles"
+    case chevronRight = "chevron.right"
 }
