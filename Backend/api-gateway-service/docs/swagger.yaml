@@ -75,13 +75,6 @@ definitions:
       session_id:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_requests.AddMediaToPinStartRequest:
-    properties:
-      files_to_upload:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
-        type: array
-    type: object
   pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest:
     properties:
       deleted_media_ids:
@@ -99,21 +92,7 @@ definitions:
         example: new@example.com
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_requests.CommitPinCreationUploadRequest:
-    properties:
-      captured_at_unix:
-        type: integer
-      latitude:
-        type: number
-      longitude:
-        type: number
-      media_type:
-        description: image | video
-        type: string
-      s3_key:
-        type: string
-    type: object
-  pinz_backend_api-gateway-service_internal_requests.CommitPinMediaUploadRequest:
+  pinz_backend_api-gateway-service_internal_requests.CommitPinUploadRequest:
     properties:
       captured_at_unix:
         type: integer
@@ -154,13 +133,6 @@ definitions:
         example: desired-places/{user_id}/{uuid}.jpg
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_requests.CreatePinStartRequest:
-    properties:
-      files_to_upload:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
-        type: array
-    type: object
   pinz_backend_api-gateway-service_internal_requests.CreateTripRequest:
     properties:
       category:
@@ -198,7 +170,7 @@ definitions:
       content_type:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_requests.FinalizePinCreationRequest:
+  pinz_backend_api-gateway-service_internal_requests.FinalizePinUploadRequest:
     properties:
       category:
         type: string
@@ -224,13 +196,6 @@ definitions:
         type: array
       tags_set:
         type: boolean
-    type: object
-  pinz_backend_api-gateway-service_internal_requests.FinalizePinMediaAdditionRequest:
-    properties:
-      media_to_delete:
-        items:
-          type: string
-        type: array
     type: object
   pinz_backend_api-gateway-service_internal_requests.FinalizeTripRequest:
     properties:
@@ -328,6 +293,15 @@ definitions:
           type: string
         type: array
     type: object
+  pinz_backend_api-gateway-service_internal_requests.PinUploadStartRequest:
+    properties:
+      files_to_upload:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
+        type: array
+      target_pin_id:
+        type: string
+    type: object
   pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest:
     properties:
       media:
@@ -367,14 +341,7 @@ definitions:
         example: photo.jpg
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_requests.RequestPinCreationUploadUrlsRequest:
-    properties:
-      files_to_upload:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
-        type: array
-    type: object
-  pinz_backend_api-gateway-service_internal_requests.RequestPinMediaUploadUrlsRequest:
+  pinz_backend_api-gateway-service_internal_requests.RequestPinUploadUrlsRequest:
     properties:
       files_to_upload:
         items:
@@ -615,15 +582,6 @@ definitions:
         example: "2026-04-25T13:00:00Z"
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_responses.AddMediaToPinStartResponse:
-    properties:
-      session_id:
-        type: string
-      upload_urls:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
-        type: array
-    type: object
   pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse:
     properties:
       message:
@@ -662,13 +620,7 @@ definitions:
       url:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_responses.CancelPinCreationResponse:
-    properties:
-      status:
-        example: cancelled
-        type: string
-    type: object
-  pinz_backend_api-gateway-service_internal_responses.CancelPinMediaAdditionResponse:
+  pinz_backend_api-gateway-service_internal_responses.CancelPinUploadResponse:
     properties:
       status:
         example: cancelled
@@ -679,28 +631,12 @@ definitions:
       success:
         type: boolean
     type: object
-  pinz_backend_api-gateway-service_internal_responses.CommitPinCreationUploadResponse:
+  pinz_backend_api-gateway-service_internal_responses.CommitPinUploadResponse:
     properties:
       media_count_in_session:
         type: integer
       media_id:
         type: string
-    type: object
-  pinz_backend_api-gateway-service_internal_responses.CommitPinMediaUploadResponse:
-    properties:
-      media_count_in_session:
-        type: integer
-      media_id:
-        type: string
-    type: object
-  pinz_backend_api-gateway-service_internal_responses.CreatePinStartResponse:
-    properties:
-      session_id:
-        type: string
-      upload_urls:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
-        type: array
     type: object
   pinz_backend_api-gateway-service_internal_responses.CreateTripResponse:
     properties:
@@ -887,23 +823,13 @@ definitions:
           $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.BestMemory'
         type: array
     type: object
-  pinz_backend_api-gateway-service_internal_responses.GetPinCreationReviewResponse:
+  pinz_backend_api-gateway-service_internal_responses.GetPinUploadReviewResponse:
     properties:
       draft:
-        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinCreationDraft'
-      session_id:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinUploadDraft'
+      processing_status:
+        example: READY_FOR_REVIEW
         type: string
-      similar:
-        items:
-          items:
-            type: string
-          type: array
-        type: array
-    type: object
-  pinz_backend_api-gateway-service_internal_responses.GetPinMediaAdditionReviewResponse:
-    properties:
-      draft:
-        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinAdditionDraft'
       session_id:
         type: string
       similar:
@@ -998,26 +924,31 @@ definitions:
       refresh_token:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_responses.PinAdditionDraft:
+  pinz_backend_api-gateway-service_internal_responses.PinResponse:
     properties:
-      deduped_media_ids:
-        items:
-          type: string
-        type: array
-      new_media:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ReviewPinMedia'
-        type: array
-      nsfw_media_ids:
-        items:
-          type: string
-        type: array
-      pin_issues:
+      pin:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PinSuggestedFields:
+    properties:
+      category:
+        type: string
+      end_time_unix:
+        type: integer
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+      start_time_unix:
+        type: integer
+      tags:
         items:
           type: string
         type: array
     type: object
-  pinz_backend_api-gateway-service_internal_responses.PinCreationDraft:
+  pinz_backend_api-gateway-service_internal_responses.PinUploadDraft:
     properties:
       deduped_media_ids:
         items:
@@ -1035,27 +966,17 @@ definitions:
         items:
           type: string
         type: array
-      suggested_category:
-        type: string
-      suggested_end_time_unix:
-        type: integer
-      suggested_latitude:
-        type: number
-      suggested_longitude:
-        type: number
-      suggested_name:
-        type: string
-      suggested_start_time_unix:
-        type: integer
-      suggested_tags:
-        items:
-          type: string
-        type: array
+      suggested:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinSuggestedFields'
     type: object
-  pinz_backend_api-gateway-service_internal_responses.PinResponse:
+  pinz_backend_api-gateway-service_internal_responses.PinUploadStartResponse:
     properties:
-      pin:
-        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
+      session_id:
+        type: string
+      upload_urls:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
+        type: array
     type: object
   pinz_backend_api-gateway-service_internal_responses.PrivacyResponse:
     properties:
@@ -1073,31 +994,13 @@ definitions:
       trip_id:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_responses.ProcessPinCreationResponse:
+  pinz_backend_api-gateway-service_internal_responses.ProcessPinUploadResponse:
     properties:
-      draft:
-        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinCreationDraft'
+      processing_status:
+        example: PROCESSING
+        type: string
       session_id:
         type: string
-      similar:
-        items:
-          items:
-            type: string
-          type: array
-        type: array
-    type: object
-  pinz_backend_api-gateway-service_internal_responses.ProcessPinMediaAdditionResponse:
-    properties:
-      draft:
-        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinAdditionDraft'
-      session_id:
-        type: string
-      similar:
-        items:
-          items:
-            type: string
-          type: array
-        type: array
     type: object
   pinz_backend_api-gateway-service_internal_responses.ProfileResponse:
     properties:
@@ -1188,14 +1091,7 @@ definitions:
       access_token:
         type: string
     type: object
-  pinz_backend_api-gateway-service_internal_responses.RequestPinCreationUploadUrlsResponse:
-    properties:
-      upload_urls:
-        items:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
-        type: array
-    type: object
-  pinz_backend_api-gateway-service_internal_responses.RequestPinMediaUploadUrlsResponse:
+  pinz_backend_api-gateway-service_internal_responses.RequestPinUploadUrlsResponse:
     properties:
       upload_urls:
         items:
@@ -3556,6 +3452,362 @@ paths:
       summary: Remove participant
       tags:
       - trips
+  /api/v1/trips/{id}/pin-uploads/{sid}/cancel:
+    post:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CancelPinUploadResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel pin upload
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/commit-upload:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      - description: Commit payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.CommitPinUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CommitPinUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Commit pin upload
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/finalize:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      - description: Finalize payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizePinUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Finalize pin upload
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/process:
+    post:
+      description: 202 + processing_status="PROCESSING". По завершении воркер шлёт
+        WS PIN_UPLOAD_PROCESSING_COMPLETED.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessPinUploadResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Process pin upload (async)
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/review:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetPinUploadReviewResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get pin upload review
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/upload-urls:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      - description: Files to upload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestPinUploadUrlsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.RequestPinUploadUrlsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request more presigned URLs (pin upload)
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/start:
+    post:
+      consumes:
+      - application/json
+      description: 'Унифицированная сессия загрузки медиа. target_pin_id null → создание
+        нового пина (UNIQUE per trip), заполнен → добавление медиа в существующий
+        пин (UNIQUE per pin). Дальше: PUT в S3 → /commit-upload → /process → ws +
+        /review → /finalize или /cancel.'
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Files + optional target_pin_id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PinUploadStartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinUploadStartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Start pin upload session
+      tags:
+      - pins
   /api/v1/trips/{id}/pins/{pin_id}:
     delete:
       description: 'Удаление пина. Если трип в избранном у других пользователей —
@@ -3758,391 +4010,6 @@ paths:
       summary: Remove media from pin
       tags:
       - pins
-  /api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/cancel:
-    post:
-      description: Удаляет orphan media сессии (pin_id=NULL, pin_addition_session_id=session)
-        с S3 cleanup и закрывает сессию. Идемпотентен.
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Pin ID
-        in: path
-        name: pin_id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CancelPinMediaAdditionResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Cancel pin media addition
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/commit-upload:
-    post:
-      consumes:
-      - application/json
-      description: 'Фиксация s3-загрузки в активную сессию добавления медиа в пин:
-        создаётся media с pin_id=NULL и pin_addition_session_id=session.'
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Pin ID
-        in: path
-        name: pin_id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      - description: Commit payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.CommitPinMediaUploadRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CommitPinMediaUploadResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "412":
-          description: Precondition Failed
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Commit pin media upload
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/finalize:
-    post:
-      consumes:
-      - application/json
-      description: Применение media_to_delete (orphan-cleanup), привязка оставшихся
-        медиа к пину, пересчёт start/end/lat/lon, reverse-geocoding (если у пина появились
-        координаты), закрытие сессии.
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Pin ID
-        in: path
-        name: pin_id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      - description: Finalize payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizePinMediaAdditionRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Finalize pin media addition
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/process:
-    post:
-      description: 'Синхронный запуск ML-stub: хеш-дедуп (4.7.6.a), NSFW (4.7.5),
-        similar (4.7.7), pin issues (4.7.3-4.7.4). Snapshot сохраняется в сессию для
-        последующего GetReview/Finalize.'
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Pin ID
-        in: path
-        name: pin_id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessPinMediaAdditionResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Process pin media addition (ML stub)
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/review:
-    get:
-      description: 'Чтение snapshot Process: список новых медиа (presigned URLs),
-        pin issues, similar groups. Если Process ещё не вызывался — поля пустые.'
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Pin ID
-        in: path
-        name: pin_id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetPinMediaAdditionReviewResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get pin media addition review
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/upload-urls:
-    post:
-      consumes:
-      - application/json
-      description: Догрузка presigned URLs к активной сессии добавления медиа в пин.
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Pin ID
-        in: path
-        name: pin_id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      - description: Files to upload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestPinMediaUploadUrlsRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.RequestPinMediaUploadUrlsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Request more presigned URLs (pin add-media)
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/{pin_id}/media/sessions/start:
-    post:
-      consumes:
-      - application/json
-      description: 'Старт sessioned-флоу добавления медиа в существующий пин: создаёт
-        сессию (UNIQUE per-pin) и выдаёт presigned PUT URLs. Дальше клиент пушит файлы
-        в S3 → /commit-upload → /process → /review → /finalize или /cancel.'
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Pin ID
-        in: path
-        name: pin_id
-        required: true
-        type: string
-      - description: Files to upload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaToPinStartRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaToPinStartResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "412":
-          description: Precondition Failed
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Start add-media-to-pin session
-      tags:
-      - pins
   /api/v1/trips/{id}/pins/{pin_id}/privacy:
     put:
       consumes:
@@ -4203,361 +4070,6 @@ paths:
       summary: Set per-user pin privacy
       tags:
       - trips
-  /api/v1/trips/{id}/pins/creation/sessions/{sid}/cancel:
-    post:
-      description: Удаляет orphan media сессии (pin_id=NULL, pin_creation_session_id=session)
-        с S3 cleanup и закрывает сессию.
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CancelPinCreationResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Cancel pin creation
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/creation/sessions/{sid}/commit-upload:
-    post:
-      consumes:
-      - application/json
-      description: 'Фиксация s3-загрузки в активную сессию создания пина: создаётся
-        media с pin_id=NULL и pin_creation_session_id=session.'
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      - description: Commit payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.CommitPinCreationUploadRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CommitPinCreationUploadResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "412":
-          description: Precondition Failed
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Commit pin creation upload
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/creation/sessions/{sid}/finalize:
-    post:
-      consumes:
-      - application/json
-      description: Создание новой записи pins с финальными полями (правки клиента
-        поверх ML-suggested), привязка media, теги, reverse-geocoding, публикация
-        PIN_ADDED, закрытие сессии.
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      - description: Finalize payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizePinCreationRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "412":
-          description: Precondition Failed
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Finalize pin creation
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/creation/sessions/{sid}/process:
-    post:
-      description: 'Синхронный запуск ML-stub: хеш-дедуп (4.7.6.a), NSFW (4.7.5, заглушка),
-        similar (4.7.7, заглушка), suggested поля пина (4.7.2.a-f), pin issues (4.7.3-4.7.4).
-        Snapshot сохраняется в сессию.'
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessPinCreationResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Process pin creation (ML stub)
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/creation/sessions/{sid}/review:
-    get:
-      description: 'Чтение snapshot Process: suggested-поля пина (имя/категория/теги/координаты/start-end),
-        список новых медиа, pin issues, similar groups.'
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetPinCreationReviewResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get pin creation review
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/creation/sessions/{sid}/upload-urls:
-    post:
-      consumes:
-      - application/json
-      description: Догрузка presigned URLs к активной сессии создания пина.
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Session ID
-        in: path
-        name: sid
-        required: true
-        type: string
-      - description: Files to upload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestPinCreationUploadUrlsRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.RequestPinCreationUploadUrlsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Request more presigned URLs (pin creation)
-      tags:
-      - pins
-  /api/v1/trips/{id}/pins/creation/start:
-    post:
-      consumes:
-      - application/json
-      description: 'Старт sessioned-флоу создания одиночного пина в READY-трипе. Создаёт
-        сессию (UNIQUE active per trip — `412 FailedPrecondition`, если уже идёт)
-        и выдаёт presigned PUT URLs. Дальше: PUT в S3 → /commit-upload → /process
-        → /review → /finalize или /cancel.'
-      parameters:
-      - description: Trip ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Files to upload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.CreatePinStartRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CreatePinStartResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "412":
-          description: Precondition Failed
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Start pin creation session
-      tags:
-      - pins
   /api/v1/trips/{id}/privacy:
     put:
       consumes:

@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"time"
@@ -17,34 +16,14 @@ import (
 	pb "pinz/backend/trip-service/pkg/proto"
 )
 
-// pinAdditionDraftSnapshot — JSON-структура для сохранения результата
-// ProcessPinMediaAddition между этапами Process и Finalize. Хранится в
-// pin_media_addition_sessions.draft_snapshot и читается при GetReview/Finalize.
-type pinAdditionDraftSnapshot struct {
-	NewMediaIDs     []string                  `json:"new_media_ids"`
-	NSFWMediaIDs    []string                  `json:"nsfw_media_ids"`
-	DedupedMediaIDs []string                  `json:"deduped_media_ids"`
-	PinIssues       []string                  `json:"pin_issues"`
-	Similar         []pinAdditionSimilarGroup `json:"similar"`
-}
-
-type pinAdditionSimilarGroup struct {
-	MediaIDs []string `json:"media_ids"`
-}
-
-// pinIssueMissingCoordinates / pinIssueMissingDates — коды проблем для review (ТЗ 4.7.3-4.7.4).
+// коды проблем для review (ТЗ 4.7.3-4.7.4).
 const (
 	pinIssueMissingCoordinates = "MISSING_COORDINATES"
 	pinIssueMissingDates       = "MISSING_DATES"
 )
 
-// =============================================================================
-// GetPin (ТЗ 4.3)
-// =============================================================================
-
-// GetPin возвращает все поля пина. Доступ — participant трипа или favourite-юзер.
-// Если пин скрыт для caller'а через pin_hidden_by_user (ТЗ 4.5.2 soft-delete-for-self),
-// возвращается NotFound, чтобы клиент не отличал «нет пина» от «спрятан».
+// GetPin — все поля пина. Доступ: participant трипа или favourite-юзер.
+// Скрытый для caller'а пин (ТЗ 4.5.2) → NotFound.
 func (s *TripService) GetPin(ctx context.Context, req *pb.GetPinRequest) (*pb.GetPinResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -79,8 +58,8 @@ func (s *TripService) GetPin(ctx context.Context, req *pb.GetPinRequest) (*pb.Ge
 	return &pb.GetPinResponse{Pin: s.pinWithMediaToProto(ctx, pin, mediaList, tags)}, nil
 }
 
-// assertCanReadPin — общий guard для GetPin и read-операций над пином: участник
-// или favourite-юзер; pin_hidden для текущего юзера → NotFound.
+// assertCanReadPin — guard на GetPin: participant или favourite-юзер.
+// Скрытый для caller'а пин → NotFound.
 func (s *TripService) assertCanReadPin(ctx context.Context, tripID, pinID, userID string) (bool, error) {
 	if s.pinHiddenRepo != nil {
 		hidden, err := s.pinHiddenRepo.IsHidden(pinID, userID)
@@ -105,13 +84,8 @@ func (s *TripService) assertCanReadPin(ctx context.Context, tripID, pinID, userI
 	return false, status.Error(codes.PermissionDenied, "not a participant")
 }
 
-// =============================================================================
-// UpdatePin (ТЗ 4.2.1, 4.2.4-4.2.9)
-// =============================================================================
-
-// UpdatePin применяет правки полей пина на READY-трипе. Любой participant.
-// tags применяются как replace-all только при tags_set=true (даже если массив пуст).
-// При смене координат — reverse geocoding и upsert в trip_locations (статистика).
+// UpdatePin применяет правки полей пина на READY-трипе (ТЗ 4.2.1, 4.2.4-4.2.9).
+// tags — replace-all только при tags_set=true. Смена координат → geo-reverse upsert.
 func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (*pb.UpdatePinResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -150,7 +124,6 @@ func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (
 		return nil, status.Error(codes.NotFound, "pin not found")
 	}
 
-	// валидация и применение полей
 	coordsChanged := false
 	if req.Name != nil {
 		name := req.GetName()
@@ -233,14 +206,8 @@ func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (
 	return &pb.UpdatePinResponse{Pin: s.pinWithMediaToProto(ctx, pin, mediaList, tags)}, nil
 }
 
-// =============================================================================
-// DeletePin (ТЗ 4.5.1 / 4.5.2)
-// =============================================================================
-
-// DeletePin — full delete если трип не в избранном у других пользователей,
-// иначе soft-delete-for-self через pin_hidden_by_user. Любой participant.
-// Защита: запрет удаления при активной pin_media_addition_session, чтобы не было
-// orphan media с pin_addition_session_id, ссылающимся на удалённый пин.
+// DeletePin: full delete если трип ни у кого не в favourites, иначе soft-delete-for-self
+// через pin_hidden_by_user (ТЗ 4.5.1/4.5.2). Запрещён при активной pin_media_addition_session.
 func (s *TripService) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (*pb.DeletePinResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -268,11 +235,10 @@ func (s *TripService) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (
 	if pin.TripID != tripID {
 		return nil, status.Error(codes.NotFound, "pin not found")
 	}
-	// блокируем delete если идёт сессия добавления медиа в этот пин.
-	if s.pinAddSessionRepo != nil {
-		if _, err := s.pinAddSessionRepo.GetActiveForPin(ctx, pinID); err == nil {
+	if s.pinUploadSessionRepo != nil {
+		if _, err := s.pinUploadSessionRepo.GetActiveAdditionForPin(ctx, pinID); err == nil {
 			return nil, status.Error(codes.FailedPrecondition, "pin has an active media addition session; cancel it first")
-		} else if !errors.Is(err, repositories.ErrPinAdditionSessionNotFound) {
+		} else if !errors.Is(err, repositories.ErrPinUploadSessionNotFound) {
 			return nil, status.Error(codes.Internal, "failed to check active pin media session")
 		}
 	}
@@ -294,9 +260,7 @@ func (s *TripService) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (
 		}
 		return &pb.DeletePinResponse{DeletionMode: "soft_for_user"}, nil
 	}
-	// full delete (ТЗ 4.5.1): ссылка media.pin_id = ON DELETE SET NULL, поэтому
-	// каскадим media явно — DeleteByPinID возвращает s3_keys для best-effort
-	// S3 cleanup. tagRepo.DeleteForPin зеркалирует CASCADE FK для прозрачности.
+	// media.pin_id = ON DELETE SET NULL, поэтому media каскадим явно (s3 cleanup).
 	s3Keys, err := s.mediaRepo.DeleteByPinID(pinID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to delete pin media")
@@ -318,437 +282,6 @@ func (s *TripService) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (
 		return nil, status.Error(codes.Internal, "failed to delete pin")
 	}
 	return &pb.DeletePinResponse{DeletionMode: "full"}, nil
-}
-
-// =============================================================================
-// AddMediaToPin* — sessioned флоу добавления медиа в существующий пин (ТЗ 4.2.2)
-// =============================================================================
-
-// AddMediaToPinStart создаёт сессию (UNIQUE per-pin), возвращает session_id и
-// presigned URLs. Conflict — если для пина уже идёт сессия (FailedPrecondition).
-func (s *TripService) AddMediaToPinStart(ctx context.Context, req *pb.AddMediaToPinStartRequest) (*pb.AddMediaToPinStartResponse, error) {
-	userID, ok := server.UserIDFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user_id required")
-	}
-	tripID := req.GetTripId()
-	pinID := req.GetPinId()
-	if tripID == "" || pinID == "" {
-		return nil, status.Error(codes.InvalidArgument, "trip_id and pin_id are required")
-	}
-	files := req.GetFilesToUpload()
-	if len(files) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "files_to_upload is required")
-	}
-	if err := s.assertParticipantAndPinReady(ctx, tripID, pinID, userID); err != nil {
-		return nil, err
-	}
-	if err := s.assertTripCapacity(tripID, files); err != nil {
-		return nil, err
-	}
-	if s.pinAddSessionRepo == nil {
-		return nil, status.Error(codes.Internal, "pin media addition repository not configured")
-	}
-	sessionID, err := s.pinAddSessionRepo.Create(ctx, tripID, pinID, userID)
-	if err != nil {
-		if errors.Is(err, repositories.ErrPinAdditionSessionActive) {
-			return nil, status.Error(codes.FailedPrecondition, "another pin media addition session is already active for this pin")
-		}
-		return nil, status.Error(codes.Internal, "failed to create pin media session")
-	}
-	uploadUrls, err := s.presignPinUploadUrls(ctx, tripID, files)
-	if err != nil {
-		return nil, err
-	}
-	return &pb.AddMediaToPinStartResponse{
-		SessionId: sessionID,
-		UploadUrls: uploadUrls,
-	}, nil
-}
-
-// RequestPinMediaUploadUrls — догрузка presigned URLs к активной сессии.
-// Не меняет состояние; валидирует сессию + лимиты.
-func (s *TripService) RequestPinMediaUploadUrls(ctx context.Context, req *pb.RequestPinMediaUploadUrlsRequest) (*pb.RequestPinMediaUploadUrlsResponse, error) {
-	userID, ok := server.UserIDFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user_id required")
-	}
-	tripID, pinID, sessionID := req.GetTripId(), req.GetPinId(), req.GetSessionId()
-	if tripID == "" || pinID == "" || sessionID == "" {
-		return nil, status.Error(codes.InvalidArgument, "trip_id, pin_id, session_id are required")
-	}
-	files := req.GetFilesToUpload()
-	if len(files) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "files_to_upload is required")
-	}
-	if err := s.assertParticipantAndPinReady(ctx, tripID, pinID, userID); err != nil {
-		return nil, err
-	}
-	if _, err := s.assertActivePinSession(ctx, tripID, pinID, sessionID, userID); err != nil {
-		return nil, err
-	}
-	if err := s.assertTripCapacity(tripID, files); err != nil {
-		return nil, err
-	}
-	uploadUrls, err := s.presignPinUploadUrls(ctx, tripID, files)
-	if err != nil {
-		return nil, err
-	}
-	_ = s.pinAddSessionRepo.Touch(ctx, sessionID)
-	return &pb.RequestPinMediaUploadUrlsResponse{UploadUrls: uploadUrls}, nil
-}
-
-// CommitPinMediaUpload фиксирует загрузку файла в S3: создаёт media с
-// pin_id=NULL и pin_addition_session_id=session. Лимиты трипа считаются на
-// общем COUNT (включая draft media — защищает от over-upload в S3).
-func (s *TripService) CommitPinMediaUpload(ctx context.Context, req *pb.CommitPinMediaUploadRequest) (*pb.CommitPinMediaUploadResponse, error) {
-	userID, ok := server.UserIDFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user_id required")
-	}
-	tripID, pinID, sessionID := req.GetTripId(), req.GetPinId(), req.GetSessionId()
-	if tripID == "" || pinID == "" || sessionID == "" {
-		return nil, status.Error(codes.InvalidArgument, "trip_id, pin_id, session_id are required")
-	}
-	if req.GetS3Key() == "" || req.GetMediaType() == "" {
-		return nil, status.Error(codes.InvalidArgument, "s3_key and media_type are required")
-	}
-	if req.GetMediaType() != "image" && req.GetMediaType() != "video" {
-		return nil, status.Error(codes.InvalidArgument, "media_type must be 'image' or 'video'")
-	}
-	if err := s.assertParticipantAndPinReady(ctx, tripID, pinID, userID); err != nil {
-		return nil, err
-	}
-	if _, err := s.assertActivePinSession(ctx, tripID, pinID, sessionID, userID); err != nil {
-		return nil, err
-	}
-	trip, err := s.tripRepo.GetByID(tripID)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to get trip")
-	}
-	total, videos, _ := s.mediaRepo.CountByTripID(tripID)
-	if total+1 > MaxMediaPerTrip {
-		return nil, errLimitExceeded("media", MaxMediaPerTrip, total+1)
-	}
-	if req.GetMediaType() == "video" && videos+1 > MaxVideosPerTrip {
-		return nil, errLimitExceeded("video", MaxVideosPerTrip, videos+1)
-	}
-	m := &models.Media{
-		TripID: tripID,
-		S3Key: req.GetS3Key(),
-		MediaType: req.GetMediaType(),
-		PrivacyLevel: trip.PrivacyLevel,
-		PinAdditionSessionID: &sessionID,
-		UploadedBy: &userID,
-	}
-	if req.CapturedAtUnix != nil {
-		t := time.Unix(req.GetCapturedAtUnix(), 0)
-		m.CapturedAt = &t
-	}
-	if req.Latitude != nil && req.Longitude != nil {
-		lat := req.GetLatitude()
-		lon := req.GetLongitude()
-		m.Latitude = &lat
-		m.Longitude = &lon
-	}
-	if err := s.mediaRepo.Create(m); err != nil {
-		return nil, status.Error(codes.Internal, "failed to save media")
-	}
-	_ = s.pinAddSessionRepo.Touch(ctx, sessionID)
-	mediaInSession, _ := s.mediaRepo.ListByPinAdditionSession(sessionID)
-	return &pb.CommitPinMediaUploadResponse{
-		MediaId: m.ID,
-		MediaCountInSession: int32(len(mediaInSession)),
-	}, nil
-}
-
-// ProcessPinMediaAddition — синхронный ML-stub: хеш-дедуп (4.7.6.a), NSFW (4.7.5),
-// similar (4.7.7), pin issues (4.7.3-4.7.4). Snapshot → draft_snapshot для повторного
-// чтения через GetPinMediaAdditionReview. Дедуплицированные media удаляются физически
-// (DeleteByIDs + S3 cleanup).
-func (s *TripService) ProcessPinMediaAddition(ctx context.Context, req *pb.ProcessPinMediaAdditionRequest) (*pb.ProcessPinMediaAdditionResponse, error) {
-	userID, ok := server.UserIDFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user_id required")
-	}
-	tripID, pinID, sessionID := req.GetTripId(), req.GetPinId(), req.GetSessionId()
-	if tripID == "" || pinID == "" || sessionID == "" {
-		return nil, status.Error(codes.InvalidArgument, "trip_id, pin_id, session_id are required")
-	}
-	if err := s.assertParticipantAndPinReady(ctx, tripID, pinID, userID); err != nil {
-		return nil, err
-	}
-	if _, err := s.assertActivePinSession(ctx, tripID, pinID, sessionID, userID); err != nil {
-		return nil, err
-	}
-
-	// 1. Текущие медиа сессии + уже привязанные к пину (для дедупа кросс-сессии).
-	sessionMedia, err := s.mediaRepo.ListByPinAdditionSession(sessionID)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to list session media")
-	}
-	pinMedia, _ := s.mediaRepo.ListByPinID(pinID)
-
-	// 2. Хеш-дедуп: если у session-media совпадает content_hash с (a) другой
-	// session-media или (b) уже привязанной к пину — кандидат на удаление.
-	existingHashes := map[string]struct{}{}
-	for _, m := range pinMedia {
-		if m.ContentHash != nil {
-			existingHashes[*m.ContentHash] = struct{}{}
-		}
-	}
-	seen := map[string]string{} // hash → first kept media id in session
-	var deduped []*models.Media
-	for _, m := range sessionMedia {
-		if m.ContentHash == nil {
-			continue
-		}
-		if _, dup := existingHashes[*m.ContentHash]; dup {
-			deduped = append(deduped, m)
-			continue
-		}
-		if _, dup := seen[*m.ContentHash]; dup {
-			deduped = append(deduped, m)
-			continue
-		}
-		seen[*m.ContentHash] = m.ID
-	}
-	dedupedIDs := make([]string, 0, len(deduped))
-	dedupedKeys := make([]string, 0, len(deduped))
-	for _, m := range deduped {
-		dedupedIDs = append(dedupedIDs, m.ID)
-		if m.S3Key != "" {
-			dedupedKeys = append(dedupedKeys, m.S3Key)
-		}
-	}
-	if len(dedupedIDs) > 0 {
-		if err := s.mediaRepo.DeleteByIDs(dedupedIDs); err != nil {
-			return nil, status.Error(codes.Internal, "failed to delete duplicates")
-		}
-		if s.mediaURLs != nil {
-			for _, k := range dedupedKeys {
-				_ = s.mediaURLs.DeleteObject(ctx, k)
-			}
-		}
-	}
-
-	// 3. Перечитать оставшиеся session media после дедупа.
-	remaining, err := s.mediaRepo.ListByPinAdditionSession(sessionID)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to reload session media")
-	}
-
-	// 4. NSFW и similar — заглушки до подключения реального ML (паритет
-	// с finalizeProcessingStub в creation-флоу).
-	var nsfwIDs []string
-	var similar []pinAdditionSimilarGroup
-
-	// 5. Pin issues: симулируем привязку remaining к пину и считаем,
-	// есть ли captured_at и координаты у объединённого набора (pinMedia + remaining).
-	hasDate := false
-	hasCoords := false
-	for _, m := range pinMedia {
-		if m.CapturedAt != nil {
-			hasDate = true
-		}
-		if m.Latitude != nil && m.Longitude != nil {
-			hasCoords = true
-		}
-	}
-	for _, m := range remaining {
-		if m.CapturedAt != nil {
-			hasDate = true
-		}
-		if m.Latitude != nil && m.Longitude != nil {
-			hasCoords = true
-		}
-	}
-	var issues []string
-	if !hasCoords {
-		issues = append(issues, pinIssueMissingCoordinates)
-	}
-	if !hasDate {
-		issues = append(issues, pinIssueMissingDates)
-	}
-
-	// 6. Snapshot и сохранение.
-	newIDs := make([]string, 0, len(remaining))
-	for _, m := range remaining {
-		newIDs = append(newIDs, m.ID)
-	}
-	snap := pinAdditionDraftSnapshot{
-		NewMediaIDs: newIDs,
-		NSFWMediaIDs: nsfwIDs,
-		DedupedMediaIDs: dedupedIDs,
-		PinIssues: issues,
-		Similar: similar,
-	}
-	snapBytes, err := json.Marshal(snap)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to encode snapshot")
-	}
-	if err := s.pinAddSessionRepo.SetDraftSnapshot(ctx, sessionID, snapBytes); err != nil {
-		return nil, status.Error(codes.Internal, "failed to save snapshot")
-	}
-	return &pb.ProcessPinMediaAdditionResponse{
-		SessionId: sessionID,
-		Draft: snapshotToDraftProto(ctx, s, snap, remaining),
-		Similar: snapshotToSimilarProto(snap),
-	}, nil
-}
-
-// GetPinMediaAdditionReview читает snapshot из сессии и возвращает review-снимок.
-// Если Process ещё не вызывался — снапшот пустой (issues/similar пустые).
-func (s *TripService) GetPinMediaAdditionReview(ctx context.Context, req *pb.GetPinMediaAdditionReviewRequest) (*pb.GetPinMediaAdditionReviewResponse, error) {
-	userID, ok := server.UserIDFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user_id required")
-	}
-	tripID, pinID, sessionID := req.GetTripId(), req.GetPinId(), req.GetSessionId()
-	if tripID == "" || pinID == "" || sessionID == "" {
-		return nil, status.Error(codes.InvalidArgument, "trip_id, pin_id, session_id are required")
-	}
-	if err := s.assertParticipantAndPinReady(ctx, tripID, pinID, userID); err != nil {
-		return nil, err
-	}
-	session, err := s.assertActivePinSession(ctx, tripID, pinID, sessionID, userID)
-	if err != nil {
-		return nil, err
-	}
-	var snap pinAdditionDraftSnapshot
-	if len(session.DraftSnapshot) > 0 {
-		_ = json.Unmarshal(session.DraftSnapshot, &snap)
-	}
-	remaining, _ := s.mediaRepo.ListByPinAdditionSession(sessionID)
-	return &pb.GetPinMediaAdditionReviewResponse{
-		SessionId: sessionID,
-		Draft: snapshotToDraftProto(ctx, s, snap, remaining),
-		Similar: snapshotToSimilarProto(snap),
-	}, nil
-}
-
-// FinalizePinMediaAddition применяет media_to_delete (orphan-cleanup), привязывает
-// оставшиеся media сессии к пину (UpdatePinIDByIDs), пересчитывает start/end/lat/lon,
-// делает reverse-geocoding (если у пина появились координаты впервые/изменились),
-// закрывает сессию.
-func (s *TripService) FinalizePinMediaAddition(ctx context.Context, req *pb.FinalizePinMediaAdditionRequest) (*pb.FinalizePinMediaAdditionResponse, error) {
-	userID, ok := server.UserIDFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user_id required")
-	}
-	tripID, pinID, sessionID := req.GetTripId(), req.GetPinId(), req.GetSessionId()
-	if tripID == "" || pinID == "" || sessionID == "" {
-		return nil, status.Error(codes.InvalidArgument, "trip_id, pin_id, session_id are required")
-	}
-	if err := s.assertParticipantAndPinReady(ctx, tripID, pinID, userID); err != nil {
-		return nil, err
-	}
-	if _, err := s.assertActivePinSession(ctx, tripID, pinID, sessionID, userID); err != nil {
-		return nil, err
-	}
-
-	pin, err := s.pinRepo.GetByID(pinID)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to get pin")
-	}
-	prevHadCoords := pin.Latitude != nil && pin.Longitude != nil
-
-	// 1. Применить media_to_delete (только media текущей сессии).
-	if del := req.GetMediaToDelete(); len(del) > 0 {
-		toDelete, s3Keys, derr := s.collectDeletableSessionMedia(sessionID, del)
-		if derr != nil {
-			return nil, derr
-		}
-		if len(toDelete) > 0 {
-			if err := s.mediaRepo.DeleteByIDs(toDelete); err != nil {
-				return nil, status.Error(codes.Internal, "failed to delete media")
-			}
-			if s.mediaURLs != nil {
-				for _, k := range s3Keys {
-					_ = s.mediaURLs.DeleteObject(ctx, k)
-				}
-			}
-		}
-	}
-
-	// 2. Привязать оставшиеся media сессии к пину.
-	remaining, err := s.mediaRepo.ListByPinAdditionSession(sessionID)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to reload session media")
-	}
-	if len(remaining) > 0 {
-		ids := make([]string, 0, len(remaining))
-		for _, m := range remaining {
-			ids = append(ids, m.ID)
-		}
-		if err := s.mediaRepo.UpdatePinIDByIDs(ids, pinID); err != nil {
-			return nil, status.Error(codes.Internal, "failed to attach media to pin")
-		}
-		if err := s.pinRepo.IncMediaCount(pinID, len(ids)); err != nil {
-			slog.WarnContext(ctx, "FinalizePinMediaAddition: media_count update failed", "pin_id", pinID, "err", err)
-		}
-		updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pinID)
-	}
-
-	// 3. Reverse geocoding если у пина теперь есть координаты впервые. Async через
-	// statistics-service: PIN_LOCATIONS_REQUESTED → PIN_LOCATIONS_RESOLVED.
-	pin, err = s.pinRepo.GetByID(pinID)
-	if err == nil && pin.Latitude != nil && pin.Longitude != nil && !prevHadCoords && s.eventRepo != nil {
-		_ = s.eventRepo.PublishGeoRequest(ctx, tripID, []repositories.GeoRequestPin{{
-			PinID:     pinID,
-			Latitude:  *pin.Latitude,
-			Longitude: *pin.Longitude,
-		}})
-	}
-
-	// 4. Закрыть сессию.
-	if err := s.pinAddSessionRepo.Close(ctx, sessionID, models.PinMediaAdditionSessionCloseReasonConfirmed); err != nil {
-		if !errors.Is(err, repositories.ErrPinAdditionSessionNotFound) {
-			return nil, status.Error(codes.Internal, "failed to close session")
-		}
-	}
-
-	mediaList, _ := s.mediaRepo.ListByPinID(pinID)
-	tags, _ := s.tagRepo.GetByPinID(pinID)
-	if tags == nil {
-		tags = []string{}
-	}
-	return &pb.FinalizePinMediaAdditionResponse{Pin: s.pinWithMediaToProto(ctx, pin, mediaList, tags)}, nil
-}
-
-// CancelPinMediaAddition удаляет orphan media сессии (pin_id=NULL,
-// pin_addition_session_id=session) + S3 cleanup, закрывает сессию.
-func (s *TripService) CancelPinMediaAddition(ctx context.Context, req *pb.CancelPinMediaAdditionRequest) (*pb.CancelPinMediaAdditionResponse, error) {
-	userID, ok := server.UserIDFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user_id required")
-	}
-	tripID, pinID, sessionID := req.GetTripId(), req.GetPinId(), req.GetSessionId()
-	if tripID == "" || pinID == "" || sessionID == "" {
-		return nil, status.Error(codes.InvalidArgument, "trip_id, pin_id, session_id are required")
-	}
-	participant, perr := s.participantRepo.IsParticipant(tripID, userID)
-	if perr != nil || !participant {
-		return nil, status.Error(codes.PermissionDenied, "not a participant")
-	}
-	if _, err := s.assertActivePinSession(ctx, tripID, pinID, sessionID, userID); err != nil {
-		return nil, err
-	}
-	s3Keys, err := s.mediaRepo.DeleteOrphanByPinAdditionSession(sessionID)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to cleanup orphan media")
-	}
-	if s.mediaURLs != nil {
-		for _, k := range s3Keys {
-			_ = s.mediaURLs.DeleteObject(ctx, k)
-		}
-	}
-	if err := s.pinAddSessionRepo.Close(ctx, sessionID, models.PinMediaAdditionSessionCloseReasonCancelled); err != nil {
-		if !errors.Is(err, repositories.ErrPinAdditionSessionNotFound) {
-			return nil, status.Error(codes.Internal, "failed to close session")
-		}
-	}
-	return &pb.CancelPinMediaAdditionResponse{Status: "cancelled"}, nil
 }
 
 // =============================================================================
@@ -843,136 +376,12 @@ func (s *TripService) assertParticipantAndPinReady(ctx context.Context, tripID, 
 	if pin.TripID != tripID {
 		return status.Error(codes.NotFound, "pin not found")
 	}
+	if s.pinHiddenRepo != nil {
+		if hidden, herr := s.pinHiddenRepo.IsHidden(pinID, userID); herr == nil && hidden {
+			return status.Error(codes.NotFound, "pin not found")
+		}
+	}
 	_ = ctx
 	return nil
 }
 
-// assertActivePinSession — сессия существует, не закрыта, принадлежит этому пину
-// и инициатор = caller. Возвращает session для дальнейшего использования.
-func (s *TripService) assertActivePinSession(ctx context.Context, tripID, pinID, sessionID, userID string) (*models.PinMediaAdditionSession, error) {
-	if s.pinAddSessionRepo == nil {
-		return nil, status.Error(codes.Internal, "pin media addition repository not configured")
-	}
-	session, err := s.pinAddSessionRepo.GetByID(ctx, sessionID)
-	if err != nil {
-		if errors.Is(err, repositories.ErrPinAdditionSessionNotFound) {
-			return nil, status.Error(codes.NotFound, "pin media session not found")
-		}
-		return nil, status.Error(codes.Internal, "failed to load pin media session")
-	}
-	if session.ClosedAt != nil {
-		return nil, status.Error(codes.FailedPrecondition, "pin media session is closed")
-	}
-	if session.TripID != tripID || session.PinID != pinID {
-		return nil, status.Error(codes.PermissionDenied, "session does not belong to this pin")
-	}
-	if session.InitiatorUserID != userID {
-		return nil, status.Error(codes.PermissionDenied, "only session initiator can act on it")
-	}
-	return session, nil
-}
-
-// assertTripCapacity — лимит трипа (ТЗ §1.6: ≤500 media, ≤50 видео) учитывая
-// планируемые files. Использует CountByTripID который считает все media трипа,
-// включая draft из активных pin-add-сессий — намеренно, чтобы не дать over-upload в S3.
-func (s *TripService) assertTripCapacity(tripID string, files []*pb.FileToUpload) error {
-	for _, f := range files {
-		if !validateContentType(f.GetContentType()) {
-			return status.Errorf(codes.InvalidArgument, "unsupported content type: %s", f.GetContentType())
-		}
-	}
-	total, videos, _ := s.mediaRepo.CountByTripID(tripID)
-	newVideos := 0
-	for _, f := range files {
-		if ct := f.GetContentType(); ct == "video/mp4" || ct == "video/quicktime" {
-			newVideos++
-		}
-	}
-	if total+len(files) > MaxMediaPerTrip {
-		return errLimitExceeded("media", MaxMediaPerTrip, total+len(files))
-	}
-	if videos+newVideos > MaxVideosPerTrip {
-		return errLimitExceeded("video", MaxVideosPerTrip, videos+newVideos)
-	}
-	return nil
-}
-
-// presignPinUploadUrls — выдача presigned PUT URLs (паттерн AddMediaRequestUploadUrls).
-// s3_key включает trip_id для упорядоченности; client_id используется как имя файла,
-// что достаточно для уникальности в рамках одного клиента.
-func (s *TripService) presignPinUploadUrls(ctx context.Context, tripID string, files []*pb.FileToUpload) ([]*pb.UploadUrl, error) {
-	uploadUrls := make([]*pb.UploadUrl, 0, len(files))
-	for _, f := range files {
-		ext := contentTypeToExt(f.GetContentType())
-		s3Key := "trips/" + tripID + "/pins/" + f.GetClientId() + ext
-		url := ""
-		if s.mediaURLs != nil {
-			var perr error
-			url, perr = s.mediaURLs.PresignedUploadURL(ctx, s3Key, f.GetContentType())
-			if perr != nil {
-				slog.ErrorContext(ctx, "trip_service: S3 presign upload failed (pin add)", "trip_id", tripID, "client_id", f.GetClientId(), "s3_key", s3Key, "err", perr)
-				return nil, status.Error(codes.Internal, "failed to presign upload url")
-			}
-		}
-		uploadUrls = append(uploadUrls, &pb.UploadUrl{
-			ClientId: f.GetClientId(),
-			S3Key: s3Key,
-			Url: url,
-		})
-	}
-	return uploadUrls, nil
-}
-
-// collectDeletableSessionMedia — фильтрует ids: только media текущей сессии (pin_id=NULL,
-// pin_addition_session_id=$session). Возвращает allowed ids + s3 keys для cleanup.
-func (s *TripService) collectDeletableSessionMedia(sessionID string, ids []string) ([]string, []string, error) {
-	if len(ids) == 0 {
-		return nil, nil, nil
-	}
-	idSet := map[string]struct{}{}
-	for _, id := range ids {
-		idSet[id] = struct{}{}
-	}
-	sessionMedia, err := s.mediaRepo.ListByPinAdditionSession(sessionID)
-	if err != nil {
-		return nil, nil, status.Error(codes.Internal, "failed to list session media")
-	}
-	var allowed []string
-	var keys []string
-	for _, m := range sessionMedia {
-		if _, ok := idSet[m.ID]; !ok {
-			continue
-		}
-		allowed = append(allowed, m.ID)
-		if m.S3Key != "" {
-			keys = append(keys, m.S3Key)
-		}
-	}
-	return allowed, keys, nil
-}
-
-// snapshotToDraftProto собирает PinAdditionDraft proto из снимка и текущего списка media
-// (с presigned URLs).
-func snapshotToDraftProto(ctx context.Context, s *TripService, snap pinAdditionDraftSnapshot, media []*models.Media) *pb.PinAdditionDraft {
-	out := &pb.PinAdditionDraft{
-		PinIssues: snap.PinIssues,
-		NsfwMediaIds: snap.NSFWMediaIDs,
-		DedupedMediaIds: snap.DedupedMediaIDs,
-	}
-	for _, m := range media {
-		out.NewMedia = append(out.NewMedia, &pb.ReviewPinMedia{
-			MediaId: m.ID,
-			Url: s.presignedReadURL(ctx, m.S3Key),
-			PrivacyLevel: m.PrivacyLevel,
-		})
-	}
-	return out
-}
-
-func snapshotToSimilarProto(snap pinAdditionDraftSnapshot) []*pb.MediaSimilarGroup {
-	out := make([]*pb.MediaSimilarGroup, 0, len(snap.Similar))
-	for _, g := range snap.Similar {
-		out = append(out, &pb.MediaSimilarGroup{MediaIds: g.MediaIDs})
-	}
-	return out
-}

@@ -27,7 +27,7 @@ func buildService(tripRepo repositories.TripRepositoryInterface,
 		tripRepo, participantRepo, nil, nil,
 		eventRepo, mediaRepo, nil, pinRepo, tagRepo,
 		nil, nil, nil, sessionRepo, nil,
-		nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil,
 	)
 }
 
@@ -253,8 +253,7 @@ func TestAddMediaConfirm_Initiator_Success(t *testing.T) {
 	sessionRepo.EXPECT().Close(gomock.Any(), sessionID, models.AddMediaSessionCloseReasonConfirmed, gomock.Any()).Return(tripID, nil)
 	tripRepo.EXPECT().SetStatus(tripID, models.TripStatusReady).Return(nil)
 	eventRepo.EXPECT().PublishTripEvent(gomock.Any(), "ADD_MEDIA_SESSION_COMPLETED", tripID, initiatorUserID).Return(nil)
-	participantRepo.EXPECT().GetByTripID(tripID).Return([]*models.TripParticipant{{TripID: tripID, UserID: initiatorUserID}}, nil)
-	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, gomock.Any(), "TRIP_STATUS_CHANGED", gomock.Any()).Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "TRIP_STATUS_CHANGED", gomock.Any()).Return(nil)
 
 	svc := buildService(tripRepo, participantRepo, sessionRepo, mediaRepo, pinRepo, nil, eventRepo)
 	resp, err := svc.AddMediaConfirm(ctxWithUser(initiatorUserID), &pb.AddMediaConfirmRequest{
@@ -319,8 +318,7 @@ func TestEnsureInitiator_TakeoverAfterHour(t *testing.T) {
 
 	sessionRepo.EXPECT().GetActive(gomock.Any(), tripID).Return(active, nil)
 	sessionRepo.EXPECT().SetInitiator(gomock.Any(), sessionID, newUserID, gomock.Any()).Return(nil)
-	participantRepo.EXPECT().GetByTripID(tripID).Return([]*models.TripParticipant{{UserID: newUserID}}, nil)
-	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, gomock.Any(), "ADD_MEDIA_INITIATOR_CHANGED", gomock.Any()).Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "ADD_MEDIA_INITIATOR_CHANGED", gomock.Any()).Return(nil)
 
 	svc := buildService(nil, participantRepo, sessionRepo, nil, nil, nil, eventRepo)
 	got, err := svc.ensureInitiator(context.Background(), tripID, sessionID, newUserID)
@@ -351,8 +349,7 @@ func TestAddMediaCancel_UploadingByAnyone_DeletesOrphans(t *testing.T) {
 	mediaRepo.EXPECT().DeleteOrphanSessionMedia(tripID, []string{"old-1"}).Return([]string{"s3/new-1"}, nil)
 	sessionRepo.EXPECT().Close(gomock.Any(), sessionID, models.AddMediaSessionCloseReasonCancelled, gomock.Any()).Return(tripID, nil)
 	tripRepo.EXPECT().SetStatus(tripID, models.TripStatusReady).Return(nil)
-	participantRepo.EXPECT().GetByTripID(tripID).Return([]*models.TripParticipant{{UserID: userID}}, nil)
-	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, gomock.Any(), "TRIP_STATUS_CHANGED", gomock.Any()).Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "TRIP_STATUS_CHANGED", gomock.Any()).Return(nil)
 
 	svc := buildService(tripRepo, participantRepo, sessionRepo, mediaRepo, nil, nil, eventRepo)
 	resp, err := svc.AddMediaCancel(ctxWithUser(userID), &pb.AddMediaCancelRequest{
@@ -448,8 +445,7 @@ func TestAddMediaTakeover_AfterHour_Success(t *testing.T) {
 	sessionRepo.EXPECT().GetActive(gomock.Any(), tripID).Return(active, nil)
 	tripRepo.EXPECT().GetByID(tripID).Return(trip, nil)
 	sessionRepo.EXPECT().SetInitiator(gomock.Any(), sessionID, callerID, gomock.Any()).Return(nil)
-	participantRepo.EXPECT().GetByTripID(tripID).Return([]*models.TripParticipant{{UserID: leaderID}, {UserID: callerID}}, nil)
-	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, gomock.Any(), "ADD_MEDIA_INITIATOR_CHANGED", gomock.Any()).Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "ADD_MEDIA_INITIATOR_CHANGED", gomock.Any()).Return(nil)
 
 	svc := buildService(tripRepo, participantRepo, sessionRepo, nil, nil, nil, eventRepo)
 	resp, err := svc.AddMediaTakeover(ctxWithUser(callerID), &pb.AddMediaTakeoverRequest{

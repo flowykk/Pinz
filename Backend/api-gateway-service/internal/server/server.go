@@ -62,9 +62,9 @@ func NewServer(deps *di.Dependencies) *Server {
 	// cancels the request context after 10s and kills the connection.
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RequireJWT)
-		r.Get("/v1/ws", deps.WSHandler.ServeWS)
 		r.Get("/api/v1/trips/creation/{id}/review/ws", deps.WSHandler.ServeTripCreationReviewWS)
 		r.Get("/api/v1/trips/{id}/media/add/review/ws", deps.WSHandler.ServeTripAddMediaReviewWS)
+		r.Get("/api/v1/trips/{id}/pin-uploads/{sid}/ws", deps.WSHandler.ServeTripPinUploadSessionWS)
 	})
 
 	r.Group(func(r chi.Router) {
@@ -159,22 +159,16 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Get("/{id}/pins/{pin_id}", deps.TripHandler.GetPin)
 				r.Patch("/{id}/pins/{pin_id}", deps.TripHandler.UpdatePin)
 				r.Delete("/{id}/pins/{pin_id}", deps.TripHandler.DeletePin)
-				r.Post("/{id}/pins/{pin_id}/media/sessions/start", deps.TripHandler.AddMediaToPinStart)
-				r.Post("/{id}/pins/{pin_id}/media/sessions/{sid}/upload-urls", deps.TripHandler.RequestPinMediaUploadUrls)
-				r.Post("/{id}/pins/{pin_id}/media/sessions/{sid}/commit-upload", deps.TripHandler.CommitPinMediaUpload)
-				r.Post("/{id}/pins/{pin_id}/media/sessions/{sid}/process", deps.TripHandler.ProcessPinMediaAddition)
-				r.Get("/{id}/pins/{pin_id}/media/sessions/{sid}/review", deps.TripHandler.GetPinMediaAdditionReview)
-				r.Post("/{id}/pins/{pin_id}/media/sessions/{sid}/finalize", deps.TripHandler.FinalizePinMediaAddition)
-				r.Post("/{id}/pins/{pin_id}/media/sessions/{sid}/cancel", deps.TripHandler.CancelPinMediaAddition)
 				r.Delete("/{id}/pins/{pin_id}/media/{media_id}", deps.TripHandler.RemoveMediaFromPin)
-				// Sessioned создание одиночного пина (ТЗ 4.1, 4.6-4.11)
-				r.Post("/{id}/pins/creation/start", deps.TripHandler.CreatePinStart)
-				r.Post("/{id}/pins/creation/sessions/{sid}/upload-urls", deps.TripHandler.RequestPinCreationUploadUrls)
-				r.Post("/{id}/pins/creation/sessions/{sid}/commit-upload", deps.TripHandler.CommitPinCreationUpload)
-				r.Post("/{id}/pins/creation/sessions/{sid}/process", deps.TripHandler.ProcessPinCreation)
-				r.Get("/{id}/pins/creation/sessions/{sid}/review", deps.TripHandler.GetPinCreationReview)
-				r.Post("/{id}/pins/creation/sessions/{sid}/finalize", deps.TripHandler.FinalizePinCreation)
-				r.Post("/{id}/pins/creation/sessions/{sid}/cancel", deps.TripHandler.CancelPinCreation)
+
+				// Унифицированный pin-upload (target_pin_id null → creation, заполнен → addition).
+				r.Post("/{id}/pin-uploads/start", deps.TripHandler.PinUploadStart)
+				r.Post("/{id}/pin-uploads/{sid}/upload-urls", deps.TripHandler.RequestPinUploadUrls)
+				r.Post("/{id}/pin-uploads/{sid}/commit-upload", deps.TripHandler.CommitPinUpload)
+				r.Post("/{id}/pin-uploads/{sid}/process", deps.TripHandler.ProcessPinUpload)
+				r.Get("/{id}/pin-uploads/{sid}/review", deps.TripHandler.GetPinUploadReview)
+				r.Post("/{id}/pin-uploads/{sid}/finalize", deps.TripHandler.FinalizePinUpload)
+				r.Post("/{id}/pin-uploads/{sid}/cancel", deps.TripHandler.CancelPinUpload)
 			})
 
 			r.Route("/feed", func(r chi.Router) {

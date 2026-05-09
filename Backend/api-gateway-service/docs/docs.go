@@ -3574,21 +3574,102 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/pins/creation/sessions/{sid}/cancel": {
+        "/api/v1/trips/{id}/pin-uploads/start": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Удаляет orphan media сессии (pin_id=NULL, pin_creation_session_id=session) с S3 cleanup и закрывает сессию.",
+                "description": "Унифицированная сессия загрузки медиа. target_pin_id null → создание нового пина (UNIQUE per trip), заполнен → добавление медиа в существующий пин (UNIQUE per pin). Дальше: PUT в S3 → /commit-upload → /process → ws + /review → /finalize или /cancel.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "pins"
                 ],
-                "summary": "Cancel pin creation",
+                "summary": "Start pin upload session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Files + optional target_pin_id",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.PinUploadStartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PinUploadStartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Precondition Failed",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trips/{id}/pin-uploads/{sid}/cancel": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pins"
+                ],
+                "summary": "Cancel pin upload",
                 "parameters": [
                     {
                         "type": "string",
@@ -3609,7 +3690,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CancelPinCreationResponse"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CancelPinUploadResponse"
                         }
                     },
                     "401": {
@@ -3639,14 +3720,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/pins/creation/sessions/{sid}/commit-upload": {
+        "/api/v1/trips/{id}/pin-uploads/{sid}/commit-upload": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Фиксация s3-загрузки в активную сессию создания пина: создаётся media с pin_id=NULL и pin_creation_session_id=session.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3656,7 +3736,7 @@ const docTemplate = `{
                 "tags": [
                     "pins"
                 ],
-                "summary": "Commit pin creation upload",
+                "summary": "Commit pin upload",
                 "parameters": [
                     {
                         "type": "string",
@@ -3678,7 +3758,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.CommitPinCreationUploadRequest"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.CommitPinUploadRequest"
                         }
                     }
                 ],
@@ -3686,7 +3766,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CommitPinCreationUploadResponse"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CommitPinUploadResponse"
                         }
                     },
                     "400": {
@@ -3719,6 +3799,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -3728,14 +3814,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/pins/creation/sessions/{sid}/finalize": {
+        "/api/v1/trips/{id}/pin-uploads/{sid}/finalize": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Создание новой записи pins с финальными полями (правки клиента поверх ML-suggested), привязка media, теги, reverse-geocoding, публикация PIN_ADDED, закрытие сессии.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3745,7 +3830,7 @@ const docTemplate = `{
                 "tags": [
                     "pins"
                 ],
-                "summary": "Finalize pin creation",
+                "summary": "Finalize pin upload",
                 "parameters": [
                     {
                         "type": "string",
@@ -3767,7 +3852,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizePinCreationRequest"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizePinUploadRequest"
                         }
                     }
                 ],
@@ -3802,8 +3887,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
-                    "412": {
-                        "description": "Precondition Failed",
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -3817,21 +3902,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/pins/creation/sessions/{sid}/process": {
+        "/api/v1/trips/{id}/pin-uploads/{sid}/process": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Синхронный запуск ML-stub: хеш-дедуп (4.7.6.a), NSFW (4.7.5, заглушка), similar (4.7.7, заглушка), suggested поля пина (4.7.2.a-f), pin issues (4.7.3-4.7.4). Snapshot сохраняется в сессию.",
+                "description": "202 + processing_status=\"PROCESSING\". По завершении воркер шлёт WS PIN_UPLOAD_PROCESSING_COMPLETED.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "pins"
                 ],
-                "summary": "Process pin creation (ML stub)",
+                "summary": "Process pin upload (async)",
                 "parameters": [
                     {
                         "type": "string",
@@ -3849,10 +3934,10 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "202": {
+                        "description": "Accepted",
                         "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessPinCreationResponse"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessPinUploadResponse"
                         }
                     },
                     "401": {
@@ -3873,6 +3958,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -3882,21 +3973,20 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/pins/creation/sessions/{sid}/review": {
+        "/api/v1/trips/{id}/pin-uploads/{sid}/review": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Чтение snapshot Process: suggested-поля пина (имя/категория/теги/координаты/start-end), список новых медиа, pin issues, similar groups.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "pins"
                 ],
-                "summary": "Get pin creation review",
+                "summary": "Get pin upload review",
                 "parameters": [
                     {
                         "type": "string",
@@ -3917,7 +4007,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.GetPinCreationReviewResponse"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.GetPinUploadReviewResponse"
                         }
                     },
                     "401": {
@@ -3947,14 +4037,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trips/{id}/pins/creation/sessions/{sid}/upload-urls": {
+        "/api/v1/trips/{id}/pin-uploads/{sid}/upload-urls": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Догрузка presigned URLs к активной сессии создания пина.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3964,7 +4053,7 @@ const docTemplate = `{
                 "tags": [
                     "pins"
                 ],
-                "summary": "Request more presigned URLs (pin creation)",
+                "summary": "Request more presigned URLs (pin upload)",
                 "parameters": [
                     {
                         "type": "string",
@@ -3986,7 +4075,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestPinCreationUploadUrlsRequest"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestPinUploadUrlsRequest"
                         }
                     }
                 ],
@@ -3994,7 +4083,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.RequestPinCreationUploadUrlsResponse"
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.RequestPinUploadUrlsResponse"
                         }
                     },
                     "400": {
@@ -4017,82 +4106,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/pins/creation/start": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Старт sessioned-флоу создания одиночного пина в READY-трипе. Создаёт сессию (UNIQUE active per trip — ` + "`" + `412 FailedPrecondition` + "`" + `, если уже идёт) и выдаёт presigned PUT URLs. Дальше: PUT в S3 → /commit-upload → /process → /review → /finalize или /cancel.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pins"
-                ],
-                "summary": "Start pin creation session",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Files to upload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.CreatePinStartRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CreatePinStartResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "412": {
-                        "description": "Precondition Failed",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -4314,581 +4327,6 @@ const docTemplate = `{
                     },
                     "412": {
                         "description": "Precondition Failed",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/pins/{pin_id}/media/sessions/start": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Старт sessioned-флоу добавления медиа в существующий пин: создаёт сессию (UNIQUE per-pin) и выдаёт presigned PUT URLs. Дальше клиент пушит файлы в S3 → /commit-upload → /process → /review → /finalize или /cancel.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pins"
-                ],
-                "summary": "Start add-media-to-pin session",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Pin ID",
-                        "name": "pin_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Files to upload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaToPinStartRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaToPinStartResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "412": {
-                        "description": "Precondition Failed",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/cancel": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Удаляет orphan media сессии (pin_id=NULL, pin_addition_session_id=session) с S3 cleanup и закрывает сессию. Идемпотентен.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pins"
-                ],
-                "summary": "Cancel pin media addition",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Pin ID",
-                        "name": "pin_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "sid",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CancelPinMediaAdditionResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/commit-upload": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Фиксация s3-загрузки в активную сессию добавления медиа в пин: создаётся media с pin_id=NULL и pin_addition_session_id=session.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pins"
-                ],
-                "summary": "Commit pin media upload",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Pin ID",
-                        "name": "pin_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "sid",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Commit payload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.CommitPinMediaUploadRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.CommitPinMediaUploadResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "412": {
-                        "description": "Precondition Failed",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/finalize": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Применение media_to_delete (orphan-cleanup), привязка оставшихся медиа к пину, пересчёт start/end/lat/lon, reverse-geocoding (если у пина появились координаты), закрытие сессии.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pins"
-                ],
-                "summary": "Finalize pin media addition",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Pin ID",
-                        "name": "pin_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "sid",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Finalize payload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizePinMediaAdditionRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PinResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/process": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Синхронный запуск ML-stub: хеш-дедуп (4.7.6.a), NSFW (4.7.5), similar (4.7.7), pin issues (4.7.3-4.7.4). Snapshot сохраняется в сессию для последующего GetReview/Finalize.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pins"
-                ],
-                "summary": "Process pin media addition (ML stub)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Pin ID",
-                        "name": "pin_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "sid",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessPinMediaAdditionResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/review": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Чтение snapshot Process: список новых медиа (presigned URLs), pin issues, similar groups. Если Process ещё не вызывался — поля пустые.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pins"
-                ],
-                "summary": "Get pin media addition review",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Pin ID",
-                        "name": "pin_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "sid",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.GetPinMediaAdditionReviewResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/trips/{id}/pins/{pin_id}/media/sessions/{sid}/upload-urls": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Догрузка presigned URLs к активной сессии добавления медиа в пин.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pins"
-                ],
-                "summary": "Request more presigned URLs (pin add-media)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Trip ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Pin ID",
-                        "name": "pin_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "sid",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Files to upload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestPinMediaUploadUrlsRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.RequestPinMediaUploadUrlsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse"
                         }
@@ -5359,17 +4797,6 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_requests.AddMediaToPinStartRequest": {
-            "type": "object",
-            "properties": {
-                "files_to_upload": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry"
-                    }
-                }
-            }
-        },
         "pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest": {
             "type": "object",
             "properties": {
@@ -5396,28 +4823,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_requests.CommitPinCreationUploadRequest": {
-            "type": "object",
-            "properties": {
-                "captured_at_unix": {
-                    "type": "integer"
-                },
-                "latitude": {
-                    "type": "number"
-                },
-                "longitude": {
-                    "type": "number"
-                },
-                "media_type": {
-                    "description": "image | video",
-                    "type": "string"
-                },
-                "s3_key": {
-                    "type": "string"
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_requests.CommitPinMediaUploadRequest": {
+        "pinz_backend_api-gateway-service_internal_requests.CommitPinUploadRequest": {
             "type": "object",
             "properties": {
                 "captured_at_unix": {
@@ -5479,17 +4885,6 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_requests.CreatePinStartRequest": {
-            "type": "object",
-            "properties": {
-                "files_to_upload": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry"
-                    }
-                }
-            }
-        },
         "pinz_backend_api-gateway-service_internal_requests.CreateTripRequest": {
             "type": "object",
             "properties": {
@@ -5547,7 +4942,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_requests.FinalizePinCreationRequest": {
+        "pinz_backend_api-gateway-service_internal_requests.FinalizePinUploadRequest": {
             "type": "object",
             "properties": {
                 "category": {
@@ -5585,17 +4980,6 @@ const docTemplate = `{
                 },
                 "tags_set": {
                     "type": "boolean"
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_requests.FinalizePinMediaAdditionRequest": {
-            "type": "object",
-            "properties": {
-                "media_to_delete": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
@@ -5741,6 +5125,20 @@ const docTemplate = `{
                 }
             }
         },
+        "pinz_backend_api-gateway-service_internal_requests.PinUploadStartRequest": {
+            "type": "object",
+            "properties": {
+                "files_to_upload": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry"
+                    }
+                },
+                "target_pin_id": {
+                    "type": "string"
+                }
+            }
+        },
         "pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest": {
             "type": "object",
             "properties": {
@@ -5800,18 +5198,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_requests.RequestPinCreationUploadUrlsRequest": {
-            "type": "object",
-            "properties": {
-                "files_to_upload": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry"
-                    }
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_requests.RequestPinMediaUploadUrlsRequest": {
+        "pinz_backend_api-gateway-service_internal_requests.RequestPinUploadUrlsRequest": {
             "type": "object",
             "properties": {
                 "files_to_upload": {
@@ -6179,20 +5566,6 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.AddMediaToPinStartResponse": {
-            "type": "object",
-            "properties": {
-                "session_id": {
-                    "type": "string"
-                },
-                "upload_urls": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL"
-                    }
-                }
-            }
-        },
         "pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse": {
             "type": "object",
             "properties": {
@@ -6252,16 +5625,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.CancelPinCreationResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string",
-                    "example": "cancelled"
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_responses.CancelPinMediaAdditionResponse": {
+        "pinz_backend_api-gateway-service_internal_responses.CancelPinUploadResponse": {
             "type": "object",
             "properties": {
                 "status": {
@@ -6278,7 +5642,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.CommitPinCreationUploadResponse": {
+        "pinz_backend_api-gateway-service_internal_responses.CommitPinUploadResponse": {
             "type": "object",
             "properties": {
                 "media_count_in_session": {
@@ -6286,31 +5650,6 @@ const docTemplate = `{
                 },
                 "media_id": {
                     "type": "string"
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_responses.CommitPinMediaUploadResponse": {
-            "type": "object",
-            "properties": {
-                "media_count_in_session": {
-                    "type": "integer"
-                },
-                "media_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_responses.CreatePinStartResponse": {
-            "type": "object",
-            "properties": {
-                "session_id": {
-                    "type": "string"
-                },
-                "upload_urls": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL"
-                    }
                 }
             }
         },
@@ -6593,31 +5932,15 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.GetPinCreationReviewResponse": {
+        "pinz_backend_api-gateway-service_internal_responses.GetPinUploadReviewResponse": {
             "type": "object",
             "properties": {
                 "draft": {
-                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PinCreationDraft"
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PinUploadDraft"
                 },
-                "session_id": {
-                    "type": "string"
-                },
-                "similar": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_responses.GetPinMediaAdditionReviewResponse": {
-            "type": "object",
-            "properties": {
-                "draft": {
-                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PinAdditionDraft"
+                "processing_status": {
+                    "type": "string",
+                    "example": "READY_FOR_REVIEW"
                 },
                 "session_id": {
                     "type": "string"
@@ -6764,28 +6087,36 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.PinAdditionDraft": {
+        "pinz_backend_api-gateway-service_internal_responses.PinResponse": {
             "type": "object",
             "properties": {
-                "deduped_media_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "pin": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.PinSuggestedFields": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
                 },
-                "new_media": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.ReviewPinMedia"
-                    }
+                "end_time_unix": {
+                    "type": "integer"
                 },
-                "nsfw_media_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "latitude": {
+                    "type": "number"
                 },
-                "pin_issues": {
+                "longitude": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_time_unix": {
+                    "type": "integer"
+                },
+                "tags": {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -6793,7 +6124,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.PinCreationDraft": {
+        "pinz_backend_api-gateway-service_internal_responses.PinUploadDraft": {
             "type": "object",
             "properties": {
                 "deduped_media_ids": {
@@ -6820,37 +6151,22 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "suggested_category": {
-                    "type": "string"
-                },
-                "suggested_end_time_unix": {
-                    "type": "integer"
-                },
-                "suggested_latitude": {
-                    "type": "number"
-                },
-                "suggested_longitude": {
-                    "type": "number"
-                },
-                "suggested_name": {
-                    "type": "string"
-                },
-                "suggested_start_time_unix": {
-                    "type": "integer"
-                },
-                "suggested_tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "suggested": {
+                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PinSuggestedFields"
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.PinResponse": {
+        "pinz_backend_api-gateway-service_internal_responses.PinUploadStartResponse": {
             "type": "object",
             "properties": {
-                "pin": {
-                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin"
+                "session_id": {
+                    "type": "string"
+                },
+                "upload_urls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL"
+                    }
                 }
             }
         },
@@ -6879,43 +6195,15 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.ProcessPinCreationResponse": {
+        "pinz_backend_api-gateway-service_internal_responses.ProcessPinUploadResponse": {
             "type": "object",
             "properties": {
-                "draft": {
-                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PinCreationDraft"
+                "processing_status": {
+                    "type": "string",
+                    "example": "PROCESSING"
                 },
                 "session_id": {
                     "type": "string"
-                },
-                "similar": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_responses.ProcessPinMediaAdditionResponse": {
-            "type": "object",
-            "properties": {
-                "draft": {
-                    "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.PinAdditionDraft"
-                },
-                "session_id": {
-                    "type": "string"
-                },
-                "similar": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
                 }
             }
         },
@@ -7054,18 +6342,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pinz_backend_api-gateway-service_internal_responses.RequestPinCreationUploadUrlsResponse": {
-            "type": "object",
-            "properties": {
-                "upload_urls": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL"
-                    }
-                }
-            }
-        },
-        "pinz_backend_api-gateway-service_internal_responses.RequestPinMediaUploadUrlsResponse": {
+        "pinz_backend_api-gateway-service_internal_responses.RequestPinUploadUrlsResponse": {
             "type": "object",
             "properties": {
                 "upload_urls": {

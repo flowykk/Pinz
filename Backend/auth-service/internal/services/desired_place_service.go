@@ -23,7 +23,6 @@ const (
 	desiredPlaceDescriptionMaxLen = 1000
 )
 
-// allowedDesiredPlaceImageExt — те же расширения, что и для аватара (см. RequestAvatarUpload).
 var allowedDesiredPlaceImageExt = map[string]struct{}{
 	".jpg":  {},
 	".jpeg": {},
@@ -101,7 +100,6 @@ func (s *AuthService) UpdateDesiredPlace(ctx context.Context, req *pb.UpdateDesi
 		return nil, status.Error(codes.Internal, "failed to load desired place")
 	}
 	if existing.UserID != userID {
-		// not exposing existence of foreign records
 		return nil, status.Error(codes.NotFound, "desired place not found")
 	}
 
@@ -229,8 +227,6 @@ func (s *AuthService) DeleteDesiredPlaceImage(ctx context.Context, req *pb.Delet
 	return &pb.DeleteDesiredPlaceImageResponse{Place: s.desiredPlaceToProto(ctx, updated)}, nil
 }
 
-// listDesiredPlacesProto собирает список с presigned image_url для одного юзера.
-// Используется как ListDesiredPlaces, так и GetPublicUserProfile.
 func (s *AuthService) listDesiredPlacesProto(ctx context.Context, userID string) ([]*pb.DesiredPlace, error) {
 	if s.desiredPlaceRepo == nil {
 		return nil, nil

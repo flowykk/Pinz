@@ -51,13 +51,9 @@ func (r *MediaRepository) Create(m *models.Media) error {
 		cols = append(cols, "uploaded_by")
 		vals = append(vals, *m.UploadedBy)
 	}
-	if m.PinAdditionSessionID != nil {
-		cols = append(cols, "pin_addition_session_id")
-		vals = append(vals, *m.PinAdditionSessionID)
-	}
-	if m.PinCreationSessionID != nil {
-		cols = append(cols, "pin_creation_session_id")
-		vals = append(vals, *m.PinCreationSessionID)
+	if m.UploadSessionID != nil {
+		cols = append(cols, "upload_session_id")
+		vals = append(vals, *m.UploadSessionID)
 	}
 	q := psq.Insert("media").Columns(cols...).Values(vals...).Suffix("RETURNING id, created_at")
 	sqlStr, args, err := q.ToSql()
@@ -148,17 +144,89 @@ func (r *MediaRepository) CommitInSession(ctx context.Context, m *models.Media, 
 	return totalAfter, videosAfter, nil
 }
 
+// CommitInUploadSession — аналог CommitInSession для pin_upload_sessions.
+// Берёт advisory_xact_lock по session_id, проверяет лимиты трипа, INSERT media,
+// UPDATE pin_upload_sessions.last_activity_at — всё в одной транзакции.
+func (r *MediaRepository) CommitInUploadSession(ctx context.Context, m *models.Media, sessionID string, maxMedia, maxVideos int) (totalAfter, videosAfter int, err error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, err
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+	if _, err = tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock(hashtext($1))", sessionID); err != nil {
+		return 0, 0, err
+	}
+	var total, videos int
+	if err = tx.QueryRowContext(ctx, "SELECT COUNT(*), COUNT(*) FILTER (WHERE media_type = 'video') FROM media WHERE trip_id = $1", m.TripID).Scan(&total, &videos); err != nil {
+		return 0, 0, err
+	}
+	if total >= maxMedia {
+		return total, videos, ErrMediaLimitExceeded
+	}
+	if m.MediaType == "video" && videos >= maxVideos {
+		return total, videos, ErrVideoLimitExceeded
+	}
+	cols := []string{"trip_id", "s3_key", "media_type", "captured_at", "battle_rating", "privacy_level"}
+	vals := []interface{}{m.TripID, m.S3Key, m.MediaType, m.CapturedAt, m.BattleRating, m.PrivacyLevel}
+	if m.PinID != nil {
+		cols = append(cols, "pin_id")
+		vals = append(vals, *m.PinID)
+	}
+	if m.Latitude != nil && m.Longitude != nil {
+		cols = append(cols, "location")
+		vals = append(vals, sq.Expr("ST_SetSRID(ST_MakePoint(?, ?), 4326)", *m.Longitude, *m.Latitude))
+	}
+	if m.ContentHash != nil {
+		cols = append(cols, "content_hash")
+		vals = append(vals, *m.ContentHash)
+	}
+	if m.UploadedBy != nil {
+		cols = append(cols, "uploaded_by")
+		vals = append(vals, *m.UploadedBy)
+	}
+	if m.UploadSessionID != nil {
+		cols = append(cols, "upload_session_id")
+		vals = append(vals, *m.UploadSessionID)
+	}
+	q := psq.Insert("media").Columns(cols...).Values(vals...).Suffix("RETURNING id, created_at")
+	sqlStr, args, qerr := q.ToSql()
+	if qerr != nil {
+		return 0, 0, qerr
+	}
+	if err = tx.QueryRowContext(ctx, sqlStr, args...).Scan(&m.ID, &m.CreatedAt); err != nil {
+		return 0, 0, err
+	}
+	if _, err = tx.ExecContext(ctx, "UPDATE pin_upload_sessions SET last_activity_at = NOW() WHERE session_id = $1", sessionID); err != nil {
+		return 0, 0, err
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, 0, err
+	}
+	committed = true
+	totalAfter = total + 1
+	videosAfter = videos
+	if m.MediaType == "video" {
+		videosAfter++
+	}
+	return totalAfter, videosAfter, nil
+}
+
 func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, upload_session_id, created_at
 		FROM media WHERE id = $1`
 	var m models.Media
-	var pinID, similarGroupID, contentHash sql.NullString
+	var pinID, similarGroupID, contentHash, uploadSession sql.NullString
 	var lat, lon sql.NullFloat64
 	var capturedAt sql.NullTime
 	err := r.db.QueryRow(sqlStr, id).Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
-		&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &m.CreatedAt)
+		&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadSession, &m.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
@@ -183,13 +251,16 @@ func (r *MediaRepository) GetByID(id string) (*models.Media, error) {
 	if contentHash.Valid {
 		m.ContentHash = &contentHash.String
 	}
+	if uploadSession.Valid {
+		m.UploadSessionID = &uploadSession.String
+	}
 	return &m, nil
 }
 
 func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, uploaded_by, created_at
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, uploaded_by, upload_session_id, created_at
 		FROM media WHERE trip_id = $1 ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
 	if err != nil {
@@ -199,11 +270,11 @@ func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 	var list []*models.Media
 	for rows.Next() {
 		var m models.Media
-		var pinID, similarGroupID, contentHash, uploadedBy sql.NullString
+		var pinID, similarGroupID, contentHash, uploadedBy, uploadSession sql.NullString
 		var lat, lon sql.NullFloat64
 		var capturedAt sql.NullTime
 		if err := rows.Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
-			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadedBy, &m.CreatedAt); err != nil {
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadedBy, &uploadSession, &m.CreatedAt); err != nil {
 			return nil, err
 		}
 		if pinID.Valid {
@@ -226,6 +297,9 @@ func (r *MediaRepository) ListByTripID(tripID string) ([]*models.Media, error) {
 		}
 		if uploadedBy.Valid {
 			m.UploadedBy = &uploadedBy.String
+		}
+		if uploadSession.Valid {
+			m.UploadSessionID = &uploadSession.String
 		}
 		list = append(list, &m)
 	}
@@ -493,7 +567,7 @@ func (r *MediaRepository) ClusterIDsByLocation(tripID string, radiusMeters float
 func (r *MediaRepository) ListByPinID(pinID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, upload_session_id, created_at
 		FROM media WHERE pin_id = $1 ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, pinID)
 	if err != nil {
@@ -503,11 +577,11 @@ func (r *MediaRepository) ListByPinID(pinID string) ([]*models.Media, error) {
 	var list []*models.Media
 	for rows.Next() {
 		var m models.Media
-		var pinIDNull, similarGroupID, contentHash sql.NullString
+		var pinIDNull, similarGroupID, contentHash, uploadSession sql.NullString
 		var lat, lon sql.NullFloat64
 		var capturedAt sql.NullTime
 		if err := rows.Scan(&m.ID, &m.TripID, &pinIDNull, &m.S3Key, &m.MediaType,
-			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &m.CreatedAt); err != nil {
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadSession, &m.CreatedAt); err != nil {
 			return nil, err
 		}
 		if pinIDNull.Valid {
@@ -527,6 +601,9 @@ func (r *MediaRepository) ListByPinID(pinID string) ([]*models.Media, error) {
 		}
 		if contentHash.Valid {
 			m.ContentHash = &contentHash.String
+		}
+		if uploadSession.Valid {
+			m.UploadSessionID = &uploadSession.String
 		}
 		list = append(list, &m)
 	}
@@ -591,14 +668,13 @@ func (r *MediaRepository) DeleteByPinID(pinID string) ([]string, error) {
 	return keys, rows.Err()
 }
 
-// ListByPinAdditionSession возвращает media сессии add-media-в-пин (pin_id=NULL,
-// pin_addition_session_id=$1) в хронологическом порядке. Используется в Process
-// для хеш-дедупа и расчёта pin issues.
-func (r *MediaRepository) ListByPinAdditionSession(sessionID string) ([]*models.Media, error) {
+// ListByUploadSession возвращает media активной pin-upload-сессии
+// (pin_id=NULL, upload_session_id=$1) в хронологическом порядке.
+func (r *MediaRepository) ListByUploadSession(sessionID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, uploaded_by, pin_addition_session_id, created_at
-		FROM media WHERE pin_addition_session_id = $1
+		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, uploaded_by, upload_session_id, created_at
+		FROM media WHERE upload_session_id = $1
 		ORDER BY captured_at ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, sessionID)
 	if err != nil {
@@ -608,11 +684,11 @@ func (r *MediaRepository) ListByPinAdditionSession(sessionID string) ([]*models.
 	var list []*models.Media
 	for rows.Next() {
 		var m models.Media
-		var pinID, similarGroupID, contentHash, uploadedBy, pinAddSession sql.NullString
+		var pinID, similarGroupID, contentHash, uploadedBy, uploadSession sql.NullString
 		var lat, lon sql.NullFloat64
 		var capturedAt sql.NullTime
 		if err := rows.Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
-			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadedBy, &pinAddSession, &m.CreatedAt); err != nil {
+			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadedBy, &uploadSession, &m.CreatedAt); err != nil {
 			return nil, err
 		}
 		if pinID.Valid {
@@ -636,20 +712,19 @@ func (r *MediaRepository) ListByPinAdditionSession(sessionID string) ([]*models.
 		if uploadedBy.Valid {
 			m.UploadedBy = &uploadedBy.String
 		}
-		if pinAddSession.Valid {
-			m.PinAdditionSessionID = &pinAddSession.String
+		if uploadSession.Valid {
+			m.UploadSessionID = &uploadSession.String
 		}
 		list = append(list, &m)
 	}
 	return list, rows.Err()
 }
 
-// DeleteOrphanByPinAdditionSession удаляет все media сессии добавления медиа в
-// пин (pin_id=NULL, pin_addition_session_id=$1) и возвращает s3_keys для S3
-// cleanup. Используется в CancelPinMediaAddition.
-func (r *MediaRepository) DeleteOrphanByPinAdditionSession(sessionID string) ([]string, error) {
+// DeleteOrphanByUploadSession удаляет media с pin_id=NULL,
+// upload_session_id=$1 и возвращает s3_keys для S3 cleanup.
+func (r *MediaRepository) DeleteOrphanByUploadSession(sessionID string) ([]string, error) {
 	rows, err := r.db.Query(
-		`DELETE FROM media WHERE pin_addition_session_id = $1 AND pin_id IS NULL RETURNING s3_key`,
+		`DELETE FROM media WHERE upload_session_id = $1 AND pin_id IS NULL RETURNING s3_key`,
 		sessionID)
 	if err != nil {
 		return nil, err
@@ -665,82 +740,6 @@ func (r *MediaRepository) DeleteOrphanByPinAdditionSession(sessionID string) ([]
 	}
 	return keys, rows.Err()
 }
-
-// ListByPinCreationSession возвращает media активной pin-creation сессии
-// (pin_id=NULL, pin_creation_session_id=$1) в хронологическом порядке.
-// Используется в Process для хеш-дедупа и расчёта suggested-полей пина.
-func (r *MediaRepository) ListByPinCreationSession(sessionID string) ([]*models.Media, error) {
-	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
-		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, uploaded_by, pin_creation_session_id, created_at
-		FROM media WHERE pin_creation_session_id = $1
-		ORDER BY captured_at ASC NULLS LAST, created_at ASC`
-	rows, err := r.db.Query(sqlStr, sessionID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var list []*models.Media
-	for rows.Next() {
-		var m models.Media
-		var pinID, similarGroupID, contentHash, uploadedBy, pinCreationSession sql.NullString
-		var lat, lon sql.NullFloat64
-		var capturedAt sql.NullTime
-		if err := rows.Scan(&m.ID, &m.TripID, &pinID, &m.S3Key, &m.MediaType,
-			&lat, &lon, &capturedAt, &m.BattleRating, &m.PrivacyLevel, &similarGroupID, &contentHash, &uploadedBy, &pinCreationSession, &m.CreatedAt); err != nil {
-			return nil, err
-		}
-		if pinID.Valid {
-			m.PinID = &pinID.String
-		}
-		if lat.Valid {
-			m.Latitude = &lat.Float64
-		}
-		if lon.Valid {
-			m.Longitude = &lon.Float64
-		}
-		if capturedAt.Valid {
-			m.CapturedAt = &capturedAt.Time
-		}
-		if similarGroupID.Valid {
-			m.SimilarGroupID = &similarGroupID.String
-		}
-		if contentHash.Valid {
-			m.ContentHash = &contentHash.String
-		}
-		if uploadedBy.Valid {
-			m.UploadedBy = &uploadedBy.String
-		}
-		if pinCreationSession.Valid {
-			m.PinCreationSessionID = &pinCreationSession.String
-		}
-		list = append(list, &m)
-	}
-	return list, rows.Err()
-}
-
-// DeleteOrphanByPinCreationSession удаляет все media сессии создания пина
-// (pin_id=NULL, pin_creation_session_id=$1) и возвращает s3_keys. Используется
-// в CancelPinCreation.
-func (r *MediaRepository) DeleteOrphanByPinCreationSession(sessionID string) ([]string, error) {
-	rows, err := r.db.Query(
-		`DELETE FROM media WHERE pin_creation_session_id = $1 AND pin_id IS NULL RETURNING s3_key`,
-		sessionID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var keys []string
-	for rows.Next() {
-		var k string
-		if err := rows.Scan(&k); err != nil {
-			return nil, err
-		}
-		keys = append(keys, k)
-	}
-	return keys, rows.Err()
-}
-
 // TopMediaByPinIDs возвращает топ-N медиа на каждый пин (sorted by battle_rating DESC, id) одним запросом.
 func (r *MediaRepository) TopMediaByPinIDs(pinIDs []string, limitPerPin int) (map[string][]*FeedMedia, error) {
 	if len(pinIDs) == 0 || limitPerPin <= 0 {

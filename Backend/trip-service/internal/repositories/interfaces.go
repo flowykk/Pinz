@@ -81,13 +81,13 @@ type TripEventPublisher interface {
 	// geo_registry/trip_locations и пришлёт PIN_LOCATIONS_RESOLVED обратно
 	// в pinz:trip:geo_events. См. vkr.txt §2.5.4.
 	PublishGeoRequest(ctx context.Context, tripID string, pins []GeoRequestPin) error
-	// Fan-out WS-события в pinz:trip:{id}:events и pinz:user:{uid}:events.
-	PublishTripEventWS(ctx context.Context, tripID string, userIDs []string, eventType string, payload map[string]interface{}) error
+	PublishTripEventWS(ctx context.Context, tripID string, eventType string, payload map[string]interface{}) error
 	// DeleteTripEventStream удаляет per-trip WS-stream (вызывается из DeleteTrip).
 	DeleteTripEventStream(ctx context.Context, tripID string) error
 	// PublishPrivacyEvent публикует событие изменения per-user приватности
 	// в pinz:trip:privacy:events для асинхронного fallback-пересчёта воркером.
 	PublishPrivacyEvent(ctx context.Context, objectType, objectID, tripID, userID, privacyLevel string) error
+	AddPinUploadTask(ctx context.Context, tripID, sessionID string, targetPinID *string, initiatorUserID string) error
 }
 
 type MediaRepositoryInterface interface {
@@ -97,6 +97,8 @@ type MediaRepositoryInterface interface {
 	// ErrVideoLimitExceeded). Возвращает totalAfter/videosAfter для ответа
 	// commit-upload.
 	CommitInSession(ctx context.Context, m *models.Media, sessionID string, maxMedia, maxVideos int) (totalAfter, videosAfter int, err error)
+	// CommitInUploadSession — то же, но для pin_upload_sessions.
+	CommitInUploadSession(ctx context.Context, m *models.Media, sessionID string, maxMedia, maxVideos int) (totalAfter, videosAfter int, err error)
 	GetByID(id string) (*models.Media, error)
 	ListByTripID(tripID string) ([]*models.Media, error)
 	UpdatePinID(mediaID, pinID string) error
@@ -107,16 +109,11 @@ type MediaRepositoryInterface interface {
 	// DeleteByPinID — full delete пина (ТЗ 4.5.1): удаляет все media пина и
 	// возвращает s3_keys для S3 cleanup.
 	DeleteByPinID(pinID string) ([]string, error)
-	// ListByPinAdditionSession — media активной pin-add-media-сессии (pin_id=NULL,
-	// pin_addition_session_id=$1). Используется в Process.
-	ListByPinAdditionSession(sessionID string) ([]*models.Media, error)
-	// DeleteOrphanByPinAdditionSession — orphan-cleanup при Cancel.
-	DeleteOrphanByPinAdditionSession(sessionID string) ([]string, error)
-	// ListByPinCreationSession — media активной pin-creation сессии (pin_id=NULL,
-	// pin_creation_session_id=$1). Используется в Process / Finalize.
-	ListByPinCreationSession(sessionID string) ([]*models.Media, error)
-	// DeleteOrphanByPinCreationSession — orphan-cleanup при CancelPinCreation.
-	DeleteOrphanByPinCreationSession(sessionID string) ([]string, error)
+	// ListByUploadSession — media унифицированной pin-upload сессии (pin_id=NULL,
+	// upload_session_id=$1).
+	ListByUploadSession(sessionID string) ([]*models.Media, error)
+	// DeleteOrphanByUploadSession — orphan-cleanup при CancelPinUpload.
+	DeleteOrphanByUploadSession(sessionID string) ([]string, error)
 	SetSimilarGroupID(mediaIDs []string, groupID string) error
 	MarkNSFW(mediaIDs []string) error
 	CountByTripID(tripID string) (total int, videos int, err error)
@@ -166,23 +163,15 @@ type PinHiddenRepositoryInterface interface {
 	IsHidden(pinID, userID string) (bool, error)
 }
 
-// PinMediaAdditionSessionRepositoryInterface — sessioned add-media-в-пин (ТЗ 4.2.2 + 4.12-4.14).
-type PinMediaAdditionSessionRepositoryInterface interface {
-	Create(ctx context.Context, tripID, pinID, userID string) (sessionID string, err error)
-	GetByID(ctx context.Context, sessionID string) (*models.PinMediaAdditionSession, error)
-	GetActiveForPin(ctx context.Context, pinID string) (*models.PinMediaAdditionSession, error)
+// PinUploadSessionRepositoryInterface — pin upload session (creation/addition).
+type PinUploadSessionRepositoryInterface interface {
+	Create(ctx context.Context, tripID string, targetPinID *string, userID string) (sessionID string, err error)
+	GetByID(ctx context.Context, sessionID string) (*models.PinUploadSession, error)
+	GetActiveCreationForTrip(ctx context.Context, tripID string) (*models.PinUploadSession, error)
+	GetActiveAdditionForPin(ctx context.Context, pinID string) (*models.PinUploadSession, error)
 	Touch(ctx context.Context, sessionID string) error
 	SetDraftSnapshot(ctx context.Context, sessionID string, snapshot []byte) error
-	Close(ctx context.Context, sessionID, reason string) error
-}
-
-// PinCreationSessionRepositoryInterface — sessioned создание одиночного пина (ТЗ 4.1, 4.6-4.11).
-type PinCreationSessionRepositoryInterface interface {
-	Create(ctx context.Context, tripID, userID string) (sessionID string, err error)
-	GetByID(ctx context.Context, sessionID string) (*models.PinCreationSession, error)
-	GetActiveForTrip(ctx context.Context, tripID string) (*models.PinCreationSession, error)
-	Touch(ctx context.Context, sessionID string) error
-	SetDraftSnapshot(ctx context.Context, sessionID string, snapshot []byte) error
+	SetProcessingStatus(ctx context.Context, sessionID, expected, next string) error
 	Close(ctx context.Context, sessionID, reason string) error
 }
 

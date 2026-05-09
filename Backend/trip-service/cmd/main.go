@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -85,6 +86,20 @@ func main() {
 
 	// cron для закрытия заброшенных add-media сессий (72ч без активности).
 	go worker.RunSessionCleanup(ctx, deps.AddMediaSessionRepo, deps.TripRepo, deps.ParticipantRepo, deps.MediaRepo, deps.EventRepo, deps.MediaURLs)
+
+	// cron для закрытия заброшенных pin_upload сессий.
+	go worker.RunPinUploadCleanup(ctx, deps.PinUploadSessionRepo, deps.MediaRepo, deps.MediaURLs)
+
+	// Унифицированный pin-upload consumer (pinz:trip:pin_upload:tasks). N горутин в одной group.
+	for i := 0; i < worker.PinUploadConsumerCount; i++ {
+		consumerName := "trip-pin-upload-" + strconv.Itoa(i)
+		go worker.RunPinUploadConsumer(ctx, deps.RedisClient, consumerName, worker.PinUploadConsumerDeps{
+			SessionRepo: deps.PinUploadSessionRepo,
+			MediaRepo:   deps.MediaRepo,
+			EventRepo:   deps.EventRepo,
+			MediaURLs:   deps.MediaURLs,
+		})
+	}
 
 	slog.Info("dependencies ready, starting gRPC server")
 	if err := server.RunGRPCServer(deps.TripService); err != nil {

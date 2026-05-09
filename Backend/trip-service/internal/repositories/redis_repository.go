@@ -19,9 +19,7 @@ const (
 	mlResultsStream = "pinz:trip:ml:results"
 	mlContextPrefix = "pinz:trip:ml:context:"
 	privacyEventsStream = "pinz:trip:privacy:events"
-
-	userEventsChannelPrefix = "pinz:user:"
-	userEventsChannelSuffix = ":events"
+	pinUploadTasksStream = "pinz:trip:pin_upload:tasks"
 
 	tripEventsChannelPrefix = "pinz:trip:"
 	tripEventsChannelSuffix = ":events"
@@ -42,6 +40,7 @@ const (
 	EventAddMediaProgress = "ADD_MEDIA_PROGRESS"
 	EventAddMediaInitiatorChanged = "ADD_MEDIA_INITIATOR_CHANGED"
 	EventAddMediaSessionCompleted = "ADD_MEDIA_SESSION_COMPLETED"
+	EventPinUploadProcessingCompleted = "PIN_UPLOAD_PROCESSING_COMPLETED"
 )
 
 // RedisRepository provides Redis client and trip event streaming for Notification/Statistics
@@ -190,6 +189,29 @@ func (r *RedisRepository) ReadMLResults(ctx context.Context, group, consumer str
 	return streams, nil
 }
 
+// AddPinUploadTask публикует задачу async ML pin-upload сессии.
+func (r *RedisRepository) AddPinUploadTask(ctx context.Context, tripID, sessionID string, targetPinID *string, initiatorUserID string) error {
+	if r == nil || r.client == nil {
+		return nil
+	}
+	vals := map[string]interface{}{
+		"trip_id":           tripID,
+		"session_id":        sessionID,
+		"initiator_user_id": initiatorUserID,
+	}
+	if targetPinID != nil {
+		vals["target_pin_id"] = *targetPinID
+	}
+	if err := r.client.XAdd(ctx, &redis.XAddArgs{
+		Stream: pinUploadTasksStream,
+		Values: vals,
+	}).Err(); err != nil {
+		slog.WarnContext(ctx, "AddPinUploadTask failed", "session_id", sessionID, "trip_id", tripID, "error", err)
+		return err
+	}
+	return nil
+}
+
 // AddMLTask adds a task to the ML/processing stream (for worker: apply-groups-and-process flow).
 func (r *RedisRepository) AddMLTask(ctx context.Context, tripID string) error {
 	err := r.client.XAdd(ctx, &redis.XAddArgs{
@@ -282,43 +304,8 @@ func (r *RedisRepository) PublishPrivacyEvent(ctx context.Context, objectType, o
 	}).Err()
 }
 
-// PublishUserEvent publishes a JSON event to the per-user Pub/Sub channel used by API Gateway
-// WebSocket connections. Message format:
-//
-//	{
-//	 "event": "<event_type>",
-//	 "payload": { ... arbitrary JSON ... }
-//	}
-func (r *RedisRepository) PublishUserEvent(ctx context.Context, userID, eventType string, payload map[string]interface{}) error {
-	if r == nil || r.client == nil {
-		return nil
-	}
-	msg := map[string]interface{}{
-		"event": eventType,
-		"payload": payload,
-	}
-	data, err := json.Marshal(msg)
-	if err != nil {
-		slog.WarnContext(ctx, "PublishUserEvent marshal failed", "user_id", userID, "event", eventType, "error", err)
-		return err
-	}
-	channel := userEventsChannelPrefix + userID + userEventsChannelSuffix
-	if err := r.client.Publish(ctx, channel, data).Err(); err != nil {
-		slog.WarnContext(ctx, "PublishUserEvent failed", "channel", channel, "event", eventType, "error", err)
-		return err
-	}
-	return nil
-}
-
-// PublishTripEventWS fan-outs a WebSocket event to both the per-trip stream
-// (consumed by per-resource WS endpoints) and each participant's per-user stream
-// (consumed by the global /v1/ws endpoint). Payload is always wrapped into
-// {"event","payload"} with trip_id injected so downstream filters work uniformly.
-//
-// Доставка идёт через Redis Streams (XADD с MAXLEN ~ wsStreamMaxLen + EXPIRE).
-// XREAD на стороне api-gateway может начать чтение с "0-0" и получить backfill —
-// это устраняет гонку publish-до-subscribe, которая была у Pub/Sub.
-func (r *RedisRepository) PublishTripEventWS(ctx context.Context, tripID string, userIDs []string, eventType string, payload map[string]interface{}) error {
+// PublishTripEventWS — XADD в per-trip WS-stream pinz:trip:{id}:events.
+func (r *RedisRepository) PublishTripEventWS(ctx context.Context, tripID string, eventType string, payload map[string]interface{}) error {
 	if r == nil || r.client == nil || tripID == "" {
 		return nil
 	}
@@ -329,22 +316,14 @@ func (r *RedisRepository) PublishTripEventWS(ctx context.Context, tripID string,
 		payload["trip_id"] = tripID
 	}
 	data, err := json.Marshal(map[string]interface{}{
-		"event": eventType,
+		"event":   eventType,
 		"payload": payload,
 	})
 	if err != nil {
 		slog.WarnContext(ctx, "PublishTripEventWS marshal failed", "trip_id", tripID, "event", eventType, "error", err)
 		return err
 	}
-	tripChannel := tripEventsChannelPrefix + tripID + tripEventsChannelSuffix
-	r.publishWSStream(ctx, tripChannel, data, eventType)
-	for _, uid := range userIDs {
-		if uid == "" {
-			continue
-		}
-		userChannel := userEventsChannelPrefix + uid + userEventsChannelSuffix
-		r.publishWSStream(ctx, userChannel, data, eventType)
-	}
+	r.publishWSStream(ctx, tripEventsChannelPrefix+tripID+tripEventsChannelSuffix, data, eventType)
 	return nil
 }
 

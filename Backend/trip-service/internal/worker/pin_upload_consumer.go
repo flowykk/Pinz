@@ -1,0 +1,119 @@
+package worker
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	"time"
+
+	"github.com/redis/go-redis/v9"
+
+	"pinz/backend/trip-service/internal/models"
+	"pinz/backend/trip-service/internal/repositories"
+	"pinz/backend/trip-service/internal/services"
+)
+
+const (
+	pinUploadTasksStream = "pinz:trip:pin_upload:tasks"
+	pinUploadConsumerGroup = "trip-service-pin-upload"
+)
+
+// PinUploadConsumerCount — число параллельных consumer-горутин в одной group.
+const PinUploadConsumerCount = 4
+
+type PinUploadConsumerDeps struct {
+	SessionRepo *repositories.PinUploadSessionRepository
+	MediaRepo   *repositories.MediaRepository
+	EventRepo   *repositories.RedisRepository
+	MediaURLs   services.MediaURLResolver
+}
+
+// RunPinUploadConsumer — один consumer-loop. Стартовать N штук c разными consumerName.
+func RunPinUploadConsumer(ctx context.Context, redisClient *redis.Client, consumerName string, deps PinUploadConsumerDeps) {
+	if redisClient == nil || deps.SessionRepo == nil || deps.MediaRepo == nil {
+		slog.Warn("pin_upload_consumer: dependencies missing, disabled", "consumer", consumerName)
+		<-ctx.Done()
+		return
+	}
+	if err := redisClient.XGroupCreateMkStream(ctx, pinUploadTasksStream, pinUploadConsumerGroup, "0").Err(); err != nil && !isBusyGroupErr(err) {
+		slog.ErrorContext(ctx, "pin_upload_consumer: create group failed", "consumer", consumerName, "error", err)
+		return
+	}
+	slog.Info("pin_upload_consumer: started", "stream", pinUploadTasksStream, "group", pinUploadConsumerGroup, "consumer", consumerName)
+	for {
+		select {
+		case <-ctx.Done():
+			slog.Info("pin_upload_consumer: context cancelled, stopping", "consumer", consumerName)
+			return
+		default:
+		}
+		streams, err := redisClient.XReadGroup(ctx, &redis.XReadGroupArgs{
+			Group:    pinUploadConsumerGroup,
+			Consumer: consumerName,
+			Streams:  []string{pinUploadTasksStream, ">"},
+			Count:    10,
+			Block:    2 * time.Second,
+		}).Result()
+		if err != nil && !errors.Is(err, redis.Nil) {
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return
+			}
+			slog.WarnContext(ctx, "pin_upload_consumer: XReadGroup failed", "consumer", consumerName, "error", err)
+			continue
+		}
+		for _, stream := range streams {
+			for _, msg := range stream.Messages {
+				processPinUploadMessage(ctx, msg, deps)
+				_ = redisClient.XAck(ctx, stream.Stream, pinUploadConsumerGroup, msg.ID)
+			}
+		}
+	}
+}
+
+func processPinUploadMessage(ctx context.Context, msg redis.XMessage, deps PinUploadConsumerDeps) {
+	tripID, _ := msg.Values["trip_id"].(string)
+	sessionID, _ := msg.Values["session_id"].(string)
+	initiator, _ := msg.Values["initiator_user_id"].(string)
+	targetPinID, _ := msg.Values["target_pin_id"].(string)
+	if sessionID == "" || tripID == "" {
+		slog.WarnContext(ctx, "pin_upload_consumer: malformed message", "values", msg.Values)
+		return
+	}
+	transitioned, err := services.RunPinUploadProcessing(ctx, sessionID, services.PinUploadProcessorDeps{
+		SessionRepo: deps.SessionRepo,
+		MediaRepo:   deps.MediaRepo,
+		MediaURLs:   deps.MediaURLs,
+	})
+	if err != nil {
+		slog.WarnContext(ctx, "pin_upload_consumer: processing failed",
+			"session_id", sessionID, "trip_id", tripID, "error", err)
+		// fallback: всё равно довести до READY_FOR_REVIEW, чтобы клиент мог finalize.
+		if ferr := deps.SessionRepo.SetProcessingStatus(ctx, sessionID,
+			models.PinUploadProcessingStatusProcessing,
+			models.PinUploadProcessingStatusReadyForReview); ferr != nil {
+			if !errors.Is(ferr, repositories.ErrPinUploadSessionWrongState) &&
+				!errors.Is(ferr, repositories.ErrPinUploadSessionNotFound) {
+				slog.WarnContext(ctx, "pin_upload_consumer: fallback transition failed",
+					"session_id", sessionID, "error", ferr)
+			}
+		} else {
+			transitioned = true
+		}
+	}
+	if !transitioned {
+		return
+	}
+	if deps.EventRepo != nil {
+		payload := map[string]interface{}{
+			"trip_id":           tripID,
+			"session_id":        sessionID,
+			"initiator_user_id": initiator,
+			"processing_status": models.PinUploadProcessingStatusReadyForReview,
+		}
+		if targetPinID != "" {
+			payload["target_pin_id"] = targetPinID
+		}
+		_ = deps.EventRepo.PublishTripEventWS(ctx, tripID,
+			repositories.EventPinUploadProcessingCompleted, payload)
+	}
+}

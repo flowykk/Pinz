@@ -390,6 +390,7 @@ func TestRefreshToken_success_returns_new_access_token(t *testing.T) {
 		ID: "r1", UserID: "u1", Token: "valid-token",
 		ExpiresAt: time.Now().Add(time.Hour),
 	}, nil)
+	userRepo.EXPECT().UpdateRefreshTokenExpiresAt("r1", gomock.Any()).Return(nil)
 	userRepo.EXPECT().GetUserByID("u1").Return(&models.User{ID: "u1", Email: "u@example.com", Username: "user"}, nil)
 
 	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
