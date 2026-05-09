@@ -12,6 +12,7 @@ package mocks
 import (
 	models "pinz/backend/auth-service/internal/models"
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -198,6 +199,20 @@ func (m *MockUserRepositoryInterface) UpdateEmail(userID, email string) (*models
 func (mr *MockUserRepositoryInterfaceMockRecorder) UpdateEmail(userID, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockUserRepositoryInterface)(nil).UpdateEmail), userID, email)
+}
+
+// UpdateRefreshTokenExpiresAt mocks base method.
+func (m *MockUserRepositoryInterface) UpdateRefreshTokenExpiresAt(id string, expiresAt time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRefreshTokenExpiresAt", id, expiresAt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateRefreshTokenExpiresAt indicates an expected call of UpdateRefreshTokenExpiresAt.
+func (mr *MockUserRepositoryInterfaceMockRecorder) UpdateRefreshTokenExpiresAt(id, expiresAt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRefreshTokenExpiresAt", reflect.TypeOf((*MockUserRepositoryInterface)(nil).UpdateRefreshTokenExpiresAt), id, expiresAt)
 }
 
 // UpdateUsername mocks base method.

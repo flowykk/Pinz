@@ -73,6 +73,22 @@ func (mr *MockMediaRepositoryInterfaceMockRecorder) CommitInSession(ctx, m, sess
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitInSession", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).CommitInSession), ctx, m, sessionID, maxMedia, maxVideos)
 }
 
+// CommitInUploadSession mocks base method.
+func (m_2 *MockMediaRepositoryInterface) CommitInUploadSession(ctx context.Context, m *models.Media, sessionID string, maxMedia, maxVideos int) (int, int, error) {
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "CommitInUploadSession", ctx, m, sessionID, maxMedia, maxVideos)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CommitInUploadSession indicates an expected call of CommitInUploadSession.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) CommitInUploadSession(ctx, m, sessionID, maxMedia, maxVideos any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitInUploadSession", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).CommitInUploadSession), ctx, m, sessionID, maxMedia, maxVideos)
+}
+
 // CountByTripID mocks base method.
 func (m *MockMediaRepositoryInterface) CountByTripID(tripID string) (int, int, error) {
 	m.ctrl.T.Helper()
@@ -132,34 +148,19 @@ func (mr *MockMediaRepositoryInterfaceMockRecorder) DeleteByPinID(pinID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByPinID", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).DeleteByPinID), pinID)
 }
 
-// DeleteOrphanByPinAdditionSession mocks base method.
-func (m *MockMediaRepositoryInterface) DeleteOrphanByPinAdditionSession(sessionID string) ([]string, error) {
+// DeleteOrphanByUploadSession mocks base method.
+func (m *MockMediaRepositoryInterface) DeleteOrphanByUploadSession(sessionID string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteOrphanByPinAdditionSession", sessionID)
+	ret := m.ctrl.Call(m, "DeleteOrphanByUploadSession", sessionID)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeleteOrphanByPinAdditionSession indicates an expected call of DeleteOrphanByPinAdditionSession.
-func (mr *MockMediaRepositoryInterfaceMockRecorder) DeleteOrphanByPinAdditionSession(sessionID any) *gomock.Call {
+// DeleteOrphanByUploadSession indicates an expected call of DeleteOrphanByUploadSession.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) DeleteOrphanByUploadSession(sessionID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrphanByPinAdditionSession", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).DeleteOrphanByPinAdditionSession), sessionID)
-}
-
-// DeleteOrphanByPinCreationSession mocks base method.
-func (m *MockMediaRepositoryInterface) DeleteOrphanByPinCreationSession(sessionID string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteOrphanByPinCreationSession", sessionID)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DeleteOrphanByPinCreationSession indicates an expected call of DeleteOrphanByPinCreationSession.
-func (mr *MockMediaRepositoryInterfaceMockRecorder) DeleteOrphanByPinCreationSession(sessionID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrphanByPinCreationSession", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).DeleteOrphanByPinCreationSession), sessionID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrphanByUploadSession", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).DeleteOrphanByUploadSession), sessionID)
 }
 
 // DeleteOrphanSessionMedia mocks base method.
@@ -207,36 +208,6 @@ func (mr *MockMediaRepositoryInterfaceMockRecorder) IncrementBattleRating(mediaI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementBattleRating", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).IncrementBattleRating), mediaID)
 }
 
-// ListByPinAdditionSession mocks base method.
-func (m *MockMediaRepositoryInterface) ListByPinAdditionSession(sessionID string) ([]*models.Media, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListByPinAdditionSession", sessionID)
-	ret0, _ := ret[0].([]*models.Media)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListByPinAdditionSession indicates an expected call of ListByPinAdditionSession.
-func (mr *MockMediaRepositoryInterfaceMockRecorder) ListByPinAdditionSession(sessionID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByPinAdditionSession", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).ListByPinAdditionSession), sessionID)
-}
-
-// ListByPinCreationSession mocks base method.
-func (m *MockMediaRepositoryInterface) ListByPinCreationSession(sessionID string) ([]*models.Media, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListByPinCreationSession", sessionID)
-	ret0, _ := ret[0].([]*models.Media)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListByPinCreationSession indicates an expected call of ListByPinCreationSession.
-func (mr *MockMediaRepositoryInterfaceMockRecorder) ListByPinCreationSession(sessionID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByPinCreationSession", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).ListByPinCreationSession), sessionID)
-}
-
 // ListByPinID mocks base method.
 func (m *MockMediaRepositoryInterface) ListByPinID(pinID string) ([]*models.Media, error) {
 	m.ctrl.T.Helper()
@@ -265,6 +236,21 @@ func (m *MockMediaRepositoryInterface) ListByTripID(tripID string) ([]*models.Me
 func (mr *MockMediaRepositoryInterfaceMockRecorder) ListByTripID(tripID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByTripID", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).ListByTripID), tripID)
+}
+
+// ListByUploadSession mocks base method.
+func (m *MockMediaRepositoryInterface) ListByUploadSession(sessionID string) ([]*models.Media, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByUploadSession", sessionID)
+	ret0, _ := ret[0].([]*models.Media)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByUploadSession indicates an expected call of ListByUploadSession.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) ListByUploadSession(sessionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByUploadSession", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).ListByUploadSession), sessionID)
 }
 
 // ListWithPositiveBattleRating mocks base method.

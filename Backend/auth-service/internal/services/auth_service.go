@@ -29,7 +29,10 @@ import (
 	pb "pinz/backend/auth-service/pkg/proto"
 )
 
-// pendingUser implements webauthn.User for a not-yet-persisted registration.
+// ТЗ 1.5.1: сессия активна 30 дней с момента прошлого использования (sliding).
+const refreshTokenTTL = 30 * 24 * time.Hour
+
+// pendingUser реализует webauthn.User до записи юзера в БД.
 type pendingUser struct {
 	id []byte
 	name string
@@ -42,7 +45,7 @@ func (u *pendingUser) WebAuthnName() string { return u.name }
 func (u *pendingUser) WebAuthnDisplayName() string { return u.displayName }
 func (u *pendingUser) WebAuthnCredentials() []webauthn.Credential { return u.credentials }
 
-// existingUser implements webauthn.User for a fully-persisted user.
+// existingUser реализует webauthn.User для уже записанного юзера.
 type existingUser struct {
 	id []byte
 	name string
@@ -55,14 +58,14 @@ func (u *existingUser) WebAuthnName() string { return u.name }
 func (u *existingUser) WebAuthnDisplayName() string { return u.displayName }
 func (u *existingUser) WebAuthnCredentials() []webauthn.Credential { return u.credentials }
 
-// regSession is stored in Redis between PasskeyRegisterBegin and PasskeyRegisterFinish.
+// regSession кладётся в Redis между PasskeyRegisterBegin и PasskeyRegisterFinish.
 type regSession struct {
 	PendingUserID string `json:"pending_user_id"`
 	Username string `json:"username"`
 	SessionData webauthn.SessionData `json:"session_data"`
 }
 
-// loginSession is stored in Redis between PasskeyLoginBegin and PasskeyLoginFinish.
+// loginSession кладётся в Redis между PasskeyLoginBegin и PasskeyLoginFinish.
 type loginSession struct {
 	UserID string `json:"user_id"`
 	SessionData webauthn.SessionData `json:"session_data"`
@@ -323,9 +326,10 @@ func (s *AuthService) PasskeyRegisterFinish(ctx context.Context, req *pb.Passkey
 		Username: rs.Username,
 	}
 	if err := s.userRepo.CreateUser(u); err != nil {
+		// ТЗ 1.3.1: username не уникален. Конфликт может прийти только по email (UNIQUE).
 		if isUniqueViolation(err) {
 			s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "conflict")))
-			return nil, status.Error(codes.AlreadyExists, "user with this email or username already exists")
+			return nil, status.Error(codes.AlreadyExists, "user with this email already exists")
 		}
 		slog.ErrorContext(ctx, "PasskeyRegisterFinish: create user", "error", err)
 		s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "error")))
@@ -516,6 +520,12 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequ
 		return nil, status.Error(codes.Unauthenticated, "refresh token expired")
 	}
 
+	// ТЗ 1.5.1: продлеваем сессию ещё на 30 дней от момента использования.
+	if err := s.userRepo.UpdateRefreshTokenExpiresAt(rec.ID, time.Now().Add(refreshTokenTTL)); err != nil {
+		slog.ErrorContext(ctx, "RefreshToken: extend expires_at", "error", err)
+		return nil, status.Error(codes.Internal, "failed to extend session")
+	}
+
 	u, err := s.userRepo.GetUserByID(rec.UserID)
 	if err != nil {
 		slog.ErrorContext(ctx, "RefreshToken: get user", "error", err)
@@ -559,7 +569,6 @@ func (s *AuthService) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.Lo
 	return &pb.LogoutResponse{Success: true}, nil
 }
 
-// issueTokens creates an access+refresh token pair and persists the session.
 func (s *AuthService) issueTokens(ctx context.Context, u *models.User) (*pb.PasskeyRegisterFinishResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "AuthService.issueTokens")
 	defer span.End()
@@ -576,7 +585,7 @@ func (s *AuthService) issueTokens(ctx context.Context, u *models.User) (*pb.Pass
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to generate refresh token")
 	}
-	expiresAt := time.Now().Add(30 * 24 * time.Hour)
+	expiresAt := time.Now().Add(refreshTokenTTL)
 	if err := s.userRepo.AddSession(u.ID, refreshToken, expiresAt); err != nil {
 		slog.ErrorContext(ctx, "issueTokens: add session", "error", err)
 		return nil, status.Error(codes.Internal, "failed to save session")
@@ -662,10 +671,8 @@ func (s *AuthService) GetProfile(ctx context.Context, req *pb.GetProfileRequest)
 	return &pb.GetProfileResponse{User: s.userToProto(ctx, u)}, nil
 }
 
-// GetUsersProfiles — batched публичные профили (без email). Используется api-gateway
-// для обогащения списков участников / current_initiator в ответах trip-service.
-// avatar_url presigned; если пользователь не найден — в ответе остаётся пустой
-// объект с заполненным user_id, клиент фильтрует по непустому username.
+// GetUsersProfiles — batched публичные профили (без email). Несуществующие user_id
+// возвращаются с пустым username — вызывающая сторона фильтрует.
 func (s *AuthService) GetUsersProfiles(ctx context.Context, req *pb.GetUsersProfilesRequest) (*pb.GetUsersProfilesResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "AuthService.GetUsersProfiles")
 	defer span.End()
@@ -706,9 +713,8 @@ func (s *AuthService) GetUsersProfiles(ctx context.Context, req *pb.GetUsersProf
 	return &pb.GetUsersProfilesResponse{Profiles: profiles}, nil
 }
 
-// GetPublicUserProfile возвращает публичный профиль другого пользователя (без email)
-// и его список желаемых мест за один gRPC round-trip (decomp #16, ТЗ 1.7.2).
-// Не используем GetProfile, чтобы email не покидал auth-service для публичного запроса.
+// GetPublicUserProfile — публичный профиль (без email) + желаемые места одним
+// gRPC round-trip'ом (ТЗ 1.7.2). email сюда не утекает.
 func (s *AuthService) GetPublicUserProfile(ctx context.Context, req *pb.GetPublicUserProfileRequest) (*pb.GetPublicUserProfileResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "AuthService.GetPublicUserProfile")
 	defer span.End()
@@ -770,9 +776,6 @@ func (s *AuthService) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRe
 
 	u, err := s.userRepo.UpdateUsername(userID, username)
 	if err != nil {
-		if isUniqueViolation(err) {
-			return nil, status.Error(codes.AlreadyExists, "username already taken")
-		}
 		slog.ErrorContext(ctx, "UpdateProfile: update username", "error", err)
 		return nil, status.Error(codes.Internal, "failed to update username")
 	}

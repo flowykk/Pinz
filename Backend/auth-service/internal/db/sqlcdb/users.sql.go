@@ -219,6 +219,20 @@ func (q *Queries) UpdateEmail(ctx context.Context, arg UpdateEmailParams) (User,
 	return i, err
 }
 
+const updateRefreshTokenExpiresAt = `-- name: UpdateRefreshTokenExpiresAt :exec
+UPDATE refresh_tokens SET expires_at = $2 WHERE id = $1
+`
+
+type UpdateRefreshTokenExpiresAtParams struct {
+	ID        uuid.UUID
+	ExpiresAt time.Time
+}
+
+func (q *Queries) UpdateRefreshTokenExpiresAt(ctx context.Context, arg UpdateRefreshTokenExpiresAtParams) error {
+	_, err := q.db.ExecContext(ctx, updateRefreshTokenExpiresAt, arg.ID, arg.ExpiresAt)
+	return err
+}
+
 const updateUsername = `-- name: UpdateUsername :one
 UPDATE users SET username = $2 WHERE id = $1
 RETURNING id, email, username, avatar_url, created_at

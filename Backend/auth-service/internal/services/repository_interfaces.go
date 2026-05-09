@@ -20,6 +20,7 @@ type UserRepositoryInterface interface {
 	GetUsersByIDs(userIDs []string) ([]*models.User, error)
 	DeleteRefreshToken(id string) error
 	DeleteUserRefreshTokens(userID string) error
+	UpdateRefreshTokenExpiresAt(id string, expiresAt time.Time) error
 	UpdateUsername(userID, username string) (*models.User, error)
 	UpdateEmail(userID, email string) (*models.User, error)
 	UpdateAvatarURL(userID, avatarURL string) (*models.User, error)

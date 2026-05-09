@@ -263,10 +263,10 @@ func clusterMediaWithExistingPinsAsSeeds(mediaRepo repositories.MediaRepositoryI
 	return result
 }
 
-func updatePinTimesAndLocation(pinRepo repositories.PinRepositoryInterface, mediaRepo repositories.MediaRepositoryInterface, pinID string) {
+func updatePinTimesAndLocation(pinRepo repositories.PinRepositoryInterface, mediaRepo repositories.MediaRepositoryInterface, pinID string) *models.Pin {
 	pinMedia, err := mediaRepo.ListByPinID(pinID)
 	if err != nil || len(pinMedia) == 0 {
-		return
+		return nil
 	}
 	var startTime, endTime *time.Time
 	var lat, lon *float64
@@ -286,13 +286,16 @@ func updatePinTimesAndLocation(pinRepo repositories.PinRepositoryInterface, medi
 	}
 	pin, err := pinRepo.GetByID(pinID)
 	if err != nil {
-		return
+		return nil
 	}
 	pin.StartTime = startTime
 	pin.EndTime = endTime
 	pin.Latitude = lat
 	pin.Longitude = lon
-	_ = pinRepo.Update(pin)
+	if err := pinRepo.Update(pin); err != nil {
+		return nil
+	}
+	return pin
 }
 
 func contentTypeToExt(ct string) string {

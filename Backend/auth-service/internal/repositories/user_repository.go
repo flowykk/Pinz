@@ -97,10 +97,8 @@ func (r *UserRepository) GetUserByID(userID string) (*models.User, error) {
 	return userFromSQLC(u), nil
 }
 
-// GetUsersByIDs — batched выборка пользователей по списку id для api-gateway
-// enrichment (N2). Несуществующие id просто отсутствуют в ответе. Дубликаты в
-// запросе не ошибочны — Postgres вернёт их один раз, вызывающая сторона
-// строит map user_id → профиль и переиспользует.
+// GetUsersByIDs — batched выборка пользователей по списку id. Несуществующие id
+// просто отсутствуют в ответе.
 func (r *UserRepository) GetUsersByIDs(userIDs []string) ([]*models.User, error) {
 	if len(userIDs) == 0 {
 		return nil, nil
@@ -141,6 +139,17 @@ func (r *UserRepository) DeleteUserRefreshTokens(userID string) error {
 		return err
 	}
 	return r.q.DeleteUserRefreshTokens(context.Background(), uid)
+}
+
+func (r *UserRepository) UpdateRefreshTokenExpiresAt(id string, expiresAt time.Time) error {
+	tid, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+	return r.q.UpdateRefreshTokenExpiresAt(context.Background(), sqlcdb.UpdateRefreshTokenExpiresAtParams{
+		ID:        tid,
+		ExpiresAt: expiresAt,
+	})
 }
 
 func (r *UserRepository) UpdateUsername(userID, username string) (*models.User, error) {

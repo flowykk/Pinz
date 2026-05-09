@@ -69,24 +69,16 @@ service TripService {
  rpc GetPin(GetPinRequest) returns (GetPinResponse);
  rpc UpdatePin(UpdatePinRequest) returns (UpdatePinResponse);
  rpc DeletePin(DeletePinRequest) returns (DeletePinResponse);
- // Sessioned добавление медиа в существующий пин (ТЗ 4.2.2 + 4.12-4.14)
- rpc AddMediaToPinStart(AddMediaToPinStartRequest) returns (AddMediaToPinStartResponse);
- rpc RequestPinMediaUploadUrls(RequestPinMediaUploadUrlsRequest) returns (RequestPinMediaUploadUrlsResponse);
- rpc CommitPinMediaUpload(CommitPinMediaUploadRequest) returns (CommitPinMediaUploadResponse);
- rpc ProcessPinMediaAddition(ProcessPinMediaAdditionRequest) returns (ProcessPinMediaAdditionResponse);
- rpc GetPinMediaAdditionReview(GetPinMediaAdditionReviewRequest) returns (GetPinMediaAdditionReviewResponse);
- rpc FinalizePinMediaAddition(FinalizePinMediaAdditionRequest) returns (FinalizePinMediaAdditionResponse);
- rpc CancelPinMediaAddition(CancelPinMediaAdditionRequest) returns (CancelPinMediaAdditionResponse);
  // Sessionless удаление одного медиа из пина (ТЗ 4.2.3)
  rpc RemoveMediaFromPin(RemoveMediaFromPinRequest) returns (RemoveMediaFromPinResponse);
- // Sessioned создание одиночного пина в READY-трипе (ТЗ 4.1, 4.6-4.11)
- rpc CreatePinStart(CreatePinStartRequest) returns (CreatePinStartResponse);
- rpc RequestPinCreationUploadUrls(RequestPinCreationUploadUrlsRequest) returns (RequestPinCreationUploadUrlsResponse);
- rpc CommitPinCreationUpload(CommitPinCreationUploadRequest) returns (CommitPinCreationUploadResponse);
- rpc ProcessPinCreation(ProcessPinCreationRequest) returns (ProcessPinCreationResponse);
- rpc GetPinCreationReview(GetPinCreationReviewRequest) returns (GetPinCreationReviewResponse);
- rpc FinalizePinCreation(FinalizePinCreationRequest) returns (FinalizePinCreationResponse);
- rpc CancelPinCreation(CancelPinCreationRequest) returns (CancelPinCreationResponse);
+ // Унифицированный pin-upload: target_pin_id nil → создание пина, заполнен → добавление медиа.
+ rpc PinUploadStart(PinUploadStartRequest) returns (PinUploadStartResponse);
+ rpc RequestPinUploadUrls(RequestPinUploadUrlsRequest) returns (RequestPinUploadUrlsResponse);
+ rpc CommitPinUpload(CommitPinUploadRequest) returns (CommitPinUploadResponse);
+ rpc ProcessPinUpload(ProcessPinUploadRequest) returns (ProcessPinUploadResponse);
+ rpc GetPinUploadReview(GetPinUploadReviewRequest) returns (GetPinUploadReviewResponse);
+ rpc FinalizePinUpload(FinalizePinUploadRequest) returns (FinalizePinUploadResponse);
+ rpc CancelPinUpload(CancelPinUploadRequest) returns (CancelPinUploadResponse);
  // Рекомендации (ТЗ 9): карта популярных мест по городу/стране и
  // материализация её как сохранённого трипа.
  rpc GetRecommendations(GetRecommendationsRequest) returns (GetRecommendationsResponse);
@@ -853,95 +845,6 @@ message DeletePinResponse {
  string deletion_mode = 1;
 }
 
-// Sessioned добавление медиа в пин (ТЗ 4.2.2 + 4.12-4.14): presigned → commit →
-// process (ML-stub: NSFW/hash-dedup/similar) → review → finalize. До finalize media
-// лежит с pin_id=NULL и связано с сессией через pin_addition_session_id.
-message AddMediaToPinStartRequest {
- string trip_id = 1;
- string pin_id = 2;
- repeated FileToUpload files_to_upload = 3;
-}
-message AddMediaToPinStartResponse {
- string session_id = 1;
- repeated UploadUrl upload_urls = 2;
-}
-
-message RequestPinMediaUploadUrlsRequest {
- string trip_id = 1;
- string pin_id = 2;
- string session_id = 3;
- repeated FileToUpload files_to_upload = 4;
-}
-message RequestPinMediaUploadUrlsResponse {
- repeated UploadUrl upload_urls = 1;
-}
-
-message CommitPinMediaUploadRequest {
- string trip_id = 1;
- string pin_id = 2;
- string session_id = 3;
- string s3_key = 4;
- string media_type = 5;            // image | video
- optional int64 captured_at_unix = 6;
- optional double latitude = 7;
- optional double longitude = 8;
-}
-message CommitPinMediaUploadResponse {
- string media_id = 1;
- int32 media_count_in_session = 2;
-}
-
-message ProcessPinMediaAdditionRequest {
- string trip_id = 1;
- string pin_id = 2;
- string session_id = 3;
-}
-message ProcessPinMediaAdditionResponse {
- string session_id = 1;
- PinAdditionDraft draft = 2;
- repeated MediaSimilarGroup similar = 3;
-}
-message PinAdditionDraft {
- // Новые медиа в этой сессии после хеш-дедупа и применения NSFW.
- repeated ReviewPinMedia new_media = 1;
- // Issues, посчитанные на пине после потенциальной привязки этих медиа.
- repeated string pin_issues = 2;     // MISSING_COORDINATES, MISSING_DATES
- // Идентификаторы, помеченные NSFW (privacy_level уже выставлен Restricted в БД).
- repeated string nsfw_media_ids = 3;
- // Дубликаты, удалённые системой по content_hash (информативно для UI).
- repeated string deduped_media_ids = 4;
-}
-
-message GetPinMediaAdditionReviewRequest {
- string trip_id = 1;
- string pin_id = 2;
- string session_id = 3;
-}
-message GetPinMediaAdditionReviewResponse {
- string session_id = 1;
- PinAdditionDraft draft = 2;
- repeated MediaSimilarGroup similar = 3;
-}
-
-message FinalizePinMediaAdditionRequest {
- string trip_id = 1;
- string pin_id = 2;
- string session_id = 3;
- repeated string media_to_delete = 4;
-}
-message FinalizePinMediaAdditionResponse {
- TripPin pin = 1;
-}
-
-message CancelPinMediaAdditionRequest {
- string trip_id = 1;
- string pin_id = 2;
- string session_id = 3;
-}
-message CancelPinMediaAdditionResponse {
- string status = 1;
-}
-
 message RemoveMediaFromPinRequest {
  string trip_id = 1;
  string pin_id = 2;
@@ -951,104 +854,108 @@ message RemoveMediaFromPinResponse {
  TripPin pin = 1;
 }
 
-// Sessioned создание одиночного пина в READY-трипе (ТЗ 4.1, 4.6-4.11):
-// presigned → commit → process (ML stub: NSFW/dedup/similar + suggested поля
-// пина) → review → finalize → создаётся запись pins. До finalize media лежит с
-// pin_id=NULL и pin_creation_session_id=$session.
-message CreatePinStartRequest {
+// =============================================================================
+// Pin upload (унифицированная сессия загрузки медиа)
+// =============================================================================
+
+message PinUploadStartRequest {
  string trip_id = 1;
- repeated FileToUpload files_to_upload = 2;
+ // target_pin_id nil → создание нового пина; заполнен → добавление медиа в существующий.
+ optional string target_pin_id = 2;
+ repeated FileToUpload files_to_upload = 3;
 }
-message CreatePinStartResponse {
+message PinUploadStartResponse {
  string session_id = 1;
  repeated UploadUrl upload_urls = 2;
 }
 
-message RequestPinCreationUploadUrlsRequest {
+message RequestPinUploadUrlsRequest {
  string trip_id = 1;
  string session_id = 2;
  repeated FileToUpload files_to_upload = 3;
 }
-message RequestPinCreationUploadUrlsResponse {
+message RequestPinUploadUrlsResponse {
  repeated UploadUrl upload_urls = 1;
 }
 
-message CommitPinCreationUploadRequest {
+message CommitPinUploadRequest {
  string trip_id = 1;
  string session_id = 2;
  string s3_key = 3;
- string media_type = 4;
+ string media_type = 4; // image | video
  optional int64 captured_at_unix = 5;
  optional double latitude = 6;
  optional double longitude = 7;
 }
-message CommitPinCreationUploadResponse {
+message CommitPinUploadResponse {
  string media_id = 1;
  int32 media_count_in_session = 2;
 }
 
-message ProcessPinCreationRequest {
+message ProcessPinUploadRequest {
  string trip_id = 1;
  string session_id = 2;
 }
-message ProcessPinCreationResponse {
+message ProcessPinUploadResponse {
  string session_id = 1;
- PinCreationDraft draft = 2;
- repeated MediaSimilarGroup similar = 3;
+ string processing_status = 2; // UPLOADING | PROCESSING | READY_FOR_REVIEW
 }
 
-// Snapshot ML-результатов для review. Suggested поля (имя/категория/теги/
-// координаты/start-end) вычислены из медиа и ML; клиент показывает их в форме
-// и отправляет финальные значения через FinalizePinCreationRequest.
-message PinCreationDraft {
- string suggested_name = 1;             // = категория (ТЗ 4.7.2.f)
- string suggested_category = 2;         // ТЗ 4.7.2.d
- repeated string suggested_tags = 3;    // ТЗ 4.7.2.e
- optional double suggested_latitude = 4; // первое медиа с координатами (4.7.2.c)
- optional double suggested_longitude = 5;
- optional int64 suggested_start_time_unix = 6; // первое медиа по captured_at (4.7.2.a)
- optional int64 suggested_end_time_unix = 7;   // последнее медиа по captured_at (4.7.2.b)
- repeated ReviewPinMedia media = 8;
- repeated string pin_issues = 9;        // MISSING_COORDINATES, MISSING_DATES (4.7.3-4.7.4)
- repeated string nsfw_media_ids = 10;   // 4.7.5: NSFW → privacy_level=Restricted
- repeated string deduped_media_ids = 11; // 4.7.6.a: hash-дубли удалены физически
+// PinUploadDraft — snapshot после worker-обработки. Suggested заполнено только
+// для creation (target_pin_id == nil).
+message PinUploadDraft {
+ optional PinSuggestedFields suggested = 1;
+ repeated ReviewPinMedia media = 2;
+ repeated string pin_issues = 3;
+ repeated string nsfw_media_ids = 4;
+ repeated string deduped_media_ids = 5;
+}
+message PinSuggestedFields {
+ string name = 1;
+ string category = 2;
+ repeated string tags = 3;
+ optional double latitude = 4;
+ optional double longitude = 5;
+ optional int64 start_time_unix = 6;
+ optional int64 end_time_unix = 7;
 }
 
-message GetPinCreationReviewRequest {
+message GetPinUploadReviewRequest {
  string trip_id = 1;
  string session_id = 2;
 }
-message GetPinCreationReviewResponse {
+message GetPinUploadReviewResponse {
  string session_id = 1;
- PinCreationDraft draft = 2;
+ PinUploadDraft draft = 2; // пусто на UPLOADING/PROCESSING
  repeated MediaSimilarGroup similar = 3;
+ string processing_status = 4;
 }
 
-// Финал: пользовательские правки поверх PinCreationDraft. Если поле nil/пусто —
-// берётся suggested из snapshot. Создаётся запись pins, медиа привязываются.
-message FinalizePinCreationRequest {
+message FinalizePinUploadRequest {
  string trip_id = 1;
  string session_id = 2;
- optional string name = 3;          // ≤100
- optional string description = 4;   // ≤5000
+ // Поля заполняются только для creation; для addition игнорируются.
+ optional string name = 3;
+ optional string description = 4;
  optional string category = 5;
  optional double latitude = 6;
  optional double longitude = 7;
  optional int64 start_time_unix = 8;
  optional int64 end_time_unix = 9;
  repeated string tags = 10;
- bool tags_set = 11;                // true → применить tags даже пустым массивом
+ bool tags_set = 11;
+ // media_to_delete — id медиа из сессии, которые клиент пометил на удаление.
  repeated string media_to_delete = 12;
 }
-message FinalizePinCreationResponse {
+message FinalizePinUploadResponse {
  TripPin pin = 1;
 }
 
-message CancelPinCreationRequest {
+message CancelPinUploadRequest {
  string trip_id = 1;
  string session_id = 2;
 }
-message CancelPinCreationResponse {
+message CancelPinUploadResponse {
  string status = 1;
 }
 

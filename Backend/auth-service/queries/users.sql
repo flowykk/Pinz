@@ -25,6 +25,9 @@ WHERE id = $1;
 -- name: DeleteRefreshToken :exec
 DELETE FROM refresh_tokens WHERE id = $1;
 
+-- name: UpdateRefreshTokenExpiresAt :exec
+UPDATE refresh_tokens SET expires_at = $2 WHERE id = $1;
+
 -- name: DeleteUserRefreshTokens :exec
 DELETE FROM refresh_tokens WHERE user_id = $1;
 

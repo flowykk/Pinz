@@ -58,26 +58,38 @@ type wsEvent struct {
 	Payload map[string]interface{} `json:"payload"`
 }
 
-// ServeWS upgrades the HTTP connection to WebSocket and streams every message from
-// pinz:user:{user_id}:events with no filtering. Used for cross-cutting per-user
-// notifications not bound to a specific trip.
-func (h *WSHandler) ServeWS(w http.ResponseWriter, r *http.Request) {
-	h.serveUserWS(w, r, nil)
-}
-
 // ServeTripCreationReviewWS serves the review-stage WebSocket for the trip creation flow.
 // Only messages with payload.trip_id == {id} reach the client.
 func (h *WSHandler) ServeTripCreationReviewWS(w http.ResponseWriter, r *http.Request) {
-	h.serveTripWS(w, r, chi.URLParam(r, "id"))
+	h.serveTripWS(w, r, chi.URLParam(r, "id"), nil)
 }
 
 // ServeTripAddMediaReviewWS serves the review-stage WebSocket for the add-media flow (ТЗ 5.3).
 // Contract is identical to ServeTripCreationReviewWS.
 func (h *WSHandler) ServeTripAddMediaReviewWS(w http.ResponseWriter, r *http.Request) {
-	h.serveTripWS(w, r, chi.URLParam(r, "id"))
+	h.serveTripWS(w, r, chi.URLParam(r, "id"), nil)
 }
 
-func (h *WSHandler) serveTripWS(w http.ResponseWriter, r *http.Request, tripID string) {
+// ServeTripPinUploadSessionWS — WS для унифицированной pin-upload сессии.
+func (h *WSHandler) ServeTripPinUploadSessionWS(w http.ResponseWriter, r *http.Request) {
+	tripID := chi.URLParam(r, "id")
+	sessionID := chi.URLParam(r, "sid")
+	if sessionID == "" {
+		http.Error(w, "session_id required", http.StatusBadRequest)
+		return
+	}
+	h.serveTripWS(w, r, tripID, sessionFilter(sessionID))
+}
+
+// sessionFilter оставляет только события, у которых payload.session_id == sid.
+func sessionFilter(sid string) func(wsEvent) bool {
+	return func(ev wsEvent) bool {
+		v, ok := ev.Payload["session_id"].(string)
+		return ok && v == sid
+	}
+}
+
+func (h *WSHandler) serveTripWS(w http.ResponseWriter, r *http.Request, tripID string, allow func(wsEvent) bool) {
 	if tripID == "" {
 		http.Error(w, "trip_id required", http.StatusBadRequest)
 		return
@@ -116,7 +128,7 @@ func (h *WSHandler) serveTripWS(w http.ResponseWriter, r *http.Request, tripID s
 	streamKey := "pinz:trip:" + tripID + ":events"
 	msgs := subscribeStream(subCtx, h.redis, streamKey)
 
-	pumpWS(ctx, conn, msgs, nil)
+	pumpWS(ctx, conn, msgs, allow)
 }
 
 func tripAccessError(err error) (int, string) {
@@ -136,33 +148,6 @@ func tripAccessError(err error) (int, string) {
 	default:
 		return http.StatusBadGateway, "trip service error"
 	}
-}
-
-func (h *WSHandler) serveUserWS(w http.ResponseWriter, r *http.Request, allow func(wsEvent) bool) {
-	if h.redis == nil {
-		http.Error(w, "websocket not available", http.StatusServiceUnavailable)
-		return
-	}
-	ctx := r.Context()
-	userID := middleware.UserIDFromContext(ctx)
-	if userID == "" {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		slog.WarnContext(ctx, "ws: upgrade failed", "error", err)
-		return
-	}
-	defer conn.Close()
-
-	subCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	streamKey := "pinz:user:" + userID + ":events"
-	msgs := subscribeStream(subCtx, h.redis, streamKey)
-
-	pumpWS(ctx, conn, msgs, allow)
 }
 
 // subscribeStream запускает goroutine, читающую Redis Stream через XRead без

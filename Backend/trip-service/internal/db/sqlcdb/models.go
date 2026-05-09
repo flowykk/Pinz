@@ -69,21 +69,20 @@ type MediaPrivacy struct {
 }
 
 type Medium struct {
-	ID                   uuid.UUID
-	TripID               uuid.UUID
-	PinID                uuid.NullUUID
-	S3Key                string
-	MediaType            string
-	Location             interface{}
-	CapturedAt           sql.NullTime
-	BattleRating         int32
-	PrivacyLevel         string
-	SimilarGroupID       uuid.NullUUID
-	ContentHash          sql.NullString
-	CreatedAt            time.Time
-	UploadedBy           uuid.NullUUID
-	PinAdditionSessionID uuid.NullUUID
-	PinCreationSessionID uuid.NullUUID
+	ID              uuid.UUID
+	TripID          uuid.UUID
+	PinID           uuid.NullUUID
+	S3Key           string
+	MediaType       string
+	Location        interface{}
+	CapturedAt      sql.NullTime
+	BattleRating    int32
+	PrivacyLevel    string
+	SimilarGroupID  uuid.NullUUID
+	ContentHash     sql.NullString
+	CreatedAt       time.Time
+	UploadedBy      uuid.NullUUID
+	UploadSessionID uuid.NullUUID
 }
 
 type Pin struct {
@@ -102,38 +101,28 @@ type Pin struct {
 	LocationName      string
 }
 
-type PinCreationSession struct {
-	SessionID       uuid.UUID
-	TripID          uuid.UUID
-	InitiatorUserID uuid.UUID
-	DraftSnapshot   pqtype.NullRawMessage
-	CreatedAt       time.Time
-	LastActivityAt  time.Time
-	ClosedAt        sql.NullTime
-	CloseReason     sql.NullString
-}
-
 type PinHiddenByUser struct {
 	PinID  uuid.UUID
 	UserID uuid.UUID
-}
-
-type PinMediaAdditionSession struct {
-	SessionID       uuid.UUID
-	TripID          uuid.UUID
-	PinID           uuid.UUID
-	InitiatorUserID uuid.UUID
-	DraftSnapshot   pqtype.NullRawMessage
-	CreatedAt       time.Time
-	LastActivityAt  time.Time
-	ClosedAt        sql.NullTime
-	CloseReason     sql.NullString
 }
 
 type PinPrivacy struct {
 	PinID        uuid.UUID
 	UserID       uuid.UUID
 	PrivacyLevel string
+}
+
+type PinUploadSession struct {
+	SessionID        uuid.UUID
+	TripID           uuid.UUID
+	TargetPinID      uuid.NullUUID
+	InitiatorUserID  uuid.UUID
+	DraftSnapshot    pqtype.NullRawMessage
+	ProcessingStatus string
+	CreatedAt        time.Time
+	LastActivityAt   time.Time
+	ClosedAt         sql.NullTime
+	CloseReason      sql.NullString
 }
 
 type Social struct {

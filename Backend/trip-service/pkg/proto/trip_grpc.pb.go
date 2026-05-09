@@ -70,21 +70,14 @@ const (
 	TripService_GetPin_FullMethodName                        = "/trip.TripService/GetPin"
 	TripService_UpdatePin_FullMethodName                     = "/trip.TripService/UpdatePin"
 	TripService_DeletePin_FullMethodName                     = "/trip.TripService/DeletePin"
-	TripService_AddMediaToPinStart_FullMethodName            = "/trip.TripService/AddMediaToPinStart"
-	TripService_RequestPinMediaUploadUrls_FullMethodName     = "/trip.TripService/RequestPinMediaUploadUrls"
-	TripService_CommitPinMediaUpload_FullMethodName          = "/trip.TripService/CommitPinMediaUpload"
-	TripService_ProcessPinMediaAddition_FullMethodName       = "/trip.TripService/ProcessPinMediaAddition"
-	TripService_GetPinMediaAdditionReview_FullMethodName     = "/trip.TripService/GetPinMediaAdditionReview"
-	TripService_FinalizePinMediaAddition_FullMethodName      = "/trip.TripService/FinalizePinMediaAddition"
-	TripService_CancelPinMediaAddition_FullMethodName        = "/trip.TripService/CancelPinMediaAddition"
 	TripService_RemoveMediaFromPin_FullMethodName            = "/trip.TripService/RemoveMediaFromPin"
-	TripService_CreatePinStart_FullMethodName                = "/trip.TripService/CreatePinStart"
-	TripService_RequestPinCreationUploadUrls_FullMethodName  = "/trip.TripService/RequestPinCreationUploadUrls"
-	TripService_CommitPinCreationUpload_FullMethodName       = "/trip.TripService/CommitPinCreationUpload"
-	TripService_ProcessPinCreation_FullMethodName            = "/trip.TripService/ProcessPinCreation"
-	TripService_GetPinCreationReview_FullMethodName          = "/trip.TripService/GetPinCreationReview"
-	TripService_FinalizePinCreation_FullMethodName           = "/trip.TripService/FinalizePinCreation"
-	TripService_CancelPinCreation_FullMethodName             = "/trip.TripService/CancelPinCreation"
+	TripService_PinUploadStart_FullMethodName                = "/trip.TripService/PinUploadStart"
+	TripService_RequestPinUploadUrls_FullMethodName          = "/trip.TripService/RequestPinUploadUrls"
+	TripService_CommitPinUpload_FullMethodName               = "/trip.TripService/CommitPinUpload"
+	TripService_ProcessPinUpload_FullMethodName              = "/trip.TripService/ProcessPinUpload"
+	TripService_GetPinUploadReview_FullMethodName            = "/trip.TripService/GetPinUploadReview"
+	TripService_FinalizePinUpload_FullMethodName             = "/trip.TripService/FinalizePinUpload"
+	TripService_CancelPinUpload_FullMethodName               = "/trip.TripService/CancelPinUpload"
 	TripService_GetRecommendations_FullMethodName            = "/trip.TripService/GetRecommendations"
 	TripService_SaveRecommendation_FullMethodName            = "/trip.TripService/SaveRecommendation"
 )
@@ -157,24 +150,16 @@ type TripServiceClient interface {
 	GetPin(ctx context.Context, in *GetPinRequest, opts ...grpc.CallOption) (*GetPinResponse, error)
 	UpdatePin(ctx context.Context, in *UpdatePinRequest, opts ...grpc.CallOption) (*UpdatePinResponse, error)
 	DeletePin(ctx context.Context, in *DeletePinRequest, opts ...grpc.CallOption) (*DeletePinResponse, error)
-	// Sessioned добавление медиа в существующий пин (ТЗ 4.2.2 + 4.12-4.14)
-	AddMediaToPinStart(ctx context.Context, in *AddMediaToPinStartRequest, opts ...grpc.CallOption) (*AddMediaToPinStartResponse, error)
-	RequestPinMediaUploadUrls(ctx context.Context, in *RequestPinMediaUploadUrlsRequest, opts ...grpc.CallOption) (*RequestPinMediaUploadUrlsResponse, error)
-	CommitPinMediaUpload(ctx context.Context, in *CommitPinMediaUploadRequest, opts ...grpc.CallOption) (*CommitPinMediaUploadResponse, error)
-	ProcessPinMediaAddition(ctx context.Context, in *ProcessPinMediaAdditionRequest, opts ...grpc.CallOption) (*ProcessPinMediaAdditionResponse, error)
-	GetPinMediaAdditionReview(ctx context.Context, in *GetPinMediaAdditionReviewRequest, opts ...grpc.CallOption) (*GetPinMediaAdditionReviewResponse, error)
-	FinalizePinMediaAddition(ctx context.Context, in *FinalizePinMediaAdditionRequest, opts ...grpc.CallOption) (*FinalizePinMediaAdditionResponse, error)
-	CancelPinMediaAddition(ctx context.Context, in *CancelPinMediaAdditionRequest, opts ...grpc.CallOption) (*CancelPinMediaAdditionResponse, error)
 	// Sessionless удаление одного медиа из пина (ТЗ 4.2.3)
 	RemoveMediaFromPin(ctx context.Context, in *RemoveMediaFromPinRequest, opts ...grpc.CallOption) (*RemoveMediaFromPinResponse, error)
-	// Sessioned создание одиночного пина в READY-трипе (ТЗ 4.1, 4.6-4.11)
-	CreatePinStart(ctx context.Context, in *CreatePinStartRequest, opts ...grpc.CallOption) (*CreatePinStartResponse, error)
-	RequestPinCreationUploadUrls(ctx context.Context, in *RequestPinCreationUploadUrlsRequest, opts ...grpc.CallOption) (*RequestPinCreationUploadUrlsResponse, error)
-	CommitPinCreationUpload(ctx context.Context, in *CommitPinCreationUploadRequest, opts ...grpc.CallOption) (*CommitPinCreationUploadResponse, error)
-	ProcessPinCreation(ctx context.Context, in *ProcessPinCreationRequest, opts ...grpc.CallOption) (*ProcessPinCreationResponse, error)
-	GetPinCreationReview(ctx context.Context, in *GetPinCreationReviewRequest, opts ...grpc.CallOption) (*GetPinCreationReviewResponse, error)
-	FinalizePinCreation(ctx context.Context, in *FinalizePinCreationRequest, opts ...grpc.CallOption) (*FinalizePinCreationResponse, error)
-	CancelPinCreation(ctx context.Context, in *CancelPinCreationRequest, opts ...grpc.CallOption) (*CancelPinCreationResponse, error)
+	// Унифицированный pin-upload: target_pin_id nil → создание пина, заполнен → добавление медиа.
+	PinUploadStart(ctx context.Context, in *PinUploadStartRequest, opts ...grpc.CallOption) (*PinUploadStartResponse, error)
+	RequestPinUploadUrls(ctx context.Context, in *RequestPinUploadUrlsRequest, opts ...grpc.CallOption) (*RequestPinUploadUrlsResponse, error)
+	CommitPinUpload(ctx context.Context, in *CommitPinUploadRequest, opts ...grpc.CallOption) (*CommitPinUploadResponse, error)
+	ProcessPinUpload(ctx context.Context, in *ProcessPinUploadRequest, opts ...grpc.CallOption) (*ProcessPinUploadResponse, error)
+	GetPinUploadReview(ctx context.Context, in *GetPinUploadReviewRequest, opts ...grpc.CallOption) (*GetPinUploadReviewResponse, error)
+	FinalizePinUpload(ctx context.Context, in *FinalizePinUploadRequest, opts ...grpc.CallOption) (*FinalizePinUploadResponse, error)
+	CancelPinUpload(ctx context.Context, in *CancelPinUploadRequest, opts ...grpc.CallOption) (*CancelPinUploadResponse, error)
 	// Рекомендации (ТЗ 9): карта популярных мест по городу/стране и
 	// материализация её как сохранённого трипа.
 	GetRecommendations(ctx context.Context, in *GetRecommendationsRequest, opts ...grpc.CallOption) (*GetRecommendationsResponse, error)
@@ -699,76 +684,6 @@ func (c *tripServiceClient) DeletePin(ctx context.Context, in *DeletePinRequest,
 	return out, nil
 }
 
-func (c *tripServiceClient) AddMediaToPinStart(ctx context.Context, in *AddMediaToPinStartRequest, opts ...grpc.CallOption) (*AddMediaToPinStartResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddMediaToPinStartResponse)
-	err := c.cc.Invoke(ctx, TripService_AddMediaToPinStart_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) RequestPinMediaUploadUrls(ctx context.Context, in *RequestPinMediaUploadUrlsRequest, opts ...grpc.CallOption) (*RequestPinMediaUploadUrlsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RequestPinMediaUploadUrlsResponse)
-	err := c.cc.Invoke(ctx, TripService_RequestPinMediaUploadUrls_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) CommitPinMediaUpload(ctx context.Context, in *CommitPinMediaUploadRequest, opts ...grpc.CallOption) (*CommitPinMediaUploadResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommitPinMediaUploadResponse)
-	err := c.cc.Invoke(ctx, TripService_CommitPinMediaUpload_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) ProcessPinMediaAddition(ctx context.Context, in *ProcessPinMediaAdditionRequest, opts ...grpc.CallOption) (*ProcessPinMediaAdditionResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ProcessPinMediaAdditionResponse)
-	err := c.cc.Invoke(ctx, TripService_ProcessPinMediaAddition_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) GetPinMediaAdditionReview(ctx context.Context, in *GetPinMediaAdditionReviewRequest, opts ...grpc.CallOption) (*GetPinMediaAdditionReviewResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetPinMediaAdditionReviewResponse)
-	err := c.cc.Invoke(ctx, TripService_GetPinMediaAdditionReview_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) FinalizePinMediaAddition(ctx context.Context, in *FinalizePinMediaAdditionRequest, opts ...grpc.CallOption) (*FinalizePinMediaAdditionResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(FinalizePinMediaAdditionResponse)
-	err := c.cc.Invoke(ctx, TripService_FinalizePinMediaAddition_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tripServiceClient) CancelPinMediaAddition(ctx context.Context, in *CancelPinMediaAdditionRequest, opts ...grpc.CallOption) (*CancelPinMediaAdditionResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CancelPinMediaAdditionResponse)
-	err := c.cc.Invoke(ctx, TripService_CancelPinMediaAddition_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *tripServiceClient) RemoveMediaFromPin(ctx context.Context, in *RemoveMediaFromPinRequest, opts ...grpc.CallOption) (*RemoveMediaFromPinResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RemoveMediaFromPinResponse)
@@ -779,70 +694,70 @@ func (c *tripServiceClient) RemoveMediaFromPin(ctx context.Context, in *RemoveMe
 	return out, nil
 }
 
-func (c *tripServiceClient) CreatePinStart(ctx context.Context, in *CreatePinStartRequest, opts ...grpc.CallOption) (*CreatePinStartResponse, error) {
+func (c *tripServiceClient) PinUploadStart(ctx context.Context, in *PinUploadStartRequest, opts ...grpc.CallOption) (*PinUploadStartResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreatePinStartResponse)
-	err := c.cc.Invoke(ctx, TripService_CreatePinStart_FullMethodName, in, out, cOpts...)
+	out := new(PinUploadStartResponse)
+	err := c.cc.Invoke(ctx, TripService_PinUploadStart_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tripServiceClient) RequestPinCreationUploadUrls(ctx context.Context, in *RequestPinCreationUploadUrlsRequest, opts ...grpc.CallOption) (*RequestPinCreationUploadUrlsResponse, error) {
+func (c *tripServiceClient) RequestPinUploadUrls(ctx context.Context, in *RequestPinUploadUrlsRequest, opts ...grpc.CallOption) (*RequestPinUploadUrlsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RequestPinCreationUploadUrlsResponse)
-	err := c.cc.Invoke(ctx, TripService_RequestPinCreationUploadUrls_FullMethodName, in, out, cOpts...)
+	out := new(RequestPinUploadUrlsResponse)
+	err := c.cc.Invoke(ctx, TripService_RequestPinUploadUrls_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tripServiceClient) CommitPinCreationUpload(ctx context.Context, in *CommitPinCreationUploadRequest, opts ...grpc.CallOption) (*CommitPinCreationUploadResponse, error) {
+func (c *tripServiceClient) CommitPinUpload(ctx context.Context, in *CommitPinUploadRequest, opts ...grpc.CallOption) (*CommitPinUploadResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommitPinCreationUploadResponse)
-	err := c.cc.Invoke(ctx, TripService_CommitPinCreationUpload_FullMethodName, in, out, cOpts...)
+	out := new(CommitPinUploadResponse)
+	err := c.cc.Invoke(ctx, TripService_CommitPinUpload_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tripServiceClient) ProcessPinCreation(ctx context.Context, in *ProcessPinCreationRequest, opts ...grpc.CallOption) (*ProcessPinCreationResponse, error) {
+func (c *tripServiceClient) ProcessPinUpload(ctx context.Context, in *ProcessPinUploadRequest, opts ...grpc.CallOption) (*ProcessPinUploadResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ProcessPinCreationResponse)
-	err := c.cc.Invoke(ctx, TripService_ProcessPinCreation_FullMethodName, in, out, cOpts...)
+	out := new(ProcessPinUploadResponse)
+	err := c.cc.Invoke(ctx, TripService_ProcessPinUpload_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tripServiceClient) GetPinCreationReview(ctx context.Context, in *GetPinCreationReviewRequest, opts ...grpc.CallOption) (*GetPinCreationReviewResponse, error) {
+func (c *tripServiceClient) GetPinUploadReview(ctx context.Context, in *GetPinUploadReviewRequest, opts ...grpc.CallOption) (*GetPinUploadReviewResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetPinCreationReviewResponse)
-	err := c.cc.Invoke(ctx, TripService_GetPinCreationReview_FullMethodName, in, out, cOpts...)
+	out := new(GetPinUploadReviewResponse)
+	err := c.cc.Invoke(ctx, TripService_GetPinUploadReview_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tripServiceClient) FinalizePinCreation(ctx context.Context, in *FinalizePinCreationRequest, opts ...grpc.CallOption) (*FinalizePinCreationResponse, error) {
+func (c *tripServiceClient) FinalizePinUpload(ctx context.Context, in *FinalizePinUploadRequest, opts ...grpc.CallOption) (*FinalizePinUploadResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(FinalizePinCreationResponse)
-	err := c.cc.Invoke(ctx, TripService_FinalizePinCreation_FullMethodName, in, out, cOpts...)
+	out := new(FinalizePinUploadResponse)
+	err := c.cc.Invoke(ctx, TripService_FinalizePinUpload_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tripServiceClient) CancelPinCreation(ctx context.Context, in *CancelPinCreationRequest, opts ...grpc.CallOption) (*CancelPinCreationResponse, error) {
+func (c *tripServiceClient) CancelPinUpload(ctx context.Context, in *CancelPinUploadRequest, opts ...grpc.CallOption) (*CancelPinUploadResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CancelPinCreationResponse)
-	err := c.cc.Invoke(ctx, TripService_CancelPinCreation_FullMethodName, in, out, cOpts...)
+	out := new(CancelPinUploadResponse)
+	err := c.cc.Invoke(ctx, TripService_CancelPinUpload_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -937,24 +852,16 @@ type TripServiceServer interface {
 	GetPin(context.Context, *GetPinRequest) (*GetPinResponse, error)
 	UpdatePin(context.Context, *UpdatePinRequest) (*UpdatePinResponse, error)
 	DeletePin(context.Context, *DeletePinRequest) (*DeletePinResponse, error)
-	// Sessioned добавление медиа в существующий пин (ТЗ 4.2.2 + 4.12-4.14)
-	AddMediaToPinStart(context.Context, *AddMediaToPinStartRequest) (*AddMediaToPinStartResponse, error)
-	RequestPinMediaUploadUrls(context.Context, *RequestPinMediaUploadUrlsRequest) (*RequestPinMediaUploadUrlsResponse, error)
-	CommitPinMediaUpload(context.Context, *CommitPinMediaUploadRequest) (*CommitPinMediaUploadResponse, error)
-	ProcessPinMediaAddition(context.Context, *ProcessPinMediaAdditionRequest) (*ProcessPinMediaAdditionResponse, error)
-	GetPinMediaAdditionReview(context.Context, *GetPinMediaAdditionReviewRequest) (*GetPinMediaAdditionReviewResponse, error)
-	FinalizePinMediaAddition(context.Context, *FinalizePinMediaAdditionRequest) (*FinalizePinMediaAdditionResponse, error)
-	CancelPinMediaAddition(context.Context, *CancelPinMediaAdditionRequest) (*CancelPinMediaAdditionResponse, error)
 	// Sessionless удаление одного медиа из пина (ТЗ 4.2.3)
 	RemoveMediaFromPin(context.Context, *RemoveMediaFromPinRequest) (*RemoveMediaFromPinResponse, error)
-	// Sessioned создание одиночного пина в READY-трипе (ТЗ 4.1, 4.6-4.11)
-	CreatePinStart(context.Context, *CreatePinStartRequest) (*CreatePinStartResponse, error)
-	RequestPinCreationUploadUrls(context.Context, *RequestPinCreationUploadUrlsRequest) (*RequestPinCreationUploadUrlsResponse, error)
-	CommitPinCreationUpload(context.Context, *CommitPinCreationUploadRequest) (*CommitPinCreationUploadResponse, error)
-	ProcessPinCreation(context.Context, *ProcessPinCreationRequest) (*ProcessPinCreationResponse, error)
-	GetPinCreationReview(context.Context, *GetPinCreationReviewRequest) (*GetPinCreationReviewResponse, error)
-	FinalizePinCreation(context.Context, *FinalizePinCreationRequest) (*FinalizePinCreationResponse, error)
-	CancelPinCreation(context.Context, *CancelPinCreationRequest) (*CancelPinCreationResponse, error)
+	// Унифицированный pin-upload: target_pin_id nil → создание пина, заполнен → добавление медиа.
+	PinUploadStart(context.Context, *PinUploadStartRequest) (*PinUploadStartResponse, error)
+	RequestPinUploadUrls(context.Context, *RequestPinUploadUrlsRequest) (*RequestPinUploadUrlsResponse, error)
+	CommitPinUpload(context.Context, *CommitPinUploadRequest) (*CommitPinUploadResponse, error)
+	ProcessPinUpload(context.Context, *ProcessPinUploadRequest) (*ProcessPinUploadResponse, error)
+	GetPinUploadReview(context.Context, *GetPinUploadReviewRequest) (*GetPinUploadReviewResponse, error)
+	FinalizePinUpload(context.Context, *FinalizePinUploadRequest) (*FinalizePinUploadResponse, error)
+	CancelPinUpload(context.Context, *CancelPinUploadRequest) (*CancelPinUploadResponse, error)
 	// Рекомендации (ТЗ 9): карта популярных мест по городу/стране и
 	// материализация её как сохранённого трипа.
 	GetRecommendations(context.Context, *GetRecommendationsRequest) (*GetRecommendationsResponse, error)
@@ -1122,50 +1029,29 @@ func (UnimplementedTripServiceServer) UpdatePin(context.Context, *UpdatePinReque
 func (UnimplementedTripServiceServer) DeletePin(context.Context, *DeletePinRequest) (*DeletePinResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePin not implemented")
 }
-func (UnimplementedTripServiceServer) AddMediaToPinStart(context.Context, *AddMediaToPinStartRequest) (*AddMediaToPinStartResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddMediaToPinStart not implemented")
-}
-func (UnimplementedTripServiceServer) RequestPinMediaUploadUrls(context.Context, *RequestPinMediaUploadUrlsRequest) (*RequestPinMediaUploadUrlsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RequestPinMediaUploadUrls not implemented")
-}
-func (UnimplementedTripServiceServer) CommitPinMediaUpload(context.Context, *CommitPinMediaUploadRequest) (*CommitPinMediaUploadResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CommitPinMediaUpload not implemented")
-}
-func (UnimplementedTripServiceServer) ProcessPinMediaAddition(context.Context, *ProcessPinMediaAdditionRequest) (*ProcessPinMediaAdditionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ProcessPinMediaAddition not implemented")
-}
-func (UnimplementedTripServiceServer) GetPinMediaAdditionReview(context.Context, *GetPinMediaAdditionReviewRequest) (*GetPinMediaAdditionReviewResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPinMediaAdditionReview not implemented")
-}
-func (UnimplementedTripServiceServer) FinalizePinMediaAddition(context.Context, *FinalizePinMediaAdditionRequest) (*FinalizePinMediaAdditionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FinalizePinMediaAddition not implemented")
-}
-func (UnimplementedTripServiceServer) CancelPinMediaAddition(context.Context, *CancelPinMediaAdditionRequest) (*CancelPinMediaAdditionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CancelPinMediaAddition not implemented")
-}
 func (UnimplementedTripServiceServer) RemoveMediaFromPin(context.Context, *RemoveMediaFromPinRequest) (*RemoveMediaFromPinResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveMediaFromPin not implemented")
 }
-func (UnimplementedTripServiceServer) CreatePinStart(context.Context, *CreatePinStartRequest) (*CreatePinStartResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePinStart not implemented")
+func (UnimplementedTripServiceServer) PinUploadStart(context.Context, *PinUploadStartRequest) (*PinUploadStartResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PinUploadStart not implemented")
 }
-func (UnimplementedTripServiceServer) RequestPinCreationUploadUrls(context.Context, *RequestPinCreationUploadUrlsRequest) (*RequestPinCreationUploadUrlsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RequestPinCreationUploadUrls not implemented")
+func (UnimplementedTripServiceServer) RequestPinUploadUrls(context.Context, *RequestPinUploadUrlsRequest) (*RequestPinUploadUrlsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestPinUploadUrls not implemented")
 }
-func (UnimplementedTripServiceServer) CommitPinCreationUpload(context.Context, *CommitPinCreationUploadRequest) (*CommitPinCreationUploadResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CommitPinCreationUpload not implemented")
+func (UnimplementedTripServiceServer) CommitPinUpload(context.Context, *CommitPinUploadRequest) (*CommitPinUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CommitPinUpload not implemented")
 }
-func (UnimplementedTripServiceServer) ProcessPinCreation(context.Context, *ProcessPinCreationRequest) (*ProcessPinCreationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ProcessPinCreation not implemented")
+func (UnimplementedTripServiceServer) ProcessPinUpload(context.Context, *ProcessPinUploadRequest) (*ProcessPinUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProcessPinUpload not implemented")
 }
-func (UnimplementedTripServiceServer) GetPinCreationReview(context.Context, *GetPinCreationReviewRequest) (*GetPinCreationReviewResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPinCreationReview not implemented")
+func (UnimplementedTripServiceServer) GetPinUploadReview(context.Context, *GetPinUploadReviewRequest) (*GetPinUploadReviewResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPinUploadReview not implemented")
 }
-func (UnimplementedTripServiceServer) FinalizePinCreation(context.Context, *FinalizePinCreationRequest) (*FinalizePinCreationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FinalizePinCreation not implemented")
+func (UnimplementedTripServiceServer) FinalizePinUpload(context.Context, *FinalizePinUploadRequest) (*FinalizePinUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalizePinUpload not implemented")
 }
-func (UnimplementedTripServiceServer) CancelPinCreation(context.Context, *CancelPinCreationRequest) (*CancelPinCreationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CancelPinCreation not implemented")
+func (UnimplementedTripServiceServer) CancelPinUpload(context.Context, *CancelPinUploadRequest) (*CancelPinUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelPinUpload not implemented")
 }
 func (UnimplementedTripServiceServer) GetRecommendations(context.Context, *GetRecommendationsRequest) (*GetRecommendationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRecommendations not implemented")
@@ -2112,132 +1998,6 @@ func _TripService_DeletePin_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_AddMediaToPinStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddMediaToPinStartRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).AddMediaToPinStart(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_AddMediaToPinStart_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).AddMediaToPinStart(ctx, req.(*AddMediaToPinStartRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_RequestPinMediaUploadUrls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RequestPinMediaUploadUrlsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).RequestPinMediaUploadUrls(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_RequestPinMediaUploadUrls_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).RequestPinMediaUploadUrls(ctx, req.(*RequestPinMediaUploadUrlsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_CommitPinMediaUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CommitPinMediaUploadRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).CommitPinMediaUpload(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_CommitPinMediaUpload_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).CommitPinMediaUpload(ctx, req.(*CommitPinMediaUploadRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_ProcessPinMediaAddition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ProcessPinMediaAdditionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).ProcessPinMediaAddition(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_ProcessPinMediaAddition_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).ProcessPinMediaAddition(ctx, req.(*ProcessPinMediaAdditionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_GetPinMediaAdditionReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPinMediaAdditionReviewRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).GetPinMediaAdditionReview(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_GetPinMediaAdditionReview_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).GetPinMediaAdditionReview(ctx, req.(*GetPinMediaAdditionReviewRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_FinalizePinMediaAddition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FinalizePinMediaAdditionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).FinalizePinMediaAddition(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_FinalizePinMediaAddition_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).FinalizePinMediaAddition(ctx, req.(*FinalizePinMediaAdditionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TripService_CancelPinMediaAddition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CancelPinMediaAdditionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TripServiceServer).CancelPinMediaAddition(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TripService_CancelPinMediaAddition_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).CancelPinMediaAddition(ctx, req.(*CancelPinMediaAdditionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _TripService_RemoveMediaFromPin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveMediaFromPinRequest)
 	if err := dec(in); err != nil {
@@ -2256,128 +2016,128 @@ func _TripService_RemoveMediaFromPin_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_CreatePinStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreatePinStartRequest)
+func _TripService_PinUploadStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PinUploadStartRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TripServiceServer).CreatePinStart(ctx, in)
+		return srv.(TripServiceServer).PinUploadStart(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TripService_CreatePinStart_FullMethodName,
+		FullMethod: TripService_PinUploadStart_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).CreatePinStart(ctx, req.(*CreatePinStartRequest))
+		return srv.(TripServiceServer).PinUploadStart(ctx, req.(*PinUploadStartRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_RequestPinCreationUploadUrls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RequestPinCreationUploadUrlsRequest)
+func _TripService_RequestPinUploadUrls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestPinUploadUrlsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TripServiceServer).RequestPinCreationUploadUrls(ctx, in)
+		return srv.(TripServiceServer).RequestPinUploadUrls(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TripService_RequestPinCreationUploadUrls_FullMethodName,
+		FullMethod: TripService_RequestPinUploadUrls_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).RequestPinCreationUploadUrls(ctx, req.(*RequestPinCreationUploadUrlsRequest))
+		return srv.(TripServiceServer).RequestPinUploadUrls(ctx, req.(*RequestPinUploadUrlsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_CommitPinCreationUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CommitPinCreationUploadRequest)
+func _TripService_CommitPinUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CommitPinUploadRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TripServiceServer).CommitPinCreationUpload(ctx, in)
+		return srv.(TripServiceServer).CommitPinUpload(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TripService_CommitPinCreationUpload_FullMethodName,
+		FullMethod: TripService_CommitPinUpload_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).CommitPinCreationUpload(ctx, req.(*CommitPinCreationUploadRequest))
+		return srv.(TripServiceServer).CommitPinUpload(ctx, req.(*CommitPinUploadRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_ProcessPinCreation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ProcessPinCreationRequest)
+func _TripService_ProcessPinUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProcessPinUploadRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TripServiceServer).ProcessPinCreation(ctx, in)
+		return srv.(TripServiceServer).ProcessPinUpload(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TripService_ProcessPinCreation_FullMethodName,
+		FullMethod: TripService_ProcessPinUpload_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).ProcessPinCreation(ctx, req.(*ProcessPinCreationRequest))
+		return srv.(TripServiceServer).ProcessPinUpload(ctx, req.(*ProcessPinUploadRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_GetPinCreationReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPinCreationReviewRequest)
+func _TripService_GetPinUploadReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPinUploadReviewRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TripServiceServer).GetPinCreationReview(ctx, in)
+		return srv.(TripServiceServer).GetPinUploadReview(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TripService_GetPinCreationReview_FullMethodName,
+		FullMethod: TripService_GetPinUploadReview_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).GetPinCreationReview(ctx, req.(*GetPinCreationReviewRequest))
+		return srv.(TripServiceServer).GetPinUploadReview(ctx, req.(*GetPinUploadReviewRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_FinalizePinCreation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FinalizePinCreationRequest)
+func _TripService_FinalizePinUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FinalizePinUploadRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TripServiceServer).FinalizePinCreation(ctx, in)
+		return srv.(TripServiceServer).FinalizePinUpload(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TripService_FinalizePinCreation_FullMethodName,
+		FullMethod: TripService_FinalizePinUpload_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).FinalizePinCreation(ctx, req.(*FinalizePinCreationRequest))
+		return srv.(TripServiceServer).FinalizePinUpload(ctx, req.(*FinalizePinUploadRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TripService_CancelPinCreation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CancelPinCreationRequest)
+func _TripService_CancelPinUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelPinUploadRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TripServiceServer).CancelPinCreation(ctx, in)
+		return srv.(TripServiceServer).CancelPinUpload(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TripService_CancelPinCreation_FullMethodName,
+		FullMethod: TripService_CancelPinUpload_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TripServiceServer).CancelPinCreation(ctx, req.(*CancelPinCreationRequest))
+		return srv.(TripServiceServer).CancelPinUpload(ctx, req.(*CancelPinUploadRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2630,64 +2390,36 @@ var TripService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TripService_DeletePin_Handler,
 		},
 		{
-			MethodName: "AddMediaToPinStart",
-			Handler:    _TripService_AddMediaToPinStart_Handler,
-		},
-		{
-			MethodName: "RequestPinMediaUploadUrls",
-			Handler:    _TripService_RequestPinMediaUploadUrls_Handler,
-		},
-		{
-			MethodName: "CommitPinMediaUpload",
-			Handler:    _TripService_CommitPinMediaUpload_Handler,
-		},
-		{
-			MethodName: "ProcessPinMediaAddition",
-			Handler:    _TripService_ProcessPinMediaAddition_Handler,
-		},
-		{
-			MethodName: "GetPinMediaAdditionReview",
-			Handler:    _TripService_GetPinMediaAdditionReview_Handler,
-		},
-		{
-			MethodName: "FinalizePinMediaAddition",
-			Handler:    _TripService_FinalizePinMediaAddition_Handler,
-		},
-		{
-			MethodName: "CancelPinMediaAddition",
-			Handler:    _TripService_CancelPinMediaAddition_Handler,
-		},
-		{
 			MethodName: "RemoveMediaFromPin",
 			Handler:    _TripService_RemoveMediaFromPin_Handler,
 		},
 		{
-			MethodName: "CreatePinStart",
-			Handler:    _TripService_CreatePinStart_Handler,
+			MethodName: "PinUploadStart",
+			Handler:    _TripService_PinUploadStart_Handler,
 		},
 		{
-			MethodName: "RequestPinCreationUploadUrls",
-			Handler:    _TripService_RequestPinCreationUploadUrls_Handler,
+			MethodName: "RequestPinUploadUrls",
+			Handler:    _TripService_RequestPinUploadUrls_Handler,
 		},
 		{
-			MethodName: "CommitPinCreationUpload",
-			Handler:    _TripService_CommitPinCreationUpload_Handler,
+			MethodName: "CommitPinUpload",
+			Handler:    _TripService_CommitPinUpload_Handler,
 		},
 		{
-			MethodName: "ProcessPinCreation",
-			Handler:    _TripService_ProcessPinCreation_Handler,
+			MethodName: "ProcessPinUpload",
+			Handler:    _TripService_ProcessPinUpload_Handler,
 		},
 		{
-			MethodName: "GetPinCreationReview",
-			Handler:    _TripService_GetPinCreationReview_Handler,
+			MethodName: "GetPinUploadReview",
+			Handler:    _TripService_GetPinUploadReview_Handler,
 		},
 		{
-			MethodName: "FinalizePinCreation",
-			Handler:    _TripService_FinalizePinCreation_Handler,
+			MethodName: "FinalizePinUpload",
+			Handler:    _TripService_FinalizePinUpload_Handler,
 		},
 		{
-			MethodName: "CancelPinCreation",
-			Handler:    _TripService_CancelPinCreation_Handler,
+			MethodName: "CancelPinUpload",
+			Handler:    _TripService_CancelPinUpload_Handler,
 		},
 		{
 			MethodName: "GetRecommendations",

@@ -70,6 +70,20 @@ func (mr *MockTripEventPublisherMockRecorder) AddMLTaskWithFlow(ctx, tripID, flo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTaskWithFlow", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTaskWithFlow), ctx, tripID, flow, newPinIDs)
 }
 
+// AddPinUploadTask mocks base method.
+func (m *MockTripEventPublisher) AddPinUploadTask(ctx context.Context, tripID, sessionID string, targetPinID *string, initiatorUserID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddPinUploadTask", ctx, tripID, sessionID, targetPinID, initiatorUserID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddPinUploadTask indicates an expected call of AddPinUploadTask.
+func (mr *MockTripEventPublisherMockRecorder) AddPinUploadTask(ctx, tripID, sessionID, targetPinID, initiatorUserID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPinUploadTask", reflect.TypeOf((*MockTripEventPublisher)(nil).AddPinUploadTask), ctx, tripID, sessionID, targetPinID, initiatorUserID)
+}
+
 // DeleteTripEventStream mocks base method.
 func (m *MockTripEventPublisher) DeleteTripEventStream(ctx context.Context, tripID string) error {
 	m.ctrl.T.Helper()
@@ -141,17 +155,17 @@ func (mr *MockTripEventPublisherMockRecorder) PublishTripEvent(ctx, eventType, t
 }
 
 // PublishTripEventWS mocks base method.
-func (m *MockTripEventPublisher) PublishTripEventWS(ctx context.Context, tripID string, userIDs []string, eventType string, payload map[string]any) error {
+func (m *MockTripEventPublisher) PublishTripEventWS(ctx context.Context, tripID, eventType string, payload map[string]any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PublishTripEventWS", ctx, tripID, userIDs, eventType, payload)
+	ret := m.ctrl.Call(m, "PublishTripEventWS", ctx, tripID, eventType, payload)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PublishTripEventWS indicates an expected call of PublishTripEventWS.
-func (mr *MockTripEventPublisherMockRecorder) PublishTripEventWS(ctx, tripID, userIDs, eventType, payload any) *gomock.Call {
+func (mr *MockTripEventPublisherMockRecorder) PublishTripEventWS(ctx, tripID, eventType, payload any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishTripEventWS", reflect.TypeOf((*MockTripEventPublisher)(nil).PublishTripEventWS), ctx, tripID, userIDs, eventType, payload)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishTripEventWS", reflect.TypeOf((*MockTripEventPublisher)(nil).PublishTripEventWS), ctx, tripID, eventType, payload)
 }
 
 // SetMLContext mocks base method.

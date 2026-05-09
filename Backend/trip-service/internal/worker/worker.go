@@ -324,17 +324,7 @@ func processTrip(ctx context.Context, tripID string, tripRepo *repositories.Trip
 	// geo consumer заполнит pin.location_name и trip_locations replica.
 	publishGeoRequest(ctx, tripID, pinRepo, eventRepo)
 
-	participants, err := participantRepo.GetByTripID(tripID)
-	if err != nil {
-		return err
-	}
-
-	userIDs := make([]string, 0, len(participants))
-	for _, p := range participants {
-		userIDs = append(userIDs, p.UserID)
-	}
-
-	_ = eventRepo.PublishTripEventWS(ctx, tripID, userIDs, "TRIP_PROCESSING_COMPLETED", map[string]interface{}{
+	_ = eventRepo.PublishTripEventWS(ctx, tripID, "TRIP_PROCESSING_COMPLETED", map[string]interface{}{
 		"trip_id": tripID,
 		"status":  "DRAFT_FINAL_REVIEW",
 	})

@@ -125,20 +125,13 @@ func cleanupOne(
 	if err := tripRepo.SetStatus(a.TripID, models.TripStatusReady); err != nil {
 		slog.WarnContext(ctx, "session_cleanup: SetStatus failed", "trip_id", a.TripID, "err", err)
 	}
-	if eventRepo != nil && participantRepo != nil {
-		participants, perr := participantRepo.GetByTripID(a.TripID)
-		if perr == nil {
-			userIDs := make([]string, 0, len(participants))
-			for _, p := range participants {
-				userIDs = append(userIDs, p.UserID)
-			}
-			_ = eventRepo.PublishTripEventWS(ctx, a.TripID, userIDs, repositories.EventTripStatusChanged, map[string]interface{}{
-				"trip_id": a.TripID,
-				"new_status": models.TripStatusReady,
-				"session_id": a.SessionID,
-				"reason": "add_media_abandoned",
-			})
-		}
+	if eventRepo != nil {
+		_ = eventRepo.PublishTripEventWS(ctx, a.TripID, repositories.EventTripStatusChanged, map[string]interface{}{
+			"trip_id": a.TripID,
+			"new_status": models.TripStatusReady,
+			"session_id": a.SessionID,
+			"reason": "add_media_abandoned",
+		})
 	}
 	slog.InfoContext(ctx, "session_cleanup: cleaned", "session_id", a.SessionID, "trip_id", a.TripID, "deleted_media", len(s3Keys))
 }

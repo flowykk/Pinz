@@ -236,66 +236,38 @@ func (c *Client) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (*pb.D
 	return c.client.DeletePin(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) AddMediaToPinStart(ctx context.Context, req *pb.AddMediaToPinStartRequest) (*pb.AddMediaToPinStartResponse, error) {
-	return c.client.AddMediaToPinStart(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) RequestPinMediaUploadUrls(ctx context.Context, req *pb.RequestPinMediaUploadUrlsRequest) (*pb.RequestPinMediaUploadUrlsResponse, error) {
-	return c.client.RequestPinMediaUploadUrls(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) CommitPinMediaUpload(ctx context.Context, req *pb.CommitPinMediaUploadRequest) (*pb.CommitPinMediaUploadResponse, error) {
-	return c.client.CommitPinMediaUpload(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) ProcessPinMediaAddition(ctx context.Context, req *pb.ProcessPinMediaAdditionRequest) (*pb.ProcessPinMediaAdditionResponse, error) {
-	return c.client.ProcessPinMediaAddition(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) GetPinMediaAdditionReview(ctx context.Context, req *pb.GetPinMediaAdditionReviewRequest) (*pb.GetPinMediaAdditionReviewResponse, error) {
-	return c.client.GetPinMediaAdditionReview(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) FinalizePinMediaAddition(ctx context.Context, req *pb.FinalizePinMediaAdditionRequest) (*pb.FinalizePinMediaAdditionResponse, error) {
-	return c.client.FinalizePinMediaAddition(withUserIDMetadata(ctx), req)
-}
-
-func (c *Client) CancelPinMediaAddition(ctx context.Context, req *pb.CancelPinMediaAdditionRequest) (*pb.CancelPinMediaAdditionResponse, error) {
-	return c.client.CancelPinMediaAddition(withUserIDMetadata(ctx), req)
-}
-
 func (c *Client) RemoveMediaFromPin(ctx context.Context, req *pb.RemoveMediaFromPinRequest) (*pb.RemoveMediaFromPinResponse, error) {
 	return c.client.RemoveMediaFromPin(withUserIDMetadata(ctx), req)
 }
 
-// Pin Create flow (ТЗ 4.1, 4.6-4.11)
+// Pin upload flow (унифицированный creation/addition).
 
-func (c *Client) CreatePinStart(ctx context.Context, req *pb.CreatePinStartRequest) (*pb.CreatePinStartResponse, error) {
-	return c.client.CreatePinStart(withUserIDMetadata(ctx), req)
+func (c *Client) PinUploadStart(ctx context.Context, req *pb.PinUploadStartRequest) (*pb.PinUploadStartResponse, error) {
+	return c.client.PinUploadStart(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) RequestPinCreationUploadUrls(ctx context.Context, req *pb.RequestPinCreationUploadUrlsRequest) (*pb.RequestPinCreationUploadUrlsResponse, error) {
-	return c.client.RequestPinCreationUploadUrls(withUserIDMetadata(ctx), req)
+func (c *Client) RequestPinUploadUrls(ctx context.Context, req *pb.RequestPinUploadUrlsRequest) (*pb.RequestPinUploadUrlsResponse, error) {
+	return c.client.RequestPinUploadUrls(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) CommitPinCreationUpload(ctx context.Context, req *pb.CommitPinCreationUploadRequest) (*pb.CommitPinCreationUploadResponse, error) {
-	return c.client.CommitPinCreationUpload(withUserIDMetadata(ctx), req)
+func (c *Client) CommitPinUpload(ctx context.Context, req *pb.CommitPinUploadRequest) (*pb.CommitPinUploadResponse, error) {
+	return c.client.CommitPinUpload(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) ProcessPinCreation(ctx context.Context, req *pb.ProcessPinCreationRequest) (*pb.ProcessPinCreationResponse, error) {
-	return c.client.ProcessPinCreation(withUserIDMetadata(ctx), req)
+func (c *Client) ProcessPinUpload(ctx context.Context, req *pb.ProcessPinUploadRequest) (*pb.ProcessPinUploadResponse, error) {
+	return c.client.ProcessPinUpload(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) GetPinCreationReview(ctx context.Context, req *pb.GetPinCreationReviewRequest) (*pb.GetPinCreationReviewResponse, error) {
-	return c.client.GetPinCreationReview(withUserIDMetadata(ctx), req)
+func (c *Client) GetPinUploadReview(ctx context.Context, req *pb.GetPinUploadReviewRequest) (*pb.GetPinUploadReviewResponse, error) {
+	return c.client.GetPinUploadReview(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) FinalizePinCreation(ctx context.Context, req *pb.FinalizePinCreationRequest) (*pb.FinalizePinCreationResponse, error) {
-	return c.client.FinalizePinCreation(withUserIDMetadata(ctx), req)
+func (c *Client) FinalizePinUpload(ctx context.Context, req *pb.FinalizePinUploadRequest) (*pb.FinalizePinUploadResponse, error) {
+	return c.client.FinalizePinUpload(withUserIDMetadata(ctx), req)
 }
 
-func (c *Client) CancelPinCreation(ctx context.Context, req *pb.CancelPinCreationRequest) (*pb.CancelPinCreationResponse, error) {
-	return c.client.CancelPinCreation(withUserIDMetadata(ctx), req)
+func (c *Client) CancelPinUpload(ctx context.Context, req *pb.CancelPinUploadRequest) (*pb.CancelPinUploadResponse, error) {
+	return c.client.CancelPinUpload(withUserIDMetadata(ctx), req)
 }
 
 func (c *Client) GetRecommendations(ctx context.Context, req *pb.GetRecommendationsRequest) (*pb.GetRecommendationsResponse, error) {

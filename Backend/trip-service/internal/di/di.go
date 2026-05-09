@@ -31,6 +31,7 @@ type Dependencies struct {
 	AddMediaSessionRepo *repositories.AddMediaSessionRepository
 	BattleRepo *repositories.MediaBattleRepository
 	GeoEventLogRepo *repositories.GeoEventLogRepository
+	PinUploadSessionRepo *repositories.PinUploadSessionRepository
 	MediaURLs services.MediaURLResolver
 }
 
@@ -72,10 +73,9 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	addMediaSessionRepo := repositories.NewAddMediaSessionRepository(db)
 	battleRepo := repositories.NewMediaBattleRepository(db)
 	pinHiddenRepo := repositories.NewPinHiddenRepository(db)
-	pinAddSessionRepo := repositories.NewPinMediaAdditionSessionRepository(db)
-	pinCreationSessionRepo := repositories.NewPinCreationSessionRepository(db)
+	pinUploadSessionRepo := repositories.NewPinUploadSessionRepository(db)
 
-	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geoRepo, addMediaSessionRepo, battleRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo, pinHiddenRepo, pinAddSessionRepo, pinCreationSessionRepo)
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geoRepo, addMediaSessionRepo, battleRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo, pinHiddenRepo, pinUploadSessionRepo)
 	return &Dependencies{
 		TripService: tripSvc,
 		RedisClient: redisClient,
@@ -92,6 +92,7 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 		AddMediaSessionRepo: addMediaSessionRepo,
 		BattleRepo: battleRepo,
 		GeoEventLogRepo: geoEventLogRepo,
+		PinUploadSessionRepo: pinUploadSessionRepo,
 		MediaURLs: mediaURLs,
 	}, nil
 }

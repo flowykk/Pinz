@@ -3,11 +3,9 @@ package e2e
 import (
 	"encoding/json"
 	"net/http"
-	"net/url"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
 )
 
@@ -243,31 +241,6 @@ func TestE2E_Social_LikeDislikeFavourite(t *testing.T) {
 	})
 }
 
-func TestE2E_WebSocket_Handshake(t *testing.T) {
-	st := startStack(t)
-
-	userID := uuid.New().String()
-	email := "ws@example.com"
-	st.seedUser(t, userID, email, "ws")
-
-	resp, body := st.doJSON(t, http.MethodPost, "/api/v1/auth/dev-login", "", `{"email":"`+email+`"}`)
-	require.Equal(t, http.StatusOK, resp.StatusCode, body)
-	var login struct {
-		AccessToken string `json:"access_token"`
-	}
-	require.NoError(t, json.Unmarshal([]byte(body), &login))
-	require.NotEmpty(t, login.AccessToken)
-
-	t.Run("dial_with_bearer_returns_101", func(t *testing.T) {
-		u, err := url.Parse(st.baseURL)
-		require.NoError(t, err)
-		wsURL := "ws://" + u.Host + "/v1/ws"
-		dialer := websocket.Dialer{}
-		h := http.Header{}
-		h.Set("Authorization", "Bearer "+login.AccessToken)
-		conn, resp2, err := dialer.Dial(wsURL, h)
-		require.NoError(t, err)
-		require.Equal(t, http.StatusSwitchingProtocols, resp2.StatusCode)
-		_ = conn.Close()
-	})
-}
+// Тест /v1/ws удалён вместе с самим endpoint'ом — все WS теперь per-resource
+// (creation/review/ws, media/add/review/ws, pins/creation/sessions/{sid}/ws,
+// pins/{pin_id}/media/sessions/{sid}/ws).
