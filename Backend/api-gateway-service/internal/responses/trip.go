@@ -39,7 +39,7 @@ type GetTripResponse struct {
 }
 
 // TripParticipant — участник трипа в ответе GetTrip.
-// privacy_level — per-user выбор этого участника ("Private" если записи нет).
+// privacy_level — per-user выбор этого участника ("private" если записи нет).
 // role — "admin" | "member". username/avatar_url приходят из auth.GetUsersProfiles
 // (могут быть пустыми, если auth недоступен).
 type TripParticipant struct {

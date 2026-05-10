@@ -63,8 +63,8 @@ func TestTripService_Integration(t *testing.T) {
 			err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 				resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
 					Name: "Trip",
-					Category: "Отпуск",
-					Season: "Лето",
+					Category: "vacation",
+					Season: "summer",
 					FilesToUpload: []*pb.FileToUpload{
 						{ClientId: "c1", ContentType: "image/jpeg"},
 					},
@@ -247,8 +247,8 @@ func TestTripService_Integration(t *testing.T) {
 			err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 				resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
 					Name: "TripToDelete",
-					Category: "Отпуск",
-					Season: "Лето",
+					Category: "vacation",
+					Season: "summer",
 					FilesToUpload: []*pb.FileToUpload{
 						{ClientId: "c2", ContentType: "image/jpeg"},
 					},
@@ -331,8 +331,8 @@ func TestTripService_Integration_CreationFlow(t *testing.T) {
 		err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 			resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
 				Name: "Алтай 2026",
-				Category: "Отпуск",
-				Season: "Лето",
+				Category: "vacation",
+				Season: "summer",
 				Description: "Поход с друзьями",
 				FilesToUpload: []*pb.FileToUpload{
 					{ClientId: "file-1", ContentType: "image/jpeg"},
@@ -481,8 +481,8 @@ func TestTripService_Integration_SoftDelete(t *testing.T) {
 		err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 			resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
 				Name: "SoftDeleteTrip",
-				Category: "Отпуск",
-				Season: "Лето",
+				Category: "vacation",
+				Season: "summer",
 				FilesToUpload: []*pb.FileToUpload{
 					{ClientId: "f1", ContentType: "image/jpeg"},
 					{ClientId: "f2", ContentType: "image/jpeg"},
@@ -551,7 +551,7 @@ func TestTripService_Integration_SoftDelete(t *testing.T) {
 		// сначала выставить свой выбор Public — единственный участник, поэтому
 		// агрегация даст Public.
 		err := callAsUser(t, ownerID, "/pinz.TripService/UpsertTripPrivacy", func(ctx context.Context) error {
-			_, err := svc.UpsertTripPrivacy(ctx, &pb.UpsertTripPrivacyRequest{TripId: tripID, PrivacyLevel: "Public"})
+			_, err := svc.UpsertTripPrivacy(ctx, &pb.UpsertTripPrivacyRequest{TripId: tripID, PrivacyLevel: "public"})
 			return err
 		})
 		require.NoError(t, err)

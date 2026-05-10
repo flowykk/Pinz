@@ -60,7 +60,7 @@ func NewGeocodingClientFromEnv() *GeocodingClient {
 		httpClient: client,
 		baseURL:    baseURL,
 		apiKey:     apiKey,
-		language:   "ru",
+		language:   "en",
 	}
 }
 

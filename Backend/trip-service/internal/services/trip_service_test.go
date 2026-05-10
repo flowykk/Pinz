@@ -40,7 +40,7 @@ func TestTripToProto(t *testing.T) {
 		"basic": {
 			trip: &models.Trip{
 				ID: "id1", OwnerUserID: "u1", Name: "Trip", Description: "desc",
-				Category: "Отпуск", Season: "Лето", Status: "Created", PrivacyLevel: "Private",
+				Category: "vacation", Season: "summer", Status: "DRAFT", PrivacyLevel: "private",
 				LikesCount: 1, DislikesCount: 0, CoverURL: "", IsPublished: false, IsGenerated: false,
 				CreatedAt: now, UpdatedAt: now,
 			},
@@ -49,8 +49,8 @@ func TestTripToProto(t *testing.T) {
 				require.Equal(t, "u1", out.OwnerUserId)
 				require.Equal(t, "Trip", out.Name)
 				require.Equal(t, "desc", out.Description)
-				require.Equal(t, "Отпуск", out.Category)
-				require.Equal(t, "Лето", out.Season)
+				require.Equal(t, "vacation", out.Category)
+				require.Equal(t, "summer", out.Season)
 				require.Equal(t, int32(1), out.LikesCount)
 				require.Equal(t, int64(1000), out.CreatedAtUnix)
 				require.Equal(t, int64(1000), out.UpdatedAtUnix)
@@ -60,8 +60,8 @@ func TestTripToProto(t *testing.T) {
 		},
 		"with_dates": {
 			trip: &models.Trip{
-				ID: "id2", OwnerUserID: "u2", Name: "T2", Description: "", Category: "Другое", Season: "Зима",
-				Status: "Created", PrivacyLevel: "Public", StartDate: ptrTime(time.Unix(2000, 0)), EndDate: ptrTime(time.Unix(3000, 0)),
+				ID: "id2", OwnerUserID: "u2", Name: "T2", Description: "", Category: "custom", Season: "winter",
+				Status: "DRAFT", PrivacyLevel: "public", StartDate: ptrTime(time.Unix(2000, 0)), EndDate: ptrTime(time.Unix(3000, 0)),
 				CreatedAt: now, UpdatedAt: now,
 			},
 			check: func(t *testing.T, out *pb.Trip) {
@@ -86,7 +86,7 @@ func TestCreateTrip_ValidationErrors(t *testing.T) {
 	// Service with nil repos: we only hit validation, no repo calls.
 	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	validReq := &pb.CreateTripRequest{
-		Name: "Trip", Category: "Отпуск", Season: "Лето",
+		Name: "Trip", Category: "vacation", Season: "summer",
 	}
 
 	cases := map[string]struct {
@@ -101,33 +101,33 @@ func TestCreateTrip_ValidationErrors(t *testing.T) {
 		},
 		"empty_name": {
 			ctx: ctxWithUser("u1"),
-			req: &pb.CreateTripRequest{Name: "", Category: "Отпуск", Season: "Лето"},
+			req: &pb.CreateTripRequest{Name: "", Category: "vacation", Season: "summer"},
 			code: codes.InvalidArgument,
 		},
 		"name_too_long": {
 			ctx: ctxWithUser("u1"),
-			req: &pb.CreateTripRequest{Name: string(make([]byte, MaxNameLength+1)), Category: "Отпуск", Season: "Лето"},
+			req: &pb.CreateTripRequest{Name: string(make([]byte, MaxNameLength+1)), Category: "vacation", Season: "summer"},
 			code: codes.InvalidArgument,
 		},
 		"description_too_long": {
 			ctx: ctxWithUser("u1"),
-			req: &pb.CreateTripRequest{Name: "Trip", Description: string(make([]byte, MaxDescriptionLength+1)), Category: "Отпуск", Season: "Лето"},
+			req: &pb.CreateTripRequest{Name: "Trip", Description: string(make([]byte, MaxDescriptionLength+1)), Category: "vacation", Season: "summer"},
 			code: codes.InvalidArgument,
 		},
 		"invalid_category": {
 			ctx: ctxWithUser("u1"),
-			req: &pb.CreateTripRequest{Name: "Trip", Category: "Invalid", Season: "Лето"},
+			req: &pb.CreateTripRequest{Name: "Trip", Category: "Invalid", Season: "summer"},
 			code: codes.InvalidArgument,
 		},
 		"invalid_season": {
 			ctx: ctxWithUser("u1"),
-			req: &pb.CreateTripRequest{Name: "Trip", Category: "Отпуск", Season: "Invalid"},
+			req: &pb.CreateTripRequest{Name: "Trip", Category: "vacation", Season: "Invalid"},
 			code: codes.InvalidArgument,
 		},
 		"unsupported_content_type": {
 			ctx: ctxWithUser("u1"),
 			req: &pb.CreateTripRequest{
-				Name: "Trip", Category: "Отпуск", Season: "Лето",
+				Name: "Trip", Category: "vacation", Season: "summer",
 				FilesToUpload: []*pb.FileToUpload{{ClientId: "c1", ContentType: "image/gif"}},
 			},
 			code: codes.InvalidArgument,
@@ -166,8 +166,8 @@ func TestCreateTrip_PresignedUploadURLs(t *testing.T) {
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urlMock, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.CreateTrip(ctxWithUser("u1"), &pb.CreateTripRequest{
 		Name: "Trip",
-		Category: "Отпуск",
-		Season: "Лето",
+		Category: "vacation",
+		Season: "summer",
 		FilesToUpload: []*pb.FileToUpload{
 			{ClientId: "client-1", ContentType: "image/jpeg"},
 		},
@@ -338,8 +338,8 @@ func TestListFavourites_Success(t *testing.T) {
 	favRepo := mocks.NewMockFavouriteRepositoryInterface(ctrl)
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
 	trip := &models.Trip{
-		ID: "t1", OwnerUserID: "u1", Name: "Fav Trip", Category: "Отпуск", Season: "Лето",
-		Status: "READY", PrivacyLevel: "Private", CreatedAt: time.Unix(1000, 0), UpdatedAt: time.Unix(1000, 0),
+		ID: "t1", OwnerUserID: "u1", Name: "Fav Trip", Category: "vacation", Season: "summer",
+		Status: "READY", PrivacyLevel: "private", CreatedAt: time.Unix(1000, 0), UpdatedAt: time.Unix(1000, 0),
 	}
 	favRepo.EXPECT().ListTripIDsByUserID("user-1", int32(20), int32(0)).Return([]string{"t1"}, nil)
 	tripRepo.EXPECT().GetByID("t1").Return(trip, nil)
@@ -370,13 +370,13 @@ func TestListFavourites_KeepsSoftDeleted(t *testing.T) {
 	favRepo := mocks.NewMockFavouriteRepositoryInterface(ctrl)
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
 	activeTrip := &models.Trip{
-		ID: "t1", OwnerUserID: "u1", Name: "Active", Category: "Отпуск", Season: "Лето",
-		Status: "READY", PrivacyLevel: "Private", IsSoftDeleted: false,
+		ID: "t1", OwnerUserID: "u1", Name: "Active", Category: "vacation", Season: "summer",
+		Status: "READY", PrivacyLevel: "private", IsSoftDeleted: false,
 		CreatedAt: time.Unix(1000, 0), UpdatedAt: time.Unix(1000, 0),
 	}
 	softDeletedTrip := &models.Trip{
-		ID: "t2", OwnerUserID: "u1", Name: "Deleted", Category: "Отпуск", Season: "Лето",
-		Status: "READY", PrivacyLevel: "Private", IsSoftDeleted: true,
+		ID: "t2", OwnerUserID: "u1", Name: "Deleted", Category: "vacation", Season: "summer",
+		Status: "READY", PrivacyLevel: "private", IsSoftDeleted: true,
 		CreatedAt: time.Unix(1000, 0), UpdatedAt: time.Unix(1000, 0),
 	}
 	favRepo.EXPECT().ListTripIDsByUserID("user-1", int32(20), int32(0)).Return([]string{"t1", "t2"}, nil)
@@ -408,11 +408,11 @@ func TestCreateTrip_Success(t *testing.T) {
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("owner-1")
 	resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
-		Name: "Trip", Category: "Отпуск", Season: "Лето",
+		Name: "Trip", Category: "vacation", Season: "summer",
 	})
 	require.NoError(t, err)
 	require.Equal(t, "trip-mock-id", resp.GetTripId())
-	require.Contains(t, []string{"Created", "UPLOADING"}, resp.GetStatus())
+	require.Contains(t, []string{"DRAFT", "UPLOADING"}, resp.GetStatus())
 }
 
 func TestCreateTrip_RepoCreateError(t *testing.T) {
@@ -423,7 +423,7 @@ func TestCreateTrip_RepoCreateError(t *testing.T) {
 	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("u1")
 	_, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
-		Name: "Trip", Category: "Отпуск", Season: "Лето",
+		Name: "Trip", Category: "vacation", Season: "summer",
 	})
 	require.Error(t, err)
 	st, ok := status.FromError(err)
@@ -434,8 +434,8 @@ func TestCreateTrip_RepoCreateError(t *testing.T) {
 func TestGetTrip_ParticipantSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	trip := &models.Trip{
-		ID: "t1", OwnerUserID: "u1", Name: "T", Category: "Отпуск", Season: "Лето",
-		Status: "READY", PrivacyLevel: "Private", CreatedAt: time.Unix(1000, 0), UpdatedAt: time.Unix(1000, 0),
+		ID: "t1", OwnerUserID: "u1", Name: "T", Category: "vacation", Season: "summer",
+		Status: "READY", PrivacyLevel: "private", CreatedAt: time.Unix(1000, 0), UpdatedAt: time.Unix(1000, 0),
 	}
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
@@ -452,7 +452,7 @@ func TestGetTrip_ParticipantSuccess(t *testing.T) {
 	}, nil)
 	tripPrivacyRepo := mocks.NewMockTripPrivacyRepositoryInterface(ctrl)
 	tripPrivacyRepo.EXPECT().GetByTripID(gomock.Any(), "t1").Return([]repositories.PrivacyEntry{
-		{UserID: "user-1", PrivacyLevel: "Public"},
+		{UserID: "user-1", PrivacyLevel: "public"},
 	}, nil)
 	settingsRepo := mocks.NewMockTripSettingsRepositoryInterface(ctrl)
 	settingsRepo.EXPECT().GetByTripAndUsers("t1", []string{"user-1"}).Return(map[string]bool{"user-1": false}, nil)
@@ -466,9 +466,9 @@ func TestGetTrip_ParticipantSuccess(t *testing.T) {
 	require.Len(t, resp.GetParticipants(), 1)
 	require.Equal(t, "user-1", resp.GetParticipants()[0].GetUserId())
 	require.Equal(t, "admin", resp.GetParticipants()[0].GetRole())
-	require.Equal(t, "Public", resp.GetParticipants()[0].GetPrivacyLevel())
+	require.Equal(t, "public", resp.GetParticipants()[0].GetPrivacyLevel())
 	require.False(t, resp.GetCurrentUserSettings().GetNotificationsEnabled())
-	require.Equal(t, "Public", resp.GetCurrentUserSettings().GetPrivacyLevel())
+	require.Equal(t, "public", resp.GetCurrentUserSettings().GetPrivacyLevel())
 }
 
 func TestGetTrip_NotParticipantNorFavourite(t *testing.T) {
@@ -494,13 +494,13 @@ func TestGetTrip_NotParticipantNorFavourite(t *testing.T) {
 func TestGetTrip_PublicSharedAccess_Published(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	trip := &models.Trip{
-		ID: "t1", OwnerUserID: "u1", Name: "Shared", Category: "Отпуск", Season: "Лето",
-		Status: "READY", PrivacyLevel: "Public", IsPublished: true,
+		ID: "t1", OwnerUserID: "u1", Name: "Shared", Category: "vacation", Season: "summer",
+		Status: "READY", PrivacyLevel: "public", IsPublished: true,
 		CreatedAt: time.Unix(1000, 0), UpdatedAt: time.Unix(1000, 0),
 	}
-	publicPin := &models.Pin{ID: "p-pub", TripID: "t1", Name: "Public pin", Category: "Достопримечательность", PrivacyLevel: "Public", IsPublishedInFeed: true}
-	hiddenPin := &models.Pin{ID: "p-priv", TripID: "t1", Name: "Private pin", Category: "Жилье", PrivacyLevel: "Private", IsPublishedInFeed: true}
-	notPublishedPin := &models.Pin{ID: "p-unpub", TripID: "t1", Name: "Not in feed", Category: "Еда и напитки", PrivacyLevel: "Public", IsPublishedInFeed: false}
+	publicPin := &models.Pin{ID: "p-pub", TripID: "t1", Name: "Public pin", Category: "sight", PrivacyLevel: "public", IsPublishedInFeed: true}
+	hiddenPin := &models.Pin{ID: "p-priv", TripID: "t1", Name: "Private pin", Category: "housing", PrivacyLevel: "private", IsPublishedInFeed: true}
+	notPublishedPin := &models.Pin{ID: "p-unpub", TripID: "t1", Name: "Not in feed", Category: "food", PrivacyLevel: "public", IsPublishedInFeed: false}
 
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
@@ -515,8 +515,8 @@ func TestGetTrip_PublicSharedAccess_Published(t *testing.T) {
 	pinRepo.EXPECT().ListByTripID("t1").Return([]*models.Pin{publicPin, hiddenPin, notPublishedPin}, nil)
 	tagRepo.EXPECT().GetByTripID("t1").Return(map[string][]string{"p-pub": {"sea"}}, nil)
 	mediaRepo.EXPECT().ListByPinID("p-pub").Return([]*models.Media{
-		{ID: "m1", S3Key: "s1", MediaType: "image", PrivacyLevel: "Public"},
-		{ID: "m2", S3Key: "s2", MediaType: "image", PrivacyLevel: "Private"},
+		{ID: "m1", S3Key: "s1", MediaType: "image", PrivacyLevel: "public"},
+		{ID: "m2", S3Key: "s2", MediaType: "image", PrivacyLevel: "private"},
 	}, nil)
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
@@ -701,7 +701,7 @@ func TestApplyGroupsAndProcess_DeletedMediaSuccess(t *testing.T) {
 	const tripID = "trip-1"
 	const userID = "user-1"
 	trip := &models.Trip{
-		ID: tripID, Status: "DRAFT_GROUPING_REVIEW", Category: "Отпуск", PrivacyLevel: "Private",
+		ID: tripID, Status: "DRAFT_GROUPING_REVIEW", Category: "vacation", PrivacyLevel: "private",
 	}
 	ctrl := gomock.NewController(t)
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
@@ -730,7 +730,7 @@ func TestApplyGroupsAndProcess_DeletedMediaSuccess(t *testing.T) {
 func TestFinalizeTrip_MediaToDeleteSuccess(t *testing.T) {
 	const tripID = "trip-1"
 	const userID = "user-1"
-	trip := &models.Trip{ID: tripID, Status: "PROCESSING", Category: "Отпуск", PrivacyLevel: "Private"}
+	trip := &models.Trip{ID: tripID, Status: "PROCESSING", Category: "vacation", PrivacyLevel: "private"}
 	ctrl := gomock.NewController(t)
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
@@ -762,8 +762,8 @@ func TestPublishTrip_RejectsNonPublicPrivacy(t *testing.T) {
 	cases := map[string]struct {
 		privacyLevel string
 	}{
-		"private": {privacyLevel: "Private"},
-		"restricted": {privacyLevel: "Restricted"},
+		"private": {privacyLevel: "private"},
+		"restricted": {privacyLevel: "restricted"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -784,7 +784,7 @@ func TestPublishTrip_RejectsNonPublicPrivacy(t *testing.T) {
 			st, ok := status.FromError(err)
 			require.True(t, ok)
 			require.Equal(t, codes.FailedPrecondition, st.Code())
-			require.Contains(t, st.Message(), "Public privacy level")
+			require.Contains(t, st.Message(), "public privacy level")
 		})
 	}
 }
@@ -929,13 +929,13 @@ func TestSearchPins_Success(t *testing.T) {
 	pins := []*models.Pin{
 		{
 			ID: "pin-1", TripID: "trip-1", Name: "Cafe Central", Description: "best cafe",
-			Category: "Food", PrivacyLevel: "Public", MediaCount: 1,
+			Category: "Food", PrivacyLevel: "public", MediaCount: 1,
 			Latitude: &lat, Longitude: &lon,
 		},
 	}
 	pinRepo.EXPECT().SearchByUserID("u1", "cafe", int32(20), int32(0)).Return(pins, nil)
 	mediaRepo.EXPECT().ListByPinID("pin-1").Return([]*models.Media{
-		{ID: "m1", TripID: "trip-1", S3Key: "k", MediaType: "photo", PrivacyLevel: "Public"},
+		{ID: "m1", TripID: "trip-1", S3Key: "k", MediaType: "photo", PrivacyLevel: "public"},
 	}, nil)
 	tagRepo.EXPECT().GetByPinID("pin-1").Return([]string{"cafe", "coffee"}, nil)
 
@@ -1009,10 +1009,10 @@ func TestListFeed_PerUserFlags(t *testing.T) {
 		wantSaved  bool
 	}{
 		"no_state":         {nil, nil, false, false, false},
-		"like_only":        {map[string]string{"trip-1": "Like"}, nil, true, false, false},
-		"dislike_only":     {map[string]string{"trip-1": "Dislike"}, nil, false, true, false},
+		"like_only":        {map[string]string{"trip-1": "like"}, nil, true, false, false},
+		"dislike_only":     {map[string]string{"trip-1": "dislike"}, nil, false, true, false},
 		"saved_only":       {nil, map[string]struct{}{"trip-1": {}}, false, false, true},
-		"like_and_saved":   {map[string]string{"trip-1": "Like"}, map[string]struct{}{"trip-1": {}}, true, false, true},
+		"like_and_saved":   {map[string]string{"trip-1": "like"}, map[string]struct{}{"trip-1": {}}, true, false, true},
 		"unknown_reaction": {map[string]string{"trip-1": "Wat"}, nil, false, false, false},
 	}
 	for name, tc := range cases {
@@ -1026,8 +1026,8 @@ func TestListFeed_PerUserFlags(t *testing.T) {
 
 			now := time.Unix(1000, 0)
 			trips := []*models.Trip{{
-				ID: "trip-1", OwnerUserID: "owner", Name: "T", Category: "Отпуск", Season: "Лето",
-				Status: "READY", PrivacyLevel: "Public", IsPublished: true, CreatedAt: now, UpdatedAt: now,
+				ID: "trip-1", OwnerUserID: "owner", Name: "T", Category: "vacation", Season: "summer",
+				Status: "READY", PrivacyLevel: "public", IsPublished: true, CreatedAt: now, UpdatedAt: now,
 			}}
 			tripRepo.EXPECT().ListFeed(int32(20), int32(0), "", "", []int(nil), "date").Return(trips, nil)
 			socialRepo.EXPECT().GetReactionsByUserAndTrips("u1", []string{"trip-1"}).Return(tc.reactions, nil)
@@ -1057,8 +1057,8 @@ func TestListFeed_DegradesOnUserStateRepoError(t *testing.T) {
 
 	now := time.Unix(1000, 0)
 	trips := []*models.Trip{{
-		ID: "trip-1", OwnerUserID: "owner", Name: "T", Category: "Отпуск", Season: "Лето",
-		Status: "READY", PrivacyLevel: "Public", IsPublished: true, CreatedAt: now, UpdatedAt: now,
+		ID: "trip-1", OwnerUserID: "owner", Name: "T", Category: "vacation", Season: "summer",
+		Status: "READY", PrivacyLevel: "public", IsPublished: true, CreatedAt: now, UpdatedAt: now,
 	}}
 	tripRepo.EXPECT().ListFeed(int32(20), int32(0), "", "", []int(nil), "date").Return(trips, nil)
 	socialRepo.EXPECT().GetReactionsByUserAndTrips("u1", []string{"trip-1"}).Return(nil, sql.ErrConnDone)

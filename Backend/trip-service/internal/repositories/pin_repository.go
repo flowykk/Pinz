@@ -237,11 +237,11 @@ func (r *PinRepository) UpdateLocationName(pinID, name string) error {
 }
 
 // SetPrivacyLevel updates only pin privacy_level (used by privacy aggregation worker).
-// SQL guard: never overwrite Restricted ("permanently private", ТЗ 6.3) with a lower level.
+// SQL guard: never overwrite restricted ("permanently private", ТЗ 6.3) with a lower level.
 func (r *PinRepository) SetPrivacyLevel(pinID, level string) error {
 	q := psq.Update("pins").Set("privacy_level", level).Where(sq.Eq{"id": pinID})
-	if level != "Restricted" {
-		q = q.Where(sq.NotEq{"privacy_level": "Restricted"})
+	if level != "restricted" {
+		q = q.Where(sq.NotEq{"privacy_level": "restricted"})
 	}
 	res, err := q.RunWith(r.db).Exec()
 	if err != nil {
@@ -469,7 +469,7 @@ WITH top_trips AS (
  WHERE tl.location_id = $1
   AND t.is_published = true
   AND t.is_soft_deleted = false
-  AND t.privacy_level = 'Public'
+  AND t.privacy_level = 'public'
   AND COALESCE(t.end_date, t.start_date) >= NOW() - INTERVAL '2 years'
   AND ($3 = '' OR t.category = $3)
   AND ($4 = '' OR t.season = $4)

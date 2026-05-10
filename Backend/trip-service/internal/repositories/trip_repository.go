@@ -218,11 +218,11 @@ func (r *TripRepository) UpdateCoverURL(tripID, s3Key string) error {
 }
 
 // SetPrivacyLevel updates only trip privacy_level (used by privacy aggregation worker).
-// SQL guard: never overwrite Restricted ("permanently private", ТЗ 6.3) with a lower level.
+// SQL guard: never overwrite restricted ("permanently private", ТЗ 6.3) with a lower level.
 func (r *TripRepository) SetPrivacyLevel(tripID, level string) error {
 	q := psq.Update("trips").Set("privacy_level", level).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID})
-	if level != "Restricted" {
-		q = q.Where(sq.NotEq{"privacy_level": "Restricted"})
+	if level != "restricted" {
+		q = q.Where(sq.NotEq{"privacy_level": "restricted"})
 	}
 	res, err := q.RunWith(r.db).Exec()
 	if err != nil {
@@ -254,14 +254,14 @@ func (r *TripRepository) ListAbandonedGenerated(minAge time.Duration, limit int)
 SELECT t.id FROM trips t
 WHERE t.is_generated = true
   AND t.is_soft_deleted = false
-  AND t.created_at < NOW() - ($1 || ' seconds')::interval
+  AND t.created_at < NOW() - make_interval(secs => $1::float8)
   AND NOT EXISTS (
     SELECT 1 FROM favourite f
     WHERE f.user_id = t.owner_user_id AND f.trip_id = t.id
   )
 ORDER BY t.created_at ASC
 LIMIT $2`
-	rows, err := r.db.Query(sqlStr, int64(minAge.Seconds()), limit)
+	rows, err := r.db.Query(sqlStr, minAge.Seconds(), limit)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +299,7 @@ func (r *TripRepository) ListFeed(limit, offset int32, category, season string, 
 	).From("trips t").
 		Where(sq.Eq{"t.is_published": true}).
 		Where(sq.Eq{"t.is_soft_deleted": false}).
-		Where(sq.Eq{"t.privacy_level": "Public"})
+		Where(sq.Eq{"t.privacy_level": "public"})
 	if category != "" {
 		q = q.Where(sq.Eq{"t.category": category})
 	}

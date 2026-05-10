@@ -14,7 +14,7 @@ import (
 )
 
 const geoRegistryFindCityByNameAndParent = `-- name: GeoRegistryFindCityByNameAndParent :one
-SELECT id FROM geo_registry WHERE name = $1 AND type = 'City' AND parent_id = $2 LIMIT 1
+SELECT id FROM geo_registry WHERE name = $1 AND type = 'city' AND parent_id = $2 LIMIT 1
 `
 
 type GeoRegistryFindCityByNameAndParentParams struct {
@@ -30,7 +30,7 @@ func (q *Queries) GeoRegistryFindCityByNameAndParent(ctx context.Context, arg Ge
 }
 
 const geoRegistryFindCityByNameNoParent = `-- name: GeoRegistryFindCityByNameNoParent :one
-SELECT id FROM geo_registry WHERE name = $1 AND type = 'City' LIMIT 1
+SELECT id FROM geo_registry WHERE name = $1 AND type = 'city' LIMIT 1
 `
 
 func (q *Queries) GeoRegistryFindCityByNameNoParent(ctx context.Context, name string) (int32, error) {
@@ -41,7 +41,7 @@ func (q *Queries) GeoRegistryFindCityByNameNoParent(ctx context.Context, name st
 }
 
 const geoRegistryFindCountryByName = `-- name: GeoRegistryFindCountryByName :one
-SELECT id FROM geo_registry WHERE name = $1 AND type = 'Country' LIMIT 1
+SELECT id FROM geo_registry WHERE name = $1 AND type = 'country' LIMIT 1
 `
 
 func (q *Queries) GeoRegistryFindCountryByName(ctx context.Context, name string) (int32, error) {
@@ -53,7 +53,7 @@ func (q *Queries) GeoRegistryFindCountryByName(ctx context.Context, name string)
 
 const geoRegistryFindIDsByNamePattern = `-- name: GeoRegistryFindIDsByNamePattern :many
 SELECT id FROM geo_registry
-WHERE name ILIKE $1 AND (type = 'Country' OR type = 'City')
+WHERE name ILIKE $1 AND (type = 'country' OR type = 'city')
 `
 
 func (q *Queries) GeoRegistryFindIDsByNamePattern(ctx context.Context, name string) ([]int32, error) {

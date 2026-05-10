@@ -44,9 +44,9 @@ func ids(picks []*repositories.RecommendationPinCandidate) []string {
 
 func TestPickRecommendationPins_PicksTopFromCluster_ByMediaCount(t *testing.T) {
 	cands := []*repositories.RecommendationPinCandidate{
-		makeCand("a", "Достопримечательность", 1, 2, 5, 10),
-		makeCand("b", "Достопримечательность", 1, 5, 5, 10), // best media_count → выбран
-		makeCand("c", "Достопримечательность", 1, 1, 50, 10),
+		makeCand("a", "sight", 1, 2, 5, 10),
+		makeCand("b", "sight", 1, 5, 5, 10), // best media_count → выбран
+		makeCand("c", "sight", 1, 1, 50, 10),
 	}
 	got := pickRecommendationPins(cands)
 	require.Equal(t, []string{"b"}, ids(got))
@@ -54,8 +54,8 @@ func TestPickRecommendationPins_PicksTopFromCluster_ByMediaCount(t *testing.T) {
 
 func TestPickRecommendationPins_TieBreakByLongerDescription(t *testing.T) {
 	cands := []*repositories.RecommendationPinCandidate{
-		makeCand("a", "Природа", 1, 3, 10, 5),
-		makeCand("b", "Природа", 1, 3, 80, 5), // тот же media_count, длиннее description
+		makeCand("a", "nature", 1, 3, 10, 5),
+		makeCand("b", "nature", 1, 3, 80, 5), // тот же media_count, длиннее description
 	}
 	got := pickRecommendationPins(cands)
 	require.Equal(t, []string{"b"}, ids(got))
@@ -64,8 +64,8 @@ func TestPickRecommendationPins_TieBreakByLongerDescription(t *testing.T) {
 func TestPickRecommendationPins_PartitionsByCategoryAndCluster(t *testing.T) {
 	// две категории, у каждой свой cluster_id=1 (PARTITION BY category) — должны быть оба пина.
 	cands := []*repositories.RecommendationPinCandidate{
-		makeCand("sight", "Достопримечательность", 1, 1, 1, 10),
-		makeCand("food", "Еда и напитки", 1, 1, 1, 10),
+		makeCand("sight", "sight", 1, 1, 1, 10),
+		makeCand("food", "food", 1, 1, 1, 10),
 	}
 	got := pickRecommendationPins(cands)
 	require.ElementsMatch(t, []string{"sight", "food"}, ids(got))
@@ -74,10 +74,10 @@ func TestPickRecommendationPins_PartitionsByCategoryAndCluster(t *testing.T) {
 func TestPickRecommendationPins_FillsQuotasFirst(t *testing.T) {
 	// Меньше 6 sightseeing и 3 food — берём всё, что есть, без падения.
 	cands := []*repositories.RecommendationPinCandidate{
-		makeCand("s1", "Достопримечательность", 1, 1, 1, 10),
-		makeCand("s2", "Природа", 2, 1, 1, 9),
-		makeCand("f1", "Еда и напитки", 1, 1, 1, 8),
-		makeCand("o1", "Шопинг", 1, 1, 1, 7),
+		makeCand("s1", "sight", 1, 1, 1, 10),
+		makeCand("s2", "nature", 2, 1, 1, 9),
+		makeCand("f1", "food", 1, 1, 1, 8),
+		makeCand("o1", "shopping", 1, 1, 1, 7),
 	}
 	got := pickRecommendationPins(cands)
 	require.ElementsMatch(t, []string{"s1", "s2", "f1", "o1"}, ids(got))
@@ -88,13 +88,13 @@ func TestPickRecommendationPins_AddsExtraUpToCap(t *testing.T) {
 	// 8 sightseeing, 5 food, 20 other — итог должен быть = recommendationMaxPins (25),
 	// и стартовать с минимумов.
 	for i := 0; i < 8; i++ {
-		cands = append(cands, makeCand(uniqueID("s", i), "Природа", int32(i), int32(10-i), 5, int32(100-i)))
+		cands = append(cands, makeCand(uniqueID("s", i), "nature", int32(i), int32(10-i), 5, int32(100-i)))
 	}
 	for i := 0; i < 5; i++ {
-		cands = append(cands, makeCand(uniqueID("f", i), "Еда и напитки", int32(i), int32(10-i), 5, int32(50-i)))
+		cands = append(cands, makeCand(uniqueID("f", i), "food", int32(i), int32(10-i), 5, int32(50-i)))
 	}
 	for i := 0; i < 20; i++ {
-		cands = append(cands, makeCand(uniqueID("o", i), "Шопинг", int32(i), int32(10-i), 5, int32(30-i)))
+		cands = append(cands, makeCand(uniqueID("o", i), "shopping", int32(i), int32(10-i), 5, int32(30-i)))
 	}
 	got := pickRecommendationPins(cands)
 	require.Len(t, got, recommendationMaxPins)
@@ -174,7 +174,7 @@ func TestSaveRecommendation_TokenFastPath(t *testing.T) {
 
 	lat, lon := 55.75, 37.62
 	expectMaterialize(tripRepo, participantRepo, pinRepo, favRepo, geoRepo, 42, []*models.Pin{
-		{ID: "p1", TripID: "tsrc", Name: "Кремль", Category: "Достопримечательность", Latitude: &lat, Longitude: &lon, IsPublishedInFeed: true},
+		{ID: "p1", TripID: "tsrc", Name: "Кремль", Category: "sight", Latitude: &lat, Longitude: &lon, IsPublishedInFeed: true},
 	}, "new-trip-1")
 	snapRepo.EXPECT().Delete(gomock.Any(), token).Return(nil)
 
@@ -203,7 +203,7 @@ func TestSaveRecommendation_FallbackByPinIDs(t *testing.T) {
 
 	lat, lon := 55.75, 37.62
 	expectMaterialize(tripRepo, participantRepo, pinRepo, favRepo, geoRepo, 42, []*models.Pin{
-		{ID: "p1", TripID: "tsrc", Name: "Кремль", Category: "Достопримечательность", Latitude: &lat, Longitude: &lon, IsPublishedInFeed: true},
+		{ID: "p1", TripID: "tsrc", Name: "Кремль", Category: "sight", Latitude: &lat, Longitude: &lon, IsPublishedInFeed: true},
 	}, "new-trip-2")
 
 	resp, err := svc.SaveRecommendation(ctxWithUser("user-1"), &pb.SaveRecommendationRequest{
@@ -267,7 +267,7 @@ func TestPublishTrip_GeneratedRejected(t *testing.T) {
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
 	tripRepo.EXPECT().GetByID("t1").Return(&models.Trip{
-		ID: "t1", OwnerUserID: "user-1", Status: "READY", PrivacyLevel: "Private", IsGenerated: true,
+		ID: "t1", OwnerUserID: "user-1", Status: "READY", PrivacyLevel: "private", IsGenerated: true,
 	}, nil)
 	participantRepo.EXPECT().IsParticipant("t1", "user-1").Return(true, nil)
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
@@ -282,10 +282,10 @@ func TestUpsertTripPrivacy_GeneratedRejected(t *testing.T) {
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
 	participantRepo.EXPECT().IsParticipant("t1", "user-1").Return(true, nil)
 	tripRepo.EXPECT().GetByID("t1").Return(&models.Trip{
-		ID: "t1", OwnerUserID: "user-1", PrivacyLevel: "Private", IsGenerated: true,
+		ID: "t1", OwnerUserID: "user-1", PrivacyLevel: "private", IsGenerated: true,
 	}, nil)
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	_, err := svc.UpsertTripPrivacy(ctxWithUser("user-1"), &pb.UpsertTripPrivacyRequest{TripId: "t1", PrivacyLevel: "Public"})
+	_, err := svc.UpsertTripPrivacy(ctxWithUser("user-1"), &pb.UpsertTripPrivacyRequest{TripId: "t1", PrivacyLevel: "public"})
 	require.Error(t, err)
 	require.Equal(t, codes.FailedPrecondition, status.Code(err))
 }
@@ -310,15 +310,15 @@ func TestCurrentSeason(t *testing.T) {
 		month time.Month
 		want string
 	}{
-		"jan_winter": {time.January, "Зима"},
-		"feb_winter": {time.February, "Зима"},
-		"dec_winter": {time.December, "Зима"},
-		"mar_spring": {time.March, "Весна"},
-		"may_spring": {time.May, "Весна"},
-		"jun_summer": {time.June, "Лето"},
-		"aug_summer": {time.August, "Лето"},
-		"sep_autumn": {time.September, "Осень"},
-		"nov_autumn": {time.November, "Осень"},
+		"jan_winter": {time.January, "winter"},
+		"feb_winter": {time.February, "winter"},
+		"dec_winter": {time.December, "winter"},
+		"mar_spring": {time.March, "spring"},
+		"may_spring": {time.May, "spring"},
+		"jun_summer": {time.June, "summer"},
+		"aug_summer": {time.August, "summer"},
+		"sep_autumn": {time.September, "autumn"},
+		"nov_autumn": {time.November, "autumn"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

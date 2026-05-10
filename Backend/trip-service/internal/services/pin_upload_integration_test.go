@@ -55,7 +55,7 @@ func TestPinUpload_Integration_HappyPath(t *testing.T) {
 		var mediaByDraft [][]string
 		err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 			resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
-				Name: "PinUpload", Category: "Отпуск", Season: "Лето",
+				Name: "PinUpload", Category: "vacation", Season: "summer",
 				FilesToUpload: []*pb.FileToUpload{
 					{ClientId: "f1", ContentType: "image/jpeg"},
 				},
@@ -294,8 +294,8 @@ func TestPinUpload_Integration_HappyPath(t *testing.T) {
 		another := &models.Pin{
 			TripID:       tripID,
 			Name:         "Second",
-			Category:     "Другое",
-			PrivacyLevel: "Private",
+			Category:     "custom",
+			PrivacyLevel: "private",
 			MediaCount:   0,
 		}
 		require.NoError(t, pinRepo.Create(another))

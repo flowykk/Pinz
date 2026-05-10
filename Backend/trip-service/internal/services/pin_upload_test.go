@@ -372,7 +372,7 @@ func TestCommitPinUpload_Success_LimitsRespected(t *testing.T) {
 		ProcessingStatus: models.PinUploadProcessingStatusUploading,
 	}, nil)
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
-	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusReady, PrivacyLevel: "Private"}, nil).Times(2)
+	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusReady, PrivacyLevel: "private"}, nil).Times(2)
 	mediaRepo.EXPECT().CommitInUploadSession(gomock.Any(), gomock.Any(), sessionID, MaxMediaPerTrip, MaxVideosPerTrip).
 		DoAndReturn(func(_ context.Context, m *models.Media, _ string, _, _ int) (int, int, error) {
 			m.ID = "media-new"
@@ -468,7 +468,7 @@ func TestGetPinUploadReview_ReadyForReview_FullDraftCreation(t *testing.T) {
 	end := int64(2000)
 	snap := pinUploadDraftSnapshot{
 		Suggested: &pinSuggestedFields{
-			Name: "Другое", Category: "Другое",
+			Name: "custom", Category: "custom",
 			Latitude: &lat, Longitude: &lon,
 			StartTimeUnix: &start, EndTimeUnix: &end,
 		},
@@ -484,7 +484,7 @@ func TestGetPinUploadReview_ReadyForReview_FullDraftCreation(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
 	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusReady}, nil)
 	mediaRepo.EXPECT().ListByUploadSession(sessionID).Return([]*models.Media{
-		{ID: "m1", S3Key: "k1", PrivacyLevel: "Private"},
+		{ID: "m1", S3Key: "k1", PrivacyLevel: "private"},
 	}, nil)
 
 	svc := newSvcWithUploadRepo(tripRepo, participantRepo, mediaRepo, nil, nil, nil, nil, nil, uploadRepo)
@@ -495,7 +495,7 @@ func TestGetPinUploadReview_ReadyForReview_FullDraftCreation(t *testing.T) {
 	require.Equal(t, models.PinUploadProcessingStatusReadyForReview, resp.GetProcessingStatus())
 	require.NotNil(t, resp.GetDraft())
 	require.NotNil(t, resp.GetDraft().GetSuggested())
-	require.Equal(t, "Другое", resp.GetDraft().GetSuggested().GetCategory())
+	require.Equal(t, "custom", resp.GetDraft().GetSuggested().GetCategory())
 	require.Len(t, resp.GetDraft().GetMedia(), 1)
 }
 
@@ -557,7 +557,7 @@ func TestFinalizePinUpload_Creation_HappyPath_CreatesPinAndPublishesEvent(t *tes
 
 	snap := pinUploadDraftSnapshot{
 		Suggested: &pinSuggestedFields{
-			Name: "Другое", Category: "Другое", Tags: []string{},
+			Name: "custom", Category: "custom", Tags: []string{},
 		},
 		NewMediaIDs: []string{"m1", "m2"},
 	}
@@ -569,7 +569,7 @@ func TestFinalizePinUpload_Creation_HappyPath_CreatesPinAndPublishesEvent(t *tes
 		DraftSnapshot:    snapBytes,
 	}, nil)
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
-	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusReady, PrivacyLevel: "Private"}, nil).Times(2)
+	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusReady, PrivacyLevel: "private"}, nil).Times(2)
 	mediaRepo.EXPECT().ListByUploadSession(sessionID).Return([]*models.Media{
 		{ID: "m1", S3Key: "k1"},
 		{ID: "m2", S3Key: "k2"},

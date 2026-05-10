@@ -10,8 +10,8 @@ import (
 	"pinz/backend/trip-service/internal/db/sqlcdb"
 )
 
-const reactionLike = "Like"
-const reactionDislike = "Dislike"
+const reactionLike = "like"
+const reactionDislike = "dislike"
 
 type SocialRepository struct {
 	db *sql.DB
@@ -21,8 +21,8 @@ func NewSocialRepository(db *sql.DB) *SocialRepository {
 	return &SocialRepository{db: db}
 }
 
-// SetReaction sets or replaces user's reaction (Like or Dislike). Updates trip likes_count/dislikes_count.
-// Возвращает предыдущую реакцию (oldReaction: "", "Like", "Dislike"), чтобы вызывающий сервис
+// SetReaction sets or replaces user's reaction (like or dislike). Updates trip likes_count/dislikes_count.
+// Возвращает предыдущую реакцию (oldReaction: "", "like", "dislike"), чтобы вызывающий сервис
 // мог корректно опубликовать LIKE_ADDED/LIKE_REMOVED/DISLIKE_* события для statistics.
 func (r *SocialRepository) SetReaction(userID, tripID, reaction string) (oldReaction string, err error) {
 	if reaction != reactionLike && reaction != reactionDislike {
@@ -108,7 +108,7 @@ func (r *SocialRepository) GetReactionsByUserAndTrips(userID string, tripIDs []s
 	return out, nil
 }
 
-// GetReaction returns the user's reaction for the trip ("", "Like", or "Dislike").
+// GetReaction returns the user's reaction for the trip ("", "like", or "dislike").
 func (r *SocialRepository) GetReaction(userID, tripID string) (string, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {

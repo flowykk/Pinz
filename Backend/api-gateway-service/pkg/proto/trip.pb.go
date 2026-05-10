@@ -662,7 +662,7 @@ type TripPinMedia struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	MediaId        string                 `protobuf:"bytes,1,opt,name=media_id,json=mediaId,proto3" json:"media_id,omitempty"`
 	Url            string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`                              // presigned or CDN URL; may be empty if resolved elsewhere
-	MediaType      string                 `protobuf:"bytes,3,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // photo, video
+	MediaType      string                 `protobuf:"bytes,3,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // image, video
 	CapturedAtUnix int64                  `protobuf:"varint,4,opt,name=captured_at_unix,json=capturedAtUnix,proto3" json:"captured_at_unix,omitempty"`
 	PrivacyLevel   string                 `protobuf:"bytes,5,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -817,7 +817,7 @@ func (x *GetTripResponse) GetCurrentUserSettings() *TripSettings {
 }
 
 // TripParticipant — участник трипа для ответа GetTrip.
-// privacy_level — выбор этого юзера из trip_privacy ("Private" если записи нет).
+// privacy_level — выбор этого юзера из trip_privacy ("private" если записи нет).
 // role — "admin" | "member".
 type TripParticipant struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -3498,7 +3498,7 @@ type FeedMedia struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MediaId       string                 `protobuf:"bytes,1,opt,name=media_id,json=mediaId,proto3" json:"media_id,omitempty"`
 	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`                              // presigned GET URL
-	MediaType     string                 `protobuf:"bytes,3,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // photo, video
+	MediaType     string                 `protobuf:"bytes,3,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // image, video
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6787,7 +6787,7 @@ func (x *SearchPinsResponse) GetPins() []*TripPin {
 }
 
 // Per-user приватность: каждый участник выставляет свой уровень для trip/pin/media.
-// privacy_level — выбор пользователя (Public|Private). user_id берётся из gRPC metadata.
+// privacy_level — выбор пользователя (public|private). user_id берётся из gRPC metadata.
 type UpsertTripPrivacyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TripId        string                 `protobuf:"bytes,1,opt,name=trip_id,json=tripId,proto3" json:"trip_id,omitempty"`

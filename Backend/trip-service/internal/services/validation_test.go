@@ -11,12 +11,12 @@ func TestValidateCategory(t *testing.T) {
 		input string
 		want bool
 	}{
-		"Отпуск": {"Отпуск", true},
-		"Командировка": {"Командировка", true},
-		"Выходные": {"Выходные", true},
-		"Активный_отдых": {"Активный отдых", true},
-		"Образование": {"Образование", true},
-		"Другое": {"Другое", true},
+		"vacation": {"vacation", true},
+		"business": {"business", true},
+		"holidays": {"holidays", true},
+		"Активный_отдых": {"active", true},
+		"education": {"education", true},
+		"custom": {"custom", true},
 		"invalid": {"invalid", false},
 		"empty": {"", false},
 	}
@@ -33,10 +33,10 @@ func TestValidateSeason(t *testing.T) {
 		input string
 		want bool
 	}{
-		"Зима": {"Зима", true},
-		"Весна": {"Весна", true},
-		"Лето": {"Лето", true},
-		"Осень": {"Осень", true},
+		"winter": {"winter", true},
+		"spring": {"spring", true},
+		"summer": {"summer", true},
+		"autumn": {"autumn", true},
 		"invalid": {"invalid", false},
 		"empty": {"", false},
 	}
@@ -53,9 +53,9 @@ func TestValidatePrivacyLevel(t *testing.T) {
 		input string
 		want bool
 	}{
-		"Public": {"Public", true},
-		"Private": {"Private", true},
-		"Restricted": {"Restricted", true},
+		"public": {"public", true},
+		"private": {"private", true},
+		"restricted": {"restricted", true},
 		"invalid": {"invalid", false},
 		"empty": {"", false},
 	}
@@ -131,12 +131,12 @@ func TestValidatePinCategory(t *testing.T) {
 		input string
 		want string
 	}{
-		"valid": {"Достопримечательность", "Достопримечательность"},
-		"food": {"Еда и напитки", "Еда и напитки"},
-		"other": {"Другое", "Другое"},
-		"unknown": {"Unknown", "Другое"},
-		"empty": {"", "Другое"},
-		"english": {"Sightseeing", "Другое"},
+		"valid": {"sight", "sight"},
+		"food": {"food", "food"},
+		"other": {"custom", "custom"},
+		"unknown": {"Unknown", "custom"},
+		"empty": {"", "custom"},
+		"english": {"Sightseeing", "custom"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

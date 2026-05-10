@@ -29,8 +29,8 @@ func TestFavouriteRepository_FavouritesByUserAndTrips(t *testing.T) {
 		t.Helper()
 		trip := &models.Trip{
 			OwnerUserID: uuid.New().String(),
-			Name: "Trip", Category: "Отпуск", Season: "Лето",
-			Status: "DRAFT", PrivacyLevel: "Private",
+			Name: "Trip", Category: "vacation", Season: "summer",
+			Status: "DRAFT", PrivacyLevel: "private",
 		}
 		require.NoError(t, tripRepo.Create(trip))
 		return trip.ID

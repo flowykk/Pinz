@@ -72,16 +72,16 @@ func TestGetVisitedLocations_Ok(t *testing.T) {
 
 	now := time.Unix(1_700_000_000, 0)
 	tripLocations.EXPECT().
-		AggregateVisitedByTripIDs(gomock.Any(), []string{"trip-1", "trip-2"}, "Country").
+		AggregateVisitedByTripIDs(gomock.Any(), []string{"trip-1", "trip-2"}, "country").
 		Return([]*models.VisitedLocation{
-			{LocationID: 1, Name: "France", Type: "Country", ParentID: 0, VisitCount: 2, LastVisitAt: now},
+			{LocationID: 1, Name: "France", Type: "country", ParentID: 0, VisitCount: 2, LastVisitAt: now},
 		}, nil)
 
 	svc := NewStatisticsService(statsRepo, tripLocations)
 	resp, err := svc.GetVisitedLocations(context.Background(), &pb.GetVisitedLocationsRequest{
 		UserId: "u",
 		TripIds: []string{"trip-1", "trip-2"},
-		Type: "Country",
+		Type: "country",
 	})
 	require.NoError(t, err)
 	require.Len(t, resp.GetLocations(), 1)

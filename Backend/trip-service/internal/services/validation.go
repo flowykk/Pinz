@@ -20,48 +20,48 @@ const (
 
 var (
 	categories = map[string]bool{
-		"Отпуск": true,
-		"Командировка": true,
-		"Выходные": true,
-		"Активный отдых": true,
-		"Образование": true,
-		"Другое": true,
+		"vacation": true,
+		"business": true,
+		"holidays": true,
+		"active": true,
+		"education": true,
+		"custom": true,
 	}
 	seasons = map[string]bool{
-		"Зима": true,
-		"Весна": true,
-		"Лето": true,
-		"Осень": true,
+		"winter": true,
+		"spring": true,
+		"summer": true,
+		"autumn": true,
 	}
 	privacyLevels = map[string]bool{
-		"Public": true,
-		"Private": true,
-		"Restricted": true,
+		"public": true,
+		"private": true,
+		"restricted": true,
 	}
-	// userPrivacyLevels — уровни, доступные пользователю. Restricted (ТЗ 6.3 «постоянно приватный») ставит только система.
+	// userPrivacyLevels — уровни, доступные пользователю. restricted (ТЗ 6.3 «постоянно приватный») ставит только система.
 	userPrivacyLevels = map[string]bool{
-		"Public": true,
-		"Private": true,
+		"public": true,
+		"private": true,
 	}
 )
 
 // Pin categories per ТЗ 2.2.4.
 var pinCategories = map[string]bool{
-	"Достопримечательность": true,
-	"Природа": true,
-	"Отдых": true,
-	"Жилье": true,
-	"Еда и напитки": true,
-	"Шопинг": true,
-	"Транспорт": true,
-	"Развлечение": true,
-	"Мероприятие": true,
-	"Спорт": true,
-	"Рабочее место": true,
-	"Другое": true,
+	"sight": true,
+	"nature": true,
+	"leisure": true,
+	"housing": true,
+	"food": true,
+	"shopping": true,
+	"transport": true,
+	"entertainment": true,
+	"event": true,
+	"sport": true,
+	"work": true,
+	"custom": true,
 }
 
-const PinCategoryDefault = "Другое"
+const PinCategoryDefault = "custom"
 
 func ValidatePinCategory(c string) string {
 	if pinCategories[c] {

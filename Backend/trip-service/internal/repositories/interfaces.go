@@ -186,11 +186,11 @@ type TagRepositoryInterface interface {
 }
 
 type SocialRepositoryInterface interface {
-	// Возвращает oldReaction ("", "Like", "Dislike") — для публикации статистических событий.
+	// Возвращает oldReaction ("", "like", "dislike") — для публикации статистических событий.
 	SetReaction(userID, tripID, reaction string) (oldReaction string, err error)
 	GetReaction(userID, tripID string) (string, error)
 	// GetReactionsByUserAndTrips bulk-фетч реакций пользователя по списку trip_id.
-	// В мапе только те трипы, по которым у пользователя есть запись; reaction — "Like" или "Dislike".
+	// В мапе только те трипы, по которым у пользователя есть запись; reaction — "like" или "dislike".
 	GetReactionsByUserAndTrips(userID string, tripIDs []string) (map[string]string, error)
 }
 

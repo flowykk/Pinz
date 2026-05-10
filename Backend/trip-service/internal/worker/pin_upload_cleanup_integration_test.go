@@ -34,10 +34,10 @@ func TestRunPinUploadCleanupOnce_Integration(t *testing.T) {
 	trip := &models.Trip{
 		OwnerUserID:  ownerID,
 		Name:         "Cleanup trip",
-		Category:     "Другое",
-		Season:       "Лето",
+		Category:     "custom",
+		Season:       "summer",
 		Status:       "READY",
-		PrivacyLevel: "Private",
+		PrivacyLevel: "private",
 	}
 	require.NoError(t, tripRepo.Create(trip))
 

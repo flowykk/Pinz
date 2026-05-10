@@ -49,7 +49,7 @@ func (r *GeoRegistryRepository) EnsureByName(ctx context.Context, countryName, c
 
 	var country *models.GeoLocation
 	if countryName != "" {
-		row, err := r.upsertByName(ctx, countryName, "Country", nil)
+		row, err := r.upsertByName(ctx, countryName, "country", nil)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -62,7 +62,7 @@ func (r *GeoRegistryRepository) EnsureByName(ctx context.Context, countryName, c
 		if country != nil {
 			parentID = &country.ID
 		}
-		row, err := r.upsertByName(ctx, cityName, "City", parentID)
+		row, err := r.upsertByName(ctx, cityName, "city", parentID)
 		if err != nil {
 			return country, nil, err
 		}

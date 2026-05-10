@@ -55,10 +55,10 @@ func TestE2E_Trip_CreationStart(t *testing.T) {
 	t.Run("POST_creation_start_returns_201_and_upload_urls", func(t *testing.T) {
 		startBody := `{
 	 "name":"Trip",
-	 "category":"Отпуск",
-	 "season":"Лето",
+	 "category":"vacation",
+	 "season":"summer",
 	 "description":"d",
-	 "privacy_level":"Private",
+	 "privacy_level":"private",
 	 "files_to_upload":[{"client_id":"c1","content_type":"image/jpeg"}]
 	}`
 		resp, body := st.doJSON(t, http.MethodPost, "/api/v1/trips/creation/start", login.AccessToken, startBody)
@@ -102,10 +102,10 @@ func TestE2E_Trip_InviteJoin_GetTrip(t *testing.T) {
 
 	resp, body = st.doJSON(t, http.MethodPost, "/api/v1/trips", ownerLogin.AccessToken, `{
 	 "name":"Trip",
-	 "category":"Отпуск",
-	 "season":"Лето",
+	 "category":"vacation",
+	 "season":"summer",
 	 "description":"d",
-	 "privacy_level":"Private",
+	 "privacy_level":"private",
 	 "files_to_upload":[]
 	}`)
 	require.Equal(t, http.StatusCreated, resp.StatusCode, body)
@@ -169,10 +169,10 @@ func TestE2E_Social_LikeDislikeFavourite(t *testing.T) {
 	// Create trip via creation flow (with file) to get UPLOADING
 	resp, body = st.doJSON(t, http.MethodPost, "/api/v1/trips/creation/start", login.AccessToken, `{
 	 "name":"Trip",
-	 "category":"Отпуск",
-	 "season":"Лето",
+	 "category":"vacation",
+	 "season":"summer",
 	 "description":"d",
-	 "privacy_level":"Public",
+	 "privacy_level":"public",
 	 "files_to_upload":[{"client_id":"c1","content_type":"image/jpeg"}]
 	}`)
 	require.Equal(t, http.StatusCreated, resp.StatusCode, body)

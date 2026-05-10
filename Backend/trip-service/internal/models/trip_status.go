@@ -2,7 +2,7 @@ package models
 
 // Trip status values. Stored as TEXT in trips.status.
 const (
-	TripStatusDraft = "Draft"
+	TripStatusDraft = "DRAFT"
 	TripStatusUploading = "UPLOADING"
 	TripStatusDraftGroupingReview = "DRAFT_GROUPING_REVIEW"
 	TripStatusProcessing = "PROCESSING"
