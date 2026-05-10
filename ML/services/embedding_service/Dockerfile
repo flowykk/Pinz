@@ -12,7 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 
 ENV MODEL_CACHE_DIR=/model_cache
-ENV TEXT_MODEL_NAME=cointegrated/rubert-tiny-toxicity
+ENV TEXT_EMBED_MODEL=intfloat/multilingual-e5-large
+ENV IMAGE_EMBED_MODEL=ViT-L-14
+ENV IMAGE_EMBED_PRETRAINED=openai
 
-EXPOSE 8001
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+EXPOSE 8002
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
