@@ -139,6 +139,39 @@ func (q *Queries) GeoRegistryMirrorByID(ctx context.Context, arg GeoRegistryMirr
 	return err
 }
 
+const tripLocationFilterByLocation = `-- name: TripLocationFilterByLocation :many
+SELECT trip_id FROM trip_locations
+WHERE location_id = $1 AND trip_id = ANY($2::uuid[])
+`
+
+type TripLocationFilterByLocationParams struct {
+	LocationID int32
+	Column2    []uuid.UUID
+}
+
+func (q *Queries) TripLocationFilterByLocation(ctx context.Context, arg TripLocationFilterByLocationParams) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, tripLocationFilterByLocation, arg.LocationID, pq.Array(arg.Column2))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []uuid.UUID{}
+	for rows.Next() {
+		var trip_id uuid.UUID
+		if err := rows.Scan(&trip_id); err != nil {
+			return nil, err
+		}
+		items = append(items, trip_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const tripLocationInsert = `-- name: TripLocationInsert :exec
 INSERT INTO trip_locations (trip_id, location_id) VALUES ($1, $2)
 ON CONFLICT DO NOTHING

@@ -63,6 +63,19 @@ func errNoActiveSession(tripID string) error {
 		map[string]string{"trip_id": tripID})
 }
 
+var errGeneratedReadOnly = status.Error(codes.FailedPrecondition, "operation not allowed for generated trips")
+
+func (s *TripService) isGeneratedTrip(tripID string) bool {
+	if s == nil || s.tripRepo == nil {
+		return false
+	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil || trip == nil {
+		return false
+	}
+	return trip.IsGenerated
+}
+
 // errWrongStatus — trip.status не подходит для запрошенной операции.
 // Клиент получает 412 + текущий статус, делает GET /trips/{id} и перерисовывается.
 func errWrongStatus(expected, actual string) error {

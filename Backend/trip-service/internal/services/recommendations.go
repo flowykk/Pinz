@@ -8,6 +8,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -31,6 +32,8 @@ const (
 	recommendationMaxPins = 25
 	// сколько медиа отдавать в общей карусели карточки ленты (как в ListFeed).
 	recommendationFeedMediaLimit = 8
+	// TTL снимка карты в Redis для fast-path SaveRecommendation.
+	recommendationSnapshotTTL = 30 * time.Minute
 )
 
 // Категории из ТЗ 2.2.4, на которые опираются квоты ТЗ 9.2.4–9.2.5.
@@ -43,36 +46,8 @@ var (
 	recommendationFoodCategory = "Еда и напитки"
 )
 
-// GetRecommendations — ТЗ 9.1–9.3. Принимает либо city, либо country (XOR),
-// возвращает карту популярных мест: один пин на кластер из топ-трипов региона
-// за последние 2 года.
+// GetRecommendations — ТЗ 9.1–9.3.
 func (s *TripService) GetRecommendations(ctx context.Context, req *pb.GetRecommendationsRequest) (*pb.GetRecommendationsResponse, error) {
-	if _, ok := server.UserIDFromContext(ctx); !ok {
-		return nil, status.Error(codes.Unauthenticated, "user_id required")
-	}
-	region, err := s.resolveRecommendationRegion(ctx, req.GetCity(), req.GetCountry())
-	if err != nil {
-		return nil, err
-	}
-	pins, err := s.buildRecommendationPins(ctx, region)
-	if err != nil {
-		return nil, err
-	}
-	media := topMediaFromRecommendedPins(pins, recommendationFeedMediaLimit)
-	return &pb.GetRecommendationsResponse{
-		Map: &pb.RecommendedMap{
-			RegionName: region.name,
-			RegionType: region.kind,
-			Pins: pins,
-			Trip: virtualRecommendationTrip(region, pins),
-			Media: media,
-		},
-	}, nil
-}
-
-// SaveRecommendation — ТЗ 9.4. Переисполняет алгоритм и материализует карту
-// как сгенерированный приватный трип пользователя, добавляя его в favourites.
-func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecommendationRequest) (*pb.SaveRecommendationResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user_id required")
@@ -81,20 +56,131 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 	if err != nil {
 		return nil, err
 	}
-	pins, err := s.buildRecommendationPins(ctx, region)
+	category := trimToNonEmpty(req.GetCategory())
+	season := trimToNonEmpty(req.GetSeason())
+	pins, err := s.buildRecommendationPins(ctx, region, category, season)
 	if err != nil {
 		return nil, err
 	}
-	if len(pins) == 0 {
+	media := topMediaFromRecommendedPins(pins, recommendationFeedMediaLimit)
+
+	var token string
+	if len(pins) > 0 {
+		token = uuid.NewString()
+		pinIDs := make([]string, len(pins))
+		for i, p := range pins {
+			pinIDs[i] = p.GetId()
+		}
+		snap := &repositories.RecommendationSnapshot{
+			UserID: userID,
+			RegionID: region.id,
+			RegionName: region.name,
+			RegionType: region.kind,
+			Category: category,
+			Season: season,
+			PinIDs: pinIDs,
+			CreatedAt: time.Now().Unix(),
+		}
+		if err := s.recSnapshotRepo.Save(ctx, token, snap, recommendationSnapshotTTL); err != nil {
+			slog.WarnContext(ctx, "GetRecommendations: snapshot save failed", "error", err)
+			token = ""
+		}
+	}
+
+	return &pb.GetRecommendationsResponse{
+		Map: &pb.RecommendedMap{
+			RegionName: region.name,
+			RegionType: region.kind,
+			Pins: pins,
+			Trip: virtualRecommendationTrip(region, pins),
+			Media: media,
+			SnapshotToken: token,
+		},
+	}, nil
+}
+
+// SaveRecommendation — ТЗ 9.4.
+func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecommendationRequest) (*pb.SaveRecommendationResponse, error) {
+	userID, ok := server.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user_id required")
+	}
+
+	var (
+		regionID int
+		regionName string
+		pinIDs []string
+		category string
+		season string
+		token = req.GetSnapshotToken()
+		usedSnapshot bool
+	)
+
+	if token != "" {
+		snap, ok, err := s.recSnapshotRepo.Get(ctx, token)
+		if err != nil {
+			slog.WarnContext(ctx, "SaveRecommendation: snapshot get failed", "error", err)
+		} else if ok {
+			if snap.UserID != userID {
+				return nil, status.Error(codes.PermissionDenied, "snapshot belongs to another user")
+			}
+			regionID = snap.RegionID
+			regionName = snap.RegionName
+			pinIDs = snap.PinIDs
+			category = snap.Category
+			season = snap.Season
+			usedSnapshot = true
+		}
+	}
+
+	if !usedSnapshot {
+		if len(req.GetPinIds()) == 0 {
+			return nil, status.Error(codes.InvalidArgument, "snapshot_token expired and pin_ids not provided")
+		}
+		region, err := s.resolveRecommendationRegion(ctx, req.GetCity(), req.GetCountry())
+		if err != nil {
+			return nil, err
+		}
+		pinIDs = req.GetPinIds()
+		regionID = region.id
+		regionName = region.name
+		category = trimToNonEmpty(req.GetCategory())
+		season = trimToNonEmpty(req.GetSeason())
+	}
+
+	if len(pinIDs) == 0 {
 		return nil, status.Error(codes.NotFound, "no recommendations available for region")
 	}
 
+	pins, err := s.pinRepo.GetByIDs(pinIDs)
+	if err != nil {
+		slog.ErrorContext(ctx, "SaveRecommendation: load pins failed", "error", err)
+		return nil, status.Error(codes.Internal, "failed to load pins")
+	}
+	if len(pins) == 0 {
+		return nil, status.Error(codes.FailedPrecondition, "snapshot pins are no longer available")
+	}
+
+	if !usedSnapshot {
+		if err := s.validateFallbackPins(ctx, pins, regionID); err != nil {
+			return nil, err
+		}
+	}
+
+	tripCategory := category
+	if tripCategory == "" || !validateCategory(tripCategory) {
+		tripCategory = "Другое"
+	}
+	tripSeason := season
+	if tripSeason == "" || !validateSeason(tripSeason) {
+		tripSeason = currentSeason(time.Now())
+	}
 	trip := &models.Trip{
 		OwnerUserID: userID,
-		Name: "Популярные места: " + region.name,
-		Description: "Автоматически собранная карта популярных мест по " + region.name,
-		Category: "Другое",
-		Season: currentSeason(time.Now()),
+		Name: "Популярные места: " + regionName,
+		Description: "Автоматически собранная карта популярных мест по " + regionName,
+		Category: tripCategory,
+		Season: tripSeason,
 		Status: "READY",
 		PrivacyLevel: "Private",
 		IsGenerated: true,
@@ -111,30 +197,34 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 		slog.ErrorContext(ctx, "SaveRecommendation: add participant failed", "error", err, "trip_id", trip.ID)
 		return nil, status.Error(codes.Internal, "failed to add participant")
 	}
-	for _, p := range pins {
-		lat := p.GetLatitude()
-		lon := p.GetLongitude()
+	for _, src := range pins {
 		copyPin := &models.Pin{
 			TripID: trip.ID,
-			Name: p.GetName(),
-			Description: p.GetDescription(),
-			Category: p.GetCategory(),
-			LocationName: p.GetLocationName(),
+			Name: src.Name,
+			Description: src.Description,
+			Category: src.Category,
+			LocationName: src.LocationName,
 			PrivacyLevel: "Private",
 			MediaCount: 0,
 			IsPublishedInFeed: false,
-			Latitude: &lat,
-			Longitude: &lon,
+			Latitude: src.Latitude,
+			Longitude: src.Longitude,
 		}
 		if err := s.pinRepo.Create(copyPin); err != nil {
 			slog.WarnContext(ctx, "SaveRecommendation: create pin failed", "error", err, "trip_id", trip.ID)
 		}
 	}
-	if err := s.geoRepo.UpsertTripLocations(ctx, trip.ID, []int{region.id}); err != nil {
+	if err := s.geoRepo.UpsertTripLocations(ctx, trip.ID, []int{regionID}); err != nil {
 		slog.WarnContext(ctx, "SaveRecommendation: upsert trip_locations failed", "error", err, "trip_id", trip.ID)
 	}
 	if err := s.favouriteRepo.Add(userID, trip.ID); err != nil {
 		slog.WarnContext(ctx, "SaveRecommendation: add favourite failed", "error", err, "trip_id", trip.ID)
+	}
+
+	if usedSnapshot {
+		if err := s.recSnapshotRepo.Delete(ctx, token); err != nil {
+			slog.WarnContext(ctx, "SaveRecommendation: snapshot delete failed", "error", err)
+		}
 	}
 
 	saved, err := s.tripRepo.GetByID(trip.ID)
@@ -142,6 +232,31 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 		return nil, status.Error(codes.Internal, "failed to reload trip")
 	}
 	return &pb.SaveRecommendationResponse{Trip: s.tripToProto(ctx, saved)}, nil
+}
+
+func (s *TripService) validateFallbackPins(ctx context.Context, pins []*models.Pin, regionID int) error {
+	tripIDSet := make(map[string]struct{}, len(pins))
+	for _, p := range pins {
+		if !p.IsPublishedInFeed {
+			return status.Errorf(codes.InvalidArgument, "pin %s is not published in feed", p.ID)
+		}
+		tripIDSet[p.TripID] = struct{}{}
+	}
+	tripIDs := make([]string, 0, len(tripIDSet))
+	for id := range tripIDSet {
+		tripIDs = append(tripIDs, id)
+	}
+	belongs, err := s.geoRepo.TripIDsAtLocation(ctx, regionID, tripIDs)
+	if err != nil {
+		slog.ErrorContext(ctx, "SaveRecommendation: validate trips at location failed", "error", err)
+		return status.Error(codes.Internal, "failed to validate pins")
+	}
+	for _, id := range tripIDs {
+		if _, ok := belongs[id]; !ok {
+			return status.Errorf(codes.InvalidArgument, "trip %s does not belong to requested region", id)
+		}
+	}
+	return nil
 }
 
 // recommendationRegion — резолвленный регион (geo_registry id + тип + имя).
@@ -180,9 +295,8 @@ func (s *TripService) resolveRecommendationRegion(ctx context.Context, city, cou
 	return &recommendationRegion{id: id, kind: kind, name: name, eps: eps}, nil
 }
 
-// buildRecommendationPins — общий пайплайн ТЗ 9.2–9.3, используется и для GET, и для save.
-func (s *TripService) buildRecommendationPins(ctx context.Context, region *recommendationRegion) ([]*pb.RecommendedPin, error) {
-	candidates, err := s.pinRepo.ListRecommendationCandidates(region.id, region.eps)
+func (s *TripService) buildRecommendationPins(ctx context.Context, region *recommendationRegion, category, season string) ([]*pb.RecommendedPin, error) {
+	candidates, err := s.pinRepo.ListRecommendationCandidates(region.id, region.eps, category, season)
 	if err != nil {
 		slog.ErrorContext(ctx, "GetRecommendations: list candidates failed", "error", err, "region_id", region.id)
 		return nil, status.Error(codes.Internal, "failed to list candidates")

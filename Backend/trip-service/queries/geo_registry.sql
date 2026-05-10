@@ -27,3 +27,7 @@ ON CONFLICT DO NOTHING;
 
 -- name: GeoRegistryGetByIDs :many
 SELECT id, parent_id, name, type FROM geo_registry WHERE id = ANY($1::int[]);
+
+-- name: TripLocationFilterByLocation :many
+SELECT trip_id FROM trip_locations
+WHERE location_id = $1 AND trip_id = ANY($2::uuid[]);

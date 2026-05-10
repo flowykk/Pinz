@@ -8510,6 +8510,8 @@ type GetRecommendationsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	City          string                 `protobuf:"bytes,1,opt,name=city,proto3" json:"city,omitempty"`
 	Country       string                 `protobuf:"bytes,2,opt,name=country,proto3" json:"country,omitempty"`
+	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"` // ТЗ 9.2.2 → 7.9.1
+	Season        string                 `protobuf:"bytes,4,opt,name=season,proto3" json:"season,omitempty"`     // ТЗ 9.2.2 → 7.9.2
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8554,6 +8556,20 @@ func (x *GetRecommendationsRequest) GetCity() string {
 func (x *GetRecommendationsRequest) GetCountry() string {
 	if x != nil {
 		return x.Country
+	}
+	return ""
+}
+
+func (x *GetRecommendationsRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *GetRecommendationsRequest) GetSeason() string {
+	if x != nil {
+		return x.Season
 	}
 	return ""
 }
@@ -8689,6 +8705,7 @@ type RecommendedMap struct {
 	// Топ-8 медиа из всех выбранных пинов (для карусели в карточке ленты),
 	// отсортированы по battle_rating DESC.
 	Media         []*FeedMedia `protobuf:"bytes,5,rep,name=media,proto3" json:"media,omitempty"`
+	SnapshotToken string       `protobuf:"bytes,6,opt,name=snapshot_token,json=snapshotToken,proto3" json:"snapshot_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8758,6 +8775,13 @@ func (x *RecommendedMap) GetMedia() []*FeedMedia {
 	return nil
 }
 
+func (x *RecommendedMap) GetSnapshotToken() string {
+	if x != nil {
+		return x.SnapshotToken
+	}
+	return ""
+}
+
 type GetRecommendationsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Map           *RecommendedMap        `protobuf:"bytes,1,opt,name=map,proto3" json:"map,omitempty"`
@@ -8806,6 +8830,10 @@ type SaveRecommendationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	City          string                 `protobuf:"bytes,1,opt,name=city,proto3" json:"city,omitempty"`
 	Country       string                 `protobuf:"bytes,2,opt,name=country,proto3" json:"country,omitempty"`
+	SnapshotToken string                 `protobuf:"bytes,3,opt,name=snapshot_token,json=snapshotToken,proto3" json:"snapshot_token,omitempty"`
+	PinIds        []string               `protobuf:"bytes,4,rep,name=pin_ids,json=pinIds,proto3" json:"pin_ids,omitempty"`
+	Category      string                 `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
+	Season        string                 `protobuf:"bytes,6,opt,name=season,proto3" json:"season,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8850,6 +8878,34 @@ func (x *SaveRecommendationRequest) GetCity() string {
 func (x *SaveRecommendationRequest) GetCountry() string {
 	if x != nil {
 		return x.Country
+	}
+	return ""
+}
+
+func (x *SaveRecommendationRequest) GetSnapshotToken() string {
+	if x != nil {
+		return x.SnapshotToken
+	}
+	return ""
+}
+
+func (x *SaveRecommendationRequest) GetPinIds() []string {
+	if x != nil {
+		return x.PinIds
+	}
+	return nil
+}
+
+func (x *SaveRecommendationRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *SaveRecommendationRequest) GetSeason() string {
+	if x != nil {
+		return x.Season
 	}
 	return ""
 }
@@ -9587,10 +9643,12 @@ const file_trip_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x02 \x01(\tR\tsessionId\"1\n" +
 	"\x17CancelPinUploadResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\"I\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\"}\n" +
 	"\x19GetRecommendationsRequest\x12\x12\n" +
 	"\x04city\x18\x01 \x01(\tR\x04city\x12\x18\n" +
-	"\acountry\x18\x02 \x01(\tR\acountry\"\xb2\x02\n" +
+	"\acountry\x18\x02 \x01(\tR\acountry\x12\x1a\n" +
+	"\bcategory\x18\x03 \x01(\tR\bcategory\x12\x16\n" +
+	"\x06season\x18\x04 \x01(\tR\x06season\"\xb2\x02\n" +
 	"\x0eRecommendedPin\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\atrip_id\x18\x02 \x01(\tR\x06tripId\x12\x1a\n" +
@@ -9603,7 +9661,7 @@ const file_trip_proto_rawDesc = "" +
 	"\vmedia_count\x18\t \x01(\x05R\n" +
 	"mediaCount\x12%\n" +
 	"\x05media\x18\n" +
-	" \x03(\v2\x0f.trip.FeedMediaR\x05media\"\xc3\x01\n" +
+	" \x03(\v2\x0f.trip.FeedMediaR\x05media\"\xea\x01\n" +
 	"\x0eRecommendedMap\x12\x1f\n" +
 	"\vregion_name\x18\x01 \x01(\tR\n" +
 	"regionName\x12\x1f\n" +
@@ -9612,12 +9670,17 @@ const file_trip_proto_rawDesc = "" +
 	"\x04pins\x18\x03 \x03(\v2\x14.trip.RecommendedPinR\x04pins\x12\x1e\n" +
 	"\x04trip\x18\x04 \x01(\v2\n" +
 	".trip.TripR\x04trip\x12%\n" +
-	"\x05media\x18\x05 \x03(\v2\x0f.trip.FeedMediaR\x05media\"D\n" +
+	"\x05media\x18\x05 \x03(\v2\x0f.trip.FeedMediaR\x05media\x12%\n" +
+	"\x0esnapshot_token\x18\x06 \x01(\tR\rsnapshotToken\"D\n" +
 	"\x1aGetRecommendationsResponse\x12&\n" +
-	"\x03map\x18\x01 \x01(\v2\x14.trip.RecommendedMapR\x03map\"I\n" +
+	"\x03map\x18\x01 \x01(\v2\x14.trip.RecommendedMapR\x03map\"\xbd\x01\n" +
 	"\x19SaveRecommendationRequest\x12\x12\n" +
 	"\x04city\x18\x01 \x01(\tR\x04city\x12\x18\n" +
-	"\acountry\x18\x02 \x01(\tR\acountry\"<\n" +
+	"\acountry\x18\x02 \x01(\tR\acountry\x12%\n" +
+	"\x0esnapshot_token\x18\x03 \x01(\tR\rsnapshotToken\x12\x17\n" +
+	"\apin_ids\x18\x04 \x03(\tR\x06pinIds\x12\x1a\n" +
+	"\bcategory\x18\x05 \x01(\tR\bcategory\x12\x16\n" +
+	"\x06season\x18\x06 \x01(\tR\x06season\"<\n" +
 	"\x1aSaveRecommendationResponse\x12\x1e\n" +
 	"\x04trip\x18\x01 \x01(\v2\n" +
 	".trip.TripR\x04trip2\xb6'\n" +

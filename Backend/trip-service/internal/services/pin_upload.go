@@ -350,6 +350,9 @@ func (s *TripService) assertParticipantAndTripReady(ctx context.Context, tripID,
 	if err != nil {
 		return status.Error(codes.Internal, "failed to get trip")
 	}
+	if trip.IsGenerated {
+		return errGeneratedReadOnly
+	}
 	if trip.Status != models.TripStatusReady {
 		return errWrongStatus(models.TripStatusReady, trip.Status)
 	}

@@ -1054,6 +1054,8 @@ definitions:
         type: string
       region_type:
         type: string
+      snapshot_token:
+        type: string
       trip:
         allOf:
         - $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
@@ -1136,6 +1138,23 @@ definitions:
       privacy_level:
         type: string
       url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SaveRecommendationRequest:
+    properties:
+      category:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      pin_ids:
+        items:
+          type: string
+        type: array
+      season:
+        type: string
+      snapshot_token:
         type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.SaveRecommendationResponse:
@@ -2389,6 +2408,14 @@ paths:
         in: query
         name: country
         type: string
+      - description: trip category filter (ТЗ 9.2.2 → 7.9.1)
+        in: query
+        name: category
+        type: string
+      - description: trip season filter (ТЗ 9.2.2 → 7.9.2)
+        in: query
+        name: season
+        type: string
       produces:
       - application/json
       responses:
@@ -2415,15 +2442,15 @@ paths:
       - recommendations
   /api/v1/recommendations/save:
     post:
+      consumes:
+      - application/json
       parameters:
-      - description: city name (mutually exclusive with country)
-        in: query
-        name: city
-        type: string
-      - description: country name (mutually exclusive with city)
-        in: query
-        name: country
-        type: string
+      - description: snapshot_token (fast-path) или pin_ids+city/country (fallback)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SaveRecommendationRequest'
       produces:
       - application/json
       responses:

@@ -13,6 +13,7 @@ import (
 	models "pinz/backend/trip-service/internal/models"
 	repositories "pinz/backend/trip-service/internal/repositories"
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -82,6 +83,21 @@ func (m *MockTripRepositoryInterface) GetByID(id string) (*models.Trip, error) {
 func (mr *MockTripRepositoryInterfaceMockRecorder) GetByID(id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockTripRepositoryInterface)(nil).GetByID), id)
+}
+
+// ListAbandonedGenerated mocks base method.
+func (m *MockTripRepositoryInterface) ListAbandonedGenerated(minAge time.Duration, limit int) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAbandonedGenerated", minAge, limit)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAbandonedGenerated indicates an expected call of ListAbandonedGenerated.
+func (mr *MockTripRepositoryInterfaceMockRecorder) ListAbandonedGenerated(minAge, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAbandonedGenerated", reflect.TypeOf((*MockTripRepositoryInterface)(nil).ListAbandonedGenerated), minAge, limit)
 }
 
 // ListAnniversaryCandidates mocks base method.

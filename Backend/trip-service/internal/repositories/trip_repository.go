@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/lib/pq"
@@ -106,6 +107,8 @@ func (r *TripRepository) ListByUserID(userID string, limit, offset int32) ([]*mo
 	).From("trips t").
 		InnerJoin("trip_participants tp ON tp.trip_id = t.id").
 		Where(sq.Eq{"tp.user_id": userID}).
+		Where(sq.Eq{"t.is_generated": false}).
+		Where(sq.Eq{"t.is_soft_deleted": false}).
 		OrderBy("t.updated_at DESC").
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
@@ -246,6 +249,34 @@ func (r *TripRepository) SetStatus(tripID, status string) error {
 }
 
 // SetSoftDeleted sets is_soft_deleted=true.
+func (r *TripRepository) ListAbandonedGenerated(minAge time.Duration, limit int) ([]string, error) {
+	const sqlStr = `
+SELECT t.id FROM trips t
+WHERE t.is_generated = true
+  AND t.is_soft_deleted = false
+  AND t.created_at < NOW() - ($1 || ' seconds')::interval
+  AND NOT EXISTS (
+    SELECT 1 FROM favourite f
+    WHERE f.user_id = t.owner_user_id AND f.trip_id = t.id
+  )
+ORDER BY t.created_at ASC
+LIMIT $2`
+	rows, err := r.db.Query(sqlStr, int64(minAge.Seconds()), limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out = append(out, id)
+	}
+	return out, rows.Err()
+}
+
 func (r *TripRepository) SetSoftDeleted(tripID string) error {
 	res, err := psq.Update("trips").Set("is_soft_deleted", true).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID}).RunWith(r.db).Exec()
 	if err != nil {
@@ -340,7 +371,9 @@ func (r *TripRepository) ListSummariesByUserID(userID string) ([]*TripSummary, e
 		"(SELECT COUNT(*) FROM media m WHERE m.trip_id = t.id)",
 	).From("trips t").
 		InnerJoin("trip_participants tp ON tp.trip_id = t.id").
-		Where(sq.Eq{"tp.user_id": userID})
+		Where(sq.Eq{"tp.user_id": userID}).
+		Where(sq.Eq{"t.is_generated": false}).
+		Where(sq.Eq{"t.is_soft_deleted": false})
 	sqlStr, args, err := q.ToSql()
 	if err != nil {
 		return nil, err

@@ -70,7 +70,7 @@ func TestTripToProto(t *testing.T) {
 			},
 		},
 	}
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			out := svc.tripToProto(context.Background(), tc.trip)
@@ -84,7 +84,7 @@ func ptrTime(t time.Time) *time.Time { return &t }
 
 func TestCreateTrip_ValidationErrors(t *testing.T) {
 	// Service with nil repos: we only hit validation, no repo calls.
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	validReq := &pb.CreateTripRequest{
 		Name: "Trip", Category: "Отпуск", Season: "Лето",
 	}
@@ -163,7 +163,7 @@ func TestCreateTrip_PresignedUploadURLs(t *testing.T) {
 		},
 	)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urlMock, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urlMock, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.CreateTrip(ctxWithUser("u1"), &pb.CreateTripRequest{
 		Name: "Trip",
 		Category: "Отпуск",
@@ -180,7 +180,7 @@ func TestCreateTrip_PresignedUploadURLs(t *testing.T) {
 }
 
 func TestGetTrip_ValidationErrors(t *testing.T) {
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
 		ctx context.Context
 		req *pb.GetTripRequest
@@ -209,7 +209,7 @@ func TestGetTrip_ValidationErrors(t *testing.T) {
 }
 
 func TestUpdateTrip_ValidationErrors(t *testing.T) {
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
 		ctx context.Context
 		req *pb.UpdateTripRequest
@@ -238,7 +238,7 @@ func TestUpdateTrip_ValidationErrors(t *testing.T) {
 }
 
 func TestDeleteTrip_ValidationErrors(t *testing.T) {
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
 		ctx context.Context
 		req *pb.DeleteTripRequest
@@ -267,7 +267,7 @@ func TestDeleteTrip_ValidationErrors(t *testing.T) {
 }
 
 func TestRemoveParticipant_ValidationErrors(t *testing.T) {
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
 		ctx context.Context
 		req *pb.RemoveParticipantRequest
@@ -301,7 +301,7 @@ func TestRemoveParticipant_ValidationErrors(t *testing.T) {
 }
 
 func TestListUserTrips_ValidationErrors(t *testing.T) {
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cases := map[string]struct {
 		ctx context.Context
 		req *pb.ListUserTripsRequest
@@ -325,7 +325,7 @@ func TestListUserTrips_ValidationErrors(t *testing.T) {
 }
 
 func TestListFavourites_Unauthenticated(t *testing.T) {
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.ListFavourites(context.Background(), &pb.ListFavouritesRequest{})
 	require.Error(t, err)
 	st, ok := status.FromError(err)
@@ -344,7 +344,7 @@ func TestListFavourites_Success(t *testing.T) {
 	favRepo.EXPECT().ListTripIDsByUserID("user-1", int32(20), int32(0)).Return([]string{"t1"}, nil)
 	tripRepo.EXPECT().GetByID("t1").Return(trip, nil)
 
-	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ListFavourites(ctxWithUser("user-1"), &pb.ListFavouritesRequest{Limit: 20, Offset: 0})
 	require.NoError(t, err)
 	require.Len(t, resp.GetTrips(), 1)
@@ -357,13 +357,15 @@ func TestListFavourites_EmptyList(t *testing.T) {
 	favRepo := mocks.NewMockFavouriteRepositoryInterface(ctrl)
 	favRepo.EXPECT().ListTripIDsByUserID("user-1", int32(20), int32(0)).Return(nil, nil)
 
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ListFavourites(ctxWithUser("user-1"), &pb.ListFavouritesRequest{})
 	require.NoError(t, err)
 	require.Empty(t, resp.GetTrips())
 }
 
-func TestListFavourites_SkipsSoftDeleted(t *testing.T) {
+// ТЗ 3.24.2: после удаления автором трип, добавленный в избранное другими, остаётся
+// видимым у них как read-only. ListFavourites не фильтрует soft-deleted.
+func TestListFavourites_KeepsSoftDeleted(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	favRepo := mocks.NewMockFavouriteRepositoryInterface(ctrl)
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
@@ -381,11 +383,12 @@ func TestListFavourites_SkipsSoftDeleted(t *testing.T) {
 	tripRepo.EXPECT().GetByID("t1").Return(activeTrip, nil)
 	tripRepo.EXPECT().GetByID("t2").Return(softDeletedTrip, nil)
 
-	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ListFavourites(ctxWithUser("user-1"), &pb.ListFavouritesRequest{})
 	require.NoError(t, err)
-	require.Len(t, resp.GetTrips(), 1)
+	require.Len(t, resp.GetTrips(), 2)
 	require.Equal(t, "t1", resp.GetTrips()[0].GetId())
+	require.Equal(t, "t2", resp.GetTrips()[1].GetId())
 }
 
 func TestCreateTrip_Success(t *testing.T) {
@@ -402,7 +405,7 @@ func TestCreateTrip_Success(t *testing.T) {
 		return nil
 	})
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("owner-1")
 	resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
 		Name: "Trip", Category: "Отпуск", Season: "Лето",
@@ -417,7 +420,7 @@ func TestCreateTrip_RepoCreateError(t *testing.T) {
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
 	tripRepo.EXPECT().Create(gomock.Any()).Return(sql.ErrConnDone)
 
-	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("u1")
 	_, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
 		Name: "Trip", Category: "Отпуск", Season: "Лето",
@@ -454,7 +457,7 @@ func TestGetTrip_ParticipantSuccess(t *testing.T) {
 	settingsRepo := mocks.NewMockTripSettingsRepositoryInterface(ctrl)
 	settingsRepo.EXPECT().GetByTripAndUsers("t1", []string{"user-1"}).Return(map[string]bool{"user-1": false}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, settingsRepo, nil, nil, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, tripPrivacyRepo, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, settingsRepo, nil, nil, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, tripPrivacyRepo, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("user-1")
 	resp, err := svc.GetTrip(ctx, &pb.GetTripRequest{TripId: "t1"})
 	require.NoError(t, err)
@@ -479,7 +482,7 @@ func TestGetTrip_NotParticipantNorFavourite(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant("t1", "stranger").Return(false, nil)
 	favRepo.EXPECT().HasFavourite("stranger", "t1").Return(false, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("stranger")
 	_, err := svc.GetTrip(ctx, &pb.GetTripRequest{TripId: "t1"})
 	require.Error(t, err)
@@ -516,7 +519,7 @@ func TestGetTrip_PublicSharedAccess_Published(t *testing.T) {
 		{ID: "m2", S3Key: "s2", MediaType: "image", PrivacyLevel: "Private"},
 	}, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("stranger")
 	resp, err := svc.GetTrip(ctx, &pb.GetTripRequest{TripId: "t1"})
 	require.NoError(t, err)
@@ -541,7 +544,7 @@ func TestUpdateTrip_NotParticipant(t *testing.T) {
 	tripRepo.EXPECT().GetByID("t1").Return(trip, nil)
 	participantRepo.EXPECT().IsParticipant("t1", "stranger").Return(false, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("stranger")
 	_, err := svc.UpdateTrip(ctx, &pb.UpdateTripRequest{TripId: "t1"})
 	require.Error(t, err)
@@ -555,7 +558,7 @@ func TestDeleteTrip_NotAdmin(t *testing.T) {
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
 	participantRepo.EXPECT().IsAdmin("t1", "participant-1").Return(false, nil)
 
-	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("participant-1")
 	_, err := svc.DeleteTrip(ctx, &pb.DeleteTripRequest{TripId: "t1"})
 	require.Error(t, err)
@@ -569,7 +572,7 @@ func TestJoinTripByToken_NotFound(t *testing.T) {
 	inviteRepo := mocks.NewMockInvitationLinkRepositoryInterface(ctrl)
 	inviteRepo.EXPECT().GetByToken("bad-token").Return(nil, sql.ErrNoRows)
 
-	svc := NewTripService(nil, nil, inviteRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, inviteRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("u1")
 	_, err := svc.JoinTripByToken(ctx, &pb.JoinTripByTokenRequest{Token: "bad-token"})
 	require.Error(t, err)
@@ -586,7 +589,7 @@ func TestJoinTripByToken_Expired(t *testing.T) {
 	}
 	inviteRepo.EXPECT().GetByToken("expired-token").Return(link, nil)
 
-	svc := NewTripService(nil, nil, inviteRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, inviteRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	ctx := ctxWithUser("u1")
 	_, err := svc.JoinTripByToken(ctx, &pb.JoinTripByTokenRequest{Token: "expired-token"})
 	require.Error(t, err)
@@ -675,7 +678,7 @@ func TestResolveMediaDeletionsForTrip(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
 			tc.setupMedia(mediaRepo)
-			svc := NewTripService(nil, nil, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+			svc := NewTripService(nil, nil, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 			allowed, keys, err := svc.resolveMediaDeletionsForTrip(tripID, tc.inputIDs)
 			if tc.wantErr {
@@ -715,7 +718,7 @@ func TestApplyGroupsAndProcess_DeletedMediaSuccess(t *testing.T) {
 	// (finalizeProcessingStub, пока ML-воркер не реализован).
 	tripRepo.EXPECT().SetStatus(tripID, "DRAFT_FINAL_REVIEW").Return(nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ApplyGroupsAndProcess(ctxWithUser(userID), &pb.ApplyGroupsAndProcessRequest{
 		TripId: tripID,
 		DeletedMediaIds: []string{"m1"},
@@ -744,7 +747,7 @@ func TestFinalizeTrip_MediaToDeleteSuccess(t *testing.T) {
 	tripRepo.EXPECT().Update(gomock.Any()).Return(nil)
 	tripRepo.EXPECT().SetStatus(tripID, "READY").Return(nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.FinalizeTrip(ctxWithUser(userID), &pb.FinalizeTripRequest{
 		TripId: tripID,
 		MediaToDelete: []string{"m1"},
@@ -773,7 +776,7 @@ func TestPublishTrip_RejectsNonPublicPrivacy(t *testing.T) {
 			}, nil)
 			participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
 
-			svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+			svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 			_, err := svc.PublishTrip(ctxWithUser("u1"), &pb.PublishTripRequest{
 				TripId: "trip-1", PublishWhole: true,
 			})
@@ -803,7 +806,7 @@ func TestRequestTripCoverUpload_Success(t *testing.T) {
 			return "https://s3/put?sig=1", nil
 		})
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.RequestTripCoverUpload(ctxWithUser("u1"), &pb.RequestTripCoverUploadRequest{
 		TripId: "trip-1",
 		Filename: "cover.JPG",
@@ -822,7 +825,7 @@ func TestRequestTripCoverUpload_NotParticipant(t *testing.T) {
 	tripRepo.EXPECT().GetByID("trip-1").Return(&models.Trip{ID: "trip-1"}, nil)
 	participantRepo.EXPECT().IsParticipant("trip-1", "stranger").Return(false, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.RequestTripCoverUpload(ctxWithUser("stranger"), &pb.RequestTripCoverUploadRequest{
 		TripId: "trip-1",
 		Filename: "cover.jpg",
@@ -841,7 +844,7 @@ func TestRequestTripCoverUpload_BadExtension(t *testing.T) {
 	tripRepo.EXPECT().GetByID("trip-1").Return(&models.Trip{ID: "trip-1"}, nil)
 	participantRepo.EXPECT().IsParticipant("trip-1", "u1").Return(true, nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.RequestTripCoverUpload(ctxWithUser("u1"), &pb.RequestTripCoverUploadRequest{
 		TripId: "trip-1",
 		Filename: "cover.gif",
@@ -870,7 +873,7 @@ func TestConfirmTripCoverUpload_DeletesOldAndUpdates(t *testing.T) {
 	)
 	urls.EXPECT().ReadURL(gomock.Any(), "trips/trip-1/cover/new.jpg").Return("https://s3/get?sig=1", nil)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ConfirmTripCoverUpload(ctxWithUser("u1"), &pb.ConfirmTripCoverUploadRequest{
 		TripId: "trip-1",
 		S3Key: "trips/trip-1/cover/new.jpg",
@@ -896,21 +899,21 @@ func TestDeleteTripCover_Success(t *testing.T) {
 		tripRepo.EXPECT().GetByID("trip-1").Return(cleared, nil),
 	)
 
-	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, urls, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.DeleteTripCover(ctxWithUser("u1"), &pb.DeleteTripCoverRequest{TripId: "trip-1"})
 	require.NoError(t, err)
 	require.Equal(t, "", resp.GetTrip().GetCoverUrl())
 }
 
 func TestSearchPins_Unauthenticated(t *testing.T) {
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.SearchPins(context.Background(), &pb.SearchPinsRequest{Query: "x"})
 	require.Error(t, err)
 	require.Equal(t, codes.Unauthenticated, status.Code(err))
 }
 
 func TestSearchPins_EmptyQuery(t *testing.T) {
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: " "})
 	require.Error(t, err)
 	require.Equal(t, codes.InvalidArgument, status.Code(err))
@@ -936,7 +939,7 @@ func TestSearchPins_Success(t *testing.T) {
 	}, nil)
 	tagRepo.EXPECT().GetByPinID("pin-1").Return([]string{"cafe", "coffee"}, nil)
 
-	svc := NewTripService(nil, nil, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: "cafe"})
 	require.NoError(t, err)
 	require.Len(t, resp.GetPins(), 1)
@@ -961,7 +964,7 @@ func TestSearchPins_TruncatesLongQueryAndNormalizesLimits(t *testing.T) {
 	// limit=0 → default 20, offset=-5 → 0
 	pinRepo.EXPECT().SearchByUserID("u1", expected, int32(20), int32(0)).Return(nil, nil)
 
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: longQuery, Limit: 0, Offset: -5})
 	require.NoError(t, err)
 	require.Empty(t, resp.GetPins())
@@ -972,14 +975,14 @@ func TestSearchPins_RepoError(t *testing.T) {
 	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
 	pinRepo.EXPECT().SearchByUserID("u1", "cafe", int32(20), int32(0)).Return(nil, sql.ErrConnDone)
 
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.SearchPins(ctxWithUser("u1"), &pb.SearchPinsRequest{Query: "cafe"})
 	require.Error(t, err)
 	require.Equal(t, codes.Internal, status.Code(err))
 }
 
 func TestListFeed_Unauthenticated(t *testing.T) {
-	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.ListFeed(context.Background(), &pb.ListFeedRequest{})
 	require.Error(t, err)
 	require.Equal(t, codes.Unauthenticated, status.Code(err))
@@ -991,7 +994,7 @@ func TestListFeed_EmptyResultDoesNotQueryUserState(t *testing.T) {
 	// no calls to socialRepo / favouriteRepo expected when 0 trips returned
 	tripRepo.EXPECT().ListFeed(int32(20), int32(0), "", "", []int(nil), "date").Return(nil, nil)
 
-	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ListFeed(ctxWithUser("u1"), &pb.ListFeedRequest{})
 	require.NoError(t, err)
 	require.Empty(t, resp.GetItems())
@@ -1033,7 +1036,7 @@ func TestListFeed_PerUserFlags(t *testing.T) {
 			mediaRepo.EXPECT().TopMediaByTripIDs([]string{"trip-1"}, 8).Return(map[string][]*repositories.FeedMedia{}, nil)
 			mediaRepo.EXPECT().TopMediaByPinIDs(gomock.Any(), 10).Return(map[string][]*repositories.FeedMedia{}, nil)
 
-			svc := NewTripService(tripRepo, nil, nil, nil, nil, mediaRepo, nil, pinRepo, nil, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+			svc := NewTripService(tripRepo, nil, nil, nil, nil, mediaRepo, nil, pinRepo, nil, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 			resp, err := svc.ListFeed(ctxWithUser("u1"), &pb.ListFeedRequest{})
 			require.NoError(t, err)
 			require.Len(t, resp.GetItems(), 1)
@@ -1064,7 +1067,7 @@ func TestListFeed_DegradesOnUserStateRepoError(t *testing.T) {
 	mediaRepo.EXPECT().TopMediaByTripIDs([]string{"trip-1"}, 8).Return(map[string][]*repositories.FeedMedia{}, nil)
 	mediaRepo.EXPECT().TopMediaByPinIDs(gomock.Any(), 10).Return(map[string][]*repositories.FeedMedia{}, nil)
 
-	svc := NewTripService(tripRepo, nil, nil, nil, nil, mediaRepo, nil, pinRepo, nil, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewTripService(tripRepo, nil, nil, nil, nil, mediaRepo, nil, pinRepo, nil, socialRepo, favRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ListFeed(ctxWithUser("u1"), &pb.ListFeedRequest{})
 	require.NoError(t, err)
 	require.Len(t, resp.GetItems(), 1)

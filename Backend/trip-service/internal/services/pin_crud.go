@@ -110,6 +110,9 @@ func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (
 		}
 		return nil, status.Error(codes.Internal, "failed to get trip")
 	}
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
+	}
 	if trip.Status != models.TripStatusReady {
 		return nil, errWrongStatus(models.TripStatusReady, trip.Status)
 	}
@@ -224,6 +227,9 @@ func (s *TripService) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (
 	}
 	if !participant {
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if s.isGeneratedTrip(tripID) {
+		return nil, errGeneratedReadOnly
 	}
 	pin, err := s.pinRepo.GetByID(pinID)
 	if err != nil {
@@ -362,6 +368,9 @@ func (s *TripService) assertParticipantAndPinReady(ctx context.Context, tripID, 
 			return status.Error(codes.NotFound, "trip not found")
 		}
 		return status.Error(codes.Internal, "failed to get trip")
+	}
+	if trip.IsGenerated {
+		return errGeneratedReadOnly
 	}
 	if trip.Status != models.TripStatusReady {
 		return errWrongStatus(models.TripStatusReady, trip.Status)

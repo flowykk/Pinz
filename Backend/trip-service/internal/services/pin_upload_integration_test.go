@@ -44,7 +44,7 @@ func TestPinUpload_Integration_HappyPath(t *testing.T) {
 		tripRepo, participantRepo, inviteRepo, settingsRepo, nil,
 		mediaRepo, nil, pinRepo, tagRepo, socialRepo, favRepo,
 		nil, nil, nil, nil, nil, nil,
-		pinHiddenRepo, pinUploadSessionRepo,
+		pinHiddenRepo, pinUploadSessionRepo, nil,
 	)
 
 	ownerID := uuid.New().String()
