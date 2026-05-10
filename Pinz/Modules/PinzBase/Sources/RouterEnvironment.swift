@@ -1,8 +1,10 @@
 import SwiftUI
 import PinzDomain
 
-public protocol AppRouting {
+public protocol AppRouting: AnyObject {
     func navigateToMain()
+    /// Clears navigation stack so the auth flow (`path == []`) is shown.
+    func navigateToAuthenticationRoot()
 
     func navigateToTripInfo(trip: Trip, onTripUpdated: (() -> Void)?)
     func navigateToProfile(user: User)

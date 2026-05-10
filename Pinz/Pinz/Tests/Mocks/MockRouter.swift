@@ -4,6 +4,7 @@ import PinzDomain
 
 final class MockRouter: AppRouting {
     var navigatedToMain = false
+    var navigatedToAuthenticationRoot = false
     var navigatedTripInfo: Trip?
     var navigatedProfile: User?
     var navigatedPinInfo: Pin?
@@ -58,6 +59,7 @@ final class MockRouter: AppRouting {
     private var currentProfileUpdateAction: ((User) -> Void)?
 
     func navigateToMain() { navigatedToMain = true }
+    func navigateToAuthenticationRoot() { navigatedToAuthenticationRoot = true }
     func navigateToTripInfo(trip: Trip, onTripUpdated: (() -> Void)?) {
         navigatedTripInfo = trip
         tripInfoUpdateHandler = onTripUpdated

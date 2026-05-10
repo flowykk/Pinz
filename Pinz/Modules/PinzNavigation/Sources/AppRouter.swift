@@ -23,6 +23,10 @@ public final class AppRouter: AppRouting {
         path = [.main]
     }
 
+    public func navigateToAuthenticationRoot() {
+        path = []
+    }
+
     public func navigate(to route: Route) {
         path.append(route)
     }

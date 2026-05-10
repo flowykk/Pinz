@@ -30,6 +30,8 @@ public protocol NetworkServiceProtocol {
     func confirmAvatarUpload(s3Key: String) async throws -> ProfileResponseDTO
     func changeEmail(userId: String?, newEmail: String) async throws -> ChangeEmailResponseDTO
     func confirmEmailChange(verificationCode: String) async throws -> ProfileResponseDTO
+    func registerDeviceToken(apnsToken: String) async throws -> DeviceTokenRegisterResponseDTO
+    func unregisterDeviceToken(apnsToken: String) async throws -> DeviceTokenUnregisterResponseDTO
 
     // Feed
     func getFeed(
@@ -419,6 +421,20 @@ public final class NetworkService: NetworkServiceProtocol {
                 verificationCode: verificationCode
             ),
             type: ProfileResponseDTO.self
+        )
+    }
+
+    public func registerDeviceToken(apnsToken: String) async throws -> DeviceTokenRegisterResponseDTO {
+        try await provider.request(
+            .registerDeviceToken(apnsToken: apnsToken),
+            type: DeviceTokenRegisterResponseDTO.self
+        )
+    }
+
+    public func unregisterDeviceToken(apnsToken: String) async throws -> DeviceTokenUnregisterResponseDTO {
+        try await provider.request(
+            .unregisterDeviceToken(apnsToken: apnsToken),
+            type: DeviceTokenUnregisterResponseDTO.self
         )
     }
 

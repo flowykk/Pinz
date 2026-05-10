@@ -85,6 +85,14 @@ final class MockNetworkService: NetworkServiceProtocol {
     var changeEmailCall: (userId: String?, newEmail: String)?
     var confirmEmailChangeResult: Result<ProfileResponseDTO, Error> = .success(ProfileResponseDTO(nickname: "tester", email: "test@example.com"))
     var confirmEmailChangeCall: String?
+    var registerDeviceTokenResult: Result<DeviceTokenRegisterResponseDTO, Error> = .success(
+        DeviceTokenRegisterResponseDTO(tokenId: "550e8400-e29b-41d4-a716-446655440000")
+    )
+    var unregisterDeviceTokenResult: Result<DeviceTokenUnregisterResponseDTO, Error> = .success(
+        DeviceTokenUnregisterResponseDTO(success: true)
+    )
+    var registerDeviceTokenCall: String?
+    var unregisterDeviceTokenCall: String?
     var requestAvatarUploadCall: (filename: String, contentType: String)?
     var confirmAvatarUploadCall: String?
     var uploadToS3Call: (url: String, dataBytes: Int, contentType: String)?
@@ -251,6 +259,16 @@ final class MockNetworkService: NetworkServiceProtocol {
     func confirmEmailChange(verificationCode: String) async throws -> ProfileResponseDTO {
         confirmEmailChangeCall = verificationCode
         return try confirmEmailChangeResult.get()
+    }
+
+    func registerDeviceToken(apnsToken: String) async throws -> DeviceTokenRegisterResponseDTO {
+        registerDeviceTokenCall = apnsToken
+        return try registerDeviceTokenResult.get()
+    }
+
+    func unregisterDeviceToken(apnsToken: String) async throws -> DeviceTokenUnregisterResponseDTO {
+        unregisterDeviceTokenCall = apnsToken
+        return try unregisterDeviceTokenResult.get()
     }
     func getFavouriteTrips(limit: Int?, offset: Int?) async throws -> [TripDTO] {
         try getFavouriteTripsResult.get()
