@@ -1596,6 +1596,18 @@ const docTemplate = `{
                         "description": "country name (mutually exclusive with city)",
                         "name": "country",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "trip category filter (ТЗ 9.2.2 → 7.9.1)",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "trip season filter (ТЗ 9.2.2 → 7.9.2)",
+                        "name": "season",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1633,6 +1645,9 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1642,16 +1657,13 @@ const docTemplate = `{
                 "summary": "Save recommendation as trip",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "city name (mutually exclusive with country)",
-                        "name": "city",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "country name (mutually exclusive with city)",
-                        "name": "country",
-                        "in": "query"
+                        "description": "snapshot_token (fast-path) или pin_ids+city/country (fallback)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.SaveRecommendationRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -6286,6 +6298,9 @@ const docTemplate = `{
                 "region_type": {
                     "type": "string"
                 },
+                "snapshot_token": {
+                    "type": "string"
+                },
                 "trip": {
                     "description": "Виртуальный трип-обёртка с name/description/dates/cover/счётчиками.\ntrip.id пуст до вызова SaveRecommendation.",
                     "allOf": [
@@ -6410,6 +6425,32 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "pinz_backend_api-gateway-service_internal_responses.SaveRecommendationRequest": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "pin_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "season": {
+                    "type": "string"
+                },
+                "snapshot_token": {
                     "type": "string"
                 }
             }

@@ -471,11 +471,21 @@ type RecommendedMap struct {
 	Trip Trip `json:"trip"`
 	// Топ-8 медиа всей карты (карусель в карточке ленты).
 	Media []FeedMedia `json:"media"`
+	SnapshotToken string `json:"snapshot_token"`
 }
 
 // GetRecommendationsResponse — ответ GET /api/v1/recommendations.
 type GetRecommendationsResponse struct {
 	Map RecommendedMap `json:"map"`
+}
+
+type SaveRecommendationRequest struct {
+	SnapshotToken string   `json:"snapshot_token"`
+	PinIDs        []string `json:"pin_ids"`
+	City          string   `json:"city"`
+	Country       string   `json:"country"`
+	Category      string   `json:"category"`
+	Season        string   `json:"season"`
 }
 
 // SaveRecommendationResponse — ответ POST /api/v1/recommendations/save.

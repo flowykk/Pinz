@@ -964,6 +964,8 @@ message CancelPinUploadResponse {
 message GetRecommendationsRequest {
  string city = 1;
  string country = 2;
+ string category = 3; // ТЗ 9.2.2 → 7.9.1
+ string season = 4;   // ТЗ 9.2.2 → 7.9.2
 }
 
 // RecommendedPin — пин-кандидат из топ-трипов региона. ID и trip_id указывают
@@ -993,6 +995,7 @@ message RecommendedMap {
  // Топ-8 медиа из всех выбранных пинов (для карусели в карточке ленты),
  // отсортированы по battle_rating DESC.
  repeated FeedMedia media = 5;
+ string snapshot_token = 6;
 }
 
 message GetRecommendationsResponse {
@@ -1002,6 +1005,10 @@ message GetRecommendationsResponse {
 message SaveRecommendationRequest {
  string city = 1;
  string country = 2;
+ string snapshot_token = 3;
+ repeated string pin_ids = 4;
+ string category = 5;
+ string season = 6;
 }
 
 message SaveRecommendationResponse {

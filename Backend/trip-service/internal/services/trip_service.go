@@ -48,6 +48,7 @@ type TripService struct {
 	mediaPrivacyRepo repositories.MediaPrivacyRepositoryInterface
 	pinHiddenRepo repositories.PinHiddenRepositoryInterface
 	pinUploadSessionRepo repositories.PinUploadSessionRepositoryInterface
+	recSnapshotRepo repositories.RecommendationSnapshotRepositoryInterface
 }
 
 func NewTripService(
@@ -70,6 +71,7 @@ func NewTripService(
 	mediaPrivacyRepo repositories.MediaPrivacyRepositoryInterface,
 	pinHiddenRepo repositories.PinHiddenRepositoryInterface,
 	pinUploadSessionRepo repositories.PinUploadSessionRepositoryInterface,
+	recSnapshotRepo repositories.RecommendationSnapshotRepositoryInterface,
 ) *TripService {
 	return &TripService{
 		tripRepo: tripRepo,
@@ -91,6 +93,7 @@ func NewTripService(
 		mediaPrivacyRepo: mediaPrivacyRepo,
 		pinHiddenRepo: pinHiddenRepo,
 		pinUploadSessionRepo: pinUploadSessionRepo,
+		recSnapshotRepo: recSnapshotRepo,
 	}
 }
 
@@ -655,6 +658,9 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 	if !participant {
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
 	}
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
+	}
 	// Merge optional fields
 	if req.Name != nil {
 		name := *req.Name
@@ -711,11 +717,15 @@ func (s *TripService) RequestTripCoverUpload(ctx context.Context, req *pb.Reques
 	if tripID == "" || filename == "" {
 		return nil, status.Error(codes.InvalidArgument, "trip_id and filename are required")
 	}
-	if _, err := s.tripRepo.GetByID(tripID); err != nil {
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "trip not found")
 		}
 		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
 	}
 	participant, err := s.participantRepo.IsParticipant(tripID, userID)
 	if err != nil {
@@ -774,6 +784,10 @@ func (s *TripService) ConfirmTripCoverUpload(ctx context.Context, req *pb.Confir
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
 	}
 
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
+	}
+
 	if trip.CoverURL != "" && trip.CoverURL != s3Key && s.mediaURLs != nil {
 		if err := s.mediaURLs.DeleteObject(ctx, trip.CoverURL); err != nil {
 			slog.ErrorContext(ctx, "ConfirmTripCoverUpload: delete old cover (best-effort)", "trip_id", tripID, "key", trip.CoverURL, "error", err)
@@ -816,6 +830,10 @@ func (s *TripService) DeleteTripCover(ctx context.Context, req *pb.DeleteTripCov
 	}
 	if !participant {
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
 	}
 
 	if trip.CoverURL != "" && s.mediaURLs != nil {
@@ -914,6 +932,16 @@ func (s *TripService) GenerateInviteLink(ctx context.Context, req *pb.GenerateIn
 	if !participant {
 		return nil, status.Error(codes.PermissionDenied, "only participants can generate invite link")
 	}
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "trip not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
+	}
 	expiresIn := req.GetExpiresInSeconds()
 	if expiresIn <= 0 {
 		expiresIn = defaultInviteExpiresInSec
@@ -967,11 +995,15 @@ func (s *TripService) JoinTripByToken(ctx context.Context, req *pb.JoinTripByTok
 	if already {
 		return &pb.JoinTripByTokenResponse{TripId: link.TripID, AlreadyJoined: true}, nil
 	}
-	if _, err := s.tripRepo.GetByID(link.TripID); err != nil {
+	trip, err := s.tripRepo.GetByID(link.TripID)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Error(codes.NotFound, "trip not found")
 		}
 		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
 	}
 	participant := &models.TripParticipant{TripID: link.TripID, UserID: userID, IsAdmin: false}
 	if err := s.participantRepo.Add(participant); err != nil {
@@ -1024,6 +1056,9 @@ func (s *TripService) RemoveParticipant(ctx context.Context, req *pb.RemoveParti
 	if !isAdmin {
 		return nil, status.Error(codes.PermissionDenied, "only admin can remove participant")
 	}
+	if s.isGeneratedTrip(tripID) {
+		return nil, errGeneratedReadOnly
+	}
 	isParticipant, err := s.participantRepo.IsParticipant(tripID, targetUserID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to check participant")
@@ -1061,6 +1096,9 @@ func (s *TripService) LeaveTrip(ctx context.Context, req *pb.LeaveTripRequest) (
 	}
 	if !participant {
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if s.isGeneratedTrip(tripID) {
+		return nil, errGeneratedReadOnly
 	}
 	if err := s.participantRepo.Remove(tripID, userID); err != nil {
 		return nil, status.Error(codes.Internal, "failed to leave trip")
@@ -1104,6 +1142,9 @@ func (s *TripService) TransferAdmin(ctx context.Context, req *pb.TransferAdminRe
 	}
 	if !isAdmin {
 		return nil, status.Error(codes.PermissionDenied, "only admin can transfer admin")
+	}
+	if s.isGeneratedTrip(tripID) {
+		return nil, errGeneratedReadOnly
 	}
 	participant, err := s.participantRepo.IsParticipant(tripID, newAdminID)
 	if err != nil {
@@ -1561,6 +1602,9 @@ func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRe
 			return nil, status.Error(codes.NotFound, "trip not found")
 		}
 		return nil, status.Error(codes.Internal, "failed to get trip")
+	}
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
 	}
 	participant, err := s.participantRepo.IsParticipant(tripID, userID)
 	if err != nil || !participant {
@@ -2477,6 +2521,10 @@ func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripReques
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
 	}
 
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
+	}
+
 	if trip.Status != "READY" {
 		return nil, status.Error(codes.FailedPrecondition, "trip must be READY to publish")
 	}
@@ -2579,6 +2627,9 @@ func (s *TripService) UpsertTripPrivacy(ctx context.Context, req *pb.UpsertTripP
 	if trip.PrivacyLevel == "Restricted" {
 		return nil, status.Error(codes.FailedPrecondition, "cannot change permanently private privacy level")
 	}
+	if trip.IsGenerated {
+		return nil, errGeneratedReadOnly
+	}
 	if err := s.tripPrivacyRepo.Upsert(ctx, tripID, userID, level); err != nil {
 		return nil, status.Error(codes.Internal, "failed to upsert trip privacy")
 	}
@@ -2617,6 +2668,9 @@ func (s *TripService) UpsertPinPrivacy(ctx context.Context, req *pb.UpsertPinPri
 	}
 	if !participant {
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if s.isGeneratedTrip(tripID) {
+		return nil, errGeneratedReadOnly
 	}
 	pin, err := s.pinRepo.GetByID(pinID)
 	if err != nil {
@@ -2670,6 +2724,9 @@ func (s *TripService) UpsertMediaPrivacy(ctx context.Context, req *pb.UpsertMedi
 	if !participant {
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
 	}
+	if s.isGeneratedTrip(tripID) {
+		return nil, errGeneratedReadOnly
+	}
 	media, err := s.mediaRepo.GetByID(mediaID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -2713,6 +2770,9 @@ func (s *TripService) UpdateTripSettings(ctx context.Context, req *pb.UpdateTrip
 	participant, err := s.participantRepo.IsParticipant(tripID, userID)
 	if err != nil || !participant {
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
+	}
+	if s.isGeneratedTrip(tripID) {
+		return nil, errGeneratedReadOnly
 	}
 	_ = s.settingsRepo.EnsureDefaultSettings(tripID, userID)
 	if err := s.settingsRepo.UpdateNotifications(tripID, userID, req.GetNotificationsEnabled()); err != nil {
@@ -2946,7 +3006,9 @@ func (s *TripService) AddToFavourites(ctx context.Context, req *pb.AddToFavourit
 	if err != nil || trip == nil {
 		return nil, status.Error(codes.NotFound, "trip not found")
 	}
-	if !trip.IsPublished {
+	// generated-трип рекомендаций приватный, но владелец может toggle save/unsave
+	ownGenerated := trip.IsGenerated && trip.OwnerUserID == userID
+	if !trip.IsPublished && !ownGenerated {
 		return nil, status.Error(codes.FailedPrecondition, "trip is not published")
 	}
 	if err := s.favouriteRepo.Add(userID, tripID); err != nil {
@@ -2974,7 +3036,9 @@ func (s *TripService) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFr
 	return &pb.RemoveFromFavouritesResponse{Success: true}, nil
 }
 
-// ListFavourites returns trips that the current user has added to favourites . Excludes soft-deleted trips.
+// ListFavourites returns trips that the current user has added to favourites.
+// Soft-deleted trips остаются видимы здесь (ТЗ 3.24.2): автор удалил трип, но
+// у тех, кто добавил его в сохранённое, он остаётся доступным как read-only.
 func (s *TripService) ListFavourites(ctx context.Context, req *pb.ListFavouritesRequest) (*pb.ListFavouritesResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -3000,9 +3064,6 @@ func (s *TripService) ListFavourites(ctx context.Context, req *pb.ListFavourites
 				continue
 			}
 			return nil, status.Error(codes.Internal, "failed to get trip")
-		}
-		if trip.IsSoftDeleted {
-			continue
 		}
 		out = append(out, s.tripToProto(ctx, trip))
 	}

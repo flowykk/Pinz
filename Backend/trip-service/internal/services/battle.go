@@ -32,6 +32,9 @@ func (s *TripService) StartBattle(ctx context.Context, req *pb.StartBattleReques
 	if err != nil || !isParticipant {
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
 	}
+	if s.isGeneratedTrip(tripID) {
+		return nil, errGeneratedReadOnly
+	}
 	total, _, err := s.mediaRepo.CountByTripID(tripID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to count media")

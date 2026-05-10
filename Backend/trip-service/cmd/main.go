@@ -90,6 +90,9 @@ func main() {
 	// cron для закрытия заброшенных pin_upload сессий.
 	go worker.RunPinUploadCleanup(ctx, deps.PinUploadSessionRepo, deps.MediaRepo, deps.MediaURLs)
 
+	// cron для очистки generated-трипов рекомендаций, выкинутых из favourites.
+	go worker.RunGeneratedTripCleanup(ctx, deps.TripRepo)
+
 	// Унифицированный pin-upload consumer (pinz:trip:pin_upload:tasks). N горутин в одной group.
 	for i := 0; i < worker.PinUploadConsumerCount; i++ {
 		consumerName := "trip-pin-upload-" + strconv.Itoa(i)

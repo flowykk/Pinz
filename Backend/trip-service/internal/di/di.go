@@ -75,7 +75,12 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	pinHiddenRepo := repositories.NewPinHiddenRepository(db)
 	pinUploadSessionRepo := repositories.NewPinUploadSessionRepository(db)
 
-	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geoRepo, addMediaSessionRepo, battleRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo, pinHiddenRepo, pinUploadSessionRepo)
+	var recSnapshotRepo *repositories.RecommendationSnapshotRepository
+	if redisClient != nil {
+		recSnapshotRepo = repositories.NewRecommendationSnapshotRepository(redisClient)
+	}
+
+	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geoRepo, addMediaSessionRepo, battleRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo, pinHiddenRepo, pinUploadSessionRepo, recSnapshotRepo)
 	return &Dependencies{
 		TripService: tripSvc,
 		RedisClient: redisClient,

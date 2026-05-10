@@ -34,7 +34,7 @@ func newSvcWithUploadRepo(
 		tripRepo, participantRepo, nil, nil, eventRepo,
 		mediaRepo, nil, pinRepo, tagRepo, nil, favouriteRepo,
 		nil, nil, nil, nil, nil, nil,
-		pinHiddenRepo, pinUploadRepo,
+		pinHiddenRepo, pinUploadRepo, nil,
 	)
 }
 

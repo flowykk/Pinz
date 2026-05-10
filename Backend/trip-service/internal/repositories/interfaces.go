@@ -24,6 +24,7 @@ type TripRepositoryInterface interface {
 	// выборки для notification-service scheduler'а.
 	ListAnniversaryCandidates(today int64) ([]*NotificationTripCandidate, error)
 	ListEndedMonthAgoCandidates(today int64) ([]*NotificationTripCandidate, error)
+	ListAbandonedGenerated(minAge time.Duration, limit int) ([]string, error)
 }
 
 type TripParticipantRepositoryInterface interface {
@@ -153,7 +154,8 @@ type PinRepositoryInterface interface {
 	// ListRecommendationCandidates — выборка кандидатов для рекомендательной системы (ТЗ 9):
 	// топ-50 опубликованных трипов региона за 2 года, их пины с координатами и
 	// cluster_id из ST_ClusterDBSCAN (партиция по category, eps в метрах).
-	ListRecommendationCandidates(locationID int, epsMeters float64) ([]*RecommendationPinCandidate, error)
+	ListRecommendationCandidates(locationID int, epsMeters float64, tripCategory, tripSeason string) ([]*RecommendationPinCandidate, error)
+	GetByIDs(ids []string) ([]*models.Pin, error)
 }
 
 // PinHiddenRepositoryInterface — управление soft-delete-for-self записями (ТЗ 4.5.2).
@@ -214,6 +216,7 @@ type GeoRegistryRepositoryInterface interface {
 	FindCountryByName(ctx context.Context, name string) (int, error)
 	FindCityByName(ctx context.Context, name string) (int, error)
 	GetLocations(ctx context.Context, ids []int) ([]GeoLocation, error)
+	TripIDsAtLocation(ctx context.Context, locationID int, tripIDs []string) (map[string]struct{}, error)
 }
 
 // Per-user приватность: каждый участник выставляет свой уровень для trip/pin/media.
@@ -231,4 +234,10 @@ type PinPrivacyRepositoryInterface interface {
 type MediaPrivacyRepositoryInterface interface {
 	Upsert(ctx context.Context, mediaID, userID, privacyLevel string) error
 	GetByMediaID(ctx context.Context, mediaID string) ([]PrivacyEntry, error)
+}
+
+type RecommendationSnapshotRepositoryInterface interface {
+	Save(ctx context.Context, token string, snap *RecommendationSnapshot, ttl time.Duration) error
+	Get(ctx context.Context, token string) (*RecommendationSnapshot, bool, error)
+	Delete(ctx context.Context, token string) error
 }

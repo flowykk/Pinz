@@ -85,6 +85,59 @@ func (r *PinRepository) GetByID(id string) (*models.Pin, error) {
 	return &p, nil
 }
 
+func (r *PinRepository) GetByIDs(ids []string) ([]*models.Pin, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
+		start_time, end_time, is_published_in_feed, location_name, created_at
+		FROM pins WHERE id IN (` + strings.Join(placeholders, ",") + `)`
+	rows, err := r.db.Query(sqlStr, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []*models.Pin
+	for rows.Next() {
+		var p models.Pin
+		var desc sql.NullString
+		var lat, lon sql.NullFloat64
+		var startTime, endTime sql.NullTime
+		var isPublished sql.NullBool
+		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		if desc.Valid {
+			p.Description = desc.String
+		}
+		if lat.Valid {
+			p.Latitude = &lat.Float64
+		}
+		if lon.Valid {
+			p.Longitude = &lon.Float64
+		}
+		if startTime.Valid {
+			p.StartTime = &startTime.Time
+		}
+		if endTime.Valid {
+			p.EndTime = &endTime.Time
+		}
+		if isPublished.Valid {
+			p.IsPublishedInFeed = isPublished.Bool
+		}
+		list = append(list, &p)
+	}
+	return list, rows.Err()
+}
+
 func (r *PinRepository) ListByTripID(tripID string) ([]*models.Pin, error) {
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
@@ -230,6 +283,7 @@ func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32
 		p.start_time, p.end_time, p.is_published_in_feed, p.location_name, p.created_at
 		FROM pins p
 		INNER JOIN trip_participants tp ON tp.trip_id = p.trip_id AND tp.user_id = $1
+		INNER JOIN trips tr ON tr.id = p.trip_id AND tr.is_generated = false AND tr.is_soft_deleted = false
 		LEFT JOIN tags t ON t.pin_id = p.id AND t.trip_id = p.trip_id
 		LEFT JOIN pin_hidden_by_user ph ON ph.pin_id = p.id AND ph.user_id = $1
 		WHERE (p.name ILIKE $2 OR p.description ILIKE $2 OR t.tag ILIKE $2)
@@ -406,7 +460,7 @@ type RecommendationPinCandidate struct {
 //     кластерами (ТЗ 9.2.3 «по координатам и категориям»).
 //
 // epsMeters: 50 (ТЗ 9.2.3.a) или 500 (9.2.3.b).
-func (r *PinRepository) ListRecommendationCandidates(locationID int, epsMeters float64) ([]*RecommendationPinCandidate, error) {
+func (r *PinRepository) ListRecommendationCandidates(locationID int, epsMeters float64, tripCategory, tripSeason string) ([]*RecommendationPinCandidate, error) {
 	const sqlStr = `
 WITH top_trips AS (
  SELECT t.id, (t.likes_count - t.dislikes_count)::int AS score
@@ -417,6 +471,8 @@ WITH top_trips AS (
   AND t.is_soft_deleted = false
   AND t.privacy_level = 'Public'
   AND COALESCE(t.end_date, t.start_date) >= NOW() - INTERVAL '2 years'
+  AND ($3 = '' OR t.category = $3)
+  AND ($4 = '' OR t.season = $4)
  ORDER BY score DESC
  LIMIT 50
 ),
@@ -446,7 +502,7 @@ SELECT c.id, c.trip_id, c.name, c.description, c.category, c.location_name, c.me
  ) OVER (PARTITION BY c.category) AS cluster_id,
  c.score
 FROM candidates c CROSS JOIN centroid cn`
-	rows, err := r.db.Query(sqlStr, locationID, epsMeters)
+	rows, err := r.db.Query(sqlStr, locationID, epsMeters, tripCategory, tripSeason)
 	if err != nil {
 		return nil, err
 	}

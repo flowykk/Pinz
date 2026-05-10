@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"time"
@@ -2200,6 +2201,8 @@ func (h *TripHandler) GetBestMemories(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param city query string false "city name (mutually exclusive with country)"
 // @Param country query string false "country name (mutually exclusive with city)"
+// @Param category query string false "trip category filter (ТЗ 9.2.2 → 7.9.1)"
+// @Param season query string false "trip season filter (ТЗ 9.2.2 → 7.9.2)"
 // @Success 200 {object} responses.GetRecommendationsResponse
 // @Failure 400 {object} responses.ErrorResponse
 // @Failure 401 {object} responses.ErrorResponse
@@ -2220,6 +2223,8 @@ func (h *TripHandler) GetRecommendations(w http.ResponseWriter, r *http.Request)
 	resp, err := h.tripClient.GetRecommendations(ctx, &proto.GetRecommendationsRequest{
 		City: city,
 		Country: country,
+		Category: r.URL.Query().Get("category"),
+		Season: r.URL.Query().Get("season"),
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "GetRecommendations")
@@ -2231,10 +2236,10 @@ func (h *TripHandler) GetRecommendations(w http.ResponseWriter, r *http.Request)
 // SaveRecommendation persists the popular-places map as a generated trip in the user's favourites (ТЗ 9.4).
 // @Summary Save recommendation as trip
 // @Tags recommendations
+// @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param city query string false "city name (mutually exclusive with country)"
-// @Param country query string false "country name (mutually exclusive with city)"
+// @Param body body responses.SaveRecommendationRequest true "snapshot_token (fast-path) или pin_ids+city/country (fallback)"
 // @Success 200 {object} responses.SaveRecommendationResponse
 // @Failure 400 {object} responses.ErrorResponse
 // @Failure 401 {object} responses.ErrorResponse
@@ -2246,15 +2251,28 @@ func (h *TripHandler) SaveRecommendation(w http.ResponseWriter, r *http.Request)
 		respondError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	city := r.URL.Query().Get("city")
-	country := r.URL.Query().Get("country")
-	if (city == "") == (country == "") {
-		respondError(w, http.StatusBadRequest, "exactly one of city or country must be provided")
+	var body responses.SaveRecommendationRequest
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid json body")
 		return
 	}
+	if body.SnapshotToken == "" {
+		if (body.City == "") == (body.Country == "") {
+			respondError(w, http.StatusBadRequest, "exactly one of city or country must be provided")
+			return
+		}
+		if len(body.PinIDs) == 0 {
+			respondError(w, http.StatusBadRequest, "pin_ids is required when snapshot_token is missing")
+			return
+		}
+	}
 	resp, err := h.tripClient.SaveRecommendation(ctx, &proto.SaveRecommendationRequest{
-		City: city,
-		Country: country,
+		SnapshotToken: body.SnapshotToken,
+		PinIds: body.PinIDs,
+		City: body.City,
+		Country: body.Country,
+		Category: body.Category,
+		Season: body.Season,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "SaveRecommendation")
@@ -2304,5 +2322,6 @@ func (h *TripHandler) recommendedMapProtoToResponse(m *proto.RecommendedMap) res
 		Pins: pins,
 		Trip: h.tripProtoToResponse(m.GetTrip()),
 		Media: media,
+		SnapshotToken: m.GetSnapshotToken(),
 	}
 }

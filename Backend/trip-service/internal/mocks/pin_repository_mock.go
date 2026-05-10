@@ -98,6 +98,21 @@ func (mr *MockPinRepositoryInterfaceMockRecorder) GetByID(id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockPinRepositoryInterface)(nil).GetByID), id)
 }
 
+// GetByIDs mocks base method.
+func (m *MockPinRepositoryInterface) GetByIDs(ids []string) ([]*models.Pin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByIDs", ids)
+	ret0, _ := ret[0].([]*models.Pin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByIDs indicates an expected call of GetByIDs.
+func (mr *MockPinRepositoryInterfaceMockRecorder) GetByIDs(ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDs", reflect.TypeOf((*MockPinRepositoryInterface)(nil).GetByIDs), ids)
+}
+
 // IncMediaCount mocks base method.
 func (m *MockPinRepositoryInterface) IncMediaCount(pinID string, delta int) error {
 	m.ctrl.T.Helper()
@@ -158,18 +173,18 @@ func (mr *MockPinRepositoryInterfaceMockRecorder) ListPublishedPinsByTripIDs(tri
 }
 
 // ListRecommendationCandidates mocks base method.
-func (m *MockPinRepositoryInterface) ListRecommendationCandidates(locationID int, epsMeters float64) ([]*repositories.RecommendationPinCandidate, error) {
+func (m *MockPinRepositoryInterface) ListRecommendationCandidates(locationID int, epsMeters float64, tripCategory, tripSeason string) ([]*repositories.RecommendationPinCandidate, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRecommendationCandidates", locationID, epsMeters)
+	ret := m.ctrl.Call(m, "ListRecommendationCandidates", locationID, epsMeters, tripCategory, tripSeason)
 	ret0, _ := ret[0].([]*repositories.RecommendationPinCandidate)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListRecommendationCandidates indicates an expected call of ListRecommendationCandidates.
-func (mr *MockPinRepositoryInterfaceMockRecorder) ListRecommendationCandidates(locationID, epsMeters any) *gomock.Call {
+func (mr *MockPinRepositoryInterfaceMockRecorder) ListRecommendationCandidates(locationID, epsMeters, tripCategory, tripSeason any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRecommendationCandidates", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ListRecommendationCandidates), locationID, epsMeters)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRecommendationCandidates", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ListRecommendationCandidates), locationID, epsMeters, tripCategory, tripSeason)
 }
 
 // SearchByUserID mocks base method.

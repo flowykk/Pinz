@@ -111,6 +111,35 @@ func (r *GeoRegistryRepository) GetLocations(ctx context.Context, ids []int) ([]
 	return out, nil
 }
 
+func (r *GeoRegistryRepository) TripIDsAtLocation(ctx context.Context, locationID int, tripIDs []string) (map[string]struct{}, error) {
+	out := make(map[string]struct{})
+	if len(tripIDs) == 0 {
+		return out, nil
+	}
+	parsed := make([]uuid.UUID, 0, len(tripIDs))
+	for _, id := range tripIDs {
+		u, err := uuid.Parse(id)
+		if err != nil {
+			continue
+		}
+		parsed = append(parsed, u)
+	}
+	if len(parsed) == 0 {
+		return out, nil
+	}
+	rows, err := r.q.TripLocationFilterByLocation(ctx, sqlcdb.TripLocationFilterByLocationParams{
+		LocationID: int32(locationID),
+		Column2:    parsed,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, id := range rows {
+		out[id.String()] = struct{}{}
+	}
+	return out, nil
+}
+
 // UpsertTripLocations пишет связи trip↔location в локальную реплику.
 // Используется как из geo consumer'а (mirror события PIN_LOCATIONS_RESOLVED),
 // так и из рекомендательной системы (рекомендации по региону).

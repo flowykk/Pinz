@@ -18,4 +18,6 @@
 //go:generate go run go.uber.org/mock/mockgen@latest -destination=media_privacy_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories MediaPrivacyRepositoryInterface
 //go:generate go run go.uber.org/mock/mockgen@latest -destination=pin_hidden_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories PinHiddenRepositoryInterface
 //go:generate go run go.uber.org/mock/mockgen@latest -destination=pin_upload_session_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories PinUploadSessionRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=geo_registry_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories GeoRegistryRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=recommendation_snapshot_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories RecommendationSnapshotRepositoryInterface
 package mocks
