@@ -219,40 +219,27 @@ final class AuthFlowViewModel {
         do {
             try await performRegistration()
         } catch {
-            print("[AuthFlow] Registration failed: \(error)")
             state = .register(.nickname)
             throw error
         }
     }
 
     private func performLogin() async throws {
-#if targetEnvironment(simulator)
-        TokenStorage.shared.save(accessToken: "sim_access_token", refreshToken: "sim_refresh_token")
-        router?.navigateToMain()
-        NotificationCenter.default.post(name: .pinzDidAuthenticate, object: nil)
-        return
-#endif
         do {
             let options = try await networkService.passkeyLoginBegin(email: email)
             let credentialJSON = try await passkeyService.performAssertion(optionsJSON: options.optionsJson)
             let tokens = try await networkService.passkeyLoginFinish(email: email, credentialJSON: credentialJSON)
             TokenStorage.shared.save(accessToken: tokens.accessToken, refreshToken: tokens.refreshToken)
+            await PushNotificationRegistration.syncRegisteredTokenWithBackendIfPossible()
             router?.navigateToMain()
             NotificationCenter.default.post(name: .pinzDidAuthenticate, object: nil)
         } catch {
-            print("[AuthFlow] Login failed: \(error)")
             state = .login(.passkeyPrompt)
             throw error
         }
     }
 
     private func performRegistration() async throws {
-#if targetEnvironment(simulator)
-        TokenStorage.shared.save(accessToken: "sim_access_token", refreshToken: "sim_refresh_token")
-        router?.navigateToMain()
-        NotificationCenter.default.post(name: .pinzDidAuthenticate, object: nil)
-        return
-#endif
         let options = try await networkService.passkeyRegisterBegin(
             registrationId: registrationId,
             username: username
@@ -263,6 +250,7 @@ final class AuthFlowViewModel {
             credentialJSON: credentialJSON
         )
         TokenStorage.shared.save(accessToken: tokens.accessToken, refreshToken: tokens.refreshToken)
+        await PushNotificationRegistration.syncRegisteredTokenWithBackendIfPossible()
         router?.navigateToMain()
         NotificationCenter.default.post(name: .pinzDidAuthenticate, object: nil)
     }

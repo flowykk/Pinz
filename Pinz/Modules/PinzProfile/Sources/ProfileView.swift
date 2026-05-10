@@ -283,7 +283,7 @@ public struct ProfileView: View {
                     leading: .iconTitle(ProfileIcon.door, PinzBaseStrings.Profile.Button.logout),
                     trailing: .icon(ProfileIcon.chevronRight),
                     style: .destructive,
-                    action: .plain { }
+                    action: .plain { viewModel.dispatch(.logout) }
                 )),
                 accountDeleteSetting,
             ],

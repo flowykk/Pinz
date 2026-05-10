@@ -28,6 +28,8 @@ enum PinzAPI {
     case confirmAvatarUpload(s3Key: String)
     case changeEmail(userId: String?, newEmail: String)
     case confirmEmailChange(verificationCode: String)
+    case registerDeviceToken(apnsToken: String)
+    case unregisterDeviceToken(apnsToken: String)
 
     // Feed
     case getFeed(limit: Int?, offset: Int?, category: String?, season: String?, city: String?, country: String?, sortBy: String?)
@@ -142,6 +144,8 @@ extension PinzAPI: TargetType {
         case .confirmAvatarUpload: endpointPath = "/profile/avatar/confirm"
         case .changeEmail: endpointPath = "/profile/change-email"
         case .confirmEmailChange: endpointPath = "/profile/confirm-email"
+        case .registerDeviceToken, .unregisterDeviceToken:
+            endpointPath = "/profile/device-tokens"
         case .getFeed: endpointPath = "/feed"
         case .getRecommendations: endpointPath = "/recommendations"
         case .saveRecommendation: endpointPath = "/recommendations/save"
@@ -213,6 +217,8 @@ extension PinzAPI: TargetType {
             return .patch
         case .setTripPrivacy, .setPinPrivacy, .setMediaPrivacy:
             return .put
+        case .unregisterDeviceToken:
+            return .delete
         case .deleteTrip, .removeParticipant, .deleteAccount, .removeTripFromFavourites,
              .deleteDesiredPlace, .deleteDesiredPlaceImage, .deletePin:
             return .delete
@@ -285,6 +291,8 @@ extension PinzAPI: TargetType {
             if let userId { params["user_id"] = userId }
             return jsonParams(params)
         case let .confirmEmailChange(code): return jsonParams(["verification_code": code])
+        case let .registerDeviceToken(token): return jsonParams(["apns_token": token])
+        case let .unregisterDeviceToken(token): return jsonParams(["apns_token": token])
 
         case let .joinTripByToken(token): return jsonParams(["token": token])
         case let .generateInviteLink(_, secs):
@@ -479,6 +487,10 @@ extension PinzAPI {
             json = #"{"success":true,"message":"Verification code sent","email":"new@example.com","expires_at_unix":1700000000}"#
         case .confirmEmailChange:
             json = #"{"success":true,"message":"Email changed","email":"new@example.com"}"#
+        case .registerDeviceToken:
+            json = #"{"token_id":"550e8400-e29b-41d4-a716-446655440000"}"#
+        case .unregisterDeviceToken:
+            json = #"{"success":true}"#
         case let .getRecommendations(_, _):
             json = #"{"map":{"media":[{"media_id":"rec-media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"photo"}],"pins":[{"id":"rec-pin-001","trip_id":"trip-rec-001","name":"Тайные улочки Пекина","description":"Лучшие места для прогулок и съемки в историческом центре города","category":"vacation","latitude":39.9042,"longitude":116.4074,"location_name":"Пекин","media_count":1,"media":[{"media_id":"rec-pin-media-001","url":"https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg","media_type":"photo"}]}],"region_name":"Пекин","region_type":"city","trip":{"id":"trip-rec-001","name":"Тайная Пекинская неделя","description":"Сборка локаций и маршрутов из одного города на один уикенд","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":73,"dislikes_count":1,"participants_count":2,"media_count":4,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}}}"#
         case let .saveRecommendation(_, _):

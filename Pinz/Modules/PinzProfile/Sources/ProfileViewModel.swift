@@ -36,6 +36,7 @@ public class ProfileViewModel {
         case saveProfile
         case deleteAccount
         case deleteAvatar
+        case logout
         case navigate(Route)
     }
 
@@ -123,6 +124,22 @@ public class ProfileViewModel {
 
             Task {
                 await deleteAvatar()
+            }
+        case .logout:
+            guard !isLoading else { return }
+            isLoading = true
+            Task {
+                defer {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isLoading = false
+                    }
+                }
+                await unregisterPushTokenFromBackendIfPossible()
+                if let refresh = TokenStorage.shared.refreshToken {
+                    try? await networkService.logout(refreshToken: refresh)
+                }
+                TokenStorage.shared.clear()
+                router?.navigateToAuthenticationRoot()
             }
         case let .navigate(route):
             switch route {
@@ -290,6 +307,8 @@ public class ProfileViewModel {
             }
         }
 
+        await unregisterPushTokenFromBackendIfPossible()
+
         do {
             _ = try await networkService.deleteAccount()
             router?.navigateToMain()
@@ -325,5 +344,10 @@ public class ProfileViewModel {
         withAnimation(.easeInOut(duration: 0.3)) {
             self.state = state
         }
+    }
+
+    private func unregisterPushTokenFromBackendIfPossible() async {
+        guard let hex = APNSDeviceTokenStorage.shared.hexToken else { return }
+        try? await networkService.unregisterDeviceToken(apnsToken: hex)
     }
 }

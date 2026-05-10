@@ -12,6 +12,8 @@ import PinzPins
 
 @main
 struct PinzApp: App {
+    @UIApplicationDelegateAdaptor(PinzAppDelegate.self) private var appDelegate
+
     @State private var router = AppRouter(
         initialPath: TokenStorage.shared.isAuthenticated ? [.main] : []
     )
@@ -53,45 +55,15 @@ struct PinzApp: App {
                         showToast: { toastController.present(with: $0) }
                     ).processPendingInviteIfNeeded()
                 }
-            }
-        }
-    }
-
-#if DEBUG
-    @State private var showResetConfirmation = false
-
-    private var debugResetButton: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Button {
-                    showResetConfirmation = true
-                } label: {
-                    Color.red.opacity(0.6)
-                        .frame(width: 20, height: 20)
-                        .clipShape(Rectangle())
-                }
-                .alert("Сбросить данные?", isPresented: $showResetConfirmation) {
-                    Button("Сбросить", role: .destructive) {
-                        TokenStorage.shared.clear()
-                        PendingTripInviteStorage.shared.clear()
-                        UserDefaults.standard.removePersistentDomain(
-                            forName: Bundle.main.bundleIdentifier ?? ""
-                        )
-                        router.path = []
+                .onAppear {
+                    PushTripFromNotificationCoordinator.shared.router = router
+                    PushTripFromNotificationCoordinator.shared.showToast = {
+                        toastController.present(with: $0)
                     }
-                    Button("Отмена", role: .cancel) {}
-                } message: {
-                    Text("Удалит токены и UserDefaults. Приложение вернётся к экрану авторизации.")
                 }
-                Spacer()
             }
-            Spacer()
         }
-        .ignoresSafeArea()
-        .allowsHitTesting(true)
     }
-#endif
 }
 
 extension View {
