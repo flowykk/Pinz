@@ -29,8 +29,8 @@ func TestSocialRepository_GetReactionsByUserAndTrips(t *testing.T) {
 		t.Helper()
 		trip := &models.Trip{
 			OwnerUserID: uuid.New().String(),
-			Name: "Trip", Category: "Отпуск", Season: "Лето",
-			Status: "DRAFT", PrivacyLevel: "Private",
+			Name: "Trip", Category: "vacation", Season: "summer",
+			Status: "DRAFT", PrivacyLevel: "private",
 		}
 		require.NoError(t, tripRepo.Create(trip))
 		return trip.ID
@@ -42,11 +42,11 @@ func TestSocialRepository_GetReactionsByUserAndTrips(t *testing.T) {
 	tripB := mkTrip(t)
 	tripC := mkTrip(t)
 
-	_, err = socialRepo.SetReaction(user, tripA, "Like")
+	_, err = socialRepo.SetReaction(user, tripA, "like")
 	require.NoError(t, err)
-	_, err = socialRepo.SetReaction(user, tripB, "Dislike")
+	_, err = socialRepo.SetReaction(user, tripB, "dislike")
 	require.NoError(t, err)
-	_, err = socialRepo.SetReaction(other, tripC, "Like")
+	_, err = socialRepo.SetReaction(other, tripC, "like")
 	require.NoError(t, err)
 
 	t.Run("empty_input", func(t *testing.T) {
@@ -58,8 +58,8 @@ func TestSocialRepository_GetReactionsByUserAndTrips(t *testing.T) {
 	t.Run("partial_match", func(t *testing.T) {
 		out, err := socialRepo.GetReactionsByUserAndTrips(user, []string{tripA, tripB, tripC})
 		require.NoError(t, err)
-		require.Equal(t, "Like", out[tripA])
-		require.Equal(t, "Dislike", out[tripB])
+		require.Equal(t, "like", out[tripA])
+		require.Equal(t, "dislike", out[tripB])
 		_, hasC := out[tripC]
 		require.False(t, hasC, "tripC принадлежит другому пользователю — в выдачу попасть не должен")
 	})
@@ -73,7 +73,7 @@ func TestSocialRepository_GetReactionsByUserAndTrips(t *testing.T) {
 	t.Run("invalid_trip_uuid_skipped", func(t *testing.T) {
 		out, err := socialRepo.GetReactionsByUserAndTrips(user, []string{"not-a-uuid", tripA})
 		require.NoError(t, err)
-		require.Equal(t, "Like", out[tripA])
+		require.Equal(t, "like", out[tripA])
 		require.Len(t, out, 1)
 	})
 }

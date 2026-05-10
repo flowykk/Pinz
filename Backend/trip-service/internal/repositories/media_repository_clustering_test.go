@@ -30,10 +30,10 @@ func TestMediaRepository_ClusterIDsByLocation(t *testing.T) {
 		trip := &models.Trip{
 			OwnerUserID: uuid.New().String(),
 			Name: "Trip",
-			Category: "Отпуск",
-			Season: "Лето",
+			Category: "vacation",
+			Season: "summer",
 			Status: "DRAFT",
-			PrivacyLevel: "Private",
+			PrivacyLevel: "private",
 		}
 		require.NoError(t, tripRepo.Create(trip))
 		return trip.ID
@@ -46,7 +46,7 @@ func TestMediaRepository_ClusterIDsByLocation(t *testing.T) {
 			MediaType: "image",
 			Latitude: &lat,
 			Longitude: &lon,
-			PrivacyLevel: "Private",
+			PrivacyLevel: "private",
 		}
 		require.NoError(t, mediaRepo.Create(m))
 		return m.ID

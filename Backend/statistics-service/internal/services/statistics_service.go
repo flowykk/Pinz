@@ -51,8 +51,8 @@ func (s *StatisticsService) GetVisitedLocations(ctx context.Context, req *pb.Get
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
 	}
 	typeFilter := req.GetType()
-	if typeFilter != "" && typeFilter != "Country" && typeFilter != "City" {
-		return nil, status.Error(codes.InvalidArgument, "type must be Country, City or empty")
+	if typeFilter != "" && typeFilter != "country" && typeFilter != "city" {
+		return nil, status.Error(codes.InvalidArgument, "type must be country, city or empty")
 	}
 	locs, err := s.tripLocations.AggregateVisitedByTripIDs(ctx, req.GetTripIds(), typeFilter)
 	if err != nil {

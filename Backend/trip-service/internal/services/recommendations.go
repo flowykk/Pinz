@@ -39,11 +39,11 @@ const (
 // Категории из ТЗ 2.2.4, на которые опираются квоты ТЗ 9.2.4–9.2.5.
 var (
 	recommendationSightseeingCategories = map[string]bool{
-		"Достопримечательность": true,
-		"Природа": true,
-		"Развлечение": true,
+		"sight": true,
+		"nature": true,
+		"entertainment": true,
 	}
-	recommendationFoodCategory = "Еда и напитки"
+	recommendationFoodCategory = "food"
 )
 
 // GetRecommendations — ТЗ 9.1–9.3.
@@ -65,7 +65,7 @@ func (s *TripService) GetRecommendations(ctx context.Context, req *pb.GetRecomme
 	media := topMediaFromRecommendedPins(pins, recommendationFeedMediaLimit)
 
 	var token string
-	if len(pins) > 0 {
+	if len(pins) > 0 && s.recSnapshotRepo != nil {
 		token = uuid.NewString()
 		pinIDs := make([]string, len(pins))
 		for i, p := range pins {
@@ -116,7 +116,7 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 		usedSnapshot bool
 	)
 
-	if token != "" {
+	if token != "" && s.recSnapshotRepo != nil {
 		snap, ok, err := s.recSnapshotRepo.Get(ctx, token)
 		if err != nil {
 			slog.WarnContext(ctx, "SaveRecommendation: snapshot get failed", "error", err)
@@ -169,7 +169,7 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 
 	tripCategory := category
 	if tripCategory == "" || !validateCategory(tripCategory) {
-		tripCategory = "Другое"
+		tripCategory = "custom"
 	}
 	tripSeason := season
 	if tripSeason == "" || !validateSeason(tripSeason) {
@@ -181,8 +181,8 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 		Description: "Автоматически собранная карта популярных мест по " + regionName,
 		Category: tripCategory,
 		Season: tripSeason,
-		Status: "READY",
-		PrivacyLevel: "Private",
+		Status: models.TripStatusReady,
+		PrivacyLevel: "private",
 		IsGenerated: true,
 	}
 	if err := s.tripRepo.Create(trip); err != nil {
@@ -204,7 +204,7 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 			Description: src.Description,
 			Category: src.Category,
 			LocationName: src.LocationName,
-			PrivacyLevel: "Private",
+			PrivacyLevel: "private",
 			MediaCount: 0,
 			IsPublishedInFeed: false,
 			Latitude: src.Latitude,
@@ -221,7 +221,7 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 		slog.WarnContext(ctx, "SaveRecommendation: add favourite failed", "error", err, "trip_id", trip.ID)
 	}
 
-	if usedSnapshot {
+	if usedSnapshot && s.recSnapshotRepo != nil {
 		if err := s.recSnapshotRepo.Delete(ctx, token); err != nil {
 			slog.WarnContext(ctx, "SaveRecommendation: snapshot delete failed", "error", err)
 		}
@@ -262,7 +262,7 @@ func (s *TripService) validateFallbackPins(ctx context.Context, pins []*models.P
 // recommendationRegion — резолвленный регион (geo_registry id + тип + имя).
 type recommendationRegion struct {
 	id int
-	kind string // "City" | "Country"
+	kind string // "city" | "country"
 	name string
 	eps float64
 }
@@ -281,10 +281,10 @@ func (s *TripService) resolveRecommendationRegion(ctx context.Context, city, cou
 	)
 	if city != "" {
 		id, err = s.geoRepo.FindCityByName(ctx, city)
-		kind, name, eps = "City", city, recommendationCityEpsMeters
+		kind, name, eps = "city", city, recommendationCityEpsMeters
 	} else {
 		id, err = s.geoRepo.FindCountryByName(ctx, country)
-		kind, name, eps = "Country", country, recommendationCountryEpsMeters
+		kind, name, eps = "country", country, recommendationCountryEpsMeters
 	}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -451,10 +451,10 @@ func virtualRecommendationTrip(region *recommendationRegion, pins []*pb.Recommen
 	return &pb.Trip{
 		Name: "Популярные места: " + region.name,
 		Description: "Автоматически собранная карта популярных мест по " + region.name,
-		Category: "Другое",
+		Category: "custom",
 		Season: currentSeason(time.Now()),
-		Status: "READY",
-		PrivacyLevel: "Public",
+		Status: models.TripStatusReady,
+		PrivacyLevel: "public",
 		StartDateUnix: now,
 		EndDateUnix: now,
 		IsPublished: true,
@@ -495,16 +495,16 @@ func topMediaFromRecommendedPins(pins []*pb.RecommendedPin, limit int) []*pb.Fee
 	return out
 }
 
-// currentSeason — ТЗ 2.3.5 список (Зима/Весна/Лето/Осень) по месяцу.
+// currentSeason — ТЗ 2.3.5 список (winter/spring/summer/autumn) по месяцу.
 func currentSeason(t time.Time) string {
 	switch t.Month() {
 	case time.December, time.January, time.February:
-		return "Зима"
+		return "winter"
 	case time.March, time.April, time.May:
-		return "Весна"
+		return "spring"
 	case time.June, time.July, time.August:
-		return "Лето"
+		return "summer"
 	default:
-		return "Осень"
+		return "autumn"
 	}
 }

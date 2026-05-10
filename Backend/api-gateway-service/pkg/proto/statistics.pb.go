@@ -93,7 +93,7 @@ type VisitedLocation struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	LocationId      int32                  `protobuf:"varint,1,opt,name=location_id,json=locationId,proto3" json:"location_id,omitempty"`
 	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Type            string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"` // "Country" | "City"
+	Type            string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"` // "country" | "city"
 	ParentId        int32                  `protobuf:"varint,4,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
 	VisitCount      int32                  `protobuf:"varint,5,opt,name=visit_count,json=visitCount,proto3" json:"visit_count,omitempty"` // COUNT(DISTINCT trip_id) среди trip_ids пользователя
 	LastVisitAtUnix int64                  `protobuf:"varint,6,opt,name=last_visit_at_unix,json=lastVisitAtUnix,proto3" json:"last_visit_at_unix,omitempty"`
@@ -265,7 +265,7 @@ type GetVisitedLocationsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	TripIds       []string               `protobuf:"bytes,2,rep,name=trip_ids,json=tripIds,proto3" json:"trip_ids,omitempty"`
-	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"` // "Country" / "City" / "" (любой)
+	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"` // "country" / "city" / "" (любой)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

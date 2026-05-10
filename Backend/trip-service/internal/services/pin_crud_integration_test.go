@@ -55,8 +55,8 @@ func TestPinCRUD_Integration_HappyPath(t *testing.T) {
 		err := callAsUser(t, ownerID, "/pinz.TripService/CreateTrip", func(ctx context.Context) error {
 			resp, err := svc.CreateTrip(ctx, &pb.CreateTripRequest{
 				Name: "Pin CRUD",
-				Category: "Отпуск",
-				Season: "Лето",
+				Category: "vacation",
+				Season: "summer",
 				FilesToUpload: []*pb.FileToUpload{
 					{ClientId: "f1", ContentType: "image/jpeg"},
 					{ClientId: "f2", ContentType: "image/jpeg"},

@@ -90,7 +90,7 @@ func TestGetPin_HappyPath(t *testing.T) {
 	hiddenRepo.EXPECT().IsHidden(pinID, userID).Return(false, nil)
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
 	pinRepo.EXPECT().GetByID(pinID).Return(&models.Pin{
-		ID: pinID, TripID: tripID, Name: "Кафе", Category: "Еда и напитки", PrivacyLevel: "Private",
+		ID: pinID, TripID: tripID, Name: "Кафе", Category: "food", PrivacyLevel: "private",
 	}, nil)
 	mediaRepo.EXPECT().ListByPinID(pinID).Return(nil, nil)
 	tagRepo.EXPECT().GetByPinID(pinID).Return([]string{"food", "coffee"}, nil)

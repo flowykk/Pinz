@@ -1,15 +1,15 @@
 -- name: GeoRegistryFindCountryByName :one
-SELECT id FROM geo_registry WHERE name = $1 AND type = 'Country' LIMIT 1;
+SELECT id FROM geo_registry WHERE name = $1 AND type = 'country' LIMIT 1;
 
 -- name: GeoRegistryFindCityByNameAndParent :one
-SELECT id FROM geo_registry WHERE name = $1 AND type = 'City' AND parent_id = $2 LIMIT 1;
+SELECT id FROM geo_registry WHERE name = $1 AND type = 'city' AND parent_id = $2 LIMIT 1;
 
 -- name: GeoRegistryFindCityByNameNoParent :one
-SELECT id FROM geo_registry WHERE name = $1 AND type = 'City' LIMIT 1;
+SELECT id FROM geo_registry WHERE name = $1 AND type = 'city' LIMIT 1;
 
 -- name: GeoRegistryFindIDsByNamePattern :many
 SELECT id FROM geo_registry
-WHERE name ILIKE $1 AND (type = 'Country' OR type = 'City');
+WHERE name ILIKE $1 AND (type = 'country' OR type = 'city');
 
 -- name: GeoRegistryMirrorByID :exec
 -- Зеркалит запись master geo_registry из statistics-service в локальную реплику.

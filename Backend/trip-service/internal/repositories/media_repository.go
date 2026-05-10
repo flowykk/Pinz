@@ -388,21 +388,21 @@ func (r *MediaRepository) SetSimilarGroupID(mediaIDs []string, groupID string) e
 	return err
 }
 
-// MarkNSFW выставляет privacy_level='Restricted' для переданных медиа (цензура через ML).
+// MarkNSFW выставляет privacy_level='restricted' для переданных медиа (цензура через ML).
 func (r *MediaRepository) MarkNSFW(mediaIDs []string) error {
 	if len(mediaIDs) == 0 {
 		return nil
 	}
-	_, err := psq.Update("media").Set("privacy_level", "Restricted").Where(sq.Eq{"id": mediaIDs}).RunWith(r.db).Exec()
+	_, err := psq.Update("media").Set("privacy_level", "restricted").Where(sq.Eq{"id": mediaIDs}).RunWith(r.db).Exec()
 	return err
 }
 
 // SetPrivacyLevel sets privacy_level on a single media (used by privacy aggregation worker).
-// SQL guard: never overwrite Restricted ("permanently private", ТЗ 6.3) with a lower level.
+// SQL guard: never overwrite restricted ("permanently private", ТЗ 6.3) with a lower level.
 func (r *MediaRepository) SetPrivacyLevel(mediaID, level string) error {
 	q := psq.Update("media").Set("privacy_level", level).Where(sq.Eq{"id": mediaID})
-	if level != "Restricted" {
-		q = q.Where(sq.NotEq{"privacy_level": "Restricted"})
+	if level != "restricted" {
+		q = q.Where(sq.NotEq{"privacy_level": "restricted"})
 	}
 	res, err := q.RunWith(r.db).Exec()
 	if err != nil {
@@ -415,12 +415,12 @@ func (r *MediaRepository) SetPrivacyLevel(mediaID, level string) error {
 	return nil
 }
 
-// PickRandomForBattle возвращает до limit случайных медиа трипа, исключая Restricted (NSFW, ТЗ 6.3). Для фотобатла (ТЗ 8.1).
+// PickRandomForBattle возвращает до limit случайных медиа трипа, исключая restricted (NSFW, ТЗ 6.3). Для фотобатла (ТЗ 8.1).
 func (r *MediaRepository) PickRandomForBattle(tripID string, limit int) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
 		captured_at, battle_rating, privacy_level, similar_group_id, content_hash, created_at
-		FROM media WHERE trip_id = $1 AND privacy_level <> 'Restricted'
+		FROM media WHERE trip_id = $1 AND privacy_level <> 'restricted'
 		ORDER BY RANDOM() LIMIT $2`
 	rows, err := r.db.Query(sqlStr, tripID, limit)
 	if err != nil {

@@ -159,7 +159,7 @@ message TripPin {
 message TripPinMedia {
  string media_id = 1;
  string url = 2; // presigned or CDN URL; may be empty if resolved elsewhere
- string media_type = 3; // photo, video
+ string media_type = 3; // image, video
  int64 captured_at_unix = 4;
  string privacy_level = 5;
 }
@@ -179,7 +179,7 @@ message GetTripResponse {
 }
 
 // TripParticipant — участник трипа для ответа GetTrip.
-// privacy_level — выбор этого юзера из trip_privacy ("Private" если записи нет).
+// privacy_level — выбор этого юзера из trip_privacy ("private" если записи нет).
 // role — "admin" | "member".
 message TripParticipant {
  string user_id = 1;
@@ -451,7 +451,7 @@ message ListFeedRequest {
 message FeedMedia {
  string media_id = 1;
  string url = 2; // presigned GET URL
- string media_type = 3; // photo, video
+ string media_type = 3; // image, video
 }
 
 // lightweight pin for feed card map.
@@ -786,7 +786,7 @@ message SearchPinsResponse {
 }
 
 // Per-user приватность: каждый участник выставляет свой уровень для trip/pin/media.
-// privacy_level — выбор пользователя (Public|Private). user_id берётся из gRPC metadata.
+// privacy_level — выбор пользователя (public|private). user_id берётся из gRPC metadata.
 message UpsertTripPrivacyRequest {
  string trip_id = 1;
  string privacy_level = 2;

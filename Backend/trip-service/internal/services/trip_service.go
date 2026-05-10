@@ -115,11 +115,11 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	}
 	category := req.GetCategory()
 	if category == "" || !validateCategory(category) {
-		return nil, status.Error(codes.InvalidArgument, "category must be one of: Отпуск, Командировка, Выходные, Активный отдых, Образование, Другое")
+		return nil, status.Error(codes.InvalidArgument, "category must be one of: vacation, business, holidays, active, education, custom")
 	}
 	season := req.GetSeason()
 	if season == "" || !validateSeason(season) {
-		return nil, status.Error(codes.InvalidArgument, "season must be one of: Зима, Весна, Лето, Осень")
+		return nil, status.Error(codes.InvalidArgument, "season must be one of: winter, spring, summer, autumn")
 	}
 	for _, f := range req.GetFilesToUpload() {
 		if !validateContentType(f.GetContentType()) {
@@ -127,11 +127,11 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 		}
 	}
 
-	tripStatus := "Created"
+	tripStatus := models.TripStatusDraft
 	if len(req.GetFilesToUpload()) > 0 {
-		tripStatus = "UPLOADING"
+		tripStatus = models.TripStatusUploading
 	}
-	// privacy_level — DEFAULT 'Private' в БД; ставим явно для надёжности.
+	// privacy_level — DEFAULT 'private' в БД; ставим явно для надёжности.
 	// Per-user уровень хранится в trip_privacy и меняется через UpsertTripPrivacy (ТЗ 6.4).
 	trip := &models.Trip{
 		OwnerUserID: userID,
@@ -140,7 +140,7 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 		Category: category,
 		Season: season,
 		Status: tripStatus,
-		PrivacyLevel: "Private",
+		PrivacyLevel: "private",
 		LikesCount: 0,
 		DislikesCount: 0,
 		IsPublished: false,
@@ -153,9 +153,9 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	if err := s.participantRepo.Add(participant); err != nil {
 		return nil, status.Error(codes.Internal, "failed to add owner as participant")
 	}
-	// дефолтный per-user уровень владельца — Private (ТЗ 6.6: один Private → Private).
+	// дефолтный per-user уровень владельца — private (ТЗ 6.6: один private → private).
 	if s.tripPrivacyRepo != nil {
-		if err := s.tripPrivacyRepo.Upsert(ctx, trip.ID, userID, "Private"); err != nil {
+		if err := s.tripPrivacyRepo.Upsert(ctx, trip.ID, userID, "private"); err != nil {
 			slog.WarnContext(ctx, "trip_service: default trip_privacy upsert failed", "trip_id", trip.ID, "user_id", userID, "err", err)
 		}
 	}
@@ -232,7 +232,7 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 }
 
 // getSharedTripResponse — публичная выборка опубликованного трипа: пины с
-// is_published_in_feed=true и privacy_level=Public, медиа только Public (ТЗ 3.4, 6.1).
+// is_published_in_feed=true и privacy_level=public, медиа только public (ТЗ 3.4, 6.1).
 func (s *TripService) getSharedTripResponse(ctx context.Context, trip *models.Trip) (*pb.GetTripResponse, error) {
 	pins, err := s.pinRepo.ListByTripID(trip.ID)
 	if err != nil {
@@ -244,7 +244,7 @@ func (s *TripService) getSharedTripResponse(ctx context.Context, trip *models.Tr
 	}
 	outPins := make([]*pb.TripPin, 0, len(pins))
 	for _, pin := range pins {
-		if !pin.IsPublishedInFeed || pin.PrivacyLevel != "Public" {
+		if !pin.IsPublishedInFeed || pin.PrivacyLevel != "public" {
 			continue
 		}
 		mediaList, err := s.mediaRepo.ListByPinID(pin.ID)
@@ -253,7 +253,7 @@ func (s *TripService) getSharedTripResponse(ctx context.Context, trip *models.Tr
 		}
 		publicMedia := make([]*models.Media, 0, len(mediaList))
 		for _, m := range mediaList {
-			if m.PrivacyLevel == "Public" {
+			if m.PrivacyLevel == "public" {
 				publicMedia = append(publicMedia, m)
 			}
 		}
@@ -316,7 +316,7 @@ func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.
 // buildParticipantsAndSettings собирает participants и current_user_settings.
 // При ошибке подсистемы — пустой список / дефолты + Warn (не валит GetTrip).
 func (s *TripService) buildParticipantsAndSettings(ctx context.Context, tripID, callerUserID string) ([]*pb.TripParticipant, *pb.TripSettings) {
-	const defaultPrivacy = "Private"
+	const defaultPrivacy = "private"
 	settings := &pb.TripSettings{NotificationsEnabled: true, PrivacyLevel: defaultPrivacy}
 
 	parts, err := s.participantRepo.GetByTripID(tripID)
@@ -1010,10 +1010,10 @@ func (s *TripService) JoinTripByToken(ctx context.Context, req *pb.JoinTripByTok
 		return nil, status.Error(codes.Internal, "failed to add participant")
 	}
 	_ = s.settingsRepo.EnsureDefaultSettings(link.TripID, userID)
-	// дефолтный per-user уровень присоединившегося — Private (ТЗ 6.6). Пересчитываем
-	// агрегат сразу: новый Private может опустить уровень всего трипа.
+	// дефолтный per-user уровень присоединившегося — private (ТЗ 6.6). Пересчитываем
+	// агрегат сразу: новый private может опустить уровень всего трипа.
 	if s.tripPrivacyRepo != nil {
-		if err := s.tripPrivacyRepo.Upsert(ctx, link.TripID, userID, "Private"); err != nil {
+		if err := s.tripPrivacyRepo.Upsert(ctx, link.TripID, userID, "private"); err != nil {
 			slog.WarnContext(ctx, "trip_service: default trip_privacy upsert failed on join", "trip_id", link.TripID, "user_id", userID, "err", err)
 		} else {
 			if entries, err := s.tripPrivacyRepo.GetByTripID(ctx, link.TripID); err == nil {
@@ -1025,7 +1025,7 @@ func (s *TripService) JoinTripByToken(ctx context.Context, req *pb.JoinTripByTok
 				}
 			}
 			if s.eventRepo != nil {
-				_ = s.eventRepo.PublishPrivacyEvent(ctx, "trip", link.TripID, link.TripID, userID, "Private")
+				_ = s.eventRepo.PublishPrivacyEvent(ctx, "trip", link.TripID, link.TripID, userID, "private")
 			}
 		}
 	}
@@ -1185,8 +1185,8 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 	if err != nil || !participant {
 		return nil, status.Error(codes.PermissionDenied, "not a participant")
 	}
-	if trip.Status != "UPLOADING" && trip.Status != "Created" {
-		return nil, status.Error(codes.FailedPrecondition, "trip must be in UPLOADING or Created to process media grouping")
+	if trip.Status != models.TripStatusUploading && trip.Status != models.TripStatusDraft {
+		return nil, status.Error(codes.FailedPrecondition, "trip must be in UPLOADING or DRAFT to process media grouping")
 	}
 	total, videos, _ := s.mediaRepo.CountByTripID(tripID)
 	newVideos := 0
@@ -2529,9 +2529,9 @@ func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripReques
 		return nil, status.Error(codes.FailedPrecondition, "trip must be READY to publish")
 	}
 
-	if trip.PrivacyLevel != "Public" {
+	if trip.PrivacyLevel != "public" {
 		return nil, status.Errorf(codes.FailedPrecondition,
-			"trip must have Public privacy level to publish, current level: %s", trip.PrivacyLevel)
+			"trip must have public privacy level to publish, current level: %s", trip.PrivacyLevel)
 	}
 
 	publishWhole := req.GetPublishWhole()
@@ -2608,7 +2608,7 @@ func (s *TripService) UpsertTripPrivacy(ctx context.Context, req *pb.UpsertTripP
 	}
 	level := req.GetPrivacyLevel()
 	if !validateUserPrivacyLevel(level) {
-		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: Public, Private")
+		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: public, private")
 	}
 	participant, err := s.participantRepo.IsParticipant(tripID, userID)
 	if err != nil {
@@ -2624,7 +2624,7 @@ func (s *TripService) UpsertTripPrivacy(ctx context.Context, req *pb.UpsertTripP
 		}
 		return nil, status.Error(codes.Internal, "failed to get trip")
 	}
-	if trip.PrivacyLevel == "Restricted" {
+	if trip.PrivacyLevel == "restricted" {
 		return nil, status.Error(codes.FailedPrecondition, "cannot change permanently private privacy level")
 	}
 	if trip.IsGenerated {
@@ -2660,7 +2660,7 @@ func (s *TripService) UpsertPinPrivacy(ctx context.Context, req *pb.UpsertPinPri
 	}
 	level := req.GetPrivacyLevel()
 	if !validateUserPrivacyLevel(level) {
-		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: Public, Private")
+		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: public, private")
 	}
 	participant, err := s.participantRepo.IsParticipant(tripID, userID)
 	if err != nil {
@@ -2682,7 +2682,7 @@ func (s *TripService) UpsertPinPrivacy(ctx context.Context, req *pb.UpsertPinPri
 	if pin.TripID != tripID {
 		return nil, status.Error(codes.NotFound, "pin not found")
 	}
-	if pin.PrivacyLevel == "Restricted" {
+	if pin.PrivacyLevel == "restricted" {
 		return nil, status.Error(codes.FailedPrecondition, "cannot change permanently private privacy level")
 	}
 	if err := s.pinPrivacyRepo.Upsert(ctx, pinID, userID, level); err != nil {
@@ -2715,7 +2715,7 @@ func (s *TripService) UpsertMediaPrivacy(ctx context.Context, req *pb.UpsertMedi
 	}
 	level := req.GetPrivacyLevel()
 	if !validateUserPrivacyLevel(level) {
-		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: Public, Private")
+		return nil, status.Error(codes.InvalidArgument, "privacy_level must be one of: public, private")
 	}
 	participant, err := s.participantRepo.IsParticipant(tripID, userID)
 	if err != nil {
@@ -2737,7 +2737,7 @@ func (s *TripService) UpsertMediaPrivacy(ctx context.Context, req *pb.UpsertMedi
 	if media.TripID != tripID {
 		return nil, status.Error(codes.NotFound, "media not found")
 	}
-	if media.PrivacyLevel == "Restricted" {
+	if media.PrivacyLevel == "restricted" {
 		return nil, status.Error(codes.FailedPrecondition, "cannot change permanently private privacy level")
 	}
 	if err := s.mediaPrivacyRepo.Upsert(ctx, mediaID, userID, level); err != nil {
@@ -2896,8 +2896,8 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 			Trip: s.tripToProto(ctx, t),
 			Pins: protoPins,
 			Media: protoMedia,
-			IsLiked: reaction == "Like",
-			IsDisliked: reaction == "Dislike",
+			IsLiked: reaction == "like",
+			IsDisliked: reaction == "dislike",
 			IsSaved: saved,
 		}
 	}
@@ -2951,12 +2951,12 @@ func (s *TripService) LikeTrip(ctx context.Context, req *pb.LikeTripRequest) (*p
 	if !trip.IsPublished {
 		return nil, status.Error(codes.FailedPrecondition, "trip is not published")
 	}
-	old, err := s.socialRepo.SetReaction(userID, tripID, "Like")
+	old, err := s.socialRepo.SetReaction(userID, tripID, "like")
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to set like")
 	}
-	if s.eventRepo != nil && old != "Like" {
-		if old == "Dislike" {
+	if s.eventRepo != nil && old != "like" {
+		if old == "dislike" {
 			_ = s.eventRepo.PublishStatsEvent(ctx, "DISLIKE_REMOVED", tripID, []string{userID}, nil)
 		}
 		_ = s.eventRepo.PublishStatsEvent(ctx, "LIKE_ADDED", tripID, []string{userID}, nil)
@@ -2980,12 +2980,12 @@ func (s *TripService) DislikeTrip(ctx context.Context, req *pb.DislikeTripReques
 	if !trip.IsPublished {
 		return nil, status.Error(codes.FailedPrecondition, "trip is not published")
 	}
-	old, err := s.socialRepo.SetReaction(userID, tripID, "Dislike")
+	old, err := s.socialRepo.SetReaction(userID, tripID, "dislike")
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to set dislike")
 	}
-	if s.eventRepo != nil && old != "Dislike" {
-		if old == "Like" {
+	if s.eventRepo != nil && old != "dislike" {
+		if old == "like" {
 			_ = s.eventRepo.PublishStatsEvent(ctx, "LIKE_REMOVED", tripID, []string{userID}, nil)
 		}
 		_ = s.eventRepo.PublishStatsEvent(ctx, "DISLIKE_ADDED", tripID, []string{userID}, nil)

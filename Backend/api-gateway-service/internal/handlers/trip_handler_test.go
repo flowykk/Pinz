@@ -77,8 +77,8 @@ func TestTripHandler_ListTrips_Success(t *testing.T) {
 			Trips: []*proto.Trip{
 				{
 					Id: "trip-1", OwnerUserId: "user-1", Name: "My Trip",
-					Category: "Отпуск", Season: "Лето", Status: "READY",
-					PrivacyLevel: "Private", LikesCount: 0, DislikesCount: 0,
+					Category: "vacation", Season: "summer", Status: "READY",
+					PrivacyLevel: "private", LikesCount: 0, DislikesCount: 0,
 					CreatedAtUnix: 1000, UpdatedAtUnix: 1000,
 				},
 			},
@@ -140,8 +140,8 @@ func TestTripHandler_ListFavourites_Success(t *testing.T) {
 			Trips: []*proto.Trip{
 				{
 					Id: "trip-fav", OwnerUserId: "other", Name: "Favourite Trip",
-					Category: "Отпуск", Season: "Лето", Status: "READY",
-					PrivacyLevel: "Private", LikesCount: 0, DislikesCount: 0,
+					Category: "vacation", Season: "summer", Status: "READY",
+					PrivacyLevel: "private", LikesCount: 0, DislikesCount: 0,
 					CreatedAtUnix: 1000, UpdatedAtUnix: 1000,
 				},
 			},
@@ -188,8 +188,8 @@ func TestTripHandler_CreateTrip_Success(t *testing.T) {
 			OwnerUserId: "user-1",
 			Name: "New Trip",
 			Description: "desc",
-			Category: "Отпуск",
-			Season: "Лето",
+			Category: "vacation",
+			Season: "summer",
 			FilesToUpload: []*proto.FileToUpload{{ClientId: "c1", ContentType: "image/jpeg"}},
 		}).
 		Return(&proto.CreateTripResponse{
@@ -201,7 +201,7 @@ func TestTripHandler_CreateTrip_Success(t *testing.T) {
 		}, nil)
 
 	h := NewTripHandler(tripClient, nil, "")
-	body := `{"name":"New Trip","description":"desc","category":"Отпуск","season":"Лето","privacy_level":"Private","files_to_upload":[{"client_id":"c1","content_type":"image/jpeg"}]}`
+	body := `{"name":"New Trip","description":"desc","category":"vacation","season":"summer","privacy_level":"private","files_to_upload":[{"client_id":"c1","content_type":"image/jpeg"}]}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/creation/start", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req = req.WithContext(ctxWithUserID("user-1"))
@@ -359,9 +359,9 @@ func TestTripHandler_SearchPins_Success(t *testing.T) {
 					Id: "pin-1", TripId: "trip-1", Name: "Cafe Central",
 					Description: "best cafe", Category: "Food",
 					Latitude: &lat, Longitude: &lon,
-					PrivacyLevel: "Public", Tags: []string{"cafe", "coffee"},
+					PrivacyLevel: "public", Tags: []string{"cafe", "coffee"},
 					Media: []*proto.TripPinMedia{
-						{MediaId: "m1", Url: "https://s3/m1", MediaType: "photo", PrivacyLevel: "Public"},
+						{MediaId: "m1", Url: "https://s3/m1", MediaType: "photo", PrivacyLevel: "public"},
 					},
 				},
 			},
@@ -437,8 +437,8 @@ func TestTripHandler_ListFeed_MapsPerUserFlags(t *testing.T) {
 						{
 							Trip: &proto.Trip{
 								Id: "trip-1", OwnerUserId: "owner", Name: "T",
-								Category: "Отпуск", Season: "Лето", Status: "READY",
-								PrivacyLevel: "Public", IsPublished: true,
+								Category: "vacation", Season: "summer", Status: "READY",
+								PrivacyLevel: "public", IsPublished: true,
 								CreatedAtUnix: 1000, UpdatedAtUnix: 1000,
 							},
 							IsLiked: tc.liked,

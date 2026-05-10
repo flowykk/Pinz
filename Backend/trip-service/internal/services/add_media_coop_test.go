@@ -38,7 +38,7 @@ func TestAddMediaStart_Race_ReturnsJoined(t *testing.T) {
 	const userID = "user-2"
 	ctrl := gomock.NewController(t)
 
-	trip := &models.Trip{ID: tripID, Status: models.TripStatusReady, PrivacyLevel: "Private"}
+	trip := &models.Trip{ID: tripID, Status: models.TripStatusReady, PrivacyLevel: "private"}
 	activeSession := &models.AddMediaSession{SessionID: "sess-1", TripID: tripID}
 
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
@@ -63,7 +63,7 @@ func TestAddMediaStart_NewSession_Success(t *testing.T) {
 	const userID = "user-1"
 	ctrl := gomock.NewController(t)
 
-	trip := &models.Trip{ID: tripID, Status: models.TripStatusReady, PrivacyLevel: "Private"}
+	trip := &models.Trip{ID: tripID, Status: models.TripStatusReady, PrivacyLevel: "private"}
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
 	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
