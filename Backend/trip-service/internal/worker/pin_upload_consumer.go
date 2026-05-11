@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -35,8 +36,7 @@ func RunPinUploadConsumer(ctx context.Context, redisClient *redis.Client, consum
 		<-ctx.Done()
 		return
 	}
-	if err := redisClient.XGroupCreateMkStream(ctx, pinUploadTasksStream, pinUploadConsumerGroup, "0").Err(); err != nil && !isBusyGroupErr(err) {
-		slog.ErrorContext(ctx, "pin_upload_consumer: create group failed", "consumer", consumerName, "error", err)
+	if !ensurePinUploadGroup(ctx, redisClient, consumerName) {
 		return
 	}
 	slog.Info("pin_upload_consumer: started", "stream", pinUploadTasksStream, "group", pinUploadConsumerGroup, "consumer", consumerName)
@@ -59,6 +59,9 @@ func RunPinUploadConsumer(ctx context.Context, redisClient *redis.Client, consum
 				return
 			}
 			slog.WarnContext(ctx, "pin_upload_consumer: XReadGroup failed", "consumer", consumerName, "error", err)
+			if isNoGroupErr(err) && !ensurePinUploadGroup(ctx, redisClient, consumerName) {
+				return
+			}
 			continue
 		}
 		for _, stream := range streams {
@@ -70,6 +73,40 @@ func RunPinUploadConsumer(ctx context.Context, redisClient *redis.Client, consum
 	}
 }
 
+func ensurePinUploadGroup(ctx context.Context, redisClient *redis.Client, consumerName string) bool {
+	backoff := 500 * time.Millisecond
+	const maxBackoff = 30 * time.Second
+	for {
+		err := redisClient.XGroupCreateMkStream(ctx, pinUploadTasksStream, pinUploadConsumerGroup, "0").Err()
+		if err == nil || isBusyGroupErr(err) {
+			return true
+		}
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return false
+		}
+		slog.WarnContext(ctx, "pin_upload_consumer: create group failed, retrying",
+			"consumer", consumerName, "error", err, "backoff", backoff)
+		select {
+		case <-ctx.Done():
+			return false
+		case <-time.After(backoff):
+		}
+		if backoff < maxBackoff {
+			backoff *= 2
+			if backoff > maxBackoff {
+				backoff = maxBackoff
+			}
+		}
+	}
+}
+
+func isNoGroupErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "NOGROUP")
+}
+
 func processPinUploadMessage(ctx context.Context, msg redis.XMessage, deps PinUploadConsumerDeps) {
 	tripID, _ := msg.Values["trip_id"].(string)
 	sessionID, _ := msg.Values["session_id"].(string)
@@ -79,6 +116,14 @@ func processPinUploadMessage(ctx context.Context, msg redis.XMessage, deps PinUp
 		slog.WarnContext(ctx, "pin_upload_consumer: malformed message", "values", msg.Values)
 		return
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			slog.ErrorContext(ctx, "pin_upload_consumer: panic in handler",
+				"session_id", sessionID, "trip_id", tripID, "panic", r)
+		}
+	}()
+	slog.InfoContext(ctx, "pin_upload_consumer: got task",
+		"session_id", sessionID, "trip_id", tripID, "message_id", msg.ID)
 	transitioned, err := services.RunPinUploadProcessing(ctx, sessionID, services.PinUploadProcessorDeps{
 		SessionRepo: deps.SessionRepo,
 		MediaRepo:   deps.MediaRepo,
