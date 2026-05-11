@@ -69,10 +69,8 @@ public class PinInfoViewModel {
 
     private(set) var isSaving = false
 
-    /// True while resolving pin-upload entry (disables Add media).
     private(set) var isStartingAddMedia = false
 
-    /// Local `PinUploadAdditionSessionStorage` has a session id for this trip + pin (mid-flow / resume).
     private(set) var hasActivePinUploadAdditionSession = false
 
     public init(
@@ -92,7 +90,6 @@ public class PinInfoViewModel {
         updateAction?.action(pin)
     }
 
-    /// Called when pin-upload finalize completes after adding media to this pin (same `pin.id`).
     public func applyPinAfterAdditionUpload(_ updatedPin: Pin) {
         let matchesServer =
             updatedPin.serverId != nil
@@ -105,7 +102,6 @@ public class PinInfoViewModel {
         refreshPinUploadAdditionSessionFlag()
     }
 
-    /// Sync from `PinUploadAdditionSessionStorage` (call on gallery appear — UserDefaults is not observable).
     public func refreshPinUploadAdditionSessionFlag() {
         guard let tripId = pin.tripId,
               let pinId = pin.serverId?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -328,7 +324,6 @@ public class PinInfoViewModel {
         updateAction?.action(pin)
     }
 
-    /// After PinPlaceChange: optimistically set coordinates, then PATCH; revert coordinates on failure.
     private func applyPlaceChange(_ newCoordinate: CLLocationCoordinate2D?) {
         let previous = pin.coordinates
         if coordinatesEqual(previous, newCoordinate) { return }
@@ -488,7 +483,6 @@ extension PinInfoViewModel {
         state == .editing
     }
 
-    /// Primary "Add media" CTA on gallery tab.
     var addMediaButtonDisabled: Bool {
         state == .editing || isSaving || isStartingAddMedia || !canStartPinUploadAddition
     }

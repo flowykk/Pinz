@@ -49,7 +49,6 @@ final class PinUploadReviewViewModel {
 
     let tripId: String
     let sessionId: String
-    /// Non-nil when this session adds media to an existing pin.
     let targetPinId: String?
 
     var state: State = .info
@@ -228,7 +227,6 @@ final class PinUploadReviewViewModel {
         }
     }
 
-    /// Creation: `popToRoot`. Addition: drop only `.pinUpload` routes (stay on e.g. PinInfo).
     private func dismissPinUploadFlow() {
         if targetPinId != nil {
             router?.popAllPinUploadRoutes()
@@ -237,7 +235,6 @@ final class PinUploadReviewViewModel {
         }
     }
 
-    /// When adding media, backend draft may omit pin title; load existing pin as template for finalize validation.
     private func fillMissingPinFieldsFromServerIfNeeded() async {
         guard let pinId = targetPinId else { return }
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -350,7 +347,6 @@ final class PinUploadReviewViewModel {
         )
     }
 
-    /// Thumbnails for `PinAnnotationView` on the map (same URLs as review gallery, minus pending deletes).
     private func draftMediasForMapPreview() -> [MediaItem] {
         medias
             .filter { !mediaToDelete.contains($0.mediaId) }

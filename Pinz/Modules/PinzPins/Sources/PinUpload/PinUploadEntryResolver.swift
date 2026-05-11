@@ -2,22 +2,6 @@ import Foundation
 import PinzBase
 import PinzNetworking
 
-/// Resume / fresh-start helpers for the pin-upload flow.
-///
-/// Два входа:
-/// - **`resume`** — создание нового пина (`target_pin_id == null`). Локальный источник истины —
-///   `PinUploadSessionStorage` (одна активная сессия на трип).
-/// - **`resumeAddition`** — добавление медиа в существующий пин. Источник истины —
-///   `PinUploadAdditionSessionStorage` (ключ trip + pin).
-///
-/// `GET /trips/{id}` не возвращает активную pin-upload сессию; восстановление — через
-/// `GET .../pin-uploads/{sid}/review` и ветвление по `processing_status` (одинаково для обоих входов).
-///
-/// Логика по статусу:
-/// - Если локально есть `session_id`, вызываем `pinUploadGetReview` и навигируем по статусу.
-/// - Если сессия не найдена на бэке (404) — чистим соответствующее хранилище и открываем старт.
-/// - Если статус неизвестный/финальный — как 404.
-/// - Если нет локального `session_id` — сразу на экран выбора медиа (старт флоу).
 public enum PinUploadEntryResolver {
 
     @MainActor
@@ -60,7 +44,6 @@ public enum PinUploadEntryResolver {
         }
     }
 
-    /// Восстановление сессии добавления медиа в существующий пин (`target_pin_id` при старте).
     @MainActor
     public static func resumeAddition(
         tripId: String,

@@ -37,7 +37,6 @@ final class PinUploadStartViewModel {
     }
 
     let tripId: String
-    /// Non-nil when adding media to an existing pin (`target_pin_id` on start).
     let targetPinId: String?
     var medias: [LoadedMedia] = []
     private(set) var isLoading = false
