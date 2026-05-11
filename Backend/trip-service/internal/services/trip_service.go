@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/server"
@@ -22,7 +23,6 @@ import (
 
 const defaultInviteExpiresInSec = 86400 // 24 hours
 
-// сколько ведущий может не делать мутаций в DRAFT_FINAL_REVIEW, прежде чем
 // следующий participant может перехватить роль неявно (первое мутирующее действие).
 // Cron порог 72 часа для abandoned-sessions живёт в worker/session_cleanup.go.
 const initiatorTakeoverTimeout = time.Hour
@@ -132,7 +132,7 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 		tripStatus = models.TripStatusUploading
 	}
 	// privacy_level — DEFAULT 'private' в БД; ставим явно для надёжности.
-	// Per-user уровень хранится в trip_privacy и меняется через UpsertTripPrivacy (ТЗ 6.4).
+	// Per-user уровень хранится в trip_privacy и меняется через UpsertTripPrivacy.
 	trip := &models.Trip{
 		OwnerUserID: userID,
 		Name: name,
@@ -149,11 +149,13 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	if err := s.tripRepo.Create(trip); err != nil {
 		return nil, status.Error(codes.Internal, "failed to create trip")
 	}
+	metrics.TripCreated(ctx, "creation")
+	metrics.TripStatusChanged(ctx, tripStatus)
 	participant := &models.TripParticipant{TripID: trip.ID, UserID: userID, IsAdmin: true}
 	if err := s.participantRepo.Add(participant); err != nil {
 		return nil, status.Error(codes.Internal, "failed to add owner as participant")
 	}
-	// дефолтный per-user уровень владельца — private (ТЗ 6.6: один private → private).
+	// дефолтный per-user уровень владельца — private.
 	if s.tripPrivacyRepo != nil {
 		if err := s.tripPrivacyRepo.Upsert(ctx, trip.ID, userID, "private"); err != nil {
 			slog.WarnContext(ctx, "trip_service: default trip_privacy upsert failed", "trip_id", trip.ID, "user_id", userID, "err", err)
@@ -224,7 +226,7 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 		}
 		return resp, nil
 	}
-	// ТЗ 3.4: shared read-only view опубликованного трипа для не-участника.
+	// shared read-only view опубликованного трипа для не-участника.
 	if trip.IsPublished {
 		return s.getSharedTripResponse(ctx, trip)
 	}
@@ -232,7 +234,7 @@ func (s *TripService) GetTrip(ctx context.Context, req *pb.GetTripRequest) (*pb.
 }
 
 // getSharedTripResponse — публичная выборка опубликованного трипа: пины с
-// is_published_in_feed=true и privacy_level=public, медиа только public (ТЗ 3.4, 6.1).
+// is_published_in_feed=true и privacy_level=public, медиа только public.
 func (s *TripService) getSharedTripResponse(ctx context.Context, trip *models.Trip) (*pb.GetTripResponse, error) {
 	pins, err := s.pinRepo.ListByTripID(trip.ID)
 	if err != nil {
@@ -272,7 +274,7 @@ func (s *TripService) getSharedTripResponse(ctx context.Context, trip *models.Tr
 // getTripResponseWithPins — полный ответ для участника: пины+медиа, participants
 // с per-user privacy_level и ролью, current_user_settings, active_add_media_session.
 func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.Trip, callerUserID string) (*pb.GetTripResponse, error) {
-	// ТЗ 4.5.2: пины, скрытые caller'ом, не возвращаются.
+	// пины, скрытые caller'ом, не возвращаются.
 	var pins []*models.Pin
 	var err error
 	if s.pinHiddenRepo != nil && callerUserID != "" {
@@ -489,6 +491,7 @@ func (s *TripService) executeTakeover(ctx context.Context, tripID, sessionID, pr
 	if err := s.addMediaSessionRepo.SetInitiator(ctx, sessionID, newUserID, now); err != nil {
 		return time.Time{}, status.Error(codes.Internal, "failed to reassign initiator")
 	}
+	metrics.AddMediaTakeover(ctx)
 	if s.eventRepo != nil {
 		takeoverAt := now.Add(initiatorTakeoverTimeout).Unix()
 		_ = s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventAddMediaInitiatorChanged, map[string]interface{}{
@@ -650,7 +653,7 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 		}
 		return nil, status.Error(codes.Internal, "failed to get trip")
 	}
-	// ТЗ 3.2: редактировать параметры путешествия может любой участник
+	// редактировать параметры путешествия может любой участник
 	participant, err := s.participantRepo.IsParticipant(tripID, userID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to check participant")
@@ -706,7 +709,7 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 }
 
 // RequestTripCoverUpload выдаёт presigned PUT URL для загрузки обложки в S3 (step 1 двухшагового потока, аналог аватара пользователя).
-// ТЗ 3.2: обложка — редактируемый параметр; доступ — любому участнику.
+// обложка — редактируемый параметр; доступ — любому участнику.
 func (s *TripService) RequestTripCoverUpload(ctx context.Context, req *pb.RequestTripCoverUploadRequest) (*pb.RequestTripCoverUploadResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -855,7 +858,7 @@ func (s *TripService) DeleteTripCover(ctx context.Context, req *pb.DeleteTripCov
 	return &pb.DeleteTripCoverResponse{Trip: s.tripToProto(ctx, updated)}, nil
 }
 
-// DeleteTrip — только админ. (ТЗ 3.24.1/3.24.2): если трип в избранном у других — soft delete (удаление из списка участников); иначе — полное удаление.
+// DeleteTrip — только админ.: если трип в избранном у других — soft delete (удаление из списка участников); иначе — полное удаление.
 func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest) (*pb.DeleteTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -915,7 +918,7 @@ func (s *TripService) DeleteTrip(ctx context.Context, req *pb.DeleteTripRequest)
 	return &pb.DeleteTripResponse{Success: true}, nil
 }
 
-// GenerateInviteLink — только участники трипа могут генерировать ссылку (ТЗ 3.18).
+// GenerateInviteLink — только участники трипа могут генерировать ссылку.
 func (s *TripService) GenerateInviteLink(ctx context.Context, req *pb.GenerateInviteLinkRequest) (*pb.GenerateInviteLinkResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -1010,7 +1013,7 @@ func (s *TripService) JoinTripByToken(ctx context.Context, req *pb.JoinTripByTok
 		return nil, status.Error(codes.Internal, "failed to add participant")
 	}
 	_ = s.settingsRepo.EnsureDefaultSettings(link.TripID, userID)
-	// дефолтный per-user уровень присоединившегося — private (ТЗ 6.6). Пересчитываем
+	// дефолтный per-user уровень присоединившегося — private. Пересчитываем
 	// агрегат сразу: новый private может опустить уровень всего трипа.
 	if s.tripPrivacyRepo != nil {
 		if err := s.tripPrivacyRepo.Upsert(ctx, link.TripID, userID, "private"); err != nil {
@@ -1035,7 +1038,7 @@ func (s *TripService) JoinTripByToken(ctx context.Context, req *pb.JoinTripByTok
 	return &pb.JoinTripByTokenResponse{TripId: link.TripID, AlreadyJoined: false}, nil
 }
 
-// RemoveParticipant — только админ может удалить участника (ТЗ 3.19), событие PARTICIPANT_REMOVED.
+// RemoveParticipant — только админ может удалить участника, событие PARTICIPANT_REMOVED.
 func (s *TripService) RemoveParticipant(ctx context.Context, req *pb.RemoveParticipantRequest) (*pb.RemoveParticipantResponse, error) {
 	callerID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -1075,7 +1078,7 @@ func (s *TripService) RemoveParticipant(ctx context.Context, req *pb.RemoveParti
 	return &pb.RemoveParticipantResponse{Success: true}, nil
 }
 
-// LeaveTrip — любой участник выходит (ТЗ 3.20). Если единственный админ — удаляем трип (3.21);
+// LeaveTrip — любой участник выходит. Если единственный админ — удаляем трип (3.21);
 // иначе назначаем нового админа (3.22), событие PARTICIPANT_LEFT или ADMIN_CHANGED.
 func (s *TripService) LeaveTrip(ctx context.Context, req *pb.LeaveTripRequest) (*pb.LeaveTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -1125,7 +1128,7 @@ func (s *TripService) LeaveTrip(ctx context.Context, req *pb.LeaveTripRequest) (
 	return &pb.LeaveTripResponse{Success: true, TripDeleted: false}, nil
 }
 
-// TransferAdmin — только текущий админ может передать права (ТЗ 3.22.1), событие ADMIN_CHANGED.
+// TransferAdmin — только текущий админ может передать права, событие ADMIN_CHANGED.
 func (s *TripService) TransferAdmin(ctx context.Context, req *pb.TransferAdminRequest) (*pb.TransferAdminResponse, error) {
 	callerID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -1228,6 +1231,7 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 	if err := s.tripRepo.SetStatus(tripID, "DRAFT_GROUPING_REVIEW"); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update trip status")
 	}
+	metrics.TripStatusChanged(ctx, "DRAFT_GROUPING_REVIEW")
 	// Build response: draft_pins with media URLs (stub)
 	mediaList, _ := s.mediaRepo.ListByTripID(tripID)
 	mediaByID := make(map[string]*models.Media)
@@ -1329,6 +1333,7 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 	if err := s.tripRepo.SetStatus(tripID, models.TripStatusProcessing); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
+	metrics.TripStatusChanged(ctx, models.TripStatusProcessing)
 	s.finalizeProcessingStub(ctx, tripID, models.TripStatusDraftFinalReview)
 	return &pb.ApplyGroupsAndProcessResponse{
 		Message: "Processing started",
@@ -1346,10 +1351,11 @@ func (s *TripService) finalizeProcessingStub(ctx context.Context, tripID, target
 		slog.ErrorContext(ctx, "finalizeProcessingStub: SetStatus failed", "trip_id", tripID, "error", err)
 		return
 	}
+	metrics.TripStatusChanged(ctx, targetStatus)
 	if s.eventRepo == nil {
 		return
 	}
-	// чистим per-trip WS-stream от событий предыдущих processing-сессий —
+	// чистим per-trip WS-stream от событий предыдущих processing-сессий,
 	// иначе XREAD "0-0" подхватит чужое TRIP_PROCESSING_COMPLETED.
 	_ = s.eventRepo.DeleteTripEventStream(ctx, tripID)
 	if err := s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventTripProcessingCompleted, map[string]interface{}{
@@ -1492,6 +1498,7 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 	if err := s.tripRepo.SetStatus(tripID, models.TripStatusReady); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
+	metrics.TripStatusChanged(ctx, models.TripStatusReady)
 	return &pb.FinalizeTripResponse{
 		TripId:  tripID,
 		Status:  models.TripStatusReady,
@@ -1501,10 +1508,10 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 
 // applyReviewEdits — общая логика финализации ревью (creation FinalizeTrip и
 // add-media Confirm): применяет pin_updates (name, lat/lon), удаляет
-// media_to_delete (ТЗ 3.15.1 — «похожие»), агрегирует cover_url + start/end
+// media_to_delete, агрегирует cover_url + start/end
 // dates по состоянию пинов/медиа. Reverse geocoding запускается асинхронно
 // через PIN_LOCATIONS_REQUESTED для всех пинов с обновлёнными координатами
-// (vkr.txt §2.5.4). Статус трипа меняет вызывающая сторона.
+// Статус трипа меняет вызывающая сторона.
 func (s *TripService) applyReviewEdits(ctx context.Context, trip *models.Trip, pinUpdates []*pb.PinUpdate, mediaToDelete []string) error {
 	tripID := trip.ID
 	geoPins := make([]repositories.GeoRequestPin, 0, len(pinUpdates))
@@ -1585,7 +1592,7 @@ func (s *TripService) applyReviewEdits(ctx context.Context, trip *models.Trip, p
 	return nil
 }
 
-// AddMediaStart — старт сессии добавления медиа в готовый трип (ТЗ 5.3, 3.8).
+// AddMediaStart — старт сессии добавления медиа в готовый трип.
 // Идемпотентна: при существующей сессии возвращает её session_id с joined=true.
 func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRequest) (*pb.AddMediaStartResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -1694,6 +1701,7 @@ func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRe
 	if err := s.tripRepo.SetStatus(tripID, models.TripStatusAddMediaUploading); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update trip status")
 	}
+	metrics.TripStatusChanged(ctx, models.TripStatusAddMediaUploading)
 	s.publishTripStatusChanged(ctx, tripID, models.TripStatusAddMediaUploading, "add_media_started")
 	return &pb.AddMediaStartResponse{
 		SessionId: sessionID,
@@ -1866,7 +1874,6 @@ func existingIDsFromSession(ctx context.Context, repo repositories.AddMediaSessi
 
 // AddMediaGetSessionMedia — снимок медиа сессии (свои и чужие).
 // Используется participant'ом, который вошёл в сессию посередине — нужен для отрисовки
-// уже загруженных медиа, прежде чем подпишется на WS ADD_MEDIA_PROGRESS.
 func (s *TripService) AddMediaGetSessionMedia(ctx context.Context, req *pb.AddMediaGetSessionMediaRequest) (*pb.AddMediaGetSessionMediaResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -1916,7 +1923,7 @@ func (s *TripService) AddMediaGetSessionMedia(ctx context.Context, req *pb.AddMe
 }
 
 // AddMediaProcessGrouping кластеризует добавленные медиа с существующими пинами
-// как seed-группами (ТЗ 5.3.1-5.3.2). add_more=true в GROUPING_REVIEW откатывает
+// как seed-группами. add_more=true в GROUPING_REVIEW откатывает
 // сессию в UPLOADING.
 func (s *TripService) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMediaProcessGroupingRequest) (*pb.AddMediaProcessGroupingResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -1947,6 +1954,7 @@ func (s *TripService) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMe
 		if err := s.tripRepo.SetStatus(tripID, models.TripStatusAddMediaUploading); err != nil {
 			return nil, status.Error(codes.Internal, "failed to update trip status")
 		}
+		metrics.TripStatusChanged(ctx, models.TripStatusAddMediaUploading)
 		if err := s.addMediaSessionRepo.Touch(ctx, sessionID, time.Now()); err != nil {
 			slog.WarnContext(ctx, "addMediaProcessGrouping rollback: touch failed", "session_id", sessionID, "err", err)
 		}
@@ -1977,6 +1985,7 @@ func (s *TripService) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMe
 	if err := s.tripRepo.SetStatus(tripID, models.TripStatusAddMediaGroupingReview); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update trip status")
 	}
+	metrics.TripStatusChanged(ctx, models.TripStatusAddMediaGroupingReview)
 	if err := s.addMediaSessionRepo.Touch(ctx, sessionID, time.Now()); err != nil {
 		slog.WarnContext(ctx, "addMediaProcessGrouping: touch failed", "session_id", sessionID, "err", err)
 	}
@@ -2057,7 +2066,7 @@ func (s *TripService) buildDraftPinsForSession(ctx context.Context, tripID, sess
 	return respPins, existingIDs, nil
 }
 
-// AddMediaApplyGroupsAndProcess — ТЗ 5.3.3-5.3.4: применение групп и запуск ML-обработки для добавленных медиа.
+// AddMediaApplyGroupsAndProcess — применение групп и запуск ML-обработки для добавленных медиа.
 // Существующие медиа защищены от удаления/перемещения; ML worker получает flow="add_media" + new_pin_ids для пропуска тегов/категорий у существующих пинов.
 func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb.AddMediaApplyGroupsAndProcessRequest) (*pb.AddMediaApplyGroupsAndProcessResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -2091,7 +2100,7 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 	for _, id := range existingIDs {
 		existingSet[id] = struct{}{}
 	}
-	// ТЗ 5.3.3: запрещено удалять исходные медиа — фильтруем deleted_media_ids.
+	// запрещено удалять исходные медиа — фильтруем deleted_media_ids.
 	if ids := req.GetDeletedMediaIds(); len(ids) > 0 {
 		filtered := make([]string, 0, len(ids))
 		for _, id := range ids {
@@ -2114,7 +2123,7 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 			}
 		}
 	}
-	// Применяем группы. Для "existing-{pin_id}" — только новые медиа добавляются к существующему пину (исходные не трогаем, ТЗ 5.3.3).
+	// Применяем группы. Для "existing-{pin_id}" — только новые медиа добавляются к существующему пину (исходные не трогаем).
 	// Для остальных (cluster-N / draft-unassigned) — создаём новый пин.
 	newPinIDs := make([]string, 0)
 	touchedPinIDs := make(map[string]struct{})
@@ -2130,7 +2139,7 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 			if perr != nil {
 				continue
 			}
-			// Фильтруем исходные медиа из набора (они не должны переназначаться — ТЗ 5.3.3).
+			// Фильтруем исходные медиа из набора (они не должны переназначаться — ).
 			newOnly := make([]string, 0, len(mediaIDs))
 			for _, id := range mediaIDs {
 				if _, isExisting := existingSet[id]; !isExisting {
@@ -2180,14 +2189,15 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 	if err := s.tripRepo.SetStatus(tripID, models.TripStatusAddMediaProcessing); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
+	metrics.TripStatusChanged(ctx, models.TripStatusAddMediaProcessing)
 	if err := s.addMediaSessionRepo.SetInitiator(ctx, sessionID, userID, time.Now()); err != nil {
 		slog.ErrorContext(ctx, "AddMediaApplyGroupsAndProcess: SetInitiator failed", "session_id", sessionID, "err", err)
 	}
 	s.publishTripStatusChanged(ctx, tripID, models.TripStatusAddMediaProcessing, "add_media_processing")
-	// уведомляем notification-service о добавленных пинах. userID —
-	// автор добавления медиа; notification-service адресует пуш остальным
-	// участникам трипа. Одно событие на весь add-media запрос — избегаем
-	// флуда, если пользователь добавил сразу несколько pin'ов.
+	// уведомляем notification-service о добавленных пинах: userID — автор
+	// добавления, notification-service адресует пуш остальным участникам.
+	// Одно событие на весь add-media запрос, чтобы не флудить, если добавлено
+	// сразу несколько pin'ов.
 	if s.eventRepo != nil && len(newPinIDs) > 0 {
 		_ = s.eventRepo.PublishTripEvent(ctx, "PIN_ADDED", tripID, userID)
 	}
@@ -2337,7 +2347,7 @@ func (s *TripService) AddMediaConfirm(ctx context.Context, req *pb.AddMediaConfi
 	if _, err := s.ensureInitiator(ctx, tripID, sessionID, userID); err != nil {
 		return nil, err
 	}
-	// применяем правки пинов и удаление «похожих» медиа (ТЗ 3.14/3.15).
+	// применяем правки пинов и удаление «похожих» медиа.
 	if err := s.applyReviewEdits(ctx, trip, req.GetPinUpdates(), req.GetMediaToDelete()); err != nil {
 		return nil, err
 	}
@@ -2350,6 +2360,7 @@ func (s *TripService) AddMediaConfirm(ctx context.Context, req *pb.AddMediaConfi
 	if err := s.tripRepo.SetStatus(tripID, models.TripStatusReady); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update trip status")
 	}
+	metrics.TripStatusChanged(ctx, models.TripStatusReady)
 	if s.eventRepo != nil {
 		_ = s.eventRepo.PublishTripEvent(ctx, repositories.EventAddMediaSessionCompleted, tripID, userID)
 		_ = s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventTripStatusChanged, map[string]interface{}{
@@ -2421,6 +2432,7 @@ func (s *TripService) AddMediaCancel(ctx context.Context, req *pb.AddMediaCancel
 	if err := s.tripRepo.SetStatus(tripID, models.TripStatusReady); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update trip status")
 	}
+	metrics.TripStatusChanged(ctx, models.TripStatusReady)
 	if s.eventRepo != nil {
 		_ = s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventTripStatusChanged, map[string]interface{}{
 			"trip_id": tripID,
@@ -2493,7 +2505,7 @@ func (s *TripService) AddMediaTakeover(ctx context.Context, req *pb.AddMediaTake
 	}, nil
 }
 
-// PublishTrip публикует трип в общую ленту (ТЗ 3.3).
+// PublishTrip публикует трип в общую ленту.
 // publish_whole=true — все пины; иначе только переданные pin_ids.
 func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripRequest) (*pb.PublishTripResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -2594,8 +2606,8 @@ func (s *TripService) PublishTrip(ctx context.Context, req *pb.PublishTripReques
 	return &pb.PublishTripResponse{Trip: s.tripToProto(ctx, updated)}, nil
 }
 
-// UpsertTripPrivacy — ТЗ 6.4.1: участник выставляет свой уровень приватности на путешествии.
-// Эффективный privacy_level пересчитывается синхронно по AggregatePrivacyLevel (ТЗ 6.6/6.7).
+// UpsertTripPrivacy — участник выставляет свой уровень приватности на путешествии.
+// Эффективный privacy_level пересчитывается синхронно по AggregatePrivacyLevel.
 // Воркер processPrivacyEvents дублирует пересчёт асинхронно как fallback.
 func (s *TripService) UpsertTripPrivacy(ctx context.Context, req *pb.UpsertTripPrivacyRequest) (*pb.UpsertPrivacyResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -2647,7 +2659,7 @@ func (s *TripService) UpsertTripPrivacy(ctx context.Context, req *pb.UpsertTripP
 	return &pb.UpsertPrivacyResponse{EffectivePrivacyLevel: effective}, nil
 }
 
-// UpsertPinPrivacy — ТЗ 6.4.2: участник выставляет свой уровень приватности на пине.
+// UpsertPinPrivacy — участник выставляет свой уровень приватности на пине.
 func (s *TripService) UpsertPinPrivacy(ctx context.Context, req *pb.UpsertPinPrivacyRequest) (*pb.UpsertPrivacyResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -2702,7 +2714,7 @@ func (s *TripService) UpsertPinPrivacy(ctx context.Context, req *pb.UpsertPinPri
 	return &pb.UpsertPrivacyResponse{EffectivePrivacyLevel: effective}, nil
 }
 
-// UpsertMediaPrivacy — ТЗ 6.4.3 / 5.2: участник выставляет свой уровень приватности на медиа.
+// UpsertMediaPrivacy — участник выставляет свой уровень приватности на медиа.
 func (s *TripService) UpsertMediaPrivacy(ctx context.Context, req *pb.UpsertMediaPrivacyRequest) (*pb.UpsertPrivacyResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -2757,7 +2769,7 @@ func (s *TripService) UpsertMediaPrivacy(ctx context.Context, req *pb.UpsertMedi
 	return &pb.UpsertPrivacyResponse{EffectivePrivacyLevel: effective}, nil
 }
 
-// UpdateTripSettings — ТЗ 12.4.1: вкл/выкл уведомлений по трипу. Только участник, только свои настройки.
+// UpdateTripSettings — вкл/выкл уведомлений по трипу. Только участник, только свои настройки.
 func (s *TripService) UpdateTripSettings(ctx context.Context, req *pb.UpdateTripSettingsRequest) (*pb.UpdateTripSettingsResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -2781,7 +2793,7 @@ func (s *TripService) UpdateTripSettings(ctx context.Context, req *pb.UpdateTrip
 	return &pb.UpdateTripSettingsResponse{Success: true}, nil
 }
 
-// ListFeed — лента опубликованных трипов . Пагинация 20, фильтры category/season/location, сортировка date|rating.
+// ListFeed — лента опубликованных трипов. Пагинация 20, фильтры category/season/location, сортировка date|rating.
 func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*pb.ListFeedResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -2799,7 +2811,7 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 	if sortBy != "rating" && sortBy != "date" {
 		sortBy = "date"
 	}
-	// ТЗ 7.9.3: фильтр по месту принимает имя города/страны строкой; резолвим в geo_registry.
+	// фильтр по месту принимает имя города/страны строкой; резолвим в geo_registry.
 	// Если регион не найден — лента возвращает пустой результат (не ошибку).
 	locationIDs, ok, err := s.resolveFeedLocationIDs(ctx, req.GetCity(), req.GetCountry())
 	if err != nil {
@@ -2821,7 +2833,7 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 		tripIDs[i] = t.ID
 	}
 
-	// per-user state для карточек ленты (ТЗ 7.5, 7.6). Degrade soft: при сбое
+	// per-user state для карточек ленты. Degrade soft: при сбое
 	// лукапа лента не 500-ит, флаги остаются false — это эквивалент «нет реакции/нет save».
 	reactionsByTrip, err := s.socialRepo.GetReactionsByUserAndTrips(userID, tripIDs)
 	if err != nil {
@@ -2904,8 +2916,8 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 	return &pb.ListFeedResponse{Items: items}, nil
 }
 
-// resolveFeedLocationIDs — ТЗ 7.9.3: фильтр по строковому city/country.
-// Возвращает (ids, ok, err): ok=false означает «регион указан, но не найден» —
+// resolveFeedLocationIDs — фильтр по строковому city/country.
+// Возвращает (ids, ok, err): ok=false означает «регион указан, но не найден»
 // лента в этом случае возвращает пустой список (а не 500). Если оба параметра
 // заданы, приоритет у города (он более узкий фильтр).
 func (s *TripService) resolveFeedLocationIDs(ctx context.Context, city, country string) ([]int, bool, error) {
@@ -2961,6 +2973,7 @@ func (s *TripService) LikeTrip(ctx context.Context, req *pb.LikeTripRequest) (*p
 		}
 		_ = s.eventRepo.PublishStatsEvent(ctx, "LIKE_ADDED", tripID, []string{userID}, nil)
 	}
+	metrics.Reaction(ctx, "like", "added")
 	return &pb.LikeTripResponse{Success: true}, nil
 }
 
@@ -2990,6 +3003,7 @@ func (s *TripService) DislikeTrip(ctx context.Context, req *pb.DislikeTripReques
 		}
 		_ = s.eventRepo.PublishStatsEvent(ctx, "DISLIKE_ADDED", tripID, []string{userID}, nil)
 	}
+	metrics.Reaction(ctx, "dislike", "added")
 	return &pb.DislikeTripResponse{Success: true}, nil
 }
 
@@ -3014,10 +3028,11 @@ func (s *TripService) AddToFavourites(ctx context.Context, req *pb.AddToFavourit
 	if err := s.favouriteRepo.Add(userID, tripID); err != nil {
 		return nil, status.Error(codes.Internal, "failed to add to favourites")
 	}
+	metrics.Reaction(ctx, "favourite", "added")
 	return &pb.AddToFavouritesResponse{Success: true}, nil
 }
 
-// RemoveFromFavourites — убрать трип из избранного .
+// RemoveFromFavourites — убрать трип из избранного.
 func (s *TripService) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFromFavouritesRequest) (*pb.RemoveFromFavouritesResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -3033,11 +3048,12 @@ func (s *TripService) RemoveFromFavourites(ctx context.Context, req *pb.RemoveFr
 		}
 		return nil, status.Error(codes.Internal, "failed to remove from favourites")
 	}
+	metrics.Reaction(ctx, "favourite", "removed")
 	return &pb.RemoveFromFavouritesResponse{Success: true}, nil
 }
 
 // ListFavourites returns trips that the current user has added to favourites.
-// Soft-deleted trips остаются видимы здесь (ТЗ 3.24.2): автор удалил трип, но
+// Soft-deleted trips остаются видимы здесь: автор удалил трип, но
 // у тех, кто добавил его в сохранённое, он остаётся доступным как read-only.
 func (s *TripService) ListFavourites(ctx context.Context, req *pb.ListFavouritesRequest) (*pb.ListFavouritesResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -3135,8 +3151,8 @@ func (s *TripService) tripToProto(ctx context.Context, t *models.Trip) *pb.Trip 
 	return out
 }
 
-// GetNotificationSettings — . Используется notification-service
-// worker'ом/scheduler'ом чтобы отфильтровать адресатов пуша по их настройкам.
+// GetNotificationSettings используется notification-service
+// worker'ом/scheduler'ом, чтобы отфильтровать адресатов пуша по их настройкам.
 // Не требует быть участником (мониторинг делается на стороне клиента).
 func (s *TripService) GetNotificationSettings(ctx context.Context, req *pb.GetNotificationSettingsRequest) (*pb.GetNotificationSettingsResponse, error) {
 	tripID := req.GetTripId()
@@ -3154,8 +3170,8 @@ func (s *TripService) GetNotificationSettings(ctx context.Context, req *pb.GetNo
 	return &pb.GetNotificationSettingsResponse{NotificationsEnabled: settings}, nil
 }
 
-// ListAnniversaryTrips — . Возвращает трипы, у которых created_at
-// пришёлся ровно на today-1y. Используется scheduler'ом notification-service.
+// ListAnniversaryTrips возвращает трипы, у которых created_at пришёлся ровно на
+// today-1y. Используется scheduler'ом notification-service.
 func (s *TripService) ListAnniversaryTrips(ctx context.Context, req *pb.ListAnniversaryTripsRequest) (*pb.ListAnniversaryTripsResponse, error) {
 	candidates, err := s.tripRepo.ListAnniversaryCandidates(req.GetTodayUnix())
 	if err != nil {
@@ -3164,8 +3180,8 @@ func (s *TripService) ListAnniversaryTrips(ctx context.Context, req *pb.ListAnni
 	return &pb.ListAnniversaryTripsResponse{Trips: toNotificationTrips(candidates)}, nil
 }
 
-// ListEndedMonthAgoTrips — . Возвращает трипы, у которых end_date
-// пришёлся ровно на today-1m.
+// ListEndedMonthAgoTrips возвращает трипы, у которых end_date пришёлся ровно
+// на today-1m.
 func (s *TripService) ListEndedMonthAgoTrips(ctx context.Context, req *pb.ListEndedMonthAgoTripsRequest) (*pb.ListEndedMonthAgoTripsResponse, error) {
 	candidates, err := s.tripRepo.ListEndedMonthAgoCandidates(req.GetTodayUnix())
 	if err != nil {
@@ -3174,8 +3190,8 @@ func (s *TripService) ListEndedMonthAgoTrips(ctx context.Context, req *pb.ListEn
 	return &pb.ListEndedMonthAgoTripsResponse{Trips: toNotificationTrips(candidates)}, nil
 }
 
-// ListTripParticipants — . Список user_id участников трипа для
-// notification-service (рассылка пушей по ТЗ 11.1).
+// ListTripParticipants — список user_id участников трипа для рассылки пушей
+// из notification-service.
 func (s *TripService) ListTripParticipants(ctx context.Context, req *pb.ListTripParticipantsRequest) (*pb.ListTripParticipantsResponse, error) {
 	tripID := req.GetTripId()
 	if tripID == "" {

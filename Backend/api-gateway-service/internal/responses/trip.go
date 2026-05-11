@@ -21,7 +21,7 @@ type Trip struct {
 	IsGenerated bool `json:"is_generated"`
 	CreatedAtUnix int64 `json:"created_at_unix"`
 	UpdatedAtUnix int64 `json:"updated_at_unix"`
-	// ShareURL — universal-link на просмотр трипа (ТЗ 3.4): копирование и
+	// ShareURL — universal-link на просмотр трипа: копирование и
 	// отправка во внешние мессенджеры. Формируется gateway по env
 	// TRIP_SHARE_LINK_BASE; пустой, если переменная не задана.
 	ShareURL string `json:"share_url,omitempty"`
@@ -209,19 +209,19 @@ type FinalizeTripResponse struct {
 	Message string `json:"message"`
 }
 
-// TripSettingsResponse is the response for PATCH /api/v1/trips/:id/settings .
+// TripSettingsResponse is the response for PATCH /api/v1/trips/:id/settings.
 type TripSettingsResponse struct {
 	Success bool `json:"success"`
 }
 
-// FeedMedia is a lightweight media item for the feed card carousel .
+// FeedMedia is a lightweight media item for the feed card carousel.
 type FeedMedia struct {
 	MediaID string `json:"media_id"`
 	URL string `json:"url"`
 	MediaType string `json:"media_type"`
 }
 
-// FeedPin is a lightweight pin for the feed card map view .
+// FeedPin is a lightweight pin for the feed card map view.
 type FeedPin struct {
 	ID string `json:"id"`
 	Latitude float64 `json:"latitude"`
@@ -229,8 +229,8 @@ type FeedPin struct {
 	Media []FeedMedia `json:"media"`
 }
 
-// FeedItem is a single card in the feed: trip data + pins + media .
-// is_liked / is_disliked / is_saved — per-user state текущего пользователя (ТЗ 7.5, 7.6).
+// FeedItem is a single card in the feed: trip data + pins + media.
+// is_liked / is_disliked / is_saved — per-user state текущего пользователя.
 type FeedItem struct {
 	Trip Trip `json:"trip"`
 	Pins []FeedPin `json:"pins"`
@@ -245,7 +245,7 @@ type SuccessResponse struct {
 	Success bool `json:"success"`
 }
 
-// AddMediaStartResponse is the response for POST /api/v1/trips/:id/media/add/start .
+// AddMediaStartResponse is the response for POST /api/v1/trips/:id/media/add/start.
 // Joined=true — подключились к уже активной сессии (race), upload_urls в этом
 // случае пуст. Клиент запрашивает URLs через /request-upload-urls.
 type AddMediaStartResponse struct {
@@ -326,8 +326,8 @@ type AddMediaTakeoverResponse struct {
 	TakeoverAvailableAt string             `json:"takeover_available_at" example:"2026-04-25T13:00:00Z"`
 }
 
-// AddMediaProcessGroupingResponse is the response for POST /api/v1/trips/:id/media/add/process-grouping .
-// ExistingMediaIDs marks the original media as read-only per spec 5.3.3.
+// AddMediaProcessGroupingResponse is the response for POST /api/v1/trips/:id/media/add/process-grouping.
+// ExistingMediaIDs marks the original media as read-only.
 type AddMediaProcessGroupingResponse struct {
 	TripID string `json:"trip_id"`
 	SessionID string `json:"session_id"`
@@ -336,31 +336,31 @@ type AddMediaProcessGroupingResponse struct {
 	ExistingMediaIDs []string `json:"existing_media_ids"`
 }
 
-// AddMediaApplyGroupsAndProcessResponse is the response for POST /api/v1/trips/:id/media/add/apply-groups-and-process .
+// AddMediaApplyGroupsAndProcessResponse is the response for POST /api/v1/trips/:id/media/add/apply-groups-and-process.
 type AddMediaApplyGroupsAndProcessResponse struct {
 	Message string `json:"message"`
 	Status string `json:"status"`
 }
 
-// BattleMedia — одна карточка в выдаче StartBattle (ТЗ 8.1.1).
+// BattleMedia — одна карточка в выдаче StartBattle.
 type BattleMedia struct {
 	MediaID string `json:"media_id"`
 	URL string `json:"url"`
 	MediaType string `json:"media_type"`
 }
 
-// StartBattleResponse — ответ POST /api/v1/trips/:id/battles (ТЗ 8.1).
+// StartBattleResponse — ответ POST /api/v1/trips/:id/battles.
 type StartBattleResponse struct {
 	BattleID string `json:"battle_id"`
 	Media []BattleMedia `json:"media"`
 }
 
-// SubmitBattleResultResponse — ответ POST /api/v1/trips/:id/battles/:battle_id/result (ТЗ 8.1.8).
+// SubmitBattleResultResponse — ответ POST /api/v1/trips/:id/battles/:battle_id/result.
 type SubmitBattleResultResponse struct {
 	NewBattleRating int32 `json:"new_battle_rating"`
 }
 
-// BestMemory — карточка медиа для story-mode "лучшие воспоминания" (ТЗ 8.2).
+// BestMemory — карточка медиа для story-mode "лучшие воспоминания".
 type BestMemory struct {
 	MediaID string `json:"media_id"`
 	URL string `json:"url"`
@@ -370,7 +370,7 @@ type BestMemory struct {
 	PinName string `json:"pin_name"`
 }
 
-// GetBestMemoriesResponse — ответ GET /api/v1/trips/:id/best-memories (ТЗ 8.2).
+// GetBestMemoriesResponse — ответ GET /api/v1/trips/:id/best-memories.
 type GetBestMemoriesResponse struct {
 	Media []BestMemory `json:"media"`
 }
@@ -382,8 +382,8 @@ type PinResponse struct {
 }
 
 // DeletePinResponse — ответ DELETE /api/v1/trips/{trip_id}/pins/{pin_id}.
-// deletion_mode: "full" (ТЗ 4.5.1) — пин и медиа удалены физически;
-// "soft_for_user" (ТЗ 4.5.2) — пин скрыт только для caller'а через pin_hidden_by_user.
+// deletion_mode: "full" — пин и медиа удалены физически;
+// "soft_for_user" — пин скрыт только для caller'а через pin_hidden_by_user.
 type DeletePinResponse struct {
 	DeletionMode string `json:"deletion_mode" example:"full"`
 }
@@ -445,7 +445,7 @@ type CancelPinUploadResponse struct {
 	Status string `json:"status" example:"cancelled"`
 }
 
-// RecommendedPin — пин в карте популярных мест (ТЗ 9.3): один на кластер
+// RecommendedPin — пин в карте популярных мест: один на кластер
 // из топ-трипов региона, с превью-медиа из исходного пина.
 type RecommendedPin struct {
 	ID string `json:"id"`

@@ -63,7 +63,7 @@ func (r *MediaBattleRepository) GetByID(id string) (*models.MediaBattle, error) 
 
 // SetWinner помечает батл завершённым и фиксирует победителя. Идемпотентно защищает от повторного инкремента:
 // если finished_at уже установлен — RowsAffected==0, возвращаем sql.ErrNoRows, вызывающий код трактует это как
-// "батл уже завершён" (см. services/battle.go). Использует NOW() для finished_at.
+// "батл уже завершён" (см. services/battle.go). Использует NOW для finished_at.
 func (r *MediaBattleRepository) SetWinner(battleID, winnerMediaID string) error {
 	res, err := psq.Update("media_battles").
 		Set("winner_media_id", winnerMediaID).

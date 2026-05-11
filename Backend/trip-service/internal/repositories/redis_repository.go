@@ -10,6 +10,8 @@ import (
 
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
+
+	"pinz/backend/trip-service/internal/metrics"
 )
 
 const (
@@ -113,16 +115,16 @@ func (r *RedisRepository) PublishStatsEvent(ctx context.Context, eventType, trip
 	}
 	if err := r.client.XAdd(ctx, &redis.XAddArgs{Stream: statsEventsStream, Values: vals}).Err(); err != nil {
 		slog.WarnContext(ctx, "PublishStatsEvent failed", "event", eventType, "trip_id", tripID, "error", err)
+		metrics.StreamPublished(ctx, statsEventsStream, eventType, "error")
 		return err
 	}
+	metrics.StreamPublished(ctx, statsEventsStream, eventType, "success")
 	return nil
 }
 
 // PublishGeoRequest публикует PIN_LOCATIONS_REQUESTED в pinz:stats:events.
 // statistics-service consumer'ит это событие, идёт в BigDataCloud, заполняет
 // master geo_registry/trip_locations и публикует PIN_LOCATIONS_RESOLVED
-// в pinz:trip:geo_events (см. vkr.txt §2.5.4).
-//
 // Геокодинг — некритичный путь: при недоступности Redis/statistics событие
 // просто остаётся в стриме, трип создаётся с пустым location_name.
 func (r *RedisRepository) PublishGeoRequest(ctx context.Context, tripID string, pins []GeoRequestPin) error {
@@ -144,8 +146,10 @@ func (r *RedisRepository) PublishGeoRequest(ctx context.Context, tripID string, 
 	}
 	if err := r.client.XAdd(ctx, &redis.XAddArgs{Stream: statsEventsStream, Values: vals}).Err(); err != nil {
 		slog.WarnContext(ctx, "PublishGeoRequest failed", "trip_id", tripID, "error", err)
+		metrics.StreamPublished(ctx, statsEventsStream, "PIN_LOCATIONS_REQUESTED", "error")
 		return err
 	}
+	metrics.StreamPublished(ctx, statsEventsStream, "PIN_LOCATIONS_REQUESTED", "success")
 	return nil
 }
 
@@ -164,8 +168,10 @@ func (r *RedisRepository) PublishTripEvent(ctx context.Context, eventType string
 	}).Err()
 	if err != nil {
 		slog.WarnContext(ctx, "PublishTripEvent failed", "event", eventType, "trip_id", tripID, "error", err)
+		metrics.StreamPublished(ctx, tripEventsStream, eventType, "error")
 		return err
 	}
+	metrics.StreamPublished(ctx, tripEventsStream, eventType, "success")
 	return nil
 }
 
@@ -207,8 +213,10 @@ func (r *RedisRepository) AddPinUploadTask(ctx context.Context, tripID, sessionI
 		Values: vals,
 	}).Err(); err != nil {
 		slog.WarnContext(ctx, "AddPinUploadTask failed", "session_id", sessionID, "trip_id", tripID, "error", err)
+		metrics.StreamPublished(ctx, pinUploadTasksStream, "pin_upload_task", "error")
 		return err
 	}
+	metrics.StreamPublished(ctx, pinUploadTasksStream, "pin_upload_task", "success")
 	return nil
 }
 
@@ -220,8 +228,10 @@ func (r *RedisRepository) AddMLTask(ctx context.Context, tripID string) error {
 	}).Err()
 	if err != nil {
 		slog.WarnContext(ctx, "AddMLTask failed", "trip_id", tripID, "error", err)
+		metrics.StreamPublished(ctx, mlTasksStream, "ml_task", "error")
 		return err
 	}
+	metrics.StreamPublished(ctx, mlTasksStream, "ml_task", "success")
 	return nil
 }
 
@@ -236,10 +246,16 @@ func (r *RedisRepository) AddMLTaskWithFlow(ctx context.Context, tripID, flow st
 			vals["new_pin_ids"] = string(b)
 		}
 	}
-	return r.client.XAdd(ctx, &redis.XAddArgs{
+	err := r.client.XAdd(ctx, &redis.XAddArgs{
 		Stream: mlTasksStream,
 		Values: vals,
 	}).Err()
+	if err != nil {
+		metrics.StreamPublished(ctx, mlTasksStream, "ml_task", "error")
+		return err
+	}
+	metrics.StreamPublished(ctx, mlTasksStream, "ml_task", "success")
+	return nil
 }
 
 // SetMLContext stores flow-scoped context for later filtering ML results (TTL).
@@ -291,7 +307,7 @@ func (r *RedisRepository) PublishPrivacyEvent(ctx context.Context, objectType, o
 	if r == nil || r.client == nil {
 		return nil
 	}
-	return r.client.XAdd(ctx, &redis.XAddArgs{
+	err := r.client.XAdd(ctx, &redis.XAddArgs{
 		Stream: privacyEventsStream,
 		Values: map[string]interface{}{
 			"event_type": "PRIVACY_CHANGED",
@@ -302,6 +318,12 @@ func (r *RedisRepository) PublishPrivacyEvent(ctx context.Context, objectType, o
 			"privacy_level": privacyLevel,
 		},
 	}).Err()
+	if err != nil {
+		metrics.StreamPublished(ctx, privacyEventsStream, "PRIVACY_CHANGED", "error")
+		return err
+	}
+	metrics.StreamPublished(ctx, privacyEventsStream, "PRIVACY_CHANGED", "success")
+	return nil
 }
 
 // PublishTripEventWS — XADD в per-trip WS-stream pinz:trip:{id}:events.
@@ -336,8 +358,10 @@ func (r *RedisRepository) publishWSStream(ctx context.Context, key string, data 
 		Values: map[string]interface{}{"data": data},
 	}).Err(); err != nil {
 		slog.WarnContext(ctx, "PublishTripEventWS xadd failed", "stream", key, "event", eventType, "error", err)
+		metrics.StreamPublished(ctx, "pinz:trip:*:events", eventType, "error")
 		return
 	}
+	metrics.StreamPublished(ctx, "pinz:trip:*:events", eventType, "success")
 	if err := r.client.Expire(ctx, key, wsStreamTTL).Err(); err != nil {
 		slog.WarnContext(ctx, "PublishTripEventWS expire failed", "stream", key, "error", err)
 	}

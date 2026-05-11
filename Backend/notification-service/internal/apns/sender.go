@@ -7,11 +7,14 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/payload"
 	"github.com/sideshow/apns2/token"
 
+	"pinz/backend/notification-service/internal/metrics"
 	"pinz/backend/notification-service/internal/models"
 )
 
@@ -71,13 +74,29 @@ func (c *Client) Send(ctx context.Context, apnsToken string, n models.PushNotifi
 		Topic: c.bundleID,
 		Payload: pl,
 	}
+	eventType := ""
+	if n.Extra != nil {
+		eventType = n.Extra["event_type"]
+	}
+	start := time.Now()
 	res, err := c.cli.PushWithContext(ctx, notif)
+	dur := time.Since(start).Seconds()
 	if err != nil {
+		metrics.APNSPush(ctx, eventType, "transport_error")
+		metrics.ObserveAPNSDuration(ctx, dur, "transport_error")
 		return fmt.Errorf("apns push: %w", err)
 	}
 	if !res.Sent() {
+		reason := res.Reason
+		if reason == "" {
+			reason = "status_" + strconv.Itoa(res.StatusCode)
+		}
+		metrics.APNSPush(ctx, eventType, reason)
+		metrics.ObserveAPNSDuration(ctx, dur, "rejected")
 		return fmt.Errorf("apns rejected: status=%d reason=%s", res.StatusCode, res.Reason)
 	}
+	metrics.APNSPush(ctx, eventType, "sent")
+	metrics.ObserveAPNSDuration(ctx, dur, "sent")
 	return nil
 }
 

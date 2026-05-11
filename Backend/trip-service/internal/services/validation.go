@@ -38,14 +38,13 @@ var (
 		"private": true,
 		"restricted": true,
 	}
-	// userPrivacyLevels — уровни, доступные пользователю. restricted (ТЗ 6.3 «постоянно приватный») ставит только система.
+	// userPrivacyLevels — уровни, доступные пользователю. restricted ставит только система.
 	userPrivacyLevels = map[string]bool{
 		"public": true,
 		"private": true,
 	}
 )
 
-// Pin categories per ТЗ 2.2.4.
 var pinCategories = map[string]bool{
 	"sight": true,
 	"nature": true,

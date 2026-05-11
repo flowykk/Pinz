@@ -1,6 +1,6 @@
 package responses
 
-// UserStatsResponse — счётчики пользователя для экрана профиля (ТЗ 10.2).
+// UserStatsResponse — счётчики пользователя для экрана профиля.
 // total_trips/pins/media агрегируются API Gateway из trip-service.ListUserTripSummaries,
 // остальные — из statistics-service (event-sourced).
 type UserStatsResponse struct {

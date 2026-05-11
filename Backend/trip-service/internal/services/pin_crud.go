@@ -16,14 +16,14 @@ import (
 	pb "pinz/backend/trip-service/pkg/proto"
 )
 
-// коды проблем для review (ТЗ 4.7.3-4.7.4).
+// коды проблем для review.
 const (
 	pinIssueMissingCoordinates = "MISSING_COORDINATES"
 	pinIssueMissingDates       = "MISSING_DATES"
 )
 
 // GetPin — все поля пина. Доступ: participant трипа или favourite-юзер.
-// Скрытый для caller'а пин (ТЗ 4.5.2) → NotFound.
+// Скрытый для caller'а пин → NotFound.
 func (s *TripService) GetPin(ctx context.Context, req *pb.GetPinRequest) (*pb.GetPinResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -84,7 +84,7 @@ func (s *TripService) assertCanReadPin(ctx context.Context, tripID, pinID, userI
 	return false, status.Error(codes.PermissionDenied, "not a participant")
 }
 
-// UpdatePin применяет правки полей пина на READY-трипе (ТЗ 4.2.1, 4.2.4-4.2.9).
+// UpdatePin применяет правки полей пина на READY-трипе.
 // tags — replace-all только при tags_set=true. Смена координат → geo-reverse upsert.
 func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (*pb.UpdatePinResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -210,7 +210,7 @@ func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (
 }
 
 // DeletePin: full delete если трип ни у кого не в favourites, иначе soft-delete-for-self
-// через pin_hidden_by_user (ТЗ 4.5.1/4.5.2). Запрещён при активной pin_media_addition_session.
+// через pin_hidden_by_user. Запрещён при активной pin_media_addition_session.
 func (s *TripService) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (*pb.DeletePinResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -257,7 +257,7 @@ func (s *TripService) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (
 		inOthersFav = v
 	}
 	if inOthersFav {
-		// soft-delete-for-self (ТЗ 4.5.2)
+		// soft-delete-for-self
 		if s.pinHiddenRepo == nil {
 			return nil, status.Error(codes.Internal, "pin hidden repository not configured")
 		}
@@ -291,11 +291,11 @@ func (s *TripService) DeletePin(ctx context.Context, req *pb.DeletePinRequest) (
 }
 
 // =============================================================================
-// RemoveMediaFromPin — sessionless удаление одного медиа (ТЗ 4.2.3)
+// RemoveMediaFromPin — sessionless удаление одного медиа
 // =============================================================================
 
 // RemoveMediaFromPin удаляет одно медиа из пина с пересчётом агрегатов.
-// Защита: пин не может остаться пустым (ТЗ 2.2.9 — set of media обязателен).
+// Защита: пин не может остаться пустым.
 func (s *TripService) RemoveMediaFromPin(ctx context.Context, req *pb.RemoveMediaFromPinRequest) (*pb.RemoveMediaFromPinResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {

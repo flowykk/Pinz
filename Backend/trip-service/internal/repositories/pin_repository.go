@@ -237,7 +237,7 @@ func (r *PinRepository) UpdateLocationName(pinID, name string) error {
 }
 
 // SetPrivacyLevel updates only pin privacy_level (used by privacy aggregation worker).
-// SQL guard: never overwrite restricted ("permanently private", ТЗ 6.3) with a lower level.
+// SQL guard: never overwrite restricted ("permanently private") with a lower level.
 func (r *PinRepository) SetPrivacyLevel(pinID, level string) error {
 	q := psq.Update("pins").Set("privacy_level", level).Where(sq.Eq{"id": pinID})
 	if level != "restricted" {
@@ -272,7 +272,7 @@ func (r *PinRepository) DeleteByTripID(tripID string) error {
 }
 
 // SearchByUserID returns pins from trips where user is participant, matching query in name, description or tag.
-// Скрытые пины (pin_hidden_by_user) — отфильтрованы (ТЗ 4.5.2).
+// Скрытые пины (pin_hidden_by_user) — отфильтрованы.
 func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32) ([]*models.Pin, error) {
 	if query == "" {
 		return nil, nil
@@ -365,7 +365,7 @@ func (r *PinRepository) ListPublishedPinsByTripIDs(tripIDs []string) (map[string
 }
 
 // ListByTripIDExcludingHidden — список пинов трипа, кроме скрытых для userID
-// через pin_hidden_by_user (ТЗ 4.5.2 soft-delete-for-self).
+// через pin_hidden_by_user.
 func (r *PinRepository) ListByTripIDExcludingHidden(tripID, userID string) ([]*models.Pin, error) {
 	sqlStr := `SELECT p.id, p.trip_id, p.name, p.description, p.category, p.privacy_level, p.media_count,
 		ST_Y(p.location)::float as lat, ST_X(p.location)::float as lon,
@@ -430,7 +430,7 @@ func (r *PinRepository) IncMediaCount(pinID string, delta int) error {
 	return nil
 }
 
-// RecommendationPinCandidate — пин-кандидат для рекомендательной выборки (ТЗ 9):
+// RecommendationPinCandidate — пин-кандидат для рекомендательной выборки:
 // результат CTE с ST_ClusterDBSCAN, партиционированной по category. ClusterID=-1
 // проставляется на случай NULL (DBSCAN-edge-cases при minpoints=1 не должен давать
 // NULL, но защищаемся sql.NullInt64).
@@ -448,18 +448,13 @@ type RecommendationPinCandidate struct {
 	TripScore int32
 }
 
-// ListRecommendationCandidates — выборка для ТЗ 9.2:
-//   - топ-50 опубликованных трипов региона за 2 года по score = likes - dislikes;
-//   - все их пины, опубликованные в фид и с координатами;
-//   - кластеризация ST_ClusterDBSCAN по координатам, eps в метрах через AEQD-проекцию,
-//     отцентрованную на centroid кандидатов (тот же подход, что и в
-//     MediaRepository.ClusterIDsByLocation для creation flow): AEQD сохраняет расстояния
-//     с искажением <10 м на нескольких тысячах километров — Web Mercator (3857) даёт
-//     1/cos(φ)-искажение по широте и для Москвы (φ≈55°) превратит eps=50 м в ~29 м.
-//   - PARTITION BY p.category — пины разных категорий в одной точке остаются разными
-//     кластерами (ТЗ 9.2.3 «по координатам и категориям»).
-//
-// epsMeters: 50 (ТЗ 9.2.3.a) или 500 (9.2.3.b).
+// ListRecommendationCandidates: топ-50 опубликованных трипов региона за 2 года
+// по score = likes - dislikes; все их пины с координатами, кластеризованные
+// ST_ClusterDBSCAN с eps в метрах через AEQD-проекцию (центр на centroid
+// кандидатов). AEQD сохраняет расстояния с искажением <10 м на нескольких
+// тысячах км; Web Mercator (3857) дал бы 1/cos(φ)-искажение по широте — для
+// Москвы (φ≈55°) превратил бы eps=50 м в ~29 м. PARTITION BY p.category держит
+// пины разных категорий в одной точке в разных кластерах. epsMeters: 50 или 500.
 func (r *PinRepository) ListRecommendationCandidates(locationID int, epsMeters float64, tripCategory, tripSeason string) ([]*RecommendationPinCandidate, error) {
 	const sqlStr = `
 WITH top_trips AS (

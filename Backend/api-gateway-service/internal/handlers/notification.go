@@ -25,7 +25,6 @@ func NewNotificationHandler(client NotificationClient) *NotificationHandler {
 }
 
 // RegisterDeviceToken — регистрация APNS-токена для текущего пользователя.
-//
 // @Summary Register APNS device token
 // @Description Registers an APNS device token for the authenticated user. Idempotent: повторная регистрация того же токена допустима (обновится owner).
 // @Tags notifications
@@ -63,7 +62,6 @@ func (h *NotificationHandler) RegisterDeviceToken(w http.ResponseWriter, r *http
 }
 
 // UnregisterDeviceToken — удаление APNS-токена (например, при logout на устройстве).
-//
 // @Summary Unregister APNS device token
 // @Description Removes an APNS device token for the authenticated user.
 // @Tags notifications

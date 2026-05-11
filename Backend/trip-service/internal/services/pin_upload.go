@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/server"
@@ -79,10 +80,17 @@ func (s *TripService) PinUploadStart(ctx context.Context, req *pb.PinUploadStart
 	sessionID, err := s.pinUploadSessionRepo.Create(ctx, tripID, targetPinID, userID)
 	if err != nil {
 		if errors.Is(err, repositories.ErrPinUploadSessionActive) {
+			metrics.PinUploadSession(ctx, "start", "conflict")
 			return nil, status.Error(codes.FailedPrecondition, "another pin upload session is already active")
 		}
+		metrics.PinUploadSession(ctx, "start", "error")
 		return nil, status.Error(codes.Internal, "failed to create pin upload session")
 	}
+	flow := "creation"
+	if targetPinID != nil {
+		flow = "addition"
+	}
+	metrics.PinUploadSession(ctx, "start", flow)
 	uploadUrls, err := s.presignPinUploadUrls(ctx, tripID, files)
 	if err != nil {
 		return nil, err
@@ -211,6 +219,7 @@ func (s *TripService) ProcessPinUpload(ctx context.Context, req *pb.ProcessPinUp
 			return nil, status.Error(codes.Internal, "failed to schedule pin upload processing")
 		}
 	}
+	metrics.PinUploadSession(ctx, "process", "scheduled")
 	return &pb.ProcessPinUploadResponse{
 		SessionId:        sessionID,
 		ProcessingStatus: models.PinUploadProcessingStatusProcessing,
@@ -331,6 +340,7 @@ func (s *TripService) CancelPinUpload(ctx context.Context, req *pb.CancelPinUplo
 			return nil, status.Error(codes.Internal, "failed to close session")
 		}
 	}
+	metrics.PinUploadSession(ctx, "cancel", "success")
 	return &pb.CancelPinUploadResponse{Status: "cancelled"}, nil
 }
 

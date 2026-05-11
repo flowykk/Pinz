@@ -5,12 +5,13 @@ import (
 	"log/slog"
 	"time"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/services"
 )
 
-// Интервалы для cron session_cleanup .
+// Интервалы для cron session_cleanup.
 const (
 	// SessionCleanupInterval — раз в 15 минут, достаточно чтобы не блокировать трип
 	// более чем на 15 минут после истечения порога.
@@ -26,7 +27,6 @@ const (
 // 2. Удалить orphan-медиа сессии (pin_id IS NULL, не в existing_media_ids) из БД и S3.
 // 3. SetStatus(trip, READY).
 // 4. Publish TRIP_STATUS_CHANGED WS для всех participant'ов.
-//
 // Ошибка на одной сессии не останавливает cycle — логируется и переходим к следующей.
 // Завершается при отмене ctx (graceful shutdown).
 func RunSessionCleanup(
@@ -124,6 +124,8 @@ func cleanupOne(
 	}
 	if err := tripRepo.SetStatus(a.TripID, models.TripStatusReady); err != nil {
 		slog.WarnContext(ctx, "session_cleanup: SetStatus failed", "trip_id", a.TripID, "err", err)
+	} else {
+		metrics.TripStatusChanged(ctx, models.TripStatusReady)
 	}
 	if eventRepo != nil {
 		_ = eventRepo.PublishTripEventWS(ctx, a.TripID, repositories.EventTripStatusChanged, map[string]interface{}{

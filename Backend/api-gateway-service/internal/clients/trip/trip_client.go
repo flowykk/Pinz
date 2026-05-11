@@ -222,7 +222,7 @@ func (c *Client) UpsertMediaPrivacy(ctx context.Context, req *pb.UpsertMediaPriv
 	return c.client.UpsertMediaPrivacy(withUserIDMetadata(ctx), req)
 }
 
-// Pin RUD (ТЗ 4.2-4.5)
+// Pin RUD
 
 func (c *Client) GetPin(ctx context.Context, req *pb.GetPinRequest) (*pb.GetPinResponse, error) {
 	return c.client.GetPin(withUserIDMetadata(ctx), req)

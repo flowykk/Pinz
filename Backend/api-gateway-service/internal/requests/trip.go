@@ -195,7 +195,7 @@ type AddMediaCommitUploadRequest struct {
 
 // AddMediaConfirmRequest — финализация add-media сессии: правки пинов и удаление
 // «похожих» медиа передаются батчем и применяются атомарно с закрытием сессии
-// (ТЗ 3.14/3.15). Аналогично FinalizeTripRequest для creation-флоу. Если pin_updates
+// Аналогично FinalizeTripRequest для creation-флоу. Если pin_updates
 // и media_to_delete пусты — Confirm просто подтверждает сессию без правок.
 // session_id нужен для защиты от устаревшего клиентского контекста.
 type AddMediaConfirmRequest struct {
@@ -218,7 +218,7 @@ type TripSettingsRequest struct {
 	NotificationsEnabled bool `json:"notifications_enabled"`
 }
 
-// SubmitBattleResultRequest — тело POST /api/v1/trips/:id/battles/:battle_id/result (ТЗ 8.1.8).
+// SubmitBattleResultRequest — тело POST /api/v1/trips/:id/battles/:battle_id/result.
 type SubmitBattleResultRequest struct {
 	WinnerMediaID string `json:"winner_media_id"`
 }

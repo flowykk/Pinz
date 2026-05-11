@@ -47,7 +47,7 @@ type CredentialRepositoryInterface interface {
 	UpdateCredential(cred *webauthn.Credential) error
 }
 
-// DesiredPlaceRepositoryInterface — CRUD для желаемых мест (ТЗ 1.13).
+// DesiredPlaceRepositoryInterface — CRUD для желаемых мест.
 // *repositories.DesiredPlaceRepository implements this interface.
 type DesiredPlaceRepositoryInterface interface {
 	Create(p *models.DesiredPlace) (*models.DesiredPlace, error)

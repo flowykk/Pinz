@@ -116,7 +116,7 @@ func (r *AddMediaSessionRepository) GetActive(ctx context.Context, tripID string
 }
 
 // SetInitiator назначает/переназначает ведущего и обновляет last_activity_at (один запрос).
-// Вызывается при AddMediaApplyGroupsAndProcess и при неявном перехвате .
+// Вызывается при AddMediaApplyGroupsAndProcess и при неявном перехвате.
 func (r *AddMediaSessionRepository) SetInitiator(ctx context.Context, sessionID, userID string, at time.Time) error {
 	sid, err := uuid.Parse(sessionID)
 	if err != nil {

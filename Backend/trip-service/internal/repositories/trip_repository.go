@@ -218,7 +218,7 @@ func (r *TripRepository) UpdateCoverURL(tripID, s3Key string) error {
 }
 
 // SetPrivacyLevel updates only trip privacy_level (used by privacy aggregation worker).
-// SQL guard: never overwrite restricted ("permanently private", ТЗ 6.3) with a lower level.
+// SQL guard: never overwrite restricted ("permanently private") with a lower level.
 func (r *TripRepository) SetPrivacyLevel(tripID, level string) error {
 	q := psq.Update("trips").Set("privacy_level", level).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID})
 	if level != "restricted" {
@@ -406,8 +406,8 @@ type NotificationTripCandidate struct {
 	YearsElapsed int32
 }
 
-// ListAnniversaryCandidates — ТЗ 11.3.1: трипы, у которых сегодня исполняется
-// ровно N лет с start_date (N ∈ {1, 2, 3, ...}). Сравниваем день+месяц с
+// ListAnniversaryCandidates — трипы, у которых сегодня исполняется
+// ровно N лет с start_date (N ∈ {1, 2, 3,...}). Сравниваем день+месяц с
 // сегодняшним и возвращаем число полных лет. Трипы без start_date пропускаем.
 func (r *TripRepository) ListAnniversaryCandidates(today int64) ([]*NotificationTripCandidate, error) {
 	const q = `
@@ -429,7 +429,7 @@ func (r *TripRepository) ListAnniversaryCandidates(today int64) ([]*Notification
 }
 
 // ListEndedMonthAgoCandidates возвращает трипы, end_date которых пришёлся на
-// today - 1 month (ТЗ 11.3.2).
+// today - 1 month.
 func (r *TripRepository) ListEndedMonthAgoCandidates(today int64) ([]*NotificationTripCandidate, error) {
 	const q = `
 		SELECT t.id, t.name,

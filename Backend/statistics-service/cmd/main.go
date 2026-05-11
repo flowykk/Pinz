@@ -12,10 +12,12 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
+	"go.opentelemetry.io/otel"
 
 	pinzotel "pinz/backend/pkg/otel"
 	"pinz/backend/statistics-service/internal/db"
 	"pinz/backend/statistics-service/internal/di"
+	"pinz/backend/statistics-service/internal/metrics"
 	"pinz/backend/statistics-service/internal/repositories"
 	"pinz/backend/statistics-service/internal/server"
 	"pinz/backend/statistics-service/internal/worker"
@@ -46,6 +48,7 @@ func main() {
 			); err != nil {
 				slog.Warn("runtime metrics start failed", "error", err)
 			}
+			metrics.Init()
 		}
 	}
 
@@ -57,6 +60,9 @@ func main() {
 	}
 	defer sqlDB.Close()
 	slog.Info("database ready")
+	if err := pinzotel.RegisterDBPoolMetrics(otel.Meter("statistics-service"), sqlDB, "pinz_statistics"); err != nil {
+		slog.Warn("db pool metrics registration failed", "error", err)
+	}
 
 	var redisClient *redis.Client
 	if rc, err := repositories.InitRedisClient(); err != nil {
@@ -64,6 +70,11 @@ func main() {
 	} else if rc != nil {
 		redisClient = rc
 		defer redisClient.Close()
+		if err := pinzotel.RegisterStreamMetrics(otel.Meter("statistics-service"), repositories.StreamQueryer{Client: redisClient}, []pinzotel.StreamSpec{
+			{Stream: worker.StreamName, Groups: []string{"statistics-service-worker"}},
+		}); err != nil {
+			slog.Warn("stream metrics registration failed", "error", err)
+		}
 	}
 
 	slog.Info("building dependencies")

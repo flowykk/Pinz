@@ -13,7 +13,7 @@ import (
 
 // GetPin returns full pin info (media + tags + privacy_level).
 // @Summary Get pin
-// @Description Получить пин со всеми полями (ТЗ 4.3). Доступ — participant трипа или favourite-юзер. Если пин скрыт для caller'а через pin_hidden_by_user (soft-delete-for-self, ТЗ 4.5.2) — 404.
+// @Description Получить пин со всеми полями. Доступ — participant трипа или favourite-юзер. Если пин скрыт для caller'а через pin_hidden_by_user (soft-delete-for-self) — 404.
 // @Tags pins
 // @Produce json
 // @Security BearerAuth
@@ -45,7 +45,7 @@ func (h *TripHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.PinResponse{Pin: tripPinProtoToResponse(resp.GetPin())})
 }
 
-// UpdatePin updates pin metadata (ТЗ 4.2.1, 4.2.4-4.2.9).
+// UpdatePin updates pin metadata.
 // @Summary Update pin
 // @Description Изменение полей пина на READY-трипе: name/description/category/координаты/start-end/tags. Privacy — отдельной ручкой PUT /pins/{id}/privacy. Любой participant.
 // @Tags pins
@@ -101,9 +101,9 @@ func (h *TripHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.PinResponse{Pin: tripPinProtoToResponse(resp.GetPin())})
 }
 
-// DeletePin deletes a pin (ТЗ 4.5).
+// DeletePin deletes a pin.
 // @Summary Delete pin
-// @Description Удаление пина. Если трип в избранном у других пользователей — soft-delete-for-self через pin_hidden_by_user (ТЗ 4.5.2); иначе full delete с каскадом media и S3 cleanup (ТЗ 4.5.1). Любой participant. Защита: запрет при активной pin_media_addition_session.
+// @Description Удаление пина. Если трип в избранном у других пользователей — soft-delete-for-self через pin_hidden_by_user; иначе full delete с каскадом media и S3 cleanup. Любой participant. Защита: запрет при активной pin_media_addition_session.
 // @Tags pins
 // @Produce json
 // @Security BearerAuth
@@ -136,9 +136,9 @@ func (h *TripHandler) DeletePin(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.DeletePinResponse{DeletionMode: resp.GetDeletionMode()})
 }
 
-// RemoveMediaFromPin removes a single media from a pin (sessionless, ТЗ 4.2.3).
+// RemoveMediaFromPin removes a single media from a pin (sessionless).
 // @Summary Remove media from pin
-// @Description Sessionless удаление одного медиа из пина с пересчётом агрегатов и S3 cleanup. Защита: пин не может остаться пустым (ТЗ 2.2.9).
+// @Description Sessionless удаление одного медиа из пина с пересчётом агрегатов и S3 cleanup. Защита: пин не может остаться пустым.
 // @Tags pins
 // @Produce json
 // @Security BearerAuth

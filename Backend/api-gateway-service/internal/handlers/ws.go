@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
+	"pinz/backend/api-gateway-service/internal/metrics"
 	"pinz/backend/api-gateway-service/internal/middleware"
 	"pinz/backend/api-gateway-service/pkg/proto"
 )
@@ -64,7 +66,7 @@ func (h *WSHandler) ServeTripCreationReviewWS(w http.ResponseWriter, r *http.Req
 	h.serveTripWS(w, r, chi.URLParam(r, "id"), nil)
 }
 
-// ServeTripAddMediaReviewWS serves the review-stage WebSocket for the add-media flow (ТЗ 5.3).
+// ServeTripAddMediaReviewWS serves the review-stage WebSocket for the add-media flow.
 // Contract is identical to ServeTripCreationReviewWS.
 func (h *WSHandler) ServeTripAddMediaReviewWS(w http.ResponseWriter, r *http.Request) {
 	h.serveTripWS(w, r, chi.URLParam(r, "id"), nil)
@@ -81,7 +83,6 @@ func (h *WSHandler) ServeTripPinUploadSessionWS(w http.ResponseWriter, r *http.R
 	h.serveTripWS(w, r, tripID, sessionFilter(sessionID))
 }
 
-// sessionFilter оставляет только события, у которых payload.session_id == sid.
 func sessionFilter(sid string) func(wsEvent) bool {
 	return func(ev wsEvent) bool {
 		v, ok := ev.Payload["session_id"].(string)
@@ -90,21 +91,26 @@ func sessionFilter(sid string) func(wsEvent) bool {
 }
 
 func (h *WSHandler) serveTripWS(w http.ResponseWriter, r *http.Request, tripID string, allow func(wsEvent) bool) {
+	endpoint := wsEndpointLabel(r)
 	if tripID == "" {
+		metrics.WSConnect(r.Context(), endpoint, "bad_request")
 		http.Error(w, "trip_id required", http.StatusBadRequest)
 		return
 	}
 	if h.redis == nil {
+		metrics.WSConnect(r.Context(), endpoint, "unavailable")
 		http.Error(w, "websocket not available", http.StatusServiceUnavailable)
 		return
 	}
 	ctx := r.Context()
 	userID := middleware.UserIDFromContext(ctx)
 	if userID == "" {
+		metrics.WSConnect(ctx, endpoint, "unauthorized")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	if h.tripClient == nil {
+		metrics.WSConnect(ctx, endpoint, "unavailable")
 		http.Error(w, "trip service unavailable", http.StatusServiceUnavailable)
 		return
 	}
@@ -112,23 +118,48 @@ func (h *WSHandler) serveTripWS(w http.ResponseWriter, r *http.Request, tripID s
 	// returns PermissionDenied for non-participants, NotFound for missing trips.
 	if _, err := h.tripClient.GetTrip(ctx, &proto.GetTripRequest{TripId: tripID, UserId: userID}); err != nil {
 		status, msg := tripAccessError(err)
+		metrics.WSConnect(ctx, endpoint, "auth_failed")
 		http.Error(w, msg, status)
 		return
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		slog.WarnContext(ctx, "ws: upgrade failed", "error", err)
+		slog.WarnContext(ctx, "ws: upgrade failed", "endpoint", endpoint, "error", err)
+		metrics.WSConnect(ctx, endpoint, "upgrade_failed")
 		return
 	}
 	defer conn.Close()
+
+	metrics.WSConnect(ctx, endpoint, "success")
+	metrics.IncWSActive(endpoint)
+	slog.InfoContext(ctx, "ws: connected", "endpoint", endpoint, "user_id", userID, "trip_id", tripID)
+	start := time.Now()
+	defer func() {
+		metrics.DecWSActive(endpoint)
+		slog.InfoContext(ctx, "ws: disconnected",
+			"endpoint", endpoint, "user_id", userID, "trip_id", tripID, "duration_s", time.Since(start).Seconds())
+	}()
 
 	subCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	streamKey := "pinz:trip:" + tripID + ":events"
 	msgs := subscribeStream(subCtx, h.redis, streamKey)
 
-	pumpWS(ctx, conn, msgs, allow)
+	pumpWS(ctx, conn, msgs, allow, endpoint)
+}
+
+func wsEndpointLabel(r *http.Request) string {
+	p := r.URL.Path
+	switch {
+	case strings.Contains(p, "/creation/") && strings.HasSuffix(p, "/review/ws"):
+		return "trip_creation_review"
+	case strings.Contains(p, "/media/add/review/ws"):
+		return "add_media_review"
+	case strings.Contains(p, "/pin-uploads/") && strings.HasSuffix(p, "/ws"):
+		return "pin_upload_session"
+	}
+	return "unknown"
 }
 
 func tripAccessError(err error) (int, string) {
@@ -200,7 +231,7 @@ func subscribeStream(ctx context.Context, client *redis.Client, key string) <-ch
 
 // pumpWS runs the read/write loop for a single WebSocket connection: forwards filtered
 // WS-stream payloads, heartbeats with ping/pong, and detects remote close via reader.
-func pumpWS(ctx context.Context, conn *websocket.Conn, sub <-chan []byte, allow func(wsEvent) bool) {
+func pumpWS(ctx context.Context, conn *websocket.Conn, sub <-chan []byte, allow func(wsEvent) bool, endpoint string) {
 	_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline))
 	conn.SetPongHandler(func(string) error {
 		return conn.SetReadDeadline(time.Now().Add(wsReadDeadline))
@@ -223,6 +254,7 @@ func pumpWS(ctx context.Context, conn *websocket.Conn, sub <-chan []byte, allow 
 		select {
 		case payload, ok := <-sub:
 			if !ok {
+				metrics.WSDisconnect(ctx, endpoint, "subscription_closed")
 				return
 			}
 			if allow != nil {
@@ -236,17 +268,21 @@ func pumpWS(ctx context.Context, conn *websocket.Conn, sub <-chan []byte, allow 
 			}
 			_ = conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
 			if err := conn.WriteMessage(websocket.TextMessage, payload); err != nil {
-				slog.WarnContext(ctx, "ws: write failed", "error", err)
+				slog.WarnContext(ctx, "ws: write failed", "endpoint", endpoint, "error", err)
+				metrics.WSDisconnect(ctx, endpoint, "write_error")
 				return
 			}
 		case <-ping.C:
 			if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(wsWriteTimeout)); err != nil {
-				slog.WarnContext(ctx, "ws: ping failed", "error", err)
+				slog.WarnContext(ctx, "ws: ping failed", "endpoint", endpoint, "error", err)
+				metrics.WSDisconnect(ctx, endpoint, "ping_failed")
 				return
 			}
 		case <-readerDone:
+			metrics.WSDisconnect(ctx, endpoint, "client_closed")
 			return
 		case <-ctx.Done():
+			metrics.WSDisconnect(ctx, endpoint, "context_cancelled")
 			return
 		}
 	}
