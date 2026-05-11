@@ -24,6 +24,8 @@ env:
   s3Region: "ru-central1"
   s3Bucket: ""
   s3PresignTTL: "15m"
+  # On loadtest stand: "loadtest/".
+  s3KeyPrefix: ""
 
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"

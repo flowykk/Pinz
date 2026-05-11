@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -61,6 +62,14 @@ func BuildDependencies(db *sql.DB, redisClient *redis.Client) (*Dependencies, er
 		slog.Warn("S3 not configured — avatar upload will be unavailable")
 	}
 
-	authSvc := services.NewAuthService(userRepo, credRepo, redisRepo, desiredPlaceRepo, v, wa, s3Uploader)
+	devLoginEnabled := strings.EqualFold(strings.TrimSpace(os.Getenv("AUTH_DEV_LOGIN_ENABLED")), "true")
+	if devLoginEnabled {
+		slog.Warn("AUTH_DEV_LOGIN_ENABLED=true — dev login RPC is exposed; never enable in prod")
+	}
+
+	authSvc := services.NewAuthService(
+		userRepo, credRepo, redisRepo, desiredPlaceRepo, v, wa, s3Uploader,
+		services.WithDevLogin(devLoginEnabled),
+	)
 	return &Dependencies{AuthService: authSvc}, nil
 }

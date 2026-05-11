@@ -22,6 +22,8 @@ env:
   otelServiceName: "api-gateway-service"
   otelTracesSampler: "parentbased_traceidratio"
   otelTracesSamplerArg: "1.0"
+  # Only on loadtest stand. Never set to "true" on prod.
+  devLoginProxyEnabled: "false"
 
 resources:
   requests:

@@ -80,6 +80,8 @@ spec:
               value: {{ .Values.env.otelTracesSampler | quote }}
             - name: OTEL_TRACES_SAMPLER_ARG
               value: {{ .Values.env.otelTracesSamplerArg | quote }}
+            - name: DEV_LOGIN_PROXY_ENABLED
+              value: {{ .Values.env.devLoginProxyEnabled | quote }}
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}

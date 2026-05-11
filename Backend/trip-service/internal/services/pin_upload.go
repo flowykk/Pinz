@@ -13,6 +13,7 @@ import (
 	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/repositories"
+	"pinz/backend/trip-service/internal/s3"
 	"pinz/backend/trip-service/internal/server"
 	pb "pinz/backend/trip-service/pkg/proto"
 )
@@ -398,7 +399,7 @@ func (s *TripService) presignPinUploadUrls(ctx context.Context, tripID string, f
 	uploadUrls := make([]*pb.UploadUrl, 0, len(files))
 	for _, f := range files {
 		ext := contentTypeToExt(f.GetContentType())
-		s3Key := "trips/" + tripID + "/pins/" + f.GetClientId() + ext
+		s3Key := s3.PrefixedKey("trips/" + tripID + "/pins/" + f.GetClientId() + ext)
 		url := ""
 		if s.mediaURLs != nil {
 			var perr error

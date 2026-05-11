@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"pinz/backend/auth-service/internal/models"
+	"pinz/backend/auth-service/internal/s3"
 	"pinz/backend/auth-service/internal/utils"
 	pb "pinz/backend/auth-service/pkg/proto"
 )
@@ -87,10 +88,19 @@ type AuthService struct {
 	wa *webauthn.WebAuthn
 	s3 S3Uploader
 
+	devLoginEnabled bool
+
 	tracer trace.Tracer
 	loginCounter metric.Int64Counter
 	registrationCounter metric.Int64Counter
 	tokenRefreshCounter metric.Int64Counter
+}
+
+type AuthServiceOption func(*AuthService)
+
+// WithDevLogin enables the DevLogin RPC. Off by default — must never be on in prod.
+func WithDevLogin(enabled bool) AuthServiceOption {
+	return func(s *AuthService) { s.devLoginEnabled = enabled }
 }
 
 func NewAuthService(
@@ -101,6 +111,7 @@ func NewAuthService(
 	validator *validator.Validate,
 	wa *webauthn.WebAuthn,
 	s3 S3Uploader,
+	opts ...AuthServiceOption,
 ) *AuthService {
 	tracer := otel.Tracer("auth-service")
 	meter := otel.Meter("auth-service")
@@ -115,7 +126,7 @@ func NewAuthService(
 		metric.WithDescription("Total token refresh operations"),
 	)
 
-	return &AuthService{
+	s := &AuthService{
 		userRepo: userRepo,
 		credRepo: credRepo,
 		redisRepo: redisRepo,
@@ -128,6 +139,10 @@ func NewAuthService(
 		registrationCounter: registrationCounter,
 		tokenRefreshCounter: tokenRefreshCounter,
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 func (s *AuthService) SubmitEmail(ctx context.Context, req *pb.SubmitEmailRequest) (*pb.SubmitEmailResponse, error) {
@@ -602,6 +617,10 @@ func (s *AuthService) DevLogin(ctx context.Context, req *pb.DevLoginRequest) (*p
 	)
 	defer span.End()
 
+	if !s.devLoginEnabled {
+		return nil, status.Error(codes.Unimplemented, "dev login is disabled")
+	}
+
 	email := req.GetEmail()
 	if email == "" {
 		return nil, status.Error(codes.InvalidArgument, "email is required")
@@ -885,7 +904,7 @@ func (s *AuthService) RequestAvatarUpload(ctx context.Context, req *pb.RequestAv
 	if s.s3 == nil {
 		return nil, status.Error(codes.Unavailable, "avatar upload is not configured")
 	}
-	s3Key := fmt.Sprintf("avatars/%s/%s%s", userID, uuid.NewString(), ext)
+	s3Key := s3.PrefixedKey(fmt.Sprintf("avatars/%s/%s%s", userID, uuid.NewString(), ext))
 
 	uploadURL, err := s.s3.PresignedUploadURL(ctx, s3Key, contentType)
 	if err != nil {

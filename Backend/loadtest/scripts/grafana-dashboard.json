@@ -1,0 +1,92 @@
+{
+  "title": "Pinz Loadtest",
+  "uid": "pinz-loadtest",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["pinz", "loadtest"],
+  "timezone": "browser",
+  "refresh": "10s",
+  "time": {"from": "now-1h", "to": "now"},
+  "templating": {
+    "list": [
+      {"name": "datasource", "type": "datasource", "query": "prometheus", "current": {"text": "Prometheus", "value": "Prometheus"}}
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "timeseries", "title": "k6: HTTP requests/sec",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 0},
+      "datasource": "${datasource}",
+      "targets": [{"expr": "sum(rate(k6_http_reqs_total[1m]))", "refId": "A", "legendFormat": "rps"}]
+    },
+    {
+      "id": 2, "type": "timeseries", "title": "k6: HTTP errors/sec",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 0},
+      "datasource": "${datasource}",
+      "targets": [{"expr": "sum(rate(k6_http_req_failed_total[1m]))", "refId": "A", "legendFormat": "errors"}]
+    },
+    {
+      "id": 3, "type": "timeseries", "title": "k6: latency p95 by class",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 7},
+      "datasource": "${datasource}",
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(k6_http_req_duration_seconds_bucket[1m])) by (le, class))", "legendFormat": "p95 {{class}}", "refId": "A"}
+      ]
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "k6: trip pipeline end-to-end (p95/p99/max)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 15},
+      "datasource": "${datasource}",
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(k6_trip_pipeline_duration_ms_bucket[1m])) by (le))", "refId": "A", "legendFormat": "p95 ms"},
+        {"expr": "histogram_quantile(0.99, sum(rate(k6_trip_pipeline_duration_ms_bucket[1m])) by (le))", "refId": "B", "legendFormat": "p99 ms"}
+      ]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "k6: WS event latency",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 15},
+      "datasource": "${datasource}",
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(k6_ws_event_latency_ms_bucket[1m])) by (le))", "refId": "A", "legendFormat": "p95 ms"}
+      ]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "k6: VUs",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 23},
+      "datasource": "${datasource}",
+      "targets": [{"expr": "max(k6_vus)", "refId": "A", "legendFormat": "vus"}]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Server: HTTP request duration p95 by route (otelhttp)",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 23},
+      "datasource": "${datasource}",
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{service_name=\"api-gateway-service\"}[1m])) by (le, http_route))", "refId": "A", "legendFormat": "p95 {{http_route}}"}
+      ]
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "Pods CPU (loadtest namespace)",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 30},
+      "datasource": "${datasource}",
+      "targets": [
+        {"expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"pinz-loadtest\"}[1m])) by (pod)", "refId": "A", "legendFormat": "{{pod}}"}
+      ]
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "Pods RAM (loadtest namespace)",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 30},
+      "datasource": "${datasource}",
+      "targets": [
+        {"expr": "sum(container_memory_working_set_bytes{namespace=\"pinz-loadtest\"}) by (pod)", "refId": "A", "legendFormat": "{{pod}}"}
+      ]
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "Redis Streams depth",
+      "gridPos": {"h": 7, "w": 24, "x": 0, "y": 37},
+      "datasource": "${datasource}",
+      "targets": [
+        {"expr": "redis_stream_length{stream=~\"pinz:trip:ml:tasks|pinz:trip:events|pinz:trip:pin_upload:tasks|pinz:trip:privacy:events|pinz:stats:events\"}", "refId": "A", "legendFormat": "{{stream}}"}
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -79,7 +80,10 @@ func NewServer(deps *di.Dependencies) *Server {
 			r.Post("/auth/passkey/login/finish", deps.AuthHandler.PasskeyLoginFinish)
 			r.Post("/auth/refresh", deps.AuthHandler.RefreshToken)
 			r.Post("/auth/logout", deps.AuthHandler.Logout)
-			r.Post("/auth/dev-login", deps.AuthHandler.DevLogin)
+			if strings.EqualFold(strings.TrimSpace(os.Getenv("DEV_LOGIN_PROXY_ENABLED")), "true") {
+				slog.Warn("DEV_LOGIN_PROXY_ENABLED=true — exposing /auth/dev-login; never enable in prod")
+				r.Post("/auth/dev-login", deps.AuthHandler.DevLogin)
+			}
 
 			r.Route("/profile", func(r chi.Router) {
 				r.Use(middleware.RequireJWT)

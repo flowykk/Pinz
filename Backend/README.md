@@ -353,6 +353,13 @@ export GEOCODING_API_KEY=                                                     # 
 # Share-link (api-gateway): база для поля share_url в ответах с трипом (ТЗ 3.4).
 # Пустая → используется внутренний дефолт https://pinz.website/trips.
 export TRIP_SHARE_LINK_BASE=https://pinz.website/trips
+
+# Loadtest-only: разблокирует RPC AuthService.DevLogin и проксирующую ручку
+# POST /api/v1/auth/dev-login. По умолчанию выключено и НЕ должно включаться на
+# проде — это путь обхода passkey. Используется только сидером нагрузочного
+# тестирования (см. Backend/loadtest/).
+export AUTH_DEV_LOGIN_ENABLED=false   # auth-service
+export DEV_LOGIN_PROXY_ENABLED=false  # api-gateway-service
 ```
 
 ### SSL/TLS (Let's Encrypt)
