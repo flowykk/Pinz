@@ -49,36 +49,53 @@ public struct PinInfoView: View {
     }
 
     public var body: some View {
-        CollapsibleHeader(needsBlur: viewModel.state == .gallery ? true : false) {
-            header
-        } stickyHeader: {
-            if !viewModel.isEditing {
-                SegmentedPicker(selection: $viewModel.state, items: [.info, .gallery])
-                    .padding(.horizontal, 12)
-            }
-        } content: {
-            if viewModel.state == .info || viewModel.state == .editing {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        settings
-                            .padding(.horizontal, 12)
-                        map.if(viewModel.state != .info) { view in view.hidden() }
-                            .padding(.top, 12)
-                            .padding(.horizontal, 12)
-                    }
+        ZStack(alignment: .bottom) {
+            CollapsibleHeader(needsBlur: viewModel.state == .gallery ? true : false) {
+                header
+            } stickyHeader: {
+                if !viewModel.isEditing {
+                    SegmentedPicker(selection: $viewModel.state, items: [.info, .gallery])
+                        .padding(.horizontal, 12)
                 }
-                .scrollIndicators(.hidden)
-                .scrollDisabled(viewModel.isEditing)
-            } else {
-                gallery
-                    .padding(.horizontal, gallerySpacing)
+            } content: {
+                if viewModel.state == .info || viewModel.state == .editing {
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            settings
+                                .padding(.horizontal, 12)
+                            map.if(viewModel.state != .info) { view in view.hidden() }
+                                .padding(.top, 12)
+                                .padding(.horizontal, 12)
+                        }
+                    }
+                    .scrollIndicators(.hidden)
+                    .scrollDisabled(viewModel.isEditing)
+                } else {
+                    gallery
+                        .padding(.horizontal, gallerySpacing)
+                }
+            }
+
+            if viewModel.state == .gallery, !viewModel.isEditing {
+                galleryAddMediaBar
             }
         }
         .onAppear {
             viewModel.setRouter(router)
             viewModel.setToast(showToast)
+            viewModel.refreshPinUploadAdditionSessionFlag()
+            router?.setPinUploadAdditionSuccessHandler { pin in
+                viewModel.applyPinAfterAdditionUpload(pin)
+            }
         }
-        .onDisappear { viewModel.onDisappear() }
+        .onChange(of: viewModel.state) { _, newState in
+            if newState == .gallery {
+                viewModel.refreshPinUploadAdditionSessionFlag()
+            }
+        }
+        .onDisappear {
+            viewModel.onDisappear()
+        }
         .background(PinzUIAsset.background.swiftUIColor)
         .itemsPickerSheet(
             isPresented: $isCategoryPickerPresented,
@@ -181,11 +198,12 @@ public struct PinInfoView: View {
             }
         }
         .scrollIndicators(.hidden)
+        .padding(.bottom, 90)
         .simultaneousGesture(
             MagnificationGesture()
                 .onChanged { value in
                     magnificationScale = value
-                    
+
                     let targetColumns: Int
                     if value >= 2.0 {
                         targetColumns = 1
@@ -198,7 +216,7 @@ public struct PinInfoView: View {
                     } else {
                         targetColumns = 5
                     }
-                    
+
                     if targetColumns != galleryColumns {
                         withAnimation(.easeOut(duration: 0.4)) {
                             galleryColumns = targetColumns
@@ -211,5 +229,25 @@ public struct PinInfoView: View {
                     }
                 }
         )
+    }
+
+    private var galleryAddMediaBar: some View {
+        BottomGradientWithButtons {
+            VStack(spacing: 4) {
+                PinzButton(
+                    type: .slot(style: .primary, title: PinzBaseStrings.PinUpload.Header.addMedia),
+                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                    disabled: viewModel.addMediaButtonDisabled,
+                    action: .async {
+                        await viewModel.asyncDispatch(.startAddMedia)
+                    }
+                )
+                if viewModel.hasActivePinUploadAdditionSession {
+                    Text(PinzBaseStrings.PinUpload.Loading.uploading)
+                        .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                        .multilineTextAlignment(.center)
+                }
+            }
+        }
     }
 }

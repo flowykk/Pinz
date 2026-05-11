@@ -29,14 +29,16 @@ final class PinUploadStartViewModel {
 
         var localizedValue: String {
             switch self {
-            case .uploading: "Загружаем медиа..."
-            case .committing: "Сохраняем..."
-            case .starting: "Запускаем обработку..."
+            case .uploading: PinzBaseStrings.PinUpload.Loading.uploading
+            case .committing: PinzBaseStrings.PinUpload.Loading.committing
+            case .starting: PinzBaseStrings.PinUpload.Loading.starting
             }
         }
     }
 
     let tripId: String
+    /// Non-nil when adding media to an existing pin (`target_pin_id` on start).
+    let targetPinId: String?
     var medias: [LoadedMedia] = []
     private(set) var isLoading = false
     private(set) var loadingStatus: LoadingStatus?
@@ -44,8 +46,9 @@ final class PinUploadStartViewModel {
     private var router: AppRouting?
     private let networkService: NetworkServiceProtocol
 
-    init(tripId: String, networkService: NetworkServiceProtocol = NetworkService.shared) {
+    init(tripId: String, targetPinId: String? = nil, networkService: NetworkServiceProtocol = NetworkService.shared) {
         self.tripId = tripId
+        self.targetPinId = targetPinId
         self.networkService = networkService
     }
 
@@ -58,7 +61,7 @@ final class PinUploadStartViewModel {
             case .back:
                 router?.pop()
             case let .processing(tripId, sessionId):
-                router?.navigateToPinUploadProcessing(tripId: tripId, sessionId: sessionId)
+                router?.navigateToPinUploadProcessing(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
             }
 
         case let .addMedias(items):
@@ -106,16 +109,24 @@ final class PinUploadStartViewModel {
 
             let startResponse = try await networkService.pinUploadStart(
                 tripId: tripId,
-                targetPinId: nil,
+                targetPinId: targetPinId,
                 filesToUpload: filesToUpload
             )
 
             // Persist session_id immediately, before any step that may fail —
             // GET /trips/{id} не отдаёт активную сессию, восстановление возможно только из локального хранилища.
-            PinUploadSessionStorage.shared.save(
-                sessionId: startResponse.sessionId,
-                forTripId: tripId
-            )
+            if let pinId = targetPinId {
+                PinUploadAdditionSessionStorage.shared.save(
+                    sessionId: startResponse.sessionId,
+                    tripId: tripId,
+                    pinId: pinId
+                )
+            } else {
+                PinUploadSessionStorage.shared.save(
+                    sessionId: startResponse.sessionId,
+                    forTripId: tripId
+                )
+            }
 
             try await uploadToS3(uploadURLs: startResponse.uploadUrls)
 

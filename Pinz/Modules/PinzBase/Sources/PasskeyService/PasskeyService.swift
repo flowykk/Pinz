@@ -21,7 +21,6 @@ public final class PasskeyService: NSObject, PasskeyServiceProtocol {
         super.init()
     }
 
-    /// Логин: показывает Face ID промпт, возвращает credential_json (base64) для /login/finish
     public func performAssertion(optionsJSON: String) async throws -> String {
         let options = try parseOptions(optionsJSON)
 
@@ -52,7 +51,6 @@ public final class PasskeyService: NSObject, PasskeyServiceProtocol {
         return buildAssertionJSON(assertion)
     }
 
-    /// Регистрация: показывает Face ID промпт, возвращает credential_json (base64) для /register/finish
     public func performAttestation(optionsJSON: String) async throws -> String {
         let options = try parseOptions(optionsJSON)
 

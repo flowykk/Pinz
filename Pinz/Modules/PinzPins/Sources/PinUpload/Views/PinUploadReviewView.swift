@@ -7,7 +7,6 @@ import PinzBase
 private enum PinUploadReviewIcon: String, Setting.Icon {
     case info = "info.circle.fill"
     case calendar = "calendar"
-    case mappin = "mappin.circle.fill"
 }
 
 public struct PinUploadReviewView: View {
@@ -23,11 +22,13 @@ public struct PinUploadReviewView: View {
     let galleryColumns: Int = 3
     let gallerySpacing: CGFloat = 4
 
+    private var isAdditionFlow: Bool { viewModel.targetPinId != nil }
+
     @Environment(\.appRouter) private var router
     @Environment(\.showToast) private var showToast
 
-    public init(tripId: String, sessionId: String) {
-        viewModel = PinUploadReviewViewModel(tripId: tripId, sessionId: sessionId)
+    public init(tripId: String, sessionId: String, targetPinId: String? = nil) {
+        viewModel = PinUploadReviewViewModel(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
     }
 
     public var body: some View {
@@ -81,14 +82,21 @@ public struct PinUploadReviewView: View {
             pickerHeight: $datePickerHeight
         )
         .confirmationDialog(
-            "Отменить создание пина?",
+            isAdditionFlow
+                ? PinzBaseStrings.PinUpload.Cancel.Addition.title
+                : PinzBaseStrings.PinUpload.Cancel.Creation.title,
             isPresented: $showCancelConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Отменить создание пина", role: .destructive) {
+            Button(
+                isAdditionFlow
+                    ? PinzBaseStrings.PinUpload.Cancel.Addition.confirm
+                    : PinzBaseStrings.PinUpload.Cancel.Creation.confirm,
+                role: .destructive
+            ) {
                 Task { try? await viewModel.asyncDispatch(.cancel) }
             }
-            Button("Продолжить", role: .cancel) {}
+            Button(PinzBaseStrings.PinUpload.Dialog.continue, role: .cancel) {}
         }
     }
 
@@ -102,7 +110,9 @@ public struct PinUploadReviewView: View {
             )
         }, centerView: {
             AnimatableHeaderTitle(
-                animatableTitle: "Новый пин",
+                animatableTitle: isAdditionFlow
+                    ? PinzBaseStrings.PinUpload.Header.addMedia
+                    : PinzBaseStrings.PinUpload.Review.Header.newPin,
                 title: $viewModel.name
             )
         }, rightView: {
@@ -116,6 +126,7 @@ public struct PinUploadReviewView: View {
                 general
                 tags
                 descriptionEditing
+                locationSection
             }
             .padding(.horizontal, 12)
         }
@@ -157,28 +168,21 @@ public struct PinUploadReviewView: View {
                 )),
             ]
         )
+    }
 
-        if let coords = viewModel.coordinates {
-            coordinatesRow(coords: coords)
+    private var locationSection: some View {
+        Button {
+            viewModel.dispatch(.navigate(.changePlace))
+        } label: {
+            PinPlaceSectionView(pin: draftPinBinding)
         }
     }
 
-    private func coordinatesRow(coords: CLLocationCoordinate2D) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: PinUploadReviewIcon.mappin.rawValue)
-                .frame(20)
-                .foregroundColor(PinzUIAsset.textPrimary.swiftUIColor)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(String(format: "%.5f, %.5f", coords.latitude, coords.longitude))
-                    .roundedFont(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
-                Text("из EXIF")
-                    .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
-            }
-            Spacer()
-        }
-        .padding(12)
-        .background(PinzUIAsset.backgroundSecondary.swiftUIColor)
-        .cornerRadius(14)
+    private var draftPinBinding: Binding<Pin> {
+        Binding(
+            get: { viewModel.draftPinForPlaceChange() },
+            set: { viewModel.applyPlaceCoordinate($0.coordinates) }
+        )
     }
 
     private var tags: some View {

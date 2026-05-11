@@ -1,8 +1,7 @@
 import Foundation
 
 extension Int {
-    /// Возвращает правильное окончание слова "день" в зависимости от числа
-    /// - Returns: "день", "дня" или "дней"
+
     public func pluralizeDays() -> String {
         let lastDigit = self % 10
         let lastTwoDigits = self % 100
@@ -16,8 +15,6 @@ extension Int {
         }
     }
 
-    /// Возвращает строку с числом и правильным окончанием
-    /// - Returns: "1 день", "2 дня", "5 дней" и т.д.
     public var daysText: String {
         "\(self) \(pluralizeDays())"
     }

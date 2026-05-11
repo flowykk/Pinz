@@ -261,12 +261,12 @@ public struct ProfileView: View {
                     trailing: .icon(ProfileIcon.chevronRight),
                     action: .plain { viewModel.dispatch(.navigate(.storageSettings)) }
                 )),
-                .default(Setting.DefaultSetting(
-                    id: "profileNotifications",
-                    leading: .iconTitle(ProfileIcon.bell, PinzBaseStrings.Profile.Label.notifications),
-                    trailing: .icon(ProfileIcon.chevronRight),
-                    action: .plain { viewModel.dispatch(.navigate(.notifications)) }
-                )),
+//                .default(Setting.DefaultSetting(
+//                    id: "profileNotifications",
+//                    leading: .iconTitle(ProfileIcon.bell, PinzBaseStrings.Profile.Label.notifications),
+//                    trailing: .icon(ProfileIcon.chevronRight),
+//                    action: .plain { viewModel.dispatch(.navigate(.notifications)) }
+//                )),
                 .default(Setting.DefaultSetting(
                     id: "profileAppearance",
                     leading: .iconTitle(ProfileIcon.paintbrush, PinzBaseStrings.Profile.Label.appearance),

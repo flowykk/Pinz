@@ -368,6 +368,33 @@ final class MockNetworkService: NetworkServiceProtocol {
     )
     var searchPinsResult: Result<[TripPinDTO], Error> = .success([])
 
+    // MARK: - Pin upload
+
+    var pinUploadStartResult: Result<PinUploadStartResponseDTO, Error> = .success(
+        PinUploadStartResponseDTO(sessionId: "mock-pin-upload-session", uploadUrls: [])
+    )
+    var pinUploadRequestUploadUrlsResult: Result<[UploadURLDTO], Error> = .success([])
+    var pinUploadCommitUploadResult: Result<PinUploadCommitResponseDTO, Error> = .success(
+        PinUploadCommitResponseDTO(mediaId: "mock-media", mediaCountInSession: 1)
+    )
+    var pinUploadProcessResult: Result<PinUploadProcessResponseDTO, Error> = .success(
+        PinUploadProcessResponseDTO(sessionId: "mock-pin-upload-session", processingStatus: "PROCESSING")
+    )
+    var pinUploadGetReviewResult: Result<PinUploadReviewResponseDTO, Error> = .success(
+        PinUploadReviewResponseDTO(
+            sessionId: "mock-pin-upload-session",
+            processingStatus: "READY_FOR_REVIEW",
+            draft: nil,
+            similar: nil
+        )
+    )
+    var pinUploadFinalizeResult: Result<PinResponseDTO, Error> = .success(
+        PinResponseDTO(pin: MockNetworkService.stubTripPins[0])
+    )
+    var pinUploadCancelError: Error?
+
+    var pinUploadGetReviewCall: (tripId: String, sessionId: String)?
+
     var getPinCall: (tripId: String, pinId: String)?
     var updatePinCall: (
         tripId: String,
@@ -413,6 +440,55 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     func searchPins(q: String, limit: Int?, offset: Int?) async throws -> [TripPinDTO] {
         try searchPinsResult.get()
+    }
+
+    func pinUploadStart(
+        tripId: String,
+        targetPinId: String?,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> PinUploadStartResponseDTO {
+        try pinUploadStartResult.get()
+    }
+
+    func pinUploadRequestUploadUrls(
+        tripId: String,
+        sessionId: String,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> [UploadURLDTO] {
+        try pinUploadRequestUploadUrlsResult.get()
+    }
+
+    func pinUploadCommitUpload(
+        tripId: String,
+        sessionId: String,
+        s3Key: String,
+        mediaType: String,
+        capturedAtUnix: Int?,
+        latitude: Double?,
+        longitude: Double?
+    ) async throws -> PinUploadCommitResponseDTO {
+        try pinUploadCommitUploadResult.get()
+    }
+
+    func pinUploadProcess(tripId: String, sessionId: String) async throws -> PinUploadProcessResponseDTO {
+        try pinUploadProcessResult.get()
+    }
+
+    func pinUploadGetReview(tripId: String, sessionId: String) async throws -> PinUploadReviewResponseDTO {
+        pinUploadGetReviewCall = (tripId, sessionId)
+        return try pinUploadGetReviewResult.get()
+    }
+
+    func pinUploadFinalize(
+        tripId: String,
+        sessionId: String,
+        input: PinUploadFinalizeInputDTO
+    ) async throws -> PinResponseDTO {
+        try pinUploadFinalizeResult.get()
+    }
+
+    func pinUploadCancel(tripId: String, sessionId: String) async throws {
+        if let pinUploadCancelError { throw pinUploadCancelError }
     }
 
     // MARK: - Stub data

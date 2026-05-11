@@ -7,6 +7,7 @@ public struct PinUploadProcessingView: View {
 
     let tripId: String
     let sessionId: String
+    let targetPinId: String?
 
     @Environment(\.appRouter) private var router
     @State private var wsClient = PinUploadWebSocketClient()
@@ -16,9 +17,16 @@ public struct PinUploadProcessingView: View {
     @State private var isCancelling = false
     @State private var showCancelConfirmation = false
 
-    public init(tripId: String, sessionId: String) {
+    private var isAdditionFlow: Bool { targetPinId != nil }
+
+    private var headerTitle: String {
+        isAdditionFlow ? PinzBaseStrings.PinUpload.Header.addMedia : PinzBaseStrings.PinUpload.Header.createPin
+    }
+
+    public init(tripId: String, sessionId: String, targetPinId: String? = nil) {
         self.tripId = tripId
         self.sessionId = sessionId
+        self.targetPinId = targetPinId
     }
 
     public var body: some View {
@@ -29,7 +37,7 @@ public struct PinUploadProcessingView: View {
                 EmptyView()
             }
 
-            LoadingView(status: "Обрабатываем медиа...")
+            LoadingView(status: PinzBaseStrings.PinUpload.Processing.status)
         }
         .background(PinzUIAsset.background.swiftUIColor)
         .navigationBarBackButtonHidden(true)
@@ -41,14 +49,21 @@ public struct PinUploadProcessingView: View {
             teardown()
         }
         .confirmationDialog(
-            "Отменить создание пина?",
+            isAdditionFlow
+                ? PinzBaseStrings.PinUpload.Cancel.Addition.title
+                : PinzBaseStrings.PinUpload.Cancel.Creation.title,
             isPresented: $showCancelConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Отменить создание пина", role: .destructive) {
+            Button(
+                isAdditionFlow
+                    ? PinzBaseStrings.PinUpload.Cancel.Addition.confirm
+                    : PinzBaseStrings.PinUpload.Cancel.Creation.confirm,
+                role: .destructive
+            ) {
                 Task { await cancelTapped() }
             }
-            Button("Продолжить", role: .cancel) {}
+            Button(PinzBaseStrings.PinUpload.Dialog.continue, role: .cancel) {}
         }
     }
 
@@ -61,7 +76,7 @@ public struct PinUploadProcessingView: View {
                 action: .plain { showCancelConfirmation = true }
             )
         }, centerView: {
-            HeaderTitle("Создание пина")
+            HeaderTitle(headerTitle)
         }, rightView: {
             EmptyView()
         })
@@ -104,7 +119,7 @@ public struct PinUploadProcessingView: View {
         guard !navigated else { return }
         navigated = true
         teardown()
-        router?.navigateToPinUploadReview(tripId: tripId, sessionId: sessionId)
+        router?.navigateToPinUploadReview(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
     }
 
     @MainActor
@@ -119,9 +134,15 @@ public struct PinUploadProcessingView: View {
             // 409 / 404 — сессия уже закрыта или не найдена; storage всё равно чистим.
         }
 
-        PinUploadSessionStorage.shared.clear(forTripId: tripId)
-        teardown()
-        router?.popToRoot()
+        if let pinId = targetPinId {
+            PinUploadAdditionSessionStorage.shared.clear(tripId: tripId, pinId: pinId)
+            teardown()
+            router?.popAllPinUploadRoutes()
+        } else {
+            PinUploadSessionStorage.shared.clear(forTripId: tripId)
+            teardown()
+            router?.popToRoot()
+        }
     }
 
     private func teardown() {

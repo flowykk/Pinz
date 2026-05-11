@@ -15,8 +15,8 @@ public struct PinUploadStartView: View {
 
     @Environment(\.appRouter) private var router
 
-    public init(tripId: String) {
-        viewModel = PinUploadStartViewModel(tripId: tripId)
+    public init(tripId: String, targetPinId: String? = nil) {
+        viewModel = PinUploadStartViewModel(tripId: tripId, targetPinId: targetPinId)
     }
 
     public var body: some View {
@@ -59,7 +59,11 @@ public struct PinUploadStartView: View {
                 action: .plain { viewModel.dispatch(.navigate(.back)) }
             )
         }, centerView: {
-            HeaderTitle("Создание пина")
+            HeaderTitle(
+                viewModel.targetPinId != nil
+                    ? PinzBaseStrings.PinUpload.Header.addMedia
+                    : PinzBaseStrings.PinUpload.Header.createPin
+            )
         }, rightView: {
             PinzButton(
                 type: .icon(.plus),
@@ -94,7 +98,7 @@ public struct PinUploadStartView: View {
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             PinzButton(
-                type: .slot(style: .primary, title: "Далее"),
+                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 action: .async { try await viewModel.asyncDispatch(.start) }
             )

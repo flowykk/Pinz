@@ -5,3 +5,9 @@ public struct PinResponseDTO: Codable {
         self.pin = pin
     }
 }
+
+public extension PinResponseDTO {
+    func toPin(tripId: String? = nil, nameIfMissing: String = "") -> Pin {
+        pin.toPin(index: 0, tripId: tripId ?? pin.tripId, nameIfMissing: nameIfMissing)
+    }
+}

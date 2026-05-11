@@ -25,6 +25,7 @@ final class PinUploadReviewViewModel {
 
     enum Route {
         case back
+        case changePlace
     }
 
     enum Intent {
@@ -48,6 +49,8 @@ final class PinUploadReviewViewModel {
 
     let tripId: String
     let sessionId: String
+    /// Non-nil when this session adds media to an existing pin.
+    let targetPinId: String?
 
     var state: State = .info
     var name: String = ""
@@ -70,10 +73,12 @@ final class PinUploadReviewViewModel {
     init(
         tripId: String,
         sessionId: String,
+        targetPinId: String? = nil,
         networkService: NetworkServiceProtocol = NetworkService.shared
     ) {
         self.tripId = tripId
         self.sessionId = sessionId
+        self.targetPinId = targetPinId
         self.networkService = networkService
     }
 
@@ -93,6 +98,12 @@ final class PinUploadReviewViewModel {
             switch route {
             case .back:
                 router?.pop()
+            case .changePlace:
+                let pin = draftPinForPlaceChange()
+                let action = PlaceSaveAction { [weak self] coord in
+                    self?.applyPlaceCoordinate(coord)
+                }
+                router?.navigateToPinPlaceChange(pin: pin, action: action)
             }
         case let .addTag(tag):
             guard tags.count < Self.maxTagsCount else {
@@ -136,6 +147,7 @@ final class PinUploadReviewViewModel {
             medias = draft.media ?? []
             pinIssues = draft.pinIssues ?? []
             initialLoaded = true
+            await fillMissingPinFieldsFromServerIfNeeded()
 
         case .finalize:
             guard validate() else { return }
@@ -164,14 +176,27 @@ final class PinUploadReviewViewModel {
             )
 
             do {
-                _ = try await networkService.pinUploadFinalize(
+                let response = try await networkService.pinUploadFinalize(
                     tripId: tripId,
                     sessionId: sessionId,
                     input: input
                 )
-                PinUploadSessionStorage.shared.clear(forTripId: tripId)
+                clearSessionStorage()
                 router?.notifyTripPinsReload(tripId: tripId)
-                router?.popToRoot()
+                if let pinId = targetPinId {
+                    // Finalize payload may omit fresh media list — GET pin so PinInfo gallery matches server.
+                    let updatedPin: Pin
+                    do {
+                        let refreshed = try await networkService.getPin(tripId: tripId, pinId: pinId)
+                        updatedPin = refreshed.toPin(tripId: tripId, nameIfMissing: name)
+                    } catch {
+                        updatedPin = response.toPin(tripId: tripId, nameIfMissing: name)
+                    }
+                    router?.notifyPinUploadAdditionSuccess(updatedPin)
+                    router?.popAllPinUploadRoutes()
+                } else {
+                    router?.popToRoot()
+                }
             } catch let httpError as HTTPError {
                 handleFinalizeError(httpError)
                 throw httpError
@@ -188,12 +213,51 @@ final class PinUploadReviewViewModel {
             } catch {
                 // 409 / 404 — сессия уже мертва на бэке, локально дочищаем и выходим.
             }
-            PinUploadSessionStorage.shared.clear(forTripId: tripId)
-            router?.popToRoot()
+            clearSessionStorage()
+            dismissPinUploadFlow()
         }
     }
 
     // MARK: - Helpers
+
+    private func clearSessionStorage() {
+        if let pinId = targetPinId {
+            PinUploadAdditionSessionStorage.shared.clear(tripId: tripId, pinId: pinId)
+        } else {
+            PinUploadSessionStorage.shared.clear(forTripId: tripId)
+        }
+    }
+
+    /// Creation: `popToRoot`. Addition: drop only `.pinUpload` routes (stay on e.g. PinInfo).
+    private func dismissPinUploadFlow() {
+        if targetPinId != nil {
+            router?.popAllPinUploadRoutes()
+        } else {
+            router?.popToRoot()
+        }
+    }
+
+    /// When adding media, backend draft may omit pin title; load existing pin as template for finalize validation.
+    private func fillMissingPinFieldsFromServerIfNeeded() async {
+        guard let pinId = targetPinId else { return }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty else { return }
+        do {
+            let response = try await networkService.getPin(tripId: tripId, pinId: pinId)
+            let pin = response.toPin(tripId: tripId, nameIfMissing: "")
+            name = pin.name
+            description = pin.description
+            category = pin.category
+            startDate = pin.startDate
+            endDate = pin.endDate
+            coordinates = pin.coordinates
+            if tags.isEmpty {
+                tags = pin.tags
+            }
+        } catch {
+            // Keep draft-only state; user may still fix fields manually.
+        }
+    }
 
     private func applySuggested(_ suggested: PinSuggestedFieldsDTO?) {
         guard let suggested else { return }
@@ -244,8 +308,8 @@ final class PinUploadReviewViewModel {
             // "expected READY_FOR_REVIEW" (race with WS / parallel cancel).
             // На клиенте мы уже валидируем пустоту, так что это race — сессия мертва.
             showToast?("Сессия больше не активна")
-            PinUploadSessionStorage.shared.clear(forTripId: tripId)
-            router?.popToRoot()
+            clearSessionStorage()
+            dismissPinUploadFlow()
         case .badRequest:
             showToast?("Проверь поля: возможно превышены лимиты или неверные координаты")
         case .unprocessableEntity:
@@ -254,15 +318,60 @@ final class PinUploadReviewViewModel {
         case .preconditionFailed:
             // 412 — состояние сессии не подходит.
             showToast?("Сессия в неподходящем состоянии")
-            PinUploadSessionStorage.shared.clear(forTripId: tripId)
-            router?.popToRoot()
+            clearSessionStorage()
+            dismissPinUploadFlow()
         case .notFound:
             showToast?("Сессия не найдена")
-            PinUploadSessionStorage.shared.clear(forTripId: tripId)
-            router?.popToRoot()
+            clearSessionStorage()
+            dismissPinUploadFlow()
         default:
             showToast?("Не удалось сохранить пин")
         }
+    }
+
+    // MARK: - Map / place picker
+
+    func draftPinForPlaceChange() -> Pin {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = trimmed.isEmpty ? PinzBaseStrings.PinUpload.Review.Header.newPin : name
+        return Pin(
+            name: title,
+            description: description,
+            category: category,
+            medias: draftMediasForMapPreview(),
+            isPrivate: false,
+            startDate: startDate,
+            endDate: endDate,
+            tags: tags,
+            issues: [],
+            serverId: nil,
+            tripId: tripId,
+            coordinates: coordinates
+        )
+    }
+
+    /// Thumbnails for `PinAnnotationView` on the map (same URLs as review gallery, minus pending deletes).
+    private func draftMediasForMapPreview() -> [MediaItem] {
+        medias
+            .filter { !mediaToDelete.contains($0.mediaId) }
+            .enumerated()
+            .map { index, media in
+                let lower = media.url.lowercased()
+                let type: MediaType =
+                    lower.contains(".mp4") || lower.contains(".mov") || lower.contains("video") ? .video : .image
+                return MediaItem(
+                    id: index + 1,
+                    isPrivate: media.privacyLevel?.lowercased() == "private",
+                    type: type,
+                    mediaURL: URL(string: media.url),
+                    tripId: tripId,
+                    mediaId: media.mediaId
+                )
+            }
+    }
+
+    func applyPlaceCoordinate(_ coordinate: CLLocationCoordinate2D?) {
+        coordinates = coordinate
     }
 }
 

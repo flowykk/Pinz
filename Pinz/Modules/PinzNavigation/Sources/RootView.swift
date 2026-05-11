@@ -129,12 +129,12 @@ public struct RootView<Content: View>: View {
             }
         case let .pinUpload(pinUploadRoute):
             switch pinUploadRoute {
-            case .start(let tripId):
-                PinUploadStartView(tripId: tripId)
-            case .processing(let tripId, let sessionId):
-                PinUploadProcessingView(tripId: tripId, sessionId: sessionId)
-            case .review(let tripId, let sessionId):
-                PinUploadReviewView(tripId: tripId, sessionId: sessionId)
+            case let .start(tripId, targetPinId):
+                PinUploadStartView(tripId: tripId, targetPinId: targetPinId)
+            case let .processing(tripId, sessionId, targetPinId):
+                PinUploadProcessingView(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
+            case let .review(tripId, sessionId, targetPinId):
+                PinUploadReviewView(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
             }
         }
     }

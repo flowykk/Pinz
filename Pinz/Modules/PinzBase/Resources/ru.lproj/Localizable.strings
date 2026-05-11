@@ -252,6 +252,24 @@
 "tripPins.status.processing" = "Медиа обрабатывается";
 "tripPins.status.draftFinalReview" = "Другой участник проверяет медиа";
 
+// MARK: - Pin upload resume
+"pinUpload.creation.resume.conflictSession" = "Сессия создания пина занята на другом устройстве. Начинаем заново.";
+"pinUpload.creation.resume.restoreFailed" = "Не удалось восстановить сессию создания пина";
+"pinUpload.addition.resume.conflictSession" = "Сессия добавления медиа в этот пин занята на другом устройстве. Начинаем заново.";
+"pinUpload.addition.resume.restoreFailed" = "Не удалось восстановить сессию добавления медиа в пин";
+"pinUpload.header.createPin" = "Создание пина";
+"pinUpload.header.addMedia" = "Добавление медиа";
+"pinUpload.loading.uploading" = "Загружаем медиа...";
+"pinUpload.loading.committing" = "Сохраняем...";
+"pinUpload.loading.starting" = "Запускаем обработку...";
+"pinUpload.processing.status" = "Обрабатываем медиа...";
+"pinUpload.review.header.newPin" = "Новый пин";
+"pinUpload.cancel.creation.title" = "Отменить создание пина?";
+"pinUpload.cancel.creation.confirm" = "Отменить создание пина";
+"pinUpload.cancel.addition.title" = "Отменить добавление медиа?";
+"pinUpload.cancel.addition.confirm" = "Отменить добавление медиа";
+"pinUpload.dialog.continue" = "Продолжить";
+
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "Твои путешествия";
 "tripsListPopup.button.createTrip" = "Создать путешествие";

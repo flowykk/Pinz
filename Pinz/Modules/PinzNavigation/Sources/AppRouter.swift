@@ -10,6 +10,7 @@ public final class AppRouter: AppRouting {
     @ObservationIgnored private var currentProfileUpdateHandler: ((User) -> Void)?
     @ObservationIgnored private var tripPinsReloadHandler: ((String) -> Void)?
     @ObservationIgnored private var tripCreationDraftPins: [String: [Pin]] = [:]
+    @ObservationIgnored public var pinUploadAdditionSuccessHandler: ((Pin) -> Void)?
 
     public init(initialPath: [Route] = []) {
         self.path = initialPath
@@ -43,6 +44,20 @@ public final class AppRouter: AppRouting {
 
     public func popToRoot() {
         path = [.main]
+    }
+
+    public func popAllPinUploadRoutes() {
+        while case .pinUpload = path.last {
+            path.removeLast()
+        }
+    }
+
+    public func setPinUploadAdditionSuccessHandler(_ handler: ((Pin) -> Void)?) {
+        pinUploadAdditionSuccessHandler = handler
+    }
+
+    public func notifyPinUploadAdditionSuccess(_ pin: Pin) {
+        pinUploadAdditionSuccessHandler?(pin)
     }
 }
 
@@ -254,16 +269,16 @@ extension AppRouter {
 // MARK: - PinUpload Routing
 
 extension AppRouter {
-    public func navigateToPinUploadStart(tripId: String) {
-        navigate(to: .pinUpload(.start(tripId: tripId)))
+    public func navigateToPinUploadStart(tripId: String, targetPinId: String?) {
+        navigate(to: .pinUpload(.start(tripId: tripId, targetPinId: targetPinId)))
     }
 
-    public func navigateToPinUploadProcessing(tripId: String, sessionId: String) {
-        navigate(to: .pinUpload(.processing(tripId: tripId, sessionId: sessionId)))
+    public func navigateToPinUploadProcessing(tripId: String, sessionId: String, targetPinId: String?) {
+        navigate(to: .pinUpload(.processing(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)))
     }
 
-    public func navigateToPinUploadReview(tripId: String, sessionId: String) {
-        navigate(to: .pinUpload(.review(tripId: tripId, sessionId: sessionId)))
+    public func navigateToPinUploadReview(tripId: String, sessionId: String, targetPinId: String?) {
+        navigate(to: .pinUpload(.review(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)))
     }
 }
 

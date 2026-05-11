@@ -64,9 +64,9 @@ public enum TripAddMediaRoute: Hashable {
 }
 
 public enum PinUploadRoute: Hashable {
-    case start(tripId: String)
-    case processing(tripId: String, sessionId: String)
-    case review(tripId: String, sessionId: String)
+    case start(tripId: String, targetPinId: String?)
+    case processing(tripId: String, sessionId: String, targetPinId: String?)
+    case review(tripId: String, sessionId: String, targetPinId: String?)
 }
 
 public enum Route: Hashable {

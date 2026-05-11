@@ -3,7 +3,6 @@ import PinzDomain
 
 public protocol AppRouting: AnyObject {
     func navigateToMain()
-    /// Clears navigation stack so the auth flow (`path == []`) is shown.
     func navigateToAuthenticationRoot()
 
     func navigateToTripInfo(trip: Trip, onTripUpdated: (() -> Void)?)
@@ -60,13 +59,32 @@ public protocol AppRouting: AnyObject {
     func navigateToAddMediaProcessing(tripId: String, sessionId: String)
     func navigateToAddMediaReview(tripId: String, sessionId: String)
 
-    func navigateToPinUploadStart(tripId: String)
-    func navigateToPinUploadProcessing(tripId: String, sessionId: String)
-    func navigateToPinUploadReview(tripId: String, sessionId: String)
+    func navigateToPinUploadStart(tripId: String, targetPinId: String?)
+    func navigateToPinUploadProcessing(tripId: String, sessionId: String, targetPinId: String?)
+    func navigateToPinUploadReview(tripId: String, sessionId: String, targetPinId: String?)
 
     func pop()
     func pop(by count: Int)
     func popToRoot()
+
+    func popAllPinUploadRoutes()
+
+    func setPinUploadAdditionSuccessHandler(_ handler: ((Pin) -> Void)?)
+    func notifyPinUploadAdditionSuccess(_ pin: Pin)
+}
+
+public extension AppRouting {
+    func navigateToPinUploadStart(tripId: String) {
+        navigateToPinUploadStart(tripId: tripId, targetPinId: nil)
+    }
+
+    func navigateToPinUploadProcessing(tripId: String, sessionId: String) {
+        navigateToPinUploadProcessing(tripId: tripId, sessionId: sessionId, targetPinId: nil)
+    }
+
+    func navigateToPinUploadReview(tripId: String, sessionId: String) {
+        navigateToPinUploadReview(tripId: tripId, sessionId: sessionId, targetPinId: nil)
+    }
 }
 
 private struct AppRouterKey: EnvironmentKey {

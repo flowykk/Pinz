@@ -2,15 +2,22 @@ import Foundation
 import PinzBase
 import PinzNetworking
 
-/// Resume / fresh-start helper for the pin-upload flow.
+/// Resume / fresh-start helpers for the pin-upload flow.
 ///
-/// `GET /trips/{id}` не возвращает активную pin-upload сессию, поэтому единственный
-/// источник истины — `PinUploadSessionStorage`. Логика:
-/// - Если в локальном хранилище есть `session_id`, дёргаем `pinUploadGetReview`
-///   и решаем, на какой экран навигировать по `processing_status`.
-/// - Если сессия не найдена на бэке (404) — чистим локально и стартуем заново.
-/// - Если сессия есть, но статус неизвестный — то же, что 404.
-/// - Если нет локального `session_id` — сразу на старт-экран.
+/// Два входа:
+/// - **`resume`** — создание нового пина (`target_pin_id == null`). Локальный источник истины —
+///   `PinUploadSessionStorage` (одна активная сессия на трип).
+/// - **`resumeAddition`** — добавление медиа в существующий пин. Источник истины —
+///   `PinUploadAdditionSessionStorage` (ключ trip + pin).
+///
+/// `GET /trips/{id}` не возвращает активную pin-upload сессию; восстановление — через
+/// `GET .../pin-uploads/{sid}/review` и ветвление по `processing_status` (одинаково для обоих входов).
+///
+/// Логика по статусу:
+/// - Если локально есть `session_id`, вызываем `pinUploadGetReview` и навигируем по статусу.
+/// - Если сессия не найдена на бэке (404) — чистим соответствующее хранилище и открываем старт.
+/// - Если статус неизвестный/финальный — как 404.
+/// - Если нет локального `session_id` — сразу на экран выбора медиа (старт флоу).
 public enum PinUploadEntryResolver {
 
     @MainActor
@@ -38,7 +45,6 @@ public enum PinUploadEntryResolver {
             case "READY_FOR_REVIEW":
                 router.navigateToPinUploadReview(tripId: tripId, sessionId: sessionId)
             default:
-                // Неизвестный/финальный статус — сессия мертва или backend в странном состоянии.
                 PinUploadSessionStorage.shared.clear(forTripId: tripId)
                 router.navigateToPinUploadStart(tripId: tripId)
             }
@@ -46,13 +52,56 @@ public enum PinUploadEntryResolver {
             PinUploadSessionStorage.shared.clear(forTripId: tripId)
             router.navigateToPinUploadStart(tripId: tripId)
         } catch let httpError as HTTPError where httpError == .conflict {
-            showToast?("Сессия создания пина занята на другом устройстве. Начинаем заново.")
+            showToast?(PinzBaseStrings.PinUpload.Creation.Resume.conflictSession)
             PinUploadSessionStorage.shared.clear(forTripId: tripId)
             router.navigateToPinUploadStart(tripId: tripId)
         } catch {
-            // 401 retry уже встроен в pinUploadGetReview через retryOnUnauthorized.
-            // Прочие ошибки (сеть, 5xx) — оставляем сессию в storage и сообщаем пользователю.
-            showToast?("Не удалось восстановить сессию создания пина")
+            showToast?(PinzBaseStrings.PinUpload.Creation.Resume.restoreFailed)
+        }
+    }
+
+    /// Восстановление сессии добавления медиа в существующий пин (`target_pin_id` при старте).
+    @MainActor
+    public static func resumeAddition(
+        tripId: String,
+        pinId rawPinId: String,
+        networkService: NetworkServiceProtocol,
+        router: AppRouting?,
+        showToast: ((String) -> Void)? = nil
+    ) async {
+        guard let router else { return }
+
+        let pinId = rawPinId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !pinId.isEmpty else { return }
+
+        guard let sessionId = PinUploadAdditionSessionStorage.shared.sessionId(tripId: tripId, pinId: pinId) else {
+            router.navigateToPinUploadStart(tripId: tripId, targetPinId: pinId)
+            return
+        }
+
+        do {
+            let response = try await networkService.pinUploadGetReview(
+                tripId: tripId,
+                sessionId: sessionId
+            )
+            switch response.processingStatus.uppercased() {
+            case "UPLOADING", "PROCESSING":
+                router.navigateToPinUploadProcessing(tripId: tripId, sessionId: sessionId, targetPinId: pinId)
+            case "READY_FOR_REVIEW":
+                router.navigateToPinUploadReview(tripId: tripId, sessionId: sessionId, targetPinId: pinId)
+            default:
+                PinUploadAdditionSessionStorage.shared.clear(tripId: tripId, pinId: pinId)
+                router.navigateToPinUploadStart(tripId: tripId, targetPinId: pinId)
+            }
+        } catch let httpError as HTTPError where httpError == .notFound {
+            PinUploadAdditionSessionStorage.shared.clear(tripId: tripId, pinId: pinId)
+            router.navigateToPinUploadStart(tripId: tripId, targetPinId: pinId)
+        } catch let httpError as HTTPError where httpError == .conflict {
+            showToast?(PinzBaseStrings.PinUpload.Addition.Resume.conflictSession)
+            PinUploadAdditionSessionStorage.shared.clear(tripId: tripId, pinId: pinId)
+            router.navigateToPinUploadStart(tripId: tripId, targetPinId: pinId)
+        } catch {
+            showToast?(PinzBaseStrings.PinUpload.Addition.Resume.restoreFailed)
         }
     }
 }
