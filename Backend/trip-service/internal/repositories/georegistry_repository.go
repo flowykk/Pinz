@@ -1,6 +1,6 @@
 package repositories
 
-// Trip-service хранит read-only реплику GEO_REGISTRY (vkr.txt §2.5.4).
+// Trip-service хранит read-only реплику GEO_REGISTRY.
 // Master живёт в statistics-service: stats консумит PIN_LOCATIONS_REQUESTED
 // (pinz:stats:events), резолвит координаты через BigDataCloud, upsert'ит
 // собственный geo_registry/trip_locations и публикует PIN_LOCATIONS_RESOLVED
@@ -51,7 +51,7 @@ func (r *GeoRegistryRepository) MirrorByID(ctx context.Context, row GeoLocation)
 }
 
 // FindCountryByName — точный поиск страны по имени. Возвращает sql.ErrNoRows, если не найдено.
-// Используется рекомендательной системой (ТЗ 9), где регион принимается строкой.
+// Используется рекомендательной системой, где регион принимается строкой.
 func (r *GeoRegistryRepository) FindCountryByName(ctx context.Context, name string) (int, error) {
 	id, err := r.q.GeoRegistryFindCountryByName(ctx, name)
 	if err != nil {

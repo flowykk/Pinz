@@ -22,7 +22,7 @@ const (
 	reasonSessionStale  = "SESSION_STALE"  // устаревший session_id → 410 Gone
 	reasonWrongStatus   = "WRONG_STATUS"   // неподходящий trip.status → 412
 	reasonNotInitiator  = "NOT_INITIATOR"  // мутация не-ведущим до истечения часа → 403
-	reasonLimitExceeded = "LIMIT_EXCEEDED" // ТЗ 4.1.2 (500 медиа, 50 видео) → 422
+	reasonLimitExceeded = "LIMIT_EXCEEDED" // 500 медиа / 50 видео → 422
 )
 
 func parseInt(s string) (int, error) {
@@ -115,7 +115,7 @@ var reasonToHTTPStatus = map[string]int{
 	reasonLimitExceeded: http.StatusUnprocessableEntity, // 422
 }
 
-// extractErrorInfo достаёт первый ErrorInfo из gRPC status.Details().
+// extractErrorInfo достаёт первый ErrorInfo из gRPC status.Details.
 // Возвращает ("", nil), если ErrorInfo не прикреплён.
 func extractErrorInfo(st *status.Status) (reason string, metadata map[string]string) {
 	for _, d := range st.Details() {

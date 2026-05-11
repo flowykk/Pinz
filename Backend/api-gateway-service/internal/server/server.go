@@ -95,14 +95,14 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Get("/visited-locations", deps.StatisticsHandler.GetProfileVisitedLocations)
 				r.Post("/device-tokens", deps.NotificationHandler.RegisterDeviceToken)
 				r.Delete("/device-tokens", deps.NotificationHandler.UnregisterDeviceToken)
-				// Желаемые места (ТЗ 1.13).
+				// Желаемые места.
 				r.Get("/desired-places", deps.AuthHandler.ListDesiredPlaces)
 				r.Post("/desired-places", deps.AuthHandler.CreateDesiredPlace)
 				r.Post("/desired-places/upload-url", deps.AuthHandler.RequestDesiredPlaceImageUpload)
 				r.Patch("/desired-places/{place_id}", deps.AuthHandler.UpdateDesiredPlace)
 				r.Delete("/desired-places/{place_id}", deps.AuthHandler.DeleteDesiredPlace)
 				r.Delete("/desired-places/{place_id}/image", deps.AuthHandler.DeleteDesiredPlaceImage)
-				// Публичный профиль другого пользователя (ТЗ 1.7.2): username, avatar,
+				// Публичный профиль другого пользователя: username, avatar,
 				// created_at + wishlist. Регистрируется здесь, а не в отдельном /users,
 				// чтобы клиент работал с одним префиксом /profile для всех профилей.
 				r.Get("/{id}", deps.AuthHandler.GetPublicUserProfile)
@@ -127,7 +127,7 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Post("/{id}/cover/confirm", deps.TripHandler.ConfirmTripCoverUpload)
 				r.Delete("/{id}/cover", deps.TripHandler.DeleteTripCover)
 				r.Patch("/{id}/settings", deps.TripHandler.UpdateTripSettings)
-				// per-user приватность (ТЗ 6.4-6.7).
+				// per-user приватность.
 				r.Put("/{id}/privacy", deps.TripHandler.UpdateTripPrivacy)
 				r.Put("/{id}/pins/{pin_id}/privacy", deps.TripHandler.UpdatePinPrivacy)
 				r.Put("/{id}/media/{media_id}/privacy", deps.TripHandler.UpdateMediaPrivacy)
@@ -139,7 +139,7 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Post("/{id}/favourite", deps.TripHandler.AddToFavourites)
 				r.Delete("/{id}/favourite", deps.TripHandler.RemoveFromFavourites)
 				r.Delete("/{id}/participants/{user_id}", deps.TripHandler.RemoveParticipant)
-				// кооперативное добавление медиа в READY-трип (ТЗ 5.1-5.3).
+				// кооперативное добавление медиа в READY-трип.
 				r.Post("/{id}/media/add/start", deps.TripHandler.AddMediaStart)
 				r.Post("/{id}/media/add/request-upload-urls", deps.TripHandler.AddMediaRequestUploadUrls)
 				r.Post("/{id}/media/add/commit-upload", deps.TripHandler.AddMediaCommitUpload)
@@ -151,11 +151,11 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Post("/{id}/media/add/confirm", deps.TripHandler.AddMediaConfirm)
 				r.Post("/{id}/media/add/cancel", deps.TripHandler.AddMediaCancel)
 				r.Post("/{id}/media/add/takeover", deps.TripHandler.AddMediaTakeover)
-				// фотобатлы и лучшие воспоминания (ТЗ 8).
+				// фотобатлы и лучшие воспоминания.
 				r.Post("/{id}/battles", deps.TripHandler.StartBattle)
 				r.Post("/{id}/battles/{battle_id}/result", deps.TripHandler.SubmitBattleResult)
 				r.Get("/{id}/best-memories", deps.TripHandler.GetBestMemories)
-				// Pin RUD + add/remove media (ТЗ 4.2-4.5)
+				// Pin RUD + add/remove media
 				r.Get("/{id}/pins/{pin_id}", deps.TripHandler.GetPin)
 				r.Patch("/{id}/pins/{pin_id}", deps.TripHandler.UpdatePin)
 				r.Delete("/{id}/pins/{pin_id}", deps.TripHandler.DeletePin)
@@ -176,7 +176,7 @@ func NewServer(deps *di.Dependencies) *Server {
 				r.Get("/", deps.TripHandler.ListFeed)
 			})
 
-			// рекомендательная система (ТЗ 9): карта популярных мест по городу/стране.
+			// рекомендательная система: карта популярных мест по городу/стране.
 			r.Route("/recommendations", func(r chi.Router) {
 				r.Use(middleware.RequireJWT)
 				r.Get("/", deps.TripHandler.GetRecommendations)

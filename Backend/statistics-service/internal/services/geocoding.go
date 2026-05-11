@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"pinz/backend/statistics-service/internal/metrics"
 )
 
 // GeocodingClient — клиент BigDataCloud Reverse Geocoding API.
-// Statistics-service единственный владелец интеграции (vkr.txt §2.4.6.3, §2.5.4):
+// Statistics-service единственный владелец интеграции:
 // trip-service отправляет события PIN_LOCATIONS_REQUESTED, statistics резолвит
 // координаты и возвращает результат событием PIN_LOCATIONS_RESOLVED.
 type GeocodingClient struct {
@@ -71,8 +73,14 @@ func (c *GeocodingClient) ResolveLocation(ctx context.Context, lat, lon float64)
 		return "", "", "", nil
 	}
 
+	start := time.Now()
+	defer func() {
+		metrics.ObserveGeocodingDuration(ctx, time.Since(start).Seconds(), labelFromErr(err, displayName))
+	}()
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL, nil)
 	if err != nil {
+		metrics.Geocoding(ctx, "request_error")
 		return "", "", "", err
 	}
 
@@ -87,16 +95,19 @@ func (c *GeocodingClient) ResolveLocation(ctx context.Context, lat, lon float64)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		metrics.Geocoding(ctx, "transport_error")
 		return "", "", "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		metrics.Geocoding(ctx, fmt.Sprintf("status_%d", resp.StatusCode))
 		return "", "", "", fmt.Errorf("geocoding: status %d", resp.StatusCode)
 	}
 
 	var body geocodingResponse
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		metrics.Geocoding(ctx, "decode_error")
 		return "", "", "", err
 	}
 
@@ -119,7 +130,22 @@ func (c *GeocodingClient) ResolveLocation(ctx context.Context, lat, lon float64)
 		name = country
 	}
 
+	if name == "" {
+		metrics.Geocoding(ctx, "empty")
+	} else {
+		metrics.Geocoding(ctx, "resolved")
+	}
 	return country, city, name, nil
+}
+
+func labelFromErr(err error, name string) string {
+	if err != nil {
+		return "error"
+	}
+	if name == "" {
+		return "empty"
+	}
+	return "resolved"
 }
 
 // LocationResolver описывает интерфейс geocoder для подстановки моков в тестах.

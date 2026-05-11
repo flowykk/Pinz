@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/repositories"
 	pb "pinz/backend/trip-service/pkg/proto"
@@ -159,6 +160,7 @@ func (s *TripService) finalizePinUploadCreation(
 			return nil, status.Error(codes.Internal, "failed to close session")
 		}
 	}
+	metrics.PinUploadSession(ctx, "finalize", "creation")
 
 	pin, err := s.pinRepo.GetByID(pin.ID)
 	if err != nil {
@@ -220,6 +222,7 @@ func (s *TripService) finalizePinUploadAddition(
 			return nil, status.Error(codes.Internal, "failed to close session")
 		}
 	}
+	metrics.PinUploadSession(ctx, "finalize", "addition")
 
 	mediaList, _ := s.mediaRepo.ListByPinID(pinID)
 	tags, _ := s.tagRepo.GetByPinID(pinID)

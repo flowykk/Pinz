@@ -29,10 +29,9 @@ func NewStatisticsHandler(stats StatisticsClient, trip StatsTripClient) *Statist
 	return &StatisticsHandler{stats: stats, trip: trip}
 }
 
-// GetProfileStats — собирает профильную статистику (ТЗ 10.2):
-// - total_trips = len(summaries), total_pins/total_media = суммы по трипам
-// - total_likes/total_dislikes/battles_finished — из statistics-service
-//
+// GetProfileStats — собирает профильную статистику:
+// total_trips = len(summaries), total_pins/total_media = суммы по трипам
+// total_likes/total_dislikes/battles_finished — из statistics-service
 // @Summary Get current user's stats
 // @Description Returns counters (trips, pins, media, likes, dislikes, battles) for authenticated user.
 // @Tags statistics
@@ -74,10 +73,9 @@ func (h *StatisticsHandler) GetProfileStats(w http.ResponseWriter, r *http.Reque
 	respondJSON(w, http.StatusOK, out)
 }
 
-// GetProfileVisitedLocations — ТЗ 10.1: посещённые страны/города пользователя.
+// GetProfileVisitedLocations — посещённые страны/города пользователя.
 // Реализация: получает список trip_ids из trip-service (включая те, что появились после
 // поздних join'ов) и агрегирует mirror в statistics-service.
-//
 // @Summary Get current user's visited locations
 // @Description Returns countries/cities where the user had trips. Optional ?type=Country|City.
 // @Tags statistics

@@ -70,7 +70,7 @@ func (h *AuthHandler) VerifyEmailCode(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary Begin passkey registration (step 1 of 2)
-// @Description Returns PublicKeyCredentialCreationOptions (options_json) to pass to navigator.credentials.create(). Call after email verification.
+// @Description Returns PublicKeyCredentialCreationOptions (options_json) to pass to navigator.credentials.create. Call after email verification.
 // @Tags auth
 // @Accept json
 // @Produce json
@@ -126,7 +126,7 @@ func (h *AuthHandler) PasskeyRegisterFinish(w http.ResponseWriter, r *http.Reque
 }
 
 // @Summary Begin passkey login (step 1 of 2)
-// @Description Returns PublicKeyCredentialRequestOptions (options_json) to pass to navigator.credentials.get(). Call after /auth/email confirms is_registered=true.
+// @Description Returns PublicKeyCredentialRequestOptions (options_json) to pass to navigator.credentials.get. Call after /auth/email confirms is_registered=true.
 // @Tags auth
 // @Accept json
 // @Produce json

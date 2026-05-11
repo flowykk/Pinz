@@ -100,8 +100,7 @@ func runOnce(ctx context.Context, d Deps, now time.Time) {
 	slog.InfoContext(ctx, "scheduler: run finished")
 }
 
-// buildAnniversaryBody — текст по ТЗ 11.3.1: «Вспомните, как это было:
-// (год/ 2 года/ 5 лет) назад вы посетили [Название]».
+// buildAnniversaryBody — текст пуша годовщины посещения трипа.
 func buildAnniversaryBody(t *pb.NotificationTrip) string {
 	years := t.GetYearsElapsed()
 	if years <= 0 {

@@ -72,7 +72,7 @@ type GeoRequestPin struct {
 type TripEventPublisher interface {
 	PublishTripEvent(ctx context.Context, eventType string, tripID, userID string) error
 	AddMLTask(ctx context.Context, tripID string) error
-	// add-media flow: помечает контекст трипа, чтобы worker пропустил авто-теги для существующих пинов (ТЗ 5.3.4).
+	// add-media flow: помечает контекст трипа, чтобы worker пропустил авто-теги для существующих пинов.
 	SetMLContext(ctx context.Context, tripID, flow string, newPinIDs []string, ttl time.Duration) error
 	AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error
 	// statistics-service consumer — публикация в pinz:stats:events (LIKE/DISLIKE/TRIP_DELETED/BATTLE_FINISHED).
@@ -80,7 +80,7 @@ type TripEventPublisher interface {
 	// PublishGeoRequest публикует PIN_LOCATIONS_REQUESTED — обратное направление
 	// репликации: statistics-service вызовет BigDataCloud, заполнит master
 	// geo_registry/trip_locations и пришлёт PIN_LOCATIONS_RESOLVED обратно
-	// в pinz:trip:geo_events. См. vkr.txt §2.5.4.
+	// в pinz:trip:geo_events.
 	PublishGeoRequest(ctx context.Context, tripID string, pins []GeoRequestPin) error
 	PublishTripEventWS(ctx context.Context, tripID string, eventType string, payload map[string]interface{}) error
 	// DeleteTripEventStream удаляет per-trip WS-stream (вызывается из DeleteTrip).
@@ -107,7 +107,7 @@ type MediaRepositoryInterface interface {
 	DeleteByIDs(ids []string) error
 	// удалить неприкреплённые медиа текущей add-media сессии.
 	DeleteOrphanSessionMedia(tripID string, existingMediaIDs []string) ([]string, error)
-	// DeleteByPinID — full delete пина (ТЗ 4.5.1): удаляет все media пина и
+	// DeleteByPinID — full delete пина: удаляет все media пина и
 	// возвращает s3_keys для S3 cleanup.
 	DeleteByPinID(pinID string) ([]string, error)
 	// ListByUploadSession — media унифицированной pin-upload сессии (pin_id=NULL,
@@ -128,7 +128,7 @@ type MediaRepositoryInterface interface {
 	SetPrivacyLevel(mediaID, level string) error
 }
 
-// MediaBattleRepositoryInterface — сессии фотобатла (ТЗ 8.1).
+// MediaBattleRepositoryInterface — сессии фотобатла.
 type MediaBattleRepositoryInterface interface {
 	Create(b *models.MediaBattle) error
 	GetByID(id string) (*models.MediaBattle, error)
@@ -140,7 +140,7 @@ type PinRepositoryInterface interface {
 	GetByID(id string) (*models.Pin, error)
 	ListByTripID(tripID string) ([]*models.Pin, error)
 	// ListByTripIDExcludingHidden — список пинов за вычетом скрытых для userID
-	// через pin_hidden_by_user (ТЗ 4.5.2 soft-delete-for-self).
+	// через pin_hidden_by_user.
 	ListByTripIDExcludingHidden(tripID, userID string) ([]*models.Pin, error)
 	Update(p *models.Pin) error
 	Delete(id string) error
@@ -151,14 +151,14 @@ type PinRepositoryInterface interface {
 	IncMediaCount(pinID string, delta int) error
 	ListPublishedPinsByTripIDs(tripIDs []string) (map[string][]*FeedPin, error)
 	SearchByUserID(userID, query string, limit, offset int32) ([]*models.Pin, error)
-	// ListRecommendationCandidates — выборка кандидатов для рекомендательной системы (ТЗ 9):
+	// ListRecommendationCandidates — выборка кандидатов для рекомендательной системы:
 	// топ-50 опубликованных трипов региона за 2 года, их пины с координатами и
 	// cluster_id из ST_ClusterDBSCAN (партиция по category, eps в метрах).
 	ListRecommendationCandidates(locationID int, epsMeters float64, tripCategory, tripSeason string) ([]*RecommendationPinCandidate, error)
 	GetByIDs(ids []string) ([]*models.Pin, error)
 }
 
-// PinHiddenRepositoryInterface — управление soft-delete-for-self записями (ТЗ 4.5.2).
+// PinHiddenRepositoryInterface — управление soft-delete-for-self записями.
 type PinHiddenRepositoryInterface interface {
 	HidePinForUser(pinID, userID string) error
 	ListHiddenPinIDsForUser(tripID, userID string) ([]string, error)
@@ -212,7 +212,7 @@ type GeoRegistryRepositoryInterface interface {
 	// UpsertTripLocations пишет факт «trip T содержит локацию L» в локальную
 	// реплику trip_locations (нужно для read-heavy фильтрации ленты).
 	UpsertTripLocations(ctx context.Context, tripID string, locationIDs []int) error
-	// Используется рекомендательной системой (ТЗ 9): резолв страны/города по точному имени.
+	// Используется рекомендательной системой: резолв страны/города по точному имени.
 	FindCountryByName(ctx context.Context, name string) (int, error)
 	FindCityByName(ctx context.Context, name string) (int, error)
 	GetLocations(ctx context.Context, ids []int) ([]GeoLocation, error)

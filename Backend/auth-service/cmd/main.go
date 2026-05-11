@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
+	"go.opentelemetry.io/otel"
 
 	"pinz/backend/auth-service/internal/db"
 	"pinz/backend/auth-service/internal/di"
@@ -46,6 +47,9 @@ func main() {
 		os.Exit(1)
 	}
 	defer sqlDB.Close()
+	if err := pinzotel.RegisterDBPoolMetrics(otel.Meter("auth-service"), sqlDB, "pinz_db"); err != nil {
+		slog.Warn("db pool metrics registration failed", "error", err)
+	}
 
 	redisClient, err := repositories.InitRedisClient()
 	if err != nil {

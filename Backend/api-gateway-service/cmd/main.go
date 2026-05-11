@@ -20,6 +20,7 @@ import (
 	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
 
 	"pinz/backend/api-gateway-service/internal/di"
+	"pinz/backend/api-gateway-service/internal/metrics"
 	"pinz/backend/api-gateway-service/internal/server"
 	pinzotel "pinz/backend/pkg/otel"
 
@@ -50,6 +51,7 @@ func main() {
 		); err != nil {
 			slog.Warn("runtime metrics start failed", "error", err)
 		}
+		metrics.Init()
 	}
 
 	deps, err := di.BuildDependencies()

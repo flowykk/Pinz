@@ -9,6 +9,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/services"
@@ -114,13 +115,21 @@ func processPinUploadMessage(ctx context.Context, msg redis.XMessage, deps PinUp
 	targetPinID, _ := msg.Values["target_pin_id"].(string)
 	if sessionID == "" || tripID == "" {
 		slog.WarnContext(ctx, "pin_upload_consumer: malformed message", "values", msg.Values)
+		metrics.StreamConsumed(ctx, pinUploadTasksStream, pinUploadConsumerGroup, "pin_upload_task", "malformed")
 		return
 	}
+	start := time.Now()
+	result := "success"
 	defer func() {
 		if r := recover(); r != nil {
 			slog.ErrorContext(ctx, "pin_upload_consumer: panic in handler",
 				"session_id", sessionID, "trip_id", tripID, "panic", r)
+			metrics.Panic(ctx, "pin_upload_consumer")
+			result = "panic"
 		}
+		metrics.StreamConsumed(ctx, pinUploadTasksStream, pinUploadConsumerGroup, "pin_upload_task", result)
+		metrics.ObserveStreamConsumeDuration(ctx, time.Since(start).Seconds(), pinUploadTasksStream, pinUploadConsumerGroup)
+		metrics.ObservePinUploadDuration(ctx, time.Since(start).Seconds(), result)
 	}()
 	slog.InfoContext(ctx, "pin_upload_consumer: got task",
 		"session_id", sessionID, "trip_id", tripID, "message_id", msg.ID)
@@ -141,12 +150,21 @@ func processPinUploadMessage(ctx context.Context, msg redis.XMessage, deps PinUp
 				slog.WarnContext(ctx, "pin_upload_consumer: fallback transition failed",
 					"session_id", sessionID, "error", ferr)
 			}
+			result = "fallback_failed"
 		} else {
 			transitioned = true
+			result = "fallback"
+			metrics.PinUploadSession(ctx, "process", "fallback")
 		}
 	}
 	if !transitioned {
+		if result == "success" {
+			result = "no_transition"
+		}
 		return
+	}
+	if result == "success" {
+		metrics.PinUploadSession(ctx, "process", "success")
 	}
 	if deps.EventRepo != nil {
 		payload := map[string]interface{}{

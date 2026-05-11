@@ -12,12 +12,14 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
+	"go.opentelemetry.io/otel"
 
 	pinzotel "pinz/backend/pkg/otel"
 	"pinz/backend/notification-service/internal/apns"
 	"pinz/backend/notification-service/internal/db"
 	"pinz/backend/notification-service/internal/di"
 	"pinz/backend/notification-service/internal/email"
+	"pinz/backend/notification-service/internal/metrics"
 	"pinz/backend/notification-service/internal/repositories"
 	"pinz/backend/notification-service/internal/scheduler"
 	"pinz/backend/notification-service/internal/server"
@@ -49,6 +51,7 @@ func main() {
 			); err != nil {
 				slog.Warn("runtime metrics start failed", "error", err)
 			}
+			metrics.Init()
 		}
 	}
 
@@ -60,6 +63,9 @@ func main() {
 	}
 	defer sqlDB.Close()
 	slog.Info("database ready")
+	if err := pinzotel.RegisterDBPoolMetrics(otel.Meter("notification-service"), sqlDB, "pinz_notifications"); err != nil {
+		slog.Warn("db pool metrics registration failed", "error", err)
+	}
 
 	var redisClient *redis.Client
 	if rc, err := repositories.InitRedisClient(); err != nil {
@@ -67,6 +73,12 @@ func main() {
 	} else if rc != nil {
 		redisClient = rc
 		defer redisClient.Close()
+		if err := pinzotel.RegisterStreamMetrics(otel.Meter("notification-service"), repositories.StreamQueryer{Client: redisClient}, []pinzotel.StreamSpec{
+			{Stream: worker.EmailStream, Groups: []string{"notification-email-worker"}},
+			{Stream: worker.TripEventsStream, Groups: []string{"notification-service-trip"}},
+		}); err != nil {
+			slog.Warn("stream metrics registration failed", "error", err)
+		}
 	}
 
 	apnsClient, err := apns.NewClientFromEnv()

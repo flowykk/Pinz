@@ -9,15 +9,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/server"
 	pb "pinz/backend/trip-service/pkg/proto"
 )
 
-// battleSize — число медиа в одном батле (ТЗ 8.1.1).
+// battleSize — число медиа в одном батле.
 const battleSize = 8
 
-// StartBattle — ТЗ 8.1.1: случайно выбирает 8 медиа трипа и создаёт сессию батла.
+// StartBattle — случайно выбирает 8 медиа трипа и создаёт сессию батла.
 // Клиент проводит турнир 4→2→1 локально и присылает финального победителя в SubmitBattleResult.
 func (s *TripService) StartBattle(ctx context.Context, req *pb.StartBattleRequest) (*pb.StartBattleResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -39,7 +40,7 @@ func (s *TripService) StartBattle(ctx context.Context, req *pb.StartBattleReques
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to count media")
 	}
-	// ТЗ 8.1.9: при < 8 медиа фотобатл недоступен.
+	// при < 8 медиа фотобатл недоступен.
 	if total < battleSize {
 		return nil, status.Errorf(codes.FailedPrecondition, "need at least %d media to start a battle", battleSize)
 	}
@@ -47,8 +48,8 @@ func (s *TripService) StartBattle(ctx context.Context, req *pb.StartBattleReques
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to pick media")
 	}
-	// Фильтр Restricted мог уронить выборку ниже порога: в таком случае пользовательских
-	// доступных медиа реально < 8 — трактуем как то же условие 8.1.9.
+	// Фильтр Restricted мог уронить выборку ниже порога — трактуем как ту же
+	// нехватку медиа.
 	if len(picked) < battleSize {
 		return nil, status.Errorf(codes.FailedPrecondition, "need at least %d available media to start a battle", battleSize)
 	}
@@ -60,6 +61,7 @@ func (s *TripService) StartBattle(ctx context.Context, req *pb.StartBattleReques
 	if err := s.battleRepo.Create(battle); err != nil {
 		return nil, status.Error(codes.Internal, "failed to create battle")
 	}
+	metrics.Battle(ctx, "started")
 	outMedia := make([]*pb.BattleMedia, 0, len(picked))
 	for _, m := range picked {
 		outMedia = append(outMedia, &pb.BattleMedia{
@@ -71,7 +73,7 @@ func (s *TripService) StartBattle(ctx context.Context, req *pb.StartBattleReques
 	return &pb.StartBattleResponse{BattleId: battle.ID, Media: outMedia}, nil
 }
 
-// SubmitBattleResult — ТЗ 8.1.7-8.1.8: фиксирует финального победителя и инкрементит его battle_rating.
+// SubmitBattleResult — фиксирует финального победителя и инкрементит его battle_rating.
 // Идемпотентная защита: если батл уже завершён — возвращает FailedPrecondition, повторный +1 невозможен.
 func (s *TripService) SubmitBattleResult(ctx context.Context, req *pb.SubmitBattleResultRequest) (*pb.SubmitBattleResultResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
@@ -99,7 +101,7 @@ func (s *TripService) SubmitBattleResult(ctx context.Context, req *pb.SubmitBatt
 	if !slices.Contains(battle.MediaIDs, winnerID) {
 		return nil, status.Error(codes.InvalidArgument, "winner_media_id is not part of this battle")
 	}
-	// Сначала закрываем сессию: SetWinner атомарно переводит finished_at с NULL на NOW() и защищает от гонок
+	// Сначала закрываем сессию: SetWinner атомарно переводит finished_at с NULL на NOW и защищает от гонок
 	// (два параллельных SubmitBattleResult не смогут оба получить RowsAffected>0 — второй вернёт ErrNoRows).
 	if err := s.battleRepo.SetWinner(battleID, winnerID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -111,11 +113,12 @@ func (s *TripService) SubmitBattleResult(ctx context.Context, req *pb.SubmitBatt
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to update battle rating")
 	}
+	metrics.Battle(ctx, "finished")
 	return &pb.SubmitBattleResultResponse{NewBattleRating: rating}, nil
 }
 
-// GetBestMemories — ТЗ 8.2: медиа трипа с battle_rating > 0, отсортированные по убыванию рейтинга (story-mode).
-// Если в трипе нет таких медиа — возвращается пустой массив; решение показывать режим принимает клиент (ТЗ 8.2.3).
+// GetBestMemories — медиа трипа с battle_rating > 0, отсортированные по убыванию рейтинга (story-mode).
+// Если в трипе нет таких медиа — возвращается пустой массив; решение показывать режим принимает клиент.
 func (s *TripService) GetBestMemories(ctx context.Context, req *pb.GetBestMemoriesRequest) (*pb.GetBestMemoriesResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {

@@ -49,7 +49,7 @@ type Tag struct {
 	Tag string
 }
 
-// MediaBattle — сессия фотобатла (ТЗ 8.1). MediaIDs — 8 случайных медиа, WinnerMediaID заполняется на SubmitBattleResult.
+// MediaBattle — сессия фотобатла. MediaIDs — 8 случайных медиа, WinnerMediaID заполняется на SubmitBattleResult.
 type MediaBattle struct {
 	ID string
 	TripID string

@@ -165,7 +165,7 @@ const docTemplate = `{
         },
         "/api/v1/auth/passkey/login/begin": {
             "post": {
-                "description": "Returns PublicKeyCredentialRequestOptions (options_json) to pass to navigator.credentials.get(). Call after /auth/email confirms is_registered=true.",
+                "description": "Returns PublicKeyCredentialRequestOptions (options_json) to pass to navigator.credentials.get. Call after /auth/email confirms is_registered=true.",
                 "consumes": [
                     "application/json"
                 ],
@@ -269,7 +269,7 @@ const docTemplate = `{
         },
         "/api/v1/auth/passkey/register/begin": {
             "post": {
-                "description": "Returns PublicKeyCredentialCreationOptions (options_json) to pass to navigator.credentials.create(). Call after email verification.",
+                "description": "Returns PublicKeyCredentialCreationOptions (options_json) to pass to navigator.credentials.create. Call after email verification.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1599,13 +1599,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "trip category filter (ТЗ 9.2.2 → 7.9.1)",
+                        "description": "trip category filter ",
                         "name": "category",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "trip season filter (ТЗ 9.2.2 → 7.9.2)",
+                        "description": "trip season filter ",
                         "name": "season",
                         "in": "query"
                     }
@@ -2083,7 +2083,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns a single trip by ID with pins and media in each pin. Requires JWT.\nДоступ: участник трипа или владелец трипа в избранных получает полный ответ с participants/current_user_settings.\nЛюбой залогиненный пользователь может открыть опубликованный трип по share-ссылке (ТЗ 3.4); в этом случае возвращаются только публичные пины (выбранные при публикации) с публичными медиа, без participants/settings.\nЕсли трип не опубликован, а пользователь не участник и не имеет трип в избранных — 403.",
+                "description": "Returns a single trip by ID with pins and media in each pin. Requires JWT.\nДоступ: участник трипа или владелец трипа в избранных получает полный ответ с participants/current_user_settings.\nЛюбой залогиненный пользователь может открыть опубликованный трип по share-ссылке; в этом случае возвращаются только публичные пины (выбранные при публикации) с публичными медиа, без participants/settings.\nЕсли трип не опубликован, а пользователь не участник и не имеет трип в избранных — 403.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2198,7 +2198,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates trip metadata (name, description, category, season, dates). Requires JWT. Any trip participant can update (ТЗ 3.2). Обложка — через /cover/upload + /cover/confirm. Приватность — через PUT /trips/{id}/privacy (per-user, ТЗ 6.4-6.7).",
+                "description": "Updates trip metadata (name, description, category, season, dates). Requires JWT. Any trip participant can update. Обложка — через /cover/upload + /cover/confirm. Приватность — через PUT /trips/{id}/privacy (per-user).",
                 "consumes": [
                     "application/json"
                 ],
@@ -2274,7 +2274,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Picks 8 random media from the trip and starts a battle session. Returns 412 if the trip has fewer than 8 available media (ТЗ 8.1.9).",
+                "description": "Picks 8 random media from the trip and starts a battle session. Returns 412 if the trip has fewer than 8 available media.",
                 "produces": [
                     "application/json"
                 ],
@@ -2415,7 +2415,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns media of the trip with battle_rating \u003e 0, sorted by rating DESC. Empty array when the trip has no winners yet (ТЗ 8.2.3).",
+                "description": "Returns media of the trip with battle_rating \u003e 0, sorted by rating DESC. Empty array when the trip has no winners yet.",
                 "produces": [
                     "application/json"
                 ],
@@ -3433,7 +3433,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Текущий пользователь выставляет свой уровень приватности на медиа (ТЗ 6.4.3 / 5.2). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.",
+                "description": "Текущий пользователь выставляет свой уровень приватности на медиа. Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается в ответе. Только участник трипа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4138,7 +4138,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Получить пин со всеми полями (ТЗ 4.3). Доступ — participant трипа или favourite-юзер. Если пин скрыт для caller'а через pin_hidden_by_user (soft-delete-for-self, ТЗ 4.5.2) — 404.",
+                "description": "Получить пин со всеми полями. Доступ — participant трипа или favourite-юзер. Если пин скрыт для caller'а через pin_hidden_by_user (soft-delete-for-self) — 404.",
                 "produces": [
                     "application/json"
                 ],
@@ -4201,7 +4201,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Удаление пина. Если трип в избранном у других пользователей — soft-delete-for-self через pin_hidden_by_user (ТЗ 4.5.2); иначе full delete с каскадом media и S3 cleanup (ТЗ 4.5.1). Любой participant. Защита: запрет при активной pin_media_addition_session.",
+                "description": "Удаление пина. Если трип в избранном у других пользователей — soft-delete-for-self через pin_hidden_by_user; иначе full delete с каскадом media и S3 cleanup. Любой participant. Защита: запрет при активной pin_media_addition_session.",
                 "produces": [
                     "application/json"
                 ],
@@ -4359,7 +4359,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Sessionless удаление одного медиа из пина с пересчётом агрегатов и S3 cleanup. Защита: пин не может остаться пустым (ТЗ 2.2.9).",
+                "description": "Sessionless удаление одного медиа из пина с пересчётом агрегатов и S3 cleanup. Защита: пин не может остаться пустым.",
                 "produces": [
                     "application/json"
                 ],
@@ -4437,7 +4437,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Текущий пользователь выставляет свой уровень приватности на пине (ТЗ 6.4.2 / 4.2.10). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.",
+                "description": "Текущий пользователь выставляет свой уровень приватности на пине. Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается в ответе. Только участник трипа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4526,7 +4526,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Текущий пользователь выставляет свой уровень приватности на путешествии (ТЗ 6.4.1). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.",
+                "description": "Текущий пользователь выставляет свой уровень приватности на путешествии. Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается в ответе. Только участник трипа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6578,7 +6578,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "share_url": {
-                    "description": "ShareURL — universal-link на просмотр трипа (ТЗ 3.4): копирование и\nотправка во внешние мессенджеры. Формируется gateway по env\nTRIP_SHARE_LINK_BASE; пустой, если переменная не задана.",
+                    "description": "ShareURL — universal-link на просмотр трипа: копирование и\nотправка во внешние мессенджеры. Формируется gateway по env\nTRIP_SHARE_LINK_BASE; пустой, если переменная не задана.",
                     "type": "string"
                 },
                 "start_date_unix": {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"pinz/backend/statistics-service/internal/metrics"
 	"pinz/backend/statistics-service/internal/models"
 	"pinz/backend/statistics-service/internal/repositories"
 	"pinz/backend/statistics-service/internal/services"
@@ -80,11 +81,16 @@ func Run(ctx context.Context, d Deps) error {
 
 		for _, stream := range streams {
 			for _, msg := range stream.Messages {
+				start := time.Now()
+				eventType, _ := msg.Values["event_type"].(string)
 				if err := handleMessage(ctx, d, msg); err != nil {
 					slog.WarnContext(ctx, "worker: handle failed, skipping ack",
 						"msg_id", msg.ID, "error", err)
+					metrics.StreamConsumed(ctx, StreamName, consumerGroup, eventType, "error")
 					continue
 				}
+				metrics.StreamConsumed(ctx, StreamName, consumerGroup, eventType, "success")
+				metrics.ObserveStreamConsumeDuration(ctx, time.Since(start).Seconds(), StreamName, consumerGroup)
 				if err := d.Redis.XAck(ctx, stream.Stream, consumerGroup, msg.ID).Err(); err != nil {
 					slog.WarnContext(ctx, "worker: XAck failed", "msg_id", msg.ID, "error", err)
 				}
@@ -170,7 +176,6 @@ func applyIncrement(ctx context.Context, inc func(context.Context, string, int32
 // handlePinLocationsRequested резолвит координаты пинов трипа через BigDataCloud,
 // upsert'ит master geo_registry + trip_locations и публикует ответ
 // PIN_LOCATIONS_RESOLVED в pinz:trip:geo_events для trip-service.
-//
 // Геокодинг — некритичный путь: ошибка на одной точке логируется warning'ом
 // и не валит обработку остальных. Если ни одна точка не разрешилась — событие
 // считается обработанным, ничего не публикуем (trip-service оставит location_name

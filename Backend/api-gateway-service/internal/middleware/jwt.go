@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+
+	"pinz/backend/api-gateway-service/internal/metrics"
 )
 
 type contextKey string
@@ -25,16 +27,19 @@ func RequireJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" || !strings.HasPrefix(strings.TrimSpace(auth), "Bearer ") {
+			metrics.JWTFailure(r.Context(), "missing")
 			respondUnauthorized(w)
 			return
 		}
 		tokenStr := strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
 		if tokenStr == "" {
+			metrics.JWTFailure(r.Context(), "empty")
 			respondUnauthorized(w)
 			return
 		}
 		secret := os.Getenv("JWT_SECRET_KEY")
 		if secret == "" {
+			metrics.JWTFailure(r.Context(), "no_secret")
 			http.Error(w, `{"error":"server misconfiguration"}`, http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "application/json")
 			return
@@ -46,22 +51,40 @@ func RequireJWT(next http.Handler) http.Handler {
 			return []byte(secret), nil
 		})
 		if err != nil || !token.Valid {
+			metrics.JWTFailure(r.Context(), classifyJWTErr(err))
 			respondUnauthorized(w)
 			return
 		}
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
+			metrics.JWTFailure(r.Context(), "claims_type")
 			respondUnauthorized(w)
 			return
 		}
 		userID, _ := claims["user_id"].(string)
 		if userID == "" {
+			metrics.JWTFailure(r.Context(), "no_user_id")
 			respondUnauthorized(w)
 			return
 		}
 		ctx := context.WithValue(r.Context(), UserIDContextKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func classifyJWTErr(err error) string {
+	if err == nil {
+		return "invalid"
+	}
+	switch {
+	case strings.Contains(err.Error(), "expired"):
+		return "expired"
+	case strings.Contains(err.Error(), "signature"):
+		return "bad_signature"
+	case strings.Contains(err.Error(), "malformed"):
+		return "malformed"
+	}
+	return "invalid"
 }
 
 func respondUnauthorized(w http.ResponseWriter) {

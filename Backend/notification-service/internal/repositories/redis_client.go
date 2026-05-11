@@ -11,7 +11,7 @@ import (
 )
 
 // InitRedisClient возвращает подключённый Redis-клиент или (nil, nil) если
-// REDIS_ADDR/REDIS_URL не заданы (без Redis воркеры не смогут читать стримы —
+// REDIS_ADDR/REDIS_URL не заданы (без Redis воркеры не смогут читать стримы
 // это ок в локальной разработке без инфры).
 func InitRedisClient() (*redis.Client, error) {
 	addr := os.Getenv("REDIS_ADDR")

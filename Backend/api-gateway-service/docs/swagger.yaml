@@ -1239,7 +1239,7 @@ definitions:
         type: string
       share_url:
         description: |-
-          ShareURL — universal-link на просмотр трипа (ТЗ 3.4): копирование и
+          ShareURL — universal-link на просмотр трипа: копирование и
           отправка во внешние мессенджеры. Формируется gateway по env
           TRIP_SHARE_LINK_BASE; пустой, если переменная не задана.
         type: string
@@ -1490,7 +1490,7 @@ paths:
       consumes:
       - application/json
       description: Returns PublicKeyCredentialRequestOptions (options_json) to pass
-        to navigator.credentials.get(). Call after /auth/email confirms is_registered=true.
+        to navigator.credentials.get. Call after /auth/email confirms is_registered=true.
       parameters:
       - description: User email
         in: body
@@ -1560,7 +1560,7 @@ paths:
       consumes:
       - application/json
       description: Returns PublicKeyCredentialCreationOptions (options_json) to pass
-        to navigator.credentials.create(). Call after email verification.
+        to navigator.credentials.create. Call after email verification.
       parameters:
       - description: Registration ID and username
         in: body
@@ -2408,11 +2408,11 @@ paths:
         in: query
         name: country
         type: string
-      - description: trip category filter (ТЗ 9.2.2 → 7.9.1)
+      - description: 'trip category filter '
         in: query
         name: category
         type: string
-      - description: trip season filter (ТЗ 9.2.2 → 7.9.2)
+      - description: 'trip season filter '
         in: query
         name: season
         type: string
@@ -2545,7 +2545,7 @@ paths:
       description: |-
         Returns a single trip by ID with pins and media in each pin. Requires JWT.
         Доступ: участник трипа или владелец трипа в избранных получает полный ответ с participants/current_user_settings.
-        Любой залогиненный пользователь может открыть опубликованный трип по share-ссылке (ТЗ 3.4); в этом случае возвращаются только публичные пины (выбранные при публикации) с публичными медиа, без participants/settings.
+        Любой залогиненный пользователь может открыть опубликованный трип по share-ссылке; в этом случае возвращаются только публичные пины (выбранные при публикации) с публичными медиа, без participants/settings.
         Если трип не опубликован, а пользователь не участник и не имеет трип в избранных — 403.
       parameters:
       - description: Trip ID
@@ -2585,9 +2585,8 @@ paths:
       consumes:
       - application/json
       description: Updates trip metadata (name, description, category, season, dates).
-        Requires JWT. Any trip participant can update (ТЗ 3.2). Обложка — через /cover/upload
-        + /cover/confirm. Приватность — через PUT /trips/{id}/privacy (per-user, ТЗ
-        6.4-6.7).
+        Requires JWT. Any trip participant can update. Обложка — через /cover/upload
+        + /cover/confirm. Приватность — через PUT /trips/{id}/privacy (per-user).
       parameters:
       - description: Trip ID
         in: path
@@ -2635,7 +2634,7 @@ paths:
   /api/v1/trips/{id}/battles:
     post:
       description: Picks 8 random media from the trip and starts a battle session.
-        Returns 412 if the trip has fewer than 8 available media (ТЗ 8.1.9).
+        Returns 412 if the trip has fewer than 8 available media.
       parameters:
       - description: Trip ID
         in: path
@@ -2728,7 +2727,7 @@ paths:
   /api/v1/trips/{id}/best-memories:
     get:
       description: Returns media of the trip with battle_rating > 0, sorted by rating
-        DESC. Empty array when the trip has no winners yet (ТЗ 8.2.3).
+        DESC. Empty array when the trip has no winners yet.
       parameters:
       - description: Trip ID
         in: path
@@ -3059,9 +3058,9 @@ paths:
     put:
       consumes:
       - application/json
-      description: Текущий пользователь выставляет свой уровень приватности на медиа
-        (ТЗ 6.4.3 / 5.2). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel
-        (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+      description: Текущий пользователь выставляет свой уровень приватности на медиа.
+        Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается
+        в ответе. Только участник трипа.
       parameters:
       - description: Trip ID
         in: path
@@ -3838,9 +3837,8 @@ paths:
   /api/v1/trips/{id}/pins/{pin_id}:
     delete:
       description: 'Удаление пина. Если трип в избранном у других пользователей —
-        soft-delete-for-self через pin_hidden_by_user (ТЗ 4.5.2); иначе full delete
-        с каскадом media и S3 cleanup (ТЗ 4.5.1). Любой participant. Защита: запрет
-        при активной pin_media_addition_session.'
+        soft-delete-for-self через pin_hidden_by_user; иначе full delete с каскадом
+        media и S3 cleanup. Любой participant. Защита: запрет при активной pin_media_addition_session.'
       parameters:
       - description: Trip ID
         in: path
@@ -3885,9 +3883,9 @@ paths:
       tags:
       - pins
     get:
-      description: Получить пин со всеми полями (ТЗ 4.3). Доступ — participant трипа
-        или favourite-юзер. Если пин скрыт для caller'а через pin_hidden_by_user (soft-delete-for-self,
-        ТЗ 4.5.2) — 404.
+      description: Получить пин со всеми полями. Доступ — participant трипа или favourite-юзер.
+        Если пин скрыт для caller'а через pin_hidden_by_user (soft-delete-for-self)
+        — 404.
       parameters:
       - description: Trip ID
         in: path
@@ -3988,7 +3986,7 @@ paths:
   /api/v1/trips/{id}/pins/{pin_id}/media/{media_id}:
     delete:
       description: 'Sessionless удаление одного медиа из пина с пересчётом агрегатов
-        и S3 cleanup. Защита: пин не может остаться пустым (ТЗ 2.2.9).'
+        и S3 cleanup. Защита: пин не может остаться пустым.'
       parameters:
       - description: Trip ID
         in: path
@@ -4041,9 +4039,9 @@ paths:
     put:
       consumes:
       - application/json
-      description: Текущий пользователь выставляет свой уровень приватности на пине
-        (ТЗ 6.4.2 / 4.2.10). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel
-        (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+      description: Текущий пользователь выставляет свой уровень приватности на пине.
+        Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается
+        в ответе. Только участник трипа.
       parameters:
       - description: Trip ID
         in: path
@@ -4101,9 +4099,9 @@ paths:
     put:
       consumes:
       - application/json
-      description: Текущий пользователь выставляет свой уровень приватности на путешествии
-        (ТЗ 6.4.1). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel
-        (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+      description: Текущий пользователь выставляет свой уровень приватности на путешествии.
+        Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается
+        в ответе. Только участник трипа.
       parameters:
       - description: Trip ID
         in: path

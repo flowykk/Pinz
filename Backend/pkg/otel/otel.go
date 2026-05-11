@@ -1,11 +1,10 @@
 // Package otel provides a reusable OpenTelemetry initialisation helper for
 // Pinz backend services. All configuration is driven by standard OTel
 // environment variables:
-//
-//	OTEL_EXPORTER_OTLP_ENDPOINT – collector gRPC endpoint (default: localhost:4317)
-//	OTEL_SERVICE_NAME – falls back to the serviceName argument
-//	OTEL_RESOURCE_ATTRIBUTES – extra key=value pairs merged into the resource
-//	OTEL_TRACES_SAMPLER – sampler type (default: parentbased_always_on)
+// OTEL_EXPORTER_OTLP_ENDPOINT – collector gRPC endpoint (default: localhost:4317)
+// OTEL_SERVICE_NAME – falls back to the serviceName argument
+// OTEL_RESOURCE_ATTRIBUTES – extra key=value pairs merged into the resource
+// OTEL_TRACES_SAMPLER – sampler type (default: parentbased_always_on)
 package otel
 
 import (
@@ -39,7 +38,6 @@ type Providers struct {
 // Init initialises TracerProvider, MeterProvider and LoggerProvider with
 // OTLP/gRPC exporters and sets them as the global providers. W3C TraceContext
 // + Baggage propagation is also configured globally.
-//
 // Call Providers.Shutdown in a deferred function inside main to flush
 // in-flight telemetry on process exit.
 func Init(ctx context.Context, serviceName, version string) (*Providers, error) {

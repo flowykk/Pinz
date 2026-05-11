@@ -21,7 +21,7 @@ var _ = responses.ErrorResponse{}
 type TripHandler struct {
 	tripClient        TripClient
 	authEnricher      AuthProfileEnricher
-	// tripShareLinkBase — базовый URL для формирования share-ссылки (ТЗ 3.4):
+	// tripShareLinkBase — базовый URL для формирования share-ссылки:
 	// в ответ Trip пишется "{base}/{id}". Берётся из env TRIP_SHARE_LINK_BASE,
 	// дефолт задаётся в DI. Пустое значение → share_url остаётся пустым.
 	tripShareLinkBase string
@@ -76,7 +76,7 @@ type TripClient interface {
 	UpsertTripPrivacy(ctx context.Context, req *proto.UpsertTripPrivacyRequest) (*proto.UpsertPrivacyResponse, error)
 	UpsertPinPrivacy(ctx context.Context, req *proto.UpsertPinPrivacyRequest) (*proto.UpsertPrivacyResponse, error)
 	UpsertMediaPrivacy(ctx context.Context, req *proto.UpsertMediaPrivacyRequest) (*proto.UpsertPrivacyResponse, error)
-	// Pin RUD (ТЗ 4.2-4.5)
+	// Pin RUD
 	GetPin(ctx context.Context, req *proto.GetPinRequest) (*proto.GetPinResponse, error)
 	UpdatePin(ctx context.Context, req *proto.UpdatePinRequest) (*proto.UpdatePinResponse, error)
 	DeletePin(ctx context.Context, req *proto.DeletePinRequest) (*proto.DeletePinResponse, error)
@@ -190,7 +190,7 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 // @Summary Get trip by ID
 // @Description Returns a single trip by ID with pins and media in each pin. Requires JWT.
 // @Description Доступ: участник трипа или владелец трипа в избранных получает полный ответ с participants/current_user_settings.
-// @Description Любой залогиненный пользователь может открыть опубликованный трип по share-ссылке (ТЗ 3.4); в этом случае возвращаются только публичные пины (выбранные при публикации) с публичными медиа, без participants/settings.
+// @Description Любой залогиненный пользователь может открыть опубликованный трип по share-ссылке; в этом случае возвращаются только публичные пины (выбранные при публикации) с публичными медиа, без participants/settings.
 // @Description Если трип не опубликован, а пользователь не участник и не имеет трип в избранных — 403.
 // @Tags trips
 // @Accept json
@@ -225,7 +225,7 @@ func (h *TripHandler) GetTrip(w http.ResponseWriter, r *http.Request) {
 
 // UpdateTrip updates trip metadata.
 // @Summary Update trip
-// @Description Updates trip metadata (name, description, category, season, dates). Requires JWT. Any trip participant can update (ТЗ 3.2). Обложка — через /cover/upload + /cover/confirm. Приватность — через PUT /trips/{id}/privacy (per-user, ТЗ 6.4-6.7).
+// @Description Updates trip metadata (name, description, category, season, dates). Requires JWT. Any trip participant can update. Обложка — через /cover/upload + /cover/confirm. Приватность — через PUT /trips/{id}/privacy (per-user).
 // @Tags trips
 // @Accept json
 // @Produce json
@@ -811,7 +811,7 @@ func (h *TripHandler) FinalizeTrip(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// PublishTrip публикует трип в общую ленту (ТЗ 3.3).
+// PublishTrip публикует трип в общую ленту.
 // @Summary Publish trip to feed
 // @Tags trips
 // @Accept json
@@ -855,7 +855,7 @@ func (h *TripHandler) PublishTrip(w http.ResponseWriter, r *http.Request) {
 
 // UpdateTripPrivacy sets the caller's per-user privacy level on a trip.
 // @Summary Set per-user trip privacy
-// @Description Текущий пользователь выставляет свой уровень приватности на путешествии (ТЗ 6.4.1). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+// @Description Текущий пользователь выставляет свой уровень приватности на путешествии. Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается в ответе. Только участник трипа.
 // @Tags trips
 // @Accept json
 // @Produce json
@@ -900,7 +900,7 @@ func (h *TripHandler) UpdateTripPrivacy(w http.ResponseWriter, r *http.Request) 
 
 // UpdatePinPrivacy sets the caller's per-user privacy level on a pin.
 // @Summary Set per-user pin privacy
-// @Description Текущий пользователь выставляет свой уровень приватности на пине (ТЗ 6.4.2 / 4.2.10). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+// @Description Текущий пользователь выставляет свой уровень приватности на пине. Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается в ответе. Только участник трипа.
 // @Tags trips
 // @Accept json
 // @Produce json
@@ -948,7 +948,7 @@ func (h *TripHandler) UpdatePinPrivacy(w http.ResponseWriter, r *http.Request) {
 
 // UpdateMediaPrivacy sets the caller's per-user privacy level on a media.
 // @Summary Set per-user media privacy
-// @Description Текущий пользователь выставляет свой уровень приватности на медиа (ТЗ 6.4.3 / 5.2). Эффективный privacy_level пересчитывается по AggregatePrivacyLevel (ТЗ 6.6/6.7) и возвращается в ответе. Только участник трипа.
+// @Description Текущий пользователь выставляет свой уровень приватности на медиа. Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается в ответе. Только участник трипа.
 // @Tags trips
 // @Accept json
 // @Produce json
@@ -994,7 +994,7 @@ func (h *TripHandler) UpdateMediaPrivacy(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, responses.PrivacyResponse{PrivacyLevel: resp.GetEffectivePrivacyLevel()})
 }
 
-// UpdateTripSettings updates notifications for the trip (ТЗ 12.4.1).
+// UpdateTripSettings updates notifications for the trip.
 // @Summary Update trip notification settings
 // @Tags trips
 // @Accept json
@@ -1032,7 +1032,7 @@ func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, responses.TripSettingsResponse{Success: true})
 }
 
-// ListFeed returns published trips for the feed .
+// ListFeed returns published trips for the feed.
 // @Summary List feed
 // @Tags feed
 // @Produce json
@@ -1126,7 +1126,7 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
-// LikeTrip adds a like to the trip .
+// LikeTrip adds a like to the trip.
 // @Summary Like trip
 // @Tags trips
 // @Security BearerAuth
@@ -1153,7 +1153,7 @@ func (h *TripHandler) LikeTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
 }
 
-// DislikeTrip adds a dislike to the trip .
+// DislikeTrip adds a dislike to the trip.
 // @Summary Dislike trip
 // @Tags trips
 // @Security BearerAuth
@@ -1180,7 +1180,7 @@ func (h *TripHandler) DislikeTrip(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
 }
 
-// AddToFavourites adds the trip to user's favourites .
+// AddToFavourites adds the trip to user's favourites.
 // @Summary Add trip to favourites
 // @Tags trips
 // @Security BearerAuth
@@ -1207,7 +1207,7 @@ func (h *TripHandler) AddToFavourites(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.SuccessResponse{Success: true})
 }
 
-// RemoveFromFavourites removes the trip from user's favourites .
+// RemoveFromFavourites removes the trip from user's favourites.
 // @Summary Remove trip from favourites
 // @Tags trips
 // @Security BearerAuth
@@ -1234,7 +1234,7 @@ func (h *TripHandler) RemoveFromFavourites(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// ListFavourites returns the current user's favourite trips .
+// ListFavourites returns the current user's favourite trips.
 // @Summary List favourite trips
 // @Description Returns trips the user has added to favourites. Supports limit and offset query params.
 // @Tags trips
@@ -1276,7 +1276,7 @@ func (h *TripHandler) ListFavourites(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
-// SearchPins searches pins by text query across trips where the authenticated user is a participant .
+// SearchPins searches pins by text query across trips where the authenticated user is a participant.
 // @Summary Search pins by query
 // @Description Text search over pin name, description and tags within trips where the user participates. Requires JWT.
 // @Tags pins
@@ -1503,7 +1503,7 @@ func tripPinProtoToResponse(p *proto.TripPin) responses.TripPin {
 	return pin
 }
 
-// AddMediaStart starts a session for adding media to an existing READY trip (ТЗ 5.3 → 3.8).
+// AddMediaStart starts a session for adding media to an existing READY trip.
 // @Summary [1] Start add-media session
 // @Tags trip-add-media
 // @Accept json
@@ -1558,7 +1558,7 @@ func (h *TripHandler) AddMediaStart(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// AddMediaProcessGrouping clusters new media using existing pins as seeds (ТЗ 5.3.1-5.3.2).
+// AddMediaProcessGrouping clusters new media using existing pins as seeds.
 // @Summary [2] Process grouping for add-media
 // @Tags trip-add-media
 // @Accept json
@@ -1613,7 +1613,7 @@ func (h *TripHandler) AddMediaProcessGrouping(w http.ResponseWriter, r *http.Req
 	})
 }
 
-// AddMediaApplyGroupsAndProcess applies user grouping for add-media and starts ML processing (ТЗ 5.3.3-5.3.4).
+// AddMediaApplyGroupsAndProcess applies user grouping for add-media and starts ML processing.
 // @Summary [3] Apply groups for add-media
 // @Tags trip-add-media
 // @Accept json
@@ -2056,9 +2056,9 @@ func (h *TripHandler) AddMediaTakeover(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
-// StartBattle starts a new photo battle for the trip (ТЗ 8.1).
+// StartBattle starts a new photo battle for the trip.
 // @Summary Start photo battle
-// @Description Picks 8 random media from the trip and starts a battle session. Returns 412 if the trip has fewer than 8 available media (ТЗ 8.1.9).
+// @Description Picks 8 random media from the trip and starts a battle session. Returns 412 if the trip has fewer than 8 available media.
 // @Tags trip-battles
 // @Produce json
 // @Security BearerAuth
@@ -2100,7 +2100,7 @@ func (h *TripHandler) StartBattle(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// SubmitBattleResult finalizes a battle with the chosen winner (ТЗ 8.1.7-8.1.8).
+// SubmitBattleResult finalizes a battle with the chosen winner.
 // @Summary Submit battle winner
 // @Description Records the final winner of a photo battle; increments media battle_rating by 1. Can be called once per battle.
 // @Tags trip-battles
@@ -2151,9 +2151,9 @@ func (h *TripHandler) SubmitBattleResult(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// GetBestMemories returns trip media with battle_rating > 0 for story-mode (ТЗ 8.2).
+// GetBestMemories returns trip media with battle_rating > 0 for story-mode.
 // @Summary Get best memories (story-mode)
-// @Description Returns media of the trip with battle_rating > 0, sorted by rating DESC. Empty array when the trip has no winners yet (ТЗ 8.2.3).
+// @Description Returns media of the trip with battle_rating > 0, sorted by rating DESC. Empty array when the trip has no winners yet.
 // @Tags trip-battles
 // @Produce json
 // @Security BearerAuth
@@ -2194,15 +2194,15 @@ func (h *TripHandler) GetBestMemories(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, responses.GetBestMemoriesResponse{Media: media})
 }
 
-// GetRecommendations returns a popular-places map for the requested city or country (ТЗ 9.1-9.3).
+// GetRecommendations returns a popular-places map for the requested city or country.
 // @Summary Get recommendations
 // @Tags recommendations
 // @Produce json
 // @Security BearerAuth
 // @Param city query string false "city name (mutually exclusive with country)"
 // @Param country query string false "country name (mutually exclusive with city)"
-// @Param category query string false "trip category filter (ТЗ 9.2.2 → 7.9.1)"
-// @Param season query string false "trip season filter (ТЗ 9.2.2 → 7.9.2)"
+// @Param category query string false "trip category filter "
+// @Param season query string false "trip season filter "
 // @Success 200 {object} responses.GetRecommendationsResponse
 // @Failure 400 {object} responses.ErrorResponse
 // @Failure 401 {object} responses.ErrorResponse
@@ -2233,7 +2233,7 @@ func (h *TripHandler) GetRecommendations(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, responses.GetRecommendationsResponse{Map: h.recommendedMapProtoToResponse(resp.GetMap())})
 }
 
-// SaveRecommendation persists the popular-places map as a generated trip in the user's favourites (ТЗ 9.4).
+// SaveRecommendation persists the popular-places map as a generated trip in the user's favourites.
 // @Summary Save recommendation as trip
 // @Tags recommendations
 // @Accept json

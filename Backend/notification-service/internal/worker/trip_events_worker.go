@@ -10,6 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"pinz/backend/notification-service/internal/apns"
+	"pinz/backend/notification-service/internal/metrics"
 	"pinz/backend/notification-service/internal/models"
 	"pinz/backend/notification-service/internal/repositories"
 )
@@ -76,11 +77,16 @@ func RunTripEvents(ctx context.Context, d TripEventsDeps) error {
 		}
 		for _, stream := range streams {
 			for _, msg := range stream.Messages {
+				start := time.Now()
+				eventType, _ := msg.Values["event_type"].(string)
 				if err := handleTripEvent(ctx, d, msg); err != nil {
 					slog.WarnContext(ctx, "trip-events worker: handle failed, skipping ack",
 						"msg_id", msg.ID, "error", err)
+					metrics.StreamConsumed(ctx, TripEventsStream, tripEventsConsumerGroup, eventType, "error")
 					continue
 				}
+				metrics.StreamConsumed(ctx, TripEventsStream, tripEventsConsumerGroup, eventType, "success")
+				metrics.ObserveStreamConsumeDuration(ctx, time.Since(start).Seconds(), TripEventsStream, tripEventsConsumerGroup)
 				if err := d.Redis.XAck(ctx, stream.Stream, tripEventsConsumerGroup, msg.ID).Err(); err != nil {
 					slog.WarnContext(ctx, "trip-events worker: XAck failed", "msg_id", msg.ID, "error", err)
 				}
@@ -157,15 +163,15 @@ func handleTripEvent(ctx context.Context, d TripEventsDeps, msg redis.XMessage) 
 	return nil
 }
 
-// resolveRecipients — кому адресовано событие по ТЗ 11.1:
-// - PARTICIPANT_JOINED: все текущие участники кроме присоединившегося (actor).
-// - PARTICIPANT_LEFT: все остальные участники (actor уже удалён из списка).
-// - PARTICIPANT_REMOVED: все остальные участники + сам удалённый (actor).
+// resolveRecipients — кому адресовано событие:
+// PARTICIPANT_JOINED: все текущие участники кроме присоединившегося (actor).
+// PARTICIPANT_LEFT: все остальные участники (actor уже удалён из списка).
+// PARTICIPANT_REMOVED: все остальные участники + сам удалённый (actor).
 // После удаления actor отсутствует в списке участников — добавляем его руками.
-// - ADMIN_CHANGED: все участники трипа (включая нового админа = actor).
-// - TRIP_READY: owner (actor содержит owner_user_id — см. trip_service.go).
-// - PIN_ADDED: все участники кроме автора (actor).
-// - ADD_MEDIA_SESSION_COMPLETED: все участники кроме инициатора Confirm (actor) — M1.
+// ADMIN_CHANGED: все участники трипа (включая нового админа = actor).
+// TRIP_READY: owner (actor содержит owner_user_id — см. trip_service.go).
+// PIN_ADDED: все участники кроме автора (actor).
+// ADD_MEDIA_SESSION_COMPLETED: все участники кроме инициатора Confirm (actor) — M1.
 func resolveRecipients(ctx context.Context, d TripEventsDeps, eventType, tripID, actorUserID string) ([]string, error) {
 	participants, err := d.TripClient.ListTripParticipantIDs(ctx, tripID)
 	if err != nil {

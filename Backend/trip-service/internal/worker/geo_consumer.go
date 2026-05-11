@@ -8,11 +8,12 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/repositories"
 )
 
 // pinz:trip:geo_events — обратное направление репликации statistics → trip
-// (vkr.txt §2.5.4). Statistics-service публикует PIN_LOCATIONS_RESOLVED после
+// Statistics-service публикует PIN_LOCATIONS_RESOLVED после
 // успешного reverse geocoding; trip-service mirror'ит master geo_registry в
 // свою read-only реплику и проставляет pins.location_name.
 const (
@@ -59,11 +60,15 @@ func RunGeoConsumer(ctx context.Context, redisClient *redis.Client, geoRepo *rep
 
 		for _, stream := range streams {
 			for _, msg := range stream.Messages {
+				start := time.Now()
 				if err := handleGeoMessage(ctx, msg, geoRepo, pinRepo, eventLog); err != nil {
 					slog.WarnContext(ctx, "geo consumer: handle failed, skipping ack",
 						"msg_id", msg.ID, "error", err)
+					metrics.StreamConsumed(ctx, geoEventsStream, geoConsumerGroup, eventPinLocResolved, "error")
 					continue
 				}
+				metrics.StreamConsumed(ctx, geoEventsStream, geoConsumerGroup, eventPinLocResolved, "success")
+				metrics.ObserveStreamConsumeDuration(ctx, time.Since(start).Seconds(), geoEventsStream, geoConsumerGroup)
 				if err := redisClient.XAck(ctx, stream.Stream, geoConsumerGroup, msg.ID).Err(); err != nil {
 					slog.WarnContext(ctx, "geo consumer: XAck failed", "msg_id", msg.ID, "error", err)
 				}

@@ -98,7 +98,7 @@ func clusterMediaToDraftPins(mediaRepo repositories.MediaRepositoryInterface, tr
 }
 
 // DraftPinGroup is a media group with an assigned draft_pin_id identifier.
-// "existing-{pin_id}" — original pin seed-group (ТЗ 5.3.1).
+// "existing-{pin_id}" — original pin seed-group.
 // "cluster-{N}" — new cluster from just-added media.
 // "draft-unassigned" — media without coordinates and time.
 type DraftPinGroup struct {
@@ -106,7 +106,7 @@ type DraftPinGroup struct {
 	MediaIDs []string
 }
 
-// clusterMediaWithExistingPinsAsSeeds groups trip media using existing pins as seed clusters (ТЗ 5.3.1).
+// clusterMediaWithExistingPinsAsSeeds groups trip media using existing pins as seed clusters.
 // It returns groups in deterministic order: existing pins first (by pin ID), then new clusters, then unassigned.
 func clusterMediaWithExistingPinsAsSeeds(mediaRepo repositories.MediaRepositoryInterface, pinRepo repositories.PinRepositoryInterface, tripID string) []DraftPinGroup {
 	mediaList, err := mediaRepo.ListByTripID(tripID)

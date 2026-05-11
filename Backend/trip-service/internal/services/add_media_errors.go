@@ -12,7 +12,6 @@ import (
 // Add-media-specific gRPC error helpers. Каждый возвращает status.Error с
 // прикреплённым ErrorInfo (Reason + Metadata), который api-gateway снимает
 // в handleServiceError и превращает в HTTP-код + structured JSON-body.
-//
 // Коды gRPC остаются общими (FailedPrecondition/PermissionDenied/InvalidArgument),
 // различение по Reason идёт в клиентском коде и в api-gateway. Это позволяет
 // сохранять семантику gRPC и при этом отдавать фронту точный 410/412/403/422.
@@ -103,7 +102,7 @@ func errNotInitiator(currentInitiator string, takeoverAvailableAt time.Time) err
 		md)
 }
 
-// errLimitExceeded — превышение лимитов ТЗ 4.1.2 (500 медиа, 50 видео).
+// errLimitExceeded — превышение лимитов (500 медиа, 50 видео).
 // Клиент получает 422 + remaining_slots, чтобы точно сказать пользователю
 // сколько файлов можно докинуть.
 func errLimitExceeded(kind string, limit, current int) error {

@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"pinz/backend/notification-service/internal/email"
+	"pinz/backend/notification-service/internal/metrics"
 )
 
 const (
@@ -60,18 +61,23 @@ func RunEmail(ctx context.Context, d EmailDeps) error {
 		}
 		for _, stream := range streams {
 			for _, msg := range stream.Messages {
+				start := time.Now()
 				emailAddr, _ := msg.Values["email"].(string)
 				code, _ := msg.Values["code"].(string)
 				regID, _ := msg.Values["registration_id"].(string)
 
 				if emailAddr == "" || code == "" {
 					slog.WarnContext(ctx, "email worker: missing email or code", "msg_id", msg.ID)
+					metrics.Email(ctx, "malformed")
+					metrics.StreamConsumed(ctx, EmailStream, emailConsumerGroup, "email_task", "malformed")
 					_ = d.Redis.XAck(ctx, EmailStream, emailConsumerGroup, msg.ID)
 					continue
 				}
 
 				if d.Sender == nil {
 					slog.InfoContext(ctx, "email worker: SMTP not configured, skipping", "msg_id", msg.ID)
+					metrics.Email(ctx, "skipped")
+					metrics.StreamConsumed(ctx, EmailStream, emailConsumerGroup, "email_task", "skipped")
 					_ = d.Redis.XAck(ctx, EmailStream, emailConsumerGroup, msg.ID)
 					continue
 				}
@@ -79,10 +85,15 @@ func RunEmail(ctx context.Context, d EmailDeps) error {
 				if err := d.Sender.SendVerificationCode(emailAddr, code); err != nil {
 					slog.ErrorContext(ctx, "email worker: send failed",
 						"registration_id", regID, "email", emailAddr, "error", err)
+					metrics.Email(ctx, "failed")
+					metrics.StreamConsumed(ctx, EmailStream, emailConsumerGroup, "email_task", "error")
 				} else {
 					slog.InfoContext(ctx, "email worker: verification email sent",
 						"registration_id", regID, "email", emailAddr)
+					metrics.Email(ctx, "sent")
+					metrics.StreamConsumed(ctx, EmailStream, emailConsumerGroup, "email_task", "success")
 				}
+				metrics.ObserveStreamConsumeDuration(ctx, time.Since(start).Seconds(), EmailStream, emailConsumerGroup)
 
 				_ = d.Redis.XAck(ctx, EmailStream, emailConsumerGroup, msg.ID)
 			}

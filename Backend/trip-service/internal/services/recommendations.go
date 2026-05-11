@@ -12,18 +12,18 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/server"
 	pb "pinz/backend/trip-service/pkg/proto"
 )
 
-// Параметры рекомендательной системы из ТЗ §9.
 const (
-	// 9.2.3.a/b: адаптивный радиус кластеризации.
+	// адаптивный радиус кластеризации: 50 м внутри города, 500 м по стране.
 	recommendationCityEpsMeters = 50.0
 	recommendationCountryEpsMeters = 500.0
-	// 9.2.4 / 9.2.5: минимумы по тематикам.
+	// минимумы по тематикам в итоговой выборке.
 	recommendationMinSightseeing = 6
 	recommendationMinFood = 3
 	// сколько медиа-превью отдавать на пин в карте популярных мест.
@@ -36,7 +36,6 @@ const (
 	recommendationSnapshotTTL = 30 * time.Minute
 )
 
-// Категории из ТЗ 2.2.4, на которые опираются квоты ТЗ 9.2.4–9.2.5.
 var (
 	recommendationSightseeingCategories = map[string]bool{
 		"sight": true,
@@ -46,7 +45,6 @@ var (
 	recommendationFoodCategory = "food"
 )
 
-// GetRecommendations — ТЗ 9.1–9.3.
 func (s *TripService) GetRecommendations(ctx context.Context, req *pb.GetRecommendationsRequest) (*pb.GetRecommendationsResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -99,7 +97,7 @@ func (s *TripService) GetRecommendations(ctx context.Context, req *pb.GetRecomme
 	}, nil
 }
 
-// SaveRecommendation — ТЗ 9.4.
+// SaveRecommendation
 func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecommendationRequest) (*pb.SaveRecommendationResponse, error) {
 	userID, ok := server.UserIDFromContext(ctx)
 	if !ok {
@@ -135,6 +133,7 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 
 	if !usedSnapshot {
 		if len(req.GetPinIds()) == 0 {
+			metrics.RecommendationSave(ctx, "snapshot_expired")
 			return nil, status.Error(codes.InvalidArgument, "snapshot_token expired and pin_ids not provided")
 		}
 		region, err := s.resolveRecommendationRegion(ctx, req.GetCity(), req.GetCountry())
@@ -189,6 +188,8 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 		slog.ErrorContext(ctx, "SaveRecommendation: create trip failed", "error", err)
 		return nil, status.Error(codes.Internal, "failed to create trip")
 	}
+	metrics.TripCreated(ctx, "recommendation_save")
+	metrics.RecommendationSave(ctx, "success")
 	if err := s.participantRepo.Add(&models.TripParticipant{
 		TripID: trip.ID,
 		UserID: userID,
@@ -344,12 +345,11 @@ func (s *TripService) buildRecommendationPins(ctx context.Context, region *recom
 	return out, nil
 }
 
-// pickRecommendationPins — выбор по правилам ТЗ 9.3.1, 9.2.4, 9.2.5:
-//   - по одному пину из каждого (category, cluster_id);
-//   - в кластере выбираем по media_count DESC, при равенстве — по длиннее description;
-//   - сначала добираем минимумы для жёстких категорий (6 sightseeing + 3 food),
-//     затем заполняем оставшееся другими категориями по убыванию trip_score кандидатов
-//     до recommendationMaxPins.
+// pickRecommendationPins — по одному пину из каждого (category, cluster_id);
+// в кластере выбираем по media_count DESC, при равенстве — по длиннее description;
+// сначала добираем минимумы для жёстких категорий (6 sightseeing + 3 food),
+// затем заполняем оставшееся другими категориями по убыванию trip_score кандидатов
+// до recommendationMaxPins.
 func pickRecommendationPins(candidates []*repositories.RecommendationPinCandidate) []*repositories.RecommendationPinCandidate {
 	type clusterKey struct {
 		category string
@@ -414,7 +414,7 @@ func pickRecommendationPins(candidates []*repositories.RecommendationPinCandidat
 	return final
 }
 
-// isBetterCandidate — реализует правило ТЗ 9.3.1:
+// isBetterCandidate — реализует правило:
 // первичный ключ — media_count DESC, тай-брейк — длиннее description.
 func isBetterCandidate(a, b *repositories.RecommendationPinCandidate) bool {
 	if a.MediaCount != b.MediaCount {
@@ -443,9 +443,9 @@ func trimToNonEmpty(s string) string {
 }
 
 // virtualRecommendationTrip собирает Trip-обёртку, чтобы карта рекомендаций
-// могла встраиваться в общую ленту как обычный FeedItem. id оставляется пустым:
-// материализуется только при SaveRecommendation. Счётчики лайков/дизлайков —
-// 0, т.к. виртуальный объект ещё нигде не опубликован.
+// могла встраиваться в общую ленту как обычный FeedItem. id пуст:
+// материализуется только при SaveRecommendation. Счётчики лайков/дизлайков
+// нулевые, т.к. виртуальный объект ещё нигде не опубликован.
 func virtualRecommendationTrip(region *recommendationRegion, pins []*pb.RecommendedPin) *pb.Trip {
 	now := time.Now().Unix()
 	return &pb.Trip{
@@ -495,7 +495,7 @@ func topMediaFromRecommendedPins(pins []*pb.RecommendedPin, limit int) []*pb.Fee
 	return out
 }
 
-// currentSeason — ТЗ 2.3.5 список (winter/spring/summer/autumn) по месяцу.
+// currentSeason — список (winter/spring/summer/autumn) по месяцу.
 func currentSeason(t time.Time) string {
 	switch t.Month() {
 	case time.December, time.January, time.February:

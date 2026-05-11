@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/services"
 )
@@ -26,10 +27,9 @@ const (
 
 // Worker consumes ML/processing tasks from Redis Streams and advances the trip
 // creation flow asynchronously.
-//
 // Responsibilities:
-// - Read tasks from pinz:trip:ml:tasks (created in ApplyGroupsAndProcess)
-// - For each trip_id: mark trip status as DRAFT_FINAL_REVIEW, notify participants via Redis Pub/Sub.
+// Read tasks from pinz:trip:ml:tasks (created in ApplyGroupsAndProcess)
+// For each trip_id: mark trip status as DRAFT_FINAL_REVIEW, notify participants via Redis Pub/Sub.
 func Run(ctx context.Context, redisClient *redis.Client, tripRepo *repositories.TripRepository, participantRepo *repositories.TripParticipantRepository, mediaRepo *repositories.MediaRepository, tagRepo *repositories.TagRepository, pinRepo *repositories.PinRepository, eventRepo *repositories.RedisRepository, tripPrivacyRepo *repositories.TripPrivacyRepository, pinPrivacyRepo *repositories.PinPrivacyRepository, mediaPrivacyRepo *repositories.MediaPrivacyRepository) error {
 	if redisClient == nil || eventRepo == nil {
 		slog.Warn("worker: redis not configured, background processing disabled")
@@ -65,18 +65,25 @@ func Run(ctx context.Context, redisClient *redis.Client, tripRepo *repositories.
 			for _, msg := range stream.Messages {
 				tripIDRaw, ok := msg.Values["trip_id"]
 				if !ok {
+					metrics.StreamConsumed(ctx, "pinz:trip:ml:tasks", mlTasksConsumerGroup, "ml_task", "malformed")
 					_ = redisClient.XAck(ctx, stream.Stream, mlTasksConsumerGroup, msg.ID)
 					continue
 				}
 				tripID, ok := tripIDRaw.(string)
 				if !ok || tripID == "" {
+					metrics.StreamConsumed(ctx, "pinz:trip:ml:tasks", mlTasksConsumerGroup, "ml_task", "malformed")
 					_ = redisClient.XAck(ctx, stream.Stream, mlTasksConsumerGroup, msg.ID)
 					continue
 				}
 
+				start := time.Now()
+				result := "success"
 				if err := processTrip(ctx, tripID, tripRepo, participantRepo, pinRepo, eventRepo); err != nil {
 					slog.WarnContext(ctx, "worker: processTrip failed", "trip_id", tripID, "error", err)
+					result = "error"
 				}
+				metrics.StreamConsumed(ctx, "pinz:trip:ml:tasks", mlTasksConsumerGroup, "ml_task", result)
+				metrics.ObserveStreamConsumeDuration(ctx, time.Since(start).Seconds(), "pinz:trip:ml:tasks", mlTasksConsumerGroup)
 
 				_ = redisClient.XAck(ctx, stream.Stream, mlTasksConsumerGroup, msg.ID)
 			}
@@ -131,6 +138,7 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 
 	for _, stream := range streams {
 		for _, msg := range stream.Messages {
+			start := time.Now()
 			tripID := ""
 			if raw, ok := msg.Values["trip_id"]; ok {
 				if s, ok := raw.(string); ok {
@@ -138,7 +146,7 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 				}
 			}
 
-			// similar_groups: JSON [["media_id1","media_id2"], ...]
+			// similar_groups: JSON [["media_id1","media_id2"],...]
 			if raw, ok := msg.Values["similar_groups"]; ok {
 				if s, ok := raw.(string); ok && s != "" {
 					var groups [][]string
@@ -154,7 +162,7 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 				}
 			}
 
-			// nsfw_ids: JSON ["media_id3", ...]
+			// nsfw_ids: JSON ["media_id3",...]
 			if raw, ok := msg.Values["nsfw_ids"]; ok {
 				if s, ok := raw.(string); ok && s != "" {
 					var ids []string
@@ -164,7 +172,7 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 				}
 			}
 
-			// pin_tags: JSON [{"pin_id":"...","category":"...","tags":["t1","t2"]}, ...]
+			// pin_tags: JSON [{"pin_id":"...","category":"...","tags":["t1","t2"]},...]
 			if raw, ok := msg.Values["pin_tags"]; ok && tagRepo != nil && pinRepo != nil {
 				if s, ok := raw.(string); ok && s != "" {
 					type pinTagsPayload struct {
@@ -203,7 +211,7 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 							}
 							if pt.Category != "" {
 								pin.Category = services.ValidatePinCategory(pt.Category)
-								// ТЗ 3.12.2.f: название = категория пина. Existing-пины в add-media отфильтрованы выше.
+								// название = категория пина. Existing-пины в add-media отфильтрованы выше.
 								pin.Name = pin.Category
 							}
 							_ = pinRepo.Update(pin)
@@ -224,6 +232,8 @@ func processMLResults(ctx context.Context, client *redis.Client, eventRepo *repo
 				}
 			}
 
+			metrics.StreamConsumed(ctx, "pinz:trip:ml:results", mlResultsConsumerGroup, "ml_result", "success")
+			metrics.ObserveStreamConsumeDuration(ctx, time.Since(start).Seconds(), "pinz:trip:ml:results", mlResultsConsumerGroup)
 			_ = client.XAck(ctx, stream.Stream, mlResultsConsumerGroup, msg.ID)
 		}
 	}
@@ -250,9 +260,11 @@ func processPrivacyEvents(ctx context.Context, client *redis.Client, tripRepo *r
 	}
 	for _, stream := range streams {
 		for _, msg := range stream.Messages {
+			start := time.Now()
 			objType, _ := msg.Values["object_type"].(string)
 			objID, _ := msg.Values["object_id"].(string)
 			if objID == "" {
+				metrics.StreamConsumed(ctx, privacyStream, privacyConsumerGroup, "PRIVACY_CHANGED", "malformed")
 				_ = client.XAck(ctx, stream.Stream, privacyConsumerGroup, msg.ID)
 				continue
 			}
@@ -300,6 +312,8 @@ func processPrivacyEvents(ctx context.Context, client *redis.Client, tripRepo *r
 				level := repositories.AggregatePrivacyLevel(media.PrivacyLevel, entries)
 				_ = mediaRepo.SetPrivacyLevel(objID, level)
 			}
+			metrics.StreamConsumed(ctx, privacyStream, privacyConsumerGroup, "PRIVACY_CHANGED", "success")
+			metrics.ObserveStreamConsumeDuration(ctx, time.Since(start).Seconds(), privacyStream, privacyConsumerGroup)
 			_ = client.XAck(ctx, stream.Stream, privacyConsumerGroup, msg.ID)
 		}
 	}
@@ -316,9 +330,10 @@ func processTrip(ctx context.Context, tripID string, tripRepo *repositories.Trip
 		if err := tripRepo.SetStatus(tripID, "DRAFT_FINAL_REVIEW"); err != nil {
 			return err
 		}
+		metrics.TripStatusChanged(ctx, "DRAFT_FINAL_REVIEW")
 	}
 
-	// Reverse geocoding — асинхронно через statistics-service (vkr.txt §2.5.4):
+	// Reverse geocoding — асинхронно через statistics-service:
 	// собираем все пины с координатами и публикуем PIN_LOCATIONS_REQUESTED.
 	// Statistics резолвит и пришлёт PIN_LOCATIONS_RESOLVED в pinz:trip:geo_events,
 	// geo consumer заполнит pin.location_name и trip_locations replica.

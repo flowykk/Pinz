@@ -29,7 +29,7 @@ import (
 	pb "pinz/backend/auth-service/pkg/proto"
 )
 
-// ТЗ 1.5.1: сессия активна 30 дней с момента прошлого использования (sliding).
+// сессия активна 30 дней с момента прошлого использования (sliding).
 const refreshTokenTTL = 30 * 24 * time.Hour
 
 // pendingUser реализует webauthn.User до записи юзера в БД.
@@ -326,7 +326,7 @@ func (s *AuthService) PasskeyRegisterFinish(ctx context.Context, req *pb.Passkey
 		Username: rs.Username,
 	}
 	if err := s.userRepo.CreateUser(u); err != nil {
-		// ТЗ 1.3.1: username не уникален. Конфликт может прийти только по email (UNIQUE).
+		// username не уникален. Конфликт может прийти только по email (UNIQUE).
 		if isUniqueViolation(err) {
 			s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "conflict")))
 			return nil, status.Error(codes.AlreadyExists, "user with this email already exists")
@@ -520,7 +520,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequ
 		return nil, status.Error(codes.Unauthenticated, "refresh token expired")
 	}
 
-	// ТЗ 1.5.1: продлеваем сессию ещё на 30 дней от момента использования.
+	// продлеваем сессию ещё на 30 дней от момента использования.
 	if err := s.userRepo.UpdateRefreshTokenExpiresAt(rec.ID, time.Now().Add(refreshTokenTTL)); err != nil {
 		slog.ErrorContext(ctx, "RefreshToken: extend expires_at", "error", err)
 		return nil, status.Error(codes.Internal, "failed to extend session")
@@ -714,7 +714,7 @@ func (s *AuthService) GetUsersProfiles(ctx context.Context, req *pb.GetUsersProf
 }
 
 // GetPublicUserProfile — публичный профиль (без email) + желаемые места одним
-// gRPC round-trip'ом (ТЗ 1.7.2). email сюда не утекает.
+// gRPC round-trip'ом. email сюда не утекает.
 func (s *AuthService) GetPublicUserProfile(ctx context.Context, req *pb.GetPublicUserProfileRequest) (*pb.GetPublicUserProfileResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "AuthService.GetPublicUserProfile")
 	defer span.End()

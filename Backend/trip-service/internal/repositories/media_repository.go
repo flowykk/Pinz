@@ -72,7 +72,6 @@ func (r *MediaRepository) Create(m *models.Media) error {
 // проверяет лимиты, делает INSERT и возвращает totalAfter/videosAfter — сколько
 // медиа теперь в трипе (нужно сервису, чтобы посчитать media_count_in_session и
 // remaining_slots без гонки).
-//
 // При превышении лимита возвращает ErrMediaLimitExceeded или ErrVideoLimitExceeded
 // с заполненным totalAfter (= total до попытки, INSERT не выполняется).
 func (r *MediaRepository) CommitInSession(ctx context.Context, m *models.Media, sessionID string, maxMedia, maxVideos int) (totalAfter, videosAfter int, err error) {
@@ -398,7 +397,7 @@ func (r *MediaRepository) MarkNSFW(mediaIDs []string) error {
 }
 
 // SetPrivacyLevel sets privacy_level on a single media (used by privacy aggregation worker).
-// SQL guard: never overwrite restricted ("permanently private", ТЗ 6.3) with a lower level.
+// SQL guard: never overwrite restricted ("permanently private") with a lower level.
 func (r *MediaRepository) SetPrivacyLevel(mediaID, level string) error {
 	q := psq.Update("media").Set("privacy_level", level).Where(sq.Eq{"id": mediaID})
 	if level != "restricted" {
@@ -415,7 +414,7 @@ func (r *MediaRepository) SetPrivacyLevel(mediaID, level string) error {
 	return nil
 }
 
-// PickRandomForBattle возвращает до limit случайных медиа трипа, исключая restricted (NSFW, ТЗ 6.3). Для фотобатла (ТЗ 8.1).
+// PickRandomForBattle возвращает до limit случайных медиа трипа, исключая restricted (NSFW). Для фотобатла.
 func (r *MediaRepository) PickRandomForBattle(tripID string, limit int) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
@@ -460,7 +459,7 @@ func (r *MediaRepository) PickRandomForBattle(tripID string, limit int) ([]*mode
 	return list, rows.Err()
 }
 
-// IncrementBattleRating атомарно увеличивает battle_rating победителя батла на 1 и возвращает новое значение (ТЗ 8.1.8).
+// IncrementBattleRating атомарно увеличивает battle_rating победителя батла на 1 и возвращает новое значение.
 func (r *MediaRepository) IncrementBattleRating(mediaID string) (int32, error) {
 	var rating int32
 	err := r.db.QueryRow(`UPDATE media SET battle_rating = battle_rating + 1 WHERE id = $1 RETURNING battle_rating`, mediaID).Scan(&rating)
@@ -473,7 +472,7 @@ func (r *MediaRepository) IncrementBattleRating(mediaID string) (int32, error) {
 	return rating, nil
 }
 
-// ListWithPositiveBattleRating возвращает медиа трипа с battle_rating > 0, отсортированные по рейтингу DESC для "лучших воспоминаний" (ТЗ 8.2).
+// ListWithPositiveBattleRating возвращает медиа трипа с battle_rating > 0, отсортированные по рейтингу DESC для "лучших воспоминаний".
 func (r *MediaRepository) ListWithPositiveBattleRating(tripID string) ([]*models.Media, error) {
 	sqlStr := `SELECT id, trip_id, pin_id, s3_key, media_type,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
@@ -649,7 +648,7 @@ func (r *MediaRepository) TopMediaByTripIDs(tripIDs []string, limitPerTrip int) 
 }
 
 // DeleteByPinID удаляет все media пина и возвращает их s3_keys для best-effort
-// S3 cleanup (ТЗ 4.5.1: full delete пина каскадит media). FK media.pin_id =
+// S3 cleanup. FK media.pin_id =
 // ON DELETE SET NULL, поэтому полагаться на cascade нельзя — удаляем явно.
 func (r *MediaRepository) DeleteByPinID(pinID string) ([]string, error) {
 	rows, err := r.db.Query(`DELETE FROM media WHERE pin_id = $1 RETURNING s3_key`, pinID)
