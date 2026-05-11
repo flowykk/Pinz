@@ -26,7 +26,7 @@ public enum TripCategory: PickerItem {
     }
 
     public static let allCases: [TripCategory] = [
-        .custom("Другое"),
+        .custom(nil),
         .vacation,
         .holidays,
         .business,
@@ -34,12 +34,8 @@ public enum TripCategory: PickerItem {
         .active,
     ]
 
-    public var isCustomizable: Bool {
-        switch self {
-        case .custom: return true
-        default: return false
-        }
-    }
+    /// «Другое» — фиксированный slug `custom` в API, без произвольного текста в UI.
+    public var isCustomizable: Bool { false }
 
     public var apiValue: String? {
         switch self {
@@ -53,18 +49,8 @@ public enum TripCategory: PickerItem {
         }
     }
 
-    /// Cyrillic value expected by `/recommendations` endpoints per backend guide.
-    public var recommendationApiValue: String? {
-        switch self {
-        case .none:      return nil
-        case .vacation:  return "Отпуск"
-        case .business:  return "Командировка"
-        case .holidays:  return "Выходные"
-        case .active:    return "Активный отдых"
-        case .education: return "Образование"
-        case .custom:    return "Другое"
-        }
-    }
+    /// Same lower-case slugs as `apiValue` for `/recommendations` (PINZ-204).
+    public var recommendationApiValue: String? { apiValue }
 }
 
 extension TripCategory: Equatable {

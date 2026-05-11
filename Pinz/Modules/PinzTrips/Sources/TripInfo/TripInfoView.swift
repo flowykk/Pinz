@@ -115,11 +115,7 @@ public struct TripInfoView: View {
         .itemsPickerSheet(
             isPresented: $isCategoryPickerPresented,
             items: TripCategory.allCases,
-            selection: $viewModel.trip.category,
-            customizableItem: .custom(),
-            saveCustomizableItem: { value in
-                viewModel.trip.category = .custom(value)
-            },
+            selection: $viewModel.trip.category
         )
         .datePickerSheet(
             isPresented: $isStartDatePickerPresented,

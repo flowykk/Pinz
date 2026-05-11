@@ -58,11 +58,7 @@ public struct InitialTripSetupView: View {
         .itemsPickerSheet(
             isPresented: $isCategoryPickerPresented,
             items: TripCategory.allCases,
-            selection: $viewModel.category,
-            customizableItem: .custom(),
-            saveCustomizableItem: { value in
-                viewModel.category = .custom(value)
-            },
+            selection: $viewModel.category
         )
         .photosPicker(
             isPresented: $isMediaPickerPresented,

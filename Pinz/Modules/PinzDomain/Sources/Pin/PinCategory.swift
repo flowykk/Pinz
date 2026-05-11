@@ -78,7 +78,10 @@ public enum PinCategory: PickerItem {
 
 extension String {
     public func toPinCategory() -> PinCategory {
-        switch self {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return .custom(nil) }
+        let key = trimmed.lowercased()
+        switch key {
         case "sight": return .sight
         case "nature": return .nature
         case "leisure": return .leisure
@@ -90,7 +93,20 @@ extension String {
         case "event": return .event
         case "sport": return .sport
         case "work": return .work
-        default: return .custom(self)
+        case "custom": return .custom(nil)
+        case "достопримечательность", "достопримечательности": return .sight
+        case "природа": return .nature
+        case "отдых": return .leisure
+        case "жилье": return .housing
+        case "еда и напитки": return .food
+        case "шопинг": return .shopping
+        case "транспорт": return .transport
+        case "развлечение": return .entertainment
+        case "мероприятие": return .event
+        case "спорт": return .sport
+        case "рабочее место": return .work
+        case "другое": return .custom(nil)
+        default: return .custom(trimmed)
         }
     }
 }

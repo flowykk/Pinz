@@ -102,8 +102,8 @@ final class StatisticsViewModelTests: XCTestCase {
         sut.dispatch(.loadStats)
         try await waitForNotLoading()
 
-        XCTAssertTrue(mockNetwork.getVisitedLocationsCallTypes.contains("Country"))
-        XCTAssertTrue(mockNetwork.getVisitedLocationsCallTypes.contains("City"))
+        XCTAssertTrue(mockNetwork.getVisitedLocationsCallTypes.contains("country"))
+        XCTAssertTrue(mockNetwork.getVisitedLocationsCallTypes.contains("city"))
     }
 
     // MARK: - isLoading

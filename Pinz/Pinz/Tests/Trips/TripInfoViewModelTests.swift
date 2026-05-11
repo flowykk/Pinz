@@ -587,7 +587,7 @@ final class TripInfoViewModelTests: XCTestCase {
         await sut.asyncDispatch(.editTrip)
 
         let request = mockNetwork.updateTripCall
-        XCTAssertEqual(request?.category, "custom-category")
+        XCTAssertEqual(request?.category, "custom")
         XCTAssertEqual(request?.season, "autumn")
     }
 

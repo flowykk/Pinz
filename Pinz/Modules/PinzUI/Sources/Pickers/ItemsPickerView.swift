@@ -65,7 +65,7 @@ public struct ItemsPickerView<Item: PickerItem>: View {
             .padding(.bottom, 8)
         }
         .onAppear {
-            if selection.isCustomizable {
+            if saveCustomizableItem != nil, selection.isCustomizable {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     textFieldVisible = true
                     textFieldText = selection.value
