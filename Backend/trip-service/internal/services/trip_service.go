@@ -1558,7 +1558,7 @@ func (s *TripService) applyReviewEdits(ctx context.Context, trip *models.Trip, p
 		}
 	}
 	// агрегаты на трип: cover_url (первое image-медиа), start/end по пинам.
-	pins, _ := s.pinRepo.ListByTripID(tripID)
+	pins, _ := s.pinRepo.ListByTripIDIncludingDrafts(tripID)
 	var minStart, maxEnd *time.Time
 	var coverURL string
 	mediaList, _ := s.mediaRepo.ListByTripID(tripID)
@@ -2126,6 +2126,7 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 	// Применяем группы. Для "existing-{pin_id}" — только новые медиа добавляются к существующему пину (исходные не трогаем).
 	// Для остальных (cluster-N / draft-unassigned) — создаём новый пин.
 	newPinIDs := make([]string, 0)
+	pendingExistingAttachments := make([]string, 0)
 	touchedPinIDs := make(map[string]struct{})
 	for _, dp := range req.GetDraftPins() {
 		draftID := dp.GetDraftPinId()
@@ -2152,6 +2153,7 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 			if err := s.mediaRepo.UpdatePinIDByIDs(newOnly, pin.ID); err != nil {
 				return nil, status.Error(codes.Internal, "failed to assign media to existing pin")
 			}
+			pendingExistingAttachments = append(pendingExistingAttachments, newOnly...)
 			touchedPinIDs[pin.ID] = struct{}{}
 		} else {
 			// Новый пин — пропускаем исходные медиа из mediaIDs (они должны остаться в своих пинах).
@@ -2164,6 +2166,7 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 			if len(newOnly) == 0 {
 				continue
 			}
+			sid := sessionID
 			pin := &models.Pin{
 				TripID: tripID,
 				Name: "Pin",
@@ -2171,6 +2174,7 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 				Category: trip.Category,
 				PrivacyLevel: trip.PrivacyLevel,
 				MediaCount: int32(len(newOnly)),
+				AddMediaSessionID: &sid,
 			}
 			if err := s.pinRepo.Create(pin); err != nil {
 				return nil, status.Error(codes.Internal, "failed to create pin")
@@ -2180,6 +2184,11 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 			}
 			newPinIDs = append(newPinIDs, pin.ID)
 			touchedPinIDs[pin.ID] = struct{}{}
+		}
+	}
+	if len(pendingExistingAttachments) > 0 {
+		if err := s.addMediaSessionRepo.AppendPendingExistingAttachments(ctx, sessionID, pendingExistingAttachments); err != nil {
+			slog.ErrorContext(ctx, "AddMediaApplyGroupsAndProcess: AppendPendingExistingAttachments failed", "session_id", sessionID, "err", err)
 		}
 	}
 	for pinID := range touchedPinIDs {
@@ -2240,7 +2249,7 @@ func (s *TripService) AddMediaGetReview(ctx context.Context, req *pb.AddMediaGet
 	if trip.Status != models.TripStatusAddMediaDraftFinalReview {
 		return nil, errWrongStatus(models.TripStatusAddMediaDraftFinalReview, trip.Status)
 	}
-	pins, err := s.pinRepo.ListByTripID(tripID)
+	pins, err := s.pinRepo.ListByTripIDIncludingDrafts(tripID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list pins")
 	}
@@ -2351,6 +2360,9 @@ func (s *TripService) AddMediaConfirm(ctx context.Context, req *pb.AddMediaConfi
 	if err := s.applyReviewEdits(ctx, trip, req.GetPinUpdates(), req.GetMediaToDelete()); err != nil {
 		return nil, err
 	}
+	if err := s.pinRepo.ClearAddMediaSessionByID(sessionID); err != nil {
+		return nil, status.Error(codes.Internal, "failed to clear pin drafts")
+	}
 	if _, err := s.addMediaSessionRepo.Close(ctx, sessionID, models.AddMediaSessionCloseReasonConfirmed, time.Now()); err != nil {
 		if errors.Is(err, repositories.ErrNoActiveSession) {
 			return &pb.AddMediaConfirmResponse{Status: models.TripStatusReady, AlreadyConfirmed: true}, nil
@@ -2415,6 +2427,18 @@ func (s *TripService) AddMediaCancel(ctx context.Context, req *pb.AddMediaCancel
 		if _, err := s.ensureInitiator(ctx, tripID, sessionID, userID); err != nil {
 			return nil, err
 		}
+	}
+	pendingAttachments, perr := s.addMediaSessionRepo.GetPendingExistingAttachments(ctx, sessionID)
+	if perr != nil {
+		slog.WarnContext(ctx, "AddMediaCancel: GetPendingExistingAttachments failed", "session_id", sessionID, "err", perr)
+	}
+	if len(pendingAttachments) > 0 {
+		if err := s.mediaRepo.ClearPinIDByIDs(pendingAttachments); err != nil {
+			slog.WarnContext(ctx, "AddMediaCancel: rollback pending attachments failed", "session_id", sessionID, "err", err)
+		}
+	}
+	if _, err := s.pinRepo.DeleteByAddMediaSessionID(sessionID); err != nil {
+		slog.WarnContext(ctx, "AddMediaCancel: DeleteByAddMediaSessionID failed", "session_id", sessionID, "err", err)
 	}
 	// удаляем orphan-медиа сессии (без pin_id) из БД и S3.
 	s3Keys, derr := s.mediaRepo.DeleteOrphanSessionMedia(tripID, active.ExistingMediaIDs)

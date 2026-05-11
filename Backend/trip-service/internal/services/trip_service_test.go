@@ -742,7 +742,7 @@ func TestFinalizeTrip_MediaToDeleteSuccess(t *testing.T) {
 	mediaRepo.EXPECT().GetByID("m1").Return(
 		&models.Media{ID: "m1", TripID: tripID, S3Key: "key1"}, nil)
 	mediaRepo.EXPECT().DeleteByIDs([]string{"m1"}).Return(nil)
-	pinRepo.EXPECT().ListByTripID(tripID).Return(nil, nil)
+	pinRepo.EXPECT().ListByTripIDIncludingDrafts(tripID).Return(nil, nil)
 	mediaRepo.EXPECT().ListByTripID(tripID).Return(nil, nil)
 	tripRepo.EXPECT().Update(gomock.Any()).Return(nil)
 	tripRepo.EXPECT().SetStatus(tripID, "READY").Return(nil)

@@ -35,10 +35,11 @@ func RunSessionCleanup(
 	tripRepo *repositories.TripRepository,
 	participantRepo *repositories.TripParticipantRepository,
 	mediaRepo *repositories.MediaRepository,
+	pinRepo *repositories.PinRepository,
 	eventRepo *repositories.RedisRepository,
 	mediaURLs services.MediaURLResolver,
 ) {
-	if sessionRepo == nil || tripRepo == nil || mediaRepo == nil {
+	if sessionRepo == nil || tripRepo == nil || mediaRepo == nil || pinRepo == nil {
 		slog.Warn("session_cleanup: dependencies missing, disabled")
 		<-ctx.Done()
 		return
@@ -52,7 +53,7 @@ func RunSessionCleanup(
 			slog.Info("session_cleanup: context cancelled, stopping")
 			return
 		case <-ticker.C:
-			runOnce(ctx, sessionRepo, tripRepo, participantRepo, mediaRepo, eventRepo, mediaURLs)
+			runOnce(ctx, sessionRepo, tripRepo, participantRepo, mediaRepo, pinRepo, eventRepo, mediaURLs)
 		}
 	}
 }
@@ -65,10 +66,11 @@ func RunSessionCleanupOnce(
 	tripRepo *repositories.TripRepository,
 	participantRepo *repositories.TripParticipantRepository,
 	mediaRepo *repositories.MediaRepository,
+	pinRepo *repositories.PinRepository,
 	eventRepo *repositories.RedisRepository,
 	mediaURLs services.MediaURLResolver,
 ) {
-	runOnce(ctx, sessionRepo, tripRepo, participantRepo, mediaRepo, eventRepo, mediaURLs)
+	runOnce(ctx, sessionRepo, tripRepo, participantRepo, mediaRepo, pinRepo, eventRepo, mediaURLs)
 }
 
 func runOnce(
@@ -77,6 +79,7 @@ func runOnce(
 	tripRepo *repositories.TripRepository,
 	participantRepo *repositories.TripParticipantRepository,
 	mediaRepo *repositories.MediaRepository,
+	pinRepo *repositories.PinRepository,
 	eventRepo *repositories.RedisRepository,
 	mediaURLs services.MediaURLResolver,
 ) {
@@ -91,7 +94,7 @@ func runOnce(
 	}
 	slog.InfoContext(ctx, "session_cleanup: found abandoned sessions", "count", len(abandoned))
 	for _, a := range abandoned {
-		cleanupOne(ctx, a, sessionRepo, tripRepo, participantRepo, mediaRepo, eventRepo, mediaURLs)
+		cleanupOne(ctx, a, sessionRepo, tripRepo, participantRepo, mediaRepo, pinRepo, eventRepo, mediaURLs)
 	}
 }
 
@@ -102,6 +105,7 @@ func cleanupOne(
 	tripRepo *repositories.TripRepository,
 	participantRepo *repositories.TripParticipantRepository,
 	mediaRepo *repositories.MediaRepository,
+	pinRepo *repositories.PinRepository,
 	eventRepo *repositories.RedisRepository,
 	mediaURLs services.MediaURLResolver,
 ) {
@@ -109,6 +113,14 @@ func cleanupOne(
 	if err != nil {
 		slog.WarnContext(ctx, "session_cleanup: GetExistingMediaIDs failed", "session_id", a.SessionID, "err", err)
 		existingIDs = nil
+	}
+	if pending, err := sessionRepo.GetPendingExistingAttachments(ctx, a.SessionID); err == nil && len(pending) > 0 {
+		if err := mediaRepo.ClearPinIDByIDs(pending); err != nil {
+			slog.WarnContext(ctx, "session_cleanup: rollback pending attachments failed", "session_id", a.SessionID, "err", err)
+		}
+	}
+	if _, err := pinRepo.DeleteByAddMediaSessionID(a.SessionID); err != nil {
+		slog.WarnContext(ctx, "session_cleanup: DeleteByAddMediaSessionID failed", "session_id", a.SessionID, "err", err)
 	}
 	s3Keys, err := mediaRepo.DeleteOrphanSessionMedia(a.TripID, existingIDs)
 	if err != nil {

@@ -34,6 +34,10 @@ func (r *PinRepository) Create(p *models.Pin) error {
 		cols = append(cols, "end_time")
 		vals = append(vals, p.EndTime)
 	}
+	if p.AddMediaSessionID != nil {
+		cols = append(cols, "add_media_session_id")
+		vals = append(vals, *p.AddMediaSessionID)
+	}
 	q := psq.Insert("pins").Columns(cols...).Values(vals...).Suffix("RETURNING id, created_at")
 	sqlStr, args, err := q.ToSql()
 	if err != nil {
@@ -142,7 +146,8 @@ func (r *PinRepository) ListByTripID(tripID string) ([]*models.Pin, error) {
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
 		start_time, end_time, is_published_in_feed, location_name, created_at
-		FROM pins WHERE trip_id = $1 ORDER BY start_time ASC NULLS LAST, created_at ASC`
+		FROM pins WHERE trip_id = $1 AND add_media_session_id IS NULL
+		ORDER BY start_time ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
 	if err != nil {
 		return nil, err
@@ -287,7 +292,7 @@ func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32
 		LEFT JOIN tags t ON t.pin_id = p.id AND t.trip_id = p.trip_id
 		LEFT JOIN pin_hidden_by_user ph ON ph.pin_id = p.id AND ph.user_id = $1
 		WHERE (p.name ILIKE $2 OR p.description ILIKE $2 OR t.tag ILIKE $2)
-		 AND ph.pin_id IS NULL
+		 AND ph.pin_id IS NULL AND p.add_media_session_id IS NULL
 		ORDER BY p.id, p.created_at DESC
 		LIMIT $3 OFFSET $4`
 	rows, err := r.db.Query(sqlStr, userID, pattern, limit, offset)
@@ -372,7 +377,7 @@ func (r *PinRepository) ListByTripIDExcludingHidden(tripID, userID string) ([]*m
 		p.start_time, p.end_time, p.is_published_in_feed, p.location_name, p.created_at
 		FROM pins p
 		LEFT JOIN pin_hidden_by_user ph ON ph.pin_id = p.id AND ph.user_id = $2
-		WHERE p.trip_id = $1 AND ph.pin_id IS NULL
+		WHERE p.trip_id = $1 AND ph.pin_id IS NULL AND p.add_media_session_id IS NULL
 		ORDER BY p.start_time ASC NULLS LAST, p.created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID, userID)
 	if err != nil {
@@ -411,6 +416,80 @@ func (r *PinRepository) ListByTripIDExcludingHidden(tripID, userID string) ([]*m
 		list = append(list, &p)
 	}
 	return list, rows.Err()
+}
+
+func (r *PinRepository) ListByTripIDIncludingDrafts(tripID string) ([]*models.Pin, error) {
+	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
+		ST_Y(location)::float as lat, ST_X(location)::float as lon,
+		start_time, end_time, is_published_in_feed, location_name, created_at, add_media_session_id
+		FROM pins WHERE trip_id = $1 ORDER BY start_time ASC NULLS LAST, created_at ASC`
+	rows, err := r.db.Query(sqlStr, tripID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []*models.Pin
+	for rows.Next() {
+		var p models.Pin
+		var desc, locName sql.NullString
+		var lat, lon sql.NullFloat64
+		var startTime, endTime sql.NullTime
+		var isPublished sql.NullBool
+		var sessionID sql.NullString
+		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
+			&lat, &lon, &startTime, &endTime, &isPublished, &locName, &p.CreatedAt, &sessionID); err != nil {
+			return nil, err
+		}
+		if desc.Valid {
+			p.Description = desc.String
+		}
+		if locName.Valid {
+			p.LocationName = locName.String
+		}
+		if lat.Valid {
+			p.Latitude = &lat.Float64
+		}
+		if lon.Valid {
+			p.Longitude = &lon.Float64
+		}
+		if startTime.Valid {
+			p.StartTime = &startTime.Time
+		}
+		if endTime.Valid {
+			p.EndTime = &endTime.Time
+		}
+		if isPublished.Valid {
+			p.IsPublishedInFeed = isPublished.Bool
+		}
+		if sessionID.Valid {
+			s := sessionID.String
+			p.AddMediaSessionID = &s
+		}
+		list = append(list, &p)
+	}
+	return list, rows.Err()
+}
+
+func (r *PinRepository) ClearAddMediaSessionByID(sessionID string) error {
+	_, err := r.db.Exec(`UPDATE pins SET add_media_session_id = NULL WHERE add_media_session_id = $1`, sessionID)
+	return err
+}
+
+func (r *PinRepository) DeleteByAddMediaSessionID(sessionID string) ([]string, error) {
+	rows, err := r.db.Query(`DELETE FROM pins WHERE add_media_session_id = $1 RETURNING id`, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }
 
 // IncMediaCount атомарно увеличивает (delta>0) или уменьшает (delta<0)

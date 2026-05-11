@@ -102,7 +102,7 @@ func main() {
 	}()
 
 	// cron для закрытия заброшенных add-media сессий (72ч без активности).
-	go worker.RunSessionCleanup(ctx, deps.AddMediaSessionRepo, deps.TripRepo, deps.ParticipantRepo, deps.MediaRepo, deps.EventRepo, deps.MediaURLs)
+	go worker.RunSessionCleanup(ctx, deps.AddMediaSessionRepo, deps.TripRepo, deps.ParticipantRepo, deps.MediaRepo, deps.PinRepo, deps.EventRepo, deps.MediaURLs)
 
 	// cron для закрытия заброшенных pin_upload сессий.
 	go worker.RunPinUploadCleanup(ctx, deps.PinUploadSessionRepo, deps.MediaRepo, deps.MediaURLs)

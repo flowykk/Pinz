@@ -47,6 +47,8 @@ type AddMediaSessionRepositoryInterface interface {
 	Touch(ctx context.Context, sessionID string, at time.Time) error
 	Close(ctx context.Context, sessionID, reason string, at time.Time) (tripID string, err error)
 	ListAbandoned(ctx context.Context, threshold time.Time) ([]AbandonedSession, error)
+	AppendPendingExistingAttachments(ctx context.Context, sessionID string, mediaIDs []string) error
+	GetPendingExistingAttachments(ctx context.Context, sessionID string) ([]string, error)
 }
 
 type InvitationLinkRepositoryInterface interface {
@@ -104,6 +106,7 @@ type MediaRepositoryInterface interface {
 	ListByTripID(tripID string) ([]*models.Media, error)
 	UpdatePinID(mediaID, pinID string) error
 	UpdatePinIDByIDs(mediaIDs []string, pinID string) error
+	ClearPinIDByIDs(mediaIDs []string) error
 	DeleteByIDs(ids []string) error
 	// удалить неприкреплённые медиа текущей add-media сессии.
 	DeleteOrphanSessionMedia(tripID string, existingMediaIDs []string) ([]string, error)
@@ -139,12 +142,15 @@ type PinRepositoryInterface interface {
 	Create(p *models.Pin) error
 	GetByID(id string) (*models.Pin, error)
 	ListByTripID(tripID string) ([]*models.Pin, error)
+	ListByTripIDIncludingDrafts(tripID string) ([]*models.Pin, error)
 	// ListByTripIDExcludingHidden — список пинов за вычетом скрытых для userID
 	// через pin_hidden_by_user.
 	ListByTripIDExcludingHidden(tripID, userID string) ([]*models.Pin, error)
 	Update(p *models.Pin) error
 	Delete(id string) error
 	DeleteByTripID(tripID string) error
+	ClearAddMediaSessionByID(sessionID string) error
+	DeleteByAddMediaSessionID(sessionID string) ([]string, error)
 	SetPrivacyLevel(pinID, level string) error
 	// IncMediaCount атомарно увеличивает/уменьшает media_count на пине.
 	// Используется AddMediaToPin (delta=+N после finalize) и RemoveMediaFromPin (delta=-1).

@@ -325,6 +325,14 @@ func (r *MediaRepository) UpdatePinIDByIDs(mediaIDs []string, pinID string) erro
 	return err
 }
 
+func (r *MediaRepository) ClearPinIDByIDs(mediaIDs []string) error {
+	if len(mediaIDs) == 0 {
+		return nil
+	}
+	_, err := psq.Update("media").Set("pin_id", nil).Where(sq.Eq{"id": mediaIDs}).RunWith(r.db).Exec()
+	return err
+}
+
 func (r *MediaRepository) DeleteByIDs(ids []string) error {
 	if len(ids) == 0 {
 		return nil

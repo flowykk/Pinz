@@ -14,15 +14,16 @@ import (
 )
 
 type AddMediaSession struct {
-	SessionID              uuid.UUID
-	TripID                 uuid.UUID
-	ExistingMediaIds       json.RawMessage
-	CreatedAt              time.Time
-	CurrentInitiatorUserID uuid.NullUUID
-	InitiatorAssignedAt    sql.NullTime
-	LastActivityAt         time.Time
-	ClosedAt               sql.NullTime
-	CloseReason            sql.NullString
+	SessionID                  uuid.UUID
+	TripID                     uuid.UUID
+	ExistingMediaIds           json.RawMessage
+	CreatedAt                  time.Time
+	CurrentInitiatorUserID     uuid.NullUUID
+	InitiatorAssignedAt        sql.NullTime
+	LastActivityAt             time.Time
+	ClosedAt                   sql.NullTime
+	CloseReason                sql.NullString
+	PendingExistingAttachments json.RawMessage
 }
 
 type Favourite struct {
@@ -99,6 +100,7 @@ type Pin struct {
 	IsPublishedInFeed bool
 	CreatedAt         time.Time
 	LocationName      string
+	AddMediaSessionID uuid.NullUUID
 }
 
 type PinHiddenByUser struct {
