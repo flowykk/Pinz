@@ -43,6 +43,20 @@ func (m *MockAddMediaSessionRepositoryInterface) EXPECT() *MockAddMediaSessionRe
 	return m.recorder
 }
 
+// AppendPendingExistingAttachments mocks base method.
+func (m *MockAddMediaSessionRepositoryInterface) AppendPendingExistingAttachments(ctx context.Context, sessionID string, mediaIDs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AppendPendingExistingAttachments", ctx, sessionID, mediaIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AppendPendingExistingAttachments indicates an expected call of AppendPendingExistingAttachments.
+func (mr *MockAddMediaSessionRepositoryInterfaceMockRecorder) AppendPendingExistingAttachments(ctx, sessionID, mediaIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AppendPendingExistingAttachments", reflect.TypeOf((*MockAddMediaSessionRepositoryInterface)(nil).AppendPendingExistingAttachments), ctx, sessionID, mediaIDs)
+}
+
 // Close mocks base method.
 func (m *MockAddMediaSessionRepositoryInterface) Close(ctx context.Context, sessionID, reason string, at time.Time) (string, error) {
 	m.ctrl.T.Helper()
@@ -117,6 +131,21 @@ func (m *MockAddMediaSessionRepositoryInterface) GetExistingMediaIDs(ctx context
 func (mr *MockAddMediaSessionRepositoryInterfaceMockRecorder) GetExistingMediaIDs(ctx, sessionID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExistingMediaIDs", reflect.TypeOf((*MockAddMediaSessionRepositoryInterface)(nil).GetExistingMediaIDs), ctx, sessionID)
+}
+
+// GetPendingExistingAttachments mocks base method.
+func (m *MockAddMediaSessionRepositoryInterface) GetPendingExistingAttachments(ctx context.Context, sessionID string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPendingExistingAttachments", ctx, sessionID)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPendingExistingAttachments indicates an expected call of GetPendingExistingAttachments.
+func (mr *MockAddMediaSessionRepositoryInterfaceMockRecorder) GetPendingExistingAttachments(ctx, sessionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingExistingAttachments", reflect.TypeOf((*MockAddMediaSessionRepositoryInterface)(nil).GetPendingExistingAttachments), ctx, sessionID)
 }
 
 // ListAbandoned mocks base method.

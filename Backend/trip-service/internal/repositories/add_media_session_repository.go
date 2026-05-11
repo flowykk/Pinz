@@ -172,6 +172,46 @@ type AbandonedSession struct {
 	TripID string
 }
 
+func (r *AddMediaSessionRepository) AppendPendingExistingAttachments(ctx context.Context, sessionID string, mediaIDs []string) error {
+	if len(mediaIDs) == 0 {
+		return nil
+	}
+	sid, err := uuid.Parse(sessionID)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(mediaIDs)
+	if err != nil {
+		return err
+	}
+	return r.q.AddMediaSessionAppendPendingAttachments(ctx, sqlcdb.AddMediaSessionAppendPendingAttachmentsParams{
+		SessionID: sid,
+		Column2:   b,
+	})
+}
+
+func (r *AddMediaSessionRepository) GetPendingExistingAttachments(ctx context.Context, sessionID string) ([]string, error) {
+	sid, err := uuid.Parse(sessionID)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := r.q.AddMediaSessionGetPendingAttachments(ctx, sid)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if len(raw) == 0 {
+		return nil, nil
+	}
+	var ids []string
+	if err := json.Unmarshal(raw, &ids); err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
 // ListAbandoned — сессии без активности дольше threshold. Для cron session_cleanup.
 func (r *AddMediaSessionRepository) ListAbandoned(ctx context.Context, threshold time.Time) ([]AbandonedSession, error) {
 	rows, err := r.q.AddMediaSessionListAbandoned(ctx, threshold)

@@ -41,6 +41,20 @@ func (m *MockPinRepositoryInterface) EXPECT() *MockPinRepositoryInterfaceMockRec
 	return m.recorder
 }
 
+// ClearAddMediaSessionByID mocks base method.
+func (m *MockPinRepositoryInterface) ClearAddMediaSessionByID(sessionID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClearAddMediaSessionByID", sessionID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ClearAddMediaSessionByID indicates an expected call of ClearAddMediaSessionByID.
+func (mr *MockPinRepositoryInterfaceMockRecorder) ClearAddMediaSessionByID(sessionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearAddMediaSessionByID", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ClearAddMediaSessionByID), sessionID)
+}
+
 // Create mocks base method.
 func (m *MockPinRepositoryInterface) Create(p *models.Pin) error {
 	m.ctrl.T.Helper()
@@ -67,6 +81,21 @@ func (m *MockPinRepositoryInterface) Delete(id string) error {
 func (mr *MockPinRepositoryInterfaceMockRecorder) Delete(id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockPinRepositoryInterface)(nil).Delete), id)
+}
+
+// DeleteByAddMediaSessionID mocks base method.
+func (m *MockPinRepositoryInterface) DeleteByAddMediaSessionID(sessionID string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteByAddMediaSessionID", sessionID)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteByAddMediaSessionID indicates an expected call of DeleteByAddMediaSessionID.
+func (mr *MockPinRepositoryInterfaceMockRecorder) DeleteByAddMediaSessionID(sessionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByAddMediaSessionID", reflect.TypeOf((*MockPinRepositoryInterface)(nil).DeleteByAddMediaSessionID), sessionID)
 }
 
 // DeleteByTripID mocks base method.
@@ -155,6 +184,21 @@ func (m *MockPinRepositoryInterface) ListByTripIDExcludingHidden(tripID, userID 
 func (mr *MockPinRepositoryInterfaceMockRecorder) ListByTripIDExcludingHidden(tripID, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByTripIDExcludingHidden", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ListByTripIDExcludingHidden), tripID, userID)
+}
+
+// ListByTripIDIncludingDrafts mocks base method.
+func (m *MockPinRepositoryInterface) ListByTripIDIncludingDrafts(tripID string) ([]*models.Pin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByTripIDIncludingDrafts", tripID)
+	ret0, _ := ret[0].([]*models.Pin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByTripIDIncludingDrafts indicates an expected call of ListByTripIDIncludingDrafts.
+func (mr *MockPinRepositoryInterfaceMockRecorder) ListByTripIDIncludingDrafts(tripID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByTripIDIncludingDrafts", reflect.TypeOf((*MockPinRepositoryInterface)(nil).ListByTripIDIncludingDrafts), tripID)
 }
 
 // ListPublishedPinsByTripIDs mocks base method.

@@ -42,6 +42,20 @@ func (m *MockMediaRepositoryInterface) EXPECT() *MockMediaRepositoryInterfaceMoc
 	return m.recorder
 }
 
+// ClearPinIDByIDs mocks base method.
+func (m *MockMediaRepositoryInterface) ClearPinIDByIDs(mediaIDs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClearPinIDByIDs", mediaIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ClearPinIDByIDs indicates an expected call of ClearPinIDByIDs.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) ClearPinIDByIDs(mediaIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearPinIDByIDs", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).ClearPinIDByIDs), mediaIDs)
+}
+
 // ClusterIDsByLocation mocks base method.
 func (m *MockMediaRepositoryInterface) ClusterIDsByLocation(tripID string, radiusMeters float64) (map[string]int, error) {
 	m.ctrl.T.Helper()

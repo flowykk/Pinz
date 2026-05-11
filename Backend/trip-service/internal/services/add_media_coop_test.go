@@ -247,9 +247,10 @@ func TestAddMediaConfirm_Initiator_Success(t *testing.T) {
 	sessionRepo.EXPECT().GetActive(gomock.Any(), tripID).Return(active, nil) // ensureInitiator
 	tripRepo.EXPECT().GetByID(tripID).Return(trip, nil)
 	// applyReviewEdits без правок — делает только агрегацию cover/dates.
-	pinRepo.EXPECT().ListByTripID(tripID).Return(nil, nil)
+	pinRepo.EXPECT().ListByTripIDIncludingDrafts(tripID).Return(nil, nil)
 	mediaRepo.EXPECT().ListByTripID(tripID).Return(nil, nil)
 	tripRepo.EXPECT().Update(gomock.Any()).Return(nil)
+	pinRepo.EXPECT().ClearAddMediaSessionByID(sessionID).Return(nil)
 	sessionRepo.EXPECT().Close(gomock.Any(), sessionID, models.AddMediaSessionCloseReasonConfirmed, gomock.Any()).Return(tripID, nil)
 	tripRepo.EXPECT().SetStatus(tripID, models.TripStatusReady).Return(nil)
 	eventRepo.EXPECT().PublishTripEvent(gomock.Any(), "ADD_MEDIA_SESSION_COMPLETED", tripID, initiatorUserID).Return(nil)
@@ -341,17 +342,20 @@ func TestAddMediaCancel_UploadingByAnyone_DeletesOrphans(t *testing.T) {
 	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
 	sessionRepo := mocks.NewMockAddMediaSessionRepositoryInterface(ctrl)
 	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
 	eventRepo := mocks.NewMockTripEventPublisher(ctrl)
 
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
 	sessionRepo.EXPECT().GetActive(gomock.Any(), tripID).Return(active, nil)
 	tripRepo.EXPECT().GetByID(tripID).Return(trip, nil)
+	sessionRepo.EXPECT().GetPendingExistingAttachments(gomock.Any(), sessionID).Return(nil, nil)
+	pinRepo.EXPECT().DeleteByAddMediaSessionID(sessionID).Return(nil, nil)
 	mediaRepo.EXPECT().DeleteOrphanSessionMedia(tripID, []string{"old-1"}).Return([]string{"s3/new-1"}, nil)
 	sessionRepo.EXPECT().Close(gomock.Any(), sessionID, models.AddMediaSessionCloseReasonCancelled, gomock.Any()).Return(tripID, nil)
 	tripRepo.EXPECT().SetStatus(tripID, models.TripStatusReady).Return(nil)
 	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "TRIP_STATUS_CHANGED", gomock.Any()).Return(nil)
 
-	svc := buildService(tripRepo, participantRepo, sessionRepo, mediaRepo, nil, nil, eventRepo)
+	svc := buildService(tripRepo, participantRepo, sessionRepo, mediaRepo, pinRepo, nil, eventRepo)
 	resp, err := svc.AddMediaCancel(ctxWithUser(userID), &pb.AddMediaCancelRequest{
 		TripId: tripID,
 		SessionId: sessionID,
@@ -483,6 +487,112 @@ func TestAddMediaTakeover_WrongStatus_412(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "trip status does not allow this operation")
+}
+
+func TestAddMediaApply_MarksPinDraftAndJournalsExistingAttachments(t *testing.T) {
+	const tripID = "trip-1"
+	const sessionID = "sess-1"
+	const userID = "user-1"
+	const existingPinID = "pin-existing"
+	ctrl := gomock.NewController(t)
+
+	active := &models.AddMediaSession{SessionID: sessionID, TripID: tripID, ExistingMediaIDs: []string{"old-1"}}
+	trip := &models.Trip{ID: tripID, Status: models.TripStatusAddMediaGroupingReview, Category: "Другое", PrivacyLevel: "Private"}
+	existingPin := &models.Pin{ID: existingPinID, TripID: tripID}
+
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+	sessionRepo := mocks.NewMockAddMediaSessionRepositoryInterface(ctrl)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+	eventRepo := mocks.NewMockTripEventPublisher(ctrl)
+
+	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
+	sessionRepo.EXPECT().GetActive(gomock.Any(), tripID).Return(active, nil)
+	tripRepo.EXPECT().GetByID(tripID).Return(trip, nil)
+	sessionRepo.EXPECT().GetExistingMediaIDs(gomock.Any(), sessionID).Return([]string{"old-1"}, tripID, nil)
+
+	pinRepo.EXPECT().GetByID(existingPinID).Return(existingPin, nil)
+	mediaRepo.EXPECT().UpdatePinIDByIDs([]string{"new-existing"}, existingPinID).Return(nil)
+	sid := sessionID
+	pinRepo.EXPECT().Create(gomock.AssignableToTypeOf(&models.Pin{})).DoAndReturn(func(p *models.Pin) error {
+		require.NotNil(t, p.AddMediaSessionID)
+		require.Equal(t, sid, *p.AddMediaSessionID)
+		p.ID = "pin-new"
+		return nil
+	})
+	mediaRepo.EXPECT().UpdatePinIDByIDs([]string{"new-cluster"}, "pin-new").Return(nil)
+	sessionRepo.EXPECT().AppendPendingExistingAttachments(gomock.Any(), sessionID, []string{"new-existing"}).Return(nil)
+
+	mediaRepo.EXPECT().ListByPinID(gomock.Any()).Return(nil, nil).AnyTimes()
+	pinRepo.EXPECT().Update(gomock.Any()).Return(nil).AnyTimes()
+
+	tripRepo.EXPECT().SetStatus(tripID, models.TripStatusAddMediaProcessing).Return(nil)
+	sessionRepo.EXPECT().SetInitiator(gomock.Any(), sessionID, userID, gomock.Any()).Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "TRIP_STATUS_CHANGED", gomock.Any()).Return(nil)
+	eventRepo.EXPECT().PublishTripEvent(gomock.Any(), "PIN_ADDED", tripID, userID).Return(nil)
+
+	tripRepo.EXPECT().SetStatus(tripID, models.TripStatusAddMediaDraftFinalReview).Return(nil)
+	eventRepo.EXPECT().DeleteTripEventStream(gomock.Any(), tripID).Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "TRIP_PROCESSING_COMPLETED", gomock.Any()).Return(nil)
+
+	svc := buildService(tripRepo, participantRepo, sessionRepo, mediaRepo, pinRepo, nil, eventRepo)
+	resp, err := svc.AddMediaApplyGroupsAndProcess(ctxWithUser(userID), &pb.AddMediaApplyGroupsAndProcessRequest{
+		TripId:    tripID,
+		SessionId: sessionID,
+		DraftPins: []*pb.DraftPinInput{
+			{DraftPinId: "existing-" + existingPinID, MediaIds: []string{"new-existing"}},
+			{DraftPinId: "cluster-1", MediaIds: []string{"new-cluster"}},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, models.TripStatusAddMediaProcessing, resp.GetStatus())
+}
+
+func TestAddMediaCancel_AfterApply_DeletesDraftPinsAndRollsBackExisting(t *testing.T) {
+	const tripID = "trip-1"
+	const sessionID = "sess-1"
+	const userID = "user-leader"
+	ctrl := gomock.NewController(t)
+
+	assignedAt := time.Now().Add(-5 * time.Minute)
+	leader := userID
+	active := &models.AddMediaSession{
+		SessionID:              sessionID,
+		TripID:                 tripID,
+		ExistingMediaIDs:       []string{"old-1"},
+		CurrentInitiatorUserID: &leader,
+		InitiatorAssignedAt:    &assignedAt,
+	}
+	trip := &models.Trip{ID: tripID, Status: models.TripStatusAddMediaDraftFinalReview}
+
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+	sessionRepo := mocks.NewMockAddMediaSessionRepositoryInterface(ctrl)
+	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+	eventRepo := mocks.NewMockTripEventPublisher(ctrl)
+
+	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
+	sessionRepo.EXPECT().GetActive(gomock.Any(), tripID).Return(active, nil)
+	tripRepo.EXPECT().GetByID(tripID).Return(trip, nil)
+	sessionRepo.EXPECT().GetActive(gomock.Any(), tripID).Return(active, nil)
+
+	sessionRepo.EXPECT().GetPendingExistingAttachments(gomock.Any(), sessionID).Return([]string{"attached-1"}, nil)
+	mediaRepo.EXPECT().ClearPinIDByIDs([]string{"attached-1"}).Return(nil)
+	pinRepo.EXPECT().DeleteByAddMediaSessionID(sessionID).Return([]string{"draft-pin-1"}, nil)
+	mediaRepo.EXPECT().DeleteOrphanSessionMedia(tripID, []string{"old-1"}).Return(nil, nil)
+	sessionRepo.EXPECT().Close(gomock.Any(), sessionID, models.AddMediaSessionCloseReasonCancelled, gomock.Any()).Return(tripID, nil)
+	tripRepo.EXPECT().SetStatus(tripID, models.TripStatusReady).Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "TRIP_STATUS_CHANGED", gomock.Any()).Return(nil)
+
+	svc := buildService(tripRepo, participantRepo, sessionRepo, mediaRepo, pinRepo, nil, eventRepo)
+	resp, err := svc.AddMediaCancel(ctxWithUser(userID), &pb.AddMediaCancelRequest{
+		TripId:    tripID,
+		SessionId: sessionID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, models.TripStatusReady, resp.GetStatus())
 }
 
 // compile-guard: sql.ErrNoRows импортируется для явной семантики race в Create,

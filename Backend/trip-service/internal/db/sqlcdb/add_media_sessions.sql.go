@@ -14,6 +14,23 @@ import (
 	"github.com/google/uuid"
 )
 
+const addMediaSessionAppendPendingAttachments = `-- name: AddMediaSessionAppendPendingAttachments :exec
+UPDATE add_media_sessions
+SET pending_existing_attachments =
+    pending_existing_attachments || $2::jsonb
+WHERE session_id = $1 AND closed_at IS NULL
+`
+
+type AddMediaSessionAppendPendingAttachmentsParams struct {
+	SessionID uuid.UUID
+	Column2   json.RawMessage
+}
+
+func (q *Queries) AddMediaSessionAppendPendingAttachments(ctx context.Context, arg AddMediaSessionAppendPendingAttachmentsParams) error {
+	_, err := q.db.ExecContext(ctx, addMediaSessionAppendPendingAttachments, arg.SessionID, arg.Column2)
+	return err
+}
+
 const addMediaSessionClose = `-- name: AddMediaSessionClose :one
 UPDATE add_media_sessions
 SET closed_at = $2, close_reason = $3
@@ -112,6 +129,17 @@ func (q *Queries) AddMediaSessionGetActive(ctx context.Context, tripID uuid.UUID
 		&i.LastActivityAt,
 	)
 	return i, err
+}
+
+const addMediaSessionGetPendingAttachments = `-- name: AddMediaSessionGetPendingAttachments :one
+SELECT pending_existing_attachments FROM add_media_sessions WHERE session_id = $1
+`
+
+func (q *Queries) AddMediaSessionGetPendingAttachments(ctx context.Context, sessionID uuid.UUID) (json.RawMessage, error) {
+	row := q.db.QueryRowContext(ctx, addMediaSessionGetPendingAttachments, sessionID)
+	var pending_existing_attachments json.RawMessage
+	err := row.Scan(&pending_existing_attachments)
+	return pending_existing_attachments, err
 }
 
 const addMediaSessionListAbandoned = `-- name: AddMediaSessionListAbandoned :many

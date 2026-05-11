@@ -18,6 +18,7 @@ type Pin struct {
 	LocationName string
 	IsPublishedInFeed bool
 	CreatedAt time.Time
+	AddMediaSessionID *string
 }
 
 // Media is a photo or video in a trip.

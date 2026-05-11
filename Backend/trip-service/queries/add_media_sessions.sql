@@ -37,3 +37,12 @@ RETURNING trip_id;
 SELECT session_id, trip_id
 FROM add_media_sessions
 WHERE closed_at IS NULL AND last_activity_at < $1;
+
+-- name: AddMediaSessionAppendPendingAttachments :exec
+UPDATE add_media_sessions
+SET pending_existing_attachments =
+    pending_existing_attachments || $2::jsonb
+WHERE session_id = $1 AND closed_at IS NULL;
+
+-- name: AddMediaSessionGetPendingAttachments :one
+SELECT pending_existing_attachments FROM add_media_sessions WHERE session_id = $1;
