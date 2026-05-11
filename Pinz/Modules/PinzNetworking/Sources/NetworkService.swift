@@ -106,6 +106,35 @@ public protocol NetworkServiceProtocol {
         mediaToDelete: [String]
     ) async throws -> FinalizeTripDTO
 
+    // Pin upload flow
+    func pinUploadStart(
+        tripId: String,
+        targetPinId: String?,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> PinUploadStartResponseDTO
+    func pinUploadRequestUploadUrls(
+        tripId: String,
+        sessionId: String,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> [UploadURLDTO]
+    func pinUploadCommitUpload(
+        tripId: String,
+        sessionId: String,
+        s3Key: String,
+        mediaType: String,
+        capturedAtUnix: Int?,
+        latitude: Double?,
+        longitude: Double?
+    ) async throws -> PinUploadCommitResponseDTO
+    func pinUploadProcess(tripId: String, sessionId: String) async throws -> PinUploadProcessResponseDTO
+    func pinUploadGetReview(tripId: String, sessionId: String) async throws -> PinUploadReviewResponseDTO
+    func pinUploadFinalize(
+        tripId: String,
+        sessionId: String,
+        input: PinUploadFinalizeInputDTO
+    ) async throws -> PinResponseDTO
+    func pinUploadCancel(tripId: String, sessionId: String) async throws
+
     // Trip add-media flow
     func addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO]) async throws -> AddMediaStartDTO
     func addMediaRequestUploadUrls(tripId: String, sessionId: String, filesToUpload: [FileToUploadDTO]) async throws -> [UploadURLDTO]
@@ -190,7 +219,7 @@ public final class NetworkService: NetworkServiceProtocol {
         stub: Bool = false,
         stubDelay: TimeInterval = 0.5
     ) {
-        self.provider = NetworkProvider<PinzAPI>(stub: true, stubDelay: stubDelay)
+        self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: stubDelay)
         self.tripCreationWebSocketClient = TripCreationWebSocketClient()
     }
 
@@ -831,6 +860,104 @@ public final class NetworkService: NetworkServiceProtocol {
             ),
             type: FinalizeTripDTO.self
         )
+    }
+
+    // MARK: Pin upload flow
+
+    public func pinUploadStart(
+        tripId: String,
+        targetPinId: String?,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> PinUploadStartResponseDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .pinUploadStart(tripId: tripId, targetPinId: targetPinId, filesToUpload: filesToUpload),
+                type: PinUploadStartResponseDTO.self
+            )
+        }
+    }
+
+    public func pinUploadRequestUploadUrls(
+        tripId: String,
+        sessionId: String,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> [UploadURLDTO] {
+        struct Response: Decodable {
+            let upload_urls: [UploadURLDTO]
+        }
+        let response = try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .pinUploadRequestUploadUrls(tripId: tripId, sessionId: sessionId, filesToUpload: filesToUpload),
+                type: Response.self
+            )
+        }
+        return response.upload_urls
+    }
+
+    public func pinUploadCommitUpload(
+        tripId: String,
+        sessionId: String,
+        s3Key: String,
+        mediaType: String,
+        capturedAtUnix: Int?,
+        latitude: Double?,
+        longitude: Double?
+    ) async throws -> PinUploadCommitResponseDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .pinUploadCommitUpload(
+                    tripId: tripId,
+                    sessionId: sessionId,
+                    s3Key: s3Key,
+                    mediaType: mediaType,
+                    capturedAtUnix: capturedAtUnix,
+                    latitude: latitude,
+                    longitude: longitude
+                ),
+                type: PinUploadCommitResponseDTO.self
+            )
+        }
+    }
+
+    public func pinUploadProcess(tripId: String, sessionId: String) async throws -> PinUploadProcessResponseDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .pinUploadProcess(tripId: tripId, sessionId: sessionId),
+                type: PinUploadProcessResponseDTO.self
+            )
+        }
+    }
+
+    public func pinUploadGetReview(tripId: String, sessionId: String) async throws -> PinUploadReviewResponseDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .pinUploadGetReview(tripId: tripId, sessionId: sessionId),
+                type: PinUploadReviewResponseDTO.self
+            )
+        }
+    }
+
+    public func pinUploadFinalize(
+        tripId: String,
+        sessionId: String,
+        input: PinUploadFinalizeInputDTO
+    ) async throws -> PinResponseDTO {
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .pinUploadFinalize(tripId: tripId, sessionId: sessionId, input: input),
+                type: PinResponseDTO.self
+            )
+        }
+    }
+
+    public func pinUploadCancel(tripId: String, sessionId: String) async throws {
+        struct Response: Decodable { let status: String }
+        try await retryOnUnauthorized { [self] in
+            try await provider.request(
+                .pinUploadCancel(tripId: tripId, sessionId: sessionId),
+                type: Response.self
+            )
+        }
     }
 
     // MARK: Trip add-media flow

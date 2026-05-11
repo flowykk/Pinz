@@ -43,6 +43,11 @@ final class MockRouter: AppRouting {
     var navigatedToAddMediaProcessing: (tripId: String, sessionId: String)?
     var navigatedToAddMediaReview: (tripId: String, sessionId: String)?
 
+    // Pin upload
+    var navigatedToPinUploadStartTripId: String?
+    var navigatedToPinUploadProcessing: (tripId: String, sessionId: String)?
+    var navigatedToPinUploadReview: (tripId: String, sessionId: String)?
+
     // Trip creation
     var navigatedToTripCreationInitial = false
     var navigatedTripCreationPreprocessedPins: (tripId: String, pins: RawPins)?
@@ -121,6 +126,11 @@ final class MockRouter: AppRouting {
     func navigateToAddMediaGrouping(tripId: String, sessionId: String) { navigatedToAddMediaGrouping = (tripId, sessionId) }
     func navigateToAddMediaProcessing(tripId: String, sessionId: String) { navigatedToAddMediaProcessing = (tripId, sessionId) }
     func navigateToAddMediaReview(tripId: String, sessionId: String) { navigatedToAddMediaReview = (tripId, sessionId) }
+
+    // Pin upload
+    func navigateToPinUploadStart(tripId: String) { navigatedToPinUploadStartTripId = tripId }
+    func navigateToPinUploadProcessing(tripId: String, sessionId: String) { navigatedToPinUploadProcessing = (tripId, sessionId) }
+    func navigateToPinUploadReview(tripId: String, sessionId: String) { navigatedToPinUploadReview = (tripId, sessionId) }
 
     // Trip creation
     func navigateToTripCreationInitial() { navigatedToTripCreationInitial = true }

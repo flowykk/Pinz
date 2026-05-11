@@ -8,6 +8,7 @@ public struct TripPinsListView: View {
     @State private var viewModel: TripPinsListViewModel
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     public init(trip: Trip) {
         viewModel = TripPinsListViewModel(trip: trip)
@@ -36,7 +37,11 @@ public struct TripPinsListView: View {
             gradientWithButtons
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setShowToast(showToast)
+            viewModel.refreshActiveSessionFlag()
+        }
     }
 
     @ViewBuilder
@@ -68,6 +73,14 @@ public struct TripPinsListView: View {
         }
     }
 
+    private var pinUploadStatusLabel: String? {
+        viewModel.hasActivePinUploadSession ? "Создание пина..." : nil
+    }
+
+    private var hasAnyStatusLabel: Bool {
+        addMediaStatusLabel != nil || pinUploadStatusLabel != nil
+    }
+
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             HStack(alignment: .top, spacing: 6) {
@@ -80,12 +93,15 @@ public struct TripPinsListView: View {
                     addMediaStatusLabelView
                 }
 
-                PinzButton(
-                    type: .slot(style: .primary, title: PinzBaseStrings.TripPins.Button.addPin),
-                    tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
-                    action: .plain { viewModel.dispatch(.navigate(.pinCreation)) }
-                )
-            }.if(addMediaStatusLabel != nil) { view in
+                VStack(spacing: 4) {
+                    PinzButton(
+                        type: .slot(style: .primary, title: PinzBaseStrings.TripPins.Button.addPin),
+                        tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                        action: .plain { Task { try? await viewModel.asyncDispatch(.addPin) } }
+                    )
+                    pinUploadStatusLabelView
+                }
+            }.if(hasAnyStatusLabel) { view in
                 view.padding(.bottom, -20)
             }
         }
@@ -94,6 +110,15 @@ public struct TripPinsListView: View {
     @ViewBuilder
     private var addMediaStatusLabelView: some View {
         if let label = addMediaStatusLabel {
+            Text(label)
+                .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    @ViewBuilder
+    private var pinUploadStatusLabelView: some View {
+        if let label = pinUploadStatusLabel {
             Text(label)
                 .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 .multilineTextAlignment(.center)

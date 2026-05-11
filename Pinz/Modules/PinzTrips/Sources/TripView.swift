@@ -20,6 +20,7 @@ public struct TripView: View {
 
     @Environment(\.appRouter) private var router
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.showToast) private var showToast
 
     public init(trips: [Trip]) {
         self.availableTrips = trips
@@ -57,10 +58,12 @@ public struct TripView: View {
         }
         .onAppear {
             viewModel.setRouter(router)
+            viewModel.setShowToast(showToast)
             if SelectedTripStorage.shared.selectedTripID == nil {
                 viewModel.dispatch(.clearSelection)
             }
             viewModel.dispatch(.checkAndUpdateTrip(availableTrips))
+            viewModel.refreshActivePinUploadSessionFlag()
             Task {
                 try? await viewModel.asyncDispatch(.loadSavedTrip)
                 try? await viewModel.asyncDispatch(.loadCurrentProfile)
@@ -80,12 +83,16 @@ public struct TripView: View {
         })
         .ifLet(viewModel.trip) { view, selectedTrip in
             view.sheet(isPresented: $isPinsListPresented) {
-                TripPinsListPopupView(pins: selectedTrip.pins, tripStatus: selectedTrip.status) { pin in
+                TripPinsListPopupView(
+                    pins: selectedTrip.pins,
+                    tripStatus: selectedTrip.status,
+                    pinUploadStatusLabel: viewModel.hasActivePinUploadSession ? "Создание пина..." : nil
+                ) { pin in
                     isPinsListPresented = false
                     viewModel.dispatch(.navigate(.pinInfo(pin)))
                 } createPinTapped: {
                     isPinsListPresented = false
-                    viewModel.dispatch(.navigate(.pinCreation))
+                    Task { try? await viewModel.asyncDispatch(.addPin) }
                 } addMediaTapped: {
                     isPinsListPresented = false
                     Task { try? await viewModel.asyncDispatch(.addMedia) }

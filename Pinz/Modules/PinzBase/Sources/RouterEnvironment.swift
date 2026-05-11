@@ -56,6 +56,10 @@ public protocol AppRouting: AnyObject {
     func navigateToAddMediaProcessing(tripId: String, sessionId: String)
     func navigateToAddMediaReview(tripId: String, sessionId: String)
 
+    func navigateToPinUploadStart(tripId: String)
+    func navigateToPinUploadProcessing(tripId: String, sessionId: String)
+    func navigateToPinUploadReview(tripId: String, sessionId: String)
+
     func pop()
     func pop(by count: Int)
     func popToRoot()

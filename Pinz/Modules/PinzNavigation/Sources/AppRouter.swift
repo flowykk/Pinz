@@ -238,6 +238,22 @@ extension AppRouter {
     }
 }
 
+// MARK: - PinUpload Routing
+
+extension AppRouter {
+    public func navigateToPinUploadStart(tripId: String) {
+        navigate(to: .pinUpload(.start(tripId: tripId)))
+    }
+
+    public func navigateToPinUploadProcessing(tripId: String, sessionId: String) {
+        navigate(to: .pinUpload(.processing(tripId: tripId, sessionId: sessionId)))
+    }
+
+    public func navigateToPinUploadReview(tripId: String, sessionId: String) {
+        navigate(to: .pinUpload(.review(tripId: tripId, sessionId: sessionId)))
+    }
+}
+
 // MARK: - Feed Routing
 
 extension AppRouter {

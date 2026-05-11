@@ -2,6 +2,7 @@ import SwiftUI
 import PinzNetworking
 import PinzBase
 import PinzDomain
+import PinzPins
 
 @Observable
 final class TripPinsListViewModel {
@@ -19,15 +20,19 @@ final class TripPinsListViewModel {
 
     enum AsyncIntent {
         case addMedia
+        case addPin
     }
 
     var trip: Trip
+    var hasActivePinUploadSession: Bool = false
 
     private let networkService = NetworkService.shared
     private var router: AppRouting?
+    private var showToast: ((String) -> Void)?
 
     init(trip: Trip) {
         self.trip = trip
+        refreshActiveSessionFlag()
     }
 
     func dispatch(_ intent: Intent) {
@@ -58,6 +63,15 @@ final class TripPinsListViewModel {
 
     func asyncDispatch(_ intent: AsyncIntent) async throws {
         switch intent {
+        case .addPin:
+            await PinUploadEntryResolver.resume(
+                tripId: trip.id,
+                networkService: networkService,
+                router: router,
+                showToast: showToast
+            )
+            refreshActiveSessionFlag()
+
         case .addMedia:
             let response = try await networkService.getTrip(id: trip.id)
             let sessionId = response.activeAddMediaSession?.sessionId
@@ -80,5 +94,14 @@ final class TripPinsListViewModel {
 
     public func setRouter(_ router: AppRouting?) {
         self.router = router
+        refreshActiveSessionFlag()
+    }
+
+    public func setShowToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
+    }
+
+    func refreshActiveSessionFlag() {
+        hasActivePinUploadSession = PinUploadSessionStorage.shared.sessionId(forTripId: trip.id) != nil
     }
 }
