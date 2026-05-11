@@ -97,7 +97,7 @@ spec:
     spec:
       containers:
         - name: otel-collector
-          image: otel/opentelemetry-collector-contrib:latest
+          image: otel/opentelemetry-collector-contrib:0.151.0
           args: ["--config=/etc/otelcol/config.yaml"]
           ports:
             - containerPort: 4317
@@ -109,10 +109,10 @@ spec:
           resources:
             requests:
               cpu: "50m"
-              memory: "128Mi"
+              memory: "192Mi"
             limits:
-              cpu: "200m"
-              memory: "256Mi"
+              cpu: "300m"
+              memory: "512Mi"
           volumeMounts:
             - name: config
               mountPath: /etc/otelcol
@@ -231,10 +231,10 @@ spec:
           resources:
             requests:
               cpu: "50m"
-              memory: "128Mi"
+              memory: "160Mi"
             limits:
-              cpu: "200m"
-              memory: "256Mi"
+              cpu: "300m"
+              memory: "384Mi"
           volumeMounts:
             - name: config
               mountPath: /etc/tempo.yaml
@@ -340,7 +340,7 @@ spec:
     spec:
       containers:
         - name: loki
-          image: grafana/loki:latest
+          image: grafana/loki:3.3.2
           args: ["-config.file=/etc/loki/config.yaml", "-target=all"]
           ports:
             - containerPort: 3100
@@ -348,10 +348,10 @@ spec:
           resources:
             requests:
               cpu: "50m"
-              memory: "64Mi"
+              memory: "192Mi"
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: "300m"
+              memory: "384Mi"
           volumeMounts:
             - name: config
               mountPath: /etc/loki/config.yaml
@@ -520,7 +520,7 @@ spec:
     spec:
       containers:
         - name: prometheus
-          image: prom/prometheus:latest
+          image: prom/prometheus:v2.55.1
           args:
             - "--config.file=/etc/prometheus/prometheus.yml"
             - "--storage.tsdb.path=/prometheus"
@@ -786,7 +786,7 @@ spec:
     spec:
       containers:
         - name: grafana
-          image: grafana/grafana:latest
+          image: grafana/grafana:11.4.0
           ports:
             - containerPort: 3000
               name: http
@@ -807,10 +807,10 @@ spec:
           resources:
             requests:
               cpu: "50m"
-              memory: "64Mi"
+              memory: "96Mi"
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: "200m"
+              memory: "256Mi"
           volumeMounts:
             - name: grafana-config
               mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
