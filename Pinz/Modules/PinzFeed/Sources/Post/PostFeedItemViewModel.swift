@@ -8,11 +8,15 @@ import PinzNetworking
 @MainActor @Observable
 final class PostFeedItemViewModel {
 
+    typealias RecommendationFavouriteHandler = (_ shouldSave: Bool) async throws -> String
+
     private(set) var post: Post
     private(set) var images: [Int: UIImage] = [:]
+    private(set) var isRecommendationSaving = false
     var position: MapCameraPosition
 
     private let networkService: NetworkServiceProtocol
+    private let recommendationFavouriteHandler: RecommendationFavouriteHandler?
 
     enum Intent {
         case like
@@ -22,10 +26,12 @@ final class PostFeedItemViewModel {
 
     init(
         post: Post,
-        networkService: NetworkServiceProtocol = NetworkService.shared
+        networkService: NetworkServiceProtocol = NetworkService.shared,
+        recommendationFavouriteHandler: RecommendationFavouriteHandler? = nil
     ) {
         self.post = post
         self.networkService = networkService
+        self.recommendationFavouriteHandler = recommendationFavouriteHandler
         self.position = post.pins.calculateInitialMapPosition(
             zoomMultiplier: 2.5,
             topOffsetFactor: 0.2
@@ -36,8 +42,10 @@ final class PostFeedItemViewModel {
         withAnimation {
             switch intent {
             case .like:
+                guard !post.isRecommended else { return }
                 Task { await self.toggleLike() }
             case .dislike:
+                guard !post.isRecommended else { return }
                 Task { await self.toggleDislike() }
             case .toggleFavourite:
                 Task { await self.toggleFavourite() }
@@ -107,6 +115,11 @@ final class PostFeedItemViewModel {
     }
 
     private func toggleFavourite() async {
+        if post.isRecommended, let handler = recommendationFavouriteHandler {
+            await toggleRecommendationFavourite(handler: handler)
+            return
+        }
+
         if post.isSaved {
             post.isSaved = false
             post.favorites = max(post.favorites - 1, 0)
@@ -123,6 +136,24 @@ final class PostFeedItemViewModel {
             } catch {
                 print(error)
             }
+        }
+    }
+
+    private func toggleRecommendationFavourite(handler: RecommendationFavouriteHandler) async {
+        guard !isRecommendationSaving else { return }
+        isRecommendationSaving = true
+        defer { isRecommendationSaving = false }
+
+        let desired = !post.isSaved
+        post.isSaved = desired
+        post.favorites = max(0, post.favorites + (desired ? 1 : -1))
+
+        do {
+            _ = try await handler(desired)
+        } catch {
+            post.isSaved = !desired
+            post.favorites = max(0, post.favorites + (desired ? -1 : 1))
+            print(error)
         }
     }
 }

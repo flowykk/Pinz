@@ -52,6 +52,19 @@ public enum TripCategory: PickerItem {
         case .custom:     return "custom"
         }
     }
+
+    /// Cyrillic value expected by `/recommendations` endpoints per backend guide.
+    public var recommendationApiValue: String? {
+        switch self {
+        case .none:      return nil
+        case .vacation:  return "Отпуск"
+        case .business:  return "Командировка"
+        case .holidays:  return "Выходные"
+        case .active:    return "Активный отдых"
+        case .education: return "Образование"
+        case .custom:    return "Другое"
+        }
+    }
 }
 
 extension TripCategory: Equatable {

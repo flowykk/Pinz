@@ -23,8 +23,15 @@ final class MockNetworkService: NetworkServiceProtocol {
     var getFeedResult: Result<[FeedItemDTO], Error> = .success(MockNetworkService.stubFeed)
     var getRecommendationsResult: Result<GetRecommendationsResponseDTO, Error> = .success(MockNetworkService.stubGetRecommendationsResponse)
     var saveRecommendationResult: Result<SaveRecommendationResponseDTO, Error> = .success(MockNetworkService.stubSaveRecommendationResponse)
-    var getRecommendationsCall: (city: String?, country: String?)?
-    var saveRecommendationCall: (city: String?, country: String?)?
+    var getRecommendationsCall: (city: String?, country: String?, category: String?, season: String?)?
+    var saveRecommendationCall: (
+        snapshotToken: String,
+        pinIds: [String],
+        city: String?,
+        country: String?,
+        category: String?,
+        season: String?
+    )?
     var getTripsResult: Result<[TripDTO], Error> = .success([])
     var getTripResult: Result<GetTripResponseDTO, Error> = .success(MockNetworkService.stubTripResponse)
     var requestTripCoverUploadResult: Result<TripCoverUploadResponseDTO, Error> = .success(
@@ -145,13 +152,25 @@ final class MockNetworkService: NetworkServiceProtocol {
         try getFeedResult.get()
     }
 
-    func getRecommendations(city: String?, country: String?) async throws -> GetRecommendationsResponseDTO {
-        getRecommendationsCall = (city, country)
+    func getRecommendations(
+        city: String?,
+        country: String?,
+        category: String?,
+        season: String?
+    ) async throws -> GetRecommendationsResponseDTO {
+        getRecommendationsCall = (city, country, category, season)
         return try getRecommendationsResult.get()
     }
 
-    func saveRecommendation(city: String?, country: String?) async throws -> SaveRecommendationResponseDTO {
-        saveRecommendationCall = (city, country)
+    func saveRecommendation(
+        snapshotToken: String,
+        pinIds: [String],
+        city: String?,
+        country: String?,
+        category: String?,
+        season: String?
+    ) async throws -> SaveRecommendationResponseDTO {
+        saveRecommendationCall = (snapshotToken, pinIds, city, country, category, season)
         return try saveRecommendationResult.get()
     }
 
@@ -574,6 +593,7 @@ final class MockNetworkService: NetworkServiceProtocol {
         pins: stubRecommendationPins,
         regionName: "Пекин",
         regionType: "city",
+        snapshotToken: "stub-snapshot-token-001",
         trip: stubRecommendedTrip
     )
     private static let stubGetRecommendationsResponse = GetRecommendationsResponseDTO(map: stubRecommendationMap)

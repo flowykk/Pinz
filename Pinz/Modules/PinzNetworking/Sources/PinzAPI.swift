@@ -33,8 +33,8 @@ enum PinzAPI {
 
     // Feed
     case getFeed(limit: Int?, offset: Int?, category: String?, season: String?, city: String?, country: String?, sortBy: String?)
-    case getRecommendations(city: String?, country: String?)
-    case saveRecommendation(city: String?, country: String?)
+    case getRecommendations(city: String?, country: String?, category: String?, season: String?)
+    case saveRecommendation(snapshotToken: String, pinIds: [String], city: String?, country: String?, category: String?, season: String?)
 
     // Trips CRUD
     case getTrips
@@ -252,16 +252,23 @@ extension PinzAPI: TargetType {
             if let country { params["country"] = country }
             if let sortBy { params["sort_by"] = sortBy }
             return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
-        case let .getRecommendations(city, country):
+        case let .getRecommendations(city, country, category, season):
             var params: [String: Any] = [:]
             if let city { params["city"] = city }
             if let country { params["country"] = country }
+            if let category { params["category"] = category }
+            if let season { params["season"] = season }
             return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
-        case let .saveRecommendation(city, country):
-            var params: [String: Any] = [:]
-            if let city { params["city"] = city }
-            if let country { params["country"] = country }
-            return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
+        case let .saveRecommendation(snapshotToken, pinIds, city, country, category, season):
+            let params: [String: Any] = [
+                "snapshot_token": snapshotToken,
+                "pin_ids": pinIds,
+                "city": city ?? "",
+                "country": country ?? "",
+                "category": category ?? "",
+                "season": season ?? ""
+            ]
+            return .requestParameters(parameters: params, encoding: JSONEncoding.default)
 
         case let .getFavouriteTrips(limit, offset):
             var params: [String: Any] = [:]
@@ -491,10 +498,10 @@ extension PinzAPI {
             json = #"{"token_id":"550e8400-e29b-41d4-a716-446655440000"}"#
         case .unregisterDeviceToken:
             json = #"{"success":true}"#
-        case let .getRecommendations(_, _):
-            json = #"{"map":{"media":[{"media_id":"rec-media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"photo"}],"pins":[{"id":"rec-pin-001","trip_id":"trip-rec-001","name":"Тайные улочки Пекина","description":"Лучшие места для прогулок и съемки в историческом центре города","category":"vacation","latitude":39.9042,"longitude":116.4074,"location_name":"Пекин","media_count":1,"media":[{"media_id":"rec-pin-media-001","url":"https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg","media_type":"photo"}]}],"region_name":"Пекин","region_type":"city","trip":{"id":"trip-rec-001","name":"Тайная Пекинская неделя","description":"Сборка локаций и маршрутов из одного города на один уикенд","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":73,"dislikes_count":1,"participants_count":2,"media_count":4,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}}}"#
-        case let .saveRecommendation(_, _):
-            json = #"{"trip":{"id":"trip-rec-001","name":"Тайная Пекинская неделя","description":"Сборка локаций и маршрутов из одного города на один уикенд","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":73,"dislikes_count":1,"participants_count":2,"media_count":4,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}}"#
+        case .getRecommendations:
+            json = #"{"map":{"snapshot_token":"stub-snapshot-token-001","media":[{"media_id":"rec-media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"photo"}],"pins":[{"id":"rec-pin-001","trip_id":"trip-rec-001","name":"Тайные улочки Пекина","description":"Лучшие места для прогулок и съемки в историческом центре города","category":"vacation","latitude":39.9042,"longitude":116.4074,"location_name":"Пекин","media_count":1,"media":[{"media_id":"rec-pin-media-001","url":"https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg","media_type":"photo"}]}],"region_name":"Пекин","region_type":"city","trip":{"id":"trip-rec-001","name":"Тайная Пекинская неделя","description":"Сборка локаций и маршрутов из одного города на один уикенд","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":73,"dislikes_count":1,"participants_count":2,"media_count":4,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}}}"#
+        case .saveRecommendation:
+            json = #"{"trip":{"id":"trip-rec-generated-001","name":"Популярные места: Пекин","description":"Сборка локаций и маршрутов из одного города на один уикенд","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"private","status":"published","is_published":false,"is_generated":true,"likes_count":0,"dislikes_count":0,"participants_count":1,"media_count":4,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}}"#
         case let .getFeed(_, offset, _, _, _, _, _):
             switch offset ?? 0 {
             case 0:

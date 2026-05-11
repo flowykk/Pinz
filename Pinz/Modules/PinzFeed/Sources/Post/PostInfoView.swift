@@ -58,43 +58,47 @@ public struct PostInfoView: View {
     @ViewBuilder
     private var statistics: some View {
         let iconSize: CGFloat = 18
-        HStack(spacing: 12) {
-            Button {
-                viewModel.dispatch(.like)
-            } label: {
-                StatisticView(
-                    icon: viewModel.post.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup",
-                    text: String(viewModel.post.likes),
-                    iconSize: iconSize,
-                    iconColor: PinzUIAsset.textPrimary
-                )
-            }
-            .buttonStyle(.plain)
+        if viewModel.post.isRecommended {
+            EmptyView()
+        } else {
+            HStack(spacing: 12) {
+                Button {
+                    viewModel.dispatch(.like)
+                } label: {
+                    StatisticView(
+                        icon: viewModel.post.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup",
+                        text: String(viewModel.post.likes),
+                        iconSize: iconSize,
+                        iconColor: PinzUIAsset.textPrimary
+                    )
+                }
+                .buttonStyle(.plain)
 
-            Button {
-                viewModel.dispatch(.dislike)
-            } label: {
-                StatisticView(
-                    icon: viewModel.post.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown",
-                    text: String(viewModel.post.dislikes),
-                    iconSize: iconSize,
-                    iconColor: PinzUIAsset.textPrimary
-                )
-            }
-            .buttonStyle(.plain)
+                Button {
+                    viewModel.dispatch(.dislike)
+                } label: {
+                    StatisticView(
+                        icon: viewModel.post.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown",
+                        text: String(viewModel.post.dislikes),
+                        iconSize: iconSize,
+                        iconColor: PinzUIAsset.textPrimary
+                    )
+                }
+                .buttonStyle(.plain)
 
-            Spacer()
+                Spacer()
 
-            Button {
-                viewModel.dispatch(.toggleFavourite)
-            } label: {
-                StatisticView(
-                    icon: viewModel.post.isSaved ? "bookmark.fill" : "bookmark",
-                    iconSize: iconSize,
-                    iconColor: PinzUIAsset.textPrimary
-                )
+                Button {
+                    viewModel.dispatch(.toggleFavourite)
+                } label: {
+                    StatisticView(
+                        icon: viewModel.post.isSaved ? "bookmark.fill" : "bookmark",
+                        iconSize: iconSize,
+                        iconColor: PinzUIAsset.textPrimary
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
     }
 

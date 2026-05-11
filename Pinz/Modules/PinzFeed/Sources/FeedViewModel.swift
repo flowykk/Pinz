@@ -16,6 +16,17 @@ final class FeedViewModel {
         case navigate(Route)
     }
 
+    struct RecommendationState: Equatable {
+        let snapshotToken: String
+        let pinIds: [String]
+        let city: String?
+        let country: String?
+        let category: String?
+        let season: String?
+        var savedTripId: String?
+        var isSaving: Bool
+    }
+
     private let pageSize = 2 // TODO: change back to 20 after testing pagination
     private(set) var posts: [Post] = []
     private(set) var isLoading = false
@@ -23,6 +34,7 @@ final class FeedViewModel {
     private(set) var shouldShowRecommendationButton = true
     private(set) var hasReachedEnd = false
     private(set) var hasLoadedFeed = false
+    private(set) var recommendation: RecommendationState?
     private var showToast: ((String) -> Void)?
     private var currentOffset = 0
     var filters: FeedFilterModel = FeedFilterModel()
@@ -121,29 +133,58 @@ final class FeedViewModel {
         }
     }
 
-    private func loadRecommendation() async {
+    func loadRecommendation() async {
         guard !isRecommendationsLoading else { return }
 
-        let normalizedCity = filters.city.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedCountry = filters.country.trimmingCharacters(in: .whitespacesAndNewlines)
-        let city = normalizedCity.isEmpty ? nil : normalizedCity
-        let country = normalizedCountry.isEmpty ? nil : normalizedCountry
+        let (city, country) = normalizedLocation(from: filters)
         guard (city == nil) != (country == nil) else {
             showToast?(L10n.recommendationLocationError)
             return
         }
 
+        let category = filters.recommendationCategoryParam
+        let season = filters.recommendationSeasonParam
+
         isRecommendationsLoading = true
         defer { isRecommendationsLoading = false }
 
         do {
-            let response = try await networkService.getRecommendations(city: city, country: country)
-            let recommendation = mapRecommendationToPost(response.map)
+            let response = try await networkService.getRecommendations(
+                city: city,
+                country: country,
+                category: category,
+                season: season
+            )
+            let map = response.map
+
+            guard !map.pins.isEmpty, !map.snapshotToken.isEmpty else {
+                recommendation = nil
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    posts.removeAll(where: \.isRecommended)
+                }
+                showToast?(L10n.recommendationEmpty)
+                return
+            }
+
+            recommendation = RecommendationState(
+                snapshotToken: map.snapshotToken,
+                pinIds: map.pins.map(\.id),
+                city: city,
+                country: country,
+                category: category,
+                season: season,
+                savedTripId: nil,
+                isSaving: false
+            )
+
+            let post = mapRecommendationToPost(map)
             withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                 posts.removeAll(where: \.isRecommended)
-                posts.insert(recommendation, at: 0)
+                posts.insert(post, at: 0)
             }
             shouldShowRecommendationButton = false
+        } catch let httpError as HTTPError {
+            handleGetRecommendationsError(httpError)
         } catch {
             print(error)
             showToast?(L10n.recommendationLoadFailed)
@@ -151,12 +192,13 @@ final class FeedViewModel {
     }
 
     private func resetRecommendationStateIfNeeded(for newFilters: FeedFilterModel) {
-        let currentLocation = normalizedLocation(from: filters)
-        let nextLocation = normalizedLocation(from: newFilters)
+        let currentSignature = recommendationSignature(from: filters)
+        let nextSignature = recommendationSignature(from: newFilters)
 
-        guard currentLocation != nextLocation else { return }
+        guard currentSignature != nextSignature else { return }
 
         shouldShowRecommendationButton = true
+        recommendation = nil
         posts.removeAll(where: \.isRecommended)
     }
 
@@ -168,6 +210,116 @@ final class FeedViewModel {
         let country = normalizedCountry.isEmpty ? nil : normalizedCountry
 
         return (city, country)
+    }
+
+    private func recommendationSignature(
+        from filters: FeedFilterModel
+    ) -> (String?, String?, String?, String?) {
+        let (city, country) = normalizedLocation(from: filters)
+        return (city, country, filters.recommendationCategoryParam, filters.recommendationSeasonParam)
+    }
+
+    func toggleRecommendationFavourite(shouldSave: Bool) async throws -> String {
+        guard var current = recommendation else {
+            throw RecommendationFavouriteError.noActiveRecommendation
+        }
+        guard !current.isSaving else {
+            throw RecommendationFavouriteError.alreadyInFlight
+        }
+
+        if shouldSave, current.savedTripId == nil {
+            current.isSaving = true
+            recommendation = current
+            defer {
+                if var state = recommendation {
+                    state.isSaving = false
+                    recommendation = state
+                }
+            }
+
+            do {
+                let response = try await networkService.saveRecommendation(
+                    snapshotToken: current.snapshotToken,
+                    pinIds: current.pinIds,
+                    city: current.city,
+                    country: current.country,
+                    category: current.category,
+                    season: current.season
+                )
+                let newId = response.trip.id
+                if var state = recommendation {
+                    state.savedTripId = newId
+                    recommendation = state
+                }
+                if let idx = posts.firstIndex(where: { $0.isRecommended }) {
+                    posts[idx].isSaved = true
+                }
+                return newId
+            } catch let httpError as HTTPError {
+                if httpError == .conflict {
+                    showToast?(L10n.recommendationSnapshotExpired)
+                    await loadRecommendation()
+                } else {
+                    handleSaveRecommendationError(httpError)
+                }
+                throw httpError
+            }
+        }
+
+        guard let tripId = current.savedTripId else {
+            throw RecommendationFavouriteError.noSavedTripId
+        }
+
+        if shouldSave {
+            _ = try await networkService.addTripToFavourites(id: tripId)
+            if let idx = posts.firstIndex(where: { $0.isRecommended }) {
+                posts[idx].isSaved = true
+            }
+        } else {
+            try await networkService.removeTripFromFavourites(id: tripId)
+            if let idx = posts.firstIndex(where: { $0.isRecommended }) {
+                posts[idx].isSaved = false
+            }
+        }
+        return tripId
+    }
+
+    private func handleGetRecommendationsError(_ error: HTTPError) {
+        switch error {
+        case .badRequest:
+            showToast?(L10n.recommendationLocationError)
+        case .notFound:
+            recommendation = nil
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                posts.removeAll(where: \.isRecommended)
+            }
+            showToast?(L10n.recommendationRegionNotFound)
+        case .unauthorized:
+            showToast?(L10n.recommendationLoadFailed)
+        default:
+            print("GET /recommendations error: \(error)")
+            showToast?(L10n.recommendationLoadFailed)
+        }
+    }
+
+    private func handleSaveRecommendationError(_ error: HTTPError) {
+        switch error {
+        case .badRequest:
+            showToast?(L10n.recommendationLocationError)
+        case .forbidden:
+            showToast?(L10n.recommendationSnapshotStale)
+        case .notFound:
+            showToast?(L10n.recommendationRegionNotFound)
+        default:
+            print("POST /recommendations/save error: \(error)")
+            showToast?(L10n.recommendationSaveFailed)
+        }
+    }
+
+    enum RecommendationFavouriteError: Error {
+        case noActiveRecommendation
+        case alreadyInFlight
+        case noSavedTripId
     }
 
     private func mapRecommendationToPost(_ map: RecommendedMapDTO) -> Post {
@@ -276,6 +428,11 @@ final class FeedViewModel {
     private enum L10n {
         static let recommendationLocationError = "Выберите город или страну для рекомендаций."
         static let recommendationLoadFailed = "Не удалось загрузить рекомендацию."
+        static let recommendationSaveFailed = "Не удалось сохранить рекомендацию."
+        static let recommendationEmpty = "По этому региону пока нет рекомендаций."
+        static let recommendationRegionNotFound = "Регион не найден."
+        static let recommendationSnapshotExpired = "Карта устарела, обновляем..."
+        static let recommendationSnapshotStale = "Обновите карту."
     }
 
     private static func recommendedDescription(

@@ -16,6 +16,9 @@ struct FeedFilterModel {
     var cityParam: String?     { city.isEmpty ? nil : city }
     var countryParam: String?  { city.isEmpty && !country.isEmpty ? country : nil }
     var sortByParam: String?   { sortBy?.rawValue }
+
+    var recommendationCategoryParam: String? { category.recommendationApiValue }
+    var recommendationSeasonParam: String?   { season.recommendationApiValue }
 }
 
 enum FeedSortBy: String, CaseIterable {

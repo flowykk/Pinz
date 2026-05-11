@@ -8,8 +8,14 @@ struct PostFeedItemView: View {
     @State private var viewModel: PostFeedItemViewModel
     @State private var selection: Int = 0
 
-    init(post: Post) {
-        viewModel = PostFeedItemViewModel(post: post)
+    init(
+        post: Post,
+        recommendationFavouriteHandler: PostFeedItemViewModel.RecommendationFavouriteHandler? = nil
+    ) {
+        viewModel = PostFeedItemViewModel(
+            post: post,
+            recommendationFavouriteHandler: recommendationFavouriteHandler
+        )
     }
 
     var body: some View {
@@ -46,27 +52,29 @@ struct PostFeedItemView: View {
     public var statistics: some View {
         let iconSize: CGFloat = 18
         HStack(spacing: 12) {
-            Button {
-                viewModel.dispatch(.like)
-            } label: {
-                StatisticView(
-                    icon: viewModel.post.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup",
-                    text: String(viewModel.post.likes),
-                    iconSize: iconSize,
-                    iconColor: PinzUIAsset.textPrimary
-                )
-            }.buttonStyle(.plain)
+            if !viewModel.post.isRecommended {
+                Button {
+                    viewModel.dispatch(.like)
+                } label: {
+                    StatisticView(
+                        icon: viewModel.post.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup",
+                        text: String(viewModel.post.likes),
+                        iconSize: iconSize,
+                        iconColor: PinzUIAsset.textPrimary
+                    )
+                }.buttonStyle(.plain)
 
-            Button {
-                viewModel.dispatch(.dislike)
-            } label: {
-                StatisticView(
-                    icon: viewModel.post.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown",
-                    text: String(viewModel.post.dislikes),
-                    iconSize: iconSize,
-                    iconColor: PinzUIAsset.textPrimary
-                )
-            }.buttonStyle(.plain)
+                Button {
+                    viewModel.dispatch(.dislike)
+                } label: {
+                    StatisticView(
+                        icon: viewModel.post.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown",
+                        text: String(viewModel.post.dislikes),
+                        iconSize: iconSize,
+                        iconColor: PinzUIAsset.textPrimary
+                    )
+                }.buttonStyle(.plain)
+            }
 
             Spacer()
             Button {

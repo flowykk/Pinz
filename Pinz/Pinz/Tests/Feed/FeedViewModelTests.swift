@@ -173,6 +173,7 @@ final class FeedViewModelTests: XCTestCase {
                 ],
                 regionName: city,
                 regionType: "city",
+                snapshotToken: "stub-snapshot-token-001",
                 trip: TripDTO(
                     id: "trip-rec",
                     name: "Рекомендованный маршрут",
