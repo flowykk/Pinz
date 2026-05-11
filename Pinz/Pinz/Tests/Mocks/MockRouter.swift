@@ -63,6 +63,10 @@ final class MockRouter: AppRouting {
     var currentProfileUpdateCallCount: Int = 0
     private var currentProfileUpdateAction: ((User) -> Void)?
 
+    var tripPinsReloadCallCount: Int = 0
+    var tripPinsReloadLastTripId: String?
+    private var tripPinsReloadAction: ((String) -> Void)?
+
     func navigateToMain() { navigatedToMain = true }
     func navigateToAuthenticationRoot() { navigatedToAuthenticationRoot = true }
     func navigateToTripInfo(trip: Trip, onTripUpdated: (() -> Void)?) {
@@ -82,6 +86,17 @@ final class MockRouter: AppRouting {
     func clearCurrentProfileUpdates() {
         currentProfileUpdateAction = nil
         currentProfileUpdateUser = nil
+    }
+    func subscribeToTripPinsReload(_ action: @escaping (String) -> Void) {
+        tripPinsReloadAction = action
+    }
+    func notifyTripPinsReload(tripId: String) {
+        tripPinsReloadCallCount += 1
+        tripPinsReloadLastTripId = tripId
+        tripPinsReloadAction?(tripId)
+    }
+    func clearTripPinsReloadSubscription() {
+        tripPinsReloadAction = nil
     }
     func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction?, deleteAction: PinDeleteAction?) {
         navigatedPinInfo = pin

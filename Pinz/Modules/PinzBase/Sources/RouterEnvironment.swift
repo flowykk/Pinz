@@ -44,6 +44,10 @@ public protocol AppRouting: AnyObject {
     func notifyCurrentProfileUpdated(_ user: User)
     func clearCurrentProfileUpdates()
 
+    func subscribeToTripPinsReload(_ action: @escaping (String) -> Void)
+    func notifyTripPinsReload(tripId: String)
+    func clearTripPinsReloadSubscription()
+
     func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction)
 
     func navigateToWishlistElement(element: DesiredPlace)

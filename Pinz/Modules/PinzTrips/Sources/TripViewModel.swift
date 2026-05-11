@@ -205,6 +205,16 @@ final class TripViewModel {
                 await self?.applyProfileUpdateFromProfileScreen(updatedUser)
             }
         }
+        router?.clearTripPinsReloadSubscription()
+        router?.subscribeToTripPinsReload { [weak self] reloadTripId in
+            Task { @MainActor in
+                guard let self else { return }
+                guard self.trip?.id == reloadTripId else { return }
+                self.dispatch(.forceReloadSavedTrip)
+                try? await self.asyncDispatch(.loadSavedTrip)
+                self.refreshActivePinUploadSessionFlag()
+            }
+        }
         refreshActivePinUploadSessionFlag()
     }
 

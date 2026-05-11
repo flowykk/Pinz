@@ -170,6 +170,7 @@ final class PinUploadReviewViewModel {
                     input: input
                 )
                 PinUploadSessionStorage.shared.clear(forTripId: tripId)
+                router?.notifyTripPinsReload(tripId: tripId)
                 router?.popToRoot()
             } catch let httpError as HTTPError {
                 handleFinalizeError(httpError)

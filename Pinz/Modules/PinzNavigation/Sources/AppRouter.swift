@@ -8,6 +8,7 @@ public final class AppRouter: AppRouting {
     
     @ObservationIgnored private var tripInfoUpdateHandler: (() -> Void)?
     @ObservationIgnored private var currentProfileUpdateHandler: ((User) -> Void)?
+    @ObservationIgnored private var tripPinsReloadHandler: ((String) -> Void)?
     @ObservationIgnored private var tripCreationDraftPins: [String: [Pin]] = [:]
 
     public init(initialPath: [Route] = []) {
@@ -59,6 +60,18 @@ extension AppRouter {
 
     public func clearCurrentProfileUpdates() {
         currentProfileUpdateHandler = nil
+    }
+
+    public func subscribeToTripPinsReload(_ action: @escaping (String) -> Void) {
+        tripPinsReloadHandler = action
+    }
+
+    public func notifyTripPinsReload(tripId: String) {
+        tripPinsReloadHandler?(tripId)
+    }
+
+    public func clearTripPinsReloadSubscription() {
+        tripPinsReloadHandler = nil
     }
 }
 
