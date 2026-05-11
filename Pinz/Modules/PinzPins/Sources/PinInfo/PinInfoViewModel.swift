@@ -48,6 +48,7 @@ public class PinInfoViewModel {
 
     public enum AsyncIntent {
         case saveEdits
+        case startAddMedia
     }
 
     static let tagMaxLength = 15
@@ -66,8 +67,11 @@ public class PinInfoViewModel {
     private var router: AppRouting?
     private var showToast: ((String) -> Void)?
 
-    /// True while a save request is in flight (disables Done, like Profile `isLoading` on save).
     private(set) var isSaving = false
+
+    private(set) var isStartingAddMedia = false
+
+    private(set) var hasActivePinUploadAdditionSession = false
 
     public init(
         pin: Pin,
@@ -79,10 +83,35 @@ public class PinInfoViewModel {
         self.updateAction = updateAction
         self.deleteAction = deleteAction
         self.networkService = networkService
+        refreshPinUploadAdditionSessionFlag()
     }
 
     public func onDisappear() {
         updateAction?.action(pin)
+    }
+
+    public func applyPinAfterAdditionUpload(_ updatedPin: Pin) {
+        let matchesServer =
+            updatedPin.serverId != nil
+            && pin.serverId != nil
+            && updatedPin.serverId == pin.serverId
+        let matchesIdentity = updatedPin.id == pin.id
+        guard matchesServer || matchesIdentity else { return }
+        pin = updatedPin
+        updateAction?.action(pin)
+        refreshPinUploadAdditionSessionFlag()
+    }
+
+    public func refreshPinUploadAdditionSessionFlag() {
+        guard let tripId = pin.tripId,
+              let pinId = pin.serverId?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !pinId.isEmpty
+        else {
+            hasActivePinUploadAdditionSession = false
+            return
+        }
+        hasActivePinUploadAdditionSession =
+            PinUploadAdditionSessionStorage.shared.sessionId(tripId: tripId, pinId: pinId) != nil
     }
 
     public func asyncDispatch(
@@ -100,7 +129,32 @@ public class PinInfoViewModel {
         switch intent {
         case .saveEdits:
             try await saveEdits()
+        case .startAddMedia:
+            await startAddMediaToPin()
         }
+    }
+
+    private func startAddMediaToPin() async {
+        guard state != .editing else { return }
+        guard !isSaving else { return }
+        guard let tripId = pin.tripId,
+              let pinId = pin.serverId?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !pinId.isEmpty
+        else { return }
+
+        isStartingAddMedia = true
+        defer {
+            isStartingAddMedia = false
+            refreshPinUploadAdditionSessionFlag()
+        }
+
+        await PinUploadEntryResolver.resumeAddition(
+            tripId: tripId,
+            pinId: pinId,
+            networkService: networkService,
+            router: router,
+            showToast: showToast
+        )
     }
 
     public func dispatch(_ intent: Intent) {
@@ -146,6 +200,7 @@ public class PinInfoViewModel {
                 }
                 router?.navigateToPinPlaceChange(pin: pin, action: action)
             case .back:
+                router?.setPinUploadAdditionSuccessHandler(nil)
                 router?.pop()
             }
         case let .updatePrivacy(selection):
@@ -174,6 +229,7 @@ public class PinInfoViewModel {
                     _ = try await networkService.deletePin(tripId: tripId, pinId: pinId)
                     let deletedPin = pin
                     showToast?(PinzBaseStrings.PinInfo.Toast.pinDeleted)
+                    router?.setPinUploadAdditionSuccessHandler(nil)
                     router?.pop()
                     deleteAction?.action(deletedPin)
                 } catch {
@@ -262,17 +318,12 @@ public class PinInfoViewModel {
     }
 
     private func applyPinFromResponse(_ response: PinResponseDTO, tripId: String) {
-        var updated = response.pin.toPin(
-            index: 0,
-            tripId: tripId,
-            nameIfMissing: pin.name
-        )
+        var updated = response.toPin(tripId: tripId, nameIfMissing: pin.name)
         updated.issues = pin.issues
         pin = updated
         updateAction?.action(pin)
     }
 
-    /// After PinPlaceChange: optimistically set coordinates, then PATCH; revert coordinates on failure.
     private func applyPlaceChange(_ newCoordinate: CLLocationCoordinate2D?) {
         let previous = pin.coordinates
         if coordinatesEqual(previous, newCoordinate) { return }
@@ -430,5 +481,17 @@ public class PinInfoViewModel {
 extension PinInfoViewModel {
     var isEditing: Bool {
         state == .editing
+    }
+
+    var addMediaButtonDisabled: Bool {
+        state == .editing || isSaving || isStartingAddMedia || !canStartPinUploadAddition
+    }
+
+    private var canStartPinUploadAddition: Bool {
+        guard let tripId = pin.tripId, !tripId.isEmpty else { return false }
+        guard let pinId = pin.serverId?.trimmingCharacters(in: .whitespacesAndNewlines), !pinId.isEmpty else {
+            return false
+        }
+        return true
     }
 }

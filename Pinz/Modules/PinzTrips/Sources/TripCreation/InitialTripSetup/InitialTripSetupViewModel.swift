@@ -55,7 +55,6 @@ final class InitialTripSetupViewModel {
     static let tripNameMaxLength = 50
     static let tripDescriptionMaxLength = 5000
 
-    /// Trip name: letters (Latin/Cyrillic), digits, dots, underscores (see `tripCreation.hint.tripNameRules`).
     private static let tripNameValidationPattern = #"^[A-Za-zА-Яа-яЁё0-9._]+$"#
 
     var state: State = .info

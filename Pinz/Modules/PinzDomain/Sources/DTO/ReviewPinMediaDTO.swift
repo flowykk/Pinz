@@ -1,4 +1,4 @@
-public struct ReviewPinMediaDTO: Codable {
+public struct ReviewPinMediaDTO: Codable, Hashable {
     public let mediaId: String
     public let url: String
     public let privacyLevel: String?

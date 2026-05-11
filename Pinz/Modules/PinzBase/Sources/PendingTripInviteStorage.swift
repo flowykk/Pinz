@@ -1,7 +1,7 @@
 import Foundation
 
-/// Persists an invite token when the user opens an invite link before logging in.
 public final class PendingTripInviteStorage {
+
     public static let shared = PendingTripInviteStorage()
 
     private let defaults = UserDefaults.standard
@@ -17,7 +17,6 @@ public final class PendingTripInviteStorage {
         defaults.string(forKey: key)
     }
 
-    /// Returns the stored token once and clears it.
     public func consumePendingToken() -> String? {
         guard let token = defaults.string(forKey: key), !token.isEmpty else {
             return nil

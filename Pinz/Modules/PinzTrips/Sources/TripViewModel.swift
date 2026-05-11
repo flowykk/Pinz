@@ -3,6 +3,7 @@ import MapKit
 import PinzDomain
 import PinzBase
 import PinzNetworking
+import PinzPins
 
 @MainActor @Observable
 final class TripViewModel {
@@ -47,6 +48,7 @@ final class TripViewModel {
         case loadSavedTrip
         case loadCurrentProfile
         case addMedia
+        case addPin
     }
 
     var state: State = .default
@@ -63,8 +65,10 @@ final class TripViewModel {
     var trip: Trip?
     var _position: MapCameraPosition?
     var selectedPin: Pin?
+    var hasActivePinUploadSession: Bool = false
     private var participants: [TripParticipantDTO] = []
     private var router: AppRouting?
+    private var showToast: ((String) -> Void)?
     private let networkService = NetworkService.shared
 
     var sortedPins: [Pin] {
@@ -201,6 +205,29 @@ final class TripViewModel {
                 await self?.applyProfileUpdateFromProfileScreen(updatedUser)
             }
         }
+        router?.clearTripPinsReloadSubscription()
+        router?.subscribeToTripPinsReload { [weak self] reloadTripId in
+            Task { @MainActor in
+                guard let self else { return }
+                guard self.trip?.id == reloadTripId else { return }
+                self.dispatch(.forceReloadSavedTrip)
+                try? await self.asyncDispatch(.loadSavedTrip)
+                self.refreshActivePinUploadSessionFlag()
+            }
+        }
+        refreshActivePinUploadSessionFlag()
+    }
+
+    public func setShowToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
+    }
+
+    public func refreshActivePinUploadSessionFlag() {
+        guard let tripId = trip?.id else {
+            hasActivePinUploadSession = false
+            return
+        }
+        hasActivePinUploadSession = PinUploadSessionStorage.shared.sessionId(forTripId: tripId) != nil
     }
 
     private func navigateToRoutePin(at index: Int) {
@@ -333,6 +360,16 @@ final class TripViewModel {
             default:
                 break
             }
+
+        case .addPin:
+            guard let tripId = trip?.id else { return }
+            await PinUploadEntryResolver.resume(
+                tripId: tripId,
+                networkService: networkService,
+                router: router,
+                showToast: showToast
+            )
+            refreshActivePinUploadSessionFlag()
 
         case .loadCurrentProfile:
             guard !hasLoadedProfile else {

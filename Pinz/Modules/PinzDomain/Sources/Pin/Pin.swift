@@ -7,10 +7,10 @@ public struct Pin: Hashable, Identifiable {
         case missingDates = "MISSING_DATES"
     }
 
-    public var id: String { name }
+    public let id: String
     public let serverId: String?
     public let tripId: String?
-    
+
     public var name: String
     public var description: String?
     public var category: PinCategory
@@ -27,6 +27,7 @@ public struct Pin: Hashable, Identifiable {
     }
 
     public init(
+        id: String? = nil,
         name: String,
         description: String? = nil,
         category: PinCategory,
@@ -40,6 +41,7 @@ public struct Pin: Hashable, Identifiable {
         tripId: String? = nil,
         coordinates: CLLocationCoordinate2D? = nil
     ) {
+        self.id = id ?? serverId ?? UUID().uuidString
         self.name = name
         self.description = description
         self.category = category

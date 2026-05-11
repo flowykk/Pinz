@@ -43,6 +43,11 @@ final class MockRouter: AppRouting {
     var navigatedToAddMediaProcessing: (tripId: String, sessionId: String)?
     var navigatedToAddMediaReview: (tripId: String, sessionId: String)?
 
+    // Pin upload
+    var navigatedToPinUploadStart: (tripId: String, targetPinId: String?)?
+    var navigatedToPinUploadProcessing: (tripId: String, sessionId: String, targetPinId: String?)?
+    var navigatedToPinUploadReview: (tripId: String, sessionId: String, targetPinId: String?)?
+
     // Trip creation
     var navigatedToTripCreationInitial = false
     var navigatedTripCreationPreprocessedPins: (tripId: String, pins: RawPins)?
@@ -57,6 +62,14 @@ final class MockRouter: AppRouting {
     var currentProfileUpdateUser: User?
     var currentProfileUpdateCallCount: Int = 0
     private var currentProfileUpdateAction: ((User) -> Void)?
+
+    var tripPinsReloadCallCount: Int = 0
+    var tripPinsReloadLastTripId: String?
+    private var tripPinsReloadAction: ((String) -> Void)?
+
+    var popAllPinUploadRoutesCallCount = 0
+    var pinUploadAdditionSuccessHandler: ((Pin) -> Void)?
+    var notifiedPinUploadAdditionPin: Pin?
 
     func navigateToMain() { navigatedToMain = true }
     func navigateToAuthenticationRoot() { navigatedToAuthenticationRoot = true }
@@ -77,6 +90,17 @@ final class MockRouter: AppRouting {
     func clearCurrentProfileUpdates() {
         currentProfileUpdateAction = nil
         currentProfileUpdateUser = nil
+    }
+    func subscribeToTripPinsReload(_ action: @escaping (String) -> Void) {
+        tripPinsReloadAction = action
+    }
+    func notifyTripPinsReload(tripId: String) {
+        tripPinsReloadCallCount += 1
+        tripPinsReloadLastTripId = tripId
+        tripPinsReloadAction?(tripId)
+    }
+    func clearTripPinsReloadSubscription() {
+        tripPinsReloadAction = nil
     }
     func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction?, deleteAction: PinDeleteAction?) {
         navigatedPinInfo = pin
@@ -122,6 +146,19 @@ final class MockRouter: AppRouting {
     func navigateToAddMediaProcessing(tripId: String, sessionId: String) { navigatedToAddMediaProcessing = (tripId, sessionId) }
     func navigateToAddMediaReview(tripId: String, sessionId: String) { navigatedToAddMediaReview = (tripId, sessionId) }
 
+    // Pin upload
+    func navigateToPinUploadStart(tripId: String, targetPinId: String?) {
+        navigatedToPinUploadStart = (tripId, targetPinId)
+    }
+
+    func navigateToPinUploadProcessing(tripId: String, sessionId: String, targetPinId: String?) {
+        navigatedToPinUploadProcessing = (tripId, sessionId, targetPinId)
+    }
+
+    func navigateToPinUploadReview(tripId: String, sessionId: String, targetPinId: String?) {
+        navigatedToPinUploadReview = (tripId, sessionId, targetPinId)
+    }
+
     // Trip creation
     func navigateToTripCreationInitial() { navigatedToTripCreationInitial = true }
     func navigateToTripCreationPreprocessedPins(tripId: String, pins: RawPins) {
@@ -155,5 +192,18 @@ final class MockRouter: AppRouting {
 
     func popToRoot() {
         didCallPopToRoot = true
+    }
+
+    func popAllPinUploadRoutes() {
+        popAllPinUploadRoutesCallCount += 1
+    }
+
+    func setPinUploadAdditionSuccessHandler(_ handler: ((Pin) -> Void)?) {
+        pinUploadAdditionSuccessHandler = handler
+    }
+
+    func notifyPinUploadAdditionSuccess(_ pin: Pin) {
+        notifiedPinUploadAdditionPin = pin
+        pinUploadAdditionSuccessHandler?(pin)
     }
 }

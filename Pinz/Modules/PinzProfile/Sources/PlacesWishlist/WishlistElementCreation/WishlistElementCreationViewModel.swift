@@ -144,7 +144,6 @@ final class WishlistElementCreationViewModel {
         }
     }
 
-    /// Trims `name`, shows a toast and returns `false` if place-name rules are violated.
     private func validateAndNormalizePlaceName() -> Bool {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {

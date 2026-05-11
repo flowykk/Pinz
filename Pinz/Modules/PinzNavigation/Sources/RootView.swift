@@ -127,6 +127,15 @@ public struct RootView<Content: View>: View {
             case .review(let tripId, let sessionId):
                 AddMediaReviewView(tripId: tripId, sessionId: sessionId)
             }
+        case let .pinUpload(pinUploadRoute):
+            switch pinUploadRoute {
+            case let .start(tripId, targetPinId):
+                PinUploadStartView(tripId: tripId, targetPinId: targetPinId)
+            case let .processing(tripId, sessionId, targetPinId):
+                PinUploadProcessingView(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
+            case let .review(tripId, sessionId, targetPinId):
+                PinUploadReviewView(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
+            }
         }
     }
 

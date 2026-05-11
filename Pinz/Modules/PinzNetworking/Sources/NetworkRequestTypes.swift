@@ -65,3 +65,34 @@ struct PinUpdateInputJSON: Encodable {
         end_time_unix = dto.endTimeUnix
     }
 }
+
+struct PinUploadStartJSON: Encodable {
+    let target_pin_id: String?
+    let files_to_upload: [FileToUploadJSON]
+}
+
+struct PinUploadFinalizeJSON: Encodable {
+    let name: String?
+    let description: String?
+    let category: String?
+    let latitude: Double?
+    let longitude: Double?
+    let start_time_unix: Int?
+    let end_time_unix: Int?
+    let tags: [String]?
+    let tags_set: Bool?
+    let media_to_delete: [String]
+
+    init(_ dto: PinUploadFinalizeInputDTO) {
+        name = dto.name
+        description = dto.description
+        category = dto.category
+        latitude = dto.latitude
+        longitude = dto.longitude
+        start_time_unix = dto.startTimeUnix
+        end_time_unix = dto.endTimeUnix
+        tags = dto.tags
+        tags_set = dto.tagsSet
+        media_to_delete = dto.mediaToDelete
+    }
+}

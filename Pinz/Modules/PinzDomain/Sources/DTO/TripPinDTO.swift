@@ -53,7 +53,6 @@ public struct TripPinDTO: Codable {
 }
 
 public extension TripPinDTO {
-    /// Creates a `Pin` from a trip/pin DTO. Pass a fallback title when the API returns no `name`.
     func toPin(index: Int, tripId fallbackTripId: String? = nil, nameIfMissing: String) -> Pin {
         let resolvedTripId = tripId ?? fallbackTripId
         let coordinates: CLLocationCoordinate2D?

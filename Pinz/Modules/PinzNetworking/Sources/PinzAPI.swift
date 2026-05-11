@@ -68,6 +68,18 @@ enum PinzAPI {
     case getTripReview(tripId: String)
     case finalizeTrip(tripId: String, pinUpdates: [PinUpdateInputDTO], mediaToDelete: [String])
 
+    // Pin upload flow
+    case pinUploadStart(tripId: String, targetPinId: String?, filesToUpload: [FileToUploadDTO])
+    case pinUploadRequestUploadUrls(tripId: String, sessionId: String, filesToUpload: [FileToUploadDTO])
+    case pinUploadCommitUpload(
+        tripId: String, sessionId: String, s3Key: String, mediaType: String,
+        capturedAtUnix: Int?, latitude: Double?, longitude: Double?
+    )
+    case pinUploadProcess(tripId: String, sessionId: String)
+    case pinUploadGetReview(tripId: String, sessionId: String)
+    case pinUploadFinalize(tripId: String, sessionId: String, input: PinUploadFinalizeInputDTO)
+    case pinUploadCancel(tripId: String, sessionId: String)
+
     // Trip add-media flow
     case addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO])
     case addMediaRequestUploadUrls(tripId: String, sessionId: String, filesToUpload: [FileToUploadDTO])
@@ -186,6 +198,13 @@ extension PinzAPI: TargetType {
         case .applyGroupsAndProcess(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/apply-groups-and-process"
         case .getTripReview(let tripId): endpointPath = "/trips/creation/\(tripId)/review"
         case .finalizeTrip(let tripId, _, _): endpointPath = "/trips/creation/\(tripId)/finalize"
+        case .pinUploadStart(let tripId, _, _): endpointPath = "/trips/\(tripId)/pin-uploads/start"
+        case let .pinUploadRequestUploadUrls(tripId, sessionId, _): endpointPath = "/trips/\(tripId)/pin-uploads/\(sessionId)/upload-urls"
+        case let .pinUploadCommitUpload(tripId, sessionId, _, _, _, _, _): endpointPath = "/trips/\(tripId)/pin-uploads/\(sessionId)/commit-upload"
+        case let .pinUploadProcess(tripId, sessionId): endpointPath = "/trips/\(tripId)/pin-uploads/\(sessionId)/process"
+        case let .pinUploadGetReview(tripId, sessionId): endpointPath = "/trips/\(tripId)/pin-uploads/\(sessionId)/review"
+        case let .pinUploadFinalize(tripId, sessionId, _): endpointPath = "/trips/\(tripId)/pin-uploads/\(sessionId)/finalize"
+        case let .pinUploadCancel(tripId, sessionId): endpointPath = "/trips/\(tripId)/pin-uploads/\(sessionId)/cancel"
         case .addMediaStart(let tripId, _): endpointPath = "/trips/\(tripId)/media/add/start"
         case .addMediaRequestUploadUrls(let tripId, _, _): endpointPath = "/trips/\(tripId)/media/add/request-upload-urls"
         case .addMediaCommitUpload(let tripId, _, _, _, _, _, _): endpointPath = "/trips/\(tripId)/media/add/commit-upload"
@@ -210,6 +229,8 @@ extension PinzAPI: TargetType {
         case .getPin, .searchPins:
             return .get
         case .addMediaGetSessionMedia, .addMediaGetGrouping, .addMediaGetReview:
+            return .get
+        case .pinUploadGetReview:
             return .get
         case .deleteAvatar:
             return .delete
@@ -343,6 +364,31 @@ extension PinzAPI: TargetType {
         case let .finalizeTrip(_, updates, toDelete):
             struct Body: Encodable { let pin_updates: [PinUpdateInputJSON]; let media_to_delete: [String] }
             return .requestJSONEncodable(Body(pin_updates: updates.map(PinUpdateInputJSON.init), media_to_delete: toDelete))
+
+        case let .pinUploadStart(_, targetPinId, files):
+            return .requestJSONEncodable(
+                PinUploadStartJSON(
+                    target_pin_id: targetPinId,
+                    files_to_upload: files.map(FileToUploadJSON.init)
+                )
+            )
+
+        case let .pinUploadRequestUploadUrls(_, _, files):
+            struct PinUploadRequestUploadUrlsBody: Encodable { let files_to_upload: [FileToUploadJSON] }
+            return .requestJSONEncodable(PinUploadRequestUploadUrlsBody(files_to_upload: files.map(FileToUploadJSON.init)))
+
+        case let .pinUploadCommitUpload(_, _, s3Key, mediaType, capturedAtUnix, lat, lon):
+            var params: [String: Any] = ["s3_key": s3Key, "media_type": mediaType]
+            if let capturedAtUnix { params["captured_at_unix"] = capturedAtUnix }
+            if let lat { params["latitude"] = lat }
+            if let lon { params["longitude"] = lon }
+            return jsonParams(params)
+
+        case .pinUploadProcess, .pinUploadCancel, .pinUploadGetReview:
+            return .requestPlain
+
+        case let .pinUploadFinalize(_, _, input):
+            return .requestJSONEncodable(PinUploadFinalizeJSON(input))
 
         case let .addMediaStart(_, files):
             struct AddMediaStartBody: Encodable { let files_to_upload: [FileToUploadJSON] }
@@ -979,6 +1025,43 @@ extension PinzAPI {
             json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Обновлённый пин","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"image","privacy_level":"public"}]}}"#
         case .searchPins:
             json = #"[{"id":"pin-001","trip_id":"trip-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[]}]"#
+        case .pinUploadStart:
+            json = #"{"session_id":"pin-session-001","upload_urls":[{"client_id":"photo1","s3_key":"trips/trip-001/pins/photo1.jpg","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"}]}"#
+        case .pinUploadRequestUploadUrls:
+            json = #"{"upload_urls":[{"client_id":"photo2","s3_key":"trips/trip-001/pins/photo2.jpg","url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg"}]}"#
+        case .pinUploadCommitUpload:
+            json = #"{"media_id":"pin-media-001","media_count_in_session":1}"#
+        case .pinUploadProcess:
+            json = #"{"session_id":"pin-session-001","processing_status":"PROCESSING"}"#
+        case .pinUploadGetReview:
+            json = #"""
+            {
+              "session_id":"pin-session-001",
+              "processing_status":"READY_FOR_REVIEW",
+              "draft":{
+                "suggested":{
+                  "name":"Другое",
+                  "category":"Другое",
+                  "tags":null,
+                  "latitude":59.9386,
+                  "longitude":30.3141,
+                  "start_time_unix":1778338000,
+                  "end_time_unix":1778341600
+                },
+                "media":[
+                  {"media_id":"pin-media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"private"}
+                ],
+                "pin_issues":null,
+                "nsfw_media_ids":null,
+                "deduped_media_ids":null
+              },
+              "similar":null
+            }
+            """#
+        case .pinUploadFinalize:
+            json = #"{"pin":{"id":"pin-new-001","trip_id":"trip-001","name":"Эрмитаж","description":null,"category":"entertainment","latitude":59.94,"longitude":30.32,"start_time_unix":1778338000,"end_time_unix":1778341600,"tags":["музей"],"privacy_level":"public","media":[{"media_id":"pin-media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"}]}}"#
+        case .pinUploadCancel:
+            json = #"{"status":"cancelled"}"#
         case .addMediaStart:
             json = #"{"session_id":"session-001","status":"ADD_MEDIA_UPLOADING","joined":false,"upload_urls":[{"client_id":"photo1","s3_key":"trips/trip-001/photo1.jpg","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"}]}"#
         case .addMediaRequestUploadUrls:

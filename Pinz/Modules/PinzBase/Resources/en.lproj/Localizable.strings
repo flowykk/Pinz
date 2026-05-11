@@ -252,6 +252,24 @@
 "tripPins.status.processing" = "Media is being processed";
 "tripPins.status.draftFinalReview" = "Another participant is reviewing media";
 
+// MARK: - Pin upload resume
+"pinUpload.creation.resume.conflictSession" = "Pin creation is in progress on another device. Starting over.";
+"pinUpload.creation.resume.restoreFailed" = "Could not restore pin creation session";
+"pinUpload.addition.resume.conflictSession" = "Adding media to this pin is in progress on another device. Starting over.";
+"pinUpload.addition.resume.restoreFailed" = "Could not restore the media upload session for this pin";
+"pinUpload.header.createPin" = "Create pin";
+"pinUpload.header.addMedia" = "Add media";
+"pinUpload.loading.uploading" = "Uploading media...";
+"pinUpload.loading.committing" = "Saving...";
+"pinUpload.loading.starting" = "Starting processing...";
+"pinUpload.processing.status" = "Processing media...";
+"pinUpload.review.header.newPin" = "New pin";
+"pinUpload.cancel.creation.title" = "Cancel pin creation?";
+"pinUpload.cancel.creation.confirm" = "Cancel pin creation";
+"pinUpload.cancel.addition.title" = "Cancel adding media?";
+"pinUpload.cancel.addition.confirm" = "Cancel adding media";
+"pinUpload.dialog.continue" = "Continue";
+
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "My Trips";
 "tripsListPopup.button.createTrip" = "Create Trip";

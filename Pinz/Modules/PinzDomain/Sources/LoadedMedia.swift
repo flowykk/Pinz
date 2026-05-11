@@ -10,9 +10,7 @@ public struct LoadedMedia: Hashable, Identifiable {
 
     public let id: UUID
     public var content: Content
-    /// Raw picker bytes for `.image` — same body as S3 PUT and same as declared in `FileToUploadDTO`.
     public var imageFileData: Data?
-    /// MIME from picker when known (`FileToUploadDTO` + S3 PUT `Content-Type`); one value per item.
     public var contentType: String?
     public var photosPickerItem: PhotosPickerItem?
     public var coordinates: MediaCoordinates?
@@ -49,7 +47,6 @@ extension LoadedMedia {
         }
     }
 
-    /// MIME type to send in `FileToUploadDTO` and in the S3 PUT `Content-Type` header.
     public var uploadContentType: String {
         switch content {
         case .image:

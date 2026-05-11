@@ -8,7 +8,9 @@ public final class AppRouter: AppRouting {
     
     @ObservationIgnored private var tripInfoUpdateHandler: (() -> Void)?
     @ObservationIgnored private var currentProfileUpdateHandler: ((User) -> Void)?
+    @ObservationIgnored private var tripPinsReloadHandler: ((String) -> Void)?
     @ObservationIgnored private var tripCreationDraftPins: [String: [Pin]] = [:]
+    @ObservationIgnored public var pinUploadAdditionSuccessHandler: ((Pin) -> Void)?
 
     public init(initialPath: [Route] = []) {
         self.path = initialPath
@@ -43,6 +45,20 @@ public final class AppRouter: AppRouting {
     public func popToRoot() {
         path = [.main]
     }
+
+    public func popAllPinUploadRoutes() {
+        while case .pinUpload = path.last {
+            path.removeLast()
+        }
+    }
+
+    public func setPinUploadAdditionSuccessHandler(_ handler: ((Pin) -> Void)?) {
+        pinUploadAdditionSuccessHandler = handler
+    }
+
+    public func notifyPinUploadAdditionSuccess(_ pin: Pin) {
+        pinUploadAdditionSuccessHandler?(pin)
+    }
 }
 
 // MARK: - Profile update callbacks
@@ -59,6 +75,18 @@ extension AppRouter {
 
     public func clearCurrentProfileUpdates() {
         currentProfileUpdateHandler = nil
+    }
+
+    public func subscribeToTripPinsReload(_ action: @escaping (String) -> Void) {
+        tripPinsReloadHandler = action
+    }
+
+    public func notifyTripPinsReload(tripId: String) {
+        tripPinsReloadHandler?(tripId)
+    }
+
+    public func clearTripPinsReloadSubscription() {
+        tripPinsReloadHandler = nil
     }
 }
 
@@ -235,6 +263,22 @@ extension AppRouter {
 
     public func navigateToAddMediaReview(tripId: String, sessionId: String) {
         navigate(to: .tripAddMedia(.review(tripId: tripId, sessionId: sessionId)))
+    }
+}
+
+// MARK: - PinUpload Routing
+
+extension AppRouter {
+    public func navigateToPinUploadStart(tripId: String, targetPinId: String?) {
+        navigate(to: .pinUpload(.start(tripId: tripId, targetPinId: targetPinId)))
+    }
+
+    public func navigateToPinUploadProcessing(tripId: String, sessionId: String, targetPinId: String?) {
+        navigate(to: .pinUpload(.processing(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)))
+    }
+
+    public func navigateToPinUploadReview(tripId: String, sessionId: String, targetPinId: String?) {
+        navigate(to: .pinUpload(.review(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)))
     }
 }
 
