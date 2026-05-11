@@ -26,7 +26,7 @@ services:
       - redis_data:/data
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.151.0
     container_name: pinz-otel-collector
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
@@ -40,7 +40,7 @@ services:
       - loki
 
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.10.1
     container_name: pinz-tempo
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
@@ -50,7 +50,7 @@ services:
       - "3200:3200"
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.55.1
     container_name: pinz-prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -65,7 +65,7 @@ services:
       - otel-collector
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.3.2
     container_name: pinz-loki
     command: ["-config.file=/etc/loki/config.yaml"]
     volumes:
@@ -75,7 +75,7 @@ services:
       - "3100:3100"
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.4.0
     container_name: pinz-grafana
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
