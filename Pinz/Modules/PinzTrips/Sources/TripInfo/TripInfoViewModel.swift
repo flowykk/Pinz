@@ -262,9 +262,9 @@ final class TripInfoViewModel {
                 id: trip.id,
                 name: trip.name,
                 description: trip.description,
-                category: mapCategory(trip.category),
-                season: mapSeason(trip.season),
-                privacyLevel: trip.privacyLevel,
+                category: trip.category.apiValue,
+                season: trip.season.apiValue,
+                privacyLevel: trip.privacyLevel?.lowercased(),
                 coverUrl: trip.coverUrl,
                 startDateUnix: trip.startDate.flatMap { Int($0.timeIntervalSince1970) },
                 endDateUnix: trip.endDate.flatMap { Int($0.timeIntervalSince1970) }
@@ -364,40 +364,6 @@ final class TripInfoViewModel {
         } catch {
             showToast?(PinzBaseStrings.TripInfo.Toast.leaveFailed)
             throw error
-        }
-    }
-
-    private func mapCategory(_ category: TripCategory) -> String? {
-        switch category {
-        case .none:
-            nil
-        case let .custom(value):
-            value
-        case .vacation:
-            "vacation"
-        case .holidays:
-            "holidays"
-        case .business:
-            "business"
-        case .education:
-            "education"
-        case .active:
-            "active"
-        }
-    }
-
-    private func mapSeason(_ season: TripSeason) -> String? {
-        switch season {
-        case .none:
-            nil
-        case .summer:
-            "summer"
-        case .autumn:
-            "autumn"
-        case .winter:
-            "winter"
-        case .spring:
-            "spring"
         }
     }
 

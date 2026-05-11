@@ -248,8 +248,8 @@ final class MockNetworkService: NetworkServiceProtocol {
     func getProfile() async throws -> ProfileResponseDTO { try getProfileResult.get() }
     func getVisitedLocations(type: String?) async throws -> VisitedLocationsResponseDTO {
         if let type { getVisitedLocationsCallTypes.append(type) }
-        if type == "Country", let result = getVisitedLocationsCountryResult { return try result.get() }
-        if type == "City", let result = getVisitedLocationsCityResult { return try result.get() }
+        if type == "country", let result = getVisitedLocationsCountryResult { return try result.get() }
+        if type == "city", let result = getVisitedLocationsCityResult { return try result.get() }
         return try getVisitedLocationsResult.get()
     }
     func getProfileStats() async throws -> UserStatsResponseDTO {

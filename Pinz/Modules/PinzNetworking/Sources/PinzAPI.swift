@@ -499,7 +499,7 @@ extension PinzAPI {
         case .unregisterDeviceToken:
             json = #"{"success":true}"#
         case .getRecommendations:
-            json = #"{"map":{"snapshot_token":"stub-snapshot-token-001","media":[{"media_id":"rec-media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"photo"}],"pins":[{"id":"rec-pin-001","trip_id":"trip-rec-001","name":"Тайные улочки Пекина","description":"Лучшие места для прогулок и съемки в историческом центре города","category":"vacation","latitude":39.9042,"longitude":116.4074,"location_name":"Пекин","media_count":1,"media":[{"media_id":"rec-pin-media-001","url":"https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg","media_type":"photo"}]}],"region_name":"Пекин","region_type":"city","trip":{"id":"trip-rec-001","name":"Тайная Пекинская неделя","description":"Сборка локаций и маршрутов из одного города на один уикенд","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":73,"dislikes_count":1,"participants_count":2,"media_count":4,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}}}"#
+            json = #"{"map":{"snapshot_token":"stub-snapshot-token-001","media":[{"media_id":"rec-media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"image"}],"pins":[{"id":"rec-pin-001","trip_id":"trip-rec-001","name":"Тайные улочки Пекина","description":"Лучшие места для прогулок и съемки в историческом центре города","category":"vacation","latitude":39.9042,"longitude":116.4074,"location_name":"Пекин","media_count":1,"media":[{"media_id":"rec-pin-media-001","url":"https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg","media_type":"image"}]}],"region_name":"Пекин","region_type":"city","trip":{"id":"trip-rec-001","name":"Тайная Пекинская неделя","description":"Сборка локаций и маршрутов из одного города на один уикенд","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":true,"is_generated":false,"likes_count":73,"dislikes_count":1,"participants_count":2,"media_count":4,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}}}"#
         case .saveRecommendation:
             json = #"{"trip":{"id":"trip-rec-generated-001","name":"Популярные места: Пекин","description":"Сборка локаций и маршрутов из одного города на один уикенд","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"private","status":"published","is_published":false,"is_generated":true,"likes_count":0,"dislikes_count":0,"participants_count":1,"media_count":4,"start_date_unix":1700000000,"end_date_unix":1700200000,"created_at_unix":1699900000,"updated_at_unix":1699900000}}"#
         case let .getFeed(_, offset, _, _, _, _, _):
@@ -542,12 +542,12 @@ extension PinzAPI {
                           {
                             "media_id": "feed-001-001",
                             "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg",
-                            "media_type": "photo"
+                            "media_type": "image"
                           },
                           {
                             "media_id": "feed-001-002",
                             "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg",
-                            "media_type": "photo"
+                            "media_type": "image"
                           }
                         ]
                       }
@@ -556,7 +556,7 @@ extension PinzAPI {
                       {
                         "media_id": "m-feed-001",
                         "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg",
-                        "media_type": "photo"
+                        "media_type": "image"
                       }
                     ]
                   },
@@ -594,7 +594,7 @@ extension PinzAPI {
                           {
                             "media_id": "feed-004-001",
                             "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
-                            "media_type": "photo"
+                            "media_type": "image"
                           }
                         ]
                       }
@@ -603,7 +603,7 @@ extension PinzAPI {
                       {
                         "media_id": "feed-alt-001",
                         "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg",
-                        "media_type": "photo"
+                        "media_type": "image"
                       }
                     ]
                   }
@@ -647,7 +647,7 @@ extension PinzAPI {
                           {
                             "media_id": "feed-007-001",
                             "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg",
-                            "media_type": "photo"
+                            "media_type": "image"
                           }
                         ]
                       }
@@ -656,7 +656,7 @@ extension PinzAPI {
                       {
                         "media_id": "m-feed-007",
                         "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg",
-                        "media_type": "photo"
+                        "media_type": "image"
                       }
                     ]
                   }
@@ -816,14 +816,14 @@ extension PinzAPI {
             {
               "battle_id": "battle-001",
               "media": [
-                {"media_id": "m-001", "media_type": "photo", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"},
-                {"media_id": "m-002", "media_type": "photo", "url": "https://i.pinimg.com/736x/cb/f7/9b/cbf79b6388c70e03982a519436942256.jpg"},
+                {"media_id": "m-001", "media_type": "image", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"},
+                {"media_id": "m-002", "media_type": "image", "url": "https://i.pinimg.com/736x/cb/f7/9b/cbf79b6388c70e03982a519436942256.jpg"},
                 {"media_id": "m-003", "media_type": "video", "url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4"},
-                {"media_id": "m-004", "media_type": "photo", "url": "https://i.pinimg.com/736x/34/cb/9314/34cb93114fb0cca8f020cb9c26928394.jpg"},
-                {"media_id": "m-005", "media_type": "photo", "url": "https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg"},
-                {"media_id": "m-006", "media_type": "photo", "url": "https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg"},
-                {"media_id": "m-007", "media_type": "photo", "url": "https://i.pinimg.com/736x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"},
-                {"media_id": "m-008", "media_type": "photo", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg"}
+                {"media_id": "m-004", "media_type": "image", "url": "https://i.pinimg.com/736x/34/cb/9314/34cb93114fb0cca8f020cb9c26928394.jpg"},
+                {"media_id": "m-005", "media_type": "image", "url": "https://i.pinimg.com/1200x/1200x/c8/e5/d7/c8e5d7c87bdbc811b02c82344be63ad8.jpg"},
+                {"media_id": "m-006", "media_type": "image", "url": "https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg"},
+                {"media_id": "m-007", "media_type": "image", "url": "https://i.pinimg.com/736x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"},
+                {"media_id": "m-008", "media_type": "image", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg"}
               ]
             }
             """#
@@ -853,8 +853,8 @@ extension PinzAPI {
                 {
                   "draft_pin_id": "draft-001",
                   "media": [
-                    {"media_id": "media-001", "type": "photo", "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"},
-                    {"media_id": "media-002", "type": "photo", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg"}
+                    {"media_id": "media-001", "type": "image", "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg"},
+                    {"media_id": "media-002", "type": "image", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg"}
                   ]
                 },
                 {
@@ -866,14 +866,14 @@ extension PinzAPI {
                 {
                   "draft_pin_id": "draft-003",
                   "media": [
-                    {"media_id": "media-004", "type": "photo", "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg"},
-                    {"media_id": "media-005", "type": "photo", "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg"}
+                    {"media_id": "media-004", "type": "image", "url": "https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg"},
+                    {"media_id": "media-005", "type": "image", "url": "https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg"}
                   ]
                 },
                 {
                   "draft_pin_id": "draft-004",
                   "media": [
-                    {"media_id": "media-006", "type": "photo", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}
+                    {"media_id": "media-006", "type": "image", "url": "https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg"}
                   ]
                 }
               ]
@@ -962,7 +962,7 @@ extension PinzAPI {
         case .finalizeTrip:
             json = #"{"trip_id":"trip-001","status":"finalized","message":"Trip finalized successfully"}"#
         case .setTripPrivacy, .setPinPrivacy, .setMediaPrivacy:
-            json = #"{"privacy_level":"Public"}"#
+            json = #"{"privacy_level":"public"}"#
         case .getDesiredPlaces:
             json = #"{"places":[{"id":"dp-001","name":"Токио","description":"Мечтаю посетить японскую столицу","image_url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","created_at":1699900001},{"id":"dp-002","name":"Исландия","description":"Хочу увидеть северное сияние","image_url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","created_at":1699900002}]}"#
         case .createDesiredPlace, .updateDesiredPlace:
@@ -972,11 +972,11 @@ extension PinzAPI {
         case .deleteDesiredPlace, .deleteDesiredPlaceImage:
             json = #"{"success":true}"#
         case .getPin:
-            json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"photo","privacy_level":"public"}]}}"#
+            json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"image","privacy_level":"public"}]}}"#
         case .deletePin:
             json = #"{"deletion_mode":"full"}"#
         case .updatePin:
-            json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Обновлённый пин","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"photo","privacy_level":"public"}]}}"#
+            json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Обновлённый пин","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"image","privacy_level":"public"}]}}"#
         case .searchPins:
             json = #"[{"id":"pin-001","trip_id":"trip-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[]}]"#
         case .addMediaStart:

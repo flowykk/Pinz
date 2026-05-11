@@ -133,7 +133,7 @@ final class AddMediaReviewViewModel {
                 switch event {
                 case .initiatorChanged:
                     await loadReview()
-                case let .tripStatusChanged(status) where status.uppercased() == "READY":
+                case let .tripStatusChanged(status) where status == "READY":
                     router?.popToRoot()
                     return
                 default:

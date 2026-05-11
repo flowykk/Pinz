@@ -15,7 +15,7 @@ public enum PrivacyIcon: String, Setting.Icon, SegmentedItem {
         }
     }
 
-    public var apiValue: String { self == .lockOpened ? "Public" : "Private" }
+    public var apiValue: String { self == .lockOpened ? "public" : "private" }
 
     public static func from(isPrivate: Bool) -> PrivacyIcon { isPrivate ? .lockClosed : .lockOpened }
 }

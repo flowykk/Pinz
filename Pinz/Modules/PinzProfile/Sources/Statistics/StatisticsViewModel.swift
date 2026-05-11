@@ -7,8 +7,8 @@ import PinzDomain
 @Observable
 final class StatisticsViewModel {
     private enum VisitedLocationType {
-        static let country = "Country"
-        static let city = "City"
+        static let country = "country"
+        static let city = "city"
     }
 
     enum Route {
