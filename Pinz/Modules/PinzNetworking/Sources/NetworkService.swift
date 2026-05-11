@@ -43,8 +43,20 @@ public protocol NetworkServiceProtocol {
         country: String?,
         sortBy: String?
     ) async throws -> [FeedItemDTO]
-    func getRecommendations(city: String?, country: String?) async throws -> GetRecommendationsResponseDTO
-    func saveRecommendation(city: String?, country: String?) async throws -> SaveRecommendationResponseDTO
+    func getRecommendations(
+        city: String?,
+        country: String?,
+        category: String?,
+        season: String?
+    ) async throws -> GetRecommendationsResponseDTO
+    func saveRecommendation(
+        snapshotToken: String,
+        pinIds: [String],
+        city: String?,
+        country: String?,
+        category: String?,
+        season: String?
+    ) async throws -> SaveRecommendationResponseDTO
 
     // Trips CRUD
     func getTrips() async throws -> [TripDTO]
@@ -190,7 +202,7 @@ public final class NetworkService: NetworkServiceProtocol {
         stub: Bool = false,
         stubDelay: TimeInterval = 0.5
     ) {
-        self.provider = NetworkProvider<PinzAPI>(stub: true, stubDelay: stubDelay)
+        self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: stubDelay)
         self.tripCreationWebSocketClient = TripCreationWebSocketClient()
     }
 
@@ -465,25 +477,37 @@ public final class NetworkService: NetworkServiceProtocol {
 
     public func getRecommendations(
         city: String? = nil,
-        country: String? = nil
+        country: String? = nil,
+        category: String? = nil,
+        season: String? = nil
     ) async throws -> GetRecommendationsResponseDTO {
         try await provider.request(
             .getRecommendations(
                 city: city,
-                country: country
+                country: country,
+                category: category,
+                season: season
             ),
             type: GetRecommendationsResponseDTO.self
         )
     }
 
     public func saveRecommendation(
+        snapshotToken: String,
+        pinIds: [String],
         city: String? = nil,
-        country: String? = nil
+        country: String? = nil,
+        category: String? = nil,
+        season: String? = nil
     ) async throws -> SaveRecommendationResponseDTO {
         try await provider.request(
             .saveRecommendation(
+                snapshotToken: snapshotToken,
+                pinIds: pinIds,
                 city: city,
-                country: country
+                country: country,
+                category: category,
+                season: season
             ),
             type: SaveRecommendationResponseDTO.self
         )

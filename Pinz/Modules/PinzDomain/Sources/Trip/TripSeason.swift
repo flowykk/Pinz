@@ -42,4 +42,15 @@ public enum TripSeason: PickerItem {
         case .spring: return "spring"
         }
     }
+
+    /// Cyrillic value expected by `/recommendations` endpoints per backend guide.
+    public var recommendationApiValue: String? {
+        switch self {
+        case .none:   return nil
+        case .summer: return "Лето"
+        case .autumn: return "Осень"
+        case .winter: return "Зима"
+        case .spring: return "Весна"
+        }
+    }
 }

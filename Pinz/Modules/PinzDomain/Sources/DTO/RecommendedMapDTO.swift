@@ -5,6 +5,7 @@ public struct RecommendedMapDTO: Codable {
     public let pins: [RecommendedPinDTO]
     public let regionName: String?
     public let regionType: String?
+    public let snapshotToken: String
     public let trip: TripDTO
 
     public init(
@@ -12,12 +13,14 @@ public struct RecommendedMapDTO: Codable {
         pins: [RecommendedPinDTO],
         regionName: String?,
         regionType: String?,
+        snapshotToken: String,
         trip: TripDTO
     ) {
         self.media = media
         self.pins = pins
         self.regionName = regionName
         self.regionType = regionType
+        self.snapshotToken = snapshotToken
         self.trip = trip
     }
 
@@ -26,6 +29,7 @@ public struct RecommendedMapDTO: Codable {
         case pins
         case regionName = "region_name"
         case regionType = "region_type"
+        case snapshotToken = "snapshot_token"
         case trip
     }
 
@@ -35,6 +39,7 @@ public struct RecommendedMapDTO: Codable {
         pins = try container.decodeIfPresent([RecommendedPinDTO].self, forKey: .pins) ?? []
         regionName = try container.decodeIfPresent(String.self, forKey: .regionName)
         regionType = try container.decodeIfPresent(String.self, forKey: .regionType)
+        snapshotToken = try container.decodeIfPresent(String.self, forKey: .snapshotToken) ?? ""
         trip = try container.decode(TripDTO.self, forKey: .trip)
     }
 }
