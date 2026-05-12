@@ -22,6 +22,9 @@ final class MockRouter: AppRouting {
     var navigatedPostInfo: Post?
     var navigatedSavedTrip: Trip?
     var navigatedMediaInfo: MediaItem?
+    var navigatedMediaInfoPinIdForDelete: String?
+    var navigatedMediaInfoPinResponseAction: PinResponseAction?
+    var navigatedMediaInfoAllowsPrivacyChange: Bool?
     var navigatedLocalMediaInfo: LoadedMedia?
     var navigatedEmailChange: (email: String, userId: String?, action: EmailChangeAction)?
     var navigatedToStatistics = false
@@ -120,8 +123,17 @@ final class MockRouter: AppRouting {
     func navigateToPostPreview(trip: Trip, selectedPins: [Pin]) { navigatedPostPreview = (trip, selectedPins) }
     func navigateToPostInfo(post: Post) { navigatedPostInfo = post }
     func navigateToSavedTripDetail(trip: Trip) { navigatedSavedTrip = trip }
-    func navigateToMediaInfo(media: MediaItem, updateAction: MediaUpdateAction?) {
+    func navigateToMediaInfo(
+        media: MediaItem,
+        updateAction: MediaUpdateAction?,
+        pinIdForServerMediaDelete: String?,
+        pinResponseAction: PinResponseAction?,
+        allowsMediaPrivacyChange: Bool
+    ) {
         navigatedMediaInfo = media
+        navigatedMediaInfoPinIdForDelete = pinIdForServerMediaDelete
+        navigatedMediaInfoPinResponseAction = pinResponseAction
+        navigatedMediaInfoAllowsPrivacyChange = allowsMediaPrivacyChange
     }
     func navigateToLocalMediaInfo(media: LoadedMedia) { navigatedLocalMediaInfo = media }
     func navigateToEmailChange(email: String, userId: String?, action: EmailChangeAction) {

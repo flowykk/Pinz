@@ -15,6 +15,7 @@ public struct MediasPinShortInfo: View {
     let selectable: Bool
     let hideMediaBadges: Bool
     let dismissBeforeMediaInfo: Bool
+    let allowsMediaPrivacyChange: Bool
     let onMediaUpdated: ((MediaItem) -> Void)?
 
     public init(
@@ -23,6 +24,7 @@ public struct MediasPinShortInfo: View {
         selectable: Bool = false,
         hideMediaBadges: Bool = false,
         dismissBeforeMediaInfo: Bool = false,
+        allowsMediaPrivacyChange: Bool = true,
         onMediaUpdated: ((MediaItem) -> Void)? = nil
     ) {
         self.pin = pin
@@ -30,6 +32,7 @@ public struct MediasPinShortInfo: View {
         self.selectable = selectable
         self.hideMediaBadges = hideMediaBadges
         self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
+        self.allowsMediaPrivacyChange = allowsMediaPrivacyChange
         self.onMediaUpdated = onMediaUpdated
     }
     
@@ -45,7 +48,8 @@ public struct MediasPinShortInfo: View {
                         cornerRadius: 14,
                         hideBadges: selectable || hideMediaBadges,
                         dismissBeforeMediaInfo: dismissBeforeMediaInfo,
-                        onMediaUpdated: onMediaUpdated
+                        onMediaUpdated: onMediaUpdated,
+                        allowsMediaPrivacyChange: allowsMediaPrivacyChange
                     )
                     .frame(height: 96)
                     .opacity(selectable && media.isPrivate ? 0.5 : 1)

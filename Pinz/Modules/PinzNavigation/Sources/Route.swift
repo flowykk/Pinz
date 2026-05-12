@@ -46,7 +46,13 @@ public enum PinInfoRoute: Hashable {
 }
 
 public enum MediaRoute: Hashable {
-    case info(media: MediaItem, updateAction: MediaUpdateAction?)
+    case info(
+        media: MediaItem,
+        updateAction: MediaUpdateAction?,
+        pinIdForServerMediaDelete: String?,
+        pinResponseAction: PinResponseAction?,
+        allowsMediaPrivacyChange: Bool
+    )
     case localInfo(media: LoadedMedia)
 }
 

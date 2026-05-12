@@ -181,8 +181,24 @@ extension AppRouter {
 // MARK: Media Routing
 
 extension AppRouter {
-    public func navigateToMediaInfo(media: MediaItem, updateAction: MediaUpdateAction? = nil) {
-        navigate(to: .media(.info(media: media, updateAction: updateAction)))
+    public func navigateToMediaInfo(
+        media: MediaItem,
+        updateAction: MediaUpdateAction? = nil,
+        pinIdForServerMediaDelete: String? = nil,
+        pinResponseAction: PinResponseAction? = nil,
+        allowsMediaPrivacyChange: Bool = true
+    ) {
+        navigate(
+            to: .media(
+                .info(
+                    media: media,
+                    updateAction: updateAction,
+                    pinIdForServerMediaDelete: pinIdForServerMediaDelete,
+                    pinResponseAction: pinResponseAction,
+                    allowsMediaPrivacyChange: allowsMediaPrivacyChange
+                )
+            )
+        )
     }
 
     public func navigateToLocalMediaInfo(media: LoadedMedia) {

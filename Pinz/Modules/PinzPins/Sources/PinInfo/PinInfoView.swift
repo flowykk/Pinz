@@ -187,11 +187,17 @@ public struct PinInfoView: View {
 
     var gallery: some View {
         ScrollView {
-            PinzGrid($viewModel.pin.medias, columns: galleryColumns, spacing: gallerySpacing) { media, index in
+            PinzGrid($viewModel.pin.medias, columns: galleryColumns, spacing: gallerySpacing) { media, _ in
                 MediaItemThumbnailView(
                     mediaItem: media,
                     contentMode: .fit,
-                    cornerRadius: 14
+                    cornerRadius: 14,
+                    onMediaUpdated: { viewModel.applyGalleryMediaPrivacyUpdate($0) },
+                    showsPinMediaDeleteControl: viewModel.canDeletePinMediaFromGallery(media),
+                    pinMediaDeleteBusy: viewModel.pendingDeleteMediaId == media.mediaId,
+                    onPinMediaDelete: { viewModel.deletePinMediaFromGallery(media) },
+                    pinIdForServerMediaDelete: viewModel.pin.serverId,
+                    pinResponseAction: viewModel.pinResponseActionForCurrentPin()
                 ).onTapGesture {
                     viewModel.dispatch(.navigate(.mediaInfo(media)))
                 }

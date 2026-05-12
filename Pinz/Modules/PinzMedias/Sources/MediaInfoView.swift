@@ -19,16 +19,36 @@ public struct MediaInfoView: View {
     private let source: Source
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
     @State private var playerController: VideoPlayerController?
     @State private var mediaViewModel: MediaInfoViewModel?
     @State private var playerSetupTask: Task<Void, Never>?
+    @State private var showDeleteMediaAlert = false
 
-    public init(media: MediaItem, updateAction: MediaUpdateAction? = nil) {
+    private let allowsMediaPrivacyChange: Bool
+
+    public init(
+        media: MediaItem,
+        updateAction: MediaUpdateAction? = nil,
+        pinIdForServerMediaDelete: String? = nil,
+        pinResponseAction: PinResponseAction? = nil,
+        allowsMediaPrivacyChange: Bool = true
+    ) {
+        self.allowsMediaPrivacyChange = allowsMediaPrivacyChange
         self.source = .remote(media)
-        self._mediaViewModel = State(initialValue: MediaInfoViewModel(media: media, updateAction: updateAction))
+        self._mediaViewModel = State(
+            initialValue: MediaInfoViewModel(
+                media: media,
+                updateAction: updateAction,
+                pinIdForServerMediaDelete: pinIdForServerMediaDelete,
+                pinResponseAction: pinResponseAction,
+                allowsMediaPrivacyChange: allowsMediaPrivacyChange
+            )
+        )
     }
 
     public init(localMedia: LoadedMedia) {
+        self.allowsMediaPrivacyChange = true
         self.source = .local(localMedia)
     }
 
@@ -49,12 +69,24 @@ public struct MediaInfoView: View {
             .padding(.horizontal, 12)
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { setupPlayer() }
+        .onAppear {
+            setupPlayer()
+            mediaViewModel?.setRouter(router)
+            mediaViewModel?.setShowToast(showToast)
+        }
         .onDisappear {
             playerSetupTask?.cancel()
             playerSetupTask = nil
             playerController?.stop()
             playerController = nil
+        }
+        .alert(PinzBaseStrings.MediaInfo.Alert.DeleteMedia.title, isPresented: $showDeleteMediaAlert) {
+            Button(PinzBaseStrings.MediaInfo.Alert.DeleteMedia.confirm, role: .destructive) {
+                mediaViewModel?.dispatch(.deleteMediaFromPin)
+            }
+            Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) {}
+        } message: {
+            Text(PinzBaseStrings.MediaInfo.Alert.DeleteMedia.message)
         }
     }
 
@@ -188,26 +220,34 @@ public struct MediaInfoView: View {
         })
     }
 
+    @ViewBuilder
     private var privacy: some View {
-        if let vm = mediaViewModel {
-            PrivacySection(
-                initialSelection: vm.initialPrivacySelection,
-                onSelectionChanged: { [vm] in vm.dispatch(.updatePrivacy($0)) }
-            )
-        } else {
-            PrivacySection()
+        if allowsMediaPrivacyChange {
+            if let vm = mediaViewModel {
+                PrivacySection(
+                    initialSelection: vm.initialPrivacySelection,
+                    onSelectionChanged: { [vm] in vm.dispatch(.updatePrivacy($0)) }
+                )
+            } else {
+                PrivacySection()
+            }
         }
     }
 
+    @ViewBuilder
     private var delete: some View {
-        SettingsGroup(settings: [
-            .default(Setting.DefaultSetting(
-                id: "mediaDelete",
-                leading: .iconTitle(MediaInfoIcon.trash, PinzBaseStrings.MediaInfo.Button.delete),
-                trailing: .icon(MediaInfoIcon.chevronRight),
-                style: .destructive,
-                action: .plain { }
-            ))
-        ])
+        if let vm = mediaViewModel, vm.canDeleteMediaFromPin {
+            SettingsGroup(settings: [
+                .default(Setting.DefaultSetting(
+                    id: "mediaDelete",
+                    leading: .iconTitle(MediaInfoIcon.trash, PinzBaseStrings.MediaInfo.Button.delete),
+                    trailing: .icon(MediaInfoIcon.chevronRight),
+                    style: .destructive,
+                    action: .plain { showDeleteMediaAlert = true }
+                ))
+            ])
+            .allowsHitTesting(!vm.isDeletingPinMedia)
+            .opacity(vm.isDeletingPinMedia ? 0.45 : 1)
+        }
     }
 }

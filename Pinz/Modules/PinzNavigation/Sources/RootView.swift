@@ -102,8 +102,14 @@ public struct RootView<Content: View>: View {
             }
         case let .media(mediaRoute):
             switch mediaRoute {
-            case let .info(media, updateAction):
-                MediaInfoView(media: media, updateAction: updateAction)
+            case let .info(media, updateAction, pinIdForServerMediaDelete, pinResponseAction, allowsMediaPrivacyChange):
+                MediaInfoView(
+                    media: media,
+                    updateAction: updateAction,
+                    pinIdForServerMediaDelete: pinIdForServerMediaDelete,
+                    pinResponseAction: pinResponseAction,
+                    allowsMediaPrivacyChange: allowsMediaPrivacyChange
+                )
             case let .localInfo(media):
                 MediaInfoView(localMedia: media)
             }

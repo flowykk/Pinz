@@ -318,6 +318,9 @@
 "pinInfo.toast.tagTooLong" = "Tag must not exceed %d characters";
 "pinInfo.toast.tagAlreadyExists" = "This tag is already added";
 "pinInfo.toast.tagLimitReached" = "Tag limit reached (max %d)";
+"pinInfo.toast.mediaDeleted" = "Media removed";
+"pinInfo.toast.mediaDeleteFailed" = "Failed to remove media";
+"pinInfo.toast.mediaDeletePinMustHaveMedia" = "A pin must keep at least one photo or video";
 
 // MARK: - Raw Pin
 "rawPin.button.move" = "Move";
@@ -331,6 +334,12 @@
 
 // MARK: - Media Info
 "mediaInfo.button.delete" = "Delete Media";
+"mediaInfo.alert.deleteMedia.title" = "Delete media?";
+"mediaInfo.alert.deleteMedia.message" = "This photo or video will be removed from the pin.";
+"mediaInfo.alert.deleteMedia.confirm" = "Delete";
+"mediaInfo.toast.mediaDeleted" = "Media removed";
+"mediaInfo.toast.mediaDeleteFailed" = "Failed to remove media";
+"mediaInfo.toast.mediaDeletePinMustHaveMedia" = "A pin must keep at least one photo or video";
 
 // MARK: - Items Picker
 "itemsPicker.placeholder.customValue" = "Enter a custom value";

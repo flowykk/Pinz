@@ -61,10 +61,10 @@ final class InitialTripSetupViewModel {
     private(set) var isLoading: Bool = false
     private(set) var loadingStatus: LoadingStatus?
 
-    var name: String = "name"
-    var description: String? = "descr"
-    var category: TripCategory = .active // .none
-    var season: TripSeason = .spring // .none
+    var name: String = ""
+    var description: String?
+    var category: TripCategory = .none
+    var season: TripSeason = .none
     var medias: [LoadedMedia] = []
 
     private let networkService: NetworkServiceProtocol

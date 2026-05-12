@@ -7,6 +7,7 @@ public struct DefaultPinShortInfoView: View {
     private let hideTags: Bool
     private let hideMediaBadges: Bool
     private let dismissBeforeMediaInfo: Bool
+    private let allowsMediaPrivacyChange: Bool
     private let pinTapped: (Pin) -> Void
     private let onMediaUpdated: ((MediaItem) -> Void)?
 
@@ -17,6 +18,7 @@ public struct DefaultPinShortInfoView: View {
         hideTags: Bool = false,
         hideMediaBadges: Bool = false,
         dismissBeforeMediaInfo: Bool = false,
+        allowsMediaPrivacyChange: Bool = true,
         pinTapped: @escaping (Pin) -> Void,
         onMediaUpdated: ((MediaItem) -> Void)? = nil
     ) {
@@ -24,6 +26,7 @@ public struct DefaultPinShortInfoView: View {
         self.hideTags = hideTags
         self.hideMediaBadges = hideMediaBadges
         self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
+        self.allowsMediaPrivacyChange = allowsMediaPrivacyChange
         self.pinTapped = pinTapped
         self.onMediaUpdated = onMediaUpdated
     }
@@ -52,6 +55,7 @@ public struct DefaultPinShortInfoView: View {
             maxMedias: 15,
             hideMediaBadges: hideMediaBadges,
             dismissBeforeMediaInfo: dismissBeforeMediaInfo,
+            allowsMediaPrivacyChange: allowsMediaPrivacyChange,
             onMediaUpdated: onMediaUpdated
         )
     }

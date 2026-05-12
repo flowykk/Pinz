@@ -202,6 +202,7 @@ public protocol NetworkServiceProtocol {
     // Pins CRUD
     func getPin(tripId: String, pinId: String) async throws -> PinResponseDTO
     func deletePin(tripId: String, pinId: String) async throws -> DeletePinResponseDTO
+    func deletePinMedia(tripId: String, pinId: String, mediaId: String) async throws -> PinResponseDTO
     func updatePin(
         tripId: String,
         pinId: String,
@@ -1194,6 +1195,13 @@ public final class NetworkService: NetworkServiceProtocol {
 
     public func deletePin(tripId: String, pinId: String) async throws -> DeletePinResponseDTO {
         try await provider.request(.deletePin(tripId: tripId, pinId: pinId), type: DeletePinResponseDTO.self)
+    }
+
+    public func deletePinMedia(tripId: String, pinId: String, mediaId: String) async throws -> PinResponseDTO {
+        try await provider.request(
+            .deletePinMedia(tripId: tripId, pinId: pinId, mediaId: mediaId),
+            type: PinResponseDTO.self
+        )
     }
 
     public func updatePin(

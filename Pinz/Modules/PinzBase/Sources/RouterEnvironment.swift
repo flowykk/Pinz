@@ -27,7 +27,13 @@ public protocol AppRouting: AnyObject {
     func navigateToPostInfo(post: Post)
     func navigateToSavedTripDetail(trip: Trip)
 
-    func navigateToMediaInfo(media: MediaItem, updateAction: MediaUpdateAction?)
+    func navigateToMediaInfo(
+        media: MediaItem,
+        updateAction: MediaUpdateAction?,
+        pinIdForServerMediaDelete: String?,
+        pinResponseAction: PinResponseAction?,
+        allowsMediaPrivacyChange: Bool
+    )
     func navigateToLocalMediaInfo(media: LoadedMedia)
 
     func navigateToEmailChange(email: String, userId: String?, action: EmailChangeAction)
@@ -74,6 +80,31 @@ public protocol AppRouting: AnyObject {
 }
 
 public extension AppRouting {
+    func navigateToMediaInfo(media: MediaItem, updateAction: MediaUpdateAction? = nil) {
+        navigateToMediaInfo(
+            media: media,
+            updateAction: updateAction,
+            pinIdForServerMediaDelete: nil,
+            pinResponseAction: nil,
+            allowsMediaPrivacyChange: true
+        )
+    }
+
+    func navigateToMediaInfo(
+        media: MediaItem,
+        updateAction: MediaUpdateAction?,
+        pinIdForServerMediaDelete: String?,
+        pinResponseAction: PinResponseAction?
+    ) {
+        navigateToMediaInfo(
+            media: media,
+            updateAction: updateAction,
+            pinIdForServerMediaDelete: pinIdForServerMediaDelete,
+            pinResponseAction: pinResponseAction,
+            allowsMediaPrivacyChange: true
+        )
+    }
+
     func navigateToPinUploadStart(tripId: String) {
         navigateToPinUploadStart(tripId: tripId, targetPinId: nil)
     }
