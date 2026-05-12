@@ -54,6 +54,7 @@ public struct ReviewTripCreationView: View {
             )
         }, centerView: {
             HeaderTitle(PinzBaseStrings.ReviewTripCreation.Title.main)
+                .accessibilityIdentifier("tripCreation.review.title")
         }, rightView: {
             if viewModel.pinsHaveIssues {
                 PinzButton(
@@ -79,6 +80,7 @@ public struct ReviewTripCreationView: View {
                 disabled: viewModel.pinsHaveIssues,
                 action: .async { try await viewModel.asyncDispatch(.finalize) }
             )
+            .accessibilityIdentifier("tripCreation.button.reviewNext")
         }
     }
 }

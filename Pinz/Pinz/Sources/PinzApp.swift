@@ -14,13 +14,19 @@ import PinzPins
 struct PinzApp: App {
     @UIApplicationDelegateAdaptor(PinzAppDelegate.self) private var appDelegate
 
-    @State private var router = AppRouter(
-        initialPath: TokenStorage.shared.isAuthenticated ? [.main] : []
-    )
+    @State private var router: AppRouter
     @State private var toastController = ToastController()
 
     init() {
         PinzLaunchArgs.apply()
+        _router = State(initialValue: AppRouter(initialPath: Self.initialRoutePath()))
+    }
+
+    private static func initialRoutePath() -> [Route] {
+        if PinzLaunchArgs.testingTripCreation {
+            return [.main, .tripCreation(.initial)]
+        }
+        return TokenStorage.shared.isAuthenticated ? [.main] : []
     }
 
     var body: some Scene {

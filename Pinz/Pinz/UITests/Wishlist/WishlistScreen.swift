@@ -59,15 +59,15 @@ struct WishlistScreen {
 
     func setName(_ value: String) {
         guard let nameField = wishlistNameInput() else { return }
-        forceTap(nameField)
-        clearText(in: nameField)
+        nameField.forceTap()
+        nameField.clearText()
         nameField.typeText(value)
     }
 
     func setDescription(_ value: String) {
         guard let descriptionField = wishlistDescriptionInput() else { return }
-        forceTap(descriptionField)
-        clearText(in: descriptionField)
+        descriptionField.forceTap()
+        descriptionField.clearText()
         descriptionField.typeText(value)
     }
 
@@ -115,16 +115,16 @@ struct WishlistScreen {
     private func wishlistItemElement(withId id: String, timeout: TimeInterval = 1.0) -> XCUIElement? {
         let identifier = PinzElement.wishlist(.row(.item(id))).accessibilityID
 
-        if let button = firstHittableOrFirst(app.buttons.matching(identifier: identifier), timeout: timeout) {
+        if let button = app.firstHittableOrFirst(app.buttons.matching(identifier: identifier), timeout: timeout) {
             return button
         }
-        if let cell = firstHittableOrFirst(app.cells.matching(identifier: identifier), timeout: timeout) {
+        if let cell = app.firstHittableOrFirst(app.cells.matching(identifier: identifier), timeout: timeout) {
             return cell
         }
-        if let other = firstHittableOrFirst(app.otherElements.matching(identifier: identifier), timeout: timeout) {
+        if let other = app.firstHittableOrFirst(app.otherElements.matching(identifier: identifier), timeout: timeout) {
             return other
         }
-        if let image = firstHittableOrFirst(app.images.matching(identifier: identifier), timeout: timeout) {
+        if let image = app.firstHittableOrFirst(app.images.matching(identifier: identifier), timeout: timeout) {
             return image
         }
         let anyMatch = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
@@ -132,23 +132,6 @@ struct WishlistScreen {
             return anyMatch
         }
         return nil
-    }
-
-    private func firstHittableOrFirst(_ query: XCUIElementQuery, timeout: TimeInterval) -> XCUIElement? {
-        guard query.count > 0 else { return nil }
-        let deadline = Date().addingTimeInterval(timeout)
-        let poll = 0.1
-        while Date() < deadline {
-            for index in 0..<query.count {
-                let candidate = query.element(boundBy: index)
-                if candidate.exists && candidate.isHittable {
-                    return candidate
-                }
-            }
-            Thread.sleep(forTimeInterval: poll)
-        }
-        let first = query.firstMatch
-        return first.exists ? first : nil
     }
 
     private func wishlistNameInput() -> XCUIElement? {
@@ -187,26 +170,5 @@ struct WishlistScreen {
         }
 
         return nil
-    }
-
-    private func forceTap(_ element: XCUIElement) {
-        if element.isHittable {
-            element.tap()
-            return
-        }
-
-        let center = element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        center.tap()
-    }
-
-    private func clearText(in field: XCUIElement) {
-        guard let currentValue = field.value as? String else {
-            return
-        }
-
-        let backspaces = String(repeating: "\u{8}", count: max(0, currentValue.count))
-        if !backspaces.isEmpty {
-            field.typeText(backspaces)
-        }
     }
 }

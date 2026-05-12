@@ -85,14 +85,14 @@ struct PinUploadScreen {
         guard nameField.waitForExistence(timeout: defaultTimeout) else {
             return
         }
-        forceTap(nameField)
-        clearTextCompletely(nameField)
+        nameField.forceTap()
+        nameField.clearTextCompletely(app: app)
         nameField.typeText(value)
     }
 
     @discardableResult
     func tapSave(timeout: TimeInterval = 8) -> Bool {
-        dismissKeyboardIfNeeded()
+        app.dismissKeyboardIfNeeded()
         guard saveButton.waitForExistence(timeout: timeout), saveButton.isEnabled else {
             return false
         }
@@ -140,30 +140,5 @@ struct PinUploadScreen {
             Thread.sleep(forTimeInterval: 0.1)
         }
         return false
-    }
-
-    private func clearTextCompletely(_ field: XCUIElement) {
-        field.typeText(XCUIKeyboardKey.command.rawValue + "a")
-        field.typeText("\u{8}")
-
-        let currentValue = field.value as? String ?? ""
-        guard !currentValue.isEmpty else {
-            return
-        }
-        field.typeText(String(repeating: "\u{8}", count: currentValue.count))
-    }
-
-    private func dismissKeyboardIfNeeded() {
-        if app.keyboards.count > 0 {
-            app.typeText("\n")
-        }
-    }
-
-    private func forceTap(_ element: XCUIElement) {
-        if element.isHittable {
-            element.tap()
-        } else {
-            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        }
     }
 }

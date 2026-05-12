@@ -9,6 +9,8 @@ public enum PinzLaunchArg {
     public static let testingTrip = "-testingTrip"
     public static let testingTripId = "-testingTripId"
     public static let testingPinUploadFakeMedia = "-testingPinUploadFakeMedia"
+    public static let testingTripCreation = "-testingTripCreation"
+    public static let testingTripCreationFakeMedia = "-testingTripCreationFakeMedia"
 }
 
 public enum PinzLaunchArgs {
@@ -68,6 +70,14 @@ public enum PinzLaunchArgs {
 
     public static var testingPinUploadFakeMedia: Bool {
         CommandLine.arguments.contains(PinzLaunchArg.testingPinUploadFakeMedia)
+    }
+
+    public static var testingTripCreation: Bool {
+        CommandLine.arguments.contains(PinzLaunchArg.testingTripCreation)
+    }
+
+    public static var testingTripCreationFakeMedia: Bool {
+        CommandLine.arguments.contains(PinzLaunchArg.testingTripCreationFakeMedia)
     }
 
     public static var testingTripIdValue: String? {

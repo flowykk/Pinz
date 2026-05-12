@@ -176,8 +176,8 @@ struct TripInfoScreen {
         guard nameField.waitForExistence(timeout: defaultTimeout) else {
             return
         }
-        forceTap(nameField)
-        clearText(in: nameField)
+        nameField.forceTap()
+        nameField.clearText()
         nameField.typeText(value)
     }
 
@@ -185,24 +185,9 @@ struct TripInfoScreen {
         guard descriptionField.waitForExistence(timeout: defaultTimeout) else {
             return
         }
-        forceTap(descriptionField)
-        clearTextCompletely(descriptionField)
+        descriptionField.forceTap()
+        descriptionField.clearTextCompletely(app: app)
         descriptionField.typeText(value)
-    }
-
-    private func clearTextCompletely(_ field: XCUIElement) {
-        field.press(forDuration: 1.2)
-        let selectAllMenu = app.menuItems["Select All"]
-        if selectAllMenu.waitForExistence(timeout: 0.6) {
-            selectAllMenu.tap()
-            field.typeText("\u{8}")
-            return
-        }
-
-        field.typeText(XCUIKeyboardKey.command.rawValue + "a")
-        field.typeText("\u{8}")
-
-        clearText(in: field)
     }
 
     func pickDates(start: Date, end: Date, dateSettleTimeout: TimeInterval = 2) -> Bool {
@@ -395,26 +380,6 @@ struct TripInfoScreen {
             Thread.sleep(forTimeInterval: 0.1)
         }
         return false
-    }
-
-    private func forceTap(_ element: XCUIElement) {
-        if element.isHittable {
-            element.tap()
-            return
-        }
-
-        let center = element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        center.tap()
-    }
-
-    private func clearText(in field: XCUIElement) {
-        guard let currentValue = field.value as? String else {
-            return
-        }
-        let backspaces = String(repeating: "\u{8}", count: max(0, currentValue.count))
-        if !backspaces.isEmpty {
-            field.typeText(backspaces)
-        }
     }
 
     private func accessibleTextValue(_ element: XCUIElement) -> String? {

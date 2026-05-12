@@ -185,51 +185,9 @@ final class PinUploadCreationUITests: XCTestCase {
 
     @MainActor
     private func waitForFinalizeCount(expected: Int, timeout: TimeInterval = 4.0) async -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
+        await waitUntil(timeout: timeout) {
             let counts = await pinUploadResponseFactory.counts()
-            if counts.finalize == expected {
-                return true
-            }
-            try? await Task.sleep(for: .milliseconds(100))
+            return counts.finalize == expected
         }
-        let counts = await pinUploadResponseFactory.counts()
-        return counts.finalize == expected
-    }
-
-    @MainActor
-    private func waitForBackendHealth(timeout: TimeInterval = 2.0) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        let requestURL = URL(string: "http://localhost:8080/health")!
-
-        while Date() < deadline {
-            if isBackendHealthy(url: requestURL) {
-                return true
-            }
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-        return false
-    }
-
-    @MainActor
-    private func isBackendHealthy(url: URL) -> Bool {
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.timeoutInterval = 0.25
-
-        let sema = DispatchSemaphore(value: 0)
-        var isHealthy = false
-
-        let task = URLSession.shared.dataTask(with: request) { _, response, _ in
-            defer { sema.signal() }
-            guard let response = response as? HTTPURLResponse else {
-                return
-            }
-            isHealthy = (200 ... 299).contains(response.statusCode)
-        }
-
-        task.resume()
-        _ = sema.wait(timeout: .now() + 0.3)
-        return isHealthy
     }
 }
