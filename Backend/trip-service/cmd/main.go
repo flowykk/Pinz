@@ -71,6 +71,8 @@ func main() {
 			{Stream: "pinz:trip:ml:tasks", Groups: []string{"trip-service-worker"}},
 			{Stream: "pinz:trip:ml:results", Groups: []string{"trip-service-ml-results"}},
 			{Stream: "pinz:trip:pin_upload:tasks", Groups: []string{"trip-service-pin-upload"}},
+			{Stream: "pinz:trip:pin_upload:ml:tasks", Groups: nil},
+			{Stream: "pinz:trip:pin_upload:ml:results", Groups: []string{"trip-service-pin-upload-ml-results"}},
 			{Stream: "pinz:trip:privacy:events", Groups: []string{"trip-service-privacy"}},
 			{Stream: "pinz:trip:geo_events", Groups: []string{"trip-service-geo-worker"}},
 			{Stream: "pinz:trip:events", Groups: nil},
@@ -120,6 +122,12 @@ func main() {
 			MediaURLs:   deps.MediaURLs,
 		})
 	}
+
+	go worker.RunPinUploadMLResultsConsumer(ctx, deps.RedisClient, worker.PinUploadMLResultsDeps{
+		SessionRepo: deps.PinUploadSessionRepo,
+		MediaRepo:   deps.MediaRepo,
+		EventRepo:   deps.EventRepo,
+	})
 
 	slog.Info("dependencies ready, starting gRPC server")
 	if err := server.RunGRPCServer(deps.TripService); err != nil {

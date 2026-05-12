@@ -56,6 +56,20 @@ func (mr *MockTripEventPublisherMockRecorder) AddMLTask(ctx, tripID any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTask", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTask), ctx, tripID)
 }
 
+// AddMLTaskFull mocks base method.
+func (m *MockTripEventPublisher) AddMLTaskFull(ctx context.Context, tripID, flow, pinsJSON string, newPinIDs []string, presignExpiresAtUnix int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMLTaskFull", ctx, tripID, flow, pinsJSON, newPinIDs, presignExpiresAtUnix)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddMLTaskFull indicates an expected call of AddMLTaskFull.
+func (mr *MockTripEventPublisherMockRecorder) AddMLTaskFull(ctx, tripID, flow, pinsJSON, newPinIDs, presignExpiresAtUnix any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTaskFull", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTaskFull), ctx, tripID, flow, pinsJSON, newPinIDs, presignExpiresAtUnix)
+}
+
 // AddMLTaskWithFlow mocks base method.
 func (m *MockTripEventPublisher) AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error {
 	m.ctrl.T.Helper()
@@ -68,6 +82,20 @@ func (m *MockTripEventPublisher) AddMLTaskWithFlow(ctx context.Context, tripID, 
 func (mr *MockTripEventPublisherMockRecorder) AddMLTaskWithFlow(ctx, tripID, flow, newPinIDs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTaskWithFlow", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTaskWithFlow), ctx, tripID, flow, newPinIDs)
+}
+
+// AddPinUploadMLTask mocks base method.
+func (m *MockTripEventPublisher) AddPinUploadMLTask(ctx context.Context, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON string, presignExpiresAtUnix int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddPinUploadMLTask", ctx, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON, presignExpiresAtUnix)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddPinUploadMLTask indicates an expected call of AddPinUploadMLTask.
+func (mr *MockTripEventPublisherMockRecorder) AddPinUploadMLTask(ctx, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON, presignExpiresAtUnix any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPinUploadMLTask", reflect.TypeOf((*MockTripEventPublisher)(nil).AddPinUploadMLTask), ctx, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON, presignExpiresAtUnix)
 }
 
 // AddPinUploadTask mocks base method.
