@@ -191,6 +191,7 @@ public struct InitialTripSetupView: View {
                     try await viewModel.asyncDispatch(.continue)
                 }
             )
+            .accessibilityIdentifier("tripCreation.button.generatePins")
 //            .disabledWithOpacity(
 //                viewModel.name.isEmpty
 //                || viewModel.description?.isEmpty == true

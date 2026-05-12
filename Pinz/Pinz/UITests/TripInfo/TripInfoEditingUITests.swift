@@ -206,14 +206,9 @@ final class TripInfoEditingUITests: XCTestCase {
             return false
         }
 
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if await tripResponseFactory.getTripCount() == expected {
-                return true
-            }
-            try? await Task.sleep(for: .milliseconds(100))
+        return await waitUntil(timeout: timeout) {
+            await tripResponseFactory.getTripCount() == expected
         }
-        return false
     }
 
     private func waitForPatchTripCount(expected: Int, timeout: TimeInterval = 2.0) async -> Bool {
@@ -221,14 +216,9 @@ final class TripInfoEditingUITests: XCTestCase {
             return false
         }
 
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if await tripResponseFactory.patchTripCount() == expected {
-                return true
-            }
-            try? await Task.sleep(for: .milliseconds(100))
+        return await waitUntil(timeout: timeout) {
+            await tripResponseFactory.patchTripCount() == expected
         }
-        return false
     }
 
     private func waitForDeleteTripCount(expected: Int, timeout: TimeInterval = 2.0) async -> Bool {
@@ -236,14 +226,9 @@ final class TripInfoEditingUITests: XCTestCase {
             return false
         }
 
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if await tripResponseFactory.deleteTripCount() == expected {
-                return true
-            }
-            try? await Task.sleep(for: .milliseconds(100))
+        return await waitUntil(timeout: timeout) {
+            await tripResponseFactory.deleteTripCount() == expected
         }
-        return false
     }
 
     private func waitForLeaveTripCount(expected: Int, timeout: TimeInterval = 2.0) async -> Bool {
@@ -251,47 +236,8 @@ final class TripInfoEditingUITests: XCTestCase {
             return false
         }
 
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if await tripResponseFactory.leaveTripCount() == expected {
-                return true
-            }
-            try? await Task.sleep(for: .milliseconds(100))
+        return await waitUntil(timeout: timeout) {
+            await tripResponseFactory.leaveTripCount() == expected
         }
-        return false
-    }
-
-    private func waitForBackendHealth(timeout: TimeInterval = 2.0) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        let requestURL = URL(string: "http://localhost:8080/health")!
-
-        while Date() < deadline {
-            if isBackendHealthy(url: requestURL) {
-                return true
-            }
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-        return false
-    }
-
-    private func isBackendHealthy(url: URL) -> Bool {
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.timeoutInterval = 0.25
-
-        let semaphore = DispatchSemaphore(value: 0)
-        var isHealthy = false
-
-        let task = URLSession.shared.dataTask(with: request) { _, response, _ in
-            defer { semaphore.signal() }
-            guard let response = response as? HTTPURLResponse else {
-                return
-            }
-            isHealthy = (200...299).contains(response.statusCode)
-        }
-
-        task.resume()
-        _ = semaphore.wait(timeout: .now() + 0.3)
-        return isHealthy
     }
 }

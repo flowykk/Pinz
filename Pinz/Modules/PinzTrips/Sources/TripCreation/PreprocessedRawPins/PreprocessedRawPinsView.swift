@@ -101,6 +101,7 @@ public struct PreprocessedRawPinsView: View {
                 disabled: viewModel.isLoading,
                 action: .async { try await viewModel.asyncDispatch(.continue) }
             )
+            .accessibilityIdentifier("tripCreation.button.preprocessedNext")
         }
     }
 }

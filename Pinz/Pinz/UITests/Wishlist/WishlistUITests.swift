@@ -94,56 +94,16 @@ final class WishlistUITests: XCTestCase {
 
     @MainActor
     private func getCreateCount(expected: Int, timeout: TimeInterval = 2.0) async -> Int {
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
+        _ = await waitUntil(timeout: timeout) {
             guard let factory = wishlistResponseFactory else {
-                return 0
+                return false
             }
             let counts = await factory.getCounts()
-            if counts.create == expected {
-                return counts.create
-            }
-            try? await Task.sleep(for: .milliseconds(100))
+            return counts.create == expected
         }
         guard let factory = wishlistResponseFactory else {
             return 0
         }
         return await factory.getCounts().create
-    }
-
-    @MainActor
-    private func waitForBackendHealth(timeout: TimeInterval = 2.0) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        let requestURL = URL(string: "http://localhost:8080/health")!
-
-        while Date() < deadline {
-            if isBackendHealthy(url: requestURL) {
-                return true
-            }
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-        return false
-    }
-
-    @MainActor
-    private func isBackendHealthy(url: URL) -> Bool {
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.timeoutInterval = 0.25
-
-        let sema = DispatchSemaphore(value: 0)
-        var isHealthy = false
-
-        let task = URLSession.shared.dataTask(with: request) { _, response, _ in
-            defer { sema.signal() }
-            guard let response = response as? HTTPURLResponse else {
-                return
-            }
-            isHealthy = (200 ... 299).contains(response.statusCode)
-        }
-
-        task.resume()
-        _ = sema.wait(timeout: .now() + 0.3)
-        return isHealthy
     }
 }

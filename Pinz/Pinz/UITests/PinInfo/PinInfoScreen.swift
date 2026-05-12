@@ -130,8 +130,8 @@ struct PinInfoScreen {
         guard nameField.waitForExistence(timeout: defaultTimeout) else {
             return
         }
-        forceTap(nameField)
-        clearText(in: nameField)
+        nameField.forceTap()
+        nameField.clearText()
         nameField.typeText(value)
     }
 
@@ -139,8 +139,8 @@ struct PinInfoScreen {
         guard descriptionField.waitForExistence(timeout: defaultTimeout) else {
             return
         }
-        forceTap(descriptionField)
-        clearTextCompletely(descriptionField)
+        descriptionField.forceTap()
+        descriptionField.clearTextCompletely(app: app)
         descriptionField.typeText(value)
     }
 
@@ -148,7 +148,7 @@ struct PinInfoScreen {
     func openPinFromPinsList(named name: String, timeout: TimeInterval = 8) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            if let pinButton = firstHittableOrFirst(
+            if let pinButton = app.firstHittableOrFirst(
                 app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)),
                 timeout: 0.4
             ) {
@@ -159,14 +159,14 @@ struct PinInfoScreen {
             }
 
             let textMatches = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", name))
-            if let textElement = firstHittableOrFirst(textMatches, timeout: 0.4) {
+            if let textElement = app.firstHittableOrFirst(textMatches, timeout: 0.4) {
                 textElement.tap()
                 if waitForPinInfoToOpen(timeout: 2.0) {
                     return true
                 }
             }
 
-            if let fallback = firstHittableOrFirst(
+            if let fallback = app.firstHittableOrFirst(
                 app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", name)),
                 timeout: 0.4
             ) {
@@ -191,6 +191,46 @@ struct PinInfoScreen {
             Thread.sleep(forTimeInterval: 0.1)
         }
         return editButton.exists || headerTitleDetail.exists
+    }
+
+    @discardableResult
+    func openGallery(timeout: TimeInterval = 6) -> Bool {
+        let labels = [
+            PinzBaseStrings.Common.Label.gallery,
+            "Gallery",
+            "Галерея"
+        ]
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            for label in labels where !label.isEmpty {
+                let button = app.buttons[label]
+                if button.exists {
+                    button.tap()
+                    return waitForGalleryMode(timeout: 3)
+                }
+
+                let text = app.staticTexts[label]
+                if text.exists {
+                    text.tap()
+                    return waitForGalleryMode(timeout: 3)
+                }
+            }
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+        return false
+    }
+
+    @discardableResult
+    func waitForGalleryMode(timeout: TimeInterval = 4) -> Bool {
+        let addMediaIdentifier = PinzElement.pin(.button(.addMedia)).accessibilityID
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if app.buttons[addMediaIdentifier].exists || app.buttons[PinzBaseStrings.PinUpload.Header.addMedia].exists {
+                return true
+            }
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+        return false
     }
 
     @discardableResult
@@ -269,58 +309,5 @@ struct PinInfoScreen {
             Thread.sleep(forTimeInterval: 0.1)
         }
         return false
-    }
-
-    private func forceTap(_ element: XCUIElement) {
-        if element.isHittable {
-            element.tap()
-            return
-        }
-        let center = element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        center.tap()
-    }
-
-    private func clearText(in field: XCUIElement) {
-        guard let currentValue = field.value as? String else {
-            return
-        }
-
-        let backspaces = String(repeating: "\u{8}", count: max(0, currentValue.count))
-        if !backspaces.isEmpty {
-            field.typeText(backspaces)
-        }
-    }
-
-    private func clearTextCompletely(_ field: XCUIElement) {
-        field.press(forDuration: 1.2)
-        let selectAllMenu = app.menuItems["Select All"]
-        if selectAllMenu.waitForExistence(timeout: 0.6) {
-            selectAllMenu.tap()
-            field.typeText("\u{8}")
-            return
-        }
-
-        field.typeText(XCUIKeyboardKey.command.rawValue + "a")
-        field.typeText("\u{8}")
-
-        clearText(in: field)
-    }
-
-    private func firstHittableOrFirst(_ query: XCUIElementQuery, timeout: TimeInterval) -> XCUIElement? {
-        guard query.count > 0 else { return nil }
-
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            for index in 0..<query.count {
-                let candidate = query.element(boundBy: index)
-                if candidate.exists && candidate.isHittable {
-                    return candidate
-                }
-            }
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-
-        let first = query.firstMatch
-        return first.exists ? first : nil
     }
 }

@@ -95,12 +95,14 @@ final class PreprocessedRawPinsViewModel {
             defer { changeLoading(to: false) }
 
             let draftPins = pins.pins.map { DraftPinInputDTO(draftPinId: $0.id, mediaIds: $0.medias.map(\.id)) }
-            let waitTask = Task {
-                try await networkService.waitForTripProcessingCompleted(
-                    tripId: tripId,
-                    timeout: 30
-                )
-            }
+            let waitTask = PinzLaunchArgs.testingTripCreation
+                ? nil
+                : Task {
+                    try await networkService.waitForTripProcessingCompleted(
+                        tripId: tripId,
+                        timeout: 30
+                    )
+                }
 
             do {
                 try await networkService.applyGroupsAndProcess(
@@ -109,7 +111,7 @@ final class PreprocessedRawPinsViewModel {
                     deletedMediaIds: deletedMediaIds
                 )
             } catch {
-                waitTask.cancel()
+                waitTask?.cancel()
                 showToast?(PinzBaseStrings.PreprocessedPins.Toast.applyFailed)
                 throw error
             }
@@ -117,7 +119,7 @@ final class PreprocessedRawPinsViewModel {
             let reviewResponse: GetTripReviewDTO
 
             do {
-                try await waitTask.value
+                try await waitTask?.value
                 reviewResponse = try await networkService.getTripReview(tripId: tripId)
             } catch TripReviewWaitError.timeout {
                 do {

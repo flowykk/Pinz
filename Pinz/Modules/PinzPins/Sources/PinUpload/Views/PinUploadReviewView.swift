@@ -207,7 +207,8 @@ public struct PinUploadReviewView: View {
                 get: { viewModel.description ?? "" },
                 set: { viewModel.description = $0 }
             ),
-            placeholder: PinzBaseStrings.PinCreation.Placeholder.description
+            placeholder: PinzBaseStrings.PinCreation.Placeholder.description,
+            textFieldId: "pinDescriptionEditingTextField"
         )
     }
 
@@ -294,6 +295,7 @@ public struct PinUploadReviewView: View {
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 action: .async { try await viewModel.asyncDispatch(.finalize) }
             )
+            .accessibilityIdentifier("pinUpload.button.save")
             .disabledWithOpacity(saveButtonDisabled)
         }
     }

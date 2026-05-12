@@ -412,6 +412,42 @@ final class MockNetworkService: NetworkServiceProtocol {
     )
     var pinUploadCancelError: Error?
 
+    var addMediaStartResult: Result<AddMediaStartDTO, Error> = .success(
+        AddMediaStartDTO(sessionId: "mock-add-media-session", status: "ADD_MEDIA_UPLOADING", joined: false, uploadUrls: [])
+    )
+    var addMediaRequestUploadUrlsResult: Result<[UploadURLDTO], Error> = .success([])
+    var addMediaCommitUploadResult: Result<AddMediaCommitUploadDTO, Error> = .success(
+        AddMediaCommitUploadDTO(mediaId: "mock-add-media", mediaCountInSession: 1, remainingSlots: 99)
+    )
+    var addMediaGetSessionMediaResult: Result<AddMediaSessionMediaDTO, Error> = .success(
+        AddMediaSessionMediaDTO(sessionId: "mock-add-media-session", media: [], mediaCountInSession: 0)
+    )
+    var addMediaGroupingResult: Result<AddMediaGroupingDTO, Error> = .success(
+        AddMediaGroupingDTO(
+            tripId: "trip-001",
+            sessionId: "mock-add-media-session",
+            status: "ADD_MEDIA_GROUPING_REVIEW",
+            draftPins: []
+        )
+    )
+    var addMediaGetReviewResult: Result<AddMediaReviewDTO, Error> = .success(
+        AddMediaReviewDTO(
+            tripId: "trip-001",
+            sessionId: "mock-add-media-session",
+            pins: MockNetworkService.stubTripPins,
+            newPinIds: [],
+            protectedMediaIds: [],
+            canEdit: true
+        )
+    )
+    var addMediaConfirmResult: Result<AddMediaConfirmDTO, Error> = .success(
+        AddMediaConfirmDTO(status: "READY", alreadyConfirmed: false)
+    )
+    var addMediaCancelError: Error?
+    var addMediaTakeoverResult: Result<AddMediaTakeoverDTO, Error> = .success(
+        AddMediaTakeoverDTO(isInitiator: true)
+    )
+
     var pinUploadGetReviewCall: (tripId: String, sessionId: String)?
 
     var getPinCall: (tripId: String, pinId: String)?
@@ -517,6 +553,71 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     func pinUploadCancel(tripId: String, sessionId: String) async throws {
         if let pinUploadCancelError { throw pinUploadCancelError }
+    }
+
+    func addMediaStart(tripId: String, filesToUpload: [FileToUploadDTO]) async throws -> AddMediaStartDTO {
+        try addMediaStartResult.get()
+    }
+
+    func addMediaRequestUploadUrls(
+        tripId: String,
+        sessionId: String,
+        filesToUpload: [FileToUploadDTO]
+    ) async throws -> [UploadURLDTO] {
+        try addMediaRequestUploadUrlsResult.get()
+    }
+
+    func addMediaCommitUpload(
+        tripId: String,
+        sessionId: String,
+        s3Key: String,
+        mediaType: String,
+        capturedAt: String?,
+        latitude: Double?,
+        longitude: Double?
+    ) async throws -> AddMediaCommitUploadDTO {
+        try addMediaCommitUploadResult.get()
+    }
+
+    func addMediaGetSessionMedia(tripId: String, sessionId: String) async throws -> AddMediaSessionMediaDTO {
+        try addMediaGetSessionMediaResult.get()
+    }
+
+    func addMediaProcessGrouping(tripId: String, sessionId: String, addMore: Bool) async throws -> AddMediaGroupingDTO {
+        try addMediaGroupingResult.get()
+    }
+
+    func addMediaGetGrouping(tripId: String, sessionId: String) async throws -> AddMediaGroupingDTO {
+        try addMediaGroupingResult.get()
+    }
+
+    func addMediaApplyGroupsAndProcess(
+        tripId: String,
+        sessionId: String,
+        draftPins: [DraftPinInputDTO],
+        deletedMediaIds: [String]
+    ) async throws {
+    }
+
+    func addMediaGetReview(tripId: String, sessionId: String) async throws -> AddMediaReviewDTO {
+        try addMediaGetReviewResult.get()
+    }
+
+    func addMediaConfirm(
+        tripId: String,
+        sessionId: String,
+        pinUpdates: [PinUpdateInputDTO],
+        mediaToDelete: [String]
+    ) async throws -> AddMediaConfirmDTO {
+        try addMediaConfirmResult.get()
+    }
+
+    func addMediaCancel(tripId: String, sessionId: String) async throws {
+        if let addMediaCancelError { throw addMediaCancelError }
+    }
+
+    func addMediaTakeover(tripId: String, sessionId: String) async throws -> AddMediaTakeoverDTO {
+        try addMediaTakeoverResult.get()
     }
 
     // MARK: - Stub data

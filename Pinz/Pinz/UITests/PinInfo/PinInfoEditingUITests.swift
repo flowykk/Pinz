@@ -231,14 +231,9 @@ final class PinInfoEditingUITests: XCTestCase {
             return false
         }
 
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if await tripResponseFactory.patchPinCount() == expected {
-                return true
-            }
-            try? await Task.sleep(for: .milliseconds(100))
+        return await waitUntil(timeout: timeout) {
+            await tripResponseFactory.patchPinCount() == expected
         }
-        return false
     }
 
     private func waitForDeletePinCount(expected: Int, timeout: TimeInterval = 2.0) async -> Bool {
@@ -246,47 +241,8 @@ final class PinInfoEditingUITests: XCTestCase {
             return false
         }
 
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if await tripResponseFactory.deletePinCount() == expected {
-                return true
-            }
-            try? await Task.sleep(for: .milliseconds(100))
+        return await waitUntil(timeout: timeout) {
+            await tripResponseFactory.deletePinCount() == expected
         }
-        return false
-    }
-
-    private func waitForBackendHealth(timeout: TimeInterval = 2.0) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        let requestURL = URL(string: "http://localhost:8080/health")!
-
-        while Date() < deadline {
-            if isBackendHealthy(url: requestURL) {
-                return true
-            }
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-        return false
-    }
-
-    private func isBackendHealthy(url: URL) -> Bool {
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.timeoutInterval = 0.25
-
-        let semaphore = DispatchSemaphore(value: 0)
-        var isHealthy = false
-
-        let task = URLSession.shared.dataTask(with: request) { _, response, _ in
-            defer { semaphore.signal() }
-            guard let response = response as? HTTPURLResponse else {
-                return
-            }
-            isHealthy = (200...299).contains(response.statusCode)
-        }
-
-        task.resume()
-        _ = semaphore.wait(timeout: .now() + 0.3)
-        return isHealthy
     }
 }

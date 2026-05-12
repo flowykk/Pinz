@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import UIKit
 import PinzNetworking
 import PinzBase
 import PinzDomain
@@ -73,6 +74,11 @@ final class InitialTripSetupViewModel {
 
     init(networkService: NetworkServiceProtocol = NetworkService.shared) {
         self.networkService = networkService
+        if PinzLaunchArgs.testingTripCreationFakeMedia {
+            medias = [Self.testingMedia()]
+            season = .summer
+            category = .vacation
+        }
     }
 
     func setToast(_ showToast: ((String) -> Void)?) {
@@ -310,5 +316,18 @@ final class InitialTripSetupViewModel {
         withAnimation(.easeInOut(duration: 0.3)) {
             self.loadingStatus = status
         }
+    }
+
+    private static func testingMedia() -> LoadedMedia {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 8, height: 8))
+        let image = renderer.image { context in
+            UIColor.systemBlue.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
+        }
+        return LoadedMedia(
+            content: .image(image),
+            imageFileData: image.pngData(),
+            contentType: MediaType.image.contentType
+        )
     }
 }

@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import UIKit
 import PinzNetworking
 import PinzBase
 import PinzDomain
@@ -49,6 +50,9 @@ final class PinUploadStartViewModel {
         self.tripId = tripId
         self.targetPinId = targetPinId
         self.networkService = networkService
+        if PinzLaunchArgs.testingPinUploadFakeMedia {
+            medias = [Self.testingMedia()]
+        }
     }
 
     // MARK: - dispatch
@@ -199,5 +203,18 @@ final class PinUploadStartViewModel {
         withAnimation(.easeInOut(duration: 0.3)) {
             self.loadingStatus = status
         }
+    }
+
+    private static func testingMedia() -> LoadedMedia {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 8, height: 8))
+        let image = renderer.image { context in
+            UIColor.systemBlue.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
+        }
+        return LoadedMedia(
+            content: .image(image),
+            imageFileData: image.pngData(),
+            contentType: MediaType.image.contentType
+        )
     }
 }
