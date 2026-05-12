@@ -102,6 +102,7 @@ public struct PinUploadStartView: View {
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 action: .async { try await viewModel.asyncDispatch(.start) }
             )
+            .accessibilityIdentifier("pinUpload.button.next")
             .disabledWithOpacity(viewModel.medias.isEmpty)
         }
     }

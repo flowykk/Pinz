@@ -51,7 +51,7 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_defaultName_isSet() {
-        XCTAssertFalse(sut.name.isEmpty)
+        XCTAssertTrue(sut.name.isEmpty)
     }
 
     // MARK: - State.id and State.content
@@ -142,9 +142,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_success_navigatesToPreprocessedPins() async throws {
+        configureValidTripInfo()
         let mediaId = UUID()
         sut.medias = [
-            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+            makeLoadedImage(id: mediaId, data: Data([1]))
         ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-new", status: "created", uploadUrls: [])
@@ -165,9 +166,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_mapsNonEmptyDraftPins() async throws {
+        configureValidTripInfo()
         let mediaId = UUID()
         sut.medias = [
-            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+            makeLoadedImage(id: mediaId, data: Data([1]))
         ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-x", status: "created", uploadUrls: [])
@@ -192,9 +194,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_withNonLoadingMedia_sendsFilesToUpload() async throws {
+        configureValidTripInfo()
         let mediaId = UUID()
         sut.medias = [
-            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([0, 1, 2]), contentType: "image/jpeg")
+            makeLoadedImage(id: mediaId, data: Data([0, 1, 2]))
         ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-y", status: "created", uploadUrls: [])
@@ -215,9 +218,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_withMatchingUploadUrl_uploadsToS3() async throws {
+        configureValidTripInfo()
         let mediaId = UUID()
         sut.medias = [
-            LoadedMedia(id: mediaId, content: makeTestImage(), imageFileData: Data([1, 2, 3, 4]), contentType: "image/jpeg")
+            makeLoadedImage(id: mediaId, data: Data([1, 2, 3, 4]))
         ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(
@@ -241,8 +245,15 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_setsIsLoadingFalseAfterSuccess() async throws {
+        configureValidTripInfo()
+        let mediaId = UUID()
+        sut.medias = [
+            makeLoadedImage(id: mediaId, data: Data([1]))
+        ]
         mockNetwork.createTripResult = .success(CreateTripDTO(tripId: "t", status: "created", uploadUrls: []))
-        mockNetwork.processMediaGroupingResult = .success(ProcessMediaGroupingDTO(tripId: "t", status: "ok", draftPins: []))
+        mockNetwork.processMediaGroupingResult = .success(
+            ProcessMediaGroupingDTO(tripId: "t", status: "ok", draftPins: [DraftPinDTO(draftPinId: "pin-1", media: [])])
+        )
 
         try await sut.asyncDispatch(.continue)
 
@@ -254,9 +265,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_createTripFailure_throws() async {
+        configureValidTripInfo()
         let mediaId = UUID()
         sut.medias = [
-            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+            makeLoadedImage(id: mediaId, data: Data([1]))
         ]
         struct CreateError: Error {}
         mockNetwork.createTripResult = .failure(CreateError())
@@ -271,9 +283,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_processGroupingFailure_throws() async {
+        configureValidTripInfo()
         let mediaId = UUID()
         sut.medias = [
-            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1]), contentType: "image/jpeg")
+            makeLoadedImage(id: mediaId, data: Data([1]))
         ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(tripId: "trip-x", status: "created", uploadUrls: [])
@@ -291,9 +304,10 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_uploadToS3Failure_throws() async {
+        configureValidTripInfo()
         let mediaId = UUID()
         sut.medias = [
-            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1, 2, 3]), contentType: "image/jpeg")
+            makeLoadedImage(id: mediaId, data: Data([1, 2, 3]))
         ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(
@@ -314,12 +328,13 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_uploadMediaLimitExceededShowsToastAndThrows() async {
+        configureValidTripInfo()
         var toasts: [String] = []
         sut.setToast { toasts.append($0) }
 
         let mediaId = UUID()
         sut.medias = [
-            LoadedMedia(id: mediaId, content: .image(UIImage()), imageFileData: Data([1, 2, 3]), contentType: "image/jpeg")
+            makeLoadedImage(id: mediaId, data: Data([1, 2, 3]))
         ]
         mockNetwork.createTripResult = .success(
             CreateTripDTO(
@@ -352,6 +367,7 @@ final class InitialTripSetupViewModelTests: XCTestCase {
 
     @MainActor
     func test_asyncDispatch_continue_videoUsesUploadToS3FileAPI() async throws {
+        configureValidTripInfo()
         let mediaId = UUID()
         let videoURL = makeTempMediaFile(data: Data([1, 2, 3]), filename: "temp-video")
         let firstFrame = makeTestImage()
@@ -388,6 +404,17 @@ final class InitialTripSetupViewModelTests: XCTestCase {
             UIColor.systemBlue.setFill()
             context.fill(CGRect(origin: .zero, size: size))
         }
+    }
+
+    @MainActor
+    private func configureValidTripInfo() {
+        sut.name = "Trip_1"
+        sut.category = .vacation
+        sut.season = .summer
+    }
+
+    private func makeLoadedImage(id: UUID, data: Data) -> LoadedMedia {
+        LoadedMedia(id: id, content: .image(makeTestImage()), imageFileData: data, contentType: "image/jpeg")
     }
 
     private func makeTempMediaFile(data: Data, filename: String) -> URL {

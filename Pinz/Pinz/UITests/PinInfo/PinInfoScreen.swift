@@ -194,6 +194,46 @@ struct PinInfoScreen {
     }
 
     @discardableResult
+    func openGallery(timeout: TimeInterval = 6) -> Bool {
+        let labels = [
+            PinzBaseStrings.Common.Label.gallery,
+            "Gallery",
+            "Галерея"
+        ]
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            for label in labels where !label.isEmpty {
+                let button = app.buttons[label]
+                if button.exists {
+                    button.tap()
+                    return waitForGalleryMode(timeout: 3)
+                }
+
+                let text = app.staticTexts[label]
+                if text.exists {
+                    text.tap()
+                    return waitForGalleryMode(timeout: 3)
+                }
+            }
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+        return false
+    }
+
+    @discardableResult
+    func waitForGalleryMode(timeout: TimeInterval = 4) -> Bool {
+        let addMediaIdentifier = PinzElement.pin(.button(.addMedia)).accessibilityID
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if app.buttons[addMediaIdentifier].exists || app.buttons[PinzBaseStrings.PinUpload.Header.addMedia].exists {
+                return true
+            }
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+        return false
+    }
+
+    @discardableResult
     func waitForDefaultMode(timeout: TimeInterval = 4) -> Bool {
         guard editButton.waitForExistence(timeout: timeout) else {
             return false

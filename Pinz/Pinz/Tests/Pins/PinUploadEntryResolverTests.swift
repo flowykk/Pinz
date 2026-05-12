@@ -1,6 +1,7 @@
 import XCTest
 @testable import PinzPins
 import PinzBase
+import PinzDomain
 import PinzNetworking
 
 @MainActor

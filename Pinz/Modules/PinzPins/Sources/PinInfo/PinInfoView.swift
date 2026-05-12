@@ -248,6 +248,7 @@ public struct PinInfoView: View {
                         await viewModel.asyncDispatch(.startAddMedia)
                     }
                 )
+                .pinzA11y(.pin(.button(.addMedia)))
                 if viewModel.hasActivePinUploadAdditionSession {
                     Text(PinzBaseStrings.PinUpload.Loading.uploading)
                         .roundedFont(size: 12, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)

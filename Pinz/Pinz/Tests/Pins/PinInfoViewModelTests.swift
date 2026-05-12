@@ -135,6 +135,62 @@ final class PinInfoViewModelTests: XCTestCase {
         XCTAssertEqual(mock.updatePinCall?.name, "New name")
     }
 
+    func test_startAddMedia_noStoredSession_navigatesToPinUploadStartWithTargetPinId() async {
+        let serverPin = makeServerPin(tripId: "trip-add-media-1", pinId: "pin-add-media-1")
+        PinUploadAdditionSessionStorage.shared.clear(tripId: serverPin.tripId!, pinId: serverPin.serverId!)
+        defer {
+            PinUploadAdditionSessionStorage.shared.clear(tripId: serverPin.tripId!, pinId: serverPin.serverId!)
+        }
+
+        let mock = MockNetworkService()
+        let sut = PinInfoViewModel(pin: serverPin, networkService: mock)
+        sut.setRouter(mockRouter)
+
+        await sut.asyncDispatch(.startAddMedia)
+
+        XCTAssertEqual(mockRouter.navigatedToPinUploadStart?.tripId, "trip-add-media-1")
+        XCTAssertEqual(mockRouter.navigatedToPinUploadStart?.targetPinId, "pin-add-media-1")
+        XCTAssertNil(mockRouter.navigatedToPinUploadProcessing)
+        XCTAssertNil(mockRouter.navigatedToPinUploadReview)
+        XCTAssertFalse(sut.isStartingAddMedia)
+        XCTAssertFalse(sut.hasActivePinUploadAdditionSession)
+    }
+
+    func test_startAddMedia_readyStoredSession_navigatesToPinUploadReviewWithTargetPinId() async {
+        let serverPin = makeServerPin(tripId: "trip-add-media-2", pinId: "pin-add-media-2")
+        PinUploadAdditionSessionStorage.shared.save(
+            sessionId: "pin-add-media-session",
+            tripId: serverPin.tripId!,
+            pinId: serverPin.serverId!
+        )
+        defer {
+            PinUploadAdditionSessionStorage.shared.clear(tripId: serverPin.tripId!, pinId: serverPin.serverId!)
+        }
+
+        let mock = MockNetworkService()
+        mock.pinUploadGetReviewResult = .success(
+            PinUploadReviewResponseDTO(
+                sessionId: "pin-add-media-session",
+                processingStatus: "READY_FOR_REVIEW",
+                draft: nil,
+                similar: nil
+            )
+        )
+        let sut = PinInfoViewModel(pin: serverPin, networkService: mock)
+        sut.setRouter(mockRouter)
+
+        await sut.asyncDispatch(.startAddMedia)
+
+        XCTAssertEqual(mock.pinUploadGetReviewCall?.tripId, "trip-add-media-2")
+        XCTAssertEqual(mock.pinUploadGetReviewCall?.sessionId, "pin-add-media-session")
+        XCTAssertEqual(mockRouter.navigatedToPinUploadReview?.tripId, "trip-add-media-2")
+        XCTAssertEqual(mockRouter.navigatedToPinUploadReview?.sessionId, "pin-add-media-session")
+        XCTAssertEqual(mockRouter.navigatedToPinUploadReview?.targetPinId, "pin-add-media-2")
+        XCTAssertNil(mockRouter.navigatedToPinUploadStart)
+        XCTAssertFalse(sut.isStartingAddMedia)
+        XCTAssertTrue(sut.hasActivePinUploadAdditionSession)
+    }
+
     // MARK: - State.id / State.content
 
     func test_stateId_returnsItself() {
@@ -164,5 +220,19 @@ final class PinInfoViewModelTests: XCTestCase {
         } else {
             XCTFail("Expected .text for .editing state")
         }
+    }
+
+    private func makeServerPin(tripId: String, pinId: String) -> Pin {
+        Pin(
+            name: "Existing Pin",
+            description: "Pin with server identity",
+            category: .nature,
+            medias: [],
+            isPrivate: false,
+            tags: [],
+            serverId: pinId,
+            tripId: tripId,
+            coordinates: nil
+        )
     }
 }

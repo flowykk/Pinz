@@ -14,6 +14,8 @@ public enum PinzElement {
             case done
             case leave
             case delete
+            case addMedia
+            case addPin
         }
 
         public enum Input {
@@ -303,6 +305,7 @@ public extension PinzElement {
             case cancel
             case done
             case delete
+            case addMedia
         }
 
         public enum Input: String {

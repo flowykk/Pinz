@@ -90,6 +90,7 @@ public struct TripPinsListView: View {
                         tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                         action: .plain { Task { try? await viewModel.asyncDispatch(.addMedia) } }
                     )
+                    .accessibilityIdentifier("trip.button.addMedia")
                     addMediaStatusLabelView
                 }
 
@@ -99,6 +100,7 @@ public struct TripPinsListView: View {
                         tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                         action: .plain { Task { try? await viewModel.asyncDispatch(.addPin) } }
                     )
+                    .accessibilityIdentifier("trip.button.addPin")
                     pinUploadStatusLabelView
                 }
             }.if(hasAnyStatusLabel) { view in
