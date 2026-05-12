@@ -87,11 +87,18 @@ func (c *Client) PresignedUploadURL(ctx context.Context, s3Key, contentType stri
 }
 
 func (c *Client) ReadURL(ctx context.Context, s3Key string) (string, error) {
+	return c.ReadURLWithTTL(ctx, s3Key, 0)
+}
+
+func (c *Client) ReadURLWithTTL(ctx context.Context, s3Key string, ttl time.Duration) (string, error) {
+	if ttl <= 0 {
+		ttl = c.presignTTL
+	}
 	out, err := c.presign.PresignGetObject(ctx, &awss3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key: aws.String(s3Key),
 	}, func(opts *awss3.PresignOptions) {
-		opts.Expires = c.presignTTL
+		opts.Expires = ttl
 	})
 	if err != nil {
 		slog.Error("s3: presign GET failed", "bucket", c.bucket, "key", s3Key, "err", err)

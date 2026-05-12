@@ -38,6 +38,21 @@
 
 Go 1.25 · chi · gRPC · Protobuf · PostgreSQL · Redis · JWT · OpenTelemetry · Istio · Helm · Helmfile
 
+## ML интеграция
+
+Trip-service общается с внешним ML-сервисом только через Redis Streams и presigned S3 GET URLs — ML не имеет прямого доступа к Postgres и S3-ключам. Контракт стримов (задачи и результаты), правила для всех трёх сценариев (Trip Creation, Add Media, Pin Upload), формат payload, SLA — в `vkr/mlContract.md`.
+
+Стримы:
+
+| Стрим | Направление | Сценарии |
+|---|---|---|
+| `pinz:trip:ml:tasks` | backend → ML | Trip Creation, Add Media |
+| `pinz:trip:ml:results` | ML → backend | Trip Creation, Add Media |
+| `pinz:trip:pin_upload:ml:tasks` | backend → ML | Pin Upload |
+| `pinz:trip:pin_upload:ml:results` | ML → backend | Pin Upload |
+
+Билдеры payload'а — `internal/services/ml_payload.go` (`BuildTripMLPayload`, `BuildPinUploadMLPayload`). Worker `internal/worker/pin_upload_ml_consumer.go` потребляет результаты pin-upload и переводит сессию в `READY_FOR_REVIEW`. Активация интеграции (снятие stub'ов `finalizeProcessingStub` и переключение pin-upload-consumer на ML-step) — отдельная задача.
+
 ## Схема БД
 
 Миграции [goose](https://github.com/pressly/goose) — SQL в `auth-service/internal/db/migrations/` и `trip-service/internal/db/migrations/`, применяются при старте. Запросы к БД — [sqlc](https://docs.sqlc.dev/): `queries/` и сгенерированный код в `internal/db/sqlcdb/` (схема из тех же миграций). Из каталога `Backend`: `make sqlc`, в CI — `make sqlc-check`.

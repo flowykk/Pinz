@@ -1334,11 +1334,36 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
 	metrics.TripStatusChanged(ctx, models.TripStatusProcessing)
+	s.publishMLTaskDryRun(ctx, tripID, MLFlowCreation, nil, nil)
 	s.finalizeProcessingStub(ctx, tripID, models.TripStatusDraftFinalReview)
 	return &pb.ApplyGroupsAndProcessResponse{
 		Message: "Processing started",
 		Status: models.TripStatusProcessing,
 	}, nil
+}
+
+// dry-run параллельно со stub'ом для валидации ML-контракта. Ошибки swallowed,
+// чтобы stub-флоу не падал на проблемах с ML.
+func (s *TripService) publishMLTaskDryRun(ctx context.Context, tripID, flow string, newPinIDs, pendingExistingAttachments []string) {
+	if s.eventRepo == nil || s.mediaURLs == nil || s.pinRepo == nil || s.mediaRepo == nil {
+		return
+	}
+	pinsJSON, expiresAtUnix, count, err := BuildTripMLPayload(ctx, tripID, flow, newPinIDs, pendingExistingAttachments, s.pinRepo, s.mediaRepo, s.mediaURLs)
+	if err != nil {
+		slog.WarnContext(ctx, "ml dry-run: build payload failed", "trip_id", tripID, "flow", flow, "error", err)
+		return
+	}
+	if count == 0 {
+		return
+	}
+	if flow == MLFlowAddMedia {
+		if err := s.eventRepo.SetMLContext(ctx, tripID, flow, newPinIDs, 30*time.Minute); err != nil {
+			slog.WarnContext(ctx, "ml dry-run: SetMLContext failed", "trip_id", tripID, "error", err)
+		}
+	}
+	if err := s.eventRepo.AddMLTaskFull(ctx, tripID, flow, pinsJSON, newPinIDs, expiresAtUnix); err != nil {
+		slog.WarnContext(ctx, "ml dry-run: AddMLTaskFull failed", "trip_id", tripID, "flow", flow, "error", err)
+	}
 }
 
 // finalizeProcessingStub заменяет настоящий ML-воркер: синхронно переводит трип
@@ -2213,6 +2238,7 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 	// STUB: ML-пайплайн пока не реализован, поэтому SetMLContext/AddMLTaskWithFlow
 	// не нужны — сразу двигаем трип в ADD_MEDIA_DRAFT_FINAL_REVIEW через общий стаб.
 	// TODO: вернуть оригинальный enqueue, когда воркер ml:tasks заработает в проде.
+	s.publishMLTaskDryRun(ctx, tripID, MLFlowAddMedia, newPinIDs, pendingExistingAttachments)
 	s.finalizeProcessingStub(ctx, tripID, models.TripStatusAddMediaDraftFinalReview)
 	return &pb.AddMediaApplyGroupsAndProcessResponse{
 		Message: "Processing started",
