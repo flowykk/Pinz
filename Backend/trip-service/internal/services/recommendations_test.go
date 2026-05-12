@@ -197,7 +197,7 @@ func TestSaveRecommendation_TokenForeignUser_PermissionDenied(t *testing.T) {
 func TestSaveRecommendation_FallbackByPinIDs(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	svc, tripRepo, participantRepo, pinRepo, favRepo, geoRepo, snapRepo := makeServiceForSaveRecommendation(t, ctrl)
-	geoRepo.EXPECT().FindCityByName(gomock.Any(), "Москва").Return(42, nil)
+	geoRepo.EXPECT().FindCityByName(gomock.Any(), "москва").Return(42, nil)
 	geoRepo.EXPECT().TripIDsAtLocation(gomock.Any(), 42, gomock.Any()).Return(map[string]struct{}{"tsrc": {}}, nil)
 	_ = snapRepo
 
@@ -217,7 +217,7 @@ func TestSaveRecommendation_FallbackByPinIDs(t *testing.T) {
 func TestSaveRecommendation_FallbackForeignRegion_InvalidArgument(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	svc, _, _, pinRepo, _, geoRepo, _ := makeServiceForSaveRecommendation(t, ctrl)
-	geoRepo.EXPECT().FindCityByName(gomock.Any(), "Москва").Return(42, nil)
+	geoRepo.EXPECT().FindCityByName(gomock.Any(), "москва").Return(42, nil)
 	lat, lon := 55.75, 37.62
 	pinRepo.EXPECT().GetByIDs([]string{"p1"}).Return([]*models.Pin{
 		{ID: "p1", TripID: "tsrc", Name: "Кремль", Latitude: &lat, Longitude: &lon, IsPublishedInFeed: true},
@@ -244,7 +244,7 @@ func TestSaveRecommendation_TokenMissed_FallsBackToPinIDs(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	svc, tripRepo, participantRepo, pinRepo, favRepo, geoRepo, snapRepo := makeServiceForSaveRecommendation(t, ctrl)
 	snapRepo.EXPECT().Get(gomock.Any(), "stale").Return(nil, false, nil)
-	geoRepo.EXPECT().FindCityByName(gomock.Any(), "Москва").Return(42, nil)
+	geoRepo.EXPECT().FindCityByName(gomock.Any(), "москва").Return(42, nil)
 	geoRepo.EXPECT().TripIDsAtLocation(gomock.Any(), 42, gomock.Any()).Return(map[string]struct{}{"tsrc": {}}, nil)
 	lat, lon := 55.75, 37.62
 	expectMaterialize(tripRepo, participantRepo, pinRepo, favRepo, geoRepo, 42, []*models.Pin{

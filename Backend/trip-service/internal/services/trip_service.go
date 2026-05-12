@@ -2971,8 +2971,8 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 // лента в этом случае возвращает пустой список (а не 500). Если оба параметра
 // заданы, приоритет у города (он более узкий фильтр).
 func (s *TripService) resolveFeedLocationIDs(ctx context.Context, city, country string) ([]int, bool, error) {
-	city = strings.TrimSpace(city)
-	country = strings.TrimSpace(country)
+	city = strings.ToLower(strings.TrimSpace(city))
+	country = strings.ToLower(strings.TrimSpace(country))
 	if city == "" && country == "" {
 		return nil, true, nil
 	}

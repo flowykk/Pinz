@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -1041,8 +1042,8 @@ func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request)
 // @Param offset query int false "offset"
 // @Param category query string false "category"
 // @Param season query string false "season"
-// @Param city query string false "city name (mutually exclusive with country, city wins)"
-// @Param country query string false "country name (mutually exclusive with city)"
+// @Param city query string false "city name in lower-case (mutually exclusive with country, city wins)"
+// @Param country query string false "country name in lower-case (mutually exclusive with city)"
 // @Param sort_by query string false "date|rating"
 // @Success 200 {array} responses.FeedItem
 // @Router /api/v1/feed [get]
@@ -1071,8 +1072,8 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	if sortBy == "" {
 		sortBy = "date"
 	}
-	city := r.URL.Query().Get("city")
-	country := r.URL.Query().Get("country")
+	city := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("city")))
+	country := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("country")))
 	resp, err := h.tripClient.ListFeed(ctx, &proto.ListFeedRequest{
 		Limit: limit,
 		Offset: offset,
@@ -2199,8 +2200,8 @@ func (h *TripHandler) GetBestMemories(w http.ResponseWriter, r *http.Request) {
 // @Tags recommendations
 // @Produce json
 // @Security BearerAuth
-// @Param city query string false "city name (mutually exclusive with country)"
-// @Param country query string false "country name (mutually exclusive with city)"
+// @Param city query string false "city name in lower-case (mutually exclusive with country)"
+// @Param country query string false "country name in lower-case (mutually exclusive with city)"
 // @Param category query string false "trip category filter "
 // @Param season query string false "trip season filter "
 // @Success 200 {object} responses.GetRecommendationsResponse
@@ -2214,8 +2215,8 @@ func (h *TripHandler) GetRecommendations(w http.ResponseWriter, r *http.Request)
 		respondError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	city := r.URL.Query().Get("city")
-	country := r.URL.Query().Get("country")
+	city := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("city")))
+	country := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("country")))
 	if (city == "") == (country == "") {
 		respondError(w, http.StatusBadRequest, "exactly one of city or country must be provided")
 		return
@@ -2256,6 +2257,8 @@ func (h *TripHandler) SaveRecommendation(w http.ResponseWriter, r *http.Request)
 		respondError(w, http.StatusBadRequest, "invalid json body")
 		return
 	}
+	body.City = strings.ToLower(strings.TrimSpace(body.City))
+	body.Country = strings.ToLower(strings.TrimSpace(body.Country))
 	if body.SnapshotToken == "" {
 		if (body.City == "") == (body.Country == "") {
 			respondError(w, http.StatusBadRequest, "exactly one of city or country must be provided")

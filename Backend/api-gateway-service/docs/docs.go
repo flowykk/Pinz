@@ -520,13 +520,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "city name (mutually exclusive with country, city wins)",
+                        "description": "city name in lower-case (mutually exclusive with country, city wins)",
                         "name": "city",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "country name (mutually exclusive with city)",
+                        "description": "country name in lower-case (mutually exclusive with city)",
                         "name": "country",
                         "in": "query"
                     },
@@ -1587,13 +1587,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "city name (mutually exclusive with country)",
+                        "description": "city name in lower-case (mutually exclusive with country)",
                         "name": "city",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "country name (mutually exclusive with city)",
+                        "description": "country name in lower-case (mutually exclusive with city)",
                         "name": "country",
                         "in": "query"
                     },
