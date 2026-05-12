@@ -27,6 +27,7 @@ public struct PostInfoView: View {
                 DefaultPinsListView(
                     pins: viewModel.post.pins,
                     hideMediaBadges: true,
+                    allowsMediaPrivacyChange: false,
                     pinTapped: { _ in }
                 )
                 .padding(.bottom, 20)

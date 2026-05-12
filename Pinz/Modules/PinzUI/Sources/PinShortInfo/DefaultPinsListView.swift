@@ -7,6 +7,7 @@ public struct DefaultPinsListView: View {
     private let hideTags: Bool
     private let hideMediaBadges: Bool
     private let dismissBeforeMediaInfo: Bool
+    private let allowsMediaPrivacyChange: Bool
     private let pinTapped: (Pin) -> Void
     private let onMediaUpdated: ((MediaItem, Pin) -> Void)?
 
@@ -15,6 +16,7 @@ public struct DefaultPinsListView: View {
         hideTags: Bool = false,
         hideMediaBadges: Bool = false,
         dismissBeforeMediaInfo: Bool = false,
+        allowsMediaPrivacyChange: Bool = true,
         pinTapped: @escaping (Pin) -> Void,
         onMediaUpdated: ((MediaItem, Pin) -> Void)? = nil
     ) {
@@ -22,6 +24,7 @@ public struct DefaultPinsListView: View {
         self.hideTags = hideTags
         self.hideMediaBadges = hideMediaBadges
         self.dismissBeforeMediaInfo = dismissBeforeMediaInfo
+        self.allowsMediaPrivacyChange = allowsMediaPrivacyChange
         self.pinTapped = pinTapped
         self.onMediaUpdated = onMediaUpdated
     }
@@ -34,6 +37,7 @@ public struct DefaultPinsListView: View {
                     hideTags: hideTags,
                     hideMediaBadges: hideMediaBadges,
                     dismissBeforeMediaInfo: dismissBeforeMediaInfo,
+                    allowsMediaPrivacyChange: allowsMediaPrivacyChange,
                     pinTapped: pinTapped,
                     onMediaUpdated: onMediaUpdated.map { handler in { media in handler(media, pins[index]) } }
                 )

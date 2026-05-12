@@ -120,6 +120,7 @@ enum PinzAPI {
         startTimeUnix: Int?, endTimeUnix: Int?,
         tags: [String]?, tagsSet: Bool?
     )
+    case deletePinMedia(tripId: String, pinId: String, mediaId: String)
     case searchPins(q: String, limit: Int?, offset: Int?)
 }
 
@@ -191,6 +192,8 @@ extension PinzAPI: TargetType {
         case let .deleteDesiredPlaceImage(placeId): endpointPath = "/profile/desired-places/\(placeId)/image"
         case let .getPin(tripId, pinId): endpointPath = "/trips/\(tripId)/pins/\(pinId)"
         case let .deletePin(tripId, pinId): endpointPath = "/trips/\(tripId)/pins/\(pinId)"
+        case let .deletePinMedia(tripId, pinId, mediaId):
+            endpointPath = "/trips/\(tripId)/pins/\(pinId)/media/\(mediaId)"
         case let .updatePin(tripId, pinId, _, _, _, _, _, _, _, _, _): endpointPath = "/trips/\(tripId)/pins/\(pinId)"
         case .searchPins: endpointPath = "/pins/search"
         case .createTrip: endpointPath = "/trips/creation/start"
@@ -241,7 +244,7 @@ extension PinzAPI: TargetType {
         case .unregisterDeviceToken:
             return .delete
         case .deleteTrip, .removeParticipant, .deleteAccount, .removeTripFromFavourites,
-             .deleteDesiredPlace, .deleteDesiredPlaceImage, .deletePin:
+             .deleteDesiredPlace, .deleteDesiredPlaceImage, .deletePin, .deletePinMedia:
             return .delete
         case .getDesiredPlaces:
             return .get
@@ -452,7 +455,7 @@ extension PinzAPI: TargetType {
             if let imageS3Key { params["image_s3_key"] = imageS3Key }
             return jsonParams(params)
 
-        case .getPin, .deletePin:
+        case .getPin, .deletePin, .deletePinMedia:
             return .requestPlain
 
         case let .searchPins(q, limit, offset):
@@ -1021,6 +1024,8 @@ extension PinzAPI {
             json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"image","privacy_level":"public"}]}}"#
         case .deletePin:
             json = #"{"deletion_mode":"full"}"#
+        case .deletePinMedia:
+            json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[]}}"#
         case .updatePin:
             json = #"{"pin":{"id":"pin-001","trip_id":"trip-001","name":"Обновлённый пин","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":["архитектура"],"privacy_level":"public","media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","media_type":"image","privacy_level":"public"}]}}"#
         case .searchPins:

@@ -49,12 +49,20 @@ public class PinInfoViewModel {
     public enum AsyncIntent {
         case saveEdits
         case startAddMedia
+        case deletePinMedia(MediaItem)
     }
 
     static let tagMaxLength = 15
     static let pinTagsMaxCount = 10
     static let pinNameMaxLength = 50
     static let pinDescriptionMaxLength = 5000
+
+    /// Used when the pin’s media list changes (e.g. delete) so the gallery animates smoothly.
+    private static let pinGalleryMediaChangeAnimation = Animation.spring(
+        response: 0.44,
+        dampingFraction: 0.82,
+        blendDuration: 0.12
+    )
 
     var state: State = .info
     var previousState: State = .info
@@ -72,6 +80,8 @@ public class PinInfoViewModel {
     private(set) var isStartingAddMedia = false
 
     private(set) var hasActivePinUploadAdditionSession = false
+
+    private(set) var pendingDeleteMediaId: String?
 
     public init(
         pin: Pin,
@@ -131,6 +141,8 @@ public class PinInfoViewModel {
             try await saveEdits()
         case .startAddMedia:
             await startAddMediaToPin()
+        case let .deletePinMedia(item):
+            await deletePinMedia(item)
         }
     }
 
@@ -155,6 +167,29 @@ public class PinInfoViewModel {
             router: router,
             showToast: showToast
         )
+    }
+
+    private func deletePinMedia(_ item: MediaItem) async {
+        guard pendingDeleteMediaId == nil else { return }
+        guard let tripId = pin.tripId,
+              let pinId = pin.serverId?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+              let mediaId = item.mediaId, !mediaId.isEmpty
+        else { return }
+
+        pendingDeleteMediaId = mediaId
+        defer { pendingDeleteMediaId = nil }
+
+        do {
+            let response = try await networkService.deletePinMedia(tripId: tripId, pinId: pinId, mediaId: mediaId)
+            applyPinFromResponse(response, tripId: tripId, animatedGalleryMedia: true)
+            showToast?(PinzBaseStrings.PinInfo.Toast.mediaDeleted)
+        } catch {
+            if (error as? HTTPError) == .preconditionFailed {
+                showToast?(PinzBaseStrings.PinInfo.Toast.mediaDeletePinMustHaveMedia)
+            } else {
+                showToast?(PinzBaseStrings.PinInfo.Toast.mediaDeleteFailed)
+            }
+        }
     }
 
     public func dispatch(_ intent: Intent) {
@@ -190,10 +225,16 @@ public class PinInfoViewModel {
         case let .navigate(route):
             switch route {
             case let .mediaInfo(media):
-                router?.navigateToMediaInfo(media: media, updateAction: MediaUpdateAction { [weak self] updatedMedia in
-                    guard let self, let idx = pin.medias.firstIndex(where: { $0.mediaId == updatedMedia.mediaId }) else { return }
-                    pin.medias[idx] = updatedMedia
-                })
+                router?.navigateToMediaInfo(
+                    media: media,
+                    updateAction: MediaUpdateAction { [weak self] updatedMedia in
+                        guard let self, let idx = pin.medias.firstIndex(where: { $0.mediaId == updatedMedia.mediaId }) else { return }
+                        pin.medias[idx] = updatedMedia
+                        updateAction?.action(pin)
+                    },
+                    pinIdForServerMediaDelete: pin.serverId,
+                    pinResponseAction: pinResponseActionForCurrentPin()
+                )
             case .changePlace:
                 let action = PlaceSaveAction { [weak self] coordinate in
                     self?.applyPlaceChange(coordinate)
@@ -317,11 +358,22 @@ public class PinInfoViewModel {
         }
     }
 
-    private func applyPinFromResponse(_ response: PinResponseDTO, tripId: String) {
-        var updated = response.toPin(tripId: tripId, nameIfMissing: pin.name)
-        updated.issues = pin.issues
-        pin = updated
-        updateAction?.action(pin)
+    private func applyPinFromResponse(
+        _ response: PinResponseDTO,
+        tripId: String,
+        animatedGalleryMedia: Bool = false
+    ) {
+        let apply = {
+            var updated = response.toPin(tripId: tripId, nameIfMissing: self.pin.name)
+            updated.issues = self.pin.issues
+            self.pin = updated
+            self.updateAction?.action(self.pin)
+        }
+        if animatedGalleryMedia {
+            withAnimation(Self.pinGalleryMediaChangeAnimation, apply)
+        } else {
+            apply()
+        }
     }
 
     private func applyPlaceChange(_ newCoordinate: CLLocationCoordinate2D?) {
@@ -478,6 +530,13 @@ public class PinInfoViewModel {
     }
 }
 
+private extension String {
+    var nilIfEmpty: String? {
+        let t = trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.isEmpty ? nil : t
+    }
+}
+
 extension PinInfoViewModel {
     var isEditing: Bool {
         state == .editing
@@ -493,5 +552,31 @@ extension PinInfoViewModel {
             return false
         }
         return true
+    }
+
+    public func deletePinMediaFromGallery(_ item: MediaItem) {
+        Task {
+            await asyncDispatch(.deletePinMedia(item))
+        }
+    }
+
+    public func canDeletePinMediaFromGallery(_ item: MediaItem) -> Bool {
+        guard let tripId = pin.tripId, !tripId.isEmpty else { return false }
+        guard pin.serverId?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty != nil else { return false }
+        guard let mediaId = item.mediaId, !mediaId.isEmpty else { return false }
+        return true
+    }
+
+    public func applyGalleryMediaPrivacyUpdate(_ updated: MediaItem) {
+        guard let idx = pin.medias.firstIndex(where: { $0.mediaId == updated.mediaId }) else { return }
+        pin.medias[idx] = updated
+        updateAction?.action(pin)
+    }
+
+    public func pinResponseActionForCurrentPin() -> PinResponseAction {
+        PinResponseAction { [weak self] response in
+            guard let self, let tripId = pin.tripId else { return }
+            applyPinFromResponse(response, tripId: tripId, animatedGalleryMedia: true)
+        }
     }
 }

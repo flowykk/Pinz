@@ -429,6 +429,10 @@ final class MockNetworkService: NetworkServiceProtocol {
         tagsSet: Bool?
     )?
     var deletePinCall: (tripId: String, pinId: String)?
+    var deletePinMediaCall: (tripId: String, pinId: String, mediaId: String)?
+    var deletePinMediaResult: Result<PinResponseDTO, Error> = .success(
+        PinResponseDTO(pin: MockNetworkService.stubTripPins[0])
+    )
 
     func getPin(tripId: String, pinId: String) async throws -> PinResponseDTO {
         getPinCall = (tripId, pinId)
@@ -455,6 +459,11 @@ final class MockNetworkService: NetworkServiceProtocol {
     func deletePin(tripId: String, pinId: String) async throws -> DeletePinResponseDTO {
         deletePinCall = (tripId, pinId)
         return try deletePinResult.get()
+    }
+
+    func deletePinMedia(tripId: String, pinId: String, mediaId: String) async throws -> PinResponseDTO {
+        deletePinMediaCall = (tripId, pinId, mediaId)
+        return try deletePinMediaResult.get()
     }
 
     func searchPins(q: String, limit: Int?, offset: Int?) async throws -> [TripPinDTO] {

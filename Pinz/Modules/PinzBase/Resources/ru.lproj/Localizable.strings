@@ -318,6 +318,9 @@
 "pinInfo.toast.tagTooLong" = "Тег не должен превышать %d символов";
 "pinInfo.toast.tagAlreadyExists" = "Такой тег уже добавлен";
 "pinInfo.toast.tagLimitReached" = "Достигнут лимит тегов (макс. %d)";
+"pinInfo.toast.mediaDeleted" = "Медиа удалено";
+"pinInfo.toast.mediaDeleteFailed" = "Не удалось удалить медиа";
+"pinInfo.toast.mediaDeletePinMustHaveMedia" = "У пина должно остаться хотя бы одно фото или видео";
 
 // MARK: - Raw Pin
 "rawPin.button.move" = "Переместить";
@@ -331,6 +334,12 @@
 
 // MARK: - Media Info
 "mediaInfo.button.delete" = "Удалить медиа";
+"mediaInfo.alert.deleteMedia.title" = "Удалить медиа?";
+"mediaInfo.alert.deleteMedia.message" = "Это фото или видео будет удалено из пина.";
+"mediaInfo.alert.deleteMedia.confirm" = "Удалить";
+"mediaInfo.toast.mediaDeleted" = "Медиа удалено";
+"mediaInfo.toast.mediaDeleteFailed" = "Не удалось удалить медиа";
+"mediaInfo.toast.mediaDeletePinMustHaveMedia" = "У пина должно остаться хотя бы одно фото или видео";
 
 // MARK: - Items Picker
 "itemsPicker.placeholder.customValue" = "Введи нужное значение";

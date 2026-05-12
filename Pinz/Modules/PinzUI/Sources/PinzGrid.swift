@@ -50,13 +50,20 @@ public struct PinzGrid<T: Hashable, Content: View>: View {
                     VStack(spacing: rowSpacing) {
                         ForEach(splittedData[index], id: \.self) { item in
                             content(item, getIndexInList(for: item))
-                                .transition(.identity)
+                                .transition(
+                                    .asymmetric(
+                                        insertion: .opacity
+                                            .combined(with: .scale(scale: 0.94, anchor: .center)),
+                                        removal: .opacity
+                                            .combined(with: .scale(scale: 0.86, anchor: .center))
+                                    )
+                                )
                         }
                     }
                 }
             }
         }
-        .animation(.easeInOut, value: data)
+        .animation(.spring(response: 0.44, dampingFraction: 0.82, blendDuration: 0.12), value: data)
     }
 
     private func getIndexInList(for item: T) -> Int? {
