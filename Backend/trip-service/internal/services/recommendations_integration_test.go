@@ -49,8 +49,8 @@ func TestRecommendations_Integration(t *testing.T) {
 	ownerID := uuid.New().String()
 
 	// geo_registry seed
-	moscowID := upsertCityForTest(t, sqlDB, "Москва", nil)
-	parisID := upsertCityForTest(t, sqlDB, "Париж", nil)
+	moscowID := upsertCityForTest(t, sqlDB, "москва", nil)
+	parisID := upsertCityForTest(t, sqlDB, "париж", nil)
 
 	// Москва: top trip (high score), много пинов разных категорий.
 	topTripID := insertPublishedTripForTest(t, sqlDB, ownerID, "Москва-топ", 20, 0,
@@ -99,7 +99,7 @@ func TestRecommendations_Integration(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp.GetMap())
 	require.Equal(t, "city", resp.GetMap().GetRegionType())
-	require.Equal(t, "Москва", resp.GetMap().GetRegionName())
+	require.Equal(t, "москва", resp.GetMap().GetRegionName())
 
 	pins := resp.GetMap().GetPins()
 	require.NotEmpty(t, pins)

@@ -4,9 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 
 	"pinz/backend/statistics-service/internal/models"
 )
+
+func normalizeGeoName(s string) string {
+	return strings.ToLower(strings.TrimSpace(s))
+}
 
 // GeoRegistryRepository работает со справочником гео-объектов (ER: GEO_REGISTRY).
 // Заполняется из событий TRIP_LOCATIONS_ADDED, владеет реестром на уровне statistics-service.
@@ -33,7 +38,7 @@ func (r *GeoRegistryRepository) Upsert(ctx context.Context, loc *models.GeoLocat
 			parent_id = EXCLUDED.parent_id,
 			name = EXCLUDED.name,
 			type = EXCLUDED.type`,
-		loc.ID, parent, loc.Name, loc.Type)
+		loc.ID, parent, normalizeGeoName(loc.Name), loc.Type)
 	return err
 }
 
@@ -43,6 +48,8 @@ func (r *GeoRegistryRepository) Upsert(ctx context.Context, loc *models.GeoLocat
 // Любой из аргументов может быть пустым: тогда соответствующая возвращаемая
 // строка nil.
 func (r *GeoRegistryRepository) EnsureByName(ctx context.Context, countryName, cityName string) (*models.GeoLocation, *models.GeoLocation, error) {
+	countryName = normalizeGeoName(countryName)
+	cityName = normalizeGeoName(cityName)
 	if countryName == "" && cityName == "" {
 		return nil, nil, nil
 	}

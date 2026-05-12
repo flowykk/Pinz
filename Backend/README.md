@@ -121,7 +121,7 @@ Real‑time уведомление о завершении шага 3–4 идё
 | Метод | Путь | Описание |
 |---|---|---|
 | GET | `/api/v1/profile/stats` | Счётчики текущего пользователя: трипы, пины, медиа, завершённые батлы |
-| GET | `/api/v1/profile/visited-locations` | Список посещённых стран/городов; опц. `?type=Country\|City` |
+| GET | `/api/v1/profile/visited-locations` | Список посещённых стран/городов; опц. `?type=country\|city` |
 
 ### Notifications (notification-service через API Gateway, PINZ-134)
 

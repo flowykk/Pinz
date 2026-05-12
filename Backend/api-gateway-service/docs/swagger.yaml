@@ -1714,11 +1714,12 @@ paths:
         in: query
         name: season
         type: string
-      - description: city name (mutually exclusive with country, city wins)
+      - description: city name in lower-case (mutually exclusive with country, city
+          wins)
         in: query
         name: city
         type: string
-      - description: country name (mutually exclusive with city)
+      - description: country name in lower-case (mutually exclusive with city)
         in: query
         name: country
         type: string
@@ -2400,11 +2401,11 @@ paths:
   /api/v1/recommendations:
     get:
       parameters:
-      - description: city name (mutually exclusive with country)
+      - description: city name in lower-case (mutually exclusive with country)
         in: query
         name: city
         type: string
-      - description: country name (mutually exclusive with city)
+      - description: country name in lower-case (mutually exclusive with city)
         in: query
         name: country
         type: string

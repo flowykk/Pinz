@@ -3399,7 +3399,8 @@ func (x *UpdateTripSettingsResponse) GetSuccess() bool {
 }
 
 // лента опубликованных трипов (ТЗ 7.9-7.10).
-// Фильтры city/country принимают точные имена; сервер резолвит их в geo_registry.
+// Фильтры city/country принимают точные имена в lower-case (английские);
+// сервер резолвит их в geo_registry.
 // Если регион не найден — лента возвращает пустой результат без ошибки.
 type ListFeedRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -3407,8 +3408,8 @@ type ListFeedRequest struct {
 	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
 	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`           // ТЗ 7.9.1
 	Season        string                 `protobuf:"bytes,4,opt,name=season,proto3" json:"season,omitempty"`               // ТЗ 7.9.2
-	City          string                 `protobuf:"bytes,7,opt,name=city,proto3" json:"city,omitempty"`                   // ТЗ 7.9.3 — точное имя города
-	Country       string                 `protobuf:"bytes,8,opt,name=country,proto3" json:"country,omitempty"`             // ТЗ 7.9.3 — точное имя страны
+	City          string                 `protobuf:"bytes,7,opt,name=city,proto3" json:"city,omitempty"`                   // ТЗ 7.9.3 — точное имя города в lower-case
+	Country       string                 `protobuf:"bytes,8,opt,name=country,proto3" json:"country,omitempty"`             // ТЗ 7.9.3 — точное имя страны в lower-case
 	SortBy        string                 `protobuf:"bytes,6,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"` // "date" (ТЗ 7.10.1) или "rating" (ТЗ 7.10.2)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -8695,8 +8696,8 @@ func (x *RecommendedPin) GetMedia() []*FeedMedia {
 
 type RecommendedMap struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
-	RegionName string                 `protobuf:"bytes,1,opt,name=region_name,json=regionName,proto3" json:"region_name,omitempty"`
-	RegionType string                 `protobuf:"bytes,2,opt,name=region_type,json=regionType,proto3" json:"region_type,omitempty"` // "City" | "Country"
+	RegionName string                 `protobuf:"bytes,1,opt,name=region_name,json=regionName,proto3" json:"region_name,omitempty"` // имя региона в lower-case
+	RegionType string                 `protobuf:"bytes,2,opt,name=region_type,json=regionType,proto3" json:"region_type,omitempty"` // "city" | "country"
 	Pins       []*RecommendedPin      `protobuf:"bytes,3,rep,name=pins,proto3" json:"pins,omitempty"`
 	// Виртуальный трип-обёртка с заполненными name/description/cover/счётчиками,
 	// чтобы карта могла встраиваться в общую ленту как обычный FeedItem.

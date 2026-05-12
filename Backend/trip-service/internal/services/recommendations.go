@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -269,8 +270,8 @@ type recommendationRegion struct {
 }
 
 func (s *TripService) resolveRecommendationRegion(ctx context.Context, city, country string) (*recommendationRegion, error) {
-	city = trimToNonEmpty(city)
-	country = trimToNonEmpty(country)
+	city = strings.ToLower(trimToNonEmpty(city))
+	country = strings.ToLower(trimToNonEmpty(country))
 	if (city == "") == (country == "") {
 		return nil, status.Error(codes.InvalidArgument, "exactly one of city or country must be provided")
 	}

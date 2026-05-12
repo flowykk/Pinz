@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -122,6 +123,7 @@ func applyPinLocationsResolved(ctx context.Context, tripID string, payload map[s
 			row.ParentID = &v
 		}
 		row.Name, _ = m["name"].(string)
+		row.Name = strings.ToLower(strings.TrimSpace(row.Name))
 		row.Type, _ = m["type"].(string)
 		if err := geoRepo.MirrorByID(ctx, row); err != nil {
 			slog.WarnContext(ctx, "geo consumer: MirrorByID failed", "trip_id", tripID, "geo_id", row.ID, "error", err)
@@ -138,6 +140,7 @@ func applyPinLocationsResolved(ctx context.Context, tripID string, payload map[s
 		}
 		pinID, _ := m["pin_id"].(string)
 		locationName, _ := m["location_name"].(string)
+		locationName = strings.ToLower(strings.TrimSpace(locationName))
 		if pinID != "" && locationName != "" {
 			if err := pinRepo.UpdateLocationName(pinID, locationName); err != nil {
 				slog.WarnContext(ctx, "geo consumer: UpdateLocationName failed", "pin_id", pinID, "error", err)

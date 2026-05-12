@@ -218,6 +218,9 @@ func handlePinLocationsRequested(ctx context.Context, d Deps, tripID string, pay
 		if name == "" {
 			continue
 		}
+		country = strings.ToLower(strings.TrimSpace(country))
+		city = strings.ToLower(strings.TrimSpace(city))
+		name = strings.ToLower(strings.TrimSpace(name))
 
 		countryRow, cityRow, err := d.GeoRegistry.EnsureByName(ctx, country, city)
 		if err != nil {
