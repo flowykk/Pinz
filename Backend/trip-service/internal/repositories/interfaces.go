@@ -91,6 +91,8 @@ type TripEventPublisher interface {
 	// в pinz:trip:privacy:events для асинхронного fallback-пересчёта воркером.
 	PublishPrivacyEvent(ctx context.Context, objectType, objectID, tripID, userID, privacyLevel string) error
 	AddPinUploadTask(ctx context.Context, tripID, sessionID string, targetPinID *string, initiatorUserID string) error
+	AddMLTaskFull(ctx context.Context, tripID, flow, pinsJSON string, newPinIDs []string, presignExpiresAtUnix int64) error
+	AddPinUploadMLTask(ctx context.Context, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON string, presignExpiresAtUnix int64) error
 }
 
 type MediaRepositoryInterface interface {

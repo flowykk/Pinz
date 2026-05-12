@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -22,6 +23,8 @@ const (
 	mlContextPrefix = "pinz:trip:ml:context:"
 	privacyEventsStream = "pinz:trip:privacy:events"
 	pinUploadTasksStream = "pinz:trip:pin_upload:tasks"
+	PinUploadMLTasksStream = "pinz:trip:pin_upload:ml:tasks"
+	PinUploadMLResultsStream = "pinz:trip:pin_upload:ml:results"
 
 	tripEventsChannelPrefix = "pinz:trip:"
 	tripEventsChannelSuffix = ":events"
@@ -365,6 +368,75 @@ func (r *RedisRepository) publishWSStream(ctx context.Context, key string, data 
 	if err := r.client.Expire(ctx, key, wsStreamTTL).Err(); err != nil {
 		slog.WarnContext(ctx, "PublishTripEventWS expire failed", "stream", key, "error", err)
 	}
+}
+
+func (r *RedisRepository) AddMLTaskFull(ctx context.Context, tripID, flow, pinsJSON string, newPinIDs []string, presignExpiresAtUnix int64) error {
+	if r == nil || r.client == nil {
+		return nil
+	}
+	vals := map[string]interface{}{
+		"trip_id": tripID,
+		"pins":    pinsJSON,
+		"presign_expires_at_unix": strconv.FormatInt(presignExpiresAtUnix, 10),
+	}
+	if flow != "" {
+		vals["flow"] = flow
+	}
+	if len(newPinIDs) > 0 {
+		if b, err := json.Marshal(newPinIDs); err == nil {
+			vals["new_pin_ids"] = string(b)
+		}
+	}
+	if err := r.client.XAdd(ctx, &redis.XAddArgs{Stream: mlTasksStream, Values: vals}).Err(); err != nil {
+		metrics.StreamPublished(ctx, mlTasksStream, "ml_task", "error")
+		return err
+	}
+	metrics.StreamPublished(ctx, mlTasksStream, "ml_task", "success")
+	return nil
+}
+
+func (r *RedisRepository) AddPinUploadMLTask(ctx context.Context, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON string, presignExpiresAtUnix int64) error {
+	if r == nil || r.client == nil {
+		return nil
+	}
+	vals := map[string]interface{}{
+		"trip_id":    tripID,
+		"session_id": sessionID,
+		"new_media":  newMediaJSON,
+		"presign_expires_at_unix": strconv.FormatInt(presignExpiresAtUnix, 10),
+	}
+	if targetPinID != "" {
+		vals["target_pin_id"] = targetPinID
+	}
+	if existingMediaJSON != "" {
+		vals["existing_media"] = existingMediaJSON
+	}
+	if err := r.client.XAdd(ctx, &redis.XAddArgs{Stream: PinUploadMLTasksStream, Values: vals}).Err(); err != nil {
+		metrics.StreamPublished(ctx, PinUploadMLTasksStream, "ml_task", "error")
+		return err
+	}
+	metrics.StreamPublished(ctx, PinUploadMLTasksStream, "ml_task", "success")
+	return nil
+}
+
+func (r *RedisRepository) ReadPinUploadMLResults(ctx context.Context, group, consumer string, count int64, blockMs int64) ([]redis.XStream, error) {
+	if r == nil || r.client == nil {
+		return nil, nil
+	}
+	streams, err := r.client.XReadGroup(ctx, &redis.XReadGroupArgs{
+		Group:    group,
+		Consumer: consumer,
+		Streams:  []string{PinUploadMLResultsStream, ">"},
+		Count:    count,
+		Block:    time.Duration(blockMs) * time.Millisecond,
+	}).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return streams, nil
 }
 
 // DeleteTripEventStream удаляет per-trip WS-stream. Вызывается из DeleteTrip,

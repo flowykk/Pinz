@@ -23,6 +23,9 @@ var (
 	battles metric.Int64Counter
 	addMediaTakeovers metric.Int64Counter
 	panics metric.Int64Counter
+	mlPayloadSize metric.Int64Histogram
+	mlPayloadMediaCount metric.Int64Histogram
+	mlPresignDuration metric.Float64Histogram
 )
 
 func Init() {
@@ -65,6 +68,17 @@ func Init() {
 	)
 	panics, _ = m.Int64Counter("panics.total",
 		metric.WithDescription("Recovered panics by component"),
+	)
+	mlPayloadSize, _ = m.Int64Histogram("ml.payload.size_bytes",
+		metric.WithDescription("Size of ML task payload (pins/new_media JSON) in bytes"),
+		metric.WithUnit("By"),
+	)
+	mlPayloadMediaCount, _ = m.Int64Histogram("ml.payload.media_count",
+		metric.WithDescription("Number of media items in an ML task payload"),
+	)
+	mlPresignDuration, _ = m.Float64Histogram("ml.presign.generation_duration_seconds",
+		metric.WithDescription("Duration of presigned GET URL generation when building ML payload"),
+		metric.WithUnit("s"),
 	)
 }
 
@@ -168,4 +182,25 @@ func Panic(ctx context.Context, component string) {
 		return
 	}
 	panics.Add(ctx, 1, metric.WithAttributes(attribute.String("component", component)))
+}
+
+func MLPayloadSize(ctx context.Context, sizeBytes int64, flow string) {
+	if mlPayloadSize == nil {
+		return
+	}
+	mlPayloadSize.Record(ctx, sizeBytes, metric.WithAttributes(attribute.String("flow", flow)))
+}
+
+func MLPayloadMediaCount(ctx context.Context, count int64, flow string) {
+	if mlPayloadMediaCount == nil {
+		return
+	}
+	mlPayloadMediaCount.Record(ctx, count, metric.WithAttributes(attribute.String("flow", flow)))
+}
+
+func ObserveMLPresignDuration(ctx context.Context, seconds float64, flow string) {
+	if mlPresignDuration == nil {
+		return
+	}
+	mlPresignDuration.Record(ctx, seconds, metric.WithAttributes(attribute.String("flow", flow)))
 }

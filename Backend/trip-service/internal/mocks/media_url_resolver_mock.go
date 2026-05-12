@@ -12,6 +12,7 @@ package mocks
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -82,4 +83,19 @@ func (m *MockMediaURLResolver) ReadURL(ctx context.Context, s3Key string) (strin
 func (mr *MockMediaURLResolverMockRecorder) ReadURL(ctx, s3Key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadURL", reflect.TypeOf((*MockMediaURLResolver)(nil).ReadURL), ctx, s3Key)
+}
+
+// ReadURLWithTTL mocks base method.
+func (m *MockMediaURLResolver) ReadURLWithTTL(ctx context.Context, s3Key string, ttl time.Duration) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadURLWithTTL", ctx, s3Key, ttl)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadURLWithTTL indicates an expected call of ReadURLWithTTL.
+func (mr *MockMediaURLResolverMockRecorder) ReadURLWithTTL(ctx, s3Key, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadURLWithTTL", reflect.TypeOf((*MockMediaURLResolver)(nil).ReadURLWithTTL), ctx, s3Key, ttl)
 }

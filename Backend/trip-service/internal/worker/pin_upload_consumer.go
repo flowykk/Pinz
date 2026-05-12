@@ -166,6 +166,7 @@ func processPinUploadMessage(ctx context.Context, msg redis.XMessage, deps PinUp
 	if result == "success" {
 		metrics.PinUploadSession(ctx, "process", "success")
 	}
+	publishPinUploadMLTaskDryRun(ctx, deps, tripID, sessionID, targetPinID)
 	if deps.EventRepo != nil {
 		payload := map[string]interface{}{
 			"trip_id":           tripID,
@@ -178,5 +179,44 @@ func processPinUploadMessage(ctx context.Context, msg redis.XMessage, deps PinUp
 		}
 		_ = deps.EventRepo.PublishTripEventWS(ctx, tripID,
 			repositories.EventPinUploadProcessingCompleted, payload)
+	}
+}
+
+// dry-run параллельно со stub'ом для валидации ML-контракта. Ошибки swallowed.
+func publishPinUploadMLTaskDryRun(ctx context.Context, deps PinUploadConsumerDeps, tripID, sessionID, targetPinID string) {
+	if deps.EventRepo == nil || deps.MediaURLs == nil || deps.MediaRepo == nil {
+		return
+	}
+	sessionMedia, err := deps.MediaRepo.ListByUploadSession(sessionID)
+	if err != nil {
+		slog.WarnContext(ctx, "ml dry-run: ListByUploadSession failed",
+			"session_id", sessionID, "trip_id", tripID, "error", err)
+		return
+	}
+	if len(sessionMedia) == 0 {
+		return
+	}
+	var pinMedia []*models.Media
+	if targetPinID != "" {
+		pinMedia, err = deps.MediaRepo.ListByPinID(targetPinID)
+		if err != nil {
+			slog.WarnContext(ctx, "ml dry-run: ListByPinID failed",
+				"session_id", sessionID, "trip_id", tripID, "target_pin_id", targetPinID, "error", err)
+			return
+		}
+	}
+	flowLabel := services.MLFlowPinUploadCreate
+	if targetPinID != "" {
+		flowLabel = services.MLFlowPinUploadAddTo
+	}
+	newJSON, existingJSON, expiresAtUnix, _, err := services.BuildPinUploadMLPayload(ctx, flowLabel, sessionMedia, pinMedia, deps.MediaURLs)
+	if err != nil {
+		slog.WarnContext(ctx, "ml dry-run: BuildPinUploadMLPayload failed",
+			"session_id", sessionID, "trip_id", tripID, "error", err)
+		return
+	}
+	if err := deps.EventRepo.AddPinUploadMLTask(ctx, tripID, sessionID, targetPinID, newJSON, existingJSON, expiresAtUnix); err != nil {
+		slog.WarnContext(ctx, "ml dry-run: AddPinUploadMLTask failed",
+			"session_id", sessionID, "trip_id", tripID, "error", err)
 	}
 }
