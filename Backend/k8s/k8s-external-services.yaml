@@ -5,7 +5,8 @@ metadata:
   namespace: default
 spec:
   ports:
-  - port: 5432
+  - name: tcp-postgres
+    port: 5432
     targetPort: 5432
 ---
 apiVersion: v1
@@ -17,7 +18,8 @@ subsets:
 - addresses:
   - ip: ${SERVER_IP}
   ports:
-  - port: 5432
+  - name: tcp-postgres
+    port: 5432
 ---
 apiVersion: v1
 kind: Service
@@ -26,7 +28,8 @@ metadata:
   namespace: default
 spec:
   ports:
-  - port: 6379
+  - name: tcp-redis
+    port: 6379
     targetPort: 6379
 ---
 apiVersion: v1
@@ -38,7 +41,8 @@ subsets:
 - addresses:
   - ip: ${SERVER_IP}
   ports:
-  - port: 6379
+  - name: tcp-redis
+    port: 6379
 ---
 # Отдельный инстанс PostgreSQL для Trip Service (порт 5433 на хосте)
 apiVersion: v1
@@ -48,7 +52,8 @@ metadata:
   namespace: default
 spec:
   ports:
-  - port: 5433
+  - name: tcp-postgres
+    port: 5433
     targetPort: 5433
 ---
 apiVersion: v1
@@ -60,7 +65,8 @@ subsets:
 - addresses:
   - ip: ${SERVER_IP}
   ports:
-  - port: 5433
+  - name: tcp-postgres
+    port: 5433
 ---
 # Отдельный инстанс PostgreSQL для Statistics Service (порт 5434 на хосте)
 apiVersion: v1
@@ -70,7 +76,8 @@ metadata:
   namespace: default
 spec:
   ports:
-  - port: 5434
+  - name: tcp-postgres
+    port: 5434
     targetPort: 5434
 ---
 apiVersion: v1
@@ -82,7 +89,8 @@ subsets:
 - addresses:
   - ip: ${SERVER_IP}
   ports:
-  - port: 5434
+  - name: tcp-postgres
+    port: 5434
 ---
 # Отдельный инстанс PostgreSQL для Notification Service (порт 5435 на хосте)
 apiVersion: v1
@@ -92,7 +100,8 @@ metadata:
   namespace: default
 spec:
   ports:
-  - port: 5435
+  - name: tcp-postgres
+    port: 5435
     targetPort: 5435
 ---
 apiVersion: v1
@@ -104,4 +113,5 @@ subsets:
 - addresses:
   - ip: ${SERVER_IP}
   ports:
-  - port: 5435
+  - name: tcp-postgres
+    port: 5435

@@ -1,0 +1,59 @@
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: db-external
+  namespace: default
+spec:
+  hosts:
+    - db.default.svc.cluster.local
+  ports:
+    - number: 5432
+      name: tcp-postgres
+      protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: db-trips-external
+  namespace: default
+spec:
+  hosts:
+    - db-trips.default.svc.cluster.local
+  ports:
+    - number: 5433
+      name: tcp-postgres
+      protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: db-stats-external
+  namespace: default
+spec:
+  hosts:
+    - db-stats.default.svc.cluster.local
+  ports:
+    - number: 5434
+      name: tcp-postgres
+      protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: db-notifications-external
+  namespace: default
+spec:
+  hosts:
+    - db-notifications.default.svc.cluster.local
+  ports:
+    - number: 5435
+      name: tcp-postgres
+      protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: DNS

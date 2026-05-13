@@ -1,0 +1,35 @@
+# Overrides addon defaults to point Kiali at our Grafana + Tempo. Apply after the addon, then restart kiali.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kiali
+  namespace: istio-system
+  labels:
+    app: kiali
+    app.kubernetes.io/instance: kiali
+    app.kubernetes.io/part-of: kiali
+data:
+  config.yaml: |
+    auth:
+      strategy: anonymous
+    deployment:
+      accessible_namespaces: ["**"]
+      view_only_mode: false
+    istio_namespace: istio-system
+    external_services:
+      prometheus:
+        url: "http://prometheus.istio-system:9090"
+      grafana:
+        enabled: true
+        internal_url: "http://grafana.default.svc.cluster.local:3000"
+        external_url: "https://grafana.pinz.website"
+      tracing:
+        enabled: true
+        provider: "tempo"
+        internal_url: "http://tempo.default.svc.cluster.local:3200"
+        use_grpc: false
+    server:
+      port: 20001
+      web_root: "/kiali"
+      web_fqdn: "kiali.pinz.website"
+      web_schema: "https"

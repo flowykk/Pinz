@@ -9,6 +9,9 @@ datasources:
     isDefault: false
     jsonData:
       httpMethod: GET
+      streamingEnabled:
+        search: true
+        metrics: true
       serviceMap:
         datasourceUid: prometheus
       nodeGraph:

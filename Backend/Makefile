@@ -220,8 +220,31 @@ k8s-deploy:
 k8s-istio:
 	kubectl apply -f k8s-istio/
 
+.PHONY: kiali kiali-up kiali-down
+kiali-up:
+	@VER=$$(istioctl version --remote=false 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1); \
+	MINOR=$${VER%.*}; \
+	BASE=https://raw.githubusercontent.com/istio/istio/release-$$MINOR/samples/addons; \
+	echo "Installing Kiali addons for istio release-$$MINOR"; \
+	kubectl apply -f $$BASE/prometheus.yaml && \
+	kubectl apply -f $$BASE/kiali.yaml && \
+	kubectl apply -f k8s-kiali/ && \
+	kubectl rollout restart -n istio-system deployment/kiali
+
+kiali-down:
+	-kubectl delete -f k8s-kiali/
+	@VER=$$(istioctl version --remote=false 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1); \
+	MINOR=$${VER%.*}; \
+	BASE=https://raw.githubusercontent.com/istio/istio/release-$$MINOR/samples/addons; \
+	kubectl delete -f $$BASE/kiali.yaml || true; \
+	kubectl delete -f $$BASE/prometheus.yaml || true
+
+kiali:
+	@echo "Kiali → http://localhost:20001"
+	istioctl dashboard kiali
+
 .PHONY: all-up all-down
-all-up: infra-up obs-up k8s-build k8s-istio k8s-deploy
+all-up: infra-up obs-up k8s-build k8s-istio kiali-up k8s-deploy
 
 all-down:
 	kubectl delete -f k8s/k8s-observability.yaml || true

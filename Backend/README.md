@@ -303,6 +303,7 @@ chmod +x setup-server.sh
 | Swagger UI | https://pinz.website/swagger/index.html |
 | Health check | `curl https://pinz.website/health` |
 | **Grafana** | https://grafana.pinz.website (дашборды, трейсы, логи, метрики) |
+| **Kiali** | https://kiali.pinz.website (service mesh graph, mTLS, конфиг Istio) |
 
 ### Деплой
 
@@ -368,8 +369,8 @@ export DEV_LOGIN_PROXY_ENABLED=false  # api-gateway-service
 DOMAIN=pinz.website EMAIL=admin@pinz.website ./setup-cert-manager.sh
 # → https://pinz.website доступен после выпуска сертификата
 
-# С поддоменом для Grafana (один сертификат на оба имени):
-EXTRA_DOMAINS=grafana.pinz.website DOMAIN=pinz.website EMAIL=admin@pinz.website ./setup-cert-manager.sh
+# С поддоменами Grafana и Kiali (один сертификат на все имена):
+EXTRA_DOMAINS=grafana.pinz.website,kiali.pinz.website DOMAIN=pinz.website EMAIL=admin@pinz.website ./setup-cert-manager.sh
 
 kubectl get secret pinz-tls -n istio-system
 ```
@@ -425,6 +426,15 @@ bash setup-server.sh --profile loadtest --branch <FEATURE_BRANCH>
 | VPS (Production) | https://grafana.pinz.website |
 
 **Корреляции в Grafana**: клик по трейсу открывает связанные логи и метрики.
+
+**Kiali (service mesh):** граф сервисов, RPS/latency на edges, mTLS-статус, валидация Istio-конфига.
+
+| Среда | Доступ |
+|---|---|
+| Локально | `make kiali` → http://localhost:20001 |
+| VPS (Production) | https://kiali.pinz.website |
+
+Kiali поднимает свой изолированный Prometheus в `istio-system` (для Envoy-метрик), а Grafana/Tempo тянет из стандартного observability-стека. Установка аддонов — разовая, через `make kiali-up` (локально) или `setup-server.sh` (на свежем VPS).
 
 ## Регенерация proto и swagger
 

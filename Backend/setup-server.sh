@@ -359,6 +359,24 @@ setup_infrastructure() {
     log_success "Infrastructure started"
 }
 
+# Kiali + sample Prometheus addons pinned to running Istio minor (release branch).
+setup_kiali_addons() {
+    log_info "Installing Kiali + Prometheus addons..."
+    local ver minor base
+    ver=$(istioctl version --remote=false 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+    if [[ -z "$ver" ]]; then
+        log_error "Cannot resolve installed istio version"
+        exit 1
+    fi
+    minor="${ver%.*}"
+    base="https://raw.githubusercontent.com/istio/istio/release-${minor}/samples/addons"
+    kubectl apply -f "${base}/prometheus.yaml"
+    kubectl apply -f "${base}/kiali.yaml"
+    kubectl wait --for=condition=available --timeout=300s -n istio-system \
+        deployment/prometheus deployment/kiali
+    log_success "Kiali addons installed (istio release-${minor})"
+}
+
 # Setup Istio
 setup_istio() {
     log_info "Setting up Istio..."
@@ -536,6 +554,7 @@ main() {
     create_env_file
     setup_infrastructure
     setup_istio
+    setup_kiali_addons
     setup_port_forwarding
     create_deploy_user
     setup_ssh_for_cd
