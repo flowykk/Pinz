@@ -15,6 +15,7 @@ spec:
         - "pinz.website"
         - "pinz.example.com"
         - "grafana.pinz.website"
+        - "kiali.pinz.website"
     - port:
         number: 443
         name: https
@@ -25,3 +26,4 @@ spec:
       hosts:
         - "pinz.website"
         - "grafana.pinz.website"
+        - "kiali.pinz.website"

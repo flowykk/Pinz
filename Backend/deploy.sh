@@ -337,6 +337,40 @@ apply_observability() {
     log_success "Observability stack applied"
 }
 
+# Self-bootstrapping: installs Istio Kiali+Prometheus addons on first CD run, then applies integration manifests.
+apply_kiali() {
+    local kiali_dir="${PROJECT_DIR}/k8s-kiali"
+
+    if [[ ! -d "$kiali_dir" ]]; then
+        log_warning "Kiali config directory not found: $kiali_dir"
+        log_warning "Skipping Kiali resource apply"
+        return 0
+    fi
+
+    if ! kubectl get -n istio-system deployment/kiali &>/dev/null; then
+        local ver minor base
+        if ! command -v istioctl &>/dev/null; then
+            log_warning "istioctl not in PATH — cannot pin Kiali addons to Istio minor; skipping install"
+            return 0
+        fi
+        ver=$(istioctl version --remote=false 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        if [[ -z "$ver" ]]; then
+            log_warning "Cannot resolve installed Istio version; skipping Kiali addons install"
+            return 0
+        fi
+        minor="${ver%.*}"
+        base="https://raw.githubusercontent.com/istio/istio/release-${minor}/samples/addons"
+        log_info "Installing Kiali + Prometheus addons matching Istio ${minor}"
+        kubectl apply -f "${base}/prometheus.yaml"
+        kubectl apply -f "${base}/kiali.yaml"
+    fi
+
+    log_info "Applying Kiali integration manifests from: $kiali_dir"
+    kubectl apply -f "$kiali_dir"
+    kubectl rollout restart -n istio-system deployment/kiali
+    log_success "Kiali resources applied"
+}
+
 # Apply Istio resources from static manifests.
 apply_istio_routing() {
     if [[ ! -d "$ISTIO_CONFIG_DIR" ]]; then
@@ -574,6 +608,9 @@ main() {
 
     # Apply observability stack (Grafana, Tempo, Loki, etc.)
     apply_observability
+
+    # Before Istio routing: metric-port AuthorizationPolicy must land before kiali VirtualService.
+    apply_kiali
 
     # Apply Istio ingress routing resources (if present)
     apply_istio_routing

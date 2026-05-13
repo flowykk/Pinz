@@ -135,6 +135,35 @@ kubectl logs -f deployment/auth-service
 
 # Логи Istio
 kubectl logs -n istio-system deployment/istiod
+
+# Логи Kiali
+kubectl logs -n istio-system deployment/kiali
+```
+
+### Kiali (service mesh dashboard)
+
+Для существующих VPS, поднятых до интеграции Kiali, нужны два разовых действия (после них CD-пайплайн сам поддерживает конфиг через `deploy.sh`):
+
+1. Расширить TLS-сертификат поддоменом `kiali.pinz.website`:
+
+```bash
+EXTRA_DOMAINS=grafana.pinz.website,kiali.pinz.website \
+DOMAIN=pinz.website EMAIL=admin@pinz.website ./setup-cert-manager.sh
+```
+
+2. Установить аддоны Kiali + Prometheus (версия подберётся под установленный Istio):
+
+```bash
+cd /opt/pinz/Backend && make kiali-up
+```
+
+DNS: `kiali.pinz.website` должен указывать на IP VPS (как `grafana.pinz.website`).
+
+Проверка:
+
+```bash
+kubectl -n istio-system get pods                       # kiali, prometheus → Running
+curl -sI https://kiali.pinz.website/                   # 200 OK
 ```
 
 ### Ресурсы

@@ -10,11 +10,11 @@ releases:
           tag: latest
           pullPolicy: Never
       - env:
-          dbHost: host.docker.internal
+          dbHost: db
           dbPort: "5432"
           dbUser: pinz_user
           dbName: pinz_db
-          redisAddr: host.docker.internal:6379
+          redisAddr: redis:6379
           grpcPort: ":50051"
           otelExporterEndpoint: "otel-collector:4317"
           otelServiceName: "auth-service"
@@ -40,11 +40,11 @@ releases:
           tag: latest
           pullPolicy: Never
       - env:
-          dbHost: host.docker.internal
+          dbHost: db-trips
           dbPort: "5433"
           dbUser: pinz_user
           dbName: pinz_trips
-          redisAddr: host.docker.internal:6379
+          redisAddr: redis:6379
           grpcPort: ":50052"
           otelExporterEndpoint: "otel-collector:4317"
           otelServiceName: "trip-service"
@@ -68,11 +68,11 @@ releases:
           tag: latest
           pullPolicy: Never
       - env:
-          dbHost: host.docker.internal
+          dbHost: db-stats
           dbPort: "5434"
           dbUser: pinz_user
           dbName: pinz_stats
-          redisAddr: host.docker.internal:6379
+          redisAddr: redis:6379
           grpcPort: ":50053"
           otelExporterEndpoint: "otel-collector:4317"
           otelServiceName: "statistics-service"
@@ -92,11 +92,11 @@ releases:
           tag: latest
           pullPolicy: Never
       - env:
-          dbHost: host.docker.internal
+          dbHost: db-notifications
           dbPort: "5435"
           dbUser: pinz_user
           dbName: pinz_notifications
-          redisAddr: host.docker.internal:6379
+          redisAddr: redis:6379
           grpcPort: ":50054"
           otelExporterEndpoint: "otel-collector:4317"
           otelServiceName: "notification-service"
@@ -135,7 +135,7 @@ releases:
           tripServiceGrpcAddress: trip-service.default.svc.cluster.local:50052
           statisticsServiceGrpcAddress: statistics-service.default.svc.cluster.local:50053
           notificationServiceGrpcAddress: notification-service.default.svc.cluster.local:50054
-          redisAddr: host.docker.internal:6379
+          redisAddr: redis:6379
           swaggerHost: "localhost:8080"
           tripShareLinkBase: '{{ env "TRIP_SHARE_LINK_BASE" | default "https://pinz.website/trips" }}'
           otelExporterEndpoint: "otel-collector:4317"
