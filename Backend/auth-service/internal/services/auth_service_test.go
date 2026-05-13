@@ -551,3 +551,276 @@ func TestRequestAvatarUpload_InvalidFormat(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, codes.InvalidArgument, st.Code())
 }
+
+func TestDevLogin_HappyPath_IssuesTokens(t *testing.T) {
+	t.Setenv("JWT_SECRET_KEY", "test-secret")
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	user := &models.User{ID: "u1", Email: "u@example.com", Username: "user"}
+	userRepo.EXPECT().GetUserByEmail("u@example.com").Return(user, nil)
+	userRepo.EXPECT().AddSession("u1", gomock.Any(), gomock.Any()).Return(nil)
+
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil, WithDevLogin(true))
+	resp, err := svc.DevLogin(context.Background(), &pb.DevLoginRequest{Email: user.Email})
+	require.NoError(t, err)
+	require.NotEmpty(t, resp.GetAccessToken())
+	require.NotEmpty(t, resp.GetRefreshToken())
+}
+
+func TestDevLogin_NoJwtSecret_Internal(t *testing.T) {
+	t.Setenv("JWT_SECRET_KEY", "")
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	userRepo.EXPECT().GetUserByEmail("u@example.com").Return(&models.User{ID: "u1", Email: "u@example.com"}, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil, WithDevLogin(true))
+	_, err := svc.DevLogin(context.Background(), &pb.DevLoginRequest{Email: "u@example.com"})
+	require.Error(t, err)
+	require.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestDevLogin_AddSessionError_Internal(t *testing.T) {
+	t.Setenv("JWT_SECRET_KEY", "test-secret")
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	userRepo.EXPECT().GetUserByEmail("u@example.com").Return(&models.User{ID: "u1", Email: "u@example.com"}, nil)
+	userRepo.EXPECT().AddSession("u1", gomock.Any(), gomock.Any()).Return(errors.New("db down"))
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil, WithDevLogin(true))
+	_, err := svc.DevLogin(context.Background(), &pb.DevLoginRequest{Email: "u@example.com"})
+	require.Error(t, err)
+	require.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestGetProfile_EmptyUserID(t *testing.T) {
+	svc := authServiceForValidation(t)
+	_, err := svc.GetProfile(context.Background(), &pb.GetProfileRequest{UserId: ""})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestGetProfile_NotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	userRepo.EXPECT().GetUserByID("missing").Return(nil, sql.ErrNoRows)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
+	_, err := svc.GetProfile(context.Background(), &pb.GetProfileRequest{UserId: "missing"})
+	require.Equal(t, codes.NotFound, status.Code(err))
+}
+
+func TestGetProfile_HappyPath(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	user := &models.User{ID: "u1", Email: "e@example.com", Username: "user", CreatedAt: time.Unix(1234, 0)}
+	userRepo.EXPECT().GetUserByID("u1").Return(user, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
+
+	resp, err := svc.GetProfile(context.Background(), &pb.GetProfileRequest{UserId: "u1"})
+	require.NoError(t, err)
+	require.Equal(t, "u1", resp.GetUser().GetId())
+	require.Equal(t, "e@example.com", resp.GetUser().GetEmail())
+	require.Equal(t, int64(1234), resp.GetUser().GetCreatedAtUnix())
+}
+
+func TestUpdateProfile_HappyPath(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	updated := &models.User{ID: "u1", Email: "e@example.com", Username: "newname"}
+	userRepo.EXPECT().UpdateUsername("u1", "newname").Return(updated, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
+
+	resp, err := svc.UpdateProfile(context.Background(), &pb.UpdateProfileRequest{UserId: "u1", Username: "newname"})
+	require.NoError(t, err)
+	require.Equal(t, "newname", resp.GetUser().GetUsername())
+}
+
+func TestUpdateProfile_RepoError_Internal(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	userRepo.EXPECT().UpdateUsername("u1", "newname").Return(nil, errors.New("db down"))
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
+	_, err := svc.UpdateProfile(context.Background(), &pb.UpdateProfileRequest{UserId: "u1", Username: "newname"})
+	require.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestChangeEmail_ValidationErrors(t *testing.T) {
+	svc := authServiceForValidation(t)
+	cases := map[string]*pb.ChangeEmailRequest{
+		"empty_user_id":  {UserId: "", NewEmail: "x@example.com"},
+		"empty_new_email": {UserId: "u1", NewEmail: "  "},
+		"invalid_email":  {UserId: "u1", NewEmail: "not-an-email"},
+	}
+	for name, req := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := svc.ChangeEmail(context.Background(), req)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
+		})
+	}
+}
+
+func TestChangeEmail_AlreadyTakenByOtherUser(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	userRepo.EXPECT().GetUserByEmail("new@example.com").Return(&models.User{ID: "other"}, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
+	_, err := svc.ChangeEmail(context.Background(), &pb.ChangeEmailRequest{UserId: "u1", NewEmail: "new@example.com"})
+	require.Equal(t, codes.AlreadyExists, status.Code(err))
+}
+
+func TestChangeEmail_HappyPath_StoresInRedisAndEnqueues(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	redisRepo := mocks.NewMockRedisRepositoryInterface(ctrl)
+	userRepo.EXPECT().GetUserByEmail("new@example.com").Return(nil, sql.ErrNoRows)
+	redisRepo.EXPECT().HSet(gomock.Any(), "email_change:u1", "email", "new@example.com", "code", gomock.Any()).Return(nil)
+	redisRepo.EXPECT().Expire(gomock.Any(), "email_change:u1", 15*time.Minute).Return(nil)
+	redisRepo.EXPECT().XAdd(gomock.Any(), "pinz:auth:email:tasks", gomock.Any()).Return(nil)
+	svc := NewAuthService(userRepo, nil, redisRepo, nil, validator.New(), nil, nil)
+	resp, err := svc.ChangeEmail(context.Background(), &pb.ChangeEmailRequest{UserId: "u1", NewEmail: "new@example.com"})
+	require.NoError(t, err)
+	require.True(t, resp.GetSuccess())
+}
+
+func TestChangeEmail_HSetError_Internal(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	redisRepo := mocks.NewMockRedisRepositoryInterface(ctrl)
+	userRepo.EXPECT().GetUserByEmail("new@example.com").Return(nil, sql.ErrNoRows)
+	redisRepo.EXPECT().HSet(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("redis down"))
+	svc := NewAuthService(userRepo, nil, redisRepo, nil, validator.New(), nil, nil)
+	_, err := svc.ChangeEmail(context.Background(), &pb.ChangeEmailRequest{UserId: "u1", NewEmail: "new@example.com"})
+	require.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestConfirmEmailChange_ValidationErrors(t *testing.T) {
+	svc := authServiceForValidation(t)
+	cases := map[string]*pb.ConfirmEmailChangeRequest{
+		"empty_user_id": {UserId: "", VerificationCode: "123456"},
+		"empty_code":    {UserId: "u1", VerificationCode: ""},
+	}
+	for name, req := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := svc.ConfirmEmailChange(context.Background(), req)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
+		})
+	}
+}
+
+func TestConfirmEmailChange_NoPending(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	redisRepo := mocks.NewMockRedisRepositoryInterface(ctrl)
+	redisRepo.EXPECT().HGetAll(gomock.Any(), "email_change:u1").Return(map[string]string{}, nil)
+	svc := NewAuthService(nil, nil, redisRepo, nil, validator.New(), nil, nil)
+	_, err := svc.ConfirmEmailChange(context.Background(), &pb.ConfirmEmailChangeRequest{UserId: "u1", VerificationCode: "123456"})
+	require.Equal(t, codes.NotFound, status.Code(err))
+}
+
+func TestConfirmEmailChange_WrongCode(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	redisRepo := mocks.NewMockRedisRepositoryInterface(ctrl)
+	redisRepo.EXPECT().HGetAll(gomock.Any(), "email_change:u1").Return(map[string]string{
+		"email": "new@example.com", "code": "999999",
+	}, nil)
+	svc := NewAuthService(nil, nil, redisRepo, nil, validator.New(), nil, nil)
+	_, err := svc.ConfirmEmailChange(context.Background(), &pb.ConfirmEmailChangeRequest{UserId: "u1", VerificationCode: "111111"})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestConfirmEmailChange_HappyPath(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	redisRepo := mocks.NewMockRedisRepositoryInterface(ctrl)
+	redisRepo.EXPECT().HGetAll(gomock.Any(), "email_change:u1").Return(map[string]string{
+		"email": "new@example.com", "code": "123456",
+	}, nil)
+	userRepo.EXPECT().UpdateEmail("u1", "new@example.com").Return(&models.User{ID: "u1", Email: "new@example.com"}, nil)
+	redisRepo.EXPECT().Del(gomock.Any(), "email_change:u1").Return(nil)
+	svc := NewAuthService(userRepo, nil, redisRepo, nil, validator.New(), nil, nil)
+	resp, err := svc.ConfirmEmailChange(context.Background(), &pb.ConfirmEmailChangeRequest{UserId: "u1", VerificationCode: "123456"})
+	require.NoError(t, err)
+	require.Equal(t, "new@example.com", resp.GetUser().GetEmail())
+}
+
+func TestConfirmEmailChange_UniqueViolationMaps(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	redisRepo := mocks.NewMockRedisRepositoryInterface(ctrl)
+	redisRepo.EXPECT().HGetAll(gomock.Any(), "email_change:u1").Return(map[string]string{
+		"email": "new@example.com", "code": "123456",
+	}, nil)
+	userRepo.EXPECT().UpdateEmail("u1", "new@example.com").Return(nil, &pgconn.PgError{Code: "23505"})
+	svc := NewAuthService(userRepo, nil, redisRepo, nil, validator.New(), nil, nil)
+	_, err := svc.ConfirmEmailChange(context.Background(), &pb.ConfirmEmailChangeRequest{UserId: "u1", VerificationCode: "123456"})
+	require.Equal(t, codes.AlreadyExists, status.Code(err))
+}
+
+func TestDeleteAccount_EmptyUserID(t *testing.T) {
+	svc := authServiceForValidation(t)
+	_, err := svc.DeleteAccount(context.Background(), &pb.DeleteAccountRequest{UserId: ""})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestDeleteAccount_HappyPath(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	userRepo.EXPECT().DeleteUser("u1").Return(nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
+	resp, err := svc.DeleteAccount(context.Background(), &pb.DeleteAccountRequest{UserId: "u1"})
+	require.NoError(t, err)
+	require.True(t, resp.GetSuccess())
+}
+
+func TestDeleteAccount_RepoError_Internal(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	userRepo.EXPECT().DeleteUser("u1").Return(errors.New("fk violation"))
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
+	_, err := svc.DeleteAccount(context.Background(), &pb.DeleteAccountRequest{UserId: "u1"})
+	require.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestUserToProto_PresignsAvatar(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	s3Mock := mocks.NewMockS3Uploader(ctrl)
+	s3Mock.EXPECT().ReadURL(gomock.Any(), "avatars/u1/a.jpg").Return("https://signed/a.jpg", nil)
+	svc := NewAuthService(nil, nil, nil, nil, validator.New(), nil, s3Mock)
+	out := svc.userToProto(context.Background(), &models.User{ID: "u1", AvatarURL: "avatars/u1/a.jpg", CreatedAt: time.Unix(1, 0)})
+	require.Equal(t, "https://signed/a.jpg", out.AvatarUrl)
+}
+
+func TestUserToProto_PresignError_LeavesAvatarEmpty(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	s3Mock := mocks.NewMockS3Uploader(ctrl)
+	s3Mock.EXPECT().ReadURL(gomock.Any(), "avatars/u1/a.jpg").Return("", errors.New("s3 down"))
+	svc := NewAuthService(nil, nil, nil, nil, validator.New(), nil, s3Mock)
+	out := svc.userToProto(context.Background(), &models.User{ID: "u1", AvatarURL: "avatars/u1/a.jpg"})
+	require.Empty(t, out.AvatarUrl)
+}
+
+func TestUserToProto_NoAvatar(t *testing.T) {
+	svc := authServiceForValidation(t)
+	out := svc.userToProto(context.Background(), &models.User{ID: "u1", Email: "e@example.com", Username: "user", CreatedAt: time.Unix(42, 0)})
+	require.Empty(t, out.AvatarUrl)
+	require.Equal(t, "u1", out.Id)
+	require.Equal(t, "e@example.com", out.Email)
+	require.Equal(t, int64(42), out.CreatedAtUnix)
+}
+
+func TestGetUsersProfiles_EmptyReturnsEmpty(t *testing.T) {
+	svc := authServiceForValidation(t)
+	resp, err := svc.GetUsersProfiles(context.Background(), &pb.GetUsersProfilesRequest{})
+	require.NoError(t, err)
+	require.Empty(t, resp.GetProfiles())
+}
+
+func TestGetUsersProfiles_FillsKnownAndPlaceholdersUnknown(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	userRepo.EXPECT().GetUsersByIDs([]string{"u1", "missing"}).Return([]*models.User{
+		{ID: "u1", Username: "alice", CreatedAt: time.Unix(1, 0)},
+	}, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
+	resp, err := svc.GetUsersProfiles(context.Background(), &pb.GetUsersProfilesRequest{UserIds: []string{"u1", "missing"}})
+	require.NoError(t, err)
+	require.Len(t, resp.GetProfiles(), 2)
+	require.Equal(t, "alice", resp.GetProfiles()[0].GetUsername())
+	require.Equal(t, "missing", resp.GetProfiles()[1].GetUserId())
+	require.Empty(t, resp.GetProfiles()[1].GetUsername())
+}

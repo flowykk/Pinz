@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -303,6 +304,122 @@ func TestUpdateTrip_GeneratedRejected(t *testing.T) {
 	_, err := svc.UpdateTrip(ctxWithUser("user-1"), &pb.UpdateTripRequest{TripId: "t1", Name: &newName})
 	require.Error(t, err)
 	require.Equal(t, codes.FailedPrecondition, status.Code(err))
+}
+
+func TestVirtualRecommendationTrip(t *testing.T) {
+	region := &recommendationRegion{name: "moscow", kind: "city"}
+	pins := []*pb.RecommendedPin{{Id: "p1"}, {Id: "p2"}, {Id: "p3"}}
+
+	out := virtualRecommendationTrip(region, pins)
+	require.NotNil(t, out)
+	require.Equal(t, "Популярные места: moscow", out.Name)
+	require.Equal(t, int32(3), out.PinsCount)
+	require.True(t, out.IsGenerated)
+	require.True(t, out.IsPublished)
+	require.Equal(t, "public", out.PrivacyLevel)
+	require.Equal(t, models.TripStatusReady, out.Status)
+	require.Equal(t, out.CreatedAtUnix, out.UpdatedAtUnix)
+	require.Equal(t, out.StartDateUnix, out.EndDateUnix)
+}
+
+func TestTopMediaFromRecommendedPins(t *testing.T) {
+	t.Run("limit zero returns nil", func(t *testing.T) {
+		pins := []*pb.RecommendedPin{{Id: "p", Media: []*pb.FeedMedia{{MediaId: "m"}}}}
+		require.Nil(t, topMediaFromRecommendedPins(pins, 0))
+	})
+	t.Run("round-robin across pins", func(t *testing.T) {
+		pins := []*pb.RecommendedPin{
+			{Id: "p1", Media: []*pb.FeedMedia{{MediaId: "p1-a"}, {MediaId: "p1-b"}}},
+			{Id: "p2", Media: []*pb.FeedMedia{{MediaId: "p2-a"}}},
+			{Id: "p3", Media: []*pb.FeedMedia{{MediaId: "p3-a"}, {MediaId: "p3-b"}}},
+		}
+		got := topMediaFromRecommendedPins(pins, 4)
+		require.Len(t, got, 4)
+		require.Equal(t, []string{"p1-a", "p2-a", "p3-a", "p1-b"}, []string{got[0].MediaId, got[1].MediaId, got[2].MediaId, got[3].MediaId})
+	})
+	t.Run("breaks when nothing left to add", func(t *testing.T) {
+		pins := []*pb.RecommendedPin{{Id: "p1", Media: []*pb.FeedMedia{{MediaId: "p1-a"}}}}
+		got := topMediaFromRecommendedPins(pins, 100)
+		require.Len(t, got, 1)
+	})
+}
+
+func TestGetRecommendations_Unauthenticated(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	svc, _, _, _, _, _, _ := makeServiceForSaveRecommendation(t, ctrl)
+	_, err := svc.GetRecommendations(context.Background(), &pb.GetRecommendationsRequest{City: "Москва"})
+	require.Error(t, err)
+	require.Equal(t, codes.Unauthenticated, status.Code(err))
+}
+
+func TestGetRecommendations_RegionRequired(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	svc, _, _, _, _, _, _ := makeServiceForSaveRecommendation(t, ctrl)
+	_, err := svc.GetRecommendations(ctxWithUser("u1"), &pb.GetRecommendationsRequest{})
+	require.Error(t, err)
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestGetRecommendations_NoCandidatesReturnsEmpty(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	geoRepo := mocks.NewMockGeoRegistryRepositoryInterface(ctrl)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+	geoRepo.EXPECT().FindCityByName(gomock.Any(), "moscow").Return(42, nil)
+	pinRepo.EXPECT().ListRecommendationCandidates(42, recommendationCityEpsMeters, "", "").Return(nil, nil)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, pinRepo, nil, nil, nil, geoRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+
+	resp, err := svc.GetRecommendations(ctxWithUser("u1"), &pb.GetRecommendationsRequest{City: "moscow"})
+	require.NoError(t, err)
+	require.NotNil(t, resp.GetMap())
+	require.Empty(t, resp.GetMap().GetPins())
+	require.Empty(t, resp.GetMap().GetSnapshotToken())
+	require.Equal(t, "moscow", resp.GetMap().GetRegionName())
+	require.Equal(t, "city", resp.GetMap().GetRegionType())
+}
+
+func TestGetRecommendations_RegionNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	geoRepo := mocks.NewMockGeoRegistryRepositoryInterface(ctrl)
+	geoRepo.EXPECT().FindCountryByName(gomock.Any(), "atlantis").Return(0, sql.ErrNoRows)
+	svc := NewTripService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, geoRepo, nil, nil, nil, nil, nil, nil, nil, nil)
+
+	_, err := svc.GetRecommendations(ctxWithUser("u1"), &pb.GetRecommendationsRequest{Country: "atlantis"})
+	require.Error(t, err)
+	require.Equal(t, codes.NotFound, status.Code(err))
+}
+
+func TestGetRecommendations_HappyPath_StoresSnapshot(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	geoRepo := mocks.NewMockGeoRegistryRepositoryInterface(ctrl)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+	snapRepo := mocks.NewMockRecommendationSnapshotRepositoryInterface(ctrl)
+
+	geoRepo.EXPECT().FindCityByName(gomock.Any(), "moscow").Return(42, nil)
+	candidates := []*repositories.RecommendationPinCandidate{
+		{ID: "p1", TripID: "t1", Name: "K", Description: "long-desc", Category: "sight", MediaCount: 5, ClusterID: 1, TripScore: 100},
+	}
+	pinRepo.EXPECT().ListRecommendationCandidates(42, recommendationCityEpsMeters, "", "").Return(candidates, nil)
+	mediaRepo.EXPECT().TopMediaByPinIDs([]string{"p1"}, recommendationMediaPerPin).Return(map[string][]*repositories.FeedMedia{
+		"p1": {{ID: "m1", S3Key: "k1", MediaType: "image/jpeg"}},
+	}, nil)
+	snapRepo.EXPECT().Save(gomock.Any(), gomock.Any(), gomock.Any(), recommendationSnapshotTTL).
+		DoAndReturn(func(_ context.Context, token string, snap *repositories.RecommendationSnapshot, _ time.Duration) error {
+			require.NotEmpty(t, token)
+			require.Equal(t, "u1", snap.UserID)
+			require.Equal(t, 42, snap.RegionID)
+			require.Equal(t, "moscow", snap.RegionName)
+			require.Equal(t, []string{"p1"}, snap.PinIDs)
+			return nil
+		})
+
+	svc := NewTripService(nil, nil, nil, nil, nil, mediaRepo, nil, pinRepo, nil, nil, nil, geoRepo, nil, nil, nil, nil, nil, nil, nil, snapRepo)
+	resp, err := svc.GetRecommendations(ctxWithUser("u1"), &pb.GetRecommendationsRequest{City: "moscow"})
+	require.NoError(t, err)
+	require.Len(t, resp.GetMap().GetPins(), 1)
+	require.NotEmpty(t, resp.GetMap().GetSnapshotToken())
+	require.NotNil(t, resp.GetMap().GetTrip())
+	require.Equal(t, int32(1), resp.GetMap().GetTrip().GetPinsCount())
 }
 
 func TestCurrentSeason(t *testing.T) {
