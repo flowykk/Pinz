@@ -3,6 +3,9 @@
 import {sleep} from 'k6';
 import {pickUser} from '../lib/data.js';
 import {dailyUser} from '../lib/journeys.js';
+import {makeHandleSummary} from '../lib/summary.js';
+
+export const handleSummary = makeHandleSummary('stress');
 
 const BASE = __ENV.BASE_URL;
 if (!BASE) throw new Error('BASE_URL is required');

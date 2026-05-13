@@ -42,4 +42,5 @@ type User struct {
 	Username  string
 	AvatarUrl sql.NullString
 	CreatedAt time.Time
+	IsTest    bool
 }

@@ -1,4 +1,7 @@
-// Сидер тест-юзеров: insert в users (is_test=true) + dev-login → credentials.json.
+// Сидер тест-юзеров и trips: insert в users (is_test=true) + dev-login + опционально
+// создание N DRAFT trips через REST. Trips остаются в DRAFT_GROUPING_REVIEW (без ML
+// pipeline их нельзя finalize), но они появляются в `GET /api/v1/trips` и нагружают
+// list/get-ручки в нагрузочных сценариях.
 package main
 
 import (
@@ -8,10 +11,12 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,7 +34,8 @@ func main() {
 	baseURL := flag.String("base-url", os.Getenv("BASE_URL"), "Pinz API base URL")
 	dbURL := flag.String("db-url", os.Getenv("LOADTEST_DB_URL"), "auth-service Postgres DSN")
 	users := flag.Int("users", 100, "number of test users to create")
-	concurrency := flag.Int("concurrency", 16, "parallel dev-login requests")
+	tripsPerUser := flag.Int("trips-per-user", 0, "number of DRAFT trips to create per user (0 = skip)")
+	concurrency := flag.Int("concurrency", 16, "parallel HTTP requests")
 	out := flag.String("out", "credentials.json", "where to write credentials")
 	flag.Parse()
 
@@ -63,45 +69,76 @@ func main() {
 	}
 
 	log.Printf("dev-login for %d users (concurrency=%d)…", *users, *concurrency)
-	creds := make([]Credential, 0, *users)
-	credCh := make(chan Credential, *users)
-	jobCh := make(chan string, *users)
-	var wg sync.WaitGroup
 	httpc := &http.Client{Timeout: 15 * time.Second}
-	for w := 0; w < *concurrency; w++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for email := range jobCh {
-				c, err := devLogin(httpc, *baseURL, email)
-				if err != nil {
-					log.Printf("dev-login %s: %v", email, err)
-					continue
-				}
-				credCh <- c
-			}
-		}()
-	}
-	for _, e := range emails {
-		jobCh <- e
-	}
-	close(jobCh)
-	go func() { wg.Wait(); close(credCh) }()
-	for c := range credCh {
-		creds = append(creds, c)
-	}
+	creds := runWorkers(*concurrency, emails, func(email string) (Credential, bool) {
+		c, err := devLogin(httpc, *baseURL, email)
+		if err != nil {
+			log.Printf("dev-login %s: %v", email, err)
+			return Credential{}, false
+		}
+		return c, true
+	})
 
 	f, err := os.Create(*out)
 	if err != nil {
 		log.Fatalf("create out: %v", err)
 	}
-	defer f.Close()
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(creds); err != nil {
+		f.Close()
 		log.Fatalf("encode: %v", err)
 	}
+	f.Close()
 	log.Printf("wrote %d credentials to %s", len(creds), *out)
+
+	if *tripsPerUser > 0 {
+		total := len(creds) * *tripsPerUser
+		log.Printf("creating ~%d DRAFT trips (per user=%d, concurrency=%d)…", total, *tripsPerUser, *concurrency)
+		var ok atomic.Int64
+		jobs := make([]Credential, 0, total)
+		for _, c := range creds {
+			for i := 0; i < *tripsPerUser; i++ {
+				jobs = append(jobs, c)
+			}
+		}
+		runWorkers(*concurrency, jobs, func(c Credential) (struct{}, bool) {
+			if err := createDraftTrip(httpc, *baseURL, c.AccessToken); err != nil {
+				return struct{}{}, false
+			}
+			ok.Add(1)
+			return struct{}{}, true
+		})
+		log.Printf("trips created: %d / %d", ok.Load(), total)
+	}
+}
+
+// runWorkers — типизированный worker-pool: shards input через jobs[T]→outputs[R].
+func runWorkers[T any, R any](concurrency int, jobs []T, fn func(T) (R, bool)) []R {
+	jobCh := make(chan T, len(jobs))
+	resCh := make(chan R, len(jobs))
+	var wg sync.WaitGroup
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := range jobCh {
+				if r, ok := fn(j); ok {
+					resCh <- r
+				}
+			}
+		}()
+	}
+	for _, j := range jobs {
+		jobCh <- j
+	}
+	close(jobCh)
+	go func() { wg.Wait(); close(resCh) }()
+	out := make([]R, 0, len(jobs))
+	for r := range resCh {
+		out = append(out, r)
+	}
+	return out
 }
 
 func devLogin(c *http.Client, baseURL, email string) (Credential, error) {
@@ -126,4 +163,28 @@ func devLogin(c *http.Client, baseURL, email string) (Credential, error) {
 		return Credential{}, err
 	}
 	return Credential{Email: email, UserID: r.UserID, AccessToken: r.AccessToken, RefreshToken: r.RefreshToken}, nil
+}
+
+var categories = []string{"vacation", "business", "holidays", "active", "education", "custom"}
+var seasons = []string{"winter", "spring", "summer", "autumn"}
+
+func createDraftTrip(c *http.Client, baseURL, accessToken string) error {
+	body := map[string]string{
+		"name": fmt.Sprintf("loadtest-trip-%s", uuid.NewString()[:8]),
+		"category": categories[rand.Intn(len(categories))],
+		"season": seasons[rand.Intn(len(seasons))],
+	}
+	b, _ := json.Marshal(body)
+	req, _ := http.NewRequest(http.MethodPost, baseURL+"/api/v1/trips/creation/start", strings.NewReader(string(b)))
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("status %d", resp.StatusCode)
+	}
+	return nil
 }
