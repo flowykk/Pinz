@@ -17,6 +17,7 @@ import (
 	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/repositories"
+	"pinz/backend/trip-service/internal/s3"
 	"pinz/backend/trip-service/internal/server"
 	pb "pinz/backend/trip-service/pkg/proto"
 )
@@ -164,7 +165,7 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	uploadUrls := make([]*pb.UploadUrl, 0, len(req.GetFilesToUpload()))
 	for _, f := range req.GetFilesToUpload() {
 		ext := contentTypeToExt(f.GetContentType())
-		s3Key := "trips/" + trip.ID + "/" + f.GetClientId() + ext
+		s3Key := s3.PrefixedKey("trips/" + trip.ID + "/" + f.GetClientId() + ext)
 		url := ""
 		if s.mediaURLs != nil {
 			var err error
@@ -751,7 +752,7 @@ func (s *TripService) RequestTripCoverUpload(ctx context.Context, req *pb.Reques
 	if s.mediaURLs == nil {
 		return nil, status.Error(codes.Unavailable, "cover upload is not configured")
 	}
-	s3Key := fmt.Sprintf("trips/%s/cover/%s%s", tripID, uuid.NewString(), ext)
+	s3Key := s3.PrefixedKey(fmt.Sprintf("trips/%s/cover/%s%s", tripID, uuid.NewString(), ext))
 	uploadURL, err := s.mediaURLs.PresignedUploadURL(ctx, s3Key, req.GetContentType())
 	if err != nil {
 		slog.ErrorContext(ctx, "RequestTripCoverUpload: presign", "trip_id", tripID, "s3_key", s3Key, "error", err)
@@ -1707,7 +1708,7 @@ func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRe
 	uploadUrls := make([]*pb.UploadUrl, 0, len(files))
 	for _, f := range files {
 		ext := contentTypeToExt(f.GetContentType())
-		s3Key := "trips/" + tripID + "/" + f.GetClientId() + ext
+		s3Key := s3.PrefixedKey("trips/" + tripID + "/" + f.GetClientId() + ext)
 		url := ""
 		if s.mediaURLs != nil {
 			var perr error
@@ -1784,7 +1785,7 @@ func (s *TripService) AddMediaRequestUploadUrls(ctx context.Context, req *pb.Add
 	uploadUrls := make([]*pb.UploadUrl, 0, len(files))
 	for _, f := range files {
 		ext := contentTypeToExt(f.GetContentType())
-		s3Key := "trips/" + tripID + "/" + f.GetClientId() + ext
+		s3Key := s3.PrefixedKey("trips/" + tripID + "/" + f.GetClientId() + ext)
 		url := ""
 		if s.mediaURLs != nil {
 			var perr error

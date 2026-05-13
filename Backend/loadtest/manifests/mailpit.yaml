@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailpit
+  namespace: pinz-loadtest
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: mailpit}
+  template:
+    metadata:
+      labels: {app: mailpit}
+    spec:
+      containers:
+        - name: mailpit
+          image: axllent/mailpit:v1.20
+          ports:
+            - {containerPort: 1025, name: smtp}
+            - {containerPort: 8025, name: ui}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailpit
+  namespace: pinz-loadtest
+spec:
+  selector: {app: mailpit}
+  ports:
+    - {name: smtp, port: 1025, targetPort: 1025}
+    - {name: ui,   port: 8025, targetPort: 8025}

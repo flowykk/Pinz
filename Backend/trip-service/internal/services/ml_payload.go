@@ -11,8 +11,7 @@ import (
 	"pinz/backend/trip-service/internal/models"
 )
 
-// TTL presigned GET URL для ML — должен покрывать максимальное время
-// обработки на стороне ML. Контракт см. vkr/mlContract.md.
+// TTL presigned GET URL для ML — должен покрывать максимальное время обработки на стороне ML.
 const mlPresignTTL = 2 * time.Hour
 
 type MLMediaPayload struct {

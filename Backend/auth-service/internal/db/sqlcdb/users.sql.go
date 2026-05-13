@@ -101,7 +101,7 @@ func (q *Queries) GetRefreshToken(ctx context.Context, token string) (RefreshTok
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, username, avatar_url, created_at
+SELECT id, email, username, avatar_url, created_at, is_test
 FROM users
 WHERE email = $1
 `
@@ -115,12 +115,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Username,
 		&i.AvatarUrl,
 		&i.CreatedAt,
+		&i.IsTest,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, username, avatar_url, created_at
+SELECT id, email, username, avatar_url, created_at, is_test
 FROM users
 WHERE id = $1
 `
@@ -134,12 +135,13 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Username,
 		&i.AvatarUrl,
 		&i.CreatedAt,
+		&i.IsTest,
 	)
 	return i, err
 }
 
 const getUsersByIDs = `-- name: GetUsersByIDs :many
-SELECT id, email, username, avatar_url, created_at
+SELECT id, email, username, avatar_url, created_at, is_test
 FROM users
 WHERE id = ANY($1::uuid[])
 `
@@ -159,6 +161,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Us
 			&i.Username,
 			&i.AvatarUrl,
 			&i.CreatedAt,
+			&i.IsTest,
 		); err != nil {
 			return nil, err
 		}
@@ -175,7 +178,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Us
 
 const updateAvatarURL = `-- name: UpdateAvatarURL :one
 UPDATE users SET avatar_url = $2 WHERE id = $1
-RETURNING id, email, username, avatar_url, created_at
+RETURNING id, email, username, avatar_url, created_at, is_test
 `
 
 type UpdateAvatarURLParams struct {
@@ -192,13 +195,14 @@ func (q *Queries) UpdateAvatarURL(ctx context.Context, arg UpdateAvatarURLParams
 		&i.Username,
 		&i.AvatarUrl,
 		&i.CreatedAt,
+		&i.IsTest,
 	)
 	return i, err
 }
 
 const updateEmail = `-- name: UpdateEmail :one
 UPDATE users SET email = $2 WHERE id = $1
-RETURNING id, email, username, avatar_url, created_at
+RETURNING id, email, username, avatar_url, created_at, is_test
 `
 
 type UpdateEmailParams struct {
@@ -215,6 +219,7 @@ func (q *Queries) UpdateEmail(ctx context.Context, arg UpdateEmailParams) (User,
 		&i.Username,
 		&i.AvatarUrl,
 		&i.CreatedAt,
+		&i.IsTest,
 	)
 	return i, err
 }
@@ -235,7 +240,7 @@ func (q *Queries) UpdateRefreshTokenExpiresAt(ctx context.Context, arg UpdateRef
 
 const updateUsername = `-- name: UpdateUsername :one
 UPDATE users SET username = $2 WHERE id = $1
-RETURNING id, email, username, avatar_url, created_at
+RETURNING id, email, username, avatar_url, created_at, is_test
 `
 
 type UpdateUsernameParams struct {
@@ -252,6 +257,7 @@ func (q *Queries) UpdateUsername(ctx context.Context, arg UpdateUsernameParams) 
 		&i.Username,
 		&i.AvatarUrl,
 		&i.CreatedAt,
+		&i.IsTest,
 	)
 	return i, err
 }

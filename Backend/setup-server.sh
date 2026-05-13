@@ -7,6 +7,8 @@ set -e
 
 # Configuration
 REPO_URL="${REPO_URL:-https://github.com/flowykk/Pinz.git}"
+BRANCH="${BRANCH:-develop}"
+PROFILE="${PROFILE:-prod}"   # prod | loadtest
 PROJECT_DIR="/opt/pinz"
 BACKEND_DIR="${PROJECT_DIR}/Backend"
 ENV_FILE="${BACKEND_DIR}/.env"
@@ -35,17 +37,28 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if running as root
-check_root() {
-    if [[ $EUID -eq 0 ]]; then
-        log_error "This script should NOT be run as root"
-        log_error "Create a regular user first:"
-        log_error "  useradd -m -s /bin/bash deploy"
-        log_error "  passwd deploy"
-        log_error "  usermod -aG sudo deploy"
-        log_error "Then switch to user: su - deploy"
-        exit 1
+# Если запущено под root — создаём deploy и re-exec под ним.
+bootstrap_deploy_from_root() {
+    [[ $EUID -eq 0 ]] || return 0
+
+    log_info "Running as root — bootstrapping deploy user..."
+    id deploy &>/dev/null || useradd -m -s /bin/bash deploy
+    usermod -aG sudo deploy
+    echo "deploy ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/deploy
+    chmod 440 /etc/sudoers.d/deploy
+
+    if [[ -f /root/.ssh/authorized_keys ]]; then
+        mkdir -p /home/deploy/.ssh
+        cp /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
+        chown -R deploy:deploy /home/deploy/.ssh
+        chmod 700 /home/deploy/.ssh
+        chmod 600 /home/deploy/.ssh/authorized_keys
     fi
+
+    SCRIPT_PATH="$(readlink -f "$0")"
+    chown deploy:deploy "$SCRIPT_PATH" 2>/dev/null || true
+    exec sudo -u deploy -E -H bash "$SCRIPT_PATH" \
+        --repo-url "$REPO_URL" --branch "$BRANCH" --profile "$PROFILE"
 }
 
 # Update system
@@ -70,22 +83,19 @@ install_docker() {
     log_success "Docker installed"
 }
 
-# Install k3s (Kubernetes)
 install_k3s() {
     log_info "Installing k3s..."
     curl -sfL https://get.k3s.io | sh -
 
-    # Configure kubectl access for current user
-    sudo chmod 644 /etc/rancher/k3s/k3s.yaml 2>/dev/null || true
-    export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-    echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> ~/.bashrc
+    mkdir -p "$HOME/.kube"
+    sudo cp /etc/rancher/k3s/k3s.yaml "$HOME/.kube/config"
+    sudo chown "$USER:$USER" "$HOME/.kube/config"
+    chmod 600 "$HOME/.kube/config"
+    grep -q 'KUBECONFIG=' "$HOME/.bashrc" || echo 'export KUBECONFIG=$HOME/.kube/config' >> "$HOME/.bashrc"
 
-    # Wait for k3s to be ready
-    sleep 10
-    kubectl cluster-info
+    until sudo kubectl get nodes &>/dev/null; do sleep 2; done
 
-    # Ensure user can access Docker
-    sudo usermod -aG docker $USER
+    sudo usermod -aG docker "$USER"
     log_success "k3s installed"
 }
 
@@ -118,26 +128,35 @@ install_helm_plugins() {
     log_success "Helm plugins installed"
 }
 
-# Install Helmfile
+# Hardcoded URL 404'ит после каждого нового тега, поэтому резолвим latest динамически.
 install_helmfile() {
     log_info "Installing Helmfile..."
-    wget -O helmfile.tar.gz https://github.com/helmfile/helmfile/releases/latest/download/helmfile_1.3.1_linux_amd64.tar.gz
-    tar -xzf helmfile.tar.gz
-    sudo mv helmfile /usr/local/bin/
-    rm helmfile.tar.gz
+    local ver
+    ver=$(curl -sIL https://github.com/helmfile/helmfile/releases/latest \
+        | grep -i ^location: | tail -1 | sed -E 's|.*/v([0-9.]+).*|\1|' | tr -d '\r')
+    if [[ -z "$ver" ]]; then
+        log_error "Cannot resolve helmfile latest version"
+        exit 1
+    fi
+    local tmp
+    tmp=$(mktemp -d)
+    wget -q -O "$tmp/h.tgz" "https://github.com/helmfile/helmfile/releases/download/v${ver}/helmfile_${ver}_linux_amd64.tar.gz"
+    tar -xzf "$tmp/h.tgz" -C "$tmp"
+    sudo mv "$tmp/helmfile" /usr/local/bin/
+    rm -rf "$tmp"
 
     helmfile version
-    log_success "Helmfile installed"
+    log_success "Helmfile installed (v$ver)"
 }
 
-# Install Istio
+# Symlink — чтобы istioctl был виден в неинтерактивных ssh-вызовах (.bashrc не source-ится).
 install_istio() {
     log_info "Installing istioctl..."
-    curl -L https://istio.io/downloadIstioctl | sh -
+    curl -fsSL https://istio.io/downloadIstioctl | sh -
     export PATH=$PATH:$HOME/.istioctl/bin
-    echo "export PATH=\$PATH:\$HOME/.istioctl/bin" >> ~/.bashrc
-
-    istioctl version
+    grep -q '.istioctl/bin' ~/.bashrc || echo "export PATH=\$PATH:\$HOME/.istioctl/bin" >> ~/.bashrc
+    sudo ln -sf "$HOME/.istioctl/bin/istioctl" /usr/local/bin/istioctl
+    istioctl version --remote=false
     log_success "istioctl installed"
 }
 
@@ -157,13 +176,16 @@ install_tools() {
     log_success "Additional tools installed"
 }
 
-# Configure firewall
 configure_firewall() {
-    log_info "Configuring firewall..."
+    log_info "Configuring firewall (profile=$PROFILE)..."
     sudo ufw allow 22/tcp    # SSH
     sudo ufw allow 80/tcp    # HTTP
     sudo ufw allow 443/tcp   # HTTPS
     sudo ufw allow 6443/tcp  # k3s API
+    if [[ "$PROFILE" == "loadtest" ]]; then
+        sudo ufw allow 30000:32767/tcp comment "k8s NodePort (loadtest)"
+        sudo ufw allow 8080/tcp comment "API direct (loadtest)"
+    fi
     sudo ufw --force enable
     log_success "Firewall configured"
 }
@@ -225,27 +247,27 @@ create_directories() {
     log_success "Directories created"
 }
 
-# Clone repository
 clone_repository() {
-    log_info "Cloning repository..."
+    log_info "Cloning repository (branch=$BRANCH)..."
     if [[ -d "$PROJECT_DIR/.git" ]]; then
         log_warning "Repository already exists, updating..."
-        cd $PROJECT_DIR
-        git checkout develop
-        git pull origin develop
+        cd "$PROJECT_DIR"
+        git fetch --all
+        git checkout "$BRANCH"
+        git pull origin "$BRANCH"
     else
-        cd $PROJECT_DIR
-        git clone $REPO_URL .
-        git checkout develop
-        git pull origin develop
+        cd "$PROJECT_DIR"
+        git clone "$REPO_URL" .
+        git fetch --all
+        git checkout "$BRANCH"
+        git pull origin "$BRANCH"
     fi
 
-    # Ensure scripts are executable (if they exist)
     [[ -f "deploy.sh" ]] && chmod +x deploy.sh
     [[ -f "setup-cert-manager.sh" ]] && chmod +x setup-cert-manager.sh
     [[ -f "setup-server.sh" ]] && chmod +x setup-server.sh
     [[ -f "setup-certbot.sh" ]] && chmod +x setup-certbot.sh
-    log_success "Repository cloned and switched to develop branch"
+    log_success "Repository cloned at branch '$BRANCH'"
 }
 
 # Create environment file
@@ -493,11 +515,12 @@ check_already_setup() {
     fi
 }
 
-# Main setup function
+# prod — полный сценарий с deploy.sh; loadtest — без test_deployment
+# (стенд деплоится отдельным `helmfile -f helmfile.loadtest.yaml.gotmpl sync`).
 main() {
-    log_info "🚀 Starting complete Pinz Backend server setup..."
+    log_info "🚀 Starting Pinz Backend server setup (profile=$PROFILE, branch=$BRANCH)..."
 
-    check_root
+    bootstrap_deploy_from_root
     check_already_setup
     update_system
     install_docker
@@ -508,50 +531,72 @@ main() {
     install_istio
     install_tools
     configure_firewall
-    setup_port_forwarding
     create_directories
     clone_repository
     create_env_file
     setup_infrastructure
     setup_istio
     setup_port_forwarding
-    test_deployment
     create_deploy_user
     setup_ssh_for_cd
+
+    if [[ "$PROFILE" == "prod" ]]; then
+        test_deployment
+    else
+        log_info "Profile=loadtest — skipping prod test_deployment. Run loadtest deploy with:"
+        log_info "  cd $BACKEND_DIR && helmfile -f helmfile.loadtest.yaml.gotmpl sync"
+    fi
+
     print_instructions
 
-    log_success "🎉 Setup completed! Your server is ready for CI/CD deployment."
+    log_success "🎉 Setup completed! profile=$PROFILE"
 }
 
 # Handle command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --repo-url)
-            REPO_URL="$2"
-            shift 2
+            REPO_URL="$2"; shift 2 ;;
+        --branch)
+            BRANCH="$2"; shift 2 ;;
+        --profile)
+            PROFILE="$2"; shift 2
+            if [[ "$PROFILE" != "prod" && "$PROFILE" != "loadtest" ]]; then
+                log_error "--profile must be 'prod' or 'loadtest', got '$PROFILE'"
+                exit 1
+            fi
             ;;
         --help|-h)
-            echo "Usage: $0 [OPTIONS]"
-            echo ""
-            echo "Complete server setup for Pinz Backend CI/CD"
-            echo ""
-            echo "Options:"
-            echo "  --repo-url URL     Repository URL to clone [default: $REPO_URL]"
-            echo "  --help, -h         Show this help message"
-            echo ""
-            echo "Environment variables:"
-            echo "  REPO_URL           Same as --repo-url"
-            echo "  POSTGRES_PASSWORD  Custom PostgreSQL password"
-            echo "  JWT_SECRET_KEY     Custom JWT secret key"
-            echo ""
-            echo "Example:"
-            echo "  $0 --repo-url https://github.com/your-org/pinz-backend.git"
+            cat <<EOF
+Usage: $0 [OPTIONS]
+
+Полная установка Pinz Backend на чистом VPS.
+
+Options:
+  --repo-url URL     Repository URL to clone (default: $REPO_URL)
+  --branch BRANCH    Git branch (default: develop). Для loadtest-стенда из
+                     feature-ветки: --branch PINZ-NNN
+  --profile P        prod | loadtest (default: prod). Loadtest пропускает
+                     test_deployment и открывает 8080/30000-32767 в ufw.
+  --help, -h         Show this help
+
+Environment variables (equivalent to flags):
+  REPO_URL           Repository URL
+  BRANCH             Git branch
+  PROFILE            prod | loadtest
+  POSTGRES_PASSWORD  Custom PostgreSQL password
+  JWT_SECRET_KEY     Custom JWT secret key
+
+Examples:
+  # Прод-стенд из develop
+  sudo $0
+  # Loadtest-стенд из ветки PINZ-206
+  sudo $0 --profile loadtest --branch PINZ-206
+EOF
             exit 0
             ;;
         *)
-            log_error "Unknown option: $1"
-            exit 1
-            ;;
+            log_error "Unknown option: $1"; exit 1 ;;
     esac
 done
 

@@ -1,5 +1,5 @@
 -- name: GetUserByEmail :one
-SELECT id, email, username, avatar_url, created_at
+SELECT id, email, username, avatar_url, created_at, is_test
 FROM users
 WHERE email = $1;
 
@@ -18,7 +18,7 @@ FROM refresh_tokens
 WHERE token = $1;
 
 -- name: GetUserByID :one
-SELECT id, email, username, avatar_url, created_at
+SELECT id, email, username, avatar_url, created_at, is_test
 FROM users
 WHERE id = $1;
 
@@ -33,20 +33,20 @@ DELETE FROM refresh_tokens WHERE user_id = $1;
 
 -- name: UpdateUsername :one
 UPDATE users SET username = $2 WHERE id = $1
-RETURNING id, email, username, avatar_url, created_at;
+RETURNING id, email, username, avatar_url, created_at, is_test;
 
 -- name: UpdateEmail :one
 UPDATE users SET email = $2 WHERE id = $1
-RETURNING id, email, username, avatar_url, created_at;
+RETURNING id, email, username, avatar_url, created_at, is_test;
 
 -- name: UpdateAvatarURL :one
 UPDATE users SET avatar_url = $2 WHERE id = $1
-RETURNING id, email, username, avatar_url, created_at;
+RETURNING id, email, username, avatar_url, created_at, is_test;
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
 
 -- name: GetUsersByIDs :many
-SELECT id, email, username, avatar_url, created_at
+SELECT id, email, username, avatar_url, created_at, is_test
 FROM users
 WHERE id = ANY($1::uuid[]);

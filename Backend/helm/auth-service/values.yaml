@@ -24,6 +24,10 @@ env:
   s3Region: "ru-central1"
   s3Bucket: ""
   s3PresignTTL: "15m"
+  # On loadtest stand: "loadtest/".
+  s3KeyPrefix: ""
+  # Only on loadtest stand. Never set to "true" on prod.
+  authDevLoginEnabled: "false"
 
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"

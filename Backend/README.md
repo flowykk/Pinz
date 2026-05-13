@@ -40,7 +40,7 @@ Go 1.25 · chi · gRPC · Protobuf · PostgreSQL · Redis · JWT · OpenTelemetr
 
 ## ML интеграция
 
-Trip-service общается с внешним ML-сервисом только через Redis Streams и presigned S3 GET URLs — ML не имеет прямого доступа к Postgres и S3-ключам. Контракт стримов (задачи и результаты), правила для всех трёх сценариев (Trip Creation, Add Media, Pin Upload), формат payload, SLA — в `vkr/mlContract.md`.
+Trip-service общается с внешним ML-сервисом только через Redis Streams и presigned S3 GET URLs — ML не имеет прямого доступа к Postgres и S3-ключам. Контракт стримов (задачи и результаты), правила для всех трёх сценариев (Trip Creation, Add Media, Pin Upload), формат payload, SLA задокументированы отдельно.
 
 Стримы:
 
@@ -346,13 +346,20 @@ export S3_PRESIGN_TTL=15m
 # Geocoding (statistics-service, BigDataCloud reverse geocode).
 # Trip-service публикует PIN_LOCATIONS_REQUESTED (pinz:stats:events) → statistics
 # резолвит координаты и пришлёт PIN_LOCATIONS_RESOLVED в pinz:trip:geo_events
-# для mirror'а в реплику trip-service (vkr.txt §2.5.4).
+# для mirror'а в реплику trip-service.
 export GEOCODING_BASE_URL=https://api.bigdatacloud.net/data/reverse-geocode-client  # optional, default shown
 export GEOCODING_API_KEY=                                                     # optional, free tier works without key
 
 # Share-link (api-gateway): база для поля share_url в ответах с трипом (ТЗ 3.4).
 # Пустая → используется внутренний дефолт https://pinz.website/trips.
 export TRIP_SHARE_LINK_BASE=https://pinz.website/trips
+
+# Loadtest-only: разблокирует RPC AuthService.DevLogin и проксирующую ручку
+# POST /api/v1/auth/dev-login. По умолчанию выключено и НЕ должно включаться на
+# проде — это путь обхода passkey. Используется только сидером нагрузочного
+# тестирования (см. Backend/loadtest/).
+export AUTH_DEV_LOGIN_ENABLED=false   # auth-service
+export DEV_LOGIN_PROXY_ENABLED=false  # api-gateway-service
 ```
 
 ### SSL/TLS (Let's Encrypt)
@@ -386,6 +393,17 @@ GitHub Secrets:
 | `DOCKER_USERNAME` | Docker registry логин |
 | `DOCKER_PASSWORD` | Docker registry пароль |
 | `SERVER_IP` | IP сервера |
+
+## Loadtest stand
+
+Нагрузочное тестирование разворачивается на отдельном временном VPS (не на проде).
+
+```bash
+# На свежем VPS из-под root:
+bash setup-server.sh --profile loadtest --branch <FEATURE_BRANCH>
+```
+
+Деталь по разворачиванию, сценариям и SLO — внутри `Backend/loadtest/` (k6-сценарии в `k6/scenarios/`, манифесты стабов в `manifests/`, Makefile с целями `seed`/`smoke`/`baseline`/`load`/`soak`/`cleanup`).
 
 ## Observability
 

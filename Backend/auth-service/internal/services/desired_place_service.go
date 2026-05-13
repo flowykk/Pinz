@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"pinz/backend/auth-service/internal/models"
+	"pinz/backend/auth-service/internal/s3"
 	pb "pinz/backend/auth-service/pkg/proto"
 )
 
@@ -182,7 +183,7 @@ func (s *AuthService) RequestDesiredPlaceImageUpload(ctx context.Context, req *p
 		return nil, status.Error(codes.InvalidArgument, "image must be .jpg, .jpeg, .png or .heic")
 	}
 
-	s3Key := fmt.Sprintf("desired-places/%s/%s%s", userID, uuid.NewString(), ext)
+	s3Key := s3.PrefixedKey(fmt.Sprintf("desired-places/%s/%s%s", userID, uuid.NewString(), ext))
 	uploadURL, err := s.s3.PresignedUploadURL(ctx, s3Key, req.GetContentType())
 	if err != nil {
 		slog.ErrorContext(ctx, "RequestDesiredPlaceImageUpload: presign", "error", err)

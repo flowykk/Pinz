@@ -1,0 +1,162 @@
+# Loadtest-профиль для helmfile sync. Не для прода.
+
+repositories: []
+
+releases:
+  - name: auth-service
+    namespace: pinz-loadtest
+    chart: ./helm/auth-service
+    values:
+      - replicaCount: 3
+      - image:
+          repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-auth-service"
+          tag: "{{ env "AUTH_SERVICE_TAG" | default (env "IMAGE_TAG") | default "latest" }}"
+          pullPolicy: IfNotPresent
+      - env:
+          dbHost: "{{ env "DB_HOST" | default "db" }}"
+          dbPort: "5432"
+          dbUser: pinz_user
+          dbName: pinz_db
+          redisAddr: "{{ env "REDIS_ADDR" | default "redis:6379" }}"
+          grpcPort: ":50051"
+          otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+          otelServiceName: "auth-service"
+          otelTracesSampler: "parentbased_traceidratio"
+          otelTracesSamplerArg: "1.0"
+          s3Endpoint: "http://minio.pinz-loadtest.svc.cluster.local:9000"
+          s3Region: "us-east-1"
+          s3Bucket: "pinz-loadtest"
+          s3PresignTTL: "15m"
+          s3KeyPrefix: "loadtest/"
+          authDevLoginEnabled: "true"
+      - secret:
+          dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
+          jwtSecretKey: "{{ env "JWT_SECRET_KEY" | default "loadtest-jwt-secret-do-not-use-in-prod" }}"
+          s3AccessKey: "minioadmin"
+          s3SecretKey: "minioadmin"
+      - resources:
+          requests: {cpu: "200m", memory: "256Mi"}
+          limits: {cpu: "1000m", memory: "512Mi"}
+
+  - name: trip-service
+    namespace: pinz-loadtest
+    chart: ./helm/trip-service
+    values:
+      - replicaCount: 3
+      - image:
+          repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-trip-service"
+          tag: "{{ env "TRIP_SERVICE_TAG" | default (env "IMAGE_TAG") | default "latest" }}"
+          pullPolicy: IfNotPresent
+      - env:
+          dbHost: "{{ env "DB_TRIPS_HOST" | default "db-trips" }}"
+          dbPort: "5433"
+          dbUser: pinz_user
+          dbName: pinz_trips
+          redisAddr: "{{ env "REDIS_ADDR" | default "redis:6379" }}"
+          grpcPort: ":50052"
+          otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+          otelServiceName: "trip-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+          s3Endpoint: "http://minio.pinz-loadtest.svc.cluster.local:9000"
+          s3Region: "us-east-1"
+          s3Bucket: "pinz-loadtest"
+          s3PresignTTL: "15m"
+          s3KeyPrefix: "loadtest/"
+      - secret:
+          dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
+          s3AccessKey: "minioadmin"
+          s3SecretKey: "minioadmin"
+      - resources:
+          requests: {cpu: "300m", memory: "512Mi"}
+          limits: {cpu: "2000m", memory: "1Gi"}
+
+  - name: statistics-service
+    namespace: pinz-loadtest
+    chart: ./helm/statistics-service
+    values:
+      - replicaCount: 3
+      - image:
+          repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-statistics-service"
+          tag: "{{ env "STATISTICS_SERVICE_TAG" | default (env "IMAGE_TAG") | default "latest" }}"
+          pullPolicy: IfNotPresent
+      - env:
+          dbHost: "{{ env "DB_STATS_HOST" | default "db-stats" }}"
+          dbPort: "5434"
+          dbUser: pinz_user
+          dbName: pinz_stats
+          redisAddr: "{{ env "REDIS_ADDR" | default "redis:6379" }}"
+          grpcPort: ":50053"
+          otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+          otelServiceName: "statistics-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+          geocodingBaseUrl: "http://geo-stub.pinz-loadtest.svc.cluster.local:8080"
+      - secret:
+          dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
+          geocodingApiKey: ""
+
+  - name: notification-service
+    namespace: pinz-loadtest
+    chart: ./helm/notification-service
+    values:
+      - replicaCount: 3
+      - image:
+          repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-notification-service"
+          tag: "{{ env "NOTIFICATION_SERVICE_TAG" | default (env "IMAGE_TAG") | default "latest" }}"
+          pullPolicy: IfNotPresent
+      - env:
+          dbHost: "{{ env "DB_NOTIFICATIONS_HOST" | default "db-notifications" }}"
+          dbPort: "5435"
+          dbUser: pinz_user
+          dbName: pinz_notifications
+          redisAddr: "{{ env "REDIS_ADDR" | default "redis:6379" }}"
+          grpcPort: ":50054"
+          otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+          otelServiceName: "notification-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+          tripServiceGrpcAddress: "trip-service.pinz-loadtest.svc.cluster.local:50052"
+          apnsKeyId: ""
+          apnsTeamId: ""
+          apnsBundleId: ""
+          apnsProduction: "false"
+          smtpHost: "mailpit.pinz-loadtest.svc.cluster.local"
+          smtpPort: "1025"
+          smtpFrom: "loadtest@pinz.local"
+      - secret:
+          dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
+          apnsKeyBase64: ""
+          smtpUsername: ""
+          smtpPassword: ""
+
+  - name: api-gateway
+    namespace: pinz-loadtest
+    chart: ./helm/api-gateway
+    needs:
+      - pinz-loadtest/auth-service
+      - pinz-loadtest/trip-service
+      - pinz-loadtest/statistics-service
+      - pinz-loadtest/notification-service
+    values:
+      - replicaCount: 3
+      - image:
+          repository: "{{ env "DOCKER_REGISTRY" | default "ghcr.io" }}/{{ env "DOCKER_REPO" | default "dmitry-pr" }}/pinz-api-gateway"
+          tag: "{{ env "API_GATEWAY_TAG" | default (env "IMAGE_TAG") | default "latest" }}"
+          pullPolicy: IfNotPresent
+      - env:
+          apiGatewayPort: "8080"
+          authServiceGrpcAddress: auth-service.pinz-loadtest.svc.cluster.local:50051
+          tripServiceGrpcAddress: trip-service.pinz-loadtest.svc.cluster.local:50052
+          statisticsServiceGrpcAddress: statistics-service.pinz-loadtest.svc.cluster.local:50053
+          notificationServiceGrpcAddress: notification-service.pinz-loadtest.svc.cluster.local:50054
+          redisAddr: "{{ env "REDIS_ADDR" | default "redis:6379" }}"
+          tripShareLinkBase: '{{ env "TRIP_SHARE_LINK_BASE" | default "http://loadtest.local/trips" }}'
+          otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+          otelServiceName: "api-gateway-service"
+          otelTracesSampler: "parentbased_traceidratio"
+          otelTracesSamplerArg: "1.0"
+          devLoginProxyEnabled: "true"
+      - resources:
+          requests: {cpu: "200m", memory: "256Mi"}
+          limits: {cpu: "1000m", memory: "512Mi"}

@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 
--- Statistics-service становится владельцем GEO_REGISTRY (vkr.txt §2.5.4):
+-- Statistics-service становится владельцем GEO_REGISTRY:
 -- id выдаётся локально через sequence, уникальные индексы по name защищают
 -- идемпотентный upsert "EnsureByName" в обработчике PIN_LOCATIONS_REQUESTED.
 CREATE SEQUENCE IF NOT EXISTS geo_registry_id_seq;

@@ -94,6 +94,8 @@ spec:
                 secretKeyRef:
                   name: trip-service-secret
                   key: s3-secret-key
+            - name: S3_KEY_PREFIX
+              value: {{ .Values.env.s3KeyPrefix | quote }}
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}

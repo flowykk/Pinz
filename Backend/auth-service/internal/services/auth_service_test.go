@@ -45,7 +45,7 @@ func authServiceForValidation(t *testing.T) *AuthService {
 }
 
 func TestDevLogin_ValidationErrors(t *testing.T) {
-	svc := authServiceForValidation(t)
+	svc := NewAuthService(nil, nil, nil, nil, validator.New(), nil, nil, WithDevLogin(true))
 	ctx := context.Background()
 	cases := map[string]struct {
 		req *pb.DevLoginRequest
@@ -405,13 +405,22 @@ func TestDevLogin_user_not_found(t *testing.T) {
 	userRepo := mocks.NewMockUserRepositoryInterface(ctrl)
 	userRepo.EXPECT().GetUserByEmail("nobody@example.com").Return(nil, sql.ErrNoRows)
 
-	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil)
+	svc := NewAuthService(userRepo, nil, nil, nil, validator.New(), nil, nil, WithDevLogin(true))
 	ctx := context.Background()
 	_, err := svc.DevLogin(ctx, &pb.DevLoginRequest{Email: "nobody@example.com"})
 	require.Error(t, err)
 	st, ok := status.FromError(err)
 	require.True(t, ok)
 	require.Equal(t, codes.NotFound, st.Code())
+}
+
+func TestDevLogin_DisabledReturnsUnimplemented(t *testing.T) {
+	svc := NewAuthService(nil, nil, nil, nil, validator.New(), nil, nil)
+	_, err := svc.DevLogin(context.Background(), &pb.DevLoginRequest{Email: "any@example.com"})
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	require.Equal(t, codes.Unimplemented, st.Code())
 }
 
 func TestUpdateProfile_ValidationErrors(t *testing.T) {
