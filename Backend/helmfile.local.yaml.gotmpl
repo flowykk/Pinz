@@ -138,6 +138,7 @@ releases:
           redisAddr: redis:6379
           swaggerHost: "localhost:8080"
           tripShareLinkBase: '{{ env "TRIP_SHARE_LINK_BASE" | default "https://pinz.website/trips" }}'
+          appleAppId: '{{ env "APPLE_APP_ID" | default "" }}'
           otelExporterEndpoint: "otel-collector:4317"
           otelServiceName: "api-gateway-service"
           otelTracesSampler: "parentbased_always_on"

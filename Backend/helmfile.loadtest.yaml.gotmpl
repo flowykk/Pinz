@@ -152,6 +152,7 @@ releases:
           notificationServiceGrpcAddress: notification-service.pinz-loadtest.svc.cluster.local:50054
           redisAddr: "{{ env "REDIS_ADDR" | default "redis:6379" }}"
           tripShareLinkBase: '{{ env "TRIP_SHARE_LINK_BASE" | default "http://loadtest.local/trips" }}'
+          appleAppId: ""
           otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
           otelServiceName: "api-gateway-service"
           otelTracesSampler: "parentbased_traceidratio"
