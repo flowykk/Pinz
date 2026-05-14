@@ -26,6 +26,9 @@ final class NetworkProvider<T: TargetType> {
                 case .success(let response):
                     Self.logResponse(target: target, response: response)
                     guard response.statusCode >= 200 && response.statusCode < 300 else {
+                        if response.statusCode == 401, let pinzTarget = target as? PinzAPI {
+                            PinzSessionInvalidation.handleUnauthorizedFromAPI(for: pinzTarget)
+                        }
                         continuation.resume(throwing: HTTPError(statusCode: response.statusCode, reason: response.debugDescription))
                         return
                     }
@@ -46,6 +49,9 @@ final class NetworkProvider<T: TargetType> {
                 case .success(let response):
                     Self.logResponse(target: target, response: response)
                     guard response.statusCode >= 200 && response.statusCode < 300 else {
+                        if response.statusCode == 401, let pinzTarget = target as? PinzAPI {
+                            PinzSessionInvalidation.handleUnauthorizedFromAPI(for: pinzTarget)
+                        }
                         let error = HTTPError(statusCode: response.statusCode, reason: response.debugDescription)
                         continuation.resume(throwing: error)
                         return

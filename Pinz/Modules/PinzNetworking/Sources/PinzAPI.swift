@@ -1146,3 +1146,42 @@ extension String {
         return iso.string(from: date)
     }
 }
+
+// MARK: - Session invalidation (401 / refresh failure)
+
+/// When `true`, a 401 is being handled by `NetworkService.retryOnUnauthorized` and must not trigger a full session reset yet.
+enum PinzUnauthorizedRetryContext {
+    @TaskLocal static var isActive = false
+}
+
+enum PinzSessionInvalidation {
+
+    /// Clears stored tokens and notifies the app to return to the authentication root (e.g. `AuthFlowView`).
+    static func invalidateSession() {
+        _Concurrency.Task { @MainActor in
+            TokenStorage.shared.clear()
+            NotificationCenter.default.post(name: .pinzSessionInvalidated, object: nil)
+        }
+    }
+
+    static func handleUnauthorizedFromAPI(for target: PinzAPI) {
+        guard target.shouldInvalidateSessionOnUnauthorized else { return }
+        guard TokenStorage.shared.accessToken != nil || TokenStorage.shared.refreshToken != nil else { return }
+        guard !PinzUnauthorizedRetryContext.isActive else { return }
+        invalidateSession()
+    }
+}
+
+private extension PinzAPI {
+    /// Endpoints where 401 means a failed auth step, not an expired session.
+    var shouldInvalidateSessionOnUnauthorized: Bool {
+        switch self {
+        case .devLogin, .submitEmail, .verifyEmail,
+             .passkeyLoginBegin, .passkeyLoginFinish,
+             .passkeyRegisterBegin, .passkeyRegisterFinish:
+            return false
+        default:
+            return true
+        }
+    }
+}
