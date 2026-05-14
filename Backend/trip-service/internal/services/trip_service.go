@@ -1205,7 +1205,8 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 	if videos+newVideos > MaxVideosPerTrip {
 		return nil, status.Errorf(codes.InvalidArgument, "trip may have at most %d videos", MaxVideosPerTrip)
 	}
-	// Save media to DB (pin_id = nil)
+	// Batch INSERT — один round-trip вместо N (PINZ-223).
+	batch := make([]*models.Media, 0, len(req.GetMedia()))
 	for _, meta := range req.GetMedia() {
 		media := &models.Media{
 			TripID: tripID,
@@ -1223,9 +1224,10 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 			media.Latitude = &lat
 			media.Longitude = &lon
 		}
-		if err := s.mediaRepo.Create(media); err != nil {
-			return nil, status.Error(codes.Internal, "failed to save media")
-		}
+		batch = append(batch, media)
+	}
+	if err := s.mediaRepo.CreateBatch(batch); err != nil {
+		return nil, status.Error(codes.Internal, "failed to save media")
 	}
 	// Cluster and build draft_pins (PostGIS + time grouping)
 	draftPins := clusterMediaToDraftPins(s.mediaRepo, tripID)
@@ -1325,8 +1327,8 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 		if err := s.mediaRepo.UpdatePinIDByIDs(dp.GetMediaIds(), pin.ID); err != nil {
 			return nil, status.Error(codes.Internal, "failed to assign media to pin")
 		}
-		// Compute start_time/end_time from media (first/last by captured_at)
-		updatePinTimesAndLocation(s.pinRepo, s.mediaRepo, pin.ID)
+		// pin уже в памяти после Create — не делаем лишний GetByID (PINZ-223).
+		updatePinTimesAndLocationFor(s.pinRepo, s.mediaRepo, pin)
 	}
 	// STUB: ML-пайплайн ещё не реализован, поэтому сразу переводим трип в
 	// DRAFT_FINAL_REVIEW и публикуем TRIP_PROCESSING_COMPLETED.

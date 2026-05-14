@@ -268,6 +268,35 @@ func updatePinTimesAndLocation(pinRepo repositories.PinRepositoryInterface, medi
 	if err != nil || len(pinMedia) == 0 {
 		return nil
 	}
+	pin, err := pinRepo.GetByID(pinID)
+	if err != nil {
+		return nil
+	}
+	applyPinTimesAndLocationFromMedia(pin, pinMedia)
+	if err := pinRepo.Update(pin); err != nil {
+		return nil
+	}
+	return pin
+}
+
+// updatePinTimesAndLocationFor — вариант для случаев, когда pin только что
+// создан/прочитан и лишний GetByID не нужен (PINZ-223).
+func updatePinTimesAndLocationFor(pinRepo repositories.PinRepositoryInterface, mediaRepo repositories.MediaRepositoryInterface, pin *models.Pin) *models.Pin {
+	if pin == nil {
+		return nil
+	}
+	pinMedia, err := mediaRepo.ListByPinID(pin.ID)
+	if err != nil || len(pinMedia) == 0 {
+		return nil
+	}
+	applyPinTimesAndLocationFromMedia(pin, pinMedia)
+	if err := pinRepo.Update(pin); err != nil {
+		return nil
+	}
+	return pin
+}
+
+func applyPinTimesAndLocationFromMedia(pin *models.Pin, pinMedia []*models.Media) {
 	var startTime, endTime *time.Time
 	var lat, lon *float64
 	for _, m := range pinMedia {
@@ -284,18 +313,10 @@ func updatePinTimesAndLocation(pinRepo repositories.PinRepositoryInterface, medi
 			lon = m.Longitude
 		}
 	}
-	pin, err := pinRepo.GetByID(pinID)
-	if err != nil {
-		return nil
-	}
 	pin.StartTime = startTime
 	pin.EndTime = endTime
 	pin.Latitude = lat
 	pin.Longitude = lon
-	if err := pinRepo.Update(pin); err != nil {
-		return nil
-	}
-	return pin
 }
 
 func contentTypeToExt(ct string) string {

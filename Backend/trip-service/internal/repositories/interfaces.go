@@ -97,6 +97,7 @@ type TripEventPublisher interface {
 
 type MediaRepositoryInterface interface {
 	Create(m *models.Media) error
+	CreateBatch(medias []*models.Media) error
 	// CommitInSession — атомарный INSERT в рамках add-media сессии с advisory
 	// lock по session_id и проверкой лимитов (ErrMediaLimitExceeded /
 	// ErrVideoLimitExceeded). Возвращает totalAfter/videosAfter для ответа
