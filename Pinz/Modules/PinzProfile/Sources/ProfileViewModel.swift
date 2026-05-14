@@ -311,7 +311,8 @@ public class ProfileViewModel {
 
         do {
             _ = try await networkService.deleteAccount()
-            router?.navigateToMain()
+            TokenStorage.shared.clear()
+            router?.navigateToAuthenticationRoot()
         } catch {
             print("[Profile] Failed to delete account: \(error)")
             showToast?(PinzBaseStrings.Profile.Toast.accountDeleteFailed)

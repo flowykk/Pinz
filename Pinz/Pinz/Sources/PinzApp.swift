@@ -59,6 +59,9 @@ struct PinzApp: App {
                         ).processPendingInviteIfNeeded()
                     }
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .pinzSessionInvalidated)) { _ in
+                    router.navigateToAuthenticationRoot()
+                }
                 .task {
                     await TripInviteDeepLinkCoordinator(
                         router: router,

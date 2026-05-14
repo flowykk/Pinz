@@ -743,13 +743,28 @@ public final class NetworkService: NetworkServiceProtocol {
     private func retryOnUnauthorized<T>(
         _ perform: @escaping () async throws -> T
     ) async throws -> T {
-        do {
-            return try await perform()
-        } catch let httpError as HTTPError where httpError == .unauthorized {
-            guard let storedRefreshToken = TokenStorage.shared.refreshToken else { throw httpError }
-            let newAccessToken = try await refreshToken(refreshToken: storedRefreshToken).accessToken
-            TokenStorage.shared.save(accessToken: newAccessToken, refreshToken: storedRefreshToken)
-            return try await perform()
+        try await PinzUnauthorizedRetryContext.$isActive.withValue(true) {
+            do {
+                return try await perform()
+            } catch let httpError as HTTPError where httpError == .unauthorized {
+                guard let storedRefreshToken = TokenStorage.shared.refreshToken else {
+                    PinzSessionInvalidation.invalidateSession()
+                    throw httpError
+                }
+                do {
+                    let newAccessToken = try await refreshToken(refreshToken: storedRefreshToken).accessToken
+                    TokenStorage.shared.save(accessToken: newAccessToken, refreshToken: storedRefreshToken)
+                } catch {
+                    PinzSessionInvalidation.invalidateSession()
+                    throw error
+                }
+                do {
+                    return try await perform()
+                } catch let httpError2 as HTTPError where httpError2 == .unauthorized {
+                    PinzSessionInvalidation.invalidateSession()
+                    throw httpError2
+                }
+            }
         }
     }
 
