@@ -60,7 +60,7 @@ struct PostFeedItemView: View {
                         icon: viewModel.post.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup",
                         text: String(viewModel.post.likes),
                         iconSize: iconSize,
-                        iconColor: PinzUIAsset.textPrimary
+                        iconColor: PinzUIAsset.textPrimary.swiftUIColor
                     )
                 }.buttonStyle(.plain)
 
@@ -71,7 +71,7 @@ struct PostFeedItemView: View {
                         icon: viewModel.post.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown",
                         text: String(viewModel.post.dislikes),
                         iconSize: iconSize,
-                        iconColor: PinzUIAsset.textPrimary
+                        iconColor: PinzUIAsset.textPrimary.swiftUIColor
                     )
                 }.buttonStyle(.plain)
             }
@@ -83,7 +83,7 @@ struct PostFeedItemView: View {
                 StatisticView(
                     icon: viewModel.post.isSaved ? "bookmark.fill" : "bookmark",
                     iconSize: iconSize,
-                    iconColor: PinzUIAsset.textPrimary
+                    iconColor: PinzUIAsset.textPrimary.swiftUIColor
                 )
             }.buttonStyle(.plain)
         }
@@ -175,14 +175,14 @@ struct PostFeedItemView: View {
                         .roundedFont(
                             size: 20,
                             weight: .bold,
-                            foregroundColor: PinzUIAsset.background.swiftUIColor
+                            foregroundColor: PinzUIAsset.mapOverlayTextColor
                         )
                     if let tags = tripTags {
                         Text(tags)
                             .roundedFont(
                                 size: 14,
                                 weight: .semibold,
-                                foregroundColor: PinzUIAsset.background.swiftUIColor
+                                foregroundColor: PinzUIAsset.mapOverlayTextColor
                             )
                     }
                     Spacer()
@@ -192,7 +192,7 @@ struct PostFeedItemView: View {
                     icon: "person.2.fill",
                     text: String(viewModel.post.participants),
                     iconSize: 16,
-                    iconColor: PinzUIAsset.background
+                    iconColor: PinzUIAsset.mapOverlayTextColor
                 )
             }
             .padding(.horizontal, 14)

@@ -7,7 +7,7 @@ let project = Project(
             name: "PinzAccessibility",
             destinations: .iOS,
             product: .framework,
-            bundleId: "io.tuist.PinzAccessibility",
+            bundleId: "io.tuist.hse.PinzAccessibility",
             deploymentTargets: .iOS("18.0"),
             infoPlist: .default,
             sources: ["Sources/**"],

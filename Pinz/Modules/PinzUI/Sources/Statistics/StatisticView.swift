@@ -5,14 +5,14 @@ public struct StatisticView: View {
     private let text: String?
     private let iconSize: CGFloat
     private let textSize: CGFloat
-    private let iconColor: PinzUIColors
+    private let iconColor: Color
 
-public init (
+    public init(
         icon: String,
         text: String? = nil,
         iconSize: CGFloat = 14,
         textSize: CGFloat = 14,
-        iconColor: PinzUIColors = PinzUIAsset.textSecondary
+        iconColor: Color = PinzUIAsset.textSecondary.swiftUIColor
     ) {
         self.icon = icon
         self.text = text
@@ -25,10 +25,10 @@ public init (
         HStack(spacing: 2) {
             Group {
                 Image(systemName: icon)
-                    .roundedFont(size: iconSize, foregroundColor: iconColor.swiftUIColor)
+                    .roundedFont(size: iconSize, foregroundColor: iconColor)
                 if let text {
                     Text(text)
-                        .roundedFont(size: textSize, foregroundColor: iconColor.swiftUIColor)
+                        .roundedFont(size: textSize, foregroundColor: iconColor)
                 }
             }
         }

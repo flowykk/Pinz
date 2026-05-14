@@ -9,7 +9,7 @@ public struct PinPlaceChangeView: View {
     @State private var viewModel: PinPlaceChangeViewModel
 
     @Environment(\.appRouter) private var router
-    @AppStorage("pinzMapStyle") private var mapStyleRawValue: String = PinzMapStyle.satelight.rawValue
+    @AppStorage(PinzMapStyle.mapStyleKey) private var mapStyleRawValue: String = PinzMapStyle.satelight.rawValue
 
     public init(pin: Pin, onSave: @escaping (CLLocationCoordinate2D?) -> Void) {
         self._viewModel = State(initialValue: PinPlaceChangeViewModel(pin: pin, onSave: onSave))
@@ -69,14 +69,14 @@ public struct PinPlaceChangeView: View {
                 leftView: {
                     PinzButton(
                         type: .icon(.chevronLeft),
-                        tint: .white,
+                        tint: PinzUIAsset.mapOverlayTextColor,
                         action: .plain { viewModel.dispatch(.back) }
                     )
                 },
                 centerView: {
                     Text(PinzBaseStrings.PinPlaceChange.Label.instructions)
                         .multilineTextAlignment(.center)
-                        .roundedFont(size: 14, foregroundColor: PinzUIAsset.textPrimary.swiftUIColor)
+                        .roundedFont(size: 14, foregroundColor: PinzUIAsset.mapOverlayTextColor)
                 }
             ).background {
                 GradientView(style: .top, color: .black, height: 200)

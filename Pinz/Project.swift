@@ -7,7 +7,7 @@ let project = Project(
             name: "Pinz",
             destinations: .iOS,
             product: .app,
-            bundleId: "io.tuist.Pinz",
+            bundleId: "io.tuist.hse.Pinz",
             deploymentTargets: .iOS("18.0"),
             infoPlist: .extendingDefault(
                 with: [
@@ -17,7 +17,7 @@ let project = Project(
                     ],
                     "CFBundleURLTypes": [
                         [
-                            "CFBundleURLName": "io.tuist.Pinz.invite",
+                            "CFBundleURLName": "io.tuist.hse.Pinz.invite",
                             "CFBundleURLSchemes": ["pinz"],
                             "CFBundleTypeRole": "Editor",
                         ],
@@ -32,7 +32,7 @@ let project = Project(
                     .string("applinks:pinz.website"),
                 ]),
                 "keychain-access-groups": .array([
-                    .string("$(AppIdentifierPrefix)io.tuist.Pinz")
+                    .string("$(AppIdentifierPrefix)io.tuist.hse.Pinz")
                 ])
             ]),
             dependencies: [
@@ -53,7 +53,7 @@ let project = Project(
                 base: [
                     "ASSETCATALOG_COMPILER_APPICON_NAME": "PinzLightP",
                     "ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS": "YES",
-                    "DEVELOPMENT_TEAM": "ABNY5S6RA5",
+                    "DEVELOPMENT_TEAM": "4P79GCW6U9",
                     "CODE_SIGN_STYLE": "Automatic",
                     "CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION": "YES",
                 ]
@@ -63,7 +63,7 @@ let project = Project(
             name: "PinzTests",
             destinations: .iOS,
             product: .unitTests,
-            bundleId: "io.tuist.PinzTests",
+            bundleId: "io.tuist.hse.PinzTests",
             deploymentTargets: .iOS("18.0"),
             infoPlist: .default,
             sources: ["Pinz/Tests/**"],
@@ -74,7 +74,7 @@ let project = Project(
             name: "PinzUITests",
             destinations: .iOS,
             product: .uiTests,
-            bundleId: "io.tuist.PinzUITests",
+            bundleId: "io.tuist.hse.PinzUITests",
             deploymentTargets: .iOS("18.0"),
             infoPlist: .default,
             sources: ["Pinz/UITests/**"],

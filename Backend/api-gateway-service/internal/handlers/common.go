@@ -142,7 +142,7 @@ func AppleAppSiteAssociation(w http.ResponseWriter, r *http.Request) {
  "apps": [],
  "details": [
  {
- "appID": "ABNY5S6RA5.io.tuist.Pinz",
+ "appID": "4P79GCW6U9.io.tuist.hse.Pinz",
  "paths": [
  "/join/*",
  "/reset-password*"
@@ -151,7 +151,7 @@ func AppleAppSiteAssociation(w http.ResponseWriter, r *http.Request) {
  ]
  },
  "webcredentials": {
- "apps": ["ABNY5S6RA5.io.tuist.Pinz"]
+ "apps": ["4P79GCW6U9.io.tuist.hse.Pinz"]
  }
 }`
 	w.Header().Set("Content-Type", "application/json")

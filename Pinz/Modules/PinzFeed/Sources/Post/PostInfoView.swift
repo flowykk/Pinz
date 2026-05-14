@@ -51,7 +51,7 @@ public struct PostInfoView: View {
                 icon: "person.2.fill",
                 text: String(viewModel.post.participants),
                 iconSize: 16,
-                iconColor: PinzUIAsset.textSecondary
+                iconColor: PinzUIAsset.textSecondary.swiftUIColor
             )
         })
     }
@@ -70,7 +70,7 @@ public struct PostInfoView: View {
                         icon: viewModel.post.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup",
                         text: String(viewModel.post.likes),
                         iconSize: iconSize,
-                        iconColor: PinzUIAsset.textPrimary
+                        iconColor: PinzUIAsset.textPrimary.swiftUIColor
                     )
                 }
                 .buttonStyle(.plain)
@@ -82,7 +82,7 @@ public struct PostInfoView: View {
                         icon: viewModel.post.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown",
                         text: String(viewModel.post.dislikes),
                         iconSize: iconSize,
-                        iconColor: PinzUIAsset.textPrimary
+                        iconColor: PinzUIAsset.textPrimary.swiftUIColor
                     )
                 }
                 .buttonStyle(.plain)
@@ -95,7 +95,7 @@ public struct PostInfoView: View {
                     StatisticView(
                         icon: viewModel.post.isSaved ? "bookmark.fill" : "bookmark",
                         iconSize: iconSize,
-                        iconColor: PinzUIAsset.textPrimary
+                        iconColor: PinzUIAsset.textPrimary.swiftUIColor
                     )
                 }
                 .buttonStyle(.plain)
