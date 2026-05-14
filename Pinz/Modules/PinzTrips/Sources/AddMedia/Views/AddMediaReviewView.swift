@@ -12,6 +12,7 @@ public struct AddMediaReviewView: View {
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     @Environment(\.appRouter) private var router
+    @Environment(\.showToast) private var showToast
 
     public init(tripId: String, sessionId: String) {
         viewModel = AddMediaReviewViewModel(tripId: tripId, sessionId: sessionId)
@@ -33,7 +34,7 @@ public struct AddMediaReviewView: View {
             CollapsibleHeader(needsBlur: true) {
                 header
             } content: {
-                if !viewModel.isLoading {
+                if viewModel.initialReviewLoaded, !viewModel.isLoading {
                     content
                 }
             }
@@ -47,7 +48,11 @@ public struct AddMediaReviewView: View {
             }
         }
         .background(PinzUIAsset.background.swiftUIColor)
-        .onAppear { viewModel.setRouter(router) }
+        .onAppear {
+            viewModel.setRouter(router)
+            viewModel.setShowToast(showToast)
+            Task { await viewModel.loadInitialReviewAndStartWebSocketIfNeeded() }
+        }
         .onReceive(timer) { _ in now = Date() }
         .confirmationDialog(
             PinzBaseStrings.AddMedia.Cancel.title,
@@ -76,7 +81,21 @@ public struct AddMediaReviewView: View {
         }, centerView: {
             HeaderTitle(PinzBaseStrings.AddMedia.Review.title)
         }, rightView: {
-            EmptyView()
+            if viewModel.canEdit, viewModel.initialReviewLoaded {
+                if viewModel.pinsHaveIssues {
+                    PinzButton(
+                        type: .icon(.warning),
+                        tint: PinzUIAsset.accentOrange.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.navigate(.problems)) }
+                    )
+                } else {
+                    PinzButton(
+                        type: .icon(.checkmark),
+                        tint: PinzUIAsset.accentGreen.swiftUIColor,
+                        action: .plain {}
+                    )
+                }
+            }
         })
     }
 
@@ -94,7 +113,6 @@ public struct AddMediaReviewView: View {
                 }
             }
         }
-        .padding(.horizontal, 12)
         .padding(.bottom, 100)
         .animation(.default, value: viewModel.pins)
     }
@@ -110,6 +128,7 @@ public struct AddMediaReviewView: View {
                 PinzButton(
                     type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.confirm),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
+                    disabled: viewModel.pinsHaveIssues,
                     action: .async { try await viewModel.asyncDispatch(.confirm) }
                 )
             }

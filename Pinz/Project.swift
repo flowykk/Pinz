@@ -27,6 +27,7 @@ let project = Project(
             sources: ["Pinz/Sources/**"],
             resources: ["Pinz/Resources/**"],
             entitlements: .dictionary([
+                "aps-environment": .string("$(APS_ENVIRONMENT)"),
                 "com.apple.developer.associated-domains": .array([
                     .string("webcredentials:pinz.website"),
                     .string("applinks:pinz.website"),
@@ -56,6 +57,10 @@ let project = Project(
                     "DEVELOPMENT_TEAM": "4P79GCW6U9",
                     "CODE_SIGN_STYLE": "Automatic",
                     "CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION": "YES",
+                ],
+                configurations: [
+                    .debug(name: "Debug", settings: ["APS_ENVIRONMENT": "development"]),
+                    .release(name: "Release", settings: ["APS_ENVIRONMENT": "production"]),
                 ]
             )
         ),
@@ -68,7 +73,10 @@ let project = Project(
             infoPlist: .default,
             sources: ["Pinz/Tests/**"],
             resources: [],
-            dependencies: [.target(name: "Pinz")]
+            dependencies: [
+                .target(name: "Pinz"),
+                .project(target: "PinzUI", path: "Modules/PinzUI"),
+            ]
         ),
         .target(
             name: "PinzUITests",

@@ -45,11 +45,15 @@ final class MockRouter: AppRouting {
     var navigatedToAddMediaGrouping: (tripId: String, sessionId: String)?
     var navigatedToAddMediaProcessing: (tripId: String, sessionId: String)?
     var navigatedToAddMediaReview: (tripId: String, sessionId: String)?
+    var navigatedToAddMediaProblems: (tripId: String, sessionId: String)?
+    private var addMediaReviewDraftPinsStorage: [String: [Pin]] = [:]
 
     // Pin upload
     var navigatedToPinUploadStart: (tripId: String, targetPinId: String?)?
     var navigatedToPinUploadProcessing: (tripId: String, sessionId: String, targetPinId: String?)?
     var navigatedToPinUploadReview: (tripId: String, sessionId: String, targetPinId: String?)?
+    var navigatedToPinUploadProblems: (tripId: String, sessionId: String, targetPinId: String?)?
+    private var pinUploadReviewDraftPinStorage: [String: Pin] = [:]
 
     // Trip creation
     var navigatedToTripCreationInitial = false
@@ -158,6 +162,22 @@ final class MockRouter: AppRouting {
     func navigateToAddMediaProcessing(tripId: String, sessionId: String) { navigatedToAddMediaProcessing = (tripId, sessionId) }
     func navigateToAddMediaReview(tripId: String, sessionId: String) { navigatedToAddMediaReview = (tripId, sessionId) }
 
+    func navigateToAddMediaProblems(tripId: String, sessionId: String) {
+        navigatedToAddMediaProblems = (tripId, sessionId)
+    }
+
+    func setAddMediaReviewDraftPins(_ pins: [Pin], forSessionId sessionId: String) {
+        addMediaReviewDraftPinsStorage[sessionId] = pins
+    }
+
+    func addMediaReviewDraftPins(forSessionId sessionId: String) -> [Pin]? {
+        addMediaReviewDraftPinsStorage[sessionId]
+    }
+
+    func clearAddMediaReviewDraftPins(forSessionId sessionId: String) {
+        addMediaReviewDraftPinsStorage.removeValue(forKey: sessionId)
+    }
+
     // Pin upload
     func navigateToPinUploadStart(tripId: String, targetPinId: String?) {
         navigatedToPinUploadStart = (tripId, targetPinId)
@@ -169,6 +189,22 @@ final class MockRouter: AppRouting {
 
     func navigateToPinUploadReview(tripId: String, sessionId: String, targetPinId: String?) {
         navigatedToPinUploadReview = (tripId, sessionId, targetPinId)
+    }
+
+    func navigateToPinUploadProblems(tripId: String, sessionId: String, targetPinId: String?) {
+        navigatedToPinUploadProblems = (tripId, sessionId, targetPinId)
+    }
+
+    func setPinUploadReviewDraftPin(_ pin: Pin, forSessionId sessionId: String) {
+        pinUploadReviewDraftPinStorage[sessionId] = pin
+    }
+
+    func pinUploadReviewDraftPin(forSessionId sessionId: String) -> Pin? {
+        pinUploadReviewDraftPinStorage[sessionId]
+    }
+
+    func clearPinUploadReviewDraftPin(forSessionId sessionId: String) {
+        pinUploadReviewDraftPinStorage.removeValue(forKey: sessionId)
     }
 
     // Trip creation

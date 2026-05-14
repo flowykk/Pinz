@@ -1049,14 +1049,12 @@ extension PinzAPI {
                   "category":"Другое",
                   "tags":null,
                   "latitude":59.9386,
-                  "longitude":30.3141,
-                  "start_time_unix":1778338000,
-                  "end_time_unix":1778341600
+                  "longitude":30.3141
                 },
                 "media":[
                   {"media_id":"pin-media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"private"}
                 ],
-                "pin_issues":null,
+                "pin_issues":["MISSING_DATES"],
                 "nsfw_media_ids":null,
                 "deduped_media_ids":null
               },
@@ -1078,9 +1076,48 @@ extension PinzAPI {
         case .addMediaProcessGrouping, .addMediaGetGrouping:
             json = #"{"trip_id":"trip-001","session_id":"session-001","status":"ADD_MEDIA_GROUPING_REVIEW","draft_pins":[{"draft_pin_id":"cluster-1","media":[{"media_id":"media-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","type":"image"}]}],"existing_media_ids":[]}"#
         case .addMediaApplyGroupsAndProcess:
-            json = #"{"message":"Processing started","status":"ADD_MEDIA_PROCESSING"}"#
+            // Стаб не эмулирует WS: сразу финальный статус, клиент уйдёт на review по телу ответа.
+            json = #"{"message":"Stub ready for review","status":"ADD_MEDIA_DRAFT_FINAL_REVIEW"}"#
         case .addMediaGetReview:
-            json = #"{"trip_id":"trip-001","session_id":"session-001","pins":[{"id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"tags":[],"issues":[],"media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"}]}],"new_pin_ids":["pin-001"],"protected_media_ids":[],"current_initiator":{"user_id":"user-001","username":"flowykk","avatar_url":null},"takeover_available_at":"2026-04-25T13:00:00Z","can_edit":true}"#
+            json = #"""
+            {
+              "trip_id":"trip-001",
+              "session_id":"session-001",
+              "pins":[
+                {
+                  "id":"pin-001",
+                  "trip_id":"trip-001",
+                  "name":"Эйфелева башня",
+                  "category":"entertainment",
+                  "latitude":48.8584,
+                  "longitude":2.2945,
+                  "start_time_unix":1716048000,
+                  "end_time_unix":1716134400,
+                  "tags":["архитектура"],
+                  "issues":[],
+                  "privacy_level":"public",
+                  "media":[{"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"}]
+                },
+                {
+                  "id":"pin-002",
+                  "trip_id":"trip-001",
+                  "name":"Новый кластер",
+                  "category":"sight",
+                  "latitude":48.86,
+                  "longitude":2.30,
+                  "tags":[],
+                  "issues":["MISSING_DATES"],
+                  "privacy_level":"public",
+                  "media":[{"media_id":"m-002","url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","privacy_level":"public"}]
+                }
+              ],
+              "new_pin_ids":["pin-002"],
+              "protected_media_ids":[],
+              "current_initiator":{"user_id":"user-001","username":"flowykk","avatar_url":null},
+              "takeover_available_at":"2026-04-25T13:00:00Z",
+              "can_edit":true
+            }
+            """#
         case .addMediaConfirm:
             json = #"{"status":"READY","already_confirmed":false}"#
         case .addMediaCancel:

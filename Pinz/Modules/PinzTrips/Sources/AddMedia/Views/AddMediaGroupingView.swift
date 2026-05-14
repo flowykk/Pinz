@@ -80,7 +80,9 @@ public struct AddMediaGroupingView: View {
                 )
                 .padding(.horizontal, 12)
                 if index != pins.count - 1 {
-                    Divider().padding(.leading, 12)
+                    Divider()
+                        .padding(.vertical, 8)
+                        .padding(.leading, 12)
                 }
             }
         }

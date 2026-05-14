@@ -37,6 +37,10 @@ public final class AddMediaWebSocketClient {
     public func connect(tripId: String) -> AsyncStream<AddMediaWSEvent> {
         disconnect()
 
+        let url = websocketURL(for: tripId)
+        let hasToken = TokenStorage.shared.accessToken != nil
+        print("[AddMediaWS] connect tripId=\(tripId) url=\(url.absoluteString) hasToken=\(hasToken)")
+
         let wsTask = makeWebSocketTask(for: tripId)
         webSocketTask = wsTask
         wsTask.resume()
@@ -54,6 +58,7 @@ public final class AddMediaWebSocketClient {
             receiveTask = task
 
             continuation.onTermination = { [weak self] _ in
+                print("[AddMediaWS] stream terminated tripId=\(tripId)")
                 task.cancel()
                 self?.webSocketTask?.cancel(with: .normalClosure, reason: nil)
             }
@@ -61,6 +66,8 @@ public final class AddMediaWebSocketClient {
     }
 
     public func disconnect() {
+        guard receiveTask != nil || webSocketTask != nil else { return }
+        print("[AddMediaWS] disconnect")
         receiveTask?.cancel()
         receiveTask = nil
         webSocketTask?.cancel(with: .normalClosure, reason: nil)
@@ -70,6 +77,8 @@ public final class AddMediaWebSocketClient {
     // MARK: - Blocking wait API (for NetworkService)
 
     func waitForDraftFinalReview(tripId: String, timeout: TimeInterval) async throws {
+        let url = websocketURL(for: tripId)
+        print("[AddMediaWS] waitForDraftFinalReview url=\(url.absoluteString) timeout=\(timeout)s")
         let wsTask = makeWebSocketTask(for: tripId)
         wsTask.resume()
 
@@ -111,17 +120,49 @@ public final class AddMediaWebSocketClient {
         wsTask: URLSessionWebSocketTask,
         continuation: AsyncStream<AddMediaWSEvent>.Continuation
     ) async {
-        defer { continuation.finish() }
+        defer {
+            print("[AddMediaWS] receive loop ended")
+            continuation.finish()
+        }
+
+        print("[AddMediaWS] receive loop started")
 
         while !Task.isCancelled {
             do {
                 let message = try await wsTask.receive()
                 let data = Self.data(from: message)
+                if let raw = String(data: data, encoding: .utf8) {
+                    print("[AddMediaWS] ← message: \(raw)")
+                } else {
+                    print("[AddMediaWS] ← message: <\(data.count) bytes binary>")
+                }
                 let event = Self.parseEvent(from: data)
+                print("[AddMediaWS] parsed: \(Self.describe(event))")
+                if case .unknown = event, let preview = String(data: data.prefix(400), encoding: .utf8) {
+                    print("[AddMediaWS] unknown frame preview: \(preview)")
+                }
                 continuation.yield(event)
             } catch {
+                if Task.isCancelled {
+                    print("[AddMediaWS] receive cancelled")
+                } else {
+                    print("[AddMediaWS] receive error: \(error.localizedDescription) | \(error)")
+                }
                 break
             }
+        }
+    }
+
+    private static func describe(_ event: AddMediaWSEvent) -> String {
+        switch event {
+        case let .tripStatusChanged(status):
+            return "tripStatusChanged(\(status))"
+        case let .addMediaProgress(mediaId, _, mediaType, _, mediaCount):
+            return "addMediaProgress(mediaId=\(mediaId) type=\(mediaType) count=\(mediaCount))"
+        case let .initiatorChanged(prev, cur, _):
+            return "initiatorChanged(prev=\(prev ?? "nil") cur=\(cur))"
+        case .unknown:
+            return "unknown"
         }
     }
 
@@ -162,7 +203,7 @@ public final class AddMediaWebSocketClient {
     }
 
     private func websocketURL(for tripId: String) -> URL {
-        let base = commandLineHostURL()
+        let base = hostURL()
         var components = URLComponents()
         components.scheme = base.scheme
         components.host = base.host
@@ -171,9 +212,9 @@ public final class AddMediaWebSocketClient {
         return components.url ?? base
     }
 
-    private func commandLineHostURL() -> URL {
-        if CommandLine.arguments.contains("-useLocalhost") {
-            return URL(string: "ws://localhost:8080")!
+    private func hostURL() -> URL {
+        if let url = URL(string: PinzLaunchArgs.websocketURLString) {
+            return url
         }
         return URL(string: "wss://pinz.website")!
     }

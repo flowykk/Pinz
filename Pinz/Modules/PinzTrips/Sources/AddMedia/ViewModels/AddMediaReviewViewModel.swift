@@ -8,6 +8,7 @@ final class AddMediaReviewViewModel {
 
     enum Route {
         case back
+        case problems
     }
 
     enum Intent {
@@ -27,10 +28,16 @@ final class AddMediaReviewViewModel {
     var currentInitiator: PublicUserProfileDTO? = nil
     var takeoverAvailableAt: Date? = nil
     private(set) var isLoading = false
+    private(set) var initialReviewLoaded = false
+
+    var pinsHaveIssues: Bool {
+        pins.contains { !$0.issueKinds.isEmpty }
+    }
 
     private var wsTask: Task<Void, Never>?
     private var wsClient = AddMediaWebSocketClient()
     private var router: AppRouting?
+    private var showToast: ((String) -> Void)?
     private let networkService: NetworkServiceProtocol
 
     init(tripId: String, sessionId: String, networkService: NetworkServiceProtocol = NetworkService.shared) {
@@ -41,16 +48,28 @@ final class AddMediaReviewViewModel {
 
     func setRouter(_ router: AppRouting?) {
         self.router = router
-        Task {
-            await loadReview()
-            startWSListener()
-        }
+        applyDraftFromRouterIfNeeded()
+    }
+
+    func setShowToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
+    }
+
+    func loadInitialReviewAndStartWebSocketIfNeeded() async {
+        guard !initialReviewLoaded else { return }
+        await loadReviewFromNetwork()
+        initialReviewLoaded = true
+        syncAddMediaDraftToRouter()
+        startWSListener()
     }
 
     func dispatch(_ intent: Intent) {
         switch intent {
         case .navigate(.back):
             router?.pop()
+        case .navigate(.problems):
+            syncAddMediaDraftToRouter()
+            router?.navigateToAddMediaProblems(tripId: tripId, sessionId: sessionId)
         }
     }
 
@@ -59,7 +78,11 @@ final class AddMediaReviewViewModel {
         router?.navigateToPinInfo(
             pin: pin,
             updateAction: PinUpdateAction { [weak self] updatedPin in
-                self?.pins[index] = updatedPin
+                guard let self else { return }
+                var fixedPin = updatedPin
+                fixedPin.issues = Self.normalizeIssues(for: updatedPin)
+                self.pins[index] = fixedPin
+                self.syncAddMediaDraftToRouter()
             },
             deleteAction: nil
         )
@@ -68,6 +91,10 @@ final class AddMediaReviewViewModel {
     func asyncDispatch(_ intent: AsyncIntent) async throws {
         switch intent {
         case .confirm:
+            if pinsHaveIssues {
+                showToast?(PinzBaseStrings.ReviewTripCreation.Toast.fixIssuesFirst)
+                return
+            }
             isLoading = true
             defer { isLoading = false }
             let pinUpdates = pins.map { pin in
@@ -90,10 +117,12 @@ final class AddMediaReviewViewModel {
                 pinUpdates: pinUpdates,
                 mediaToDelete: []
             )
+            router?.clearAddMediaReviewDraftPins(forSessionId: sessionId)
             router?.popToRoot()
 
         case .cancel:
             try await networkService.addMediaCancel(tripId: tripId, sessionId: sessionId)
+            router?.clearAddMediaReviewDraftPins(forSessionId: sessionId)
             router?.popToRoot()
 
         case .takeover:
@@ -108,7 +137,19 @@ final class AddMediaReviewViewModel {
 
     // MARK: - Private
 
-    private func loadReview() async {
+    private func applyDraftFromRouterIfNeeded() {
+        guard let router, let draft = router.addMediaReviewDraftPins(forSessionId: sessionId), !draft.isEmpty else {
+            return
+        }
+        pins = draft
+    }
+
+    private func syncAddMediaDraftToRouter() {
+        guard let router, !pins.isEmpty else { return }
+        router.setAddMediaReviewDraftPins(pins, forSessionId: sessionId)
+    }
+
+    private func loadReviewFromNetwork() async {
         do {
             let dto = try await networkService.addMediaGetReview(tripId: tripId, sessionId: sessionId)
             pins = dto.pins.enumerated().map { index, pinDto in
@@ -132,8 +173,10 @@ final class AddMediaReviewViewModel {
             for await event in wsClient.connect(tripId: tripId) {
                 switch event {
                 case .initiatorChanged:
-                    await loadReview()
+                    await loadReviewFromNetwork()
+                    syncAddMediaDraftToRouter()
                 case let .tripStatusChanged(status) where status == "READY":
+                    router?.clearAddMediaReviewDraftPins(forSessionId: sessionId)
                     router?.popToRoot()
                     return
                 default:
@@ -146,6 +189,17 @@ final class AddMediaReviewViewModel {
     private func parseDate(_ string: String?) -> Date? {
         guard let string else { return nil }
         return ISO8601DateFormatter().date(from: string)
+    }
+
+    private static func normalizeIssues(for pin: Pin) -> [String] {
+        var result: [String] = []
+        if pin.coordinates == nil {
+            result.append(Pin.Issue.missingCoordinates.rawValue)
+        }
+        if pin.startDate == nil || pin.endDate == nil {
+            result.append(Pin.Issue.missingDates.rawValue)
+        }
+        return result
     }
 
     deinit {

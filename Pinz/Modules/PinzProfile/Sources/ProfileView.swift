@@ -25,6 +25,7 @@ public struct ProfileView: View {
     @State var viewModel: ProfileViewModel
 
     @State var showDeleteAccountAlert = false
+    @State var showLogoutAlert = false
 
     @State var imageEditingDialogShown = false
     @State var photoPickerShown = false
@@ -46,35 +47,31 @@ public struct ProfileView: View {
     }
 
     public var body: some View {
-        CollapsibleHeader(needsBlur: true) {
-            header
-        } content: {
-            if viewModel.isLoading && viewModel.state == .default {
-                GeometryReader { proxy in
-                    VStack {
-                        Spacer()
-                        LoadingView()
-                        Spacer()
-                    }
-                    .frame(height: max(1, proxy.size.height))
-                    .frame(maxWidth: .infinity)
-                }
-            } else {
-                VStack(spacing: 12) {
-                    avatar
-                        .padding(.top, 12)
-
+        ZStack {
+            CollapsibleHeader(needsBlur: true) {
+                header
+            } content: {
+                if !viewModel.isLoading || viewModel.state != .default {
                     VStack(spacing: 12) {
-                        switch viewModel.state {
-                        case .default:
-                            defaultSettings
-                        case .editing:
-                            editingSettings
+                        avatar
+                            .padding(.top, 12)
+                        
+                        VStack(spacing: 12) {
+                            switch viewModel.state {
+                            case .default:
+                                defaultSettings
+                            case .editing:
+                                editingSettings
+                            }
                         }
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 24)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 24)
                 }
+            }
+
+            if viewModel.isLoading && viewModel.state == .default {
+                LoadingView()
             }
         }
         .onAppear {
@@ -107,6 +104,14 @@ public struct ProfileView: View {
             }
         } message: {
             Text(PinzBaseStrings.Alert.DeleteAccount.message)
+        }
+        .alert(PinzBaseStrings.Alert.Logout.title, isPresented: $showLogoutAlert) {
+            Button(PinzBaseStrings.Common.Button.cancel, role: .cancel) { }
+            Button(PinzBaseStrings.Alert.Logout.confirm, role: .destructive) {
+                viewModel.dispatch(.logout)
+            }
+        } message: {
+            Text(PinzBaseStrings.Alert.Logout.message)
         }
     }
 
@@ -283,7 +288,7 @@ public struct ProfileView: View {
                     leading: .iconTitle(ProfileIcon.door, PinzBaseStrings.Profile.Button.logout),
                     trailing: .icon(ProfileIcon.chevronRight),
                     style: .destructive,
-                    action: .plain { viewModel.dispatch(.logout) }
+                    action: .plain { showLogoutAlert = true }
                 )),
                 accountDeleteSetting,
             ],

@@ -65,9 +65,18 @@ public protocol AppRouting: AnyObject {
     func navigateToAddMediaProcessing(tripId: String, sessionId: String)
     func navigateToAddMediaReview(tripId: String, sessionId: String)
 
+    func navigateToAddMediaProblems(tripId: String, sessionId: String)
+    func setAddMediaReviewDraftPins(_ pins: [Pin], forSessionId sessionId: String)
+    func addMediaReviewDraftPins(forSessionId sessionId: String) -> [Pin]?
+    func clearAddMediaReviewDraftPins(forSessionId sessionId: String)
+
     func navigateToPinUploadStart(tripId: String, targetPinId: String?)
     func navigateToPinUploadProcessing(tripId: String, sessionId: String, targetPinId: String?)
     func navigateToPinUploadReview(tripId: String, sessionId: String, targetPinId: String?)
+    func navigateToPinUploadProblems(tripId: String, sessionId: String, targetPinId: String?)
+    func setPinUploadReviewDraftPin(_ pin: Pin, forSessionId sessionId: String)
+    func pinUploadReviewDraftPin(forSessionId sessionId: String) -> Pin?
+    func clearPinUploadReviewDraftPin(forSessionId sessionId: String)
 
     func pop()
     func pop(by count: Int)

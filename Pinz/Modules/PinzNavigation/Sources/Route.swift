@@ -67,12 +67,14 @@ public enum TripAddMediaRoute: Hashable {
     case grouping(tripId: String, sessionId: String)
     case processing(tripId: String, sessionId: String)
     case review(tripId: String, sessionId: String)
+    case problems(tripId: String, sessionId: String)
 }
 
 public enum PinUploadRoute: Hashable {
     case start(tripId: String, targetPinId: String?)
     case processing(tripId: String, sessionId: String, targetPinId: String?)
     case review(tripId: String, sessionId: String, targetPinId: String?)
+    case problems(tripId: String, sessionId: String, targetPinId: String?)
 }
 
 public enum Route: Hashable {
