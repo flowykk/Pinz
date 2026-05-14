@@ -25,6 +25,7 @@ releases:
           s3Region: "{{ env "S3_REGION" | default "ru-central1" }}"
           s3Bucket: "{{ env "S3_BUCKET" | default "" }}"
           s3PresignTTL: "{{ env "S3_PRESIGN_TTL" | default "15m" }}"
+          authDevLoginEnabled: "{{ env "AUTH_DEV_LOGIN_ENABLED" | default "false" }}"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
           jwtSecretKey: "{{ env "JWT_SECRET_KEY" | default "change-me-in-production" }}"
@@ -136,6 +137,7 @@ releases:
           statisticsServiceGrpcAddress: statistics-service.default.svc.cluster.local:50053
           notificationServiceGrpcAddress: notification-service.default.svc.cluster.local:50054
           tripShareLinkBase: '{{ env "TRIP_SHARE_LINK_BASE" | default "https://pinz.website/trips" }}'
+          devLoginProxyEnabled: "{{ env "DEV_LOGIN_PROXY_ENABLED" | default "false" }}"
           otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
           otelServiceName: "api-gateway-service"
           otelTracesSampler: "parentbased_traceidratio"
