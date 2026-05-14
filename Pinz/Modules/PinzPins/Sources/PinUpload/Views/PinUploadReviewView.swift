@@ -60,8 +60,13 @@ public struct PinUploadReviewView: View {
         .onAppear {
             viewModel.setRouter(router)
             viewModel.setShowToast(showToast)
+            // Reload only on first entry. Re-running on every appear wipes fixes merged from
+            // `PinProblemsListView` / PinInfo via the router draft when popping back onto review.
+            guard !viewModel.initialLoaded else { return }
             Task { try? await viewModel.asyncDispatch(.reload) }
         }
+        .onChange(of: viewModel.startDate) { _, _ in viewModel.syncIssuesAndDraftToRouter() }
+        .onChange(of: viewModel.endDate) { _, _ in viewModel.syncIssuesAndDraftToRouter() }
         .itemsPickerSheet(
             isPresented: $isCategoryPickerPresented,
             items: PinCategory.allCases,
@@ -116,7 +121,21 @@ public struct PinUploadReviewView: View {
                 title: $viewModel.name
             )
         }, rightView: {
-            EmptyView()
+            if viewModel.initialLoaded {
+                if viewModel.pinsHaveIssues {
+                    PinzButton(
+                        type: .icon(.warning),
+                        tint: PinzUIAsset.accentOrange.swiftUIColor,
+                        action: .plain { viewModel.dispatch(.navigate(.problems)) }
+                    )
+                } else {
+                    PinzButton(
+                        type: .icon(.checkmark),
+                        tint: PinzUIAsset.accentGreen.swiftUIColor,
+                        action: .plain {}
+                    )
+                }
+            }
         })
     }
 
@@ -302,6 +321,6 @@ public struct PinUploadReviewView: View {
 
     private var saveButtonDisabled: Bool {
         let remaining = viewModel.medias.count - viewModel.mediaToDelete.count
-        return remaining <= 0 || viewModel.isLoading
+        return remaining <= 0 || viewModel.isLoading || viewModel.pinsHaveIssues
     }
 }

@@ -347,8 +347,6 @@ final class TripViewModel {
             let response = try await networkService.getTrip(id: tripId)
             let sessionId = response.activeAddMediaSession?.sessionId
             switch response.trip.status ?? "" {
-            case "READY":
-                router?.navigateToAddMediaStart(tripId: tripId)
             case "ADD_MEDIA_UPLOADING":
                 if let sessionId { router?.navigateToAddMediaUploading(tripId: tripId, sessionId: sessionId) }
             case "ADD_MEDIA_GROUPING_REVIEW":
@@ -358,7 +356,8 @@ final class TripViewModel {
             case "ADD_MEDIA_DRAFT_FINAL_REVIEW":
                 if let sessionId { router?.navigateToAddMediaReview(tripId: tripId, sessionId: sessionId) }
             default:
-                break
+                // published, READY, draft, nil — всё что не in-flight add-media
+                router?.navigateToAddMediaStart(tripId: tripId)
             }
 
         case .addPin:

@@ -11,9 +11,6 @@ public struct AddMediaUploadingView: View {
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var showCancelConfirmation = false
 
-    let galleryColumns: Int = 3
-    let gallerySpacing: CGFloat = 4
-
     @Environment(\.appRouter) private var router
 
     public init(tripId: String, sessionId: String) {
@@ -76,41 +73,20 @@ public struct AddMediaUploadingView: View {
 
     private var gallery: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: gallerySpacing) {
-                PinzGrid($viewModel.uploadedMediaEntries, columns: galleryColumns, spacing: gallerySpacing) { entry, _ in
-                    LoadableImageThumbnail(url: URL(string: entry.url)) { state in
-                        mediaThumbnail(for: state)
-                    }
-                }
-            }
+            MediaGridView(items: mediaGridItems)
+                .padding(.horizontal, 12)
         }
         .scrollIndicators(.hidden)
-        .padding(.horizontal, gallerySpacing)
         .padding(.bottom, 60)
     }
 
-    @ViewBuilder
-    private func mediaThumbnail(for state: LoadableMediaState) -> some View {
-        switch state {
-        case .empty:
-            Rectangle()
-                .fill(Color.gray.opacity(0.3))
-                .cornerRadius(14)
-                .overlay { ProgressView().tint(.white) }
-        case .ready(let image):
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .cornerRadius(14)
-                .clipped()
-        case .failure:
-            Rectangle()
-                .fill(Color.gray.opacity(0.3))
-                .cornerRadius(14)
-                .overlay {
-                    Image(systemName: "exclamationmark.triangle")
-                        .foregroundColor(.white)
-                }
+    private var mediaGridItems: [MediaGridView.Item] {
+        viewModel.uploadedMediaEntries.map { entry in
+            MediaGridView.Item(
+                id: entry.mediaId,
+                url: entry.url,
+                type: entry.type.lowercased() == "video" ? .video : .image
+            )
         }
     }
 

@@ -26,6 +26,7 @@ final class PinUploadReviewViewModel {
     enum Route {
         case back
         case changePlace
+        case problems
     }
 
     enum Intent {
@@ -65,6 +66,10 @@ final class PinUploadReviewViewModel {
     private(set) var isLoading: Bool = false
     private(set) var initialLoaded: Bool = false
 
+    var pinsHaveIssues: Bool {
+        !normalizeIssues(for: pinSnapshotForNormalization()).isEmpty
+    }
+
     private let networkService: NetworkServiceProtocol
     private var router: AppRouting?
     private var showToast: ((String) -> Void)?
@@ -83,6 +88,11 @@ final class PinUploadReviewViewModel {
 
     func setRouter(_ router: AppRouting?) {
         self.router = router
+        guard let router else { return }
+        if let draft = router.pinUploadReviewDraftPin(forSessionId: sessionId) {
+            applyMetadataFromDraftPin(draft)
+            reconcilePinIssuesFromDraft()
+        }
     }
 
     func setShowToast(_ showToast: ((String) -> Void)?) {
@@ -103,6 +113,9 @@ final class PinUploadReviewViewModel {
                     self?.applyPlaceCoordinate(coord)
                 }
                 router?.navigateToPinPlaceChange(pin: pin, action: action)
+            case .problems:
+                syncDraftPinToRouter()
+                router?.navigateToPinUploadProblems(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
             }
         case let .addTag(tag):
             guard tags.count < Self.maxTagsCount else {
@@ -144,12 +157,19 @@ final class PinUploadReviewViewModel {
             }
             applySuggested(draft.suggested)
             medias = draft.media ?? []
-            pinIssues = draft.pinIssues ?? []
             initialLoaded = true
             await fillMissingPinFieldsFromServerIfNeeded()
+            reconcilePinIssuesFromDraft()
+            syncDraftPinToRouter()
 
         case .finalize:
             guard validate() else { return }
+
+            reconcilePinIssuesFromDraft()
+            if pinsHaveIssues {
+                showToast?(PinzBaseStrings.ReviewTripCreation.Toast.fixIssuesFirst)
+                return
+            }
 
             // Cannot finalize an empty pin — backend will return 409 otherwise.
             let remainingMedia = medias.filter { !mediaToDelete.contains($0.mediaId) }
@@ -225,6 +245,7 @@ final class PinUploadReviewViewModel {
         } else {
             PinUploadSessionStorage.shared.clear(forTripId: tripId)
         }
+        router?.clearPinUploadReviewDraftPin(forSessionId: sessionId)
     }
 
     private func dismissPinUploadFlow() {
@@ -233,6 +254,66 @@ final class PinUploadReviewViewModel {
         } else {
             router?.popToRoot()
         }
+    }
+
+    func reconcilePinIssuesFromDraft() {
+        pinIssues = normalizeIssues(for: pinSnapshotForNormalization())
+    }
+
+    /// Call when dates or other metadata affecting `Pin.Issue` change from the review UI.
+    func syncIssuesAndDraftToRouter() {
+        syncDraftPinToRouter()
+    }
+
+    private func syncDraftPinToRouter() {
+        guard let router, initialLoaded else { return }
+        reconcilePinIssuesFromDraft()
+        let pin = draftPinSnapshot(issues: pinIssues)
+        router.setPinUploadReviewDraftPin(pin, forSessionId: sessionId)
+    }
+
+    private func applyMetadataFromDraftPin(_ pin: Pin) {
+        name = pin.name
+        description = pin.description
+        category = pin.category
+        startDate = pin.startDate
+        endDate = pin.endDate
+        tags = pin.tags
+        coordinates = pin.coordinates
+    }
+
+    private func pinSnapshotForNormalization() -> Pin {
+        draftPinSnapshot(issues: [])
+    }
+
+    private func draftPinSnapshot(issues: [String]) -> Pin {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = trimmed.isEmpty ? PinzBaseStrings.PinUpload.Review.Header.newPin : name
+        return Pin(
+            name: title,
+            description: description,
+            category: category,
+            medias: draftMediasForMapPreview(),
+            isPrivate: false,
+            startDate: startDate,
+            endDate: endDate,
+            tags: tags,
+            issues: issues,
+            serverId: targetPinId,
+            tripId: tripId,
+            coordinates: coordinates
+        )
+    }
+
+    private func normalizeIssues(for pin: Pin) -> [String] {
+        var result: [String] = []
+        if pin.coordinates == nil {
+            result.append(Pin.Issue.missingCoordinates.rawValue)
+        }
+        if pin.startDate == nil || pin.endDate == nil {
+            result.append(Pin.Issue.missingDates.rawValue)
+        }
+        return result
     }
 
     private func fillMissingPinFieldsFromServerIfNeeded() async {
@@ -329,22 +410,7 @@ final class PinUploadReviewViewModel {
     // MARK: - Map / place picker
 
     func draftPinForPlaceChange() -> Pin {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let title = trimmed.isEmpty ? PinzBaseStrings.PinUpload.Review.Header.newPin : name
-        return Pin(
-            name: title,
-            description: description,
-            category: category,
-            medias: draftMediasForMapPreview(),
-            isPrivate: false,
-            startDate: startDate,
-            endDate: endDate,
-            tags: tags,
-            issues: [],
-            serverId: nil,
-            tripId: tripId,
-            coordinates: coordinates
-        )
+        draftPinSnapshot(issues: [])
     }
 
     private func draftMediasForMapPreview() -> [MediaItem] {
@@ -368,6 +434,8 @@ final class PinUploadReviewViewModel {
 
     func applyPlaceCoordinate(_ coordinate: CLLocationCoordinate2D?) {
         coordinates = coordinate
+        reconcilePinIssuesFromDraft()
+        syncDraftPinToRouter()
     }
 }
 

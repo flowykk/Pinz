@@ -167,7 +167,7 @@ public protocol NetworkServiceProtocol {
         sessionId: String,
         draftPins: [DraftPinInputDTO],
         deletedMediaIds: [String]
-    ) async throws
+    ) async throws -> ApplyGroupsAndProcessDTO
     func addMediaGetReview(tripId: String, sessionId: String) async throws -> AddMediaReviewDTO
     func addMediaConfirm(
         tripId: String,
@@ -1058,7 +1058,7 @@ public final class NetworkService: NetworkServiceProtocol {
         sessionId: String,
         draftPins: [DraftPinInputDTO],
         deletedMediaIds: [String]
-    ) async throws {
+    ) async throws -> ApplyGroupsAndProcessDTO {
         try await retryOnUnauthorized { [self] in
             try await provider.request(
                 .addMediaApplyGroupsAndProcess(

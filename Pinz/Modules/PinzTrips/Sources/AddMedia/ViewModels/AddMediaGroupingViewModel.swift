@@ -33,9 +33,11 @@ final class AddMediaGroupingViewModel {
     private var deletedMediaIds: [String] = []
 
     private var wsTask: Task<Void, Never>?
+    private var reviewPollTask: Task<Void, Never>?
     private var wsClient = AddMediaWebSocketClient()
     private var router: AppRouting?
     private let networkService: NetworkServiceProtocol
+    private var didNavigateToAddMediaReview = false
 
     init(tripId: String, sessionId: String, networkService: NetworkServiceProtocol = NetworkService.shared) {
         self.tripId = tripId
@@ -99,13 +101,22 @@ final class AddMediaGroupingViewModel {
                 DraftPinInputDTO(draftPinId: $0.id, mediaIds: $0.medias.map(\.id))
             }
             do {
-                try await networkService.addMediaApplyGroupsAndProcess(
+                let applied = try await networkService.addMediaApplyGroupsAndProcess(
                     tripId: tripId,
                     sessionId: sessionId,
                     draftPins: draftPins,
                     deletedMediaIds: deletedMediaIds
                 )
-                // isLoading stays true — WS ADD_MEDIA_DRAFT_FINAL_REVIEW will navigate to Review
+                if normalizedAddMediaTripStatus(applied.status) == normalizedAddMediaTripStatus("ADD_MEDIA_DRAFT_FINAL_REVIEW") {
+                    navigateToReviewFromGroupingIfNeeded()
+                } else if normalizedAddMediaTripStatus(applied.status) == normalizedAddMediaTripStatus("ADD_MEDIA_PROCESSING") {
+                    // Прод отдаёт 202 + PROCESSING; WS у тебя падает с -1011 — без poll остаёмся на лоадере.
+                    print("[AddMediaGroupingViewModel] apply status=PROCESSING, start getReview poll fallback")
+                    reviewPollTask = Task { [weak self] in
+                        await self?.pollAddMediaReviewUntilReady()
+                    }
+                }
+                // иначе ждём только WS (редкие статусы)
             } catch {
                 isLoading = false
                 throw error
@@ -155,8 +166,7 @@ final class AddMediaGroupingViewModel {
                 case "ADD_MEDIA_PROCESSING":
                     isLoading = true
                 case "ADD_MEDIA_DRAFT_FINAL_REVIEW":
-                    isLoading = false
-                    dispatch(.navigate(.review(tripId: tripId, sessionId: sessionId)))
+                    navigateToReviewFromGroupingIfNeeded()
                     return
                 default:
                     break
@@ -165,8 +175,53 @@ final class AddMediaGroupingViewModel {
         }
     }
 
-    deinit {
+    private func navigateToReviewFromGroupingIfNeeded() {
+        guard !didNavigateToAddMediaReview else { return }
+        didNavigateToAddMediaReview = true
+        reviewPollTask?.cancel()
+        reviewPollTask = nil
         wsTask?.cancel()
         wsClient.disconnect()
+        isLoading = false
+        dispatch(.navigate(.review(tripId: tripId, sessionId: sessionId)))
+    }
+
+    private func pollAddMediaReviewUntilReady() async {
+        let maxAttempts = 60
+        for attempt in 1...maxAttempts {
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            guard !Task.isCancelled else {
+                print("[AddMediaGroupingViewModel] poll review cancelled")
+                return
+            }
+            guard !didNavigateToAddMediaReview else { return }
+            do {
+                _ = try await networkService.addMediaGetReview(tripId: tripId, sessionId: sessionId)
+                print("[AddMediaGroupingViewModel] poll getReview OK attempt \(attempt)/\(maxAttempts)")
+                navigateToReviewFromGroupingIfNeeded()
+                return
+            } catch {
+                if attempt <= 3 || attempt % 5 == 0 {
+                    print("[AddMediaGroupingViewModel] poll getReview (\(attempt)/\(maxAttempts)): \(error.localizedDescription)")
+                }
+            }
+        }
+        print("[AddMediaGroupingViewModel] poll getReview timed out")
+        if !didNavigateToAddMediaReview {
+            isLoading = false
+        }
+    }
+
+    deinit {
+        reviewPollTask?.cancel()
+        wsTask?.cancel()
+        wsClient.disconnect()
+    }
+
+    /// Как `AddMediaWebSocketClient` при разборе `TRIP_STATUS_CHANGED` — чтобы HTTP-ответ apply совпадал с WS.
+    private func normalizedAddMediaTripStatus(_ raw: String) -> String {
+        raw.uppercased()
+            .replacingOccurrences(of: "_", with: "")
+            .replacingOccurrences(of: " ", with: "")
     }
 }

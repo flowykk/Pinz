@@ -2,33 +2,34 @@ import SwiftUI
 import PinzBase
 import PinzDomain
 
-@MainActor @Observable
-final class TripCreationProblemsViewModel {
+@MainActor
+@Observable
+public final class PinProblemsListViewModel {
 
-    enum Route {
+    public enum Route {
         case back
     }
 
-    enum Intent {
+    public enum Intent {
         case navigate(Route)
     }
 
-    struct ProblemPin: Hashable {
-        let pin: Pin
-        let pinIndex: Int
-        let issueText: String
+    public struct ProblemPin: Hashable {
+        public let pin: Pin
+        public let pinIndex: Int
+        public let issueText: String
 
-        var id: String {
+        public var id: String {
             "\(pinIndex)-\(pin.serverId ?? pin.name)"
         }
     }
 
-    let tripId: String
-    var pins: [Pin]
+    let draftBinding: PinProblemsDraftBinding
+    public var pins: [Pin]
 
     private var router: AppRouting?
 
-    var pinsWithIssues: [ProblemPin] {
+    public var pinsWithIssues: [ProblemPin] {
         pins.enumerated().compactMap { index, pin in
             let issueText = pin.issueKinds
                 .map(\.localizedTitle)
@@ -38,19 +39,19 @@ final class TripCreationProblemsViewModel {
         }
     }
 
-    init(tripId: String, pins: [Pin]) {
-        self.tripId = tripId
+    public init(draftBinding: PinProblemsDraftBinding, pins: [Pin]) {
+        self.draftBinding = draftBinding
         self.pins = pins
     }
 
-    func dispatch(_ intent: Intent) {
+    public func dispatch(_ intent: Intent) {
         switch intent {
         case .navigate:
             router?.pop()
         }
     }
 
-    func navigateToPinInfo(at index: Int, router: AppRouting?) {
+    public func navigateToPinInfo(at index: Int, router: AppRouting?) {
         let currentPinsWithIssues = pinsWithIssues
         guard index >= 0, index < currentPinsWithIssues.count else {
             return
@@ -64,21 +65,36 @@ final class TripCreationProblemsViewModel {
                     var fixedPin = updatedPin
                     fixedPin.issues = self?.normalizeIssues(for: updatedPin) ?? []
                     self?.pins[pinProblem.pinIndex] = fixedPin
-                    self?.syncDraftPins()
+                    self?.syncDraftToRouter()
                 }
             },
             deleteAction: nil
         )
     }
 
-    func setRouter(_ router: AppRouting?) {
+    public func setRouter(_ router: AppRouting?) {
         self.router = router
         guard let router else { return }
 
-        if let draftPins = router.tripCreationDraftPins(for: tripId) {
-            pins = draftPins
-        } else {
-            router.setTripCreationDraftPins(pins, for: tripId)
+        switch draftBinding {
+        case .tripCreation(let tripId):
+            if let draftPins = router.tripCreationDraftPins(for: tripId) {
+                pins = draftPins
+            } else {
+                router.setTripCreationDraftPins(pins, for: tripId)
+            }
+        case .pinUpload(let sessionId):
+            if let draft = router.pinUploadReviewDraftPin(forSessionId: sessionId) {
+                pins = [draft]
+            } else if let first = pins.first {
+                router.setPinUploadReviewDraftPin(first, forSessionId: sessionId)
+            }
+        case .addMediaReview(let sessionId):
+            if let draftPins = router.addMediaReviewDraftPins(forSessionId: sessionId) {
+                pins = draftPins
+            } else if !pins.isEmpty {
+                router.setAddMediaReviewDraftPins(pins, forSessionId: sessionId)
+            }
         }
     }
 
@@ -93,9 +109,17 @@ final class TripCreationProblemsViewModel {
         return result
     }
 
-    private func syncDraftPins() {
+    private func syncDraftToRouter() {
         guard let router else { return }
-        router.setTripCreationDraftPins(pins, for: tripId)
+        switch draftBinding {
+        case .tripCreation(let tripId):
+            router.setTripCreationDraftPins(pins, for: tripId)
+        case .pinUpload(let sessionId):
+            guard let pin = pins.first else { return }
+            router.setPinUploadReviewDraftPin(pin, forSessionId: sessionId)
+        case .addMediaReview(let sessionId):
+            router.setAddMediaReviewDraftPins(pins, forSessionId: sessionId)
+        }
     }
 }
 

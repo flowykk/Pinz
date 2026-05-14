@@ -596,7 +596,8 @@ final class MockNetworkService: NetworkServiceProtocol {
         sessionId: String,
         draftPins: [DraftPinInputDTO],
         deletedMediaIds: [String]
-    ) async throws {
+    ) async throws -> ApplyGroupsAndProcessDTO {
+        ApplyGroupsAndProcessDTO(message: "stub", status: "ADD_MEDIA_DRAFT_FINAL_REVIEW")
     }
 
     func addMediaGetReview(tripId: String, sessionId: String) async throws -> AddMediaReviewDTO {

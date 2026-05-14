@@ -10,6 +10,8 @@ public final class AppRouter: AppRouting {
     @ObservationIgnored private var currentProfileUpdateHandler: ((User) -> Void)?
     @ObservationIgnored private var tripPinsReloadHandler: ((String) -> Void)?
     @ObservationIgnored private var tripCreationDraftPins: [String: [Pin]] = [:]
+    @ObservationIgnored private var pinUploadReviewDraftPin: [String: Pin] = [:]
+    @ObservationIgnored private var addMediaReviewDraftPins: [String: [Pin]] = [:]
     @ObservationIgnored public var pinUploadAdditionSuccessHandler: ((Pin) -> Void)?
 
     public init(initialPath: [Route] = []) {
@@ -280,6 +282,22 @@ extension AppRouter {
     public func navigateToAddMediaReview(tripId: String, sessionId: String) {
         navigate(to: .tripAddMedia(.review(tripId: tripId, sessionId: sessionId)))
     }
+
+    public func navigateToAddMediaProblems(tripId: String, sessionId: String) {
+        navigate(to: .tripAddMedia(.problems(tripId: tripId, sessionId: sessionId)))
+    }
+
+    public func setAddMediaReviewDraftPins(_ pins: [Pin], forSessionId sessionId: String) {
+        addMediaReviewDraftPins[sessionId] = pins
+    }
+
+    public func addMediaReviewDraftPins(forSessionId sessionId: String) -> [Pin]? {
+        addMediaReviewDraftPins[sessionId]
+    }
+
+    public func clearAddMediaReviewDraftPins(forSessionId sessionId: String) {
+        addMediaReviewDraftPins[sessionId] = nil
+    }
 }
 
 // MARK: - PinUpload Routing
@@ -295,6 +313,22 @@ extension AppRouter {
 
     public func navigateToPinUploadReview(tripId: String, sessionId: String, targetPinId: String?) {
         navigate(to: .pinUpload(.review(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)))
+    }
+
+    public func navigateToPinUploadProblems(tripId: String, sessionId: String, targetPinId: String?) {
+        navigate(to: .pinUpload(.problems(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)))
+    }
+
+    public func setPinUploadReviewDraftPin(_ pin: Pin, forSessionId sessionId: String) {
+        pinUploadReviewDraftPin[sessionId] = pin
+    }
+
+    public func pinUploadReviewDraftPin(forSessionId sessionId: String) -> Pin? {
+        pinUploadReviewDraftPin[sessionId]
+    }
+
+    public func clearPinUploadReviewDraftPin(forSessionId sessionId: String) {
+        pinUploadReviewDraftPin[sessionId] = nil
     }
 }
 

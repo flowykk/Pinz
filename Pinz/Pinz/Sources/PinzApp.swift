@@ -18,6 +18,10 @@ struct PinzApp: App {
     @State private var toastController = ToastController()
 
     init() {
+        TokenStorage.shared.save(
+            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODA4MTUzNjcsImlhdCI6MTc3ODIyMzM2NywidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoiRGRkZHNkZnNkZnNkZiJ9.ddmUVg68ALNczQxFMlOViogCR-npgrTS_w0ZHh-0__g",
+            refreshToken: "LPBJkrruM/Cumvlg6Pe+7/JhKgsSBRdQEfUJcRWHotw="
+        )
         PinzLaunchArgs.apply()
         _router = State(initialValue: AppRouter(initialPath: Self.initialRoutePath()))
     }

@@ -423,4 +423,8 @@
 "alert.deleteAccount.message" = "Это действие необратимо. Аккаунт будет удалён без возможности восстановления.";
 "alert.deleteAccount.confirm" = "Удалить";
 
+"alert.logout.title" = "Выйти?";
+"alert.logout.message" = "Чтобы снова пользоваться аккаунтом, нужно будет войти заново.";
+"alert.logout.confirm" = "Выйти";
+
 "profile.label.saveImagesLocally" = "Сохранять изображения локально";

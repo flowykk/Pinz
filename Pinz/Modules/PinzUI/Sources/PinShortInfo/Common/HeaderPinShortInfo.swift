@@ -68,7 +68,9 @@ public struct HeaderPinShortInfo: View {
                     if !selectable && isPrivacyShown {
                         StatisticView(
                             icon: pin.isPrivate == true ? "lock.fill" : "lock.open.fill",
-                            iconColor: pin.isPrivate == true ? PinzUIAsset.accentRed : PinzUIAsset.accentGreen
+                            iconColor: pin.isPrivate == true
+                                ? PinzUIAsset.accentRed.swiftUIColor
+                                : PinzUIAsset.accentGreen.swiftUIColor
                         )
                     }
                 }

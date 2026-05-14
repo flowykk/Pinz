@@ -423,4 +423,8 @@
 "alert.deleteAccount.message" = "This action is irreversible. Your account will be permanently deleted.";
 "alert.deleteAccount.confirm" = "Delete";
 
+"alert.logout.title" = "Log out?";
+"alert.logout.message" = "You will need to sign in again to use your account.";
+"alert.logout.confirm" = "Log Out";
+
 "profile.label.saveImagesLocally" = "Save images locally";

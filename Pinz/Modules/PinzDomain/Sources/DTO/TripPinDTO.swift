@@ -14,6 +14,7 @@ public struct TripPinDTO: Codable {
     public let tags: [String]?
     public let privacyLevel: String?
     public let media: [TripPinMediaDTO]?
+    public let issues: [String]?
 
     public init(
         id: String,
@@ -27,7 +28,8 @@ public struct TripPinDTO: Codable {
         endTimeUnix: Int?,
         tags: [String]?,
         privacyLevel: String?,
-        media: [TripPinMediaDTO]?
+        media: [TripPinMediaDTO]?,
+        issues: [String]? = nil
     ) {
         self.id = id
         self.tripId = tripId
@@ -41,10 +43,11 @@ public struct TripPinDTO: Codable {
         self.tags = tags
         self.privacyLevel = privacyLevel
         self.media = media
+        self.issues = issues
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, description, category, latitude, longitude, tags, media
+        case id, name, description, category, latitude, longitude, tags, media, issues
         case tripId = "trip_id"
         case startTimeUnix = "start_time_unix"
         case endTimeUnix = "end_time_unix"
@@ -90,7 +93,7 @@ public extension TripPinDTO {
             startDate: startTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
             endDate: endTimeUnix.map { Date(timeIntervalSince1970: Double($0)) },
             tags: (tags ?? []).map { MediaTag(tag: $0) },
-            issues: [],
+            issues: issues ?? [],
             serverId: id,
             tripId: resolvedTripId,
             coordinates: coordinates

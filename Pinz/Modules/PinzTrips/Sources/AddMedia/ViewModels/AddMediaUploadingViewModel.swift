@@ -125,6 +125,9 @@ final class AddMediaUploadingViewModel {
                 try await group.waitForAll()
             }
 
+            let refreshed = try await networkService.addMediaGetSessionMedia(tripId: tripId, sessionId: sessionId)
+            uploadedMediaEntries = refreshed.media
+
         case .cancel:
             try await networkService.addMediaCancel(tripId: tripId, sessionId: sessionId)
             router?.popToRoot()

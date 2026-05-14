@@ -174,7 +174,7 @@ actor MockPinUploadState {
                     privacyLevel: "private"
                 )
             ],
-            pinIssues: nil,
+            pinIssues: ["MISSING_DATES"],
             nsfwMediaIds: nil,
             dedupedMediaIds: nil
         )
