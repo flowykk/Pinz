@@ -24,6 +24,8 @@
 "common.label.startDate" = "Дата начала";
 "common.label.endDate" = "Дата конца";
 "common.alert.title.selectAction" = "Выберите действие";
+"common.button.apply" = "Применить";
+"common.button.confirm" = "Подтвердить";
 
 // MARK: - Auth
 "auth.label.email" = "email:";
@@ -142,6 +144,19 @@
 
 // MARK: - Feed
 "feed.title.main" = "Лента";
+"feed.filter.clearLocation" = "Сбросить";
+"feed.filter.title" = "Фильтры";
+"feed.filter.group.location" = "Локация";
+"feed.filter.group.category" = "Категория";
+"feed.filter.group.season" = "Сезон";
+"feed.filter.group.sort" = "Сортировка";
+"feed.filter.label.city" = "Город";
+"feed.filter.label.country" = "Страна";
+"feed.filter.sort.default" = "По умолчанию";
+"feed.filter.sort.date" = "По дате";
+"feed.filter.sort.rating" = "По рейтингу";
+"feed.list.endReached" = "Больше постов нет";
+"feed.button.getRecommendation" = "Получить рекомендацию";
 
 // MARK: - Trips
 "trips.title.list" = "Путешествия";
@@ -269,6 +284,20 @@
 "pinUpload.cancel.addition.title" = "Отменить добавление медиа?";
 "pinUpload.cancel.addition.confirm" = "Отменить добавление медиа";
 "pinUpload.dialog.continue" = "Продолжить";
+
+// MARK: - Add Media
+"addMedia.start.title" = "Добавить медиа";
+"addMedia.uploading.title" = "Загрузка медиа";
+"addMedia.grouping.title" = "Группировка медиа";
+"addMedia.review.title" = "Финальный просмотр";
+"addMedia.cancel.title" = "Отменить загрузку?";
+"addMedia.cancel.confirm" = "Отменить загрузку";
+"addMedia.button.addMore" = "Добавить ещё";
+"addMedia.button.start" = "Начать";
+"addMedia.button.merge" = "Объединить";
+"addMedia.button.takeover" = "Перехватить";
+"addMedia.review.takeover.message" = "%@ завершает ревью";
+"addMedia.review.takeover.messageWithCountdown" = "%@ завершает ревью. До перехвата: %@";
 
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "Твои путешествия";

@@ -11,6 +11,7 @@ let project = Project(
             deploymentTargets: .iOS("18.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
+            resources: ["Resources/**"],
             dependencies: [
                 .project(target: "PinzBase", path: "../PinzBase"),
                 .project(target: "PinzDomain", path: "../PinzDomain"),

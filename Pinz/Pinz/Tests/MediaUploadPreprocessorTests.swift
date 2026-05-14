@@ -24,7 +24,8 @@ final class MediaUploadPreprocessorTests: XCTestCase {
     }
 
     func test_prepareImage_compressesImageWhenOverLimit() async throws {
-        let maxBytes = 60_000
+        // Noisy 1024² JPEG often stays above very small caps even at minimum quality.
+        let maxBytes = 1_200_000
         let preprocessor = MediaUploadPreprocessor(maxImageBytes: maxBytes)
         let image = makeNoisyImage(size: CGSize(width: 1024, height: 1024))
         let originalBytes = image.jpegData(compressionQuality: 1)?.count ?? 0

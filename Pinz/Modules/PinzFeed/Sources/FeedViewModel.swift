@@ -203,13 +203,7 @@ final class FeedViewModel {
     }
 
     private func normalizedLocation(from filters: FeedFilterModel) -> (String?, String?) {
-        let normalizedCity = filters.city.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedCountry = filters.country.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        let city = normalizedCity.isEmpty ? nil : normalizedCity
-        let country = normalizedCountry.isEmpty ? nil : normalizedCountry
-
-        return (city, country)
+        (filters.cityParam, filters.countryParam)
     }
 
     private func recommendationSignature(
@@ -324,6 +318,7 @@ final class FeedViewModel {
 
     private func mapRecommendationToPost(_ map: RecommendedMapDTO) -> Post {
         let trip = map.trip
+        let domainTrip = trip.toTrip()
         let tripMedia = (map.media ?? []).enumerated().compactMap { index, media in
             media.toMediaItem(id: index + 1)
         }
@@ -352,12 +347,14 @@ final class FeedViewModel {
 
         return Post(
             id: trip.id,
-            name: trip.name,
+            name: Self.recommendationDisplayTripName(from: trip.name, map: map),
             description: Self.recommendedDescription(
                 tripDescription: trip.description,
                 regionName: map.regionName,
                 regionType: map.regionType
             ),
+            category: domainTrip.category,
+            season: domainTrip.season,
             participants: trip.participantsCount ?? 0,
             likes: trip.likesCount,
             dislikes: trip.dislikesCount,
@@ -383,6 +380,7 @@ final class FeedViewModel {
 
     private static func mapToPost(item: FeedItemDTO) -> Post {
         let trip = item.trip
+        let domainTrip = trip.toTrip()
         let tripMedia = item.media.enumerated().compactMap { index, media in
             media.toMediaItem(id: index + 1)
         }
@@ -412,6 +410,8 @@ final class FeedViewModel {
             id: trip.id,
             name: trip.name,
             description: trip.description,
+            category: domainTrip.category,
+            season: domainTrip.season,
             participants: trip.participantsCount ?? 0,
             likes: trip.likesCount,
             dislikes: trip.dislikesCount,
@@ -435,19 +435,30 @@ final class FeedViewModel {
         static let recommendationSnapshotStale = "Обновите карту."
     }
 
+    private static func recommendationDisplayTripName(from tripName: String, map: RecommendedMapDTO) -> String {
+        guard let raw = map.regionName?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return tripName
+        }
+        let english = FeedGeoCatalog.englishDisplay(forRegionSlug: raw, regionType: map.regionType)
+        if let range = tripName.range(of: raw, options: .caseInsensitive) {
+            return tripName.replacingCharacters(in: range, with: english)
+        }
+        return tripName
+    }
+
     private static func recommendedDescription(
         tripDescription: String?,
         regionName: String?,
         regionType: String?
     ) -> String {
-        let region = [regionType, regionName].compactMap { $0 }.joined(separator: " ")
-        guard !region.isEmpty else {
+        guard let rn = regionName?.trimmingCharacters(in: .whitespacesAndNewlines), !rn.isEmpty else {
             return tripDescription ?? ""
         }
+        let pretty = FeedGeoCatalog.englishDisplay(forRegionSlug: rn, regionType: regionType)
         guard let tripDescription, !tripDescription.isEmpty else {
-            return region
+            return pretty
         }
-        return "\(tripDescription) · \(region)"
+        return "\(tripDescription) · \(pretty)"
     }
 
     public func setRouter(_ router: AppRouting?) {

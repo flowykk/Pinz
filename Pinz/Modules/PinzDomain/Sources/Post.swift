@@ -4,6 +4,8 @@ public struct Post: Equatable, Identifiable, Hashable {
     public var id: String
     public var name: String
     public var description: String?
+    public var category: TripCategory
+    public var season: TripSeason
     public var participants: Int
     public var likes: Int
     public var dislikes: Int
@@ -21,6 +23,8 @@ public struct Post: Equatable, Identifiable, Hashable {
         id: String,
         name: String,
         description: String? = nil,
+        category: TripCategory = .none,
+        season: TripSeason = .none,
         participants: Int,
         likes: Int,
         dislikes: Int,
@@ -37,6 +41,8 @@ public struct Post: Equatable, Identifiable, Hashable {
         self.id = id
         self.name = name
         self.description = description
+        self.category = category
+        self.season = season
         self.participants = participants
         self.likes = likes
         self.dislikes = dislikes
@@ -58,6 +64,8 @@ extension Post {
             id: UUID().uuidString,
             name: "Paris Trip",
             description: "Amazing week in Paris",
+            category: .vacation,
+            season: .summer,
             participants: 12,
             likes: 234,
             dislikes: 21,

@@ -38,14 +38,14 @@ public struct AddMediaGroupingView: View {
             viewModel.dispatch(.mergePins(firstIndex: first, secondIndex: second))
         }
         .confirmationDialog(
-            "Отменить загрузку?",
+            PinzBaseStrings.AddMedia.Cancel.title,
             isPresented: $showCancelConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Отменить загрузку", role: .destructive) {
+            Button(PinzBaseStrings.AddMedia.Cancel.confirm, role: .destructive) {
                 Task { try? await viewModel.asyncDispatch(.cancel) }
             }
-            Button("Продолжить", role: .cancel) {}
+            Button(PinzBaseStrings.PinUpload.Dialog.continue, role: .cancel) {}
         }
     }
 
@@ -57,7 +57,7 @@ public struct AddMediaGroupingView: View {
                 action: .plain { showCancelConfirmation = true }
             )
         }, centerView: {
-            HeaderTitle("Группировка медиа")
+            HeaderTitle(PinzBaseStrings.AddMedia.Grouping.title)
         }, rightView: {
             EmptyView()
         })
@@ -92,24 +92,24 @@ public struct AddMediaGroupingView: View {
             VStack(spacing: 6) {
                 HStack(spacing: 6) {
                     PinzButton(
-                        type: .slot(style: .secondary(needBorder: true), title: "Добавить ещё"),
+                        type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.AddMedia.Button.addMore),
                         tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                         action: .async { try await viewModel.asyncDispatch(.addMore) }
                     )
                     PinzButton(
-                        type: .slot(style: .secondary(needBorder: true), title: "Объединить"),
+                        type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.AddMedia.Button.merge),
                         tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                         disabled: viewModel.rawPins.pins.count < 2,
                         action: .plain { isMergePickerPresented = true }
                     )
                     PinzButton(
-                        type: .slot(style: .secondary(needBorder: true), title: "Добавить пин"),
+                        type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.TripPins.Button.addPin),
                         tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                         action: .plain { viewModel.dispatch(.addPin) }
                     )
                 }
                 PinzButton(
-                    type: .slot(style: .primary, title: "Применить"),
+                    type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.apply),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .async { try await viewModel.asyncDispatch(.apply) }
                 )

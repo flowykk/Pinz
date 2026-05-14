@@ -59,7 +59,7 @@ public struct AddMediaStartView: View {
                 action: .plain { viewModel.dispatch(.navigate(.back)) }
             )
         }, centerView: {
-            HeaderTitle("Добавить медиа")
+            HeaderTitle(PinzBaseStrings.AddMedia.Start.title)
         }, rightView: {
             PinzButton(
                 type: .icon(.plus),
@@ -94,7 +94,7 @@ public struct AddMediaStartView: View {
     private var gradientWithButtons: some View {
         BottomGradientWithButtons {
             PinzButton(
-                type: .slot(style: .primary, title: "Начать"),
+                type: .slot(style: .primary, title: PinzBaseStrings.AddMedia.Button.start),
                 tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                 action: .async { try await viewModel.asyncDispatch(.start) }
             )

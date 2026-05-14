@@ -48,14 +48,14 @@ public struct AddMediaUploadingView: View {
             pickerItems = []
         }
         .confirmationDialog(
-            "Отменить загрузку?",
+            PinzBaseStrings.AddMedia.Cancel.title,
             isPresented: $showCancelConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Отменить загрузку", role: .destructive) {
+            Button(PinzBaseStrings.AddMedia.Cancel.confirm, role: .destructive) {
                 Task { try? await viewModel.asyncDispatch(.cancel) }
             }
-            Button("Продолжить", role: .cancel) {}
+            Button(PinzBaseStrings.PinUpload.Dialog.continue, role: .cancel) {}
         }
     }
 
@@ -68,7 +68,7 @@ public struct AddMediaUploadingView: View {
                 action: .plain { showCancelConfirmation = true }
             )
         }, centerView: {
-            HeaderTitle("Загрузка медиа")
+            HeaderTitle(PinzBaseStrings.AddMedia.Uploading.title)
         }, rightView: {
             EmptyView()
         })
@@ -118,12 +118,12 @@ public struct AddMediaUploadingView: View {
         BottomGradientWithButtons {
             HStack(spacing: 8) {
                 PinzButton(
-                    type: .slot(style: .secondary(needBorder: true), title: "Добавить ещё"),
+                    type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.AddMedia.Button.addMore),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { isMorePickerPresented = true }
                 )
                 PinzButton(
-                    type: .slot(style: .primary, title: "Далее"),
+                    type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.next),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .async { try await viewModel.asyncDispatch(.processGrouping) }
                 )

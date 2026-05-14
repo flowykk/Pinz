@@ -295,7 +295,7 @@ final class TripInfoViewModelTests: XCTestCase {
         sut.dispatch(.setImage(makeTestImage()))
 
         for _ in 0..<60 {
-            if mockNetwork.requestTripCoverUploadCall != nil { break }
+            if mockNetwork.uploadToS3Call != nil { break }
             try? await Task.sleep(nanoseconds: 20_000_000)
         }
 

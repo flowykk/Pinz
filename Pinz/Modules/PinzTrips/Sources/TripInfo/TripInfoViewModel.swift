@@ -291,10 +291,6 @@ final class TripInfoViewModel {
             guard let self else {
                 throw CancellationError()
             }
-            defer {
-                self.tripCoverUploadTask = nil
-            }
-
             let response = try await self.uploadTripCoverFlow(image: image)
             self.trip.coverUrl = response.coverUrl
             self.trip.image = nil
