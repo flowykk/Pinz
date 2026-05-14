@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzUI
 import PinzDomain
+import PinzBase
 
 private enum FeedFilterIcon: String, Setting.Icon {
     case checkmark = "checkmark"
@@ -9,6 +10,8 @@ private enum FeedFilterIcon: String, Setting.Icon {
 struct FeedFilterView: View {
 
     @State private var draft: FeedFilterModel
+    @State private var isCityPickerPresented = false
+    @State private var isCountryPickerPresented = false
 
     let onApply: (FeedFilterModel) -> Void
     let onReset: () -> Void
@@ -23,30 +26,52 @@ struct FeedFilterView: View {
         self.onReset = onReset
     }
 
+    private var citySelectionBinding: Binding<String> {
+        Binding(
+            get: { draft.city },
+            set: { newValue in
+                draft.city = newValue
+                if !newValue.isEmpty {
+                    draft.country = ""
+                }
+            }
+        )
+    }
+
+    private var countrySelectionBinding: Binding<String> {
+        Binding(
+            get: { draft.country },
+            set: { newValue in
+                draft.country = newValue
+                if !newValue.isEmpty {
+                    draft.city = ""
+                }
+            }
+        )
+    }
+
     var body: some View {
         ZStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    Text("Фильтры")
+                    Text(PinzBaseStrings.Feed.Filter.title)
                         .roundedFont(size: 24, weight: .bold)
                         .padding(.horizontal, 16)
 
-                    SettingsGroup(title: "Категория", settings: categorySettings)
-                        .padding(.horizontal, 12)
-
-                    SettingsGroup(title: "Сезон", settings: seasonSettings)
-                        .padding(.horizontal, 12)
-
                     SettingsGroup(
-                        title: "Локация",
+                        title: PinzBaseStrings.Feed.Filter.Group.location,
                         settings: locationSettings,
-                        subtitle: (!draft.city.isEmpty && !draft.country.isEmpty)
-                            ? "Город имеет приоритет над страной"
-                            : nil
+                        subtitle: nil
                     )
                     .padding(.horizontal, 12)
 
-                    SettingsGroup(title: "Сортировка", settings: sortSettings)
+                    SettingsGroup(title: PinzBaseStrings.Feed.Filter.Group.category, settings: categorySettings)
+                        .padding(.horizontal, 12)
+
+                    SettingsGroup(title: PinzBaseStrings.Feed.Filter.Group.season, settings: seasonSettings)
+                        .padding(.horizontal, 12)
+
+                    SettingsGroup(title: PinzBaseStrings.Feed.Filter.Group.sort, settings: sortSettings)
                         .padding(.horizontal, 12)
 
                     Spacer(minLength: 150)
@@ -57,12 +82,12 @@ struct FeedFilterView: View {
             BottomGradientWithButtons {
                 HStack(spacing: 6) {
                     PinzButton(
-                        type: .slot(style: .secondary(needBorder: true), title: "Сбросить"),
+                        type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.Common.Button.reset),
                         tint: PinzUIAsset.textPrimary.swiftUIColor,
                         action: .plain { onReset() }
                     )
                     PinzButton(
-                        type: .slot(style: .primary, title: "Применить"),
+                        type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.apply),
                         tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                         action: .plain { onApply(draft) }
                     )
@@ -70,11 +95,56 @@ struct FeedFilterView: View {
             }
         }
         .background(PinzUIAsset.background.swiftUIColor)
+        .sheet(isPresented: $isCityPickerPresented) {
+            FeedGeoPickerSheet(
+                title: PinzBaseStrings.Feed.Filter.Label.city,
+                segment: .cities,
+                selectedSlug: citySelectionBinding,
+                isPresented: $isCityPickerPresented
+            )
+            .pinzSheet()
+        }
+        .sheet(isPresented: $isCountryPickerPresented) {
+            FeedGeoPickerSheet(
+                title: PinzBaseStrings.Feed.Filter.Label.country,
+                segment: .countries,
+                selectedSlug: countrySelectionBinding,
+                isPresented: $isCountryPickerPresented
+            )
+            .pinzSheet()
+        }
+    }
+
+    private var locationSettings: [Setting] {
+        let cityValue: Setting.Value = .text(
+            draft.city.isEmpty
+                ? PinzBaseStrings.Common.Label.notSelected
+                : FeedGeoCatalog.cityDisplay(forSlug: draft.city)
+        )
+        let countryValue: Setting.Value = .text(
+            draft.country.isEmpty
+                ? PinzBaseStrings.Common.Label.notSelected
+                : FeedGeoCatalog.countryDisplay(forSlug: draft.country)
+        )
+        return [
+            .picker(Setting.PickerSetting(
+                id: "city",
+                leading: .title(PinzBaseStrings.Feed.Filter.Label.city),
+                value: cityValue,
+                isPickerPresented: $isCityPickerPresented
+            )),
+            .picker(Setting.PickerSetting(
+                id: "country",
+                leading: .title(PinzBaseStrings.Feed.Filter.Label.country),
+                value: countryValue,
+                isPickerPresented: $isCountryPickerPresented
+            ))
+        ]
     }
 
     private var categorySettings: [Setting] {
         var rows: [Setting] = [
-            selectionRow(id: "cat_none", label: "Не выбрано", selected: draft.category == .none) {
+            selectionRow(id: "cat_none", label: PinzBaseStrings.Common.Label.notSelected, selected: draft.category == .none) {
                 draft.category = .none
             }
         ]
@@ -88,7 +158,7 @@ struct FeedFilterView: View {
 
     private var seasonSettings: [Setting] {
         var rows: [Setting] = [
-            selectionRow(id: "sea_none", label: "Не выбрано", selected: draft.season == .none) {
+            selectionRow(id: "sea_none", label: PinzBaseStrings.Common.Label.notSelected, selected: draft.season == .none) {
                 draft.season = .none
             }
         ]
@@ -100,24 +170,9 @@ struct FeedFilterView: View {
         return rows
     }
 
-    private var locationSettings: [Setting] {
-        [
-            .textField(Setting.TextFieldSetting(
-                id: "city",
-                text: $draft.city,
-                placeholder: "Город"
-            )),
-            .textField(Setting.TextFieldSetting(
-                id: "country",
-                text: $draft.country,
-                placeholder: "Страна"
-            ))
-        ]
-    }
-
     private var sortSettings: [Setting] {
         var rows: [Setting] = [
-            selectionRow(id: "sort_none", label: "По умолчанию", selected: draft.sortBy == nil) {
+            selectionRow(id: "sort_none", label: PinzBaseStrings.Feed.Filter.Sort.default, selected: draft.sortBy == nil) {
                 draft.sortBy = nil
             }
         ]

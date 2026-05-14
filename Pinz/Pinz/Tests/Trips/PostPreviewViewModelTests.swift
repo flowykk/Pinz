@@ -131,8 +131,6 @@ final class PostPreviewViewModelTests: XCTestCase {
     }
 
     // MARK: - publishTrip — normalizedPinIds
-    // Note: PostPreviewViewModel.init strips serverId when mapping pins, so
-    // selectedPins always have serverId == nil. normalizedPinIds = pin.name values.
 
     func test_publishTrip_usesPinNameAsId() async {
         let pin = makePin(name: "my-pin-name")
@@ -145,7 +143,7 @@ final class PostPreviewViewModelTests: XCTestCase {
     }
 
     func test_publishTrip_filtersEmptyPinNames() async {
-        let pinWithEmptyName = makePin(name: "")
+        let pinWithEmptyName = makePin(name: "", id: "")
         let pinWithValidName = makePin(name: "valid-pin")
         sut = PostPreviewViewModel(trip: trip, selectedPins: [pinWithEmptyName, pinWithValidName], networkService: mockNetwork)
         sut.setRouter(mockRouter)
@@ -203,14 +201,16 @@ final class PostPreviewViewModelTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func makePin(name: String = "Test Pin", serverId: String? = nil) -> Pin {
-        Pin(
+    private func makePin(name: String = "Test Pin", id: String? = nil, serverId: String? = nil) -> Pin {
+        let resolvedServerId = serverId ?? (name.isEmpty ? nil : name)
+        return Pin(
+            id: id,
             name: name,
             category: .custom(),
             medias: [],
             isPrivate: false,
             tags: [],
-            serverId: serverId
+            serverId: resolvedServerId
         )
     }
 }

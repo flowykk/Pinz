@@ -37,7 +37,7 @@
     {
       "target" : {
         "containerPath" : "container:Pinz.xcodeproj",
-        "identifier" : "io.tuist.PinzTests",
+        "identifier" : "0F47C8C7A504478C69F68E8B",
         "name" : "PinzTests"
       }
     }

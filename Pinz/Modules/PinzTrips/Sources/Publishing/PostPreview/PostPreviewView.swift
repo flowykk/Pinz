@@ -55,7 +55,7 @@ public struct PostPreviewView: View {
             }
         }
         .onAppear { viewModel.setRouter(router) }
-        .alert("postPreview.error.publishFailed", isPresented: Binding(
+        .alert(PinzBaseStrings.PostPreview.Error.publishFailed, isPresented: Binding(
             get: { viewModel.publishError != nil },
             set: { isPresented in
                 if !isPresented { viewModel.publishError = nil }

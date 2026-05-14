@@ -45,7 +45,7 @@ public struct FeedView: View {
                             .padding(.vertical, 16)
                             .frame(maxWidth: .infinity)
                     } else if viewModel.hasReachedEnd {
-                        Text("Больше постов нет")
+                        Text(PinzBaseStrings.Feed.List.endReached)
                             .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 20)
@@ -60,7 +60,7 @@ public struct FeedView: View {
             if viewModel.shouldShowRecommendationButton {
                 BottomGradientWithButtons {
                     PinzButton(
-                        type: .slot(style: .primary, title: "Получить рекомендацию"),
+                        type: .slot(style: .primary, title: PinzBaseStrings.Feed.Button.getRecommendation),
                         tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                         disabled: viewModel.isRecommendationsLoading,
                         action: .async { await viewModel.loadRecommendation() }

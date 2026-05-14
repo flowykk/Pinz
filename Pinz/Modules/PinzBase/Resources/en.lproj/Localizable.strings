@@ -24,6 +24,8 @@
 "common.label.startDate" = "Start Date";
 "common.label.endDate" = "End Date";
 "common.alert.title.selectAction" = "Select Action";
+"common.button.apply" = "Apply";
+"common.button.confirm" = "Confirm";
 
 // MARK: - Auth
 "auth.label.email" = "Email:";
@@ -142,6 +144,19 @@
 
 // MARK: - Feed
 "feed.title.main" = "Feed";
+"feed.filter.clearLocation" = "Clear";
+"feed.filter.title" = "Filters";
+"feed.filter.group.location" = "Location";
+"feed.filter.group.category" = "Category";
+"feed.filter.group.season" = "Season";
+"feed.filter.group.sort" = "Sort";
+"feed.filter.label.city" = "City";
+"feed.filter.label.country" = "Country";
+"feed.filter.sort.default" = "Default";
+"feed.filter.sort.date" = "By date";
+"feed.filter.sort.rating" = "By rating";
+"feed.list.endReached" = "No more posts";
+"feed.button.getRecommendation" = "Get a recommendation";
 
 // MARK: - Trips
 "trips.title.list" = "Trips";
@@ -269,6 +284,20 @@
 "pinUpload.cancel.addition.title" = "Cancel adding media?";
 "pinUpload.cancel.addition.confirm" = "Cancel adding media";
 "pinUpload.dialog.continue" = "Continue";
+
+// MARK: - Add Media
+"addMedia.start.title" = "Add Media";
+"addMedia.uploading.title" = "Uploading media";
+"addMedia.grouping.title" = "Grouping media";
+"addMedia.review.title" = "Final review";
+"addMedia.cancel.title" = "Cancel upload?";
+"addMedia.cancel.confirm" = "Cancel upload";
+"addMedia.button.addMore" = "Add more";
+"addMedia.button.start" = "Start";
+"addMedia.button.merge" = "Merge";
+"addMedia.button.takeover" = "Take over";
+"addMedia.review.takeover.message" = "%@ is finishing the review";
+"addMedia.review.takeover.messageWithCountdown" = "%@ is finishing the review. Time until takeover: %@";
 
 // MARK: - Trips List Popup
 "tripsListPopup.title.myTrips" = "My Trips";

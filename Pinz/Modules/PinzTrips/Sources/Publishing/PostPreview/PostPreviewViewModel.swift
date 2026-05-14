@@ -32,6 +32,7 @@ final class PostPreviewViewModel {
         self.trip = trip
         self.selectedPins = selectedPins.map { pin in
             Pin(
+                id: pin.id,
                 name: pin.name,
                 description: pin.description,
                 category: pin.category,
@@ -41,7 +42,9 @@ final class PostPreviewViewModel {
                 endDate: pin.endDate,
                 tags: pin.tags,
                 issues: pin.issues,
-            coordinates: pin.coordinates
+                serverId: pin.serverId,
+                tripId: pin.tripId,
+                coordinates: pin.coordinates
             )
         }
         self.position = self.selectedPins.calculateInitialMapPosition()

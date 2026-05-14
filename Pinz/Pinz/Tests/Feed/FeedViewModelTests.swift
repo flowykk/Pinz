@@ -30,8 +30,8 @@ final class FeedViewModelTests: XCTestCase {
     }
 
     func test_loadRecommendation_insertsRecommendedPostAtTopAndHidesButton() async throws {
-        sut.filters.city = "Париж"
-        let recommendation = makeRecommendationResponse(city: "Париж")
+        sut.filters.city = "paris"
+        let recommendation = makeRecommendationResponse(city: "paris")
         mockNetwork.getRecommendationsResult = .success(recommendation)
 
         await sut.fetchFeed()
@@ -40,7 +40,7 @@ final class FeedViewModelTests: XCTestCase {
         sut.requestRecommendationsButtonTapped()
         try await Task.sleep(nanoseconds: 100_000_000)
 
-        XCTAssertEqual(mockNetwork.getRecommendationsCall?.city, "Париж")
+        XCTAssertEqual(mockNetwork.getRecommendationsCall?.city, "paris")
         XCTAssertNil(mockNetwork.getRecommendationsCall?.country)
         XCTAssertEqual(sut.posts.count, feedCount + 1)
         XCTAssertTrue(sut.posts.first?.isRecommended == true)
@@ -51,8 +51,8 @@ final class FeedViewModelTests: XCTestCase {
 
     func test_loadRecommendation_withCountryOnly_callsNetworkWithCountry() async throws {
         sut.filters.city = ""
-        sut.filters.country = "Италия"
-        let recommendation = makeRecommendationResponse(city: "Италия")
+        sut.filters.country = "italy"
+        let recommendation = makeRecommendationResponse(city: "italy")
         mockNetwork.getRecommendationsResult = .success(recommendation)
 
         await sut.fetchFeed()
@@ -61,7 +61,7 @@ final class FeedViewModelTests: XCTestCase {
         try await Task.sleep(nanoseconds: 100_000_000)
 
         XCTAssertEqual(mockNetwork.getRecommendationsCall?.city, nil)
-        XCTAssertEqual(mockNetwork.getRecommendationsCall?.country, "Италия")
+        XCTAssertEqual(mockNetwork.getRecommendationsCall?.country, "italy")
     }
 
     func test_loadRecommendation_doesNotCallWhenNoLocationAndShowsToast() async throws {
@@ -78,20 +78,19 @@ final class FeedViewModelTests: XCTestCase {
         XCTAssertTrue(sut.shouldShowRecommendationButton)
     }
 
-    func test_loadRecommendation_doesNotCallWhenBothCityAndCountrySetAndShowsToast() async throws {
-        var toasts: [String] = []
-        sut.setToast { message in
-            toasts.append(message)
-        }
-        sut.filters.city = "Париж"
-        sut.filters.country = "Франция"
+    func test_loadRecommendation_whenBothCityAndCountrySet_usesCityOnly() async throws {
+        sut.filters.city = "paris"
+        sut.filters.country = "france"
+        let recommendation = makeRecommendationResponse(city: "paris")
+        mockNetwork.getRecommendationsResult = .success(recommendation)
 
         sut.requestRecommendationsButtonTapped()
         try await Task.sleep(nanoseconds: 100_000_000)
 
-        XCTAssertNil(mockNetwork.getRecommendationsCall)
-        XCTAssertEqual(toasts, ["Выберите город или страну для рекомендаций."])
-        XCTAssertTrue(sut.shouldShowRecommendationButton)
+        XCTAssertEqual(mockNetwork.getRecommendationsCall?.city, "paris")
+        XCTAssertNil(mockNetwork.getRecommendationsCall?.country)
+        XCTAssertEqual(sut.posts.first?.id, recommendation.map.trip.id)
+        XCTAssertFalse(sut.shouldShowRecommendationButton)
     }
 
     func test_loadMore_doesNotMoveRecommendationFromTop() async throws {
@@ -124,10 +123,10 @@ final class FeedViewModelTests: XCTestCase {
             )
         ])
 
-        mockNetwork.getRecommendationsResult = .success(makeRecommendationResponse(city: "Париж"))
+        mockNetwork.getRecommendationsResult = .success(makeRecommendationResponse(city: "paris"))
         mockNetwork.getFeedResult = feedPage
         await sut.fetchFeed()
-        sut.filters.city = "Париж"
+        sut.filters.city = "paris"
         sut.requestRecommendationsButtonTapped()
         try await Task.sleep(nanoseconds: 100_000_000)
 

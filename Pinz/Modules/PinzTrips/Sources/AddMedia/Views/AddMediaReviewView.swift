@@ -50,14 +50,14 @@ public struct AddMediaReviewView: View {
         .onAppear { viewModel.setRouter(router) }
         .onReceive(timer) { _ in now = Date() }
         .confirmationDialog(
-            "Отменить загрузку?",
+            PinzBaseStrings.AddMedia.Cancel.title,
             isPresented: $showCancelConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Отменить загрузку", role: .destructive) {
+            Button(PinzBaseStrings.AddMedia.Cancel.confirm, role: .destructive) {
                 Task { try? await viewModel.asyncDispatch(.cancel) }
             }
-            Button("Продолжить", role: .cancel) {}
+            Button(PinzBaseStrings.PinUpload.Dialog.continue, role: .cancel) {}
         }
     }
 
@@ -74,7 +74,7 @@ public struct AddMediaReviewView: View {
                 EmptyView()
             }
         }, centerView: {
-            HeaderTitle("Финальный просмотр")
+            HeaderTitle(PinzBaseStrings.AddMedia.Review.title)
         }, rightView: {
             EmptyView()
         })
@@ -103,12 +103,12 @@ public struct AddMediaReviewView: View {
         BottomGradientWithButtons {
             HStack(spacing: 8) {
                 PinzButton(
-                    type: .slot(style: .secondary(needBorder: true), title: "Отменить"),
+                    type: .slot(style: .secondary(needBorder: true), title: PinzBaseStrings.Common.Button.cancel),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .plain { showCancelConfirmation = true }
                 )
                 PinzButton(
-                    type: .slot(style: .primary, title: "Подтвердить"),
+                    type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.confirm),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .async { try await viewModel.asyncDispatch(.confirm) }
                 )
@@ -120,12 +120,15 @@ public struct AddMediaReviewView: View {
         BottomGradientWithButtons {
             VStack(spacing: 8) {
                 if let initiator = viewModel.currentInitiator {
-                    Text("\(initiator.username) завершает ревью\(timeUntilTakeover.isEmpty ? "" : ". До перехвата: \(timeUntilTakeover)")")
+                    let takeoverText: String = timeUntilTakeover.isEmpty
+                        ? PinzBaseStrings.AddMedia.Review.Takeover.message(initiator.username)
+                        : PinzBaseStrings.AddMedia.Review.Takeover.messageWithCountdown(initiator.username, timeUntilTakeover)
+                    Text(takeoverText)
                         .roundedFont(size: 14, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                         .multilineTextAlignment(.center)
                 }
                 PinzButton(
-                    type: .slot(style: .primary, title: "Перехватить"),
+                    type: .slot(style: .primary, title: PinzBaseStrings.AddMedia.Button.takeover),
                     tint: PinzUIAsset.backgroundSecondary.swiftUIColor,
                     action: .async { try await viewModel.asyncDispatch(.takeover) }
                 )

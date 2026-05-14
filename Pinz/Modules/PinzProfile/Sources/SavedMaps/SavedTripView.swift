@@ -61,7 +61,7 @@ public struct SavedTripView: View {
             viewModel.setRouter(router)
             Task { await viewModel.loadTrip() }
         }
-        .alert("savedTrip.error.load", isPresented: Binding(
+        .alert(PinzBaseStrings.SavedTrip.Error.load, isPresented: Binding(
             get: { viewModel.loadError != nil },
             set: { isPresented in
                 if !isPresented { viewModel.loadError = nil }

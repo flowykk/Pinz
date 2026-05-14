@@ -105,6 +105,13 @@ struct PostFeedItemView: View {
         !viewModel.post.pins.isEmpty
     }
 
+    private var tripTags: String? {
+        let category = viewModel.post.category == .none ? nil : viewModel.post.category.value
+        let season = viewModel.post.season == .none ? nil : viewModel.post.season.value
+        let parts = [category, season].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
+
     private var totalTabPages: Int {
         viewModel.post.media.count + (hasMap ? 1 : 0)
     }
@@ -170,12 +177,14 @@ struct PostFeedItemView: View {
                             weight: .bold,
                             foregroundColor: PinzUIAsset.background.swiftUIColor
                         )
-                    Text("Отдых, Лето")
-                        .roundedFont(
-                            size: 14,
-                            weight: .semibold,
-                            foregroundColor: PinzUIAsset.background.swiftUIColor
-                        )
+                    if let tags = tripTags {
+                        Text(tags)
+                            .roundedFont(
+                                size: 14,
+                                weight: .semibold,
+                                foregroundColor: PinzUIAsset.background.swiftUIColor
+                            )
+                    }
                     Spacer()
                 }
                 Spacer()
