@@ -234,6 +234,7 @@ deploy_app() {
     # api-gateway: base URL used to build share_url in trip responses (ТЗ 3.4).
     # Empty falls back to gateway's internal default (https://pinz.website/trips).
     export TRIP_SHARE_LINK_BASE="${TRIP_SHARE_LINK_BASE:-}"
+    export APPLE_APP_ID="${APPLE_APP_ID:-}"
     # Loadtest-only dev-login bypass. NEVER set to "true" on prod (passkey bypass).
     export AUTH_DEV_LOGIN_ENABLED="${AUTH_DEV_LOGIN_ENABLED:-false}"
     export DEV_LOGIN_PROXY_ENABLED="${DEV_LOGIN_PROXY_ENABLED:-false}"
@@ -690,6 +691,7 @@ while [[ $# -gt 0 ]]; do
             echo "  GEOCODING_BASE_URL       Statistics service: BigDataCloud API base URL (optional)"
             echo "  GEOCODING_API_KEY        Statistics service: BigDataCloud API key (optional)"
             echo "  TRIP_SHARE_LINK_BASE     API gateway: base URL for share_url in trip responses (default: https://pinz.website/trips)"
+            echo "  APPLE_APP_ID             API gateway: Apple App ID <TeamID>.<BundleID> for AASA (required for working universal links)"
             echo "  AUTH_DEV_LOGIN_ENABLED   Auth service: enables AuthService.DevLogin RPC (loadtest only; default: false)"
             echo "  DEV_LOGIN_PROXY_ENABLED  API gateway: exposes POST /api/v1/auth/dev-login (loadtest only; default: false)"
             echo "  SKIP_PULL=true           Skip docker auth/pull (k3s pulls via containerd)"

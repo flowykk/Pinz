@@ -167,13 +167,46 @@ func TestAppleAppSiteAssociation(t *testing.T) {
 			AppleAppSiteAssociation(rr, req)
 			require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 		},
-		"body_contains_applinks_and_webcredentials": func(t *testing.T) {
+		"default_app_id_when_env_empty": func(t *testing.T) {
+			t.Setenv("APPLE_APP_ID", "")
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/.well-known/apple-app-site-association", nil)
 			AppleAppSiteAssociation(rr, req)
-			body := rr.Body.String()
-			require.Contains(t, body, "applinks")
-			require.Contains(t, body, "webcredentials")
+			var body struct {
+				Applinks struct {
+					Details []struct {
+						AppID string   `json:"appID"`
+						Paths []string `json:"paths"`
+					} `json:"details"`
+				} `json:"applinks"`
+				Webcredentials struct {
+					Apps []string `json:"apps"`
+				} `json:"webcredentials"`
+			}
+			require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &body))
+			require.Len(t, body.Applinks.Details, 1)
+			require.Equal(t, defaultAppleAppID, body.Applinks.Details[0].AppID)
+			require.Equal(t, []string{defaultAppleAppID}, body.Webcredentials.Apps)
+			require.NotEmpty(t, body.Applinks.Details[0].Paths)
+		},
+		"app_id_overridden_via_env": func(t *testing.T) {
+			t.Setenv("APPLE_APP_ID", "TEAM1234XX.com.example.pinz")
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/.well-known/apple-app-site-association", nil)
+			AppleAppSiteAssociation(rr, req)
+			var body struct {
+				Applinks struct {
+					Details []struct {
+						AppID string `json:"appID"`
+					} `json:"details"`
+				} `json:"applinks"`
+				Webcredentials struct {
+					Apps []string `json:"apps"`
+				} `json:"webcredentials"`
+			}
+			require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &body))
+			require.Equal(t, "TEAM1234XX.com.example.pinz", body.Applinks.Details[0].AppID)
+			require.Equal(t, []string{"TEAM1234XX.com.example.pinz"}, body.Webcredentials.Apps)
 		},
 	}
 	for name, fn := range cases {

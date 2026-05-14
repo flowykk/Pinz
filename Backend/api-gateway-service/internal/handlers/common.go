@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -109,9 +110,9 @@ func handleServiceError(w http.ResponseWriter, r *http.Request, err error, actio
 // reasonToHTTPStatus — маппинг известных ErrorInfo.Reason в HTTP-код. Соответствует
 // документу addMediaParallelFlow.md (корнер-кейсы).
 var reasonToHTTPStatus = map[string]int{
-	reasonSessionStale:  http.StatusGone,               // 410
-	reasonWrongStatus:   http.StatusPreconditionFailed, // 412
-	reasonNotInitiator:  http.StatusForbidden,          // 403
+	reasonSessionStale:  http.StatusGone,                // 410
+	reasonWrongStatus:   http.StatusPreconditionFailed,  // 412
+	reasonNotInitiator:  http.StatusForbidden,           // 403
 	reasonLimitExceeded: http.StatusUnprocessableEntity, // 422
 }
 
@@ -128,35 +129,36 @@ func extractErrorInfo(st *status.Status) (reason string, metadata map[string]str
 
 func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{
-		"status": "healthy",
-		"service": "api-gateway",
+		"status":    "healthy",
+		"service":   "api-gateway",
 		"timestamp": fmt.Sprintf("%d", time.Now().Unix()),
 	})
 }
 
-// AppleAppSiteAssociation serves the AASA file required by Apple CDN on app install.
-// Must be reachable at /.well-known/apple-app-site-association with no redirects.
+const defaultAppleAppID = "NNNNNNNNNN.io.tuist.Pinz"
+
+var applinkPaths = []string{"/join/*", "/reset-password*"}
+
 func AppleAppSiteAssociation(w http.ResponseWriter, r *http.Request) {
-	const aasa = `{
- "applinks": {
- "apps": [],
- "details": [
- {
- "appID": "4P79GCW6U9.io.tuist.hse.Pinz",
- "paths": [
- "/join/*",
- "/reset-password*"
- ]
- }
- ]
- },
- "webcredentials": {
- "apps": ["4P79GCW6U9.io.tuist.hse.Pinz"]
- }
-}`
+	appID := os.Getenv("APPLE_APP_ID")
+	if appID == "" {
+		appID = defaultAppleAppID
+	}
+	payload := map[string]any{
+		"applinks": map[string]any{
+			"apps": []string{},
+			"details": []map[string]any{{
+				"appID": appID,
+				"paths": applinkPaths,
+			}},
+		},
+		"webcredentials": map[string]any{
+			"apps": []string{appID},
+		},
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(aasa))
+	_ = json.NewEncoder(w).Encode(payload)
 }
 
 // unixToRFC3339 конвертирует unix timestamp (секунды) в RFC3339-строку UTC.
