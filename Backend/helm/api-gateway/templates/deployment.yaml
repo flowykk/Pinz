@@ -72,6 +72,8 @@ spec:
               value: {{ .Values.env.swaggerHost | default "" | quote }}
             - name: TRIP_SHARE_LINK_BASE
               value: {{ .Values.env.tripShareLinkBase | default "" | quote }}
+            - name: APPLE_APP_ID
+              value: {{ .Values.env.appleAppId | default "" | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.env.otelExporterEndpoint | quote }}
             - name: OTEL_SERVICE_NAME

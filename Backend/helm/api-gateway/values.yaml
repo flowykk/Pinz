@@ -18,6 +18,7 @@ env:
   redisAddr: "redis:6379"
   swaggerHost: ""
   tripShareLinkBase: "https://pinz.website/trips"
+  appleAppId: ""
   otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
   otelServiceName: "api-gateway-service"
   otelTracesSampler: "parentbased_traceidratio"

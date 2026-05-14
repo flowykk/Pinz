@@ -355,6 +355,11 @@ export GEOCODING_API_KEY=                                                     # 
 # Пустая → используется внутренний дефолт https://pinz.website/trips.
 export TRIP_SHARE_LINK_BASE=https://pinz.website/trips
 
+# Apple App ID (api-gateway) для /.well-known/apple-app-site-association.
+# Формат <TeamID>.<BundleID>. Без него universal-links и Sign in with Apple
+# работать не будут — встроенный дефолт это плейсхолдер.
+export APPLE_APP_ID=ABCDE12345.com.example.pinz
+
 # Loadtest-only: разблокирует RPC AuthService.DevLogin и проксирующую ручку
 # POST /api/v1/auth/dev-login. По умолчанию выключено и НЕ должно включаться на
 # проде — это путь обхода passkey. Используется только сидером нагрузочного

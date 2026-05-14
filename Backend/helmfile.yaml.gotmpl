@@ -137,6 +137,7 @@ releases:
           statisticsServiceGrpcAddress: statistics-service.default.svc.cluster.local:50053
           notificationServiceGrpcAddress: notification-service.default.svc.cluster.local:50054
           tripShareLinkBase: '{{ env "TRIP_SHARE_LINK_BASE" | default "https://pinz.website/trips" }}'
+          appleAppId: '{{ env "APPLE_APP_ID" | default "" }}'
           devLoginProxyEnabled: "{{ env "DEV_LOGIN_PROXY_ENABLED" | default "false" }}"
           otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
           otelServiceName: "api-gateway-service"

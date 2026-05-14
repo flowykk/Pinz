@@ -203,6 +203,7 @@ jobs:
             export APNS_BUNDLE_ID='${{ secrets.APNS_BUNDLE_ID }}' &&
             export APNS_KEY_BASE64='${{ secrets.APNS_KEY_BASE64 }}' &&
             export APNS_PRODUCTION='${{ secrets.APNS_PRODUCTION }}' &&
+            export APPLE_APP_ID='${{ secrets.APPLE_APP_ID }}' &&
             export SMTP_HOST='${{ secrets.SMTP_HOST }}' &&
             export SMTP_PORT='${{ secrets.SMTP_PORT }}' &&
             export SMTP_FROM='${{ secrets.SMTP_FROM }}' &&
