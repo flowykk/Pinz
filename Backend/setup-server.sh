@@ -55,9 +55,13 @@ bootstrap_deploy_from_root() {
         chmod 600 /home/deploy/.ssh/authorized_keys
     fi
 
+    # /root mode 700, deploy не может читать $0. Копируем в /tmp.
     SCRIPT_PATH="$(readlink -f "$0")"
-    chown deploy:deploy "$SCRIPT_PATH" 2>/dev/null || true
-    exec sudo -u deploy -E -H bash "$SCRIPT_PATH" \
+    local TMP_SCRIPT="/tmp/setup-server-deploy.sh"
+    cp "$SCRIPT_PATH" "$TMP_SCRIPT"
+    chown deploy:deploy "$TMP_SCRIPT"
+    chmod 755 "$TMP_SCRIPT"
+    exec sudo -u deploy -E -H bash "$TMP_SCRIPT" \
         --repo-url "$REPO_URL" --branch "$BRANCH" --profile "$PROFILE"
 }
 
@@ -92,6 +96,13 @@ install_k3s() {
     sudo chown "$USER:$USER" "$HOME/.kube/config"
     chmod 600 "$HOME/.kube/config"
     grep -q 'KUBECONFIG=' "$HOME/.bashrc" || echo 'export KUBECONFIG=$HOME/.kube/config' >> "$HOME/.bashrc"
+
+    # /etc/profile.d — login shells (включая `ssh host`) подхватывают env.
+    sudo tee /etc/profile.d/pinz.sh > /dev/null <<EOF
+export KUBECONFIG=$HOME/.kube/config
+export PATH=\$PATH:/usr/local/go/bin
+EOF
+    sudo chmod 644 /etc/profile.d/pinz.sh
 
     until sudo kubectl get nodes &>/dev/null; do sleep 2; done
 
@@ -306,9 +317,9 @@ JWT_SECRET_KEY=${JWT_SECRET_KEY:-pinz_jwt_secret_$(openssl rand -hex 32)}
 API_GATEWAY_PORT=8080
 GRPC_PORT=:50051
 
-# Docker Registry (for production deployment)
+# Docker Registry (loadtest pulls public images, prod — private)
 DOCKER_REGISTRY=ghcr.io
-DOCKER_REPO=flowykk/pinz
+DOCKER_REPO=$(if [[ "$PROFILE" == "loadtest" ]]; then echo "dmitry-pr"; else echo "flowykk/pinz"; fi)
 
 # Environment
 ENVIRONMENT=prod
@@ -347,8 +358,9 @@ setup_infrastructure() {
         exit 1
     fi
 
-    # Start infrastructure
-    make infra-up
+    # usermod -aG docker применяется к новым shell'ам; в текущем — нет, sg
+    # подхватывает группу для одной команды.
+    sg docker -c "make infra-up"
 
     # Wait for infrastructure to be ready
     log_info "Waiting for infrastructure..."
