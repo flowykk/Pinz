@@ -133,6 +133,20 @@ func (mr *MockMediaRepositoryInterfaceMockRecorder) Create(m any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).Create), m)
 }
 
+// CreateBatch mocks base method.
+func (m *MockMediaRepositoryInterface) CreateBatch(medias []*models.Media) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateBatch", medias)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateBatch indicates an expected call of CreateBatch.
+func (mr *MockMediaRepositoryInterfaceMockRecorder) CreateBatch(medias any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBatch", reflect.TypeOf((*MockMediaRepositoryInterface)(nil).CreateBatch), medias)
+}
+
 // DeleteByIDs mocks base method.
 func (m *MockMediaRepositoryInterface) DeleteByIDs(ids []string) error {
 	m.ctrl.T.Helper()

@@ -67,6 +67,77 @@ func (r *MediaRepository) Create(m *models.Media) error {
 	return nil
 }
 
+// CreateBatch вставляет batch media-записей одним SQL-вызовом и проставляет
+// ID/CreatedAt на каждый элемент. Полный набор колонок media с NULL для тех,
+// что не заданы, чтобы избежать N round-trip'ов из ProcessMediaGrouping.
+func (r *MediaRepository) CreateBatch(medias []*models.Media) error {
+	if len(medias) == 0 {
+		return nil
+	}
+	cols := []string{
+		"trip_id", "s3_key", "media_type", "captured_at",
+		"battle_rating", "privacy_level",
+		"pin_id", "similar_group_id", "location",
+		"content_hash", "uploaded_by", "upload_session_id",
+	}
+	q := psq.Insert("media").Columns(cols...)
+	for _, m := range medias {
+		var pinID, simGroup, contentHash, uploadedBy, uploadSession interface{}
+		if m.PinID != nil {
+			pinID = *m.PinID
+		}
+		if m.SimilarGroupID != nil {
+			simGroup = *m.SimilarGroupID
+		}
+		if m.ContentHash != nil {
+			contentHash = *m.ContentHash
+		}
+		if m.UploadedBy != nil {
+			uploadedBy = *m.UploadedBy
+		}
+		if m.UploadSessionID != nil {
+			uploadSession = *m.UploadSessionID
+		}
+		var loc interface{}
+		if m.Latitude != nil && m.Longitude != nil {
+			loc = sq.Expr("ST_SetSRID(ST_MakePoint(?, ?), 4326)", *m.Longitude, *m.Latitude)
+		}
+		q = q.Values(
+			m.TripID, m.S3Key, m.MediaType, m.CapturedAt,
+			m.BattleRating, m.PrivacyLevel,
+			pinID, simGroup, loc,
+			contentHash, uploadedBy, uploadSession,
+		)
+	}
+	q = q.Suffix("RETURNING id, created_at")
+	sqlStr, args, err := q.ToSql()
+	if err != nil {
+		return err
+	}
+	rows, err := r.db.Query(sqlStr, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	i := 0
+	for rows.Next() {
+		if i >= len(medias) {
+			return errors.New("CreateBatch: more rows than expected")
+		}
+		if err := rows.Scan(&medias[i].ID, &medias[i].CreatedAt); err != nil {
+			return err
+		}
+		i++
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	if i != len(medias) {
+		return errors.New("CreateBatch: fewer rows than expected")
+	}
+	return nil
+}
+
 // CommitInSession атомарно вставляет media в рамках add-media сессии: берёт
 // advisory lock по session_id (сериализует параллельные commit'ы в ту же сессию),
 // проверяет лимиты, делает INSERT и возвращает totalAfter/videosAfter — сколько

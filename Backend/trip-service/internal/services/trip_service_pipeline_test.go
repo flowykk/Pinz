@@ -101,8 +101,10 @@ func TestProcessMediaGrouping_HappyPath_TransitionsStatus(t *testing.T) {
 	tripRepo.EXPECT().GetByID("t1").Return(&models.Trip{ID: "t1", Status: models.TripStatusDraft, PrivacyLevel: "private"}, nil)
 	participantRepo.EXPECT().IsParticipant("t1", "u1").Return(true, nil)
 	mediaRepo.EXPECT().CountByTripID("t1").Return(0, 0, nil)
-	mediaRepo.EXPECT().Create(gomock.Any()).DoAndReturn(func(m *models.Media) error {
-		m.ID = "m-new"
+	mediaRepo.EXPECT().CreateBatch(gomock.Any()).DoAndReturn(func(medias []*models.Media) error {
+		for i := range medias {
+			medias[i].ID = "m-new"
+		}
 		return nil
 	})
 	mediaRepo.EXPECT().ListByTripID("t1").Return([]*models.Media{
@@ -128,7 +130,7 @@ func TestProcessMediaGrouping_MediaCreateError(t *testing.T) {
 	tripRepo.EXPECT().GetByID("t1").Return(&models.Trip{ID: "t1", Status: models.TripStatusUploading}, nil)
 	participantRepo.EXPECT().IsParticipant("t1", "u1").Return(true, nil)
 	mediaRepo.EXPECT().CountByTripID("t1").Return(0, 0, nil)
-	mediaRepo.EXPECT().Create(gomock.Any()).Return(errors.New("db down"))
+	mediaRepo.EXPECT().CreateBatch(gomock.Any()).Return(errors.New("db down"))
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.ProcessMediaGrouping(ctxWithUser("u1"), &pb.ProcessMediaGroupingRequest{
 		TripId: "t1",
