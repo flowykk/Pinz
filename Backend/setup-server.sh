@@ -176,12 +176,12 @@ install_tools() {
     log_info "Installing additional tools..."
     sudo apt install -y git make protobuf-compiler jq htop curl wget
 
-    # Install Go (for building)
-    wget -O go.tar.gz https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
-    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go.tar.gz
+    # Install Go (cwd под deploy может быть нечитаемой, пишем в /tmp).
+    wget -O /tmp/go.tar.gz https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
+    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go.tar.gz
     export PATH=$PATH:/usr/local/go/bin
     echo "export PATH=\$PATH:/usr/local/go/bin" >> ~/.bashrc
-    rm go.tar.gz
+    rm /tmp/go.tar.gz
 
     go version
     log_success "Additional tools installed"
