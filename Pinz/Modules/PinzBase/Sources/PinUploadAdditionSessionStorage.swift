@@ -28,4 +28,9 @@ public final class PinUploadAdditionSessionStorage {
         dict.removeValue(forKey: storageKey(tripId: tripId, pinId: pinId))
         defaults.set(dict, forKey: key)
     }
+
+    /// Clears all stored "add media" upload sessions (e.g. UI tests).
+    public func clearAll() {
+        defaults.removeObject(forKey: key)
+    }
 }

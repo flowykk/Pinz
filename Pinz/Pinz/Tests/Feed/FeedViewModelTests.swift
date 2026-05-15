@@ -1,5 +1,6 @@
 import XCTest
 @testable import PinzFeed
+import PinzBase
 import PinzDomain
 import PinzNetworking
 
@@ -37,15 +38,14 @@ final class FeedViewModelTests: XCTestCase {
         await sut.fetchFeed()
         let feedCount = sut.posts.count
 
-        sut.requestRecommendationsButtonTapped()
-        try await Task.sleep(nanoseconds: 100_000_000)
+        await sut.loadRecommendation()
 
         XCTAssertEqual(mockNetwork.getRecommendationsCall?.city, "paris")
         XCTAssertNil(mockNetwork.getRecommendationsCall?.country)
         XCTAssertEqual(sut.posts.count, feedCount + 1)
         XCTAssertTrue(sut.posts.first?.isRecommended == true)
         XCTAssertEqual(sut.posts.first?.id, recommendation.map.trip.id)
-        XCTAssertEqual(sut.posts.first?.recommendedBadge, "Рекомендация для тебя")
+        XCTAssertEqual(sut.posts.first?.recommendedBadge, PinzBaseStrings.Feed.Recommendation.Badge.forYou)
         XCTAssertFalse(sut.shouldShowRecommendationButton)
     }
 
@@ -57,8 +57,7 @@ final class FeedViewModelTests: XCTestCase {
 
         await sut.fetchFeed()
 
-        sut.requestRecommendationsButtonTapped()
-        try await Task.sleep(nanoseconds: 100_000_000)
+        await sut.loadRecommendation()
 
         XCTAssertEqual(mockNetwork.getRecommendationsCall?.city, nil)
         XCTAssertEqual(mockNetwork.getRecommendationsCall?.country, "italy")
@@ -70,11 +69,10 @@ final class FeedViewModelTests: XCTestCase {
             toasts.append(message)
         }
 
-        sut.requestRecommendationsButtonTapped()
-        try await Task.sleep(nanoseconds: 100_000_000)
+        await sut.loadRecommendation()
 
         XCTAssertNil(mockNetwork.getRecommendationsCall)
-        XCTAssertEqual(toasts, ["Выберите город или страну для рекомендаций."])
+        XCTAssertEqual(toasts, [PinzBaseStrings.Feed.Recommendation.Toast.locationRequired])
         XCTAssertTrue(sut.shouldShowRecommendationButton)
     }
 
@@ -84,8 +82,7 @@ final class FeedViewModelTests: XCTestCase {
         let recommendation = makeRecommendationResponse(city: "paris")
         mockNetwork.getRecommendationsResult = .success(recommendation)
 
-        sut.requestRecommendationsButtonTapped()
-        try await Task.sleep(nanoseconds: 100_000_000)
+        await sut.loadRecommendation()
 
         XCTAssertEqual(mockNetwork.getRecommendationsCall?.city, "paris")
         XCTAssertNil(mockNetwork.getRecommendationsCall?.country)
@@ -127,8 +124,7 @@ final class FeedViewModelTests: XCTestCase {
         mockNetwork.getFeedResult = feedPage
         await sut.fetchFeed()
         sut.filters.city = "paris"
-        sut.requestRecommendationsButtonTapped()
-        try await Task.sleep(nanoseconds: 100_000_000)
+        await sut.loadRecommendation()
 
         let countAfterRecommendation = sut.posts.count
         mockNetwork.getFeedResult = feedPage2

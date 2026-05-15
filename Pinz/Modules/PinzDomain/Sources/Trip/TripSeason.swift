@@ -9,11 +9,11 @@ public enum TripSeason: PickerItem {
 
     public var content: PickerItemContent {
         switch self {
-        case .none: .text("Не выбрано")
-        case .summer: .text("Лето")
-        case .autumn: .text("Осень")
-        case .winter: .text("Зима")
-        case .spring: .text("Весна")
+        case .none: .text(PinzDomainL10n.string("tripSeason.none"))
+        case .summer: .text(PinzDomainL10n.string("tripSeason.summer"))
+        case .autumn: .text(PinzDomainL10n.string("tripSeason.autumn"))
+        case .winter: .text(PinzDomainL10n.string("tripSeason.winter"))
+        case .spring: .text(PinzDomainL10n.string("tripSeason.spring"))
         }
     }
 

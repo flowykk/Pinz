@@ -176,8 +176,8 @@ final class InitialTripSetupViewModel {
                 response = try await networkService.createTrip(
                     name: name,
                     description: description,
-                    category: category == .none ? nil : category.value,
-                    season: season == .none ? nil : season.value,
+                    category: category.apiValue,
+                    season: season.apiValue,
                     filesToUpload: buildFilesToUpload()
                 )
             } catch {

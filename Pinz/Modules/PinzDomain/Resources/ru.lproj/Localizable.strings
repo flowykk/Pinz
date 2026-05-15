@@ -1,0 +1,29 @@
+// MARK: - Trip category (picker / display)
+"tripCategory.none" = "Не выбрано";
+"tripCategory.customOther" = "Другое";
+"tripCategory.vacation" = "Отпуск";
+"tripCategory.holidays" = "Выходные";
+"tripCategory.business" = "Командировка";
+"tripCategory.education" = "Образование";
+"tripCategory.active" = "Активный отдых";
+
+// MARK: - Trip season
+"tripSeason.none" = "Не выбрано";
+"tripSeason.summer" = "Лето";
+"tripSeason.autumn" = "Осень";
+"tripSeason.winter" = "Зима";
+"tripSeason.spring" = "Весна";
+
+// MARK: - Pin category
+"pinCategory.customOther" = "Другое";
+"pinCategory.sight" = "Достопримечательности";
+"pinCategory.nature" = "Природа";
+"pinCategory.leisure" = "Отдых";
+"pinCategory.housing" = "Жилье";
+"pinCategory.food" = "Еда и напитки";
+"pinCategory.shopping" = "Шопинг";
+"pinCategory.transport" = "Транспорт";
+"pinCategory.entertainment" = "Развлечение";
+"pinCategory.event" = "Мероприятие";
+"pinCategory.sport" = "Спорт";
+"pinCategory.work" = "Рабочее место";

@@ -21,7 +21,7 @@ public struct AddMediaProcessingView: View {
     }
 
     public var body: some View {
-        LoadingView(status: "Обрабатываем медиа...")
+        LoadingView(status: PinzBaseStrings.PinUpload.Processing.status)
             .background(PinzUIAsset.background.swiftUIColor)
             .navigationBarBackButtonHidden(true)
             .onAppear { startListening() }

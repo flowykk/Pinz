@@ -185,8 +185,9 @@ final class PinUploadCreationUITests: XCTestCase {
 
     @MainActor
     private func waitForFinalizeCount(expected: Int, timeout: TimeInterval = 4.0) async -> Bool {
-        await waitUntil(timeout: timeout) {
-            let counts = await pinUploadResponseFactory.counts()
+        guard let factory = pinUploadResponseFactory else { return false }
+        return await waitUntil(timeout: timeout) {
+            let counts = await factory.counts()
             return counts.finalize == expected
         }
     }

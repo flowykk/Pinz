@@ -92,7 +92,7 @@ final class FeedViewModel {
         guard !isRecommendationsLoading else {
             return
         }
-        Task {
+        Task { @MainActor in
             await loadRecommendation()
         }
     }
@@ -138,7 +138,7 @@ final class FeedViewModel {
 
         let (city, country) = normalizedLocation(from: filters)
         guard (city == nil) != (country == nil) else {
-            showToast?(L10n.recommendationLocationError)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.locationRequired)
             return
         }
 
@@ -162,7 +162,7 @@ final class FeedViewModel {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                     posts.removeAll(where: \.isRecommended)
                 }
-                showToast?(L10n.recommendationEmpty)
+                showToast?(PinzBaseStrings.Feed.Recommendation.Toast.empty)
                 return
             }
 
@@ -187,7 +187,7 @@ final class FeedViewModel {
             handleGetRecommendationsError(httpError)
         } catch {
             print(error)
-            showToast?(L10n.recommendationLoadFailed)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.loadFailed)
         }
     }
 
@@ -251,7 +251,7 @@ final class FeedViewModel {
                 return newId
             } catch let httpError as HTTPError {
                 if httpError == .conflict {
-                    showToast?(L10n.recommendationSnapshotExpired)
+                    showToast?(PinzBaseStrings.Feed.Recommendation.Toast.snapshotExpired)
                     await loadRecommendation()
                 } else {
                     handleSaveRecommendationError(httpError)
@@ -281,32 +281,32 @@ final class FeedViewModel {
     private func handleGetRecommendationsError(_ error: HTTPError) {
         switch error {
         case .badRequest:
-            showToast?(L10n.recommendationLocationError)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.locationRequired)
         case .notFound:
             recommendation = nil
             withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                 posts.removeAll(where: \.isRecommended)
             }
-            showToast?(L10n.recommendationRegionNotFound)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.regionNotFound)
         case .unauthorized:
-            showToast?(L10n.recommendationLoadFailed)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.loadFailed)
         default:
             print("GET /recommendations error: \(error)")
-            showToast?(L10n.recommendationLoadFailed)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.loadFailed)
         }
     }
 
     private func handleSaveRecommendationError(_ error: HTTPError) {
         switch error {
         case .badRequest:
-            showToast?(L10n.recommendationLocationError)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.locationRequired)
         case .forbidden:
-            showToast?(L10n.recommendationSnapshotStale)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.snapshotStale)
         case .notFound:
-            showToast?(L10n.recommendationRegionNotFound)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.regionNotFound)
         default:
             print("POST /recommendations/save error: \(error)")
-            showToast?(L10n.recommendationSaveFailed)
+            showToast?(PinzBaseStrings.Feed.Recommendation.Toast.saveFailed)
         }
     }
 
@@ -361,7 +361,7 @@ final class FeedViewModel {
             favorites: 0,
             views: 0,
             isRecommended: true,
-            recommendedBadge: "Рекомендация для тебя",
+            recommendedBadge: PinzBaseStrings.Feed.Recommendation.Badge.forYou,
             pins: pins,
             media: postMedia
         )
@@ -423,16 +423,6 @@ final class FeedViewModel {
             pins: pins,
             media: postMedia
         )
-    }
-
-    private enum L10n {
-        static let recommendationLocationError = "Выберите город или страну для рекомендаций."
-        static let recommendationLoadFailed = "Не удалось загрузить рекомендацию."
-        static let recommendationSaveFailed = "Не удалось сохранить рекомендацию."
-        static let recommendationEmpty = "По этому региону пока нет рекомендаций."
-        static let recommendationRegionNotFound = "Регион не найден."
-        static let recommendationSnapshotExpired = "Карта устарела, обновляем..."
-        static let recommendationSnapshotStale = "Обновите карту."
     }
 
     private static func recommendationDisplayTripName(from tripName: String, map: RecommendedMapDTO) -> String {

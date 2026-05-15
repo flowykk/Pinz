@@ -157,6 +157,11 @@ actor MockPinUploadState {
             return Response(status: .notFound)
         }
 
+        // Client disables Save while `pinsHaveIssues` (missing dates/coords). Suggested times must be set
+        // or the create-pin UI test cannot tap Save.
+        let pinStart = Int(Date().timeIntervalSince1970) - 3_600
+        let pinEnd = pinStart + 7_200
+
         let draft = PinUploadDraftDTO(
             suggested: PinSuggestedFieldsDTO(
                 name: "Suggested UI Pin",
@@ -164,8 +169,8 @@ actor MockPinUploadState {
                 tags: ["ui"],
                 latitude: 55.7558,
                 longitude: 37.6176,
-                startTimeUnix: nil,
-                endTimeUnix: nil
+                startTimeUnix: pinStart,
+                endTimeUnix: pinEnd
             ),
             media: [
                 ReviewPinMediaDTO(
@@ -174,7 +179,7 @@ actor MockPinUploadState {
                     privacyLevel: "private"
                 )
             ],
-            pinIssues: ["MISSING_DATES"],
+            pinIssues: [],
             nsfwMediaIds: nil,
             dedupedMediaIds: nil
         )

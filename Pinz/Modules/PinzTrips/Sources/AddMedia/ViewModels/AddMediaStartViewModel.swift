@@ -28,8 +28,8 @@ final class AddMediaStartViewModel {
 
         var localizedValue: String {
             switch self {
-            case .uploading: "Загружаем медиа..."
-            case .committing: "Сохраняем..."
+            case .uploading: PinzBaseStrings.PinUpload.Loading.uploading
+            case .committing: PinzBaseStrings.PinUpload.Loading.committing
             }
         }
     }

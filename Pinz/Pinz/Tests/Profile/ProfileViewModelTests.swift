@@ -244,10 +244,10 @@ final class ProfileViewModelTests: XCTestCase {
     func test_dispatch_deleteAccount_success_navigatesToMain() async throws {
         sut.dispatch(.deleteAccount)
         for _ in 0..<60 {
-            if mockRouter.navigatedToMain { break }
+            if mockRouter.navigatedToAuthenticationRoot { break }
             try await Task.sleep(nanoseconds: 20_000_000)
         }
-        XCTAssertTrue(mockRouter.navigatedToMain)
+        XCTAssertTrue(mockRouter.navigatedToAuthenticationRoot)
     }
 
     func test_dispatch_deleteAccount_success_setsIsLoadingFalse() async throws {

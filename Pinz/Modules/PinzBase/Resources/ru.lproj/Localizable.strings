@@ -157,6 +157,14 @@
 "feed.filter.sort.rating" = "По рейтингу";
 "feed.list.endReached" = "Больше постов нет";
 "feed.button.getRecommendation" = "Получить рекомендацию";
+"feed.recommendation.badge.forYou" = "Рекомендация для тебя";
+"feed.recommendation.toast.locationRequired" = "Выберите город или страну для рекомендаций.";
+"feed.recommendation.toast.loadFailed" = "Не удалось загрузить рекомендацию.";
+"feed.recommendation.toast.saveFailed" = "Не удалось сохранить рекомендацию.";
+"feed.recommendation.toast.empty" = "По этому региону пока нет рекомендаций.";
+"feed.recommendation.toast.regionNotFound" = "Регион не найден.";
+"feed.recommendation.toast.snapshotExpired" = "Карта устарела, обновляем...";
+"feed.recommendation.toast.snapshotStale" = "Обновите карту.";
 
 // MARK: - Trips
 "trips.title.list" = "Путешествия";
@@ -266,6 +274,7 @@
 "tripPins.status.groupingReview" = "Другой участник группирует медиа";
 "tripPins.status.processing" = "Медиа обрабатывается";
 "tripPins.status.draftFinalReview" = "Другой участник проверяет медиа";
+"tripPins.status.creatingPin" = "Создание пина...";
 
 // MARK: - Pin upload resume
 "pinUpload.creation.resume.conflictSession" = "Сессия создания пина занята на другом устройстве. Начинаем заново.";
@@ -284,6 +293,17 @@
 "pinUpload.cancel.addition.title" = "Отменить добавление медиа?";
 "pinUpload.cancel.addition.confirm" = "Отменить добавление медиа";
 "pinUpload.dialog.continue" = "Продолжить";
+"pinUpload.review.toast.maxTags" = "Максимум %d тегов";
+"pinUpload.review.toast.tagTooLongBytes" = "Тег слишком длинный (макс %d байт)";
+"pinUpload.review.toast.tagTooLongBytesNamed" = "Тег '%@' слишком длинный (макс %d байт)";
+"pinUpload.review.toast.nameTooLongBytes" = "Название слишком длинное (макс %d байт)";
+"pinUpload.review.toast.descriptionTooLongBytes" = "Описание слишком длинное (макс %d байт)";
+"pinUpload.review.toast.emptyPinNoMedia" = "Удалены все медиа — нельзя сохранить пустой пин";
+"pinUpload.review.toast.sessionInactive" = "Сессия больше не активна";
+"pinUpload.review.toast.badRequest" = "Проверь поля: возможно превышены лимиты или неверные координаты";
+"pinUpload.review.toast.limitExceeded" = "Превышен лимит — попробуй позже";
+"pinUpload.review.toast.sessionWrongState" = "Сессия в неподходящем состоянии";
+"pinUpload.review.toast.sessionNotFound" = "Сессия не найдена";
 
 // MARK: - Add Media
 "addMedia.start.title" = "Добавить медиа";

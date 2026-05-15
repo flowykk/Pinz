@@ -74,7 +74,7 @@ public struct TripPinsListView: View {
     }
 
     private var pinUploadStatusLabel: String? {
-        viewModel.hasActivePinUploadSession ? "Создание пина..." : nil
+        viewModel.hasActivePinUploadSession ? PinzBaseStrings.TripPins.Status.creatingPin : nil
     }
 
     private var hasAnyStatusLabel: Bool {
