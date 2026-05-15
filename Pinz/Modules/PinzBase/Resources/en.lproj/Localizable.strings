@@ -157,6 +157,14 @@
 "feed.filter.sort.rating" = "By rating";
 "feed.list.endReached" = "No more posts";
 "feed.button.getRecommendation" = "Get a recommendation";
+"feed.recommendation.badge.forYou" = "Picked for you";
+"feed.recommendation.toast.locationRequired" = "Choose a city or country for recommendations.";
+"feed.recommendation.toast.loadFailed" = "Couldn't load recommendation.";
+"feed.recommendation.toast.saveFailed" = "Couldn't save recommendation.";
+"feed.recommendation.toast.empty" = "No recommendations for this region yet.";
+"feed.recommendation.toast.regionNotFound" = "Region not found.";
+"feed.recommendation.toast.snapshotExpired" = "Map data expired, refreshing…";
+"feed.recommendation.toast.snapshotStale" = "Refresh the map.";
 
 // MARK: - Trips
 "trips.title.list" = "Trips";
@@ -266,6 +274,7 @@
 "tripPins.status.groupingReview" = "Another participant is grouping media";
 "tripPins.status.processing" = "Media is being processed";
 "tripPins.status.draftFinalReview" = "Another participant is reviewing media";
+"tripPins.status.creatingPin" = "Creating pin…";
 
 // MARK: - Pin upload resume
 "pinUpload.creation.resume.conflictSession" = "Pin creation is in progress on another device. Starting over.";
@@ -284,6 +293,17 @@
 "pinUpload.cancel.addition.title" = "Cancel adding media?";
 "pinUpload.cancel.addition.confirm" = "Cancel adding media";
 "pinUpload.dialog.continue" = "Continue";
+"pinUpload.review.toast.maxTags" = "Maximum %d tags";
+"pinUpload.review.toast.tagTooLongBytes" = "Tag is too long (max %d bytes)";
+"pinUpload.review.toast.tagTooLongBytesNamed" = "Tag '%@' is too long (max %d bytes)";
+"pinUpload.review.toast.nameTooLongBytes" = "Name is too long (max %d bytes)";
+"pinUpload.review.toast.descriptionTooLongBytes" = "Description is too long (max %d bytes)";
+"pinUpload.review.toast.emptyPinNoMedia" = "All media removed — can't save an empty pin";
+"pinUpload.review.toast.sessionInactive" = "Session is no longer active";
+"pinUpload.review.toast.badRequest" = "Check the fields: limits or coordinates may be invalid";
+"pinUpload.review.toast.limitExceeded" = "Limit exceeded — try again later";
+"pinUpload.review.toast.sessionWrongState" = "Session is in the wrong state";
+"pinUpload.review.toast.sessionNotFound" = "Session not found";
 
 // MARK: - Add Media
 "addMedia.start.title" = "Add Media";

@@ -23,4 +23,9 @@ public final class PinUploadSessionStorage {
         dict.removeValue(forKey: tripId)
         defaults.set(dict, forKey: key)
     }
+
+    /// Clears all stored creation uploads (e.g. UI tests / simulator resets).
+    public func clearAll() {
+        defaults.removeObject(forKey: key)
+    }
 }

@@ -33,6 +33,13 @@ public enum PinzLaunchArgs {
         } else {
             SelectedTripStorage.shared.clearSelection()
         }
+
+        // Pin-upload UI tests persist session ids in UserDefaults; leftover READY_FOR_REVIEW
+        // makes "Add pin" resume straight to Review and breaks `PinUploadScreen.waitForStartScreen`.
+        if testingPinUploadFakeMedia {
+            PinUploadSessionStorage.shared.clearAll()
+            PinUploadAdditionSessionStorage.shared.clearAll()
+        }
         return true
     }
 

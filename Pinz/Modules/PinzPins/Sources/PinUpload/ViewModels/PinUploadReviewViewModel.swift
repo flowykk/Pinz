@@ -119,11 +119,11 @@ final class PinUploadReviewViewModel {
             }
         case let .addTag(tag):
             guard tags.count < Self.maxTagsCount else {
-                showToast?("Максимум \(Self.maxTagsCount) тегов")
+                showToast?(PinzBaseStrings.PinUpload.Review.Toast.maxTags(Self.maxTagsCount))
                 return
             }
             guard tag.tag.utf8.count <= Self.maxTagUTF8Bytes else {
-                showToast?("Тег слишком длинный (макс \(Self.maxTagUTF8Bytes) байт)")
+                showToast?(PinzBaseStrings.PinUpload.Review.Toast.tagTooLongBytes(Self.maxTagUTF8Bytes))
                 return
             }
             tags.append(tag)
@@ -174,7 +174,7 @@ final class PinUploadReviewViewModel {
             // Cannot finalize an empty pin — backend will return 409 otherwise.
             let remainingMedia = medias.filter { !mediaToDelete.contains($0.mediaId) }
             guard !remainingMedia.isEmpty else {
-                showToast?("Удалены все медиа — нельзя сохранить пустой пин")
+                showToast?(PinzBaseStrings.PinUpload.Review.Toast.emptyPinNoMedia)
                 return
             }
 
@@ -220,7 +220,7 @@ final class PinUploadReviewViewModel {
                 handleFinalizeError(httpError)
                 throw httpError
             } catch {
-                showToast?("Не удалось сохранить пин")
+                showToast?(PinzBaseStrings.PinInfo.Toast.saveFailed)
                 throw error
             }
 
@@ -361,19 +361,19 @@ final class PinUploadReviewViewModel {
 
     private func validate() -> Bool {
         if name.utf8.count > Self.maxNameUTF8Bytes {
-            showToast?("Название слишком длинное (макс \(Self.maxNameUTF8Bytes) байт)")
+            showToast?(PinzBaseStrings.PinUpload.Review.Toast.nameTooLongBytes(Self.maxNameUTF8Bytes))
             return false
         }
         if let desc = description, desc.utf8.count > Self.maxDescriptionUTF8Bytes {
-            showToast?("Описание слишком длинное (макс \(Self.maxDescriptionUTF8Bytes) байт)")
+            showToast?(PinzBaseStrings.PinUpload.Review.Toast.descriptionTooLongBytes(Self.maxDescriptionUTF8Bytes))
             return false
         }
         if tags.count > Self.maxTagsCount {
-            showToast?("Максимум \(Self.maxTagsCount) тегов")
+            showToast?(PinzBaseStrings.PinUpload.Review.Toast.maxTags(Self.maxTagsCount))
             return false
         }
         if let bigTag = tags.first(where: { $0.tag.utf8.count > Self.maxTagUTF8Bytes }) {
-            showToast?("Тег '\(bigTag.tag)' слишком длинный (макс \(Self.maxTagUTF8Bytes) байт)")
+            showToast?(PinzBaseStrings.PinUpload.Review.Toast.tagTooLongBytesNamed(bigTag.tag, Self.maxTagUTF8Bytes))
             return false
         }
         return true
@@ -385,25 +385,25 @@ final class PinUploadReviewViewModel {
             // 409: backend can return either "pin must contain at least one media" or
             // "expected READY_FOR_REVIEW" (race with WS / parallel cancel).
             // На клиенте мы уже валидируем пустоту, так что это race — сессия мертва.
-            showToast?("Сессия больше не активна")
+            showToast?(PinzBaseStrings.PinUpload.Review.Toast.sessionInactive)
             clearSessionStorage()
             dismissPinUploadFlow()
         case .badRequest:
-            showToast?("Проверь поля: возможно превышены лимиты или неверные координаты")
+            showToast?(PinzBaseStrings.PinUpload.Review.Toast.badRequest)
         case .unprocessableEntity:
             // 422 LIMIT_EXCEEDED.
-            showToast?("Превышен лимит — попробуй позже")
+            showToast?(PinzBaseStrings.PinUpload.Review.Toast.limitExceeded)
         case .preconditionFailed:
             // 412 — состояние сессии не подходит.
-            showToast?("Сессия в неподходящем состоянии")
+            showToast?(PinzBaseStrings.PinUpload.Review.Toast.sessionWrongState)
             clearSessionStorage()
             dismissPinUploadFlow()
         case .notFound:
-            showToast?("Сессия не найдена")
+            showToast?(PinzBaseStrings.PinUpload.Review.Toast.sessionNotFound)
             clearSessionStorage()
             dismissPinUploadFlow()
         default:
-            showToast?("Не удалось сохранить пин")
+            showToast?(PinzBaseStrings.PinInfo.Toast.saveFailed)
         }
     }
 

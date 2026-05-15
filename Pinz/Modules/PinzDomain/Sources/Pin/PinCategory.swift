@@ -20,18 +20,18 @@ public enum PinCategory: PickerItem {
 
     public var value: String {
         switch self {
-        case let .custom(text): text ?? "Другое"
-        case .sight: "Достопримечательности"
-        case .nature: "Природа"
-        case .leisure: "Отдых"
-        case .housing: "Жилье"
-        case .food: "Еда и напитки"
-        case .shopping: "Шопинг"
-        case .transport: "Транспорт"
-        case .entertainment: "Развлечение"
-        case .event: "Мероприятие"
-        case .sport: "Спорт"
-        case .work: "Рабочее место"
+        case let .custom(text): text ?? PinzDomainL10n.string("pinCategory.customOther")
+        case .sight: PinzDomainL10n.string("pinCategory.sight")
+        case .nature: PinzDomainL10n.string("pinCategory.nature")
+        case .leisure: PinzDomainL10n.string("pinCategory.leisure")
+        case .housing: PinzDomainL10n.string("pinCategory.housing")
+        case .food: PinzDomainL10n.string("pinCategory.food")
+        case .shopping: PinzDomainL10n.string("pinCategory.shopping")
+        case .transport: PinzDomainL10n.string("pinCategory.transport")
+        case .entertainment: PinzDomainL10n.string("pinCategory.entertainment")
+        case .event: PinzDomainL10n.string("pinCategory.event")
+        case .sport: PinzDomainL10n.string("pinCategory.sport")
+        case .work: PinzDomainL10n.string("pinCategory.work")
         }
     }
 
@@ -54,7 +54,7 @@ public enum PinCategory: PickerItem {
     }
 
     public static let allCases: [PinCategory] = [
-        .custom("Другое"),
+        .custom(nil),
         .sight,
         .nature,
         .leisure,

@@ -82,7 +82,7 @@ public struct TripView: View {
                 TripPinsListPopupView(
                     pins: selectedTrip.pins,
                     tripStatus: selectedTrip.status,
-                    pinUploadStatusLabel: viewModel.hasActivePinUploadSession ? "Создание пина..." : nil
+                    pinUploadStatusLabel: viewModel.hasActivePinUploadSession ? PinzBaseStrings.TripPins.Status.creatingPin : nil
                 ) { pin in
                     isPinsListPresented = false
                     viewModel.dispatch(.navigate(.pinInfo(pin)))

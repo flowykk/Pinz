@@ -1,0 +1,29 @@
+// MARK: - Trip category (picker / display)
+"tripCategory.none" = "Not selected";
+"tripCategory.customOther" = "Other";
+"tripCategory.vacation" = "Vacation";
+"tripCategory.holidays" = "Weekend trip";
+"tripCategory.business" = "Business trip";
+"tripCategory.education" = "Education";
+"tripCategory.active" = "Active leisure";
+
+// MARK: - Trip season
+"tripSeason.none" = "Not selected";
+"tripSeason.summer" = "Summer";
+"tripSeason.autumn" = "Fall";
+"tripSeason.winter" = "Winter";
+"tripSeason.spring" = "Spring";
+
+// MARK: - Pin category
+"pinCategory.customOther" = "Other";
+"pinCategory.sight" = "Sightseeing";
+"pinCategory.nature" = "Nature";
+"pinCategory.leisure" = "Leisure";
+"pinCategory.housing" = "Lodging";
+"pinCategory.food" = "Food & drinks";
+"pinCategory.shopping" = "Shopping";
+"pinCategory.transport" = "Transport";
+"pinCategory.entertainment" = "Entertainment";
+"pinCategory.event" = "Event";
+"pinCategory.sport" = "Sports";
+"pinCategory.work" = "Workplace";

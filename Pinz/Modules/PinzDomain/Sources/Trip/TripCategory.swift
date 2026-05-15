@@ -15,13 +15,13 @@ public enum TripCategory: PickerItem {
 
     public var value: String {
         switch self {
-        case .none: "Не выбрано"
-        case let .custom(text): text ?? "Другое"
-        case .vacation: "Отпуск"
-        case .holidays: "Выходные"
-        case .business: "Командировка"
-        case .education: "Образование"
-        case .active: "Активный отдых"
+        case .none: PinzDomainL10n.string("tripCategory.none")
+        case let .custom(text): text ?? PinzDomainL10n.string("tripCategory.customOther")
+        case .vacation: PinzDomainL10n.string("tripCategory.vacation")
+        case .holidays: PinzDomainL10n.string("tripCategory.holidays")
+        case .business: PinzDomainL10n.string("tripCategory.business")
+        case .education: PinzDomainL10n.string("tripCategory.education")
+        case .active: PinzDomainL10n.string("tripCategory.active")
         }
     }
 
