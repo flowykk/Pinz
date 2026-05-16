@@ -130,6 +130,10 @@ func main() {
 	}
 
 	if mlBroker != nil {
+		var finalizer worker.TripFinalizer
+		if tripSvc, ok := deps.TripService.(worker.TripFinalizer); ok {
+			finalizer = tripSvc
+		}
 		handler := worker.HandleMLResult(worker.MLResultsDeps{
 			TripRepo:             deps.TripRepo,
 			PinRepo:              deps.PinRepo,
@@ -137,6 +141,7 @@ func main() {
 			TagRepo:              deps.TagRepo,
 			PinUploadSessionRepo: deps.PinUploadSessionRepo,
 			EventRepo:            deps.EventRepo,
+			TripFinalizer:        finalizer,
 		})
 		if err := mlBroker.SubscribeMLResults(ctx, handler); err != nil {
 			slog.Error("nats: SubscribeMLResults failed", "error", err)

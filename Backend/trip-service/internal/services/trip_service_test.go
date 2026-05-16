@@ -714,9 +714,6 @@ func TestApplyGroupsAndProcess_DeletedMediaSuccess(t *testing.T) {
 		&models.Media{ID: "m1", TripID: tripID, S3Key: "s3/k1"}, nil)
 	mediaRepo.EXPECT().DeleteByIDs([]string{"m1"}).Return(nil)
 	tripRepo.EXPECT().SetStatus(tripID, "PROCESSING").Return(nil)
-	// STUB: сразу после PROCESSING трип переводится в DRAFT_FINAL_REVIEW
-	// (finalizeProcessingStub, пока ML-воркер не реализован).
-	tripRepo.EXPECT().SetStatus(tripID, "DRAFT_FINAL_REVIEW").Return(nil)
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	resp, err := svc.ApplyGroupsAndProcess(ctxWithUser(userID), &pb.ApplyGroupsAndProcessRequest{
