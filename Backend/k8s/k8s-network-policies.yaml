@@ -211,3 +211,31 @@ spec:
           port: 4317   # OTLP gRPC
         - protocol: TCP
           port: 4318   # OTLP HTTP
+---
+# Allow trip-service to publish/subscribe to NATS JetStream.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-trip-service-to-nats
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: nats
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: trip-service
+      ports:
+        - protocol: TCP
+          port: 4222
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 8080

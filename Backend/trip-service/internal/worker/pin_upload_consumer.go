@@ -28,6 +28,7 @@ type PinUploadConsumerDeps struct {
 	MediaRepo   *repositories.MediaRepository
 	EventRepo   *repositories.RedisRepository
 	MediaURLs   services.MediaURLResolver
+	MLBroker    repositories.MLBroker
 }
 
 // RunPinUploadConsumer — один consumer-loop. Стартовать N штук c разными consumerName.
@@ -166,7 +167,7 @@ func processPinUploadMessage(ctx context.Context, msg redis.XMessage, deps PinUp
 	if result == "success" {
 		metrics.PinUploadSession(ctx, "process", "success")
 	}
-	publishPinUploadMLTaskDryRun(ctx, deps, tripID, sessionID, targetPinID)
+	publishPinUploadMLTask(ctx, deps, tripID, sessionID, targetPinID)
 	if deps.EventRepo != nil {
 		payload := map[string]interface{}{
 			"trip_id":           tripID,
@@ -182,14 +183,15 @@ func processPinUploadMessage(ctx context.Context, msg redis.XMessage, deps PinUp
 	}
 }
 
-// dry-run параллельно со stub'ом для валидации ML-контракта. Ошибки swallowed.
-func publishPinUploadMLTaskDryRun(ctx context.Context, deps PinUploadConsumerDeps, tripID, sessionID, targetPinID string) {
-	if deps.EventRepo == nil || deps.MediaURLs == nil || deps.MediaRepo == nil {
+// publishPinUploadMLTask — публикация задачи в NATS для pin_upload flow.
+// Ошибки swallowed, чтобы не блокировать переход сессии в READY_FOR_REVIEW.
+func publishPinUploadMLTask(ctx context.Context, deps PinUploadConsumerDeps, tripID, sessionID, targetPinID string) {
+	if deps.MLBroker == nil || deps.MediaURLs == nil || deps.MediaRepo == nil {
 		return
 	}
 	sessionMedia, err := deps.MediaRepo.ListByUploadSession(sessionID)
 	if err != nil {
-		slog.WarnContext(ctx, "ml dry-run: ListByUploadSession failed",
+		slog.WarnContext(ctx, "ml task: ListByUploadSession failed",
 			"session_id", sessionID, "trip_id", tripID, "error", err)
 		return
 	}
@@ -200,23 +202,23 @@ func publishPinUploadMLTaskDryRun(ctx context.Context, deps PinUploadConsumerDep
 	if targetPinID != "" {
 		pinMedia, err = deps.MediaRepo.ListByPinID(targetPinID)
 		if err != nil {
-			slog.WarnContext(ctx, "ml dry-run: ListByPinID failed",
+			slog.WarnContext(ctx, "ml task: ListByPinID failed",
 				"session_id", sessionID, "trip_id", tripID, "target_pin_id", targetPinID, "error", err)
 			return
 		}
 	}
-	flowLabel := services.MLFlowPinUploadCreate
+	flow := services.MLFlowPinUploadCreation
 	if targetPinID != "" {
-		flowLabel = services.MLFlowPinUploadAddTo
+		flow = services.MLFlowPinUploadAddition
 	}
-	newJSON, existingJSON, expiresAtUnix, _, err := services.BuildPinUploadMLPayload(ctx, flowLabel, sessionMedia, pinMedia, deps.MediaURLs)
+	msg, _, err := services.BuildMLTaskMessageForPinUpload(ctx, flow, tripID, sessionID, targetPinID, sessionMedia, pinMedia, deps.MediaURLs)
 	if err != nil {
-		slog.WarnContext(ctx, "ml dry-run: BuildPinUploadMLPayload failed",
+		slog.WarnContext(ctx, "ml task: build payload failed",
 			"session_id", sessionID, "trip_id", tripID, "error", err)
 		return
 	}
-	if err := deps.EventRepo.AddPinUploadMLTask(ctx, tripID, sessionID, targetPinID, newJSON, existingJSON, expiresAtUnix); err != nil {
-		slog.WarnContext(ctx, "ml dry-run: AddPinUploadMLTask failed",
+	if err := deps.MLBroker.PublishMLTask(ctx, msg); err != nil {
+		slog.WarnContext(ctx, "ml task: publish failed",
 			"session_id", sessionID, "trip_id", tripID, "error", err)
 	}
 }

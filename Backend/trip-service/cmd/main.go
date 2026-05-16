@@ -68,11 +68,7 @@ func main() {
 		redisClient = rc
 		defer redisClient.Close()
 		if err := pinzotel.RegisterStreamMetrics(otel.Meter("trip-service"), repositories.StreamQueryer{Client: redisClient}, []pinzotel.StreamSpec{
-			{Stream: "pinz:trip:ml:tasks", Groups: []string{"trip-service-worker"}},
-			{Stream: "pinz:trip:ml:results", Groups: []string{"trip-service-ml-results"}},
 			{Stream: "pinz:trip:pin_upload:tasks", Groups: []string{"trip-service-pin-upload"}},
-			{Stream: "pinz:trip:pin_upload:ml:tasks", Groups: nil},
-			{Stream: "pinz:trip:pin_upload:ml:results", Groups: []string{"trip-service-pin-upload-ml-results"}},
 			{Stream: "pinz:trip:privacy:events", Groups: []string{"trip-service-privacy"}},
 			{Stream: "pinz:trip:geo_events", Groups: []string{"trip-service-geo-worker"}},
 			{Stream: "pinz:trip:events", Groups: nil},
@@ -82,8 +78,16 @@ func main() {
 		}
 	}
 
+	var mlBroker *repositories.NATSBroker
+	if br, err := repositories.InitNATSBroker(); err != nil {
+		slog.Warn("nats broker init failed, ML pipeline disabled", "error", err)
+	} else if br != nil {
+		mlBroker = br
+		defer mlBroker.Close()
+	}
+
 	slog.Info("building dependencies")
-	deps, err := di.BuildDependencies(ctx, sqlDB, redisClient)
+	deps, err := di.BuildDependencies(ctx, sqlDB, redisClient, mlBroker)
 	if err != nil {
 		slog.Error("failed to build dependencies", "error", err)
 		os.Exit(1)
@@ -91,7 +95,7 @@ func main() {
 
 	// Start worker as a background goroutine.
 	go func() {
-		if err := worker.Run(ctx, deps.RedisClient, deps.TripRepo, deps.ParticipantRepo, deps.MediaRepo, deps.TagRepo, deps.PinRepo, deps.EventRepo, deps.TripPrivacyRepo, deps.PinPrivacyRepo, deps.MediaPrivacyRepo); err != nil {
+		if err := worker.Run(ctx, deps.RedisClient, deps.TripRepo, deps.PinRepo, deps.MediaRepo, deps.TripPrivacyRepo, deps.PinPrivacyRepo, deps.MediaPrivacyRepo); err != nil {
 			slog.Error("worker stopped with error", "error", err)
 		}
 	}()
@@ -120,14 +124,29 @@ func main() {
 			MediaRepo:   deps.MediaRepo,
 			EventRepo:   deps.EventRepo,
 			MediaURLs:   deps.MediaURLs,
+			MLBroker:    deps.MLBroker,
 		})
 	}
 
-	go worker.RunPinUploadMLResultsConsumer(ctx, deps.RedisClient, worker.PinUploadMLResultsDeps{
-		SessionRepo: deps.PinUploadSessionRepo,
-		MediaRepo:   deps.MediaRepo,
-		EventRepo:   deps.EventRepo,
-	})
+	if mlBroker != nil {
+		handler := worker.HandleMLResult(worker.MLResultsDeps{
+			PinRepo:              deps.PinRepo,
+			MediaRepo:            deps.MediaRepo,
+			TagRepo:              deps.TagRepo,
+			PinUploadSessionRepo: deps.PinUploadSessionRepo,
+			EventRepo:            deps.EventRepo,
+		})
+		if err := mlBroker.SubscribeMLResults(ctx, handler); err != nil {
+			slog.Error("nats: SubscribeMLResults failed", "error", err)
+		} else {
+			slog.Info("nats: ML results consumer started", "stream", repositories.MLStreamResults, "consumer", repositories.MLConsumerTripResults)
+		}
+		if err := worker.RunDLQRouter(ctx, mlBroker); err != nil {
+			slog.Error("nats: RunDLQRouter failed", "error", err)
+		} else {
+			slog.Info("nats: DLQ router started", "stream", repositories.MLStreamTasksDLQ)
+		}
+	}
 
 	slog.Info("dependencies ready, starting gRPC server")
 	if err := server.RunGRPCServer(deps.TripService); err != nil {

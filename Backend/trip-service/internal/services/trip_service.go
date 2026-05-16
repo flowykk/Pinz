@@ -50,6 +50,12 @@ type TripService struct {
 	pinHiddenRepo repositories.PinHiddenRepositoryInterface
 	pinUploadSessionRepo repositories.PinUploadSessionRepositoryInterface
 	recSnapshotRepo repositories.RecommendationSnapshotRepositoryInterface
+	mlBroker repositories.MLBroker
+}
+
+// Без брокера сервис работает в stub-режиме без публикации ML.
+func (s *TripService) SetMLBroker(broker repositories.MLBroker) {
+	s.mlBroker = broker
 }
 
 func NewTripService(
@@ -1351,7 +1357,7 @@ func (s *TripService) publishMLTaskDryRun(ctx context.Context, tripID, flow stri
 	if s.eventRepo == nil || s.mediaURLs == nil || s.pinRepo == nil || s.mediaRepo == nil {
 		return
 	}
-	pinsJSON, expiresAtUnix, count, err := BuildTripMLPayload(ctx, tripID, flow, newPinIDs, pendingExistingAttachments, s.pinRepo, s.mediaRepo, s.mediaURLs)
+	msg, count, err := BuildMLTaskMessageForTrip(ctx, tripID, flow, "", newPinIDs, pendingExistingAttachments, s.pinRepo, s.mediaRepo, s.mediaURLs)
 	if err != nil {
 		slog.WarnContext(ctx, "ml dry-run: build payload failed", "trip_id", tripID, "flow", flow, "error", err)
 		return
@@ -1359,13 +1365,10 @@ func (s *TripService) publishMLTaskDryRun(ctx context.Context, tripID, flow stri
 	if count == 0 {
 		return
 	}
-	if flow == MLFlowAddMedia {
-		if err := s.eventRepo.SetMLContext(ctx, tripID, flow, newPinIDs, 30*time.Minute); err != nil {
-			slog.WarnContext(ctx, "ml dry-run: SetMLContext failed", "trip_id", tripID, "error", err)
+	if s.mlBroker != nil {
+		if err := s.mlBroker.PublishMLTask(ctx, msg); err != nil {
+			slog.WarnContext(ctx, "ml dry-run: PublishMLTask failed", "trip_id", tripID, "flow", flow, "error", err)
 		}
-	}
-	if err := s.eventRepo.AddMLTaskFull(ctx, tripID, flow, pinsJSON, newPinIDs, expiresAtUnix); err != nil {
-		slog.WarnContext(ctx, "ml dry-run: AddMLTaskFull failed", "trip_id", tripID, "flow", flow, "error", err)
 	}
 }
 
@@ -1383,6 +1386,7 @@ func (s *TripService) finalizeProcessingStub(ctx context.Context, tripID, target
 	if s.eventRepo == nil {
 		return
 	}
+	s.publishGeoRequestForTrip(ctx, tripID)
 	// чистим per-trip WS-stream от событий предыдущих processing-сессий,
 	// иначе XREAD "0-0" подхватит чужое TRIP_PROCESSING_COMPLETED.
 	_ = s.eventRepo.DeleteTripEventStream(ctx, tripID)
@@ -1391,6 +1395,108 @@ func (s *TripService) finalizeProcessingStub(ctx context.Context, tripID, target
 		"status": targetStatus,
 	}); err != nil {
 		slog.WarnContext(ctx, "finalizeProcessingStub: PublishTripEventWS failed", "trip_id", tripID, "error", err)
+	}
+}
+
+// Отбрасывает дубликаты по content_hash против медиа трипа + внутри сессии.
+func (s *TripService) dedupAddMediaByHash(ctx context.Context, tripID string, existingSessionMedia map[string]struct{}, draftPins []*pb.DraftPinInput) (map[string]struct{}, error) {
+	dedupedSet := map[string]struct{}{}
+	if s.mediaRepo == nil {
+		return dedupedSet, nil
+	}
+	tripMedia, err := s.mediaRepo.ListByTripID(tripID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to load trip media for dedup")
+	}
+	existingHashes := map[string]struct{}{}
+	for _, m := range tripMedia {
+		// Исходные сессионные медиа исключаем — иначе их же хеш отбракует копии.
+		if _, ok := existingSessionMedia[m.ID]; ok {
+			continue
+		}
+		if m.ContentHash != nil && *m.ContentHash != "" {
+			existingHashes[*m.ContentHash] = struct{}{}
+		}
+	}
+	candidateIDs := map[string]struct{}{}
+	for _, dp := range draftPins {
+		for _, id := range dp.GetMediaIds() {
+			if _, ok := existingSessionMedia[id]; ok {
+				continue
+			}
+			candidateIDs[id] = struct{}{}
+		}
+	}
+	if len(candidateIDs) == 0 {
+		return dedupedSet, nil
+	}
+	seen := map[string]struct{}{}
+	var dedupedKeys []string
+	for _, m := range tripMedia {
+		if _, ok := candidateIDs[m.ID]; !ok {
+			continue
+		}
+		if m.ContentHash == nil || *m.ContentHash == "" {
+			continue
+		}
+		if _, dup := existingHashes[*m.ContentHash]; dup {
+			dedupedSet[m.ID] = struct{}{}
+			if m.S3Key != "" {
+				dedupedKeys = append(dedupedKeys, m.S3Key)
+			}
+			continue
+		}
+		if _, dup := seen[*m.ContentHash]; dup {
+			dedupedSet[m.ID] = struct{}{}
+			if m.S3Key != "" {
+				dedupedKeys = append(dedupedKeys, m.S3Key)
+			}
+			continue
+		}
+		seen[*m.ContentHash] = struct{}{}
+	}
+	if len(dedupedSet) > 0 {
+		ids := make([]string, 0, len(dedupedSet))
+		for id := range dedupedSet {
+			ids = append(ids, id)
+		}
+		if err := s.mediaRepo.DeleteByIDs(ids); err != nil {
+			return nil, status.Error(codes.Internal, "failed to delete duplicate media")
+		}
+		if s.mediaURLs != nil {
+			for _, k := range dedupedKeys {
+				_ = s.mediaURLs.DeleteObject(ctx, k)
+			}
+		}
+	}
+	return dedupedSet, nil
+}
+
+func (s *TripService) publishGeoRequestForTrip(ctx context.Context, tripID string) {
+	if s.pinRepo == nil || s.eventRepo == nil {
+		return
+	}
+	pins, err := s.pinRepo.ListByTripID(tripID)
+	if err != nil {
+		slog.WarnContext(ctx, "publishGeoRequestForTrip: list pins failed", "trip_id", tripID, "error", err)
+		return
+	}
+	out := make([]repositories.GeoRequestPin, 0, len(pins))
+	for _, p := range pins {
+		if p.Latitude == nil || p.Longitude == nil {
+			continue
+		}
+		out = append(out, repositories.GeoRequestPin{
+			PinID:     p.ID,
+			Latitude:  *p.Latitude,
+			Longitude: *p.Longitude,
+		})
+	}
+	if len(out) == 0 {
+		return
+	}
+	if err := s.eventRepo.PublishGeoRequest(ctx, tripID, out); err != nil {
+		slog.WarnContext(ctx, "publishGeoRequestForTrip failed", "trip_id", tripID, "error", err)
 	}
 }
 
@@ -2128,6 +2234,10 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 	for _, id := range existingIDs {
 		existingSet[id] = struct{}{}
 	}
+	dedupedSet, err := s.dedupAddMediaByHash(ctx, tripID, existingSet, req.GetDraftPins())
+	if err != nil {
+		return nil, err
+	}
 	// запрещено удалять исходные медиа — фильтруем deleted_media_ids.
 	if ids := req.GetDeletedMediaIds(); len(ids) > 0 {
 		filtered := make([]string, 0, len(ids))
@@ -2168,12 +2278,16 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 			if perr != nil {
 				continue
 			}
-			// Фильтруем исходные медиа из набора (они не должны переназначаться — ).
+			// Фильтруем исходные и удалённые дубликаты.
 			newOnly := make([]string, 0, len(mediaIDs))
 			for _, id := range mediaIDs {
-				if _, isExisting := existingSet[id]; !isExisting {
-					newOnly = append(newOnly, id)
+				if _, isExisting := existingSet[id]; isExisting {
+					continue
 				}
+				if _, dup := dedupedSet[id]; dup {
+					continue
+				}
+				newOnly = append(newOnly, id)
 			}
 			if len(newOnly) == 0 {
 				continue
@@ -2184,12 +2298,16 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 			pendingExistingAttachments = append(pendingExistingAttachments, newOnly...)
 			touchedPinIDs[pin.ID] = struct{}{}
 		} else {
-			// Новый пин — пропускаем исходные медиа из mediaIDs (они должны остаться в своих пинах).
+			// Новый пин — пропускаем исходные медиа и hash-дубликаты.
 			newOnly := make([]string, 0, len(mediaIDs))
 			for _, id := range mediaIDs {
-				if _, isExisting := existingSet[id]; !isExisting {
-					newOnly = append(newOnly, id)
+				if _, isExisting := existingSet[id]; isExisting {
+					continue
 				}
+				if _, dup := dedupedSet[id]; dup {
+					continue
+				}
+				newOnly = append(newOnly, id)
 			}
 			if len(newOnly) == 0 {
 				continue

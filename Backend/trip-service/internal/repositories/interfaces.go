@@ -73,10 +73,6 @@ type GeoRequestPin struct {
 // TripEventPublisher — методы RedisRepository, используемые TripService (eventRepo может быть nil-интерфейсом).
 type TripEventPublisher interface {
 	PublishTripEvent(ctx context.Context, eventType string, tripID, userID string) error
-	AddMLTask(ctx context.Context, tripID string) error
-	// add-media flow: помечает контекст трипа, чтобы worker пропустил авто-теги для существующих пинов.
-	SetMLContext(ctx context.Context, tripID, flow string, newPinIDs []string, ttl time.Duration) error
-	AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error
 	// statistics-service consumer — публикация в pinz:stats:events (LIKE/DISLIKE/TRIP_DELETED/BATTLE_FINISHED).
 	PublishStatsEvent(ctx context.Context, eventType, tripID string, userIDs []string, payload map[string]any) error
 	// PublishGeoRequest публикует PIN_LOCATIONS_REQUESTED — обратное направление
@@ -91,8 +87,6 @@ type TripEventPublisher interface {
 	// в pinz:trip:privacy:events для асинхронного fallback-пересчёта воркером.
 	PublishPrivacyEvent(ctx context.Context, objectType, objectID, tripID, userID, privacyLevel string) error
 	AddPinUploadTask(ctx context.Context, tripID, sessionID string, targetPinID *string, initiatorUserID string) error
-	AddMLTaskFull(ctx context.Context, tripID, flow, pinsJSON string, newPinIDs []string, presignExpiresAtUnix int64) error
-	AddPinUploadMLTask(ctx context.Context, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON string, presignExpiresAtUnix int64) error
 }
 
 type MediaRepositoryInterface interface {

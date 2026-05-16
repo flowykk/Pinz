@@ -13,7 +13,6 @@ import (
 	context "context"
 	repositories "pinz/backend/trip-service/internal/repositories"
 	reflect "reflect"
-	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -40,62 +39,6 @@ func NewMockTripEventPublisher(ctrl *gomock.Controller) *MockTripEventPublisher 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTripEventPublisher) EXPECT() *MockTripEventPublisherMockRecorder {
 	return m.recorder
-}
-
-// AddMLTask mocks base method.
-func (m *MockTripEventPublisher) AddMLTask(ctx context.Context, tripID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddMLTask", ctx, tripID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddMLTask indicates an expected call of AddMLTask.
-func (mr *MockTripEventPublisherMockRecorder) AddMLTask(ctx, tripID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTask", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTask), ctx, tripID)
-}
-
-// AddMLTaskFull mocks base method.
-func (m *MockTripEventPublisher) AddMLTaskFull(ctx context.Context, tripID, flow, pinsJSON string, newPinIDs []string, presignExpiresAtUnix int64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddMLTaskFull", ctx, tripID, flow, pinsJSON, newPinIDs, presignExpiresAtUnix)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddMLTaskFull indicates an expected call of AddMLTaskFull.
-func (mr *MockTripEventPublisherMockRecorder) AddMLTaskFull(ctx, tripID, flow, pinsJSON, newPinIDs, presignExpiresAtUnix any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTaskFull", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTaskFull), ctx, tripID, flow, pinsJSON, newPinIDs, presignExpiresAtUnix)
-}
-
-// AddMLTaskWithFlow mocks base method.
-func (m *MockTripEventPublisher) AddMLTaskWithFlow(ctx context.Context, tripID, flow string, newPinIDs []string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddMLTaskWithFlow", ctx, tripID, flow, newPinIDs)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddMLTaskWithFlow indicates an expected call of AddMLTaskWithFlow.
-func (mr *MockTripEventPublisherMockRecorder) AddMLTaskWithFlow(ctx, tripID, flow, newPinIDs any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMLTaskWithFlow", reflect.TypeOf((*MockTripEventPublisher)(nil).AddMLTaskWithFlow), ctx, tripID, flow, newPinIDs)
-}
-
-// AddPinUploadMLTask mocks base method.
-func (m *MockTripEventPublisher) AddPinUploadMLTask(ctx context.Context, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON string, presignExpiresAtUnix int64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddPinUploadMLTask", ctx, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON, presignExpiresAtUnix)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddPinUploadMLTask indicates an expected call of AddPinUploadMLTask.
-func (mr *MockTripEventPublisherMockRecorder) AddPinUploadMLTask(ctx, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON, presignExpiresAtUnix any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPinUploadMLTask", reflect.TypeOf((*MockTripEventPublisher)(nil).AddPinUploadMLTask), ctx, tripID, sessionID, targetPinID, newMediaJSON, existingMediaJSON, presignExpiresAtUnix)
 }
 
 // AddPinUploadTask mocks base method.
@@ -194,18 +137,4 @@ func (m *MockTripEventPublisher) PublishTripEventWS(ctx context.Context, tripID,
 func (mr *MockTripEventPublisherMockRecorder) PublishTripEventWS(ctx, tripID, eventType, payload any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishTripEventWS", reflect.TypeOf((*MockTripEventPublisher)(nil).PublishTripEventWS), ctx, tripID, eventType, payload)
-}
-
-// SetMLContext mocks base method.
-func (m *MockTripEventPublisher) SetMLContext(ctx context.Context, tripID, flow string, newPinIDs []string, ttl time.Duration) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetMLContext", ctx, tripID, flow, newPinIDs, ttl)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetMLContext indicates an expected call of SetMLContext.
-func (mr *MockTripEventPublisherMockRecorder) SetMLContext(ctx, tripID, flow, newPinIDs, ttl any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMLContext", reflect.TypeOf((*MockTripEventPublisher)(nil).SetMLContext), ctx, tripID, flow, newPinIDs, ttl)
 }
