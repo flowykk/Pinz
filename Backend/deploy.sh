@@ -241,6 +241,9 @@ deploy_app() {
 
     cd "$PROJECT_DIR"
 
+    log_info "Ensuring NATS release"
+    helmfile -f "$HELMFILE_CONFIG" -l name=nats apply
+
     # DEPLOY_SERVICES controls which helm releases are applied:
     #   unset/empty — deploy all releases (manual run, backward compat)
     #   "none"      — skip helmfile entirely (only infra/istio/observability)

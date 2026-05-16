@@ -1,6 +1,13 @@
 repositories: []
 
 releases:
+  - name: nats
+    namespace: default
+    chart: ./helm/nats
+    values:
+      - storage:
+          size: "1Gi"
+
   - name: auth-service
     namespace: default
     chart: ./helm/auth-service
@@ -54,10 +61,12 @@ releases:
           s3Region: "{{ env "S3_REGION" | default "ru-central1" }}"
           s3Bucket: "{{ env "S3_BUCKET" | default "" }}"
           s3PresignTTL: "{{ env "S3_PRESIGN_TTL" | default "15m" }}"
+          natsUrl: "nats://nats:4222"
       - secret:
           dbPassword: "pinz_password"
           s3AccessKey: "{{ env "S3_ACCESS_KEY" | default "" }}"
           s3SecretKey: "{{ env "S3_SECRET_KEY" | default "" }}"
+          natsToken: "local-dev-token"
 
   - name: statistics-service
     namespace: default

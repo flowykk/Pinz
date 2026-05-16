@@ -33,9 +33,10 @@ type Dependencies struct {
 	GeoEventLogRepo *repositories.GeoEventLogRepository
 	PinUploadSessionRepo *repositories.PinUploadSessionRepository
 	MediaURLs services.MediaURLResolver
+	MLBroker repositories.MLBroker
 }
 
-func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Client) (*Dependencies, error) {
+func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Client, mlBroker repositories.MLBroker) (*Dependencies, error) {
 	tripRepo := repositories.NewTripRepository(db)
 	participantRepo := repositories.NewTripParticipantRepository(db)
 	inviteRepo := repositories.NewInvitationLinkRepository(db)
@@ -81,6 +82,9 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	}
 
 	tripSvc := services.NewTripService(tripRepo, participantRepo, inviteRepo, settingsRepo, eventPub, mediaRepo, mediaURLs, pinRepo, tagRepo, socialRepo, favouriteRepo, geoRepo, addMediaSessionRepo, battleRepo, tripPrivacyRepo, pinPrivacyRepo, mediaPrivacyRepo, pinHiddenRepo, pinUploadSessionRepo, recSnapshotRepo)
+	if mlBroker != nil {
+		tripSvc.SetMLBroker(mlBroker)
+	}
 	return &Dependencies{
 		TripService: tripSvc,
 		RedisClient: redisClient,
@@ -99,5 +103,6 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 		GeoEventLogRepo: geoEventLogRepo,
 		PinUploadSessionRepo: pinUploadSessionRepo,
 		MediaURLs: mediaURLs,
+		MLBroker: mlBroker,
 	}, nil
 }

@@ -27,3 +27,4 @@ spec:
         - "pinz.website"
         - "grafana.pinz.website"
         - "kiali.pinz.website"
+        - "nats.pinz.website"

@@ -96,6 +96,15 @@ spec:
                   key: s3-secret-key
             - name: S3_KEY_PREFIX
               value: {{ .Values.env.s3KeyPrefix | quote }}
+            - name: NATS_URL
+              value: {{ .Values.env.natsUrl | quote }}
+            - name: NATS_CREDS_PATH
+              value: {{ .Values.env.natsCredsPath | quote }}
+            - name: NATS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: trip-service-secret
+                  key: nats-token
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}

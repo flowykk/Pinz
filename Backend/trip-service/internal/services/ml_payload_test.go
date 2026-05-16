@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -12,6 +11,7 @@ import (
 
 	"pinz/backend/trip-service/internal/mocks"
 	"pinz/backend/trip-service/internal/models"
+	"pinz/backend/trip-service/internal/repositories"
 )
 
 func mediaFixture(id, s3Key string, capturedAtUnix int64, lat, lon float64) *models.Media {
@@ -26,7 +26,7 @@ func mediaFixture(id, s3Key string, capturedAtUnix int64, lat, lon float64) *mod
 	}
 }
 
-func TestBuildTripMLPayload_Creation_AllPinsNew(t *testing.T) {
+func TestBuildMLTaskMessageForTrip_Creation_AllPinsNew(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
 	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
@@ -44,22 +44,22 @@ func TestBuildTripMLPayload_Creation_AllPinsNew(t *testing.T) {
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k1", mlPresignTTL).Return("https://signed/k1", nil)
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k2", mlPresignTTL).Return("https://signed/k2", nil)
 
-	pinsJSON, expiresAt, count, err := BuildTripMLPayload(context.Background(),
-		"trip-1", mlFlowCreation, nil, nil, pinRepo, mediaRepo, urls)
+	msg, count, err := BuildMLTaskMessageForTrip(context.Background(),
+		"trip-1", MLFlowCreation, "", nil, nil, pinRepo, mediaRepo, urls)
 	require.NoError(t, err)
 	require.Equal(t, 2, count)
-	require.Greater(t, expiresAt, time.Now().Unix())
-
-	var pins []MLPinPayload
-	require.NoError(t, json.Unmarshal([]byte(pinsJSON), &pins))
-	require.Len(t, pins, 2)
-	require.True(t, pins[0].IsNew)
-	require.True(t, pins[1].IsNew)
-	require.Equal(t, "https://signed/k1", pins[0].Media[0].GetURL)
-	require.Equal(t, int64(1000), *pins[0].Media[0].CapturedAtUnix)
+	require.Greater(t, msg.ExpiresAtUnix, time.Now().Unix())
+	require.Equal(t, MLFlowCreation, msg.Flow)
+	require.Len(t, msg.Pins, 2)
+	require.True(t, msg.Pins[0].IsNew)
+	require.True(t, msg.Pins[1].IsNew)
+	// is_new=true и на уровне media для new pin'ов.
+	require.True(t, msg.Pins[0].Media[0].IsNew)
+	require.Equal(t, "https://signed/k1", msg.Pins[0].Media[0].GetURL)
+	require.Equal(t, int64(1000), *msg.Pins[0].Media[0].CapturedAtUnix)
 }
 
-func TestBuildTripMLPayload_AddMedia_ExistingPinFilteredToPending(t *testing.T) {
+func TestBuildMLTaskMessageForTrip_AddMedia_ExistingPinAllMediaIsNewFlagged(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
 	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
@@ -69,38 +69,42 @@ func TestBuildTripMLPayload_AddMedia_ExistingPinFilteredToPending(t *testing.T) 
 	existingPin := &models.Pin{ID: "pin-existing", TripID: "trip-1"}
 	pinRepo.EXPECT().ListByTripID("trip-1").Return([]*models.Pin{newPin, existingPin}, nil)
 
-	// New pin: всё медиа уезжает в payload.
+	// New pin: всё медиа уезжает как is_new=true.
 	mediaRepo.EXPECT().ListByPinID("pin-new").Return([]*models.Media{
 		mediaFixture("m-new-1", "k-new-1", 1000, 1, 2),
 	}, nil)
-	// Existing pin: в payload только новые медиа (m-added-1), исходное m-orig-1 фильтруется.
+	// Existing pin: все медиа уезжают, но только m-added-1 помечается is_new=true.
 	mediaRepo.EXPECT().ListByPinID("pin-existing").Return([]*models.Media{
 		mediaFixture("m-orig-1", "k-orig-1", 500, 5, 6),
 		mediaFixture("m-added-1", "k-added-1", 2000, 7, 8),
 	}, nil)
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k-new-1", mlPresignTTL).Return("https://signed/new", nil)
+	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k-orig-1", mlPresignTTL).Return("https://signed/orig", nil)
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k-added-1", mlPresignTTL).Return("https://signed/added", nil)
 
-	pinsJSON, _, count, err := BuildTripMLPayload(context.Background(),
-		"trip-1", mlFlowAddMedia,
+	msg, count, err := BuildMLTaskMessageForTrip(context.Background(),
+		"trip-1", MLFlowAddMedia, "sess-1",
 		[]string{"pin-new"},
 		[]string{"m-added-1"},
 		pinRepo, mediaRepo, urls)
 	require.NoError(t, err)
-	require.Equal(t, 2, count)
+	require.Equal(t, 3, count)
+	require.Equal(t, "sess-1", msg.SessionID)
+	require.Len(t, msg.Pins, 2)
 
-	var pins []MLPinPayload
-	require.NoError(t, json.Unmarshal([]byte(pinsJSON), &pins))
-	require.Len(t, pins, 2)
-
-	byID := map[string]MLPinPayload{pins[0].PinID: pins[0], pins[1].PinID: pins[1]}
+	byID := map[string]repositories.MLPinPayload{msg.Pins[0].PinID: msg.Pins[0], msg.Pins[1].PinID: msg.Pins[1]}
 	require.True(t, byID["pin-new"].IsNew)
-	require.False(t, byID["pin-existing"].IsNew)
-	require.Len(t, byID["pin-existing"].Media, 1)
-	require.Equal(t, "m-added-1", byID["pin-existing"].Media[0].MediaID)
+	require.True(t, byID["pin-new"].Media[0].IsNew)
+
+	existing := byID["pin-existing"]
+	require.False(t, existing.IsNew)
+	require.Len(t, existing.Media, 2)
+	mediaByID := map[string]repositories.MLMediaPayload{existing.Media[0].MediaID: existing.Media[0], existing.Media[1].MediaID: existing.Media[1]}
+	require.False(t, mediaByID["m-orig-1"].IsNew)
+	require.True(t, mediaByID["m-added-1"].IsNew)
 }
 
-func TestBuildTripMLPayload_AddMedia_PinWithoutPendingExcluded(t *testing.T) {
+func TestBuildMLTaskMessageForTrip_AddMedia_PinWithoutPending_StillIncluded(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
 	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
@@ -111,16 +115,18 @@ func TestBuildTripMLPayload_AddMedia_PinWithoutPendingExcluded(t *testing.T) {
 	mediaRepo.EXPECT().ListByPinID("pin-untouched").Return([]*models.Media{
 		mediaFixture("m1", "k1", 0, 0, 0),
 	}, nil)
-	// urls не вызывается — медиа отфильтровано.
+	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k1", mlPresignTTL).Return("https://signed/k1", nil)
 
-	pinsJSON, _, count, err := BuildTripMLPayload(context.Background(),
-		"trip-1", mlFlowAddMedia, nil, nil, pinRepo, mediaRepo, urls)
+	msg, count, err := BuildMLTaskMessageForTrip(context.Background(),
+		"trip-1", MLFlowAddMedia, "", nil, nil, pinRepo, mediaRepo, urls)
 	require.NoError(t, err)
-	require.Equal(t, 0, count)
-	require.Equal(t, "[]", pinsJSON)
+	require.Equal(t, 1, count)
+	require.Len(t, msg.Pins, 1)
+	require.False(t, msg.Pins[0].IsNew)
+	require.False(t, msg.Pins[0].Media[0].IsNew)
 }
 
-func TestBuildTripMLPayload_NoCoordsNoCaptured_OmitFields(t *testing.T) {
+func TestBuildMLTaskMessageForTrip_NoCoordsNoCaptured_OmitFields(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
 	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
@@ -133,25 +139,25 @@ func TestBuildTripMLPayload_NoCoordsNoCaptured_OmitFields(t *testing.T) {
 	}, nil)
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k1", mlPresignTTL).Return("https://signed/k1", nil)
 
-	pinsJSON, _, _, err := BuildTripMLPayload(context.Background(),
-		"trip-1", mlFlowCreation, nil, nil, pinRepo, mediaRepo, urls)
+	msg, _, err := BuildMLTaskMessageForTrip(context.Background(),
+		"trip-1", MLFlowCreation, "", nil, nil, pinRepo, mediaRepo, urls)
 	require.NoError(t, err)
-	require.NotContains(t, pinsJSON, `"latitude"`)
-	require.NotContains(t, pinsJSON, `"captured_at_unix"`)
+	require.Nil(t, msg.Pins[0].Media[0].Latitude)
+	require.Nil(t, msg.Pins[0].Media[0].CapturedAtUnix)
 }
 
-func TestBuildTripMLPayload_UnknownFlow_Error(t *testing.T) {
+func TestBuildMLTaskMessageForTrip_UnknownFlow_Error(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
 	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
 	urls := mocks.NewMockMediaURLResolver(ctrl)
 
-	_, _, _, err := BuildTripMLPayload(context.Background(),
-		"trip-1", "bogus", nil, nil, pinRepo, mediaRepo, urls)
+	_, _, err := BuildMLTaskMessageForTrip(context.Background(),
+		"trip-1", "bogus", "", nil, nil, pinRepo, mediaRepo, urls)
 	require.Error(t, err)
 }
 
-func TestBuildTripMLPayload_PresignError_Propagated(t *testing.T) {
+func TestBuildMLTaskMessageForTrip_PresignError_Propagated(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
 	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
@@ -164,12 +170,12 @@ func TestBuildTripMLPayload_PresignError_Propagated(t *testing.T) {
 	}, nil)
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k1", mlPresignTTL).Return("", errors.New("boom"))
 
-	_, _, _, err := BuildTripMLPayload(context.Background(),
-		"trip-1", mlFlowCreation, nil, nil, pinRepo, mediaRepo, urls)
+	_, _, err := BuildMLTaskMessageForTrip(context.Background(),
+		"trip-1", MLFlowCreation, "", nil, nil, pinRepo, mediaRepo, urls)
 	require.Error(t, err)
 }
 
-func TestBuildPinUploadMLPayload_Creation_OnlyNewMedia(t *testing.T) {
+func TestBuildMLTaskMessageForPinUpload_Creation_OnlyNewMedia(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	urls := mocks.NewMockMediaURLResolver(ctrl)
 
@@ -180,19 +186,21 @@ func TestBuildPinUploadMLPayload_Creation_OnlyNewMedia(t *testing.T) {
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k1", mlPresignTTL).Return("https://signed/k1", nil)
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k2", mlPresignTTL).Return("https://signed/k2", nil)
 
-	newJSON, existingJSON, _, count, err := BuildPinUploadMLPayload(context.Background(),
-		MLFlowPinUploadCreate, sessionMedia, nil, urls)
+	msg, count, err := BuildMLTaskMessageForPinUpload(context.Background(),
+		MLFlowPinUploadCreation, "trip-1", "sess-1", "", sessionMedia, nil, urls)
 	require.NoError(t, err)
 	require.Equal(t, 2, count)
-	require.Equal(t, "", existingJSON)
-
-	var items []MLMediaPayload
-	require.NoError(t, json.Unmarshal([]byte(newJSON), &items))
-	require.Len(t, items, 2)
-	require.Equal(t, "https://signed/k1", items[0].GetURL)
+	require.Equal(t, MLFlowPinUploadCreation, msg.Flow)
+	require.Equal(t, "sess-1", msg.SessionID)
+	require.Equal(t, "", msg.TargetPinID)
+	require.Len(t, msg.Pins, 1)
+	require.True(t, msg.Pins[0].IsNew)
+	for _, m := range msg.Pins[0].Media {
+		require.True(t, m.IsNew)
+	}
 }
 
-func TestBuildPinUploadMLPayload_Addition_BothSets(t *testing.T) {
+func TestBuildMLTaskMessageForPinUpload_Addition_BothSets(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	urls := mocks.NewMockMediaURLResolver(ctrl)
 
@@ -205,25 +213,30 @@ func TestBuildPinUploadMLPayload_Addition_BothSets(t *testing.T) {
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "ko1", mlPresignTTL).Return("https://signed/old1", nil)
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "ko2", mlPresignTTL).Return("https://signed/old2", nil)
 
-	newJSON, existingJSON, _, count, err := BuildPinUploadMLPayload(context.Background(),
-		MLFlowPinUploadAddTo, sessionMedia, pinMedia, urls)
+	msg, count, err := BuildMLTaskMessageForPinUpload(context.Background(),
+		MLFlowPinUploadAddition, "trip-1", "sess-1", "pin-target", sessionMedia, pinMedia, urls)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
+	require.Equal(t, "pin-target", msg.TargetPinID)
+	require.False(t, msg.Pins[0].IsNew)
 
-	var newItems, oldItems []MLMediaPayload
-	require.NoError(t, json.Unmarshal([]byte(newJSON), &newItems))
-	require.NoError(t, json.Unmarshal([]byte(existingJSON), &oldItems))
-	require.Len(t, newItems, 1)
-	require.Len(t, oldItems, 2)
+	byID := make(map[string]repositories.MLMediaPayload, len(msg.Pins[0].Media))
+	for _, m := range msg.Pins[0].Media {
+		byID[m.MediaID] = m
+	}
+	require.True(t, byID["new-1"].IsNew)
+	require.False(t, byID["old-1"].IsNew)
+	require.False(t, byID["old-2"].IsNew)
 }
 
-func TestBuildPinUploadMLPayload_PresignError_Propagated(t *testing.T) {
+func TestBuildMLTaskMessageForPinUpload_PresignError_Propagated(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	urls := mocks.NewMockMediaURLResolver(ctrl)
 
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k1", mlPresignTTL).Return("", errors.New("boom"))
 
-	_, _, _, _, err := BuildPinUploadMLPayload(context.Background(),
-		MLFlowPinUploadCreate, []*models.Media{mediaFixture("m1", "k1", 0, 0, 0)}, nil, urls)
+	_, _, err := BuildMLTaskMessageForPinUpload(context.Background(),
+		MLFlowPinUploadCreation, "trip-1", "sess-1", "",
+		[]*models.Media{mediaFixture("m1", "k1", 0, 0, 0)}, nil, urls)
 	require.Error(t, err)
 }

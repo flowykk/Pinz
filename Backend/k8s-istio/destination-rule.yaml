@@ -67,6 +67,22 @@ spec:
     tls:
       mode: DISABLE
 ---
+# NATS-pod без sidecar — отправители должны идти plaintext, иначе mTLS не примет.
+# DO_NOT_UPGRADE — иначе Istio переключает на h2 и ломает WebSocket upgrade.
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nats-plain
+  namespace: default
+spec:
+  host: nats.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+    connectionPool:
+      http:
+        h2UpgradePolicy: DO_NOT_UPGRADE
+---
 # otel-collector has no Istio sidecar; apps must use plain TCP for OTLP
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule

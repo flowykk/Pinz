@@ -26,11 +26,14 @@ env:
   s3PresignTTL: "15m"
   # On loadtest stand: "loadtest/".
   s3KeyPrefix: ""
+  natsUrl: "nats://nats:4222"
+  natsCredsPath: ""
 
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"
   s3AccessKey: ""
   s3SecretKey: ""
+  natsToken: "local-dev-token"
 
 resources:
   requests:

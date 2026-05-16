@@ -3,6 +3,15 @@
 repositories: []
 
 releases:
+  - name: nats
+    namespace: pinz-loadtest
+    chart: ./helm/nats
+    values:
+      - storage:
+          size: "{{ env "NATS_STORAGE_SIZE" | default "5Gi" }}"
+      - auth:
+          token: "{{ env "NATS_TOKEN" | default "loadtest-token" }}"
+
   - name: auth-service
     namespace: pinz-loadtest
     chart: ./helm/auth-service
@@ -63,10 +72,12 @@ releases:
           s3Bucket: "pinz-loadtest"
           s3PresignTTL: "15m"
           s3KeyPrefix: "loadtest/"
+          natsUrl: "nats://nats.pinz-loadtest.svc.cluster.local:4222"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
           s3AccessKey: "minioadmin"
           s3SecretKey: "minioadmin"
+          natsToken: "{{ env "NATS_TOKEN" | default "loadtest-token" }}"
       - resources:
           requests: {cpu: "300m", memory: "512Mi"}
           limits: {cpu: "2000m", memory: "1Gi"}

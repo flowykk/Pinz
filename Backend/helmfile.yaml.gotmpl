@@ -1,6 +1,15 @@
 repositories: []
 
 releases:
+  - name: nats
+    namespace: default
+    chart: ./helm/nats
+    values:
+      - storage:
+          size: "{{ env "NATS_STORAGE_SIZE" | default "5Gi" }}"
+      - auth:
+          token: "{{ env "NATS_TOKEN" | required "NATS_TOKEN env is required for prod" }}"
+
   - name: auth-service
     namespace: default
     chart: ./helm/auth-service
@@ -55,10 +64,13 @@ releases:
           s3Region: "{{ env "S3_REGION" | default "ru-central1" }}"
           s3Bucket: "{{ env "S3_BUCKET" | default "" }}"
           s3PresignTTL: "{{ env "S3_PRESIGN_TTL" | default "15m" }}"
+          natsUrl: "{{ env "NATS_URL" | default "nats://nats:4222" }}"
+          natsCredsPath: "{{ env "NATS_CREDS_PATH" | default "" }}"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
           s3AccessKey: "{{ env "S3_ACCESS_KEY" | default "" }}"
           s3SecretKey: "{{ env "S3_SECRET_KEY" | default "" }}"
+          natsToken: "{{ env "NATS_TOKEN" | default "" }}"
 
   - name: statistics-service
     namespace: default
