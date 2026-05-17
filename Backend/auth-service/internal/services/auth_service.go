@@ -340,21 +340,14 @@ func (s *AuthService) PasskeyRegisterFinish(ctx context.Context, req *pb.Passkey
 		Email: email,
 		Username: rs.Username,
 	}
-	if err := s.userRepo.CreateUser(u); err != nil {
-		// username не уникален. Конфликт может прийти только по email (UNIQUE).
+	if err := s.userRepo.CreateUserWithCredential(ctx, u, credential); err != nil {
 		if isUniqueViolation(err) {
 			s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "conflict")))
 			return nil, status.Error(codes.AlreadyExists, "user with this email already exists")
 		}
-		slog.ErrorContext(ctx, "PasskeyRegisterFinish: create user", "error", err)
+		slog.ErrorContext(ctx, "PasskeyRegisterFinish: create user with credential", "error", err)
 		s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "error")))
 		return nil, status.Error(codes.Internal, "failed to create user")
-	}
-
-	if err := s.credRepo.CreateCredential(u.ID, credential); err != nil {
-		slog.ErrorContext(ctx, "PasskeyRegisterFinish: save credential", "error", err)
-		s.registrationCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("status", "error")))
-		return nil, status.Error(codes.Internal, "failed to save passkey credential")
 	}
 
 	_ = s.redisRepo.Del(ctx, verifiedKey, sessionKey)

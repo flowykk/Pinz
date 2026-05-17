@@ -219,6 +219,9 @@ func TestE2E_Social_LikeDislikeFavourite(t *testing.T) {
 	resp, body = st.doJSON(t, http.MethodPost, "/api/v1/trips/creation/"+tripID+"/finalize", login.AccessToken, `{}`)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
+	resp, body = st.doJSON(t, http.MethodPut, "/api/v1/trips/"+tripID+"/privacy", login.AccessToken, `{"privacy_level":"public"}`)
+	require.Equal(t, http.StatusOK, resp.StatusCode, body)
+
 	// PublishTrip: trip must be READY and published for like/dislike/favourite
 	resp, body = st.doJSON(t, http.MethodPost, "/api/v1/trips/"+tripID+"/publish", login.AccessToken, `{"publish_whole":true}`)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
