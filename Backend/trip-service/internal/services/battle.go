@@ -113,6 +113,9 @@ func (s *TripService) SubmitBattleResult(ctx context.Context, req *pb.SubmitBatt
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to update battle rating")
 	}
+	if s.eventRepo != nil {
+		_ = s.eventRepo.PublishStatsEvent(ctx, "BATTLE_FINISHED", battle.TripID, []string{userID}, nil)
+	}
 	metrics.Battle(ctx, "finished")
 	return &pb.SubmitBattleResultResponse{NewBattleRating: rating}, nil
 }
