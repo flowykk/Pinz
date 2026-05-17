@@ -14,6 +14,7 @@ import (
 type UserRepositoryInterface interface {
 	GetUserByEmail(email string) (*models.User, error)
 	CreateUser(u *models.User) error
+	CreateUserWithCredential(ctx context.Context, u *models.User, cred *webauthn.Credential) error
 	AddSession(userID, token string, expiresAt interface{}) error
 	GetRefreshToken(token string) (*models.RefreshToken, error)
 	GetUserByID(userID string) (*models.User, error)

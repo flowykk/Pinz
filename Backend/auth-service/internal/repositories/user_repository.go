@@ -3,9 +3,11 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"time"
 
+	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 
 	"pinz/backend/auth-service/internal/db/sqlcdb"
@@ -13,11 +15,12 @@ import (
 )
 
 type UserRepository struct {
-	q *sqlcdb.Queries
+	db *sql.DB
+	q  *sqlcdb.Queries
 }
 
 func NewUserRepository(db *sql.DB) *UserRepository {
-	return &UserRepository{q: sqlcdb.New(db)}
+	return &UserRepository{db: db, q: sqlcdb.New(db)}
 }
 
 func (r *UserRepository) GetUserByEmail(email string) (*models.User, error) {
@@ -44,6 +47,47 @@ func (r *UserRepository) CreateUser(u *models.User) error {
 		AvatarUrl: avatar,
 	})
 	if err != nil {
+		return err
+	}
+	u.CreatedAt = createdAt
+	return nil
+}
+
+func (r *UserRepository) CreateUserWithCredential(ctx context.Context, u *models.User, cred *webauthn.Credential) error {
+	id, err := uuid.Parse(u.ID)
+	if err != nil {
+		return err
+	}
+	credData, err := json.Marshal(cred)
+	if err != nil {
+		return err
+	}
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	qtx := r.q.WithTx(tx)
+	avatar := sql.NullString{String: u.AvatarURL, Valid: u.AvatarURL != ""}
+	createdAt, err := qtx.CreateUser(ctx, sqlcdb.CreateUserParams{
+		ID:        id,
+		Email:     u.Email,
+		Username:  u.Username,
+		AvatarUrl: avatar,
+	})
+	if err != nil {
+		return err
+	}
+	if err := qtx.CreateCredential(ctx, sqlcdb.CreateCredentialParams{
+		UserID:         id,
+		CredentialID:   cred.ID,
+		CredentialJson: credData,
+	}); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 	u.CreatedAt = createdAt

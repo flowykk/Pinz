@@ -10,10 +10,12 @@
 package mocks
 
 import (
+	context "context"
 	models "pinz/backend/auth-service/internal/models"
 	reflect "reflect"
 	time "time"
 
+	webauthn "github.com/go-webauthn/webauthn/webauthn"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -67,6 +69,20 @@ func (m *MockUserRepositoryInterface) CreateUser(u *models.User) error {
 func (mr *MockUserRepositoryInterfaceMockRecorder) CreateUser(u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserRepositoryInterface)(nil).CreateUser), u)
+}
+
+// CreateUserWithCredential mocks base method.
+func (m *MockUserRepositoryInterface) CreateUserWithCredential(ctx context.Context, u *models.User, cred *webauthn.Credential) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUserWithCredential", ctx, u, cred)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateUserWithCredential indicates an expected call of CreateUserWithCredential.
+func (mr *MockUserRepositoryInterfaceMockRecorder) CreateUserWithCredential(ctx, u, cred any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserWithCredential", reflect.TypeOf((*MockUserRepositoryInterface)(nil).CreateUserWithCredential), ctx, u, cred)
 }
 
 // DeleteRefreshToken mocks base method.
