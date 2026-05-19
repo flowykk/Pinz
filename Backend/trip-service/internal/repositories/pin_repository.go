@@ -53,7 +53,7 @@ func (r *PinRepository) Create(p *models.Pin) error {
 func (r *PinRepository) GetByID(id string) (*models.Pin, error) {
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		start_time, end_time, is_published_in_feed, location_name, created_at
+		start_time, end_time, is_published_in_feed, location_name, name_censored, description_censored, created_at
 		FROM pins WHERE id = $1`
 	var p models.Pin
 	var desc sql.NullString
@@ -61,7 +61,7 @@ func (r *PinRepository) GetByID(id string) (*models.Pin, error) {
 	var startTime, endTime sql.NullTime
 	var isPublished sql.NullBool
 	err := r.db.QueryRow(sqlStr, id).Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-		&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt)
+		&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.NameCensored, &p.DescriptionCensored, &p.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
@@ -101,7 +101,7 @@ func (r *PinRepository) GetByIDs(ids []string) ([]*models.Pin, error) {
 	}
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		start_time, end_time, is_published_in_feed, location_name, created_at
+		start_time, end_time, is_published_in_feed, location_name, name_censored, description_censored, created_at
 		FROM pins WHERE id IN (` + strings.Join(placeholders, ",") + `)`
 	rows, err := r.db.Query(sqlStr, args...)
 	if err != nil {
@@ -116,7 +116,7 @@ func (r *PinRepository) GetByIDs(ids []string) ([]*models.Pin, error) {
 		var startTime, endTime sql.NullTime
 		var isPublished sql.NullBool
 		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt); err != nil {
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.NameCensored, &p.DescriptionCensored, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		if desc.Valid {
@@ -145,7 +145,7 @@ func (r *PinRepository) GetByIDs(ids []string) ([]*models.Pin, error) {
 func (r *PinRepository) ListByTripID(tripID string) ([]*models.Pin, error) {
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		start_time, end_time, is_published_in_feed, location_name, created_at
+		start_time, end_time, is_published_in_feed, location_name, name_censored, description_censored, created_at
 		FROM pins WHERE trip_id = $1 AND add_media_session_id IS NULL
 		ORDER BY start_time ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
@@ -161,7 +161,7 @@ func (r *PinRepository) ListByTripID(tripID string) ([]*models.Pin, error) {
 		var startTime, endTime sql.NullTime
 		var isPublished sql.NullBool
 		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt); err != nil {
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.NameCensored, &p.DescriptionCensored, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		if desc.Valid {
@@ -241,6 +241,29 @@ func (r *PinRepository) UpdateLocationName(pinID, name string) error {
 	return nil
 }
 
+// nil pointer = поле не обновлять.
+func (r *PinRepository) SetTextCensored(pinID string, nameCensored, descriptionCensored *bool) error {
+	if nameCensored == nil && descriptionCensored == nil {
+		return nil
+	}
+	q := psq.Update("pins").Where(sq.Eq{"id": pinID})
+	if nameCensored != nil {
+		q = q.Set("name_censored", *nameCensored)
+	}
+	if descriptionCensored != nil {
+		q = q.Set("description_censored", *descriptionCensored)
+	}
+	res, err := q.RunWith(r.db).Exec()
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 // SetPrivacyLevel updates only pin privacy_level (used by privacy aggregation worker).
 // SQL guard: never overwrite restricted ("permanently private") with a lower level.
 func (r *PinRepository) SetPrivacyLevel(pinID, level string) error {
@@ -285,7 +308,7 @@ func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32
 	pattern := "%" + query + "%"
 	sqlStr := `SELECT DISTINCT ON (p.id) p.id, p.trip_id, p.name, p.description, p.category, p.privacy_level, p.media_count,
 		ST_Y(p.location)::float as lat, ST_X(p.location)::float as lon,
-		p.start_time, p.end_time, p.is_published_in_feed, p.location_name, p.created_at
+		p.start_time, p.end_time, p.is_published_in_feed, p.location_name, p.name_censored, p.description_censored, p.created_at
 		FROM pins p
 		INNER JOIN trip_participants tp ON tp.trip_id = p.trip_id AND tp.user_id = $1
 		INNER JOIN trips tr ON tr.id = p.trip_id AND tr.is_generated = false AND tr.is_soft_deleted = false
@@ -308,7 +331,7 @@ func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32
 		var startTime, endTime sql.NullTime
 		var isPublished sql.NullBool
 		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt); err != nil {
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.NameCensored, &p.DescriptionCensored, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		if desc.Valid {
@@ -374,7 +397,7 @@ func (r *PinRepository) ListPublishedPinsByTripIDs(tripIDs []string) (map[string
 func (r *PinRepository) ListByTripIDExcludingHidden(tripID, userID string) ([]*models.Pin, error) {
 	sqlStr := `SELECT p.id, p.trip_id, p.name, p.description, p.category, p.privacy_level, p.media_count,
 		ST_Y(p.location)::float as lat, ST_X(p.location)::float as lon,
-		p.start_time, p.end_time, p.is_published_in_feed, p.location_name, p.created_at
+		p.start_time, p.end_time, p.is_published_in_feed, p.location_name, p.name_censored, p.description_censored, p.created_at
 		FROM pins p
 		LEFT JOIN pin_hidden_by_user ph ON ph.pin_id = p.id AND ph.user_id = $2
 		WHERE p.trip_id = $1 AND ph.pin_id IS NULL AND p.add_media_session_id IS NULL
@@ -392,7 +415,7 @@ func (r *PinRepository) ListByTripIDExcludingHidden(tripID, userID string) ([]*m
 		var startTime, endTime sql.NullTime
 		var isPublished sql.NullBool
 		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.CreatedAt); err != nil {
+			&lat, &lon, &startTime, &endTime, &isPublished, &p.LocationName, &p.NameCensored, &p.DescriptionCensored, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		if desc.Valid {
@@ -421,7 +444,7 @@ func (r *PinRepository) ListByTripIDExcludingHidden(tripID, userID string) ([]*m
 func (r *PinRepository) ListByTripIDIncludingDrafts(tripID string) ([]*models.Pin, error) {
 	sqlStr := `SELECT id, trip_id, name, description, category, privacy_level, media_count,
 		ST_Y(location)::float as lat, ST_X(location)::float as lon,
-		start_time, end_time, is_published_in_feed, location_name, created_at, add_media_session_id
+		start_time, end_time, is_published_in_feed, location_name, name_censored, description_censored, created_at, add_media_session_id
 		FROM pins WHERE trip_id = $1 ORDER BY start_time ASC NULLS LAST, created_at ASC`
 	rows, err := r.db.Query(sqlStr, tripID)
 	if err != nil {
@@ -437,7 +460,7 @@ func (r *PinRepository) ListByTripIDIncludingDrafts(tripID string) ([]*models.Pi
 		var isPublished sql.NullBool
 		var sessionID sql.NullString
 		if err := rows.Scan(&p.ID, &p.TripID, &p.Name, &desc, &p.Category, &p.PrivacyLevel, &p.MediaCount,
-			&lat, &lon, &startTime, &endTime, &isPublished, &locName, &p.CreatedAt, &sessionID); err != nil {
+			&lat, &lon, &startTime, &endTime, &isPublished, &locName, &p.NameCensored, &p.DescriptionCensored, &p.CreatedAt, &sessionID); err != nil {
 			return nil, err
 		}
 		if desc.Valid {

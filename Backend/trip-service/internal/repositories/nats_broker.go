@@ -140,6 +140,27 @@ func (b *NATSBroker) PublishMLTask(ctx context.Context, msg MLTaskMessage) error
 	return nil
 }
 
+func (b *NATSBroker) PublishMLTextTask(ctx context.Context, msg MLTextTaskMessage) error {
+	if msg.Flow == "" {
+		msg.Flow = MLFlowTextModeration
+	}
+	subject := SubjectForFlow(msg.Flow)
+	if subject == "" {
+		return fmt.Errorf("nats broker: unknown flow %q", msg.Flow)
+	}
+	if len(msg.Items) == 0 {
+		return nil
+	}
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("nats broker: marshal: %w", err)
+	}
+	if _, err := b.js.Publish(ctx, subject, data); err != nil {
+		return fmt.Errorf("nats broker: publish %s: %w", subject, err)
+	}
+	return nil
+}
+
 func (b *NATSBroker) SubscribeMLResults(ctx context.Context, handler MLResultHandler) error {
 	if handler == nil {
 		return errors.New("nats broker: handler is required")

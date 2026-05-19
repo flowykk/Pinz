@@ -87,20 +87,22 @@ type Medium struct {
 }
 
 type Pin struct {
-	ID                uuid.UUID
-	TripID            uuid.UUID
-	Name              string
-	Description       sql.NullString
-	Location          interface{}
-	Category          string
-	PrivacyLevel      string
-	MediaCount        int32
-	StartTime         sql.NullTime
-	EndTime           sql.NullTime
-	IsPublishedInFeed bool
-	CreatedAt         time.Time
-	LocationName      string
-	AddMediaSessionID uuid.NullUUID
+	ID                  uuid.UUID
+	TripID              uuid.UUID
+	Name                string
+	Description         sql.NullString
+	Location            interface{}
+	Category            string
+	PrivacyLevel        string
+	MediaCount          int32
+	StartTime           sql.NullTime
+	EndTime             sql.NullTime
+	IsPublishedInFeed   bool
+	CreatedAt           time.Time
+	LocationName        string
+	AddMediaSessionID   uuid.NullUUID
+	NameCensored        bool
+	DescriptionCensored bool
 }
 
 type PinHiddenByUser struct {
@@ -141,24 +143,26 @@ type Tag struct {
 }
 
 type Trip struct {
-	ID            uuid.UUID
-	OwnerUserID   uuid.UUID
-	Name          string
-	Description   sql.NullString
-	Category      string
-	Season        string
-	Status        string
-	PrivacyLevel  string
-	StartDate     sql.NullTime
-	EndDate       sql.NullTime
-	LikesCount    int32
-	DislikesCount int32
-	CoverUrl      sql.NullString
-	IsPublished   bool
-	IsGenerated   bool
-	IsSoftDeleted bool
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID                  uuid.UUID
+	OwnerUserID         uuid.UUID
+	Name                string
+	Description         sql.NullString
+	Category            string
+	Season              string
+	Status              string
+	PrivacyLevel        string
+	StartDate           sql.NullTime
+	EndDate             sql.NullTime
+	LikesCount          int32
+	DislikesCount       int32
+	CoverUrl            sql.NullString
+	IsPublished         bool
+	IsGenerated         bool
+	IsSoftDeleted       bool
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	NameCensored        bool
+	DescriptionCensored bool
 }
 
 type TripLocation struct {

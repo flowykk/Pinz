@@ -26,6 +26,7 @@ const PinUploadConsumerCount = 4
 type PinUploadConsumerDeps struct {
 	SessionRepo *repositories.PinUploadSessionRepository
 	MediaRepo   *repositories.MediaRepository
+	PinRepo     *repositories.PinRepository
 	EventRepo   *repositories.RedisRepository
 	MediaURLs   services.MediaURLResolver
 	MLBroker    repositories.MLBroker
@@ -199,6 +200,7 @@ func publishPinUploadMLTask(ctx context.Context, deps PinUploadConsumerDeps, tri
 		return
 	}
 	var pinMedia []*models.Media
+	var targetPinDesc string
 	if targetPinID != "" {
 		pinMedia, err = deps.MediaRepo.ListByPinID(targetPinID)
 		if err != nil {
@@ -206,12 +208,17 @@ func publishPinUploadMLTask(ctx context.Context, deps PinUploadConsumerDeps, tri
 				"session_id", sessionID, "trip_id", tripID, "target_pin_id", targetPinID, "error", err)
 			return
 		}
+		if deps.PinRepo != nil {
+			if p, perr := deps.PinRepo.GetByID(targetPinID); perr == nil && p != nil {
+				targetPinDesc = p.Description
+			}
+		}
 	}
 	flow := services.MLFlowPinUploadCreation
 	if targetPinID != "" {
 		flow = services.MLFlowPinUploadAddition
 	}
-	msg, _, err := services.BuildMLTaskMessageForPinUpload(ctx, flow, tripID, sessionID, targetPinID, sessionMedia, pinMedia, deps.MediaURLs)
+	msg, _, err := services.BuildMLTaskMessageForPinUpload(ctx, flow, tripID, sessionID, targetPinID, targetPinDesc, sessionMedia, pinMedia, deps.MediaURLs)
 	if err != nil {
 		slog.WarnContext(ctx, "ml task: build payload failed",
 			"session_id", sessionID, "trip_id", tripID, "error", err)

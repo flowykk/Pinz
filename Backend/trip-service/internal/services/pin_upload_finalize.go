@@ -160,6 +160,9 @@ func (s *TripService) finalizePinUploadCreation(
 			return nil, status.Error(codes.Internal, "failed to close session")
 		}
 	}
+	pinName := pin.Name
+	pinDesc := pin.Description
+	PublishPinTextModeration(ctx, s.mlBroker, tripID, pin.ID, &pinName, &pinDesc)
 	metrics.PinUploadSession(ctx, "finalize", "creation")
 
 	pin, err := s.pinRepo.GetByID(pin.ID)

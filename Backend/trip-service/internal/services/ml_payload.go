@@ -96,9 +96,10 @@ func BuildMLTaskMessageForTrip(
 		}
 		mediaCount += len(mediaPayload)
 		out = append(out, repositories.MLPinPayload{
-			PinID: pin.ID,
-			IsNew: isNewPin,
-			Media: mediaPayload,
+			PinID:       pin.ID,
+			IsNew:       isNewPin,
+			Description: pin.Description,
+			Media:       mediaPayload,
 		})
 	}
 	metrics.ObserveMLPresignDuration(ctx, time.Since(presignStart).Seconds(), flow)
@@ -117,7 +118,7 @@ func BuildMLTaskMessageForTrip(
 func BuildMLTaskMessageForPinUpload(
 	ctx context.Context,
 	flow string,
-	tripID, sessionID, targetPinID string,
+	tripID, sessionID, targetPinID, targetPinDescription string,
 	sessionMedia, pinMedia []*models.Media,
 	mediaURLs MediaURLResolver,
 ) (msg repositories.MLTaskMessage, mediaCount int, err error) {
@@ -149,9 +150,10 @@ func BuildMLTaskMessageForPinUpload(
 	metrics.ObserveMLPresignDuration(ctx, time.Since(presignStart).Seconds(), flow)
 
 	pinPayload := repositories.MLPinPayload{
-		PinID: targetPinID,
-		IsNew: flow == MLFlowPinUploadCreation,
-		Media: media,
+		PinID:       targetPinID,
+		IsNew:       flow == MLFlowPinUploadCreation,
+		Description: targetPinDescription,
+		Media:       media,
 	}
 	msg = repositories.MLTaskMessage{
 		Flow:          flow,

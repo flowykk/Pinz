@@ -20,6 +20,7 @@ type TripRepositoryInterface interface {
 	SetSoftDeleted(tripID string) error
 	UpdateCoverURL(tripID, s3Key string) error
 	SetPrivacyLevel(tripID, level string) error
+	SetTextCensored(tripID string, nameCensored, descriptionCensored *bool) error
 	ListFeed(limit, offset int32, category, season string, locationIDs []int, sortBy string) ([]*models.Trip, error)
 	// выборки для notification-service scheduler'а.
 	ListAnniversaryCandidates(today int64) ([]*NotificationTripCandidate, error)
@@ -149,6 +150,7 @@ type PinRepositoryInterface interface {
 	ClearAddMediaSessionByID(sessionID string) error
 	DeleteByAddMediaSessionID(sessionID string) ([]string, error)
 	SetPrivacyLevel(pinID, level string) error
+	SetTextCensored(pinID string, nameCensored, descriptionCensored *bool) error
 	// IncMediaCount атомарно увеличивает/уменьшает media_count на пине.
 	// Используется AddMediaToPin (delta=+N после finalize) и RemoveMediaFromPin (delta=-1).
 	IncMediaCount(pinID string, delta int) error

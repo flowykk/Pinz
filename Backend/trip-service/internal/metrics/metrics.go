@@ -26,6 +26,9 @@ var (
 	mlPayloadSize metric.Int64Histogram
 	mlPayloadMediaCount metric.Int64Histogram
 	mlPresignDuration metric.Float64Histogram
+	mlTextTaskItems metric.Int64Counter
+	mlTextResultApplied metric.Int64Counter
+	mlTextResultSkipped metric.Int64Counter
 )
 
 func Init() {
@@ -79,6 +82,15 @@ func Init() {
 	mlPresignDuration, _ = m.Float64Histogram("ml.presign.generation_duration_seconds",
 		metric.WithDescription("Duration of presigned GET URL generation when building ML payload"),
 		metric.WithUnit("s"),
+	)
+	mlTextTaskItems, _ = m.Int64Counter("ml.text.task_items.total",
+		metric.WithDescription("Text-moderation items published to ML, by entity_kind/field"),
+	)
+	mlTextResultApplied, _ = m.Int64Counter("ml.text.result_applied.total",
+		metric.WithDescription("Text-moderation results applied to DB, by entity_kind/field/censored"),
+	)
+	mlTextResultSkipped, _ = m.Int64Counter("ml.text.result_skipped.total",
+		metric.WithDescription("Text-moderation results skipped due to errors/unknown fields, by reason"),
 	)
 }
 
@@ -203,4 +215,32 @@ func ObserveMLPresignDuration(ctx context.Context, seconds float64, flow string)
 		return
 	}
 	mlPresignDuration.Record(ctx, seconds, metric.WithAttributes(attribute.String("flow", flow)))
+}
+
+func MLTextTaskItem(ctx context.Context, entityKind, field string) {
+	if mlTextTaskItems == nil {
+		return
+	}
+	mlTextTaskItems.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("entity_kind", entityKind),
+		attribute.String("field", field),
+	))
+}
+
+func MLTextResultApplied(ctx context.Context, entityKind, field string, censored bool) {
+	if mlTextResultApplied == nil {
+		return
+	}
+	mlTextResultApplied.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("entity_kind", entityKind),
+		attribute.String("field", field),
+		attribute.Bool("censored", censored),
+	))
+}
+
+func MLTextResultSkipped(ctx context.Context, reason string) {
+	if mlTextResultSkipped == nil {
+		return
+	}
+	mlTextResultSkipped.Add(ctx, 1, metric.WithAttributes(attribute.String("reason", reason)))
 }

@@ -128,6 +128,7 @@ func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (
 	}
 
 	coordsChanged := false
+	var nameForML, descForML *string
 	if req.Name != nil {
 		name := req.GetName()
 		if len(name) == 0 {
@@ -136,14 +137,27 @@ func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (
 		if len(name) > MaxNameLength {
 			return nil, status.Errorf(codes.InvalidArgument, "name must be at most %d characters", MaxNameLength)
 		}
-		pin.Name = name
+		if name != pin.Name {
+			pin.Name = name
+			nameForML = &name
+			falseVal := false
+			_ = s.pinRepo.SetTextCensored(pinID, &falseVal, nil)
+			pin.NameCensored = false
+		}
 	}
 	if req.Description != nil {
 		desc := req.GetDescription()
 		if len(desc) > MaxDescriptionLength {
 			return nil, status.Errorf(codes.InvalidArgument, "description must be at most %d characters", MaxDescriptionLength)
 		}
-		pin.Description = desc
+		if desc != pin.Description {
+			pin.Description = desc
+			d := desc
+			descForML = &d
+			falseVal := false
+			_ = s.pinRepo.SetTextCensored(pinID, nil, &falseVal)
+			pin.DescriptionCensored = false
+		}
 	}
 	if req.Category != nil {
 		pin.Category = ValidatePinCategory(req.GetCategory())
@@ -186,6 +200,7 @@ func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (
 		}
 		return nil, status.Error(codes.Internal, "failed to update pin")
 	}
+	PublishPinTextModeration(ctx, s.mlBroker, tripID, pinID, nameForML, descForML)
 	if req.GetTagsSet() {
 		if err := s.tagRepo.SetForPin(tripID, pinID, req.GetTags()); err != nil {
 			return nil, status.Error(codes.Internal, "failed to update pin tags")

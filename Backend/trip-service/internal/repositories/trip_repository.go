@@ -53,6 +53,7 @@ func (r *TripRepository) GetByID(id string) (*models.Trip, error) {
 		"id", "owner_user_id", "name", "description", "category", "season",
 		"status", "privacy_level", "start_date", "end_date",
 		"likes_count", "dislikes_count", "cover_url", "is_published", "is_generated", "is_soft_deleted",
+		"name_censored", "description_censored",
 		"created_at", "updated_at",
 		"(SELECT COUNT(*) FROM media m WHERE m.trip_id = trips.id)",
 		"(SELECT COUNT(*) FROM trip_participants tp WHERE tp.trip_id = trips.id)",
@@ -70,6 +71,7 @@ func (r *TripRepository) GetByID(id string) (*models.Trip, error) {
 		&t.ID, &t.OwnerUserID, &t.Name, &desc, &t.Category, &t.Season,
 		&t.Status, &t.PrivacyLevel, &startDate, &endDate,
 		&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
+		&t.NameCensored, &t.DescriptionCensored,
 		&t.CreatedAt, &t.UpdatedAt,
 		&t.MediaCount, &t.ParticipantsCount, &t.PinsCount,
 	)
@@ -100,6 +102,7 @@ func (r *TripRepository) ListByUserID(userID string, limit, offset int32) ([]*mo
 		"t.id", "t.owner_user_id", "t.name", "t.description", "t.category", "t.season",
 		"t.status", "t.privacy_level", "t.start_date", "t.end_date",
 		"t.likes_count", "t.dislikes_count", "t.cover_url", "t.is_published", "t.is_generated", "t.is_soft_deleted",
+		"t.name_censored", "t.description_censored",
 		"t.created_at", "t.updated_at",
 		"(SELECT COUNT(*) FROM media m WHERE m.trip_id = t.id)",
 		"(SELECT COUNT(*) FROM trip_participants tp2 WHERE tp2.trip_id = t.id)",
@@ -130,6 +133,7 @@ func (r *TripRepository) ListByUserID(userID string, limit, offset int32) ([]*mo
 			&t.ID, &t.OwnerUserID, &t.Name, &desc, &t.Category, &t.Season,
 			&t.Status, &t.PrivacyLevel, &startDate, &endDate,
 			&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
+			&t.NameCensored, &t.DescriptionCensored,
 			&t.CreatedAt, &t.UpdatedAt,
 			&t.MediaCount, &t.ParticipantsCount, &t.PinsCount,
 		); err != nil {
@@ -235,6 +239,29 @@ func (r *TripRepository) SetPrivacyLevel(tripID, level string) error {
 	return nil
 }
 
+// nil pointer = поле не обновлять.
+func (r *TripRepository) SetTextCensored(tripID string, nameCensored, descriptionCensored *bool) error {
+	if nameCensored == nil && descriptionCensored == nil {
+		return nil
+	}
+	q := psq.Update("trips").Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID})
+	if nameCensored != nil {
+		q = q.Set("name_censored", *nameCensored)
+	}
+	if descriptionCensored != nil {
+		q = q.Set("description_censored", *descriptionCensored)
+	}
+	res, err := q.RunWith(r.db).Exec()
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 // SetStatus updates only trip status (for flow: UPLOADING, DRAFT_GROUPING_REVIEW, PROCESSING, DRAFT_FINAL_REVIEW, READY).
 func (r *TripRepository) SetStatus(tripID, status string) error {
 	res, err := psq.Update("trips").Set("status", status).Set("updated_at", sq.Expr("NOW()")).Where(sq.Eq{"id": tripID}).RunWith(r.db).Exec()
@@ -295,6 +322,7 @@ func (r *TripRepository) ListFeed(limit, offset int32, category, season string, 
 		"t.id", "t.owner_user_id", "t.name", "t.description", "t.category", "t.season",
 		"t.status", "t.privacy_level", "t.start_date", "t.end_date",
 		"t.likes_count", "t.dislikes_count", "t.cover_url", "t.is_published", "t.is_generated", "t.is_soft_deleted",
+		"t.name_censored", "t.description_censored",
 		"t.created_at", "t.updated_at",
 	).From("trips t").
 		Where(sq.Eq{"t.is_published": true}).
@@ -334,6 +362,7 @@ func (r *TripRepository) ListFeed(limit, offset int32, category, season string, 
 			&t.ID, &t.OwnerUserID, &t.Name, &desc, &t.Category, &t.Season,
 			&t.Status, &t.PrivacyLevel, &startDate, &endDate,
 			&t.LikesCount, &t.DislikesCount, &coverURL, &t.IsPublished, &t.IsGenerated, &t.IsSoftDeleted,
+			&t.NameCensored, &t.DescriptionCensored,
 			&t.CreatedAt, &t.UpdatedAt,
 		); err != nil {
 			return nil, err

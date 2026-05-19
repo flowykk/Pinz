@@ -8,12 +8,14 @@ import (
 
 	"github.com/google/uuid"
 
+	"pinz/backend/trip-service/internal/metrics"
 	"pinz/backend/trip-service/internal/models"
 	"pinz/backend/trip-service/internal/repositories"
 	"pinz/backend/trip-service/internal/services"
 )
 
 type MLResultsDeps struct {
+	TripRepo             *repositories.TripRepository
 	PinRepo              *repositories.PinRepository
 	MediaRepo            *repositories.MediaRepository
 	TagRepo              *repositories.TagRepository
@@ -26,16 +28,84 @@ func HandleMLResult(deps MLResultsDeps) repositories.MLResultHandler {
 	return func(ctx context.Context, msg repositories.MLResultMessage) error {
 		applySimilarGroups(ctx, deps.MediaRepo, msg.SimilarGroups)
 		applyNSFW(ctx, deps.MediaRepo, msg.NSFWIDs)
+		applyTextModeration(ctx, deps, msg.TextResults)
 
 		switch msg.Flow {
 		case repositories.MLFlowCreation, repositories.MLFlowAddMedia:
 			return applyPinSuggestionsForTrip(ctx, deps, msg)
 		case repositories.MLFlowPinUploadCreation, repositories.MLFlowPinUploadAddition:
 			return applyMLResultForPinUpload(ctx, deps, msg)
+		case repositories.MLFlowTextModeration:
+			return nil
 		default:
 			slog.WarnContext(ctx, "ml result: unknown flow, ack-drop", "flow", msg.Flow, "trip_id", msg.TripID)
 			return nil
 		}
+	}
+}
+
+func applyTextModeration(ctx context.Context, deps MLResultsDeps, results []repositories.MLTextItemResult) {
+	if len(results) == 0 {
+		return
+	}
+	for _, r := range results {
+		if r.EntityID == "" {
+			metrics.MLTextResultSkipped(ctx, "empty_entity_id")
+			continue
+		}
+		val := r.Censored
+		switch r.EntityKind {
+		case repositories.MLTextEntityTrip:
+			if deps.TripRepo == nil {
+				metrics.MLTextResultSkipped(ctx, "trip_repo_nil")
+				continue
+			}
+			if err := setTripTextFlag(deps.TripRepo, r.EntityID, r.Field, val); err != nil {
+				slog.WarnContext(ctx, "ml text: set trip flag failed",
+					"trip_id", r.EntityID, "field", r.Field, "error", err)
+				metrics.MLTextResultSkipped(ctx, "set_flag_failed")
+				continue
+			}
+			metrics.MLTextResultApplied(ctx, r.EntityKind, r.Field, val)
+		case repositories.MLTextEntityPin:
+			if deps.PinRepo == nil {
+				metrics.MLTextResultSkipped(ctx, "pin_repo_nil")
+				continue
+			}
+			if err := setPinTextFlag(deps.PinRepo, r.EntityID, r.Field, val); err != nil {
+				slog.WarnContext(ctx, "ml text: set pin flag failed",
+					"pin_id", r.EntityID, "field", r.Field, "error", err)
+				metrics.MLTextResultSkipped(ctx, "set_flag_failed")
+				continue
+			}
+			metrics.MLTextResultApplied(ctx, r.EntityKind, r.Field, val)
+		default:
+			slog.WarnContext(ctx, "ml text: unknown entity_kind, skipped",
+				"entity_kind", r.EntityKind, "entity_id", r.EntityID)
+			metrics.MLTextResultSkipped(ctx, "unknown_entity_kind")
+		}
+	}
+}
+
+func setTripTextFlag(repo *repositories.TripRepository, tripID, field string, val bool) error {
+	switch field {
+	case repositories.MLTextFieldName:
+		return repo.SetTextCensored(tripID, &val, nil)
+	case repositories.MLTextFieldDescription:
+		return repo.SetTextCensored(tripID, nil, &val)
+	default:
+		return nil
+	}
+}
+
+func setPinTextFlag(repo *repositories.PinRepository, pinID, field string, val bool) error {
+	switch field {
+	case repositories.MLTextFieldName:
+		return repo.SetTextCensored(pinID, &val, nil)
+	case repositories.MLTextFieldDescription:
+		return repo.SetTextCensored(pinID, nil, &val)
+	default:
+		return nil
 	}
 }
 

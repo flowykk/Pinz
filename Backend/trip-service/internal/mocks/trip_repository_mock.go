@@ -217,6 +217,20 @@ func (mr *MockTripRepositoryInterfaceMockRecorder) SetStatus(tripID, status any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatus", reflect.TypeOf((*MockTripRepositoryInterface)(nil).SetStatus), tripID, status)
 }
 
+// SetTextCensored mocks base method.
+func (m *MockTripRepositoryInterface) SetTextCensored(tripID string, nameCensored, descriptionCensored *bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetTextCensored", tripID, nameCensored, descriptionCensored)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetTextCensored indicates an expected call of SetTextCensored.
+func (mr *MockTripRepositoryInterfaceMockRecorder) SetTextCensored(tripID, nameCensored, descriptionCensored any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTextCensored", reflect.TypeOf((*MockTripRepositoryInterface)(nil).SetTextCensored), tripID, nameCensored, descriptionCensored)
+}
+
 // Update mocks base method.
 func (m *MockTripRepositoryInterface) Update(t *models.Trip) error {
 	m.ctrl.T.Helper()

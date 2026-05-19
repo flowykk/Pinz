@@ -106,6 +106,8 @@ message Trip {
  int32 media_count = 18;
  int32 participants_count = 19;
  int32 pins_count = 20;
+ bool name_censored = 21;
+ bool description_censored = 22;
 }
 
 message CreateTripRequest {
@@ -155,6 +157,8 @@ message TripPin {
  repeated string tags = 10;
  repeated TripPinMedia media = 11;
  string trip_id = 12;
+ bool name_censored = 13;
+ bool description_censored = 14;
 }
 message TripPinMedia {
  string media_id = 1;
@@ -352,6 +356,7 @@ message ReviewPin {
  repeated string issues = 9; // MISSING_COORDINATES, MISSING_DATES
  repeated string tags = 10;
  repeated ReviewPinMedia media = 11;
+ bool name_censored = 12;
 }
 message ReviewPinMedia {
  string media_id = 1;
