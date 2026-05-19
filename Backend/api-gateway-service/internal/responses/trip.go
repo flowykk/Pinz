@@ -19,6 +19,8 @@ type Trip struct {
 	CoverURL string `json:"cover_url,omitempty"`
 	IsPublished bool `json:"is_published"`
 	IsGenerated bool `json:"is_generated"`
+	NameCensored bool `json:"name_censored"`
+	DescriptionCensored bool `json:"description_censored"`
 	CreatedAtUnix int64 `json:"created_at_unix"`
 	UpdatedAtUnix int64 `json:"updated_at_unix"`
 	// ShareURL — universal-link на просмотр трипа: копирование и
@@ -90,6 +92,8 @@ type TripPin struct {
 	PrivacyLevel string `json:"privacy_level"`
 	Tags []string `json:"tags,omitempty"`
 	Media []TripPinMedia `json:"media,omitempty"`
+	NameCensored bool `json:"name_censored"`
+	DescriptionCensored bool `json:"description_censored"`
 }
 
 // TripPinMedia is media inside a pin.
@@ -193,6 +197,7 @@ type ReviewPin struct {
 	Issues []string `json:"issues,omitempty"`
 	Tags []string `json:"tags,omitempty"`
 	Media []ReviewPinMedia `json:"media,omitempty"`
+	NameCensored bool `json:"name_censored"`
 }
 
 // ReviewPinMedia is media in a review pin.

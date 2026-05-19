@@ -187,7 +187,7 @@ func TestBuildMLTaskMessageForPinUpload_Creation_OnlyNewMedia(t *testing.T) {
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k2", mlPresignTTL).Return("https://signed/k2", nil)
 
 	msg, count, err := BuildMLTaskMessageForPinUpload(context.Background(),
-		MLFlowPinUploadCreation, "trip-1", "sess-1", "", sessionMedia, nil, urls)
+		MLFlowPinUploadCreation, "trip-1", "sess-1", "", "", sessionMedia, nil, urls)
 	require.NoError(t, err)
 	require.Equal(t, 2, count)
 	require.Equal(t, MLFlowPinUploadCreation, msg.Flow)
@@ -214,7 +214,7 @@ func TestBuildMLTaskMessageForPinUpload_Addition_BothSets(t *testing.T) {
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "ko2", mlPresignTTL).Return("https://signed/old2", nil)
 
 	msg, count, err := BuildMLTaskMessageForPinUpload(context.Background(),
-		MLFlowPinUploadAddition, "trip-1", "sess-1", "pin-target", sessionMedia, pinMedia, urls)
+		MLFlowPinUploadAddition, "trip-1", "sess-1", "pin-target", "", sessionMedia, pinMedia, urls)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
 	require.Equal(t, "pin-target", msg.TargetPinID)
@@ -236,7 +236,7 @@ func TestBuildMLTaskMessageForPinUpload_PresignError_Propagated(t *testing.T) {
 	urls.EXPECT().ReadURLWithTTL(gomock.Any(), "k1", mlPresignTTL).Return("", errors.New("boom"))
 
 	_, _, err := BuildMLTaskMessageForPinUpload(context.Background(),
-		MLFlowPinUploadCreation, "trip-1", "sess-1", "",
+		MLFlowPinUploadCreation, "trip-1", "sess-1", "", "",
 		[]*models.Media{mediaFixture("m1", "k1", 0, 0, 0)}, nil, urls)
 	require.Error(t, err)
 }

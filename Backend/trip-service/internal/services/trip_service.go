@@ -187,6 +187,9 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 			Url: url,
 		})
 	}
+	tripName := trip.Name
+	tripDesc := trip.Description
+	PublishTripTextModeration(ctx, s.mlBroker, trip.ID, &tripName, &tripDesc)
 	return &pb.CreateTripResponse{
 		TripId: trip.ID,
 		Status: trip.Status,
@@ -520,6 +523,8 @@ func (s *TripService) pinWithMediaToProto(ctx context.Context, pin *models.Pin, 
 		Category: pin.Category,
 		PrivacyLevel: pin.PrivacyLevel,
 		Tags: tags,
+		NameCensored: pin.NameCensored,
+		DescriptionCensored: pin.DescriptionCensored,
 	}
 	if pin.Latitude != nil {
 		out.Latitude = pin.Latitude
@@ -672,18 +677,32 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 		return nil, errGeneratedReadOnly
 	}
 	// Merge optional fields
+	var nameForML, descForML *string
 	if req.Name != nil {
 		name := *req.Name
 		if len(name) > MaxNameLength {
 			return nil, status.Errorf(codes.InvalidArgument, "name must be at most %d characters", MaxNameLength)
 		}
-		trip.Name = name
+		if name != trip.Name {
+			trip.Name = name
+			nameForML = &name
+			falseVal := false
+			_ = s.tripRepo.SetTextCensored(tripID, &falseVal, nil)
+			trip.NameCensored = false
+		}
 	}
 	if req.Description != nil {
 		if len(*req.Description) > MaxDescriptionLength {
 			return nil, status.Errorf(codes.InvalidArgument, "description must be at most %d characters", MaxDescriptionLength)
 		}
-		trip.Description = *req.Description
+		if *req.Description != trip.Description {
+			trip.Description = *req.Description
+			d := *req.Description
+			descForML = &d
+			falseVal := false
+			_ = s.tripRepo.SetTextCensored(tripID, nil, &falseVal)
+			trip.DescriptionCensored = false
+		}
 	}
 	if req.Category != nil {
 		if !validateCategory(*req.Category) {
@@ -711,6 +730,7 @@ func (s *TripService) UpdateTrip(ctx context.Context, req *pb.UpdateTripRequest)
 		}
 		return nil, status.Error(codes.Internal, "failed to update trip")
 	}
+	PublishTripTextModeration(ctx, s.mlBroker, tripID, nameForML, descForML)
 	updated, _ := s.tripRepo.GetByID(tripID)
 	return &pb.UpdateTripResponse{Trip: s.tripToProto(ctx, updated)}, nil
 }
@@ -1586,6 +1606,7 @@ func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRe
 			Issues: issues,
 			Tags: tags,
 			Media: reviewMedia,
+			NameCensored: pin.NameCensored,
 		}
 		if pin.Latitude != nil {
 			rp.Latitude = pin.Latitude
@@ -1649,6 +1670,7 @@ func (s *TripService) FinalizeTrip(ctx context.Context, req *pb.FinalizeTripRequ
 func (s *TripService) applyReviewEdits(ctx context.Context, trip *models.Trip, pinUpdates []*pb.PinUpdate, mediaToDelete []string) error {
 	tripID := trip.ID
 	geoPins := make([]repositories.GeoRequestPin, 0, len(pinUpdates))
+	pinNamesForML := make([]PinNameItem, 0, len(pinUpdates))
 	for _, pu := range pinUpdates {
 		pin, err := s.pinRepo.GetByID(pu.GetPinId())
 		if err != nil {
@@ -1659,7 +1681,13 @@ func (s *TripService) applyReviewEdits(ctx context.Context, trip *models.Trip, p
 			if len(name) > MaxNameLength {
 				return status.Errorf(codes.InvalidArgument, "pin name must be at most %d characters", MaxNameLength)
 			}
-			pin.Name = name
+			if name != pin.Name {
+				pin.Name = name
+				falseVal := false
+				_ = s.pinRepo.SetTextCensored(pin.ID, &falseVal, nil)
+				pin.NameCensored = false
+				pinNamesForML = append(pinNamesForML, PinNameItem{PinID: pin.ID, Name: name})
+			}
 		}
 		if pu.Latitude != nil && pu.Longitude != nil {
 			pin.Latitude = pu.Latitude
@@ -1674,6 +1702,7 @@ func (s *TripService) applyReviewEdits(ctx context.Context, trip *models.Trip, p
 			})
 		}
 	}
+	PublishPinNameBatch(ctx, s.mlBroker, tripID, pinNamesForML)
 	if len(geoPins) > 0 && s.eventRepo != nil {
 		_ = s.eventRepo.PublishGeoRequest(ctx, tripID, geoPins)
 	}
@@ -3312,6 +3341,8 @@ func (s *TripService) tripToProto(ctx context.Context, t *models.Trip) *pb.Trip 
 		MediaCount: t.MediaCount,
 		ParticipantsCount: t.ParticipantsCount,
 		PinsCount: t.PinsCount,
+		NameCensored: t.NameCensored,
+		DescriptionCensored: t.DescriptionCensored,
 	}
 	if t.StartDate != nil {
 		out.StartDateUnix = t.StartDate.Unix()

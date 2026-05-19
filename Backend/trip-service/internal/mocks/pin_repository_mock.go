@@ -260,6 +260,20 @@ func (mr *MockPinRepositoryInterfaceMockRecorder) SetPrivacyLevel(pinID, level a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPrivacyLevel", reflect.TypeOf((*MockPinRepositoryInterface)(nil).SetPrivacyLevel), pinID, level)
 }
 
+// SetTextCensored mocks base method.
+func (m *MockPinRepositoryInterface) SetTextCensored(pinID string, nameCensored, descriptionCensored *bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetTextCensored", pinID, nameCensored, descriptionCensored)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetTextCensored indicates an expected call of SetTextCensored.
+func (mr *MockPinRepositoryInterfaceMockRecorder) SetTextCensored(pinID, nameCensored, descriptionCensored any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTextCensored", reflect.TypeOf((*MockPinRepositoryInterface)(nil).SetTextCensored), pinID, nameCensored, descriptionCensored)
+}
+
 // Update mocks base method.
 func (m *MockPinRepositoryInterface) Update(p *models.Pin) error {
 	m.ctrl.T.Helper()

@@ -22,29 +22,31 @@ const (
 )
 
 type Trip struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	OwnerUserId       string                 `protobuf:"bytes,2,opt,name=owner_user_id,json=ownerUserId,proto3" json:"owner_user_id,omitempty"`
-	Name              string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Description       string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	Category          string                 `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
-	Season            string                 `protobuf:"bytes,6,opt,name=season,proto3" json:"season,omitempty"`
-	Status            string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
-	PrivacyLevel      string                 `protobuf:"bytes,8,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
-	StartDateUnix     int64                  `protobuf:"varint,9,opt,name=start_date_unix,json=startDateUnix,proto3" json:"start_date_unix,omitempty"`
-	EndDateUnix       int64                  `protobuf:"varint,10,opt,name=end_date_unix,json=endDateUnix,proto3" json:"end_date_unix,omitempty"`
-	LikesCount        int32                  `protobuf:"varint,11,opt,name=likes_count,json=likesCount,proto3" json:"likes_count,omitempty"`
-	DislikesCount     int32                  `protobuf:"varint,12,opt,name=dislikes_count,json=dislikesCount,proto3" json:"dislikes_count,omitempty"`
-	CoverUrl          string                 `protobuf:"bytes,13,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`
-	IsPublished       bool                   `protobuf:"varint,14,opt,name=is_published,json=isPublished,proto3" json:"is_published,omitempty"`
-	IsGenerated       bool                   `protobuf:"varint,15,opt,name=is_generated,json=isGenerated,proto3" json:"is_generated,omitempty"`
-	CreatedAtUnix     int64                  `protobuf:"varint,16,opt,name=created_at_unix,json=createdAtUnix,proto3" json:"created_at_unix,omitempty"`
-	UpdatedAtUnix     int64                  `protobuf:"varint,17,opt,name=updated_at_unix,json=updatedAtUnix,proto3" json:"updated_at_unix,omitempty"`
-	MediaCount        int32                  `protobuf:"varint,18,opt,name=media_count,json=mediaCount,proto3" json:"media_count,omitempty"`
-	ParticipantsCount int32                  `protobuf:"varint,19,opt,name=participants_count,json=participantsCount,proto3" json:"participants_count,omitempty"`
-	PinsCount         int32                  `protobuf:"varint,20,opt,name=pins_count,json=pinsCount,proto3" json:"pins_count,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	OwnerUserId         string                 `protobuf:"bytes,2,opt,name=owner_user_id,json=ownerUserId,proto3" json:"owner_user_id,omitempty"`
+	Name                string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Description         string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Category            string                 `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
+	Season              string                 `protobuf:"bytes,6,opt,name=season,proto3" json:"season,omitempty"`
+	Status              string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	PrivacyLevel        string                 `protobuf:"bytes,8,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
+	StartDateUnix       int64                  `protobuf:"varint,9,opt,name=start_date_unix,json=startDateUnix,proto3" json:"start_date_unix,omitempty"`
+	EndDateUnix         int64                  `protobuf:"varint,10,opt,name=end_date_unix,json=endDateUnix,proto3" json:"end_date_unix,omitempty"`
+	LikesCount          int32                  `protobuf:"varint,11,opt,name=likes_count,json=likesCount,proto3" json:"likes_count,omitempty"`
+	DislikesCount       int32                  `protobuf:"varint,12,opt,name=dislikes_count,json=dislikesCount,proto3" json:"dislikes_count,omitempty"`
+	CoverUrl            string                 `protobuf:"bytes,13,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`
+	IsPublished         bool                   `protobuf:"varint,14,opt,name=is_published,json=isPublished,proto3" json:"is_published,omitempty"`
+	IsGenerated         bool                   `protobuf:"varint,15,opt,name=is_generated,json=isGenerated,proto3" json:"is_generated,omitempty"`
+	CreatedAtUnix       int64                  `protobuf:"varint,16,opt,name=created_at_unix,json=createdAtUnix,proto3" json:"created_at_unix,omitempty"`
+	UpdatedAtUnix       int64                  `protobuf:"varint,17,opt,name=updated_at_unix,json=updatedAtUnix,proto3" json:"updated_at_unix,omitempty"`
+	MediaCount          int32                  `protobuf:"varint,18,opt,name=media_count,json=mediaCount,proto3" json:"media_count,omitempty"`
+	ParticipantsCount   int32                  `protobuf:"varint,19,opt,name=participants_count,json=participantsCount,proto3" json:"participants_count,omitempty"`
+	PinsCount           int32                  `protobuf:"varint,20,opt,name=pins_count,json=pinsCount,proto3" json:"pins_count,omitempty"`
+	NameCensored        bool                   `protobuf:"varint,21,opt,name=name_censored,json=nameCensored,proto3" json:"name_censored,omitempty"`
+	DescriptionCensored bool                   `protobuf:"varint,22,opt,name=description_censored,json=descriptionCensored,proto3" json:"description_censored,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *Trip) Reset() {
@@ -215,6 +217,20 @@ func (x *Trip) GetPinsCount() int32 {
 		return x.PinsCount
 	}
 	return 0
+}
+
+func (x *Trip) GetNameCensored() bool {
+	if x != nil {
+		return x.NameCensored
+	}
+	return false
+}
+
+func (x *Trip) GetDescriptionCensored() bool {
+	if x != nil {
+		return x.DescriptionCensored
+	}
+	return false
 }
 
 type CreateTripRequest struct {
@@ -527,21 +543,23 @@ func (x *GetTripRequest) GetUserId() string {
 
 // TripPin is a pin with media for GetTrip response (map view).
 type TripPin struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Category      string                 `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`
-	Latitude      *float64               `protobuf:"fixed64,5,opt,name=latitude,proto3,oneof" json:"latitude,omitempty"`
-	Longitude     *float64               `protobuf:"fixed64,6,opt,name=longitude,proto3,oneof" json:"longitude,omitempty"`
-	StartTimeUnix int64                  `protobuf:"varint,7,opt,name=start_time_unix,json=startTimeUnix,proto3" json:"start_time_unix,omitempty"`
-	EndTimeUnix   int64                  `protobuf:"varint,8,opt,name=end_time_unix,json=endTimeUnix,proto3" json:"end_time_unix,omitempty"`
-	PrivacyLevel  string                 `protobuf:"bytes,9,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
-	Tags          []string               `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
-	Media         []*TripPinMedia        `protobuf:"bytes,11,rep,name=media,proto3" json:"media,omitempty"`
-	TripId        string                 `protobuf:"bytes,12,opt,name=trip_id,json=tripId,proto3" json:"trip_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description         string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Category            string                 `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`
+	Latitude            *float64               `protobuf:"fixed64,5,opt,name=latitude,proto3,oneof" json:"latitude,omitempty"`
+	Longitude           *float64               `protobuf:"fixed64,6,opt,name=longitude,proto3,oneof" json:"longitude,omitempty"`
+	StartTimeUnix       int64                  `protobuf:"varint,7,opt,name=start_time_unix,json=startTimeUnix,proto3" json:"start_time_unix,omitempty"`
+	EndTimeUnix         int64                  `protobuf:"varint,8,opt,name=end_time_unix,json=endTimeUnix,proto3" json:"end_time_unix,omitempty"`
+	PrivacyLevel        string                 `protobuf:"bytes,9,opt,name=privacy_level,json=privacyLevel,proto3" json:"privacy_level,omitempty"`
+	Tags                []string               `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
+	Media               []*TripPinMedia        `protobuf:"bytes,11,rep,name=media,proto3" json:"media,omitempty"`
+	TripId              string                 `protobuf:"bytes,12,opt,name=trip_id,json=tripId,proto3" json:"trip_id,omitempty"`
+	NameCensored        bool                   `protobuf:"varint,13,opt,name=name_censored,json=nameCensored,proto3" json:"name_censored,omitempty"`
+	DescriptionCensored bool                   `protobuf:"varint,14,opt,name=description_censored,json=descriptionCensored,proto3" json:"description_censored,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *TripPin) Reset() {
@@ -656,6 +674,20 @@ func (x *TripPin) GetTripId() string {
 		return x.TripId
 	}
 	return ""
+}
+
+func (x *TripPin) GetNameCensored() bool {
+	if x != nil {
+		return x.NameCensored
+	}
+	return false
+}
+
+func (x *TripPin) GetDescriptionCensored() bool {
+	if x != nil {
+		return x.DescriptionCensored
+	}
+	return false
 }
 
 type TripPinMedia struct {
@@ -2436,6 +2468,7 @@ type ReviewPin struct {
 	Issues        []string               `protobuf:"bytes,9,rep,name=issues,proto3" json:"issues,omitempty"` // MISSING_COORDINATES, MISSING_DATES
 	Tags          []string               `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
 	Media         []*ReviewPinMedia      `protobuf:"bytes,11,rep,name=media,proto3" json:"media,omitempty"`
+	NameCensored  bool                   `protobuf:"varint,12,opt,name=name_censored,json=nameCensored,proto3" json:"name_censored,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2545,6 +2578,13 @@ func (x *ReviewPin) GetMedia() []*ReviewPinMedia {
 		return x.Media
 	}
 	return nil
+}
+
+func (x *ReviewPin) GetNameCensored() bool {
+	if x != nil {
+		return x.NameCensored
+	}
+	return false
 }
 
 type ReviewPinMedia struct {
@@ -8960,7 +9000,7 @@ var File_trip_proto protoreflect.FileDescriptor
 const file_trip_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"trip.proto\x12\x04trip\"\x97\x05\n" +
+	"trip.proto\x12\x04trip\"\xef\x05\n" +
 	"\x04Trip\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\"\n" +
 	"\rowner_user_id\x18\x02 \x01(\tR\vownerUserId\x12\x12\n" +
@@ -8985,7 +9025,9 @@ const file_trip_proto_rawDesc = "" +
 	"mediaCount\x12-\n" +
 	"\x12participants_count\x18\x13 \x01(\x05R\x11participantsCount\x12\x1d\n" +
 	"\n" +
-	"pins_count\x18\x14 \x01(\x05R\tpinsCount\"\xf2\x01\n" +
+	"pins_count\x18\x14 \x01(\x05R\tpinsCount\x12#\n" +
+	"\rname_censored\x18\x15 \x01(\bR\fnameCensored\x121\n" +
+	"\x14description_censored\x18\x16 \x01(\bR\x13descriptionCensored\"\xf2\x01\n" +
 	"\x11CreateTripRequest\x12\"\n" +
 	"\rowner_user_id\x18\x01 \x01(\tR\vownerUserId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -9007,7 +9049,7 @@ const file_trip_proto_rawDesc = "" +
 	"\x03url\x18\x03 \x01(\tR\x03url\"B\n" +
 	"\x0eGetTripRequest\x12\x17\n" +
 	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x92\x03\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xea\x03\n" +
 	"\aTripPin\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -9021,7 +9063,9 @@ const file_trip_proto_rawDesc = "" +
 	"\x04tags\x18\n" +
 	" \x03(\tR\x04tags\x12(\n" +
 	"\x05media\x18\v \x03(\v2\x12.trip.TripPinMediaR\x05media\x12\x17\n" +
-	"\atrip_id\x18\f \x01(\tR\x06tripIdB\v\n" +
+	"\atrip_id\x18\f \x01(\tR\x06tripId\x12#\n" +
+	"\rname_censored\x18\r \x01(\bR\fnameCensored\x121\n" +
+	"\x14description_censored\x18\x0e \x01(\bR\x13descriptionCensoredB\v\n" +
 	"\t_latitudeB\f\n" +
 	"\n" +
 	"_longitude\"\xa9\x01\n" +
@@ -9165,7 +9209,7 @@ const file_trip_proto_rawDesc = "" +
 	"\asimilar\x18\x03 \x03(\v2\x17.trip.MediaSimilarGroupR\asimilar\x12#\n" +
 	"\x04pins\x18\x04 \x03(\v2\x0f.trip.ReviewPinR\x04pins\"0\n" +
 	"\x11MediaSimilarGroup\x12\x1b\n" +
-	"\tmedia_ids\x18\x01 \x03(\tR\bmediaIds\"\xfa\x02\n" +
+	"\tmedia_ids\x18\x01 \x03(\tR\bmediaIds\"\x9f\x03\n" +
 	"\tReviewPin\x12\x15\n" +
 	"\x06pin_id\x18\x01 \x01(\tR\x05pinId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -9178,7 +9222,8 @@ const file_trip_proto_rawDesc = "" +
 	"\x06issues\x18\t \x03(\tR\x06issues\x12\x12\n" +
 	"\x04tags\x18\n" +
 	" \x03(\tR\x04tags\x12*\n" +
-	"\x05media\x18\v \x03(\v2\x14.trip.ReviewPinMediaR\x05mediaB\v\n" +
+	"\x05media\x18\v \x03(\v2\x14.trip.ReviewPinMediaR\x05media\x12#\n" +
+	"\rname_censored\x18\f \x01(\bR\fnameCensoredB\v\n" +
 	"\t_latitudeB\f\n" +
 	"\n" +
 	"_longitude\"b\n" +

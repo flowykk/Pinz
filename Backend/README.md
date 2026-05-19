@@ -199,18 +199,6 @@ kubectl label namespace default istio-injection=enabled
 ### Запуск полного стека
 
 ```bash
-# Инфраструктура (PostgreSQL, Redis) — Docker Compose
-make infra-up
-
-# Observability — k8s (см. k8s/k8s-observability.yaml)
-make obs-up
-
-# Сборка образов внутри Minikube и деплой приложения
-make k8s-build
-make k8s-istio
-make k8s-deploy
-
-# Или всё одной командой
 make all-up
 ```
 

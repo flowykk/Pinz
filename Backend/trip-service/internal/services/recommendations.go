@@ -214,6 +214,15 @@ func (s *TripService) SaveRecommendation(ctx context.Context, req *pb.SaveRecomm
 		}
 		if err := s.pinRepo.Create(copyPin); err != nil {
 			slog.WarnContext(ctx, "SaveRecommendation: create pin failed", "error", err, "trip_id", trip.ID)
+			continue
+		}
+		if src.NameCensored || src.DescriptionCensored {
+			nameFlag := src.NameCensored
+			descFlag := src.DescriptionCensored
+			if err := s.pinRepo.SetTextCensored(copyPin.ID, &nameFlag, &descFlag); err != nil {
+				slog.WarnContext(ctx, "SaveRecommendation: propagate censorship flags failed",
+					"error", err, "trip_id", trip.ID, "pin_id", copyPin.ID)
+			}
 		}
 	}
 	if err := s.geoRepo.UpsertTripLocations(ctx, trip.ID, []int{regionID}); err != nil {

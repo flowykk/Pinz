@@ -122,6 +122,7 @@ func main() {
 		go worker.RunPinUploadConsumer(ctx, deps.RedisClient, consumerName, worker.PinUploadConsumerDeps{
 			SessionRepo: deps.PinUploadSessionRepo,
 			MediaRepo:   deps.MediaRepo,
+			PinRepo:     deps.PinRepo,
 			EventRepo:   deps.EventRepo,
 			MediaURLs:   deps.MediaURLs,
 			MLBroker:    deps.MLBroker,
@@ -130,6 +131,7 @@ func main() {
 
 	if mlBroker != nil {
 		handler := worker.HandleMLResult(worker.MLResultsDeps{
+			TripRepo:             deps.TripRepo,
 			PinRepo:              deps.PinRepo,
 			MediaRepo:            deps.MediaRepo,
 			TagRepo:              deps.TagRepo,

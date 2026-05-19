@@ -756,6 +756,7 @@ func (h *TripHandler) GetTripReview(w http.ResponseWriter, r *http.Request) {
 			PinID: p.GetPinId(), Name: p.GetName(), Category: p.GetCategory(),
 			LocationName: p.GetLocationName(), StartTimeUnix: p.GetStartTimeUnix(), EndTimeUnix: p.GetEndTimeUnix(),
 			Issues: p.GetIssues(), Tags: p.GetTags(), Media: mediaList,
+			NameCensored: p.GetNameCensored(),
 		}
 		if p.Latitude != nil {
 			rp.Latitude = p.Latitude
@@ -1356,6 +1357,8 @@ func (h *TripHandler) tripProtoToResponse(t *proto.Trip) responses.Trip {
 		CoverURL: t.GetCoverUrl(),
 		IsPublished: t.GetIsPublished(),
 		IsGenerated: t.GetIsGenerated(),
+		NameCensored: t.GetNameCensored(),
+		DescriptionCensored: t.GetDescriptionCensored(),
 		CreatedAtUnix: t.GetCreatedAtUnix(),
 		UpdatedAtUnix: t.GetUpdatedAtUnix(),
 	}
@@ -1488,6 +1491,8 @@ func tripPinProtoToResponse(p *proto.TripPin) responses.TripPin {
 		PrivacyLevel: p.GetPrivacyLevel(),
 		Tags: p.GetTags(),
 		Media: make([]responses.TripPinMedia, 0, len(p.GetMedia())),
+		NameCensored: p.GetNameCensored(),
+		DescriptionCensored: p.GetDescriptionCensored(),
 	}
 	for _, m := range p.GetMedia() {
 		if m == nil {

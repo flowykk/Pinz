@@ -23,6 +23,8 @@ type Trip struct {
 	IsPublished bool
 	IsGenerated bool
 	IsSoftDeleted bool
+	NameCensored bool
+	DescriptionCensored bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

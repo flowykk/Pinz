@@ -6401,6 +6401,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "name_censored": {
+                    "type": "boolean"
+                },
                 "pin_id": {
                     "type": "string"
                 },
@@ -6541,6 +6544,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "description_censored": {
+                    "type": "boolean"
+                },
                 "dislikes_count": {
                     "type": "integer"
                 },
@@ -6564,6 +6570,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "name_censored": {
+                    "type": "boolean"
                 },
                 "owner_user_id": {
                     "type": "string"
@@ -6633,6 +6642,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "description_censored": {
+                    "type": "boolean"
+                },
                 "end_time_unix": {
                     "type": "integer"
                 },
@@ -6653,6 +6665,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "name_censored": {
+                    "type": "boolean"
                 },
                 "privacy_level": {
                     "type": "string"

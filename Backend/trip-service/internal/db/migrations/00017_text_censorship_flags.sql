@@ -1,0 +1,17 @@
+-- +goose Up
+ALTER TABLE trips
+  ADD COLUMN IF NOT EXISTS name_censored        BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS description_censored BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE pins
+  ADD COLUMN IF NOT EXISTS name_censored        BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS description_censored BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- +goose Down
+ALTER TABLE trips
+  DROP COLUMN IF EXISTS name_censored,
+  DROP COLUMN IF EXISTS description_censored;
+
+ALTER TABLE pins
+  DROP COLUMN IF EXISTS name_censored,
+  DROP COLUMN IF EXISTS description_censored;

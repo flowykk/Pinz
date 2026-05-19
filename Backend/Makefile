@@ -220,6 +220,15 @@ k8s-deploy:
 k8s-istio:
 	kubectl apply -f k8s-istio/
 
+.PHONY: k8s-extsvc dev-login-enable
+k8s-extsvc:
+	SERVER_IP=$$(minikube ssh -- "getent hosts host.minikube.internal" | awk '{print $$1}') \
+		envsubst < k8s/k8s-external-services.yaml | kubectl apply -f -
+
+dev-login-enable:
+	kubectl set env deployment/auth-service AUTH_DEV_LOGIN_ENABLED=true
+	kubectl set env deployment/api-gateway DEV_LOGIN_PROXY_ENABLED=true
+
 .PHONY: kiali kiali-up kiali-down
 kiali-up:
 	@VER=$$(istioctl version --remote=false 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1); \
@@ -244,7 +253,7 @@ kiali:
 	istioctl dashboard kiali
 
 .PHONY: all-up all-down
-all-up: infra-up obs-up k8s-build k8s-istio kiali-up k8s-deploy
+all-up: infra-up obs-up k8s-build k8s-istio kiali-up k8s-deploy k8s-extsvc dev-login-enable
 
 all-down:
 	kubectl delete -f k8s/k8s-observability.yaml || true

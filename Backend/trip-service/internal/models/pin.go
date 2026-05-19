@@ -17,6 +17,8 @@ type Pin struct {
 	EndTime *time.Time
 	LocationName string
 	IsPublishedInFeed bool
+	NameCensored bool
+	DescriptionCensored bool
 	CreatedAt time.Time
 	AddMediaSessionID *string
 }

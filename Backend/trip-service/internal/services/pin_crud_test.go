@@ -235,6 +235,7 @@ func TestUpdatePin_HappyPath_TagsReplace(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
 	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusReady}, nil)
 	pinRepo.EXPECT().GetByID(pinID).Return(&models.Pin{ID: pinID, TripID: tripID, Name: "Old"}, nil)
+	pinRepo.EXPECT().SetTextCensored(pinID, gomock.Any(), gomock.Nil()).Return(nil)
 	pinRepo.EXPECT().Update(gomock.Any()).Return(nil)
 	tagRepo.EXPECT().SetForPin(tripID, pinID, []string{"a", "b"}).Return(nil)
 	mediaRepo.EXPECT().ListByPinID(pinID).Return(nil, nil)
@@ -265,6 +266,7 @@ func TestUpdatePin_TagsSetFalse_NotTouched(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
 	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusReady}, nil)
 	pinRepo.EXPECT().GetByID(pinID).Return(&models.Pin{ID: pinID, TripID: tripID}, nil)
+	pinRepo.EXPECT().SetTextCensored(pinID, gomock.Nil(), gomock.Any()).Return(nil)
 	pinRepo.EXPECT().Update(gomock.Any()).Return(nil)
 	// SetForPin не должен вызываться при tags_set=false.
 	mediaRepo.EXPECT().ListByPinID(pinID).Return(nil, nil)
