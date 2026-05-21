@@ -945,7 +945,7 @@ extension PinzAPI {
               "pins": [
                 {
                   "id": "pin-001",
-                  "name": "Эйфелева башня",
+                  "name": "Эйфелева башня FUCK",
                   "category": "entertainment",
                   "latitude": 48.8584,
                   "longitude": 2.2945,
