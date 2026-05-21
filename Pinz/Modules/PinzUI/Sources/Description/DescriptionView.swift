@@ -7,18 +7,22 @@ enum DescriptionIcon: String, Setting.Icon {
 }
 
 public struct DescriptionView: View {
-    
+
     private let title: String
     private let description: String?
+    private let subtitle: String?
+    private let subtitleStyle: SettingSubtitle.Style
     private let collapseButtonText: (collapsed: String, expanded: String)
     private let contentAccessibilityIdentifier: String?
     private let onTapAction: (() -> Void)?
 
     @State private var isCollapsed: Bool = true
-    
+
     public init(
         title: String = PinzBaseStrings.Common.Label.description,
         description: String?,
+        subtitle: String? = nil,
+        subtitleStyle: SettingSubtitle.Style = .default,
         contentAccessibilityIdentifier: String? = nil,
         collapseButtonText: (collapsed: String, expanded: String) = (
             PinzBaseStrings.Common.Button.expand,
@@ -28,6 +32,8 @@ public struct DescriptionView: View {
     ) {
         self.title = title
         self.description = description
+        self.subtitle = subtitle
+        self.subtitleStyle = subtitleStyle
         self.contentAccessibilityIdentifier = contentAccessibilityIdentifier
         self.collapseButtonText = collapseButtonText
         self.onTapAction = onAddAction
@@ -83,6 +89,11 @@ public struct DescriptionView: View {
                         } ?? nil
                     ))
                ])
+            }
+            if let subtitle {
+                SettingSubtitle(subtitle, style: subtitleStyle)
+                    .padding(.top, 4)
+                    .padding(.leading, 12)
             }
         }
     }

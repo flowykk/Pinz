@@ -18,6 +18,8 @@ public struct TripDTO: Codable {
     public let endDateUnix: Int?
     public let createdAtUnix: Int
     public let updatedAtUnix: Int
+    public let isNameCensored: Bool
+    public let isDescriptionCensored: Bool
 
     public init(
         id: String, name: String, description: String?, category: String?,
@@ -25,7 +27,8 @@ public struct TripDTO: Codable {
         status: String?, isPublished: Bool, isGenerated: Bool, likesCount: Int,
         dislikesCount: Int, participantsCount: Int? = nil, mediaCount: Int? = nil,
         startDateUnix: Int?, endDateUnix: Int?,
-        createdAtUnix: Int, updatedAtUnix: Int
+        createdAtUnix: Int, updatedAtUnix: Int,
+        isNameCensored: Bool = false, isDescriptionCensored: Bool = false
     ) {
         self.id = id; self.name = name; self.description = description
         self.category = category; self.season = season; self.coverUrl = coverUrl
@@ -38,6 +41,8 @@ public struct TripDTO: Codable {
         self.startDateUnix = startDateUnix
         self.endDateUnix = endDateUnix; self.createdAtUnix = createdAtUnix
         self.updatedAtUnix = updatedAtUnix
+        self.isNameCensored = isNameCensored
+        self.isDescriptionCensored = isDescriptionCensored
     }
 
     enum CodingKeys: String, CodingKey {
@@ -55,5 +60,32 @@ public struct TripDTO: Codable {
         case endDateUnix = "end_date_unix"
         case createdAtUnix = "created_at_unix"
         case updatedAtUnix = "updated_at_unix"
+        case isNameCensored = "name_censored"
+        case isDescriptionCensored = "description_censored"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        description = try c.decodeIfPresent(String.self, forKey: .description)
+        category = try c.decodeIfPresent(String.self, forKey: .category)
+        season = try c.decodeIfPresent(String.self, forKey: .season)
+        coverUrl = try c.decodeIfPresent(String.self, forKey: .coverUrl)
+        ownerUserId = try c.decode(String.self, forKey: .ownerUserId)
+        privacyLevel = try c.decodeIfPresent(String.self, forKey: .privacyLevel)
+        status = try c.decodeIfPresent(String.self, forKey: .status)
+        isPublished = try c.decode(Bool.self, forKey: .isPublished)
+        isGenerated = try c.decode(Bool.self, forKey: .isGenerated)
+        likesCount = try c.decode(Int.self, forKey: .likesCount)
+        dislikesCount = try c.decode(Int.self, forKey: .dislikesCount)
+        participantsCount = try c.decodeIfPresent(Int.self, forKey: .participantsCount)
+        mediaCount = try c.decodeIfPresent(Int.self, forKey: .mediaCount)
+        startDateUnix = try c.decodeIfPresent(Int.self, forKey: .startDateUnix)
+        endDateUnix = try c.decodeIfPresent(Int.self, forKey: .endDateUnix)
+        createdAtUnix = try c.decode(Int.self, forKey: .createdAtUnix)
+        updatedAtUnix = try c.decode(Int.self, forKey: .updatedAtUnix)
+        isNameCensored = (try? c.decodeIfPresent(Bool.self, forKey: .isNameCensored)) ?? false
+        isDescriptionCensored = (try? c.decodeIfPresent(Bool.self, forKey: .isDescriptionCensored)) ?? false
     }
 }

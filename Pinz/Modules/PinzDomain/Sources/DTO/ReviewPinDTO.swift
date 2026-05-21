@@ -10,6 +10,7 @@ public struct ReviewPinDTO: Codable {
     public let tags: [String]?
     public let issues: [String]?
     public let media: [ReviewPinMediaDTO]?
+    public let isNameCensored: Bool
 
     public init(
         pinId: String,
@@ -22,7 +23,8 @@ public struct ReviewPinDTO: Codable {
         endTimeUnix: Int? = nil,
         tags: [String]? = nil,
         issues: [String]? = nil,
-        media: [ReviewPinMediaDTO]? = nil
+        media: [ReviewPinMediaDTO]? = nil,
+        isNameCensored: Bool = false
     ) {
         self.pinId = pinId
         self.name = name
@@ -35,6 +37,7 @@ public struct ReviewPinDTO: Codable {
         self.tags = tags
         self.issues = issues
         self.media = media
+        self.isNameCensored = isNameCensored
     }
 
 enum CodingKeys: String, CodingKey {
@@ -44,6 +47,7 @@ enum CodingKeys: String, CodingKey {
         case locationName = "location_name"
         case startTimeUnix = "start_time_unix"
         case endTimeUnix = "end_time_unix"
+        case isNameCensored = "name_censored"
     }
 
     public init(from decoder: Decoder) throws {
@@ -70,6 +74,7 @@ enum CodingKeys: String, CodingKey {
         tags = try container.decodeIfPresent([String].self, forKey: .tags)
         issues = try container.decodeIfPresent([String].self, forKey: .issues)
         media = try container.decodeIfPresent([ReviewPinMediaDTO].self, forKey: .media)
+        isNameCensored = (try? container.decodeIfPresent(Bool.self, forKey: .isNameCensored)) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -85,6 +90,7 @@ enum CodingKeys: String, CodingKey {
         try container.encodeIfPresent(tags, forKey: .tags)
         try container.encodeIfPresent(issues, forKey: .issues)
         try container.encodeIfPresent(media, forKey: .media)
+        try container.encode(isNameCensored, forKey: .isNameCensored)
     }
 
 }

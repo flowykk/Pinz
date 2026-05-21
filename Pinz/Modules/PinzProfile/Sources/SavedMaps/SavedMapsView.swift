@@ -27,7 +27,7 @@ public struct SavedMapsView: View {
                 })
             } content: {
                 if !viewModel.isLoading {
-                    DefaultTripsListView(trips: viewModel.trips) { trip in
+                    DefaultTripsListView(trips: viewModel.trips.map { $0.censored(in: .public) }) { trip in
                         viewModel.dispatch(.selectTrip(trip))
                     }
                     .padding(.bottom, 90)

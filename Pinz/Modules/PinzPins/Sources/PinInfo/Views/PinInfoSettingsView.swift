@@ -6,6 +6,13 @@ import PinzBase
 extension PinInfoView {
     var settings: some View {
         VStack(spacing: 12) {
+            if viewModel.pin.isNameCensored {
+                Text(PinzBaseStrings.Censorship.Banner.name)
+                    .roundedFont(size: 13, foregroundColor: PinzUIAsset.accentRed.swiftUIColor)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 4)
+            }
             if viewModel.isEditing { nameEditing }
             general
             if !viewModel.pin.tags.isEmpty || viewModel.isEditing { tags }
@@ -99,6 +106,8 @@ extension PinInfoView {
     private var description: some View {
         DescriptionView(
             description: viewModel.pin.description,
+            subtitle: viewModel.pin.isDescriptionCensored ? PinzBaseStrings.Censorship.Banner.description : nil,
+            subtitleStyle: viewModel.pin.isDescriptionCensored ? .destructive : .default,
             onAddAction: {
                 viewModel.dispatch(.edit)
             }
@@ -108,6 +117,10 @@ extension PinInfoView {
     private var descriptionEditing: some View {
         DescriptionEditingView(
             title: PinzBaseStrings.Common.Label.description,
+            subtitle: viewModel.pin.isDescriptionCensored
+                ? PinzBaseStrings.Censorship.Banner.description
+                : nil,
+            subtitleStyle: viewModel.pin.isDescriptionCensored ? .destructive : .default,
             text: Binding(get: {
                 viewModel.pin.description ?? ""
             }, set: { value in

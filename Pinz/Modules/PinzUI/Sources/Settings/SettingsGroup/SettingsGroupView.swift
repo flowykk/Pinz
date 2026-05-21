@@ -19,7 +19,7 @@ extension SettingsGroup: View {
             .cornerRadius(26)
 
             if let subtitle {
-                SettingSubtitle(subtitle)
+                SettingSubtitle(subtitle, style: subtitleStyle)
                     .padding(.top, 4)
                     .padding(.leading, 12)
             }

@@ -23,6 +23,8 @@ public struct Trip: Hashable, Identifiable {
     public var dislikesCount: Int
     public var createdAt: Date
     public var updatedAt: Date
+    public var isNameCensored: Bool
+    public var isDescriptionCensored: Bool
 
     public init(
         id: String = UUID().uuidString,
@@ -45,7 +47,9 @@ public struct Trip: Hashable, Identifiable {
         likesCount: Int = 0,
         dislikesCount: Int = 0,
         createdAt: Date = Date(),
-        updatedAt: Date = Date()
+        updatedAt: Date = Date(),
+        isNameCensored: Bool = false,
+        isDescriptionCensored: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -68,6 +72,8 @@ public struct Trip: Hashable, Identifiable {
         self.dislikesCount = dislikesCount
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.isNameCensored = isNameCensored
+        self.isDescriptionCensored = isDescriptionCensored
     }
 }
 

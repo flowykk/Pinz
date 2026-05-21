@@ -448,3 +448,7 @@
 "alert.logout.confirm" = "Log Out";
 
 "profile.label.saveImagesLocally" = "Save images locally";
+
+// MARK: - Censorship
+"censorship.banner.name" = "This title won't pass moderation — other users will see a placeholder. Edit to fix.";
+"censorship.banner.description" = "This description won't pass moderation — other users will see a placeholder. Edit to fix.";
