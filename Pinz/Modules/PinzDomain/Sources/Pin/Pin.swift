@@ -21,6 +21,8 @@ public struct Pin: Hashable, Identifiable {
     public var tags: [MediaTag]
     public var coordinates: CLLocationCoordinate2D?
     public var issues: [String]
+    public var isNameCensored: Bool
+    public var isDescriptionCensored: Bool
 
     public var issueKinds: [Issue] {
         issues.compactMap(Issue.init(rawValue:))
@@ -39,7 +41,9 @@ public struct Pin: Hashable, Identifiable {
         issues: [String] = [],
         serverId: String? = nil,
         tripId: String? = nil,
-        coordinates: CLLocationCoordinate2D? = nil
+        coordinates: CLLocationCoordinate2D? = nil,
+        isNameCensored: Bool = false,
+        isDescriptionCensored: Bool = false
     ) {
         self.id = id ?? serverId ?? UUID().uuidString
         self.name = name
@@ -54,6 +58,8 @@ public struct Pin: Hashable, Identifiable {
         self.serverId = serverId
         self.tripId = tripId
         self.coordinates = coordinates
+        self.isNameCensored = isNameCensored
+        self.isDescriptionCensored = isDescriptionCensored
     }
 }
 

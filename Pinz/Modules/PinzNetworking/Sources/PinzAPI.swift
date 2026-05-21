@@ -563,7 +563,7 @@ extension PinzAPI {
                     "is_saved": false,
                     "trip": {
                       "id": "trip-001",
-                      "name": "Парижская романтика",
+                      "name": "Парижская романтика 18+ trash banned",
                       "description": "Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу",
                       "category": "vacation",
                       "season": "spring",
@@ -580,7 +580,8 @@ extension PinzAPI {
                       "start_date_unix": 1700000000,
                       "end_date_unix": 1700200000,
                       "created_at_unix": 1699900000,
-                      "updated_at_unix": 1699900000
+                      "updated_at_unix": 1699900000,
+                      "name_censored": true
                     },
                     "pins": [
                       {
@@ -616,7 +617,7 @@ extension PinzAPI {
                     "trip": {
                       "id": "trip-002",
                       "name": "Горнолыжный тур в Альпы",
-                      "description": "Захватывающие спуски и потрясающие горные пейзажи в сердце Европы",
+                      "description": "описание которое не пройдёт модерацию",
                       "category": "active",
                       "season": "winter",
                       "cover_url": null,
@@ -632,7 +633,8 @@ extension PinzAPI {
                       "start_date_unix": 1698000000,
                       "end_date_unix": 1698400000,
                       "created_at_unix": 1697900000,
-                      "updated_at_unix": 1697950000
+                      "updated_at_unix": 1697950000,
+                      "description_censored": true
                     },
                     "pins": [
                       {
@@ -720,7 +722,7 @@ extension PinzAPI {
             [
               {
                 "id": "trip-001",
-                "name": "Парижская романтика",
+                "name": "Парижская романтика 18+ trash banned",
                 "description": "Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу",
                 "category": "vacation",
                 "season": "spring",
@@ -737,7 +739,9 @@ extension PinzAPI {
                 "start_date_unix": 1700000000,
                 "end_date_unix": 1700200000,
                 "created_at_unix": 1699900000,
-                "updated_at_unix": 1699900000
+                "updated_at_unix": 1699900000,
+                "name_censored": true,
+                "description_censored": false
               },
               {
                 "id": "trip-002",
@@ -763,7 +767,7 @@ extension PinzAPI {
               {
                 "id": "trip-003",
                 "name": "Пляжный отпуск на Бали",
-                "description": "Тропические пляжи, рисовые террасы и древние храмы Индонезии",
+                "description": "описание содержит ругательство и не пройдёт модерацию",
                 "category": "vacation",
                 "season": "summer",
                 "cover_url": null,
@@ -779,7 +783,9 @@ extension PinzAPI {
                 "start_date_unix": 1720000000,
                 "end_date_unix": 1720400000,
                 "created_at_unix": 1719900000,
-                "updated_at_unix": 1719950000
+                "updated_at_unix": 1719950000,
+                "name_censored": false,
+                "description_censored": true
               }
             ]
             """#
@@ -799,15 +805,15 @@ extension PinzAPI {
             """#
         case .getTrip:
             json = #"""
-            {"trip":{"id":"trip-001","name":"Парижская романтика","description":"Волшебные улицы Парижа, Эйфелева башня и уютные кафе на левом берегу. Для любителей истории и культуры - это неповторимое путешествие, полное волшебства и изящества.","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":false,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000},"participants":[{"user_id":"user-001","username":"flowykk","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg","role":"admin","privacy_level":"public"},{"user_id":"user-002","username":"maria_k","avatar_url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","role":"member","privacy_level":"public"},{"user_id":"user-003","username":"den_explore","avatar_url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","role":"member","privacy_level":"public"}],"current_user_settings":{"notifications_enabled":true},"active_add_media_session":null,"pins":[
-              {"id":"pin-001","name":"Эйфелева башня","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"media":[
+            {"trip":{"id":"trip-001","name":"Парижская романтика 18+","description":"очень плохое описание, такое не пройдёт модерацию","category":"vacation","season":"spring","cover_url":null,"owner_user_id":"user-001","privacy_level":"public","status":"published","is_published":false,"is_generated":false,"likes_count":42,"dislikes_count":2,"start_date_unix":1708992000,"end_date_unix":1709251200,"created_at_unix":1699900000,"updated_at_unix":1699900000,"name_censored":true,"description_censored":true},"participants":[{"user_id":"user-001","username":"flowykk","avatar_url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg","role":"admin","privacy_level":"public"},{"user_id":"user-002","username":"maria_k","avatar_url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","role":"member","privacy_level":"public"},{"user_id":"user-003","username":"den_explore","avatar_url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","role":"member","privacy_level":"public"}],"current_user_settings":{"notifications_enabled":true},"active_add_media_session":null,"pins":[
+              {"id":"pin-001","name":"Эйфелева башня","description":"плохое описание, прошедшее цензуру","category":"entertainment","latitude":48.8584,"longitude":2.2945,"location_name":"Париж","tags":["архитектура","достопримечательность"],"issues":[],"name_censored":true,"description_censored":true,"media":[
                 {"media_id":"m-001","url":"https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg","privacy_level":"public"},
                 {"media_id":"m-002","url":"https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg","privacy_level":"public"},
                 {"media_id":"m-003","url":"https://i.pinimg.com/736x/eb/bc/27/ebbc278b59bbca831ee507f04020240d.jpg","privacy_level":"public"},
                 {"media_id":"m-004","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"},
                 {"media_id":"m-005","url":"https://i.pinimg.com/736x/75/28/1f/75281f11e4dc38b10d880d06cdd32cda.jpg","privacy_level":"public"}
               ]},
-              {"id":"pin-002","name":"Лувр","category":"entertainment","latitude":48.8606,"longitude":2.3352,"location_name":"Париж","tags":["музей","искусство"],"issues":[],"media":[
+              {"id":"pin-002","name":"Лувр","description":"плохое описание которое будет заменено","category":"entertainment","latitude":48.8606,"longitude":2.3352,"location_name":"Париж","tags":["музей","искусство"],"issues":[],"description_censored":true,"media":[
                 {"media_id":"m-006","url":"https://i.pinimg.com/736x/40/1d/4a/401d4a36dd09206dbb41d9969ff44dc2.jpg","privacy_level":"public"},
                 {"media_id":"m-007","url":"https://i.pinimg.com/1200x/90/17/a8/9017a826dedc6708ec0d825d9a222b1e.jpg","privacy_level":"public"},
                 {"media_id":"m-008","url":"https://i.pinimg.com/736x/59/79/59/5979594c0f0de1b583f60ce9ac15b94e.jpg","privacy_level":"public"},
@@ -946,6 +952,7 @@ extension PinzAPI {
                   "location_name": "Париж",
                   "tags": ["история", "архитектура", "религия"],
                   "issues": [],
+                  "name_censored": true,
                   "media": [
                     {"media_id": "m-001", "url": "https://i.pinimg.com/1200x/93/5d/50/935d504922bd5fd9597c5941dbb6c9ae.jpg", "privacy_level": "public"},
                     {"media_id": "m-002", "url": "https://i.pinimg.com/736x/ca/53/74/ca537401033425dc8dc8689884930b07.jpg", "privacy_level": "public"},

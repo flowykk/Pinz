@@ -1,6 +1,7 @@
 import SwiftUI
 import PinzDomain
 import PinzUI
+import PinzBase
 
 struct ReviewPinView: View {
 
@@ -8,8 +9,15 @@ struct ReviewPinView: View {
     let index: Int
     let onTap: () -> Void
 
+    private var publicPin: Pin { pin.censored(in: .public) }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if pin.isNameCensored {
+                CensorshipBanner(field: .name)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+            }
             header
             if !pin.medias.isEmpty {
                 MediaGridView(
@@ -40,6 +48,6 @@ struct ReviewPinView: View {
     }
 
     private var header: some View {
-        HeaderPinShortInfo(pin: pin, isPrivacyShown: false)
+        HeaderPinShortInfo(pin: publicPin, isPrivacyShown: false)
     }
 }
