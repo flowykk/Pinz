@@ -232,7 +232,7 @@ public final class NetworkService: NetworkServiceProtocol {
         stub: Bool = false,
         stubDelay: TimeInterval = 0.5
     ) {
-        self.provider = NetworkProvider<PinzAPI>(stub: stub, stubDelay: stubDelay)
+        self.provider = NetworkProvider<PinzAPI>(stub: true, stubDelay: stubDelay)
         self.tripCreationWebSocketClient = TripCreationWebSocketClient()
     }
 

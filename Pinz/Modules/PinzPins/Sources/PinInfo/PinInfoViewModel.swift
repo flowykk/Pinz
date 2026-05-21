@@ -334,6 +334,9 @@ public class PinInfoViewModel {
         isSaving = true
         defer { isSaving = false }
 
+        if diff.name != nil { pin.isNameCensored = false }
+        if diff.description != nil { pin.isDescriptionCensored = false }
+
         do {
             let response = try await networkService.updatePin(
                 tripId: tripId!,

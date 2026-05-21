@@ -4,6 +4,7 @@ public struct DescriptionEditingView: View {
 
     private let title: String?
     private let subtitle: String?
+    private let subtitleStyle: SettingSubtitle.Style
     private let placeholder: String
     private let textFieldId: String
     @Binding private var text: String
@@ -11,12 +12,14 @@ public struct DescriptionEditingView: View {
     public init(
         title: String? = nil,
         subtitle: String? = nil,
+        subtitleStyle: SettingSubtitle.Style = .default,
         text: Binding<String>,
         placeholder: String,
         textFieldId: String = "descriptionEditingTextField"
     ) {
         self.title = title
         self.subtitle = subtitle
+        self.subtitleStyle = subtitleStyle
         self._text = text
         self.placeholder = placeholder
         self.textFieldId = textFieldId
@@ -39,7 +42,8 @@ public struct DescriptionEditingView: View {
                         style: .multiline
                     ))
                 ],
-                subtitle: subtitle
+                subtitle: subtitle,
+                subtitleStyle: subtitleStyle
             )
         }
     }

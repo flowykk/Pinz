@@ -62,7 +62,9 @@ public extension TripDTO {
             likesCount: likesCount,
             dislikesCount: dislikesCount,
             createdAt: Date(timeIntervalSince1970: Double(createdAtUnix)),
-            updatedAt: Date(timeIntervalSince1970: Double(updatedAtUnix))
+            updatedAt: Date(timeIntervalSince1970: Double(updatedAtUnix)),
+            isNameCensored: isNameCensored,
+            isDescriptionCensored: isDescriptionCensored
         )
     }
 }

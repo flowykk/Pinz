@@ -15,6 +15,8 @@ public struct TripPinDTO: Codable {
     public let privacyLevel: String?
     public let media: [TripPinMediaDTO]?
     public let issues: [String]?
+    public let isNameCensored: Bool
+    public let isDescriptionCensored: Bool
 
     public init(
         id: String,
@@ -29,7 +31,9 @@ public struct TripPinDTO: Codable {
         tags: [String]?,
         privacyLevel: String?,
         media: [TripPinMediaDTO]?,
-        issues: [String]? = nil
+        issues: [String]? = nil,
+        isNameCensored: Bool = false,
+        isDescriptionCensored: Bool = false
     ) {
         self.id = id
         self.tripId = tripId
@@ -44,6 +48,8 @@ public struct TripPinDTO: Codable {
         self.privacyLevel = privacyLevel
         self.media = media
         self.issues = issues
+        self.isNameCensored = isNameCensored
+        self.isDescriptionCensored = isDescriptionCensored
     }
 
     enum CodingKeys: String, CodingKey {
@@ -52,6 +58,27 @@ public struct TripPinDTO: Codable {
         case startTimeUnix = "start_time_unix"
         case endTimeUnix = "end_time_unix"
         case privacyLevel = "privacy_level"
+        case isNameCensored = "name_censored"
+        case isDescriptionCensored = "description_censored"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        tripId = try c.decodeIfPresent(String.self, forKey: .tripId)
+        name = try c.decodeIfPresent(String.self, forKey: .name)
+        description = try c.decodeIfPresent(String.self, forKey: .description)
+        category = try c.decodeIfPresent(String.self, forKey: .category)
+        latitude = try c.decodeIfPresent(Double.self, forKey: .latitude)
+        longitude = try c.decodeIfPresent(Double.self, forKey: .longitude)
+        startTimeUnix = try c.decodeIfPresent(Int.self, forKey: .startTimeUnix)
+        endTimeUnix = try c.decodeIfPresent(Int.self, forKey: .endTimeUnix)
+        tags = try c.decodeIfPresent([String].self, forKey: .tags)
+        privacyLevel = try c.decodeIfPresent(String.self, forKey: .privacyLevel)
+        media = try c.decodeIfPresent([TripPinMediaDTO].self, forKey: .media)
+        issues = try c.decodeIfPresent([String].self, forKey: .issues)
+        isNameCensored = (try? c.decodeIfPresent(Bool.self, forKey: .isNameCensored)) ?? false
+        isDescriptionCensored = (try? c.decodeIfPresent(Bool.self, forKey: .isDescriptionCensored)) ?? false
     }
 }
 
@@ -96,7 +123,9 @@ public extension TripPinDTO {
             issues: issues ?? [],
             serverId: id,
             tripId: resolvedTripId,
-            coordinates: coordinates
+            coordinates: coordinates,
+            isNameCensored: isNameCensored,
+            isDescriptionCensored: isDescriptionCensored
         )
     }
 }

@@ -342,14 +342,15 @@ final class FeedViewModel {
                 medias: pinMedia.isEmpty ? fallbackMedias : pinMedia,
                 fallbackTripId: trip.id,
                 nameIfMissing: "Pin \(index + 1)"
-            )
+            ).censored(in: .public)
         }
 
+        let publicTrip = domainTrip.censored(in: .public)
         return Post(
             id: trip.id,
-            name: Self.recommendationDisplayTripName(from: trip.name, map: map),
+            name: Self.recommendationDisplayTripName(from: publicTrip.name, map: map),
             description: Self.recommendedDescription(
-                tripDescription: trip.description,
+                tripDescription: publicTrip.description,
                 regionName: map.regionName,
                 regionType: map.regionType
             ),
@@ -403,13 +404,14 @@ final class FeedViewModel {
             return pin.toPin(
                 index: index,
                 medias: pinMedias.isEmpty ? fallbackMedias : pinMedias
-            )
+            ).censored(in: .public)
         }
 
+        let publicTrip = domainTrip.censored(in: .public)
         return Post(
             id: trip.id,
-            name: trip.name,
-            description: trip.description,
+            name: publicTrip.name,
+            description: publicTrip.description,
             category: domainTrip.category,
             season: domainTrip.season,
             participants: trip.participantsCount ?? 0,
