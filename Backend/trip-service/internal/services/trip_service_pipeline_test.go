@@ -201,6 +201,23 @@ func TestApplyGroupsAndProcess_HappyPath_NoDraftPins(t *testing.T) {
 	require.Equal(t, models.TripStatusProcessing, resp.GetStatus())
 }
 
+func TestApplyGroupsAndProcess_MLEnabled_StaysProcessing(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+	eventRepo := mocks.NewMockTripEventPublisher(ctrl)
+
+	participantRepo.EXPECT().IsParticipant("t1", "u1").Return(true, nil)
+	tripRepo.EXPECT().GetByID("t1").Return(&models.Trip{ID: "t1", Status: "DRAFT_GROUPING_REVIEW", Category: "vacation", PrivacyLevel: "private"}, nil)
+	tripRepo.EXPECT().SetStatus("t1", models.TripStatusProcessing).Return(nil)
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, eventRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc.SetMLEnabled(true)
+	resp, err := svc.ApplyGroupsAndProcess(ctxWithUser("u1"), &pb.ApplyGroupsAndProcessRequest{TripId: "t1"})
+	require.NoError(t, err)
+	require.Equal(t, models.TripStatusProcessing, resp.GetStatus())
+}
+
 func TestApplyGroupsAndProcess_DeletesRejectedMedia(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)

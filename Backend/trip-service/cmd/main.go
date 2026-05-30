@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -78,16 +79,32 @@ func main() {
 		}
 	}
 
+	mlEnabled := true
+	if v := strings.TrimSpace(os.Getenv("ML_ENABLED")); v != "" {
+		mlEnabled = strings.EqualFold(v, "true")
+	}
+
 	var mlBroker *repositories.NATSBroker
-	if br, err := repositories.InitNATSBroker(); err != nil {
-		slog.Warn("nats broker init failed, ML pipeline disabled", "error", err)
-	} else if br != nil {
-		mlBroker = br
-		defer mlBroker.Close()
+	if mlEnabled {
+		if br, err := repositories.InitNATSBroker(); err != nil {
+			slog.Error("ML_ENABLED=true but NATS broker init failed; trips will wait for ML", "error", err)
+		} else if br != nil {
+			mlBroker = br
+			defer mlBroker.Close()
+		} else {
+			slog.Error("ML_ENABLED=true but NATS_URL is empty; ML pipeline not started")
+		}
+	} else {
+		slog.Info("ML_ENABLED=false; ML pipeline disabled, trips finalize synchronously")
+	}
+
+	var mlBrokerDep repositories.MLBroker
+	if mlBroker != nil {
+		mlBrokerDep = mlBroker
 	}
 
 	slog.Info("building dependencies")
-	deps, err := di.BuildDependencies(ctx, sqlDB, redisClient, mlBroker)
+	deps, err := di.BuildDependencies(ctx, sqlDB, redisClient, mlBrokerDep, mlEnabled)
 	if err != nil {
 		slog.Error("failed to build dependencies", "error", err)
 		os.Exit(1)
@@ -130,6 +147,10 @@ func main() {
 	}
 
 	if mlBroker != nil {
+		var finalizer worker.TripFinalizer
+		if tripSvc, ok := deps.TripService.(worker.TripFinalizer); ok {
+			finalizer = tripSvc
+		}
 		handler := worker.HandleMLResult(worker.MLResultsDeps{
 			TripRepo:             deps.TripRepo,
 			PinRepo:              deps.PinRepo,
@@ -137,6 +158,7 @@ func main() {
 			TagRepo:              deps.TagRepo,
 			PinUploadSessionRepo: deps.PinUploadSessionRepo,
 			EventRepo:            deps.EventRepo,
+			TripFinalizer:        finalizer,
 		})
 		if err := mlBroker.SubscribeMLResults(ctx, handler); err != nil {
 			slog.Error("nats: SubscribeMLResults failed", "error", err)

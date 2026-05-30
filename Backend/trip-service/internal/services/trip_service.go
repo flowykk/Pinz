@@ -51,11 +51,43 @@ type TripService struct {
 	pinUploadSessionRepo repositories.PinUploadSessionRepositoryInterface
 	recSnapshotRepo repositories.RecommendationSnapshotRepositoryInterface
 	mlBroker repositories.MLBroker
+	processing processingStrategy
 }
 
 // Без брокера сервис работает в stub-режиме без публикации ML.
 func (s *TripService) SetMLBroker(broker repositories.MLBroker) {
 	s.mlBroker = broker
+}
+
+type procParams struct {
+	mlFlow string
+	finalStatus string
+	newPinIDs []string
+	pending []string
+}
+
+type processingStrategy interface {
+	run(ctx context.Context, tripID string, p procParams)
+}
+
+type mlProcessing struct{ svc *TripService }
+
+func (m mlProcessing) run(ctx context.Context, tripID string, p procParams) {
+	m.svc.publishMLTask(ctx, tripID, p.mlFlow, p.newPinIDs, p.pending)
+}
+
+type syncProcessing struct{ svc *TripService }
+
+func (sp syncProcessing) run(ctx context.Context, tripID string, p procParams) {
+	sp.svc.finalizeProcessing(ctx, tripID, p.finalStatus)
+}
+
+func (s *TripService) SetMLEnabled(enabled bool) {
+	if enabled {
+		s.processing = mlProcessing{s}
+	} else {
+		s.processing = syncProcessing{s}
+	}
 }
 
 func NewTripService(
@@ -80,7 +112,7 @@ func NewTripService(
 	pinUploadSessionRepo repositories.PinUploadSessionRepositoryInterface,
 	recSnapshotRepo repositories.RecommendationSnapshotRepositoryInterface,
 ) *TripService {
-	return &TripService{
+	s := &TripService{
 		tripRepo: tripRepo,
 		participantRepo: participantRepo,
 		inviteRepo: inviteRepo,
@@ -102,6 +134,8 @@ func NewTripService(
 		pinUploadSessionRepo: pinUploadSessionRepo,
 		recSnapshotRepo: recSnapshotRepo,
 	}
+	s.processing = syncProcessing{s}
+	return s
 }
 
 func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest) (*pb.CreateTripResponse, error) {
@@ -1356,50 +1390,58 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 		// pin уже в памяти после Create — не делаем лишний GetByID (PINZ-223).
 		updatePinTimesAndLocationFor(s.pinRepo, s.mediaRepo, pin)
 	}
-	// STUB: ML-пайплайн ещё не реализован, поэтому сразу переводим трип в
-	// DRAFT_FINAL_REVIEW и публикуем TRIP_PROCESSING_COMPLETED.
-	// TODO: вернуть AddMLTask, когда воркер pinz:trip:ml:tasks заработает в проде.
 	if err := s.tripRepo.SetStatus(tripID, models.TripStatusProcessing); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
 	metrics.TripStatusChanged(ctx, models.TripStatusProcessing)
-	s.publishMLTaskDryRun(ctx, tripID, MLFlowCreation, nil, nil)
-	s.finalizeProcessingStub(ctx, tripID, models.TripStatusDraftFinalReview)
+	s.processing.run(ctx, tripID, procParams{mlFlow: MLFlowCreation, finalStatus: models.TripStatusDraftFinalReview})
 	return &pb.ApplyGroupsAndProcessResponse{
 		Message: "Processing started",
 		Status: models.TripStatusProcessing,
 	}, nil
 }
 
-// dry-run параллельно со stub'ом для валидации ML-контракта. Ошибки swallowed,
-// чтобы stub-флоу не падал на проблемах с ML.
-func (s *TripService) publishMLTaskDryRun(ctx context.Context, tripID, flow string, newPinIDs, pendingExistingAttachments []string) {
-	if s.eventRepo == nil || s.mediaURLs == nil || s.pinRepo == nil || s.mediaRepo == nil {
+// Ошибки swallowed: ML-публикация не должна валить флоу Apply.
+func (s *TripService) publishMLTask(ctx context.Context, tripID, flow string, newPinIDs, pendingExistingAttachments []string) {
+	if s.mlBroker == nil || s.mediaURLs == nil || s.pinRepo == nil || s.mediaRepo == nil {
 		return
 	}
 	msg, count, err := BuildMLTaskMessageForTrip(ctx, tripID, flow, "", newPinIDs, pendingExistingAttachments, s.pinRepo, s.mediaRepo, s.mediaURLs)
 	if err != nil {
-		slog.WarnContext(ctx, "ml dry-run: build payload failed", "trip_id", tripID, "flow", flow, "error", err)
+		slog.WarnContext(ctx, "publishMLTask: build payload failed", "trip_id", tripID, "flow", flow, "error", err)
 		return
 	}
 	if count == 0 {
 		return
 	}
-	if s.mlBroker != nil {
-		if err := s.mlBroker.PublishMLTask(ctx, msg); err != nil {
-			slog.WarnContext(ctx, "ml dry-run: PublishMLTask failed", "trip_id", tripID, "flow", flow, "error", err)
-		}
+	if err := s.mlBroker.PublishMLTask(ctx, msg); err != nil {
+		slog.WarnContext(ctx, "publishMLTask: PublishMLTask failed", "trip_id", tripID, "flow", flow, "error", err)
 	}
 }
 
-// finalizeProcessingStub заменяет настоящий ML-воркер: синхронно переводит трип
-// в targetStatus (DRAFT_FINAL_REVIEW или ADD_MEDIA_DRAFT_FINAL_REVIEW) и публикует
-// TRIP_PROCESSING_COMPLETED подписчикам WS (канал pinz:trip:{id}:events + per-user
-// каналы). Удалить вместе с TODO в ApplyGroupsAndProcess/AddMediaApplyGroupsAndProcess,
-// когда воркер заработает.
-func (s *TripService) finalizeProcessingStub(ctx context.Context, tripID, targetStatus string) {
+// Идемпотентно: вызывается из ml.results handler, может прийти больше одного раза
+// — повторный transition из non-PROCESSING статусов пропускается.
+func (s *TripService) FinalizeAfterMLResult(ctx context.Context, tripID string) {
+	trip, err := s.tripRepo.GetByID(tripID)
+	if err != nil {
+		slog.WarnContext(ctx, "FinalizeAfterMLResult: GetByID failed", "trip_id", tripID, "error", err)
+		return
+	}
+	var targetStatus string
+	switch trip.Status {
+	case models.TripStatusProcessing:
+		targetStatus = models.TripStatusDraftFinalReview
+	case models.TripStatusAddMediaProcessing:
+		targetStatus = models.TripStatusAddMediaDraftFinalReview
+	default:
+		return
+	}
+	s.finalizeProcessing(ctx, tripID, targetStatus)
+}
+
+func (s *TripService) finalizeProcessing(ctx context.Context, tripID, targetStatus string) {
 	if err := s.tripRepo.SetStatus(tripID, targetStatus); err != nil {
-		slog.ErrorContext(ctx, "finalizeProcessingStub: SetStatus failed", "trip_id", tripID, "error", err)
+		slog.ErrorContext(ctx, "finalizeProcessing: SetStatus failed", "trip_id", tripID, "error", err)
 		return
 	}
 	metrics.TripStatusChanged(ctx, targetStatus)
@@ -1407,14 +1449,13 @@ func (s *TripService) finalizeProcessingStub(ctx context.Context, tripID, target
 		return
 	}
 	s.publishGeoRequestForTrip(ctx, tripID)
-	// чистим per-trip WS-stream от событий предыдущих processing-сессий,
-	// иначе XREAD "0-0" подхватит чужое TRIP_PROCESSING_COMPLETED.
+	// Иначе XREAD "0-0" подхватит чужое TRIP_PROCESSING_COMPLETED от прошлой сессии.
 	_ = s.eventRepo.DeleteTripEventStream(ctx, tripID)
 	if err := s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventTripProcessingCompleted, map[string]interface{}{
 		"trip_id": tripID,
-		"status": targetStatus,
+		"status":  targetStatus,
 	}); err != nil {
-		slog.WarnContext(ctx, "finalizeProcessingStub: PublishTripEventWS failed", "trip_id", tripID, "error", err)
+		slog.WarnContext(ctx, "finalizeProcessing: PublishTripEventWS failed", "trip_id", tripID, "error", err)
 	}
 }
 
@@ -2385,11 +2426,12 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 	if s.eventRepo != nil && len(newPinIDs) > 0 {
 		_ = s.eventRepo.PublishTripEvent(ctx, "PIN_ADDED", tripID, userID)
 	}
-	// STUB: ML-пайплайн пока не реализован, поэтому SetMLContext/AddMLTaskWithFlow
-	// не нужны — сразу двигаем трип в ADD_MEDIA_DRAFT_FINAL_REVIEW через общий стаб.
-	// TODO: вернуть оригинальный enqueue, когда воркер ml:tasks заработает в проде.
-	s.publishMLTaskDryRun(ctx, tripID, MLFlowAddMedia, newPinIDs, pendingExistingAttachments)
-	s.finalizeProcessingStub(ctx, tripID, models.TripStatusAddMediaDraftFinalReview)
+	s.processing.run(ctx, tripID, procParams{
+		mlFlow: MLFlowAddMedia,
+		finalStatus: models.TripStatusAddMediaDraftFinalReview,
+		newPinIDs: newPinIDs,
+		pending: pendingExistingAttachments,
+	})
 	return &pb.AddMediaApplyGroupsAndProcessResponse{
 		Message: "Processing started",
 		Status: models.TripStatusAddMediaProcessing,

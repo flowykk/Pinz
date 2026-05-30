@@ -354,6 +354,9 @@ export APPLE_APP_ID=ABCDE12345.com.example.pinz
 # тестирования (см. Backend/loadtest/).
 export AUTH_DEV_LOGIN_ENABLED=false   # auth-service
 export DEV_LOGIN_PROXY_ENABLED=false  # api-gateway-service
+
+# ML-интеграция (trip-service). При false трип завершается синхронно, без ML.
+export ML_ENABLED=true
 ```
 
 ### SSL/TLS (Let's Encrypt)

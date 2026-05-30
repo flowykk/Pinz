@@ -28,6 +28,7 @@ env:
   s3KeyPrefix: ""
   natsUrl: "nats://nats:4222"
   natsCredsPath: ""
+  mlEnabled: "true"
 
 secret:
   dbPassword: "REPLACE_IN_PRODUCTION"

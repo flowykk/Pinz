@@ -21,6 +21,11 @@ type MLResultsDeps struct {
 	TagRepo              *repositories.TagRepository
 	PinUploadSessionRepo *repositories.PinUploadSessionRepository
 	EventRepo            *repositories.RedisRepository
+	TripFinalizer        TripFinalizer
+}
+
+type TripFinalizer interface {
+	FinalizeAfterMLResult(ctx context.Context, tripID string)
 }
 
 // Возврат error → nak + retry. Возврат nil → ack.
@@ -136,6 +141,9 @@ func applyNSFW(ctx context.Context, mediaRepo *repositories.MediaRepository, ids
 // ML фильтрует suggestions сама — здесь только применяем.
 func applyPinSuggestionsForTrip(ctx context.Context, deps MLResultsDeps, msg repositories.MLResultMessage) error {
 	if deps.PinRepo == nil || deps.TagRepo == nil {
+		if deps.TripFinalizer != nil && msg.TripID != "" {
+			deps.TripFinalizer.FinalizeAfterMLResult(ctx, msg.TripID)
+		}
 		return nil
 	}
 	for _, sug := range msg.PinSuggestions {
@@ -161,6 +169,9 @@ func applyPinSuggestionsForTrip(ctx context.Context, deps MLResultsDeps, msg rep
 				slog.WarnContext(ctx, "ml result: SetForPin failed", "pin_id", sug.PinID, "error", err)
 			}
 		}
+	}
+	if deps.TripFinalizer != nil && msg.TripID != "" {
+		deps.TripFinalizer.FinalizeAfterMLResult(ctx, msg.TripID)
 	}
 	return nil
 }
