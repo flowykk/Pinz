@@ -13,6 +13,7 @@ import (
 
 	"pinz/backend/trip-service/internal/mocks"
 	"pinz/backend/trip-service/internal/models"
+	"pinz/backend/trip-service/internal/repositories"
 	pb "pinz/backend/trip-service/pkg/proto"
 )
 
@@ -190,8 +191,28 @@ func TestApplyGroupsAndProcess_HappyPath_NoDraftPins(t *testing.T) {
 	participantRepo.EXPECT().IsParticipant("t1", "u1").Return(true, nil)
 	tripRepo.EXPECT().GetByID("t1").Return(&models.Trip{ID: "t1", Status: "DRAFT_GROUPING_REVIEW", Category: "vacation", PrivacyLevel: "private"}, nil)
 	tripRepo.EXPECT().SetStatus("t1", models.TripStatusProcessing).Return(nil)
+	tripRepo.EXPECT().SetStatus("t1", models.TripStatusDraftFinalReview).Return(nil)
+	eventRepo.EXPECT().DeleteTripEventStream(gomock.Any(), "t1").Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), "t1", repositories.EventTripProcessingCompleted, gomock.Any()).Return(nil)
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, eventRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	resp, err := svc.ApplyGroupsAndProcess(ctxWithUser("u1"), &pb.ApplyGroupsAndProcessRequest{TripId: "t1"})
+	require.NoError(t, err)
+	require.Equal(t, models.TripStatusProcessing, resp.GetStatus())
+}
+
+func TestApplyGroupsAndProcess_MLEnabled_StaysProcessing(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+	eventRepo := mocks.NewMockTripEventPublisher(ctrl)
+
+	participantRepo.EXPECT().IsParticipant("t1", "u1").Return(true, nil)
+	tripRepo.EXPECT().GetByID("t1").Return(&models.Trip{ID: "t1", Status: "DRAFT_GROUPING_REVIEW", Category: "vacation", PrivacyLevel: "private"}, nil)
+	tripRepo.EXPECT().SetStatus("t1", models.TripStatusProcessing).Return(nil)
+
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, eventRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc.SetMLEnabled(true)
 	resp, err := svc.ApplyGroupsAndProcess(ctxWithUser("u1"), &pb.ApplyGroupsAndProcessRequest{TripId: "t1"})
 	require.NoError(t, err)
 	require.Equal(t, models.TripStatusProcessing, resp.GetStatus())
@@ -209,6 +230,9 @@ func TestApplyGroupsAndProcess_DeletesRejectedMedia(t *testing.T) {
 	mediaRepo.EXPECT().GetByID("m1").Return(&models.Media{ID: "m1", TripID: "t1", S3Key: "key"}, nil)
 	mediaRepo.EXPECT().DeleteByIDs([]string{"m1"}).Return(nil)
 	tripRepo.EXPECT().SetStatus("t1", models.TripStatusProcessing).Return(nil)
+	tripRepo.EXPECT().SetStatus("t1", models.TripStatusDraftFinalReview).Return(nil)
+	eventRepo.EXPECT().DeleteTripEventStream(gomock.Any(), "t1").Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), "t1", repositories.EventTripProcessingCompleted, gomock.Any()).Return(nil)
 
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, eventRepo, mediaRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.ApplyGroupsAndProcess(ctxWithUser("u1"), &pb.ApplyGroupsAndProcessRequest{

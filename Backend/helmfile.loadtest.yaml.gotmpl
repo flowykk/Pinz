@@ -73,6 +73,7 @@ releases:
           s3PresignTTL: "15m"
           s3KeyPrefix: "loadtest/"
           natsUrl: "nats://nats.pinz-loadtest.svc.cluster.local:4222"
+          mlEnabled: "false"
       - secret:
           dbPassword: "{{ env "POSTGRES_PASSWORD" | default "pinz_password" }}"
           s3AccessKey: "minioadmin"

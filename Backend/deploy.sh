@@ -238,6 +238,7 @@ deploy_app() {
     # Loadtest-only dev-login bypass. NEVER set to "true" on prod (passkey bypass).
     export AUTH_DEV_LOGIN_ENABLED="${AUTH_DEV_LOGIN_ENABLED:-false}"
     export DEV_LOGIN_PROXY_ENABLED="${DEV_LOGIN_PROXY_ENABLED:-false}"
+    export ML_ENABLED="${ML_ENABLED:-true}"
 
     cd "$PROJECT_DIR"
 
@@ -697,6 +698,7 @@ while [[ $# -gt 0 ]]; do
             echo "  APPLE_APP_ID             API gateway: Apple App ID <TeamID>.<BundleID> for AASA (required for working universal links)"
             echo "  AUTH_DEV_LOGIN_ENABLED   Auth service: enables AuthService.DevLogin RPC (loadtest only; default: false)"
             echo "  DEV_LOGIN_PROXY_ENABLED  API gateway: exposes POST /api/v1/auth/dev-login (loadtest only; default: false)"
+            echo "  ML_ENABLED               Trip service: enables ML integration; false finalizes trips synchronously (default: true)"
             echo "  SKIP_PULL=true           Skip docker auth/pull (k3s pulls via containerd)"
             echo ""
             echo "Examples:"

@@ -51,11 +51,43 @@ type TripService struct {
 	pinUploadSessionRepo repositories.PinUploadSessionRepositoryInterface
 	recSnapshotRepo repositories.RecommendationSnapshotRepositoryInterface
 	mlBroker repositories.MLBroker
+	processing processingStrategy
 }
 
 // Без брокера сервис работает в stub-режиме без публикации ML.
 func (s *TripService) SetMLBroker(broker repositories.MLBroker) {
 	s.mlBroker = broker
+}
+
+type procParams struct {
+	mlFlow string
+	finalStatus string
+	newPinIDs []string
+	pending []string
+}
+
+type processingStrategy interface {
+	run(ctx context.Context, tripID string, p procParams)
+}
+
+type mlProcessing struct{ svc *TripService }
+
+func (m mlProcessing) run(ctx context.Context, tripID string, p procParams) {
+	m.svc.publishMLTask(ctx, tripID, p.mlFlow, p.newPinIDs, p.pending)
+}
+
+type syncProcessing struct{ svc *TripService }
+
+func (sp syncProcessing) run(ctx context.Context, tripID string, p procParams) {
+	sp.svc.finalizeProcessing(ctx, tripID, p.finalStatus)
+}
+
+func (s *TripService) SetMLEnabled(enabled bool) {
+	if enabled {
+		s.processing = mlProcessing{s}
+	} else {
+		s.processing = syncProcessing{s}
+	}
 }
 
 func NewTripService(
@@ -80,7 +112,7 @@ func NewTripService(
 	pinUploadSessionRepo repositories.PinUploadSessionRepositoryInterface,
 	recSnapshotRepo repositories.RecommendationSnapshotRepositoryInterface,
 ) *TripService {
-	return &TripService{
+	s := &TripService{
 		tripRepo: tripRepo,
 		participantRepo: participantRepo,
 		inviteRepo: inviteRepo,
@@ -102,6 +134,8 @@ func NewTripService(
 		pinUploadSessionRepo: pinUploadSessionRepo,
 		recSnapshotRepo: recSnapshotRepo,
 	}
+	s.processing = syncProcessing{s}
+	return s
 }
 
 func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest) (*pb.CreateTripResponse, error) {
@@ -1360,7 +1394,7 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 		return nil, status.Error(codes.Internal, "failed to update status")
 	}
 	metrics.TripStatusChanged(ctx, models.TripStatusProcessing)
-	s.publishMLTask(ctx, tripID, MLFlowCreation, nil, nil)
+	s.processing.run(ctx, tripID, procParams{mlFlow: MLFlowCreation, finalStatus: models.TripStatusDraftFinalReview})
 	return &pb.ApplyGroupsAndProcessResponse{
 		Message: "Processing started",
 		Status: models.TripStatusProcessing,
@@ -1402,8 +1436,12 @@ func (s *TripService) FinalizeAfterMLResult(ctx context.Context, tripID string) 
 	default:
 		return
 	}
+	s.finalizeProcessing(ctx, tripID, targetStatus)
+}
+
+func (s *TripService) finalizeProcessing(ctx context.Context, tripID, targetStatus string) {
 	if err := s.tripRepo.SetStatus(tripID, targetStatus); err != nil {
-		slog.ErrorContext(ctx, "FinalizeAfterMLResult: SetStatus failed", "trip_id", tripID, "error", err)
+		slog.ErrorContext(ctx, "finalizeProcessing: SetStatus failed", "trip_id", tripID, "error", err)
 		return
 	}
 	metrics.TripStatusChanged(ctx, targetStatus)
@@ -1417,7 +1455,7 @@ func (s *TripService) FinalizeAfterMLResult(ctx context.Context, tripID string) 
 		"trip_id": tripID,
 		"status":  targetStatus,
 	}); err != nil {
-		slog.WarnContext(ctx, "FinalizeAfterMLResult: PublishTripEventWS failed", "trip_id", tripID, "error", err)
+		slog.WarnContext(ctx, "finalizeProcessing: PublishTripEventWS failed", "trip_id", tripID, "error", err)
 	}
 }
 
@@ -2388,7 +2426,12 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 	if s.eventRepo != nil && len(newPinIDs) > 0 {
 		_ = s.eventRepo.PublishTripEvent(ctx, "PIN_ADDED", tripID, userID)
 	}
-	s.publishMLTask(ctx, tripID, MLFlowAddMedia, newPinIDs, pendingExistingAttachments)
+	s.processing.run(ctx, tripID, procParams{
+		mlFlow: MLFlowAddMedia,
+		finalStatus: models.TripStatusAddMediaDraftFinalReview,
+		newPinIDs: newPinIDs,
+		pending: pendingExistingAttachments,
+	})
 	return &pb.AddMediaApplyGroupsAndProcessResponse{
 		Message: "Processing started",
 		Status: models.TripStatusAddMediaProcessing,

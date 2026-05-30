@@ -533,6 +533,11 @@ func TestAddMediaApply_MarksPinDraftAndJournalsExistingAttachments(t *testing.T)
 	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "TRIP_STATUS_CHANGED", gomock.Any()).Return(nil)
 	eventRepo.EXPECT().PublishTripEvent(gomock.Any(), "PIN_ADDED", tripID, userID).Return(nil)
 
+	tripRepo.EXPECT().SetStatus(tripID, models.TripStatusAddMediaDraftFinalReview).Return(nil)
+	pinRepo.EXPECT().ListByTripID(tripID).Return(nil, nil).AnyTimes()
+	eventRepo.EXPECT().DeleteTripEventStream(gomock.Any(), tripID).Return(nil)
+	eventRepo.EXPECT().PublishTripEventWS(gomock.Any(), tripID, "TRIP_PROCESSING_COMPLETED", gomock.Any()).Return(nil)
+
 	svc := buildService(tripRepo, participantRepo, sessionRepo, mediaRepo, pinRepo, nil, eventRepo)
 	resp, err := svc.AddMediaApplyGroupsAndProcess(ctxWithUser(userID), &pb.AddMediaApplyGroupsAndProcessRequest{
 		TripId:    tripID,

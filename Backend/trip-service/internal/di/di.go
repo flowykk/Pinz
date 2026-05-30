@@ -36,7 +36,7 @@ type Dependencies struct {
 	MLBroker repositories.MLBroker
 }
 
-func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Client, mlBroker repositories.MLBroker) (*Dependencies, error) {
+func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Client, mlBroker repositories.MLBroker, mlEnabled bool) (*Dependencies, error) {
 	tripRepo := repositories.NewTripRepository(db)
 	participantRepo := repositories.NewTripParticipantRepository(db)
 	inviteRepo := repositories.NewInvitationLinkRepository(db)
@@ -85,6 +85,7 @@ func BuildDependencies(ctx context.Context, db *sql.DB, redisClient *redis.Clien
 	if mlBroker != nil {
 		tripSvc.SetMLBroker(mlBroker)
 	}
+	tripSvc.SetMLEnabled(mlEnabled)
 	return &Dependencies{
 		TripService: tripSvc,
 		RedisClient: redisClient,

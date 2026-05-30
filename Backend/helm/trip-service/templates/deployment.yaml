@@ -12,8 +12,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -105,6 +105,8 @@ spec:
                 secretKeyRef:
                   name: trip-service-secret
                   key: nats-token
+            - name: ML_ENABLED
+              value: {{ .Values.env.mlEnabled | quote }}
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}
