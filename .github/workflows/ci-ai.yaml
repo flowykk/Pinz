@@ -1,0 +1,126 @@
+name: CI AI
+
+on:
+  push:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'AI/**'
+      - '.github/workflows/ci-ai.yaml'
+    tags:
+      - 'ai-v*'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'AI/**'
+      - '.github/workflows/ci-ai.yaml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/pinz/ai
+
+jobs:
+  generate-protos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install grpcio-tools
+      - run: bash AI/scripts/gen_proto.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proto-gen
+          path: AI/proto/gen
+          retention-days: 1
+
+  build-push:
+    needs: generate-protos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ml_orchestrator
+          - moderation_service
+          - embedding_service
+          - classifier_service
+          - similarity_service
+          - search_service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: proto-gen
+          path: AI/proto/gen
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Metadata (tags)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=match,pattern=ai-v(\d+\.\d+\.\d+),group=1
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: AI
+          file: AI/${{ matrix.service }}/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  deploy:
+    needs: build-push
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/ai-v')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-ai
+      cancel-in-progress: false
+    steps:
+      - name: Compute TAG
+        id: tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/ai-v* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/ai-v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key:      ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd /srv/pinz-ai
+            git fetch --all --tags
+            git reset --hard ${{ github.sha }}
+            cd AI
+            export TAG="${{ steps.tag.outputs.tag }}"
+            docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+            docker image prune -f

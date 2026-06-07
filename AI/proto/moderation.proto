@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package pinz.ai.moderation;
+
+import "common.proto";
+
+option go_package = "github.com/pinz/ai/proto/moderation;moderationpb";
+
+service Moderation {
+  rpc ModerateMedia(ModerateMediaRequest) returns (ModerateMediaResponse);
+
+  rpc ModerateText(ModerateTextRequest) returns (ModerateTextResponse);
+}
+
+message ModerateMediaRequest {
+  string trip_id = 1;
+  repeated pinz.ai.common.MediaRef media = 2;
+}
+
+message ModerateMediaResponse {
+  repeated string nsfw_media_ids = 1;
+}
+
+message TextRef {
+  string item_id = 1;
+  string entity_kind = 2;
+  string entity_id = 3;
+  string field = 4;
+  string text = 5;
+}
+
+message ModerateTextRequest {
+  repeated TextRef items = 1;
+}
+
+message TextVerdict {
+  string item_id = 1;
+  string entity_kind = 2;
+  string entity_id = 3;
+  string field = 4;
+  bool censored = 5;
+}
+
+message ModerateTextResponse {
+  repeated TextVerdict verdicts = 1;
+}

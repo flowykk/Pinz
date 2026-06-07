@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package pinz.ai.search;
+
+option go_package = "github.com/pinz/ai/proto/search;searchpb";
+
+service Search {
+  rpc SearchPins(SearchPinsRequest) returns (SearchPinsResponse);
+  rpc IndexPin(IndexPinRequest) returns (IndexPinResponse);
+}
+
+message SearchPinsRequest {
+  string trip_id = 1;
+  string query = 2;
+  int32  top_k = 3;     
+}
+
+message SearchHit {
+  string pin_id = 1;
+  float  score = 2;
+  string category = 3;
+}
+
+message SearchPinsResponse {
+  repeated SearchHit hits = 1;
+}
+
+message IndexPinRequest {
+  string trip_id = 1;
+  string pin_id = 2;
+  string name = 3;
+  string description = 4;
+  string category = 5;
+  repeated string tags = 6;
+}
+
+message IndexPinResponse {
+  bool ok = 1;
+}

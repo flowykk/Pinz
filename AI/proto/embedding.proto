@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package pinz.ai.embedding;
+
+import "common.proto";
+
+option go_package = "github.com/pinz/ai/proto/embedding;embeddingpb";
+
+service Embedding {
+  rpc EmbedImages(EmbedImagesRequest) returns (EmbedImagesResponse);
+
+  rpc EmbedTexts(EmbedTextsRequest) returns (EmbedTextsResponse);
+
+  rpc UpsertPinVectors(UpsertPinVectorsRequest) returns (UpsertPinVectorsResponse);
+}
+
+message EmbedImagesRequest {
+  repeated pinz.ai.common.MediaRef media = 1;
+  bool upsert_to_qdrant = 2;
+  string trip_id = 3;
+  string pin_id = 4;
+}
+
+message EmbedImagesResponse {
+  repeated pinz.ai.common.Embedding embeddings = 1;
+}
+
+message EmbedTextsRequest {
+  repeated string ids = 1;
+  repeated string texts = 2;
+}
+
+message EmbedTextsResponse {
+  repeated pinz.ai.common.Embedding embeddings = 1;
+}
+
+message UpsertPinVectorsRequest {
+  string trip_id = 1;
+  string pin_id = 2;
+  string category = 3;
+  repeated string tags = 4;
+  repeated pinz.ai.common.Embedding image_embeddings = 5;
+  pinz.ai.common.Embedding text_embedding = 6;
+}
+
+message UpsertPinVectorsResponse {
+  int32 upserted = 1;
+}

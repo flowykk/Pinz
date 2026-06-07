@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package pinz.ai.similarity;
+
+import "common.proto";
+
+option go_package = "github.com/pinz/ai/proto/similarity;similaritypb";
+
+service Similarity {
+  rpc FindSimilarGroups(FindSimilarGroupsRequest) returns (FindSimilarGroupsResponse);
+}
+
+message MediaWithEmbedding {
+  string media_id = 1;
+  bool   is_new = 2;
+  string get_url = 3;  
+  pinz.ai.common.Embedding embedding = 4;
+}
+
+message FindSimilarGroupsRequest {
+  string pin_id = 1;
+  repeated MediaWithEmbedding media = 2;
+}
+
+message Group {
+  repeated string media_ids = 1;
+}
+
+message FindSimilarGroupsResponse {
+  repeated Group groups = 1;
+}

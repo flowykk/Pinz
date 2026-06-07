@@ -1,0 +1,28 @@
+name: "siglip_text"
+platform: "onnxruntime_onnx"
+max_batch_size: 64
+
+input [
+  {
+    name: "input_ids"
+    data_type: TYPE_INT64
+    dims: [ 64 ]
+  }
+]
+
+output [
+  {
+    name: "text_embeds"
+    data_type: TYPE_FP32
+    dims: [ 768 ]
+  }
+]
+
+dynamic_batching {
+  preferred_batch_size: [ 8, 16, 32 ]
+  max_queue_delay_microseconds: 4000
+}
+
+instance_group [
+  { count: 1, kind: KIND_AUTO }
+]

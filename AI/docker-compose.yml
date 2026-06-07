@@ -1,0 +1,90 @@
+# Полный стек Pinz AI Module: инфра + 6 микросервисов.
+# Для запуска: `make all-up`.
+include:
+  - docker-compose.infra.yml
+
+services:
+  ml_orchestrator:
+    build:
+      context: .
+      dockerfile: ml_orchestrator/Dockerfile
+    env_file: .env
+    environment:
+      NATS_URL: ${NATS_URL:-nats://nats:4222}
+      TRITON_GRPC_URL: triton:8001
+      MODERATION_GRPC: moderation_service:50051
+      EMBEDDING_GRPC: embedding_service:50052
+      CLASSIFIER_GRPC: classifier_service:50053
+      SIMILARITY_GRPC: similarity_service:50054
+    depends_on:
+      - nats
+      - moderation_service
+      - embedding_service
+      - classifier_service
+      - similarity_service
+    restart: unless-stopped
+
+  moderation_service:
+    build:
+      context: .
+      dockerfile: moderation_service/Dockerfile
+    env_file: .env
+    environment:
+      TRITON_GRPC_URL: triton:8001
+    depends_on:
+      - triton
+    ports:
+      - "50051:50051"
+    restart: unless-stopped
+
+  embedding_service:
+    build:
+      context: .
+      dockerfile: embedding_service/Dockerfile
+    env_file: .env
+    environment:
+      TRITON_GRPC_URL: triton:8001
+      QDRANT_URL: http://qdrant:6333
+    depends_on:
+      - triton
+      - qdrant
+    ports:
+      - "50052:50052"
+    restart: unless-stopped
+
+  classifier_service:
+    build:
+      context: .
+      dockerfile: classifier_service/Dockerfile
+    env_file: .env
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "50053:50053"
+    restart: unless-stopped
+
+  similarity_service:
+    build:
+      context: .
+      dockerfile: similarity_service/Dockerfile
+    env_file: .env
+    ports:
+      - "50054:50054"
+    restart: unless-stopped
+
+  search_service:
+    build:
+      context: .
+      dockerfile: search_service/Dockerfile
+    env_file: .env
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      MEILI_URL: http://meilisearch:7700
+      EMBEDDING_GRPC: embedding_service:50052
+    depends_on:
+      - qdrant
+      - meilisearch
+      - embedding_service
+    ports:
+      - "50055:50055"
+    restart: unless-stopped

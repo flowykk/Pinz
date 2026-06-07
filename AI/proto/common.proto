@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package pinz.ai.common;
+
+option go_package = "github.com/pinz/ai/proto/common;commonpb";
+
+message MediaRef {
+  string media_id = 1;
+  string get_url  = 2;       
+  string content_type = 3;
+  bool   is_new = 4;
+}
+
+message Embedding {
+  string media_id = 1;
+  repeated float vector = 2;
+}

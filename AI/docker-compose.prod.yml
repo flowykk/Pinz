@@ -1,0 +1,122 @@
+# Pinz AI Module — production compose
+# Запуск:
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+x-env: &service-env
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  NATS_URL: ${NATS_URL}             
+  NATS_TOKEN: ${NATS_TOKEN}
+  TRITON_GRPC_URL: triton:8001
+  QDRANT_URL: http://qdrant:6333
+  MEILI_URL: http://meilisearch:7700
+  MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+  MODERATION_GRPC: moderation_service:50051
+  EMBEDDING_GRPC: embedding_service:50052
+  CLASSIFIER_GRPC: classifier_service:50053
+  SIMILARITY_GRPC: similarity_service:50054
+
+services:
+
+  qdrant:
+    image: qdrant/qdrant:v1.9.2
+    restart: unless-stopped
+    volumes:
+      - /srv/pinz-ai/data/qdrant:/qdrant/storage
+    logging: *default-logging
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.8
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_ENV: production
+    volumes:
+      - /srv/pinz-ai/data/meili:/meili_data
+    logging: *default-logging
+
+  triton:
+    image: nvcr.io/nvidia/tritonserver:24.05-py3
+    restart: unless-stopped
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    command: >
+      tritonserver
+      --model-repository=/models
+      --strict-model-config=false
+      --log-verbose=0
+      --allow-metrics=true
+    volumes:
+      - ./triton/model_repository:/models:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    logging: *default-logging
+
+  # ---------- микросервисы ----------
+
+  ml_orchestrator:
+    image: ghcr.io/${GHCR_OWNER}/pinz/ai-ml_orchestrator:${TAG:-latest}
+    restart: unless-stopped
+    environment: *service-env
+    depends_on:
+      - moderation_service
+      - embedding_service
+      - classifier_service
+      - similarity_service
+    logging: *default-logging
+
+  moderation_service:
+    image: ghcr.io/${GHCR_OWNER}/pinz/ai-moderation_service:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      TOXIC_DEVICE: ${TOXIC_DEVICE:-cpu}      # cuda если хотите toxic на GPU
+    depends_on:
+      - triton
+    logging: *default-logging
+
+  embedding_service:
+    image: ghcr.io/${GHCR_OWNER}/pinz/ai-embedding_service:${TAG:-latest}
+    restart: unless-stopped
+    environment: *service-env
+    depends_on:
+      - triton
+      - qdrant
+    logging: *default-logging
+
+  classifier_service:
+    image: ghcr.io/${GHCR_OWNER}/pinz/ai-classifier_service:${TAG:-latest}
+    restart: unless-stopped
+    environment: *service-env
+    volumes:
+      - /srv/pinz-ai/models:/models:ro
+    logging: *default-logging
+
+  similarity_service:
+    image: ghcr.io/${GHCR_OWNER}/pinz/ai-similarity_service:${TAG:-latest}
+    restart: unless-stopped
+    environment: *service-env
+    logging: *default-logging
+
+  search_service:
+    image: ghcr.io/${GHCR_OWNER}/pinz/ai-search_service:${TAG:-latest}
+    restart: unless-stopped
+    environment: *service-env
+    depends_on:
+      - qdrant
+      - meilisearch
+      - embedding_service
+    logging: *default-logging
