@@ -2,14 +2,14 @@ name: CI AI
 
 on:
   push:
-    branches: [main, develop, 'PINZ-*', ai-module-integration]
+    branches: [ai-module-integration]
     paths:
       - 'AI/**'
       - '.github/workflows/ci-ai.yaml'
     tags:
       - 'ai-v*'
   pull_request:
-    branches: [main, develop, ai-module-integration]
+    branches: [ai-module-integration]
     paths:
       - 'AI/**'
       - '.github/workflows/ci-ai.yaml'
