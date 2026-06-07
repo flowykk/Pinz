@@ -36,15 +36,27 @@ apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin do
 systemctl enable --now docker
 
 echo "[3/6] NVIDIA driver + container toolkit"
-# Driver — meta-package, тянет совместимую версию для конкретной GPU
-apt-get install -y ubuntu-drivers-common
-ubuntu-drivers install --gpgpu || ubuntu-drivers autoinstall
 
-# Container toolkit
-distribution=$(. /etc/os-release; echo $ID$VERSION_ID)
+# --- Driver ---
+# Проверяем: провайдер мог предустановить драйвер (GPU Driver 535 и т.п.)
+if nvidia-smi &>/dev/null; then
+  echo "  NVIDIA driver already present: $(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)"
+else
+  echo "  Installing nvidia-driver-535 ..."
+  # Устанавливаем напрямую через apt — ubuntu-drivers имеет известный баг
+  # (AttributeError: 'NoneType'... depends_list_str) на Ubuntu 24.04
+  DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    linux-headers-$(uname -r) \
+    nvidia-driver-535 \
+    nvidia-utils-535
+fi
+
+# --- NVIDIA Container Toolkit ---
+# Используем актуальный URL (stable/deb/) вместо ${distribution}/
+# — NVIDIA изменил структуру репозитория, ubuntu24.04 путь устарел
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
   | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-curl -fsSL https://nvidia.github.io/libnvidia-container/${distribution}/libnvidia-container.list \
+curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
   | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
   > /etc/apt/sources.list.d/nvidia-container-toolkit.list
 apt-get update -y
