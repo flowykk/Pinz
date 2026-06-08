@@ -41,23 +41,21 @@ def _export(model, dummy, path, input_names, output_names, dynamic_axes):
 def export_siglip(model_id: str = "google/siglip-base-patch16-224") -> None:
     model = AutoModel.from_pretrained(model_id).eval()
 
-    # ----- Vision branch: output [batch, 768] -----
+    # ----- Vision branch -----
     class Vision(torch.nn.Module):
-        def __init__(self, m):
+        def __init__(self, vision_model):
             super().__init__()
-            self.m = m
+            self.vision = vision_model
 
         def forward(self, pixel_values):
-            out = self.m.get_image_features(pixel_values=pixel_values)
-            if out.ndim == 3:
-                out = out.mean(dim=1)  
-            return out 
+            h = self.vision(pixel_values=pixel_values).last_hidden_state
+            return h.mean(dim=1)
 
     out_v = ROOT / "siglip_vision" / "1" / "model.onnx"
     out_v.parent.mkdir(parents=True, exist_ok=True)
-    dummy_img = torch.randn(2, 3, 224, 224)
+    dummy_img = torch.randn(2, 3, 224, 224)  # batch=2 → dynamic batch axis
     _export(
-        Vision(model), (dummy_img,), out_v.as_posix(),
+        Vision(model.vision_model), (dummy_img,), out_v.as_posix(),
         input_names=["pixel_values"],
         output_names=["image_embeds"],
         dynamic_axes={"pixel_values": {0: "batch"}, "image_embeds": {0: "batch"}},
@@ -65,23 +63,21 @@ def export_siglip(model_id: str = "google/siglip-base-patch16-224") -> None:
     _verify(out_v, expected_ndim=2, expected_last_dim=768)
     print(f"[ok] {out_v}")
 
-    # ----- Text branch: -----
+    # ----- Text branch -----
     class Text(torch.nn.Module):
-        def __init__(self, m):
+        def __init__(self, text_model):
             super().__init__()
-            self.m = m
+            self.text = text_model
 
         def forward(self, input_ids):
-            out = self.m.get_text_features(input_ids=input_ids)
-            if out.ndim == 3:
-                out = out.mean(dim=1)  
-            return out 
+            h = self.text(input_ids=input_ids).last_hidden_state
+            return h.mean(dim=1)
 
     out_t = ROOT / "siglip_text" / "1" / "model.onnx"
     out_t.parent.mkdir(parents=True, exist_ok=True)
     dummy_ids = torch.zeros(2, 64, dtype=torch.long)
     _export(
-        Text(model), (dummy_ids,), out_t.as_posix(),
+        Text(model.text_model), (dummy_ids,), out_t.as_posix(),
         input_names=["input_ids"],
         output_names=["text_embeds"],
         dynamic_axes={"input_ids": {0: "batch"}, "text_embeds": {0: "batch"}},
