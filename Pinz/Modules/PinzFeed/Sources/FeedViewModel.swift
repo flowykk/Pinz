@@ -27,7 +27,7 @@ final class FeedViewModel {
         var isSaving: Bool
     }
 
-    private let pageSize = 2 // TODO: change back to 20 after testing pagination
+    private let pageSize = 20
     private(set) var posts: [Post] = []
     private(set) var isLoading = false
     private(set) var isRecommendationsLoading = false

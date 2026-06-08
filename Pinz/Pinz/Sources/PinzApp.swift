@@ -19,8 +19,8 @@ struct PinzApp: App {
 
     init() {
         TokenStorage.shared.save(
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODA4MTUzNjcsImlhdCI6MTc3ODIyMzM2NywidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoiRGRkZHNkZnNkZnNkZiJ9.ddmUVg68ALNczQxFMlOViogCR-npgrTS_w0ZHh-0__g",
-            refreshToken: "LPBJkrruM/Cumvlg6Pe+7/JhKgsSBRdQEfUJcRWHotw="
+            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODM0MTkzNTksImlhdCI6MTc4MDgyNzM1OSwidXNlcl9pZCI6IjIxM2ExMjg3LTBkNDItNGM0ZS05YTlhLTBmNzhjMWRlZTg3MiIsInVzZXJuYW1lIjoiRGRkZHNkZnNkZnNkZiJ9.E36d8RFX1NCDxf8UxKy9qzMLGc04Tps7z2AEtFvZxUk",
+            refreshToken: "DO9Oi63q+p7/XxqzyLeq6zU+DYws3YI2dd01MfBPcKQ="
         )
         PinzLaunchArgs.apply()
         _router = State(initialValue: AppRouter(initialPath: Self.initialRoutePath()))

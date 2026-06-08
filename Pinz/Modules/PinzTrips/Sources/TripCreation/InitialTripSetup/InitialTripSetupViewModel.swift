@@ -231,18 +231,19 @@ final class InitialTripSetupViewModel {
     }
 
     private func uploadMedia(response: CreateTripDTO) async throws {
-        try await withThrowingTaskGroup(of: Void.self) { group in
+        try await withThrowingTaskGroup(of: (UUID, String?).self) { group in
             for uploadURL in response.uploadUrls {
                 guard let media = medias.first(where: { $0.id.uuidString == uploadURL.clientId }) else {
                     continue
                 }
                 group.addTask { [weak self] in
-                    guard let self else { return }
+                    guard let self else { return (media.id, nil) }
                     let prepared = try await self.prepareUpload(
                         for: media,
                         uploadURL: uploadURL.url,
                         context: "initial_trip_setup"
                     )
+                    let contentHash = ContentHasher.sha256Hex(from: prepared)
                     switch prepared.body {
                     case let .data(data):
                         try await self.networkService.uploadToS3(
@@ -257,9 +258,14 @@ final class InitialTripSetupViewModel {
                             contentType: prepared.contentType
                         )
                     }
+                    return (media.id, contentHash)
                 }
             }
-            try await group.waitForAll()
+            for try await (mediaId, contentHash) in group {
+                guard let contentHash,
+                      let idx = medias.firstIndex(where: { $0.id == mediaId }) else { continue }
+                medias[idx].contentHash = contentHash
+            }
         }
     }
 
@@ -292,11 +298,11 @@ final class InitialTripSetupViewModel {
             guard let media = medias.first(where: { $0.id.uuidString == uploadURL.clientId }) else { return nil }
             return MediaMetaEntryDTO(
                 s3Key: uploadURL.s3Key,
-                capturedAt: nil,
+                capturedAt: media.capturedAt,
                 latitude: media.coordinates?.latitude,
                 longitude: media.coordinates?.longitude,
                 mediaType: media.mediaType.rawValue,
-                contentHash: nil
+                contentHash: media.contentHash
             )
         }
     }

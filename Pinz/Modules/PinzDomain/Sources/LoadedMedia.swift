@@ -14,6 +14,8 @@ public struct LoadedMedia: Hashable, Identifiable {
     public var contentType: String?
     public var photosPickerItem: PhotosPickerItem?
     public var coordinates: MediaCoordinates?
+    public var capturedAt: String?
+    public var contentHash: String?
     public var videoEditingSettings: VideoEditingSettings?
 
     public init(
@@ -23,6 +25,8 @@ public struct LoadedMedia: Hashable, Identifiable {
         contentType: String? = nil,
         photosPickerItem: PhotosPickerItem? = nil,
         coordinates: MediaCoordinates? = nil,
+        capturedAt: String? = nil,
+        contentHash: String? = nil,
         videoEditingSettings: VideoEditingSettings? = nil
     ) {
         self.id = id
@@ -31,6 +35,8 @@ public struct LoadedMedia: Hashable, Identifiable {
         self.contentType = contentType
         self.photosPickerItem = photosPickerItem
         self.coordinates = coordinates
+        self.capturedAt = capturedAt
+        self.contentHash = contentHash
         self.videoEditingSettings = videoEditingSettings
     }
 }

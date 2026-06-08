@@ -10,8 +10,13 @@ public struct PhotoBattleView: View {
     @State private var leftPlayerController: VideoPlayerController?
     @State private var rightPlayerController: VideoPlayerController?
     @State private var winnerPlayerController: VideoPlayerController?
+    @State private var fullScreenMedia: PhotoBattleMedia?
+    private let horizontalPadding: CGFloat = 8
+    private let battlePanelSpacing: CGFloat = 12
     private let battleMediaHeight = UIScreen.main.bounds.height / 2
-    private let battleMediaWidth = UIScreen.main.bounds.width / 2
+    private var battlePanelWidth: CGFloat {
+        (UIScreen.main.bounds.width - horizontalPadding * 2 - battlePanelSpacing) / 2
+    }
 
     init(viewModel: PhotoBattleViewModel) {
         self.viewModel = viewModel
@@ -89,8 +94,11 @@ public struct PhotoBattleView: View {
 
                 Spacer()
             }
-            .padding(.horizontal, 14)
+            .padding(.horizontal, horizontalPadding)
             .padding(.top, 10)
+        }
+        .fullScreenCover(item: $fullScreenMedia) { media in
+            BattleMediaFullScreenView(media: media)
         }
     }
 
@@ -144,7 +152,8 @@ public struct PhotoBattleView: View {
             BattleMediaPanel(
                 media: viewModel.winnerPhotoBattleMedia,
                 isLocked: true,
-                playerController: $winnerPlayerController
+                playerController: $winnerPlayerController,
+                onOpenFullScreen: { fullScreenMedia = $0 }
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .frame(height: battleMediaHeight)
@@ -157,7 +166,7 @@ public struct PhotoBattleView: View {
     }
 
     private var battlePanels: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: battlePanelSpacing) {
             battleMediaPanel(viewModel.leftMedia, isLeft: true)
             battleMediaPanel(viewModel.rightMedia, isLeft: false)
         }
@@ -195,11 +204,12 @@ public struct PhotoBattleView: View {
         BattleMediaPanel(
             media: media,
             isLocked: viewModel.isBattleControlsBlocked,
-            playerController: isLeft ? $leftPlayerController : $rightPlayerController
+            playerController: isLeft ? $leftPlayerController : $rightPlayerController,
+            onOpenFullScreen: { fullScreenMedia = $0 }
         )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .frame(width: battleMediaWidth - 6, height: battleMediaHeight)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+            .frame(width: battlePanelWidth, height: battleMediaHeight)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .id(isLeft ? "battle-left-panel-\(media?.photoBattleMediaId ?? "empty")" : "battle-right-panel-\(media?.photoBattleMediaId ?? "empty")")
     }
 
@@ -228,6 +238,7 @@ private struct BattleMediaPanel: View {
     let media: PhotoBattleMedia?
     let isLocked: Bool
     @Binding var playerController: VideoPlayerController?
+    let onOpenFullScreen: (PhotoBattleMedia) -> Void
 
     var body: some View {
         Group {
@@ -286,6 +297,24 @@ private struct BattleMediaPanel: View {
                 playerController?.togglePlayback()
             }
         }
+        .contextMenu {
+            if let media {
+                Button {
+                    onOpenFullScreen(media)
+                } label: {
+                    Label(PinzBaseStrings.Common.Button.details, systemImage: "eye.fill")
+                }
+            }
+        } preview: {
+            if let media {
+                MediaThumbnailView(
+                    url: media.url,
+                    type: media.kind,
+                    contentMode: .fill,
+                    cornerRadius: 16
+                )
+            }
+        }
         .cornerRadius(16)
         .onAppear {
             configurePlayerController(for: media)
@@ -315,6 +344,94 @@ private struct BattleMediaPanel: View {
     private func resetController() {
         playerController?.stop()
         playerController = nil
+    }
+}
+
+private struct BattleMediaFullScreenView: View {
+    let media: PhotoBattleMedia
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var playerController: VideoPlayerController?
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                HStack {
+                    PinzButton(
+                        type: .icon(.xmark),
+                        tint: .white,
+                        action: .plain { dismiss() }
+                    )
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+
+                Group {
+                    switch media.kind {
+                    case .image:
+                        LoadableImageThumbnail(url: media.url, cacheVariant: .full) { state in
+                            switch state {
+                            case .empty:
+                                ProgressView()
+                                    .tint(.white)
+                            case .ready(let image):
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFit()
+                            case .failure:
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundStyle(.white.opacity(0.8))
+                            }
+                        }
+                    case .video:
+                        if let playerController {
+                            VideoPlayerView(player: playerController.player)
+                                .overlay {
+                                    if !playerController.isPlaying {
+                                        Image(systemName: "play.fill")
+                                            .font(.system(size: 52))
+                                            .foregroundStyle(.white.opacity(0.9))
+                                            .shadow(radius: 8)
+                                    }
+                                }
+                                .onTapGesture {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        playerController.togglePlayback()
+                                    }
+                                }
+                        } else {
+                            ProgressView()
+                                .tint(.white)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                Spacer(minLength: 0)
+            }
+        }
+        .onAppear {
+            configurePlayerController()
+        }
+        .onDisappear {
+            playerController?.stop()
+            playerController = nil
+        }
+    }
+
+    private func configurePlayerController() {
+        guard media.kind == .video, let url = media.url else { return }
+
+        Task {
+            let cachedURL = await VideoFileStorage.shared.cacheVideoFullIfNeeded(from: url)
+            await MainActor.run {
+                playerController = VideoPlayerController(url: cachedURL)
+            }
+        }
     }
 }
 

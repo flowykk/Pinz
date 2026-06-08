@@ -7,11 +7,34 @@ import AVFoundation
 public final class MetaDataExtractor {
     public static let shared = MetaDataExtractor()
 
+    private static let exifDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    private static let iso8601OutputFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter
+    }()
+
     private init() {}
 
     public func extractCoordinates(from item: PhotosPickerItem) async -> MediaCoordinates? {
-        guard let data = try? await item.loadTransferable(type: Data.self),
-              let source = CGImageSourceCreateWithData(data as CFData, nil),
+        guard let data = try? await item.loadTransferable(type: Data.self) else { return nil }
+        return extractCoordinates(from: data)
+    }
+
+    public func extractOriginalDateString(from item: PhotosPickerItem) async -> String? {
+        guard let data = try? await item.loadTransferable(type: Data.self) else { return nil }
+        return extractOriginalDateString(from: data)
+    }
+
+    public func extractCoordinates(from data: Data) -> MediaCoordinates? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let gps = metadata[kCGImagePropertyGPSDictionary] as? [CFString: Any],
               let lat = gps[kCGImagePropertyGPSLatitude] as? Double,
@@ -27,16 +50,44 @@ public final class MetaDataExtractor {
         return MediaCoordinates(latitude: latitude, longitude: longitude)
     }
 
-    public func extractOriginalDateString(from item: PhotosPickerItem) async -> String? {
-        guard let data = try? await item.loadTransferable(type: Data.self),
-              let source = CGImageSourceCreateWithData(data as CFData, nil),
+    public func extractOriginalDateString(from data: Data) -> String? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let exif = metadata[kCGImagePropertyExifDictionary] as? [CFString: Any],
               let dateString = exif[kCGImagePropertyExifDateTimeOriginal] as? String
         else {
             return nil
         }
-        return dateString
+        return normalizedCapturedAtString(from: dateString)
+    }
+
+    public func normalizedCapturedAtString(from raw: String) -> String? {
+        guard let date = parseCapturedAtDate(from: raw) else { return nil }
+        return Self.iso8601OutputFormatter.string(from: date)
+    }
+
+    public func capturedAtUnix(from dateString: String) -> Int? {
+        guard let date = parseCapturedAtDate(from: dateString) else { return nil }
+        return Int(date.timeIntervalSince1970)
+    }
+
+    public func parseCapturedAtDate(from raw: String) -> Date? {
+        if let date = Self.exifDateFormatter.date(from: raw) {
+            return date
+        }
+
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = isoFormatter.date(from: raw) {
+            return date
+        }
+
+        isoFormatter.formatOptions = [.withInternetDateTime]
+        if let date = isoFormatter.date(from: raw) {
+            return date
+        }
+
+        return nil
     }
 }
 
@@ -77,7 +128,8 @@ public extension MetaDataExtractor {
 
             for item in allMetadata {
                 if let key = item.commonKey?.rawValue, key == "creationDate" {
-                    return try await item.load(.stringValue)
+                    guard let raw = try await item.load(.stringValue) else { return nil }
+                    return normalizedCapturedAtString(from: raw)
                 }
             }
         } catch {

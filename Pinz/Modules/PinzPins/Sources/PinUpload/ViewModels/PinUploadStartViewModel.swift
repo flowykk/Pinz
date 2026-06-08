@@ -175,6 +175,7 @@ final class PinUploadStartViewModel {
                 let mediaType = media.mediaType.rawValue
                 let latitude = media.coordinates?.latitude
                 let longitude = media.coordinates?.longitude
+                let capturedAtUnix = media.capturedAt.flatMap { MetaDataExtractor.shared.capturedAtUnix(from: $0) }
                 group.addTask { [weak self] in
                     guard let self else { return }
                     _ = try await networkService.pinUploadCommitUpload(
@@ -182,7 +183,7 @@ final class PinUploadStartViewModel {
                         sessionId: sessionId,
                         s3Key: s3Key,
                         mediaType: mediaType,
-                        capturedAtUnix: nil,
+                        capturedAtUnix: capturedAtUnix,
                         latitude: latitude,
                         longitude: longitude
                     )

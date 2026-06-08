@@ -10,23 +10,33 @@ public final class MediaLoader {
 
     public func load(from item: PhotosPickerItem, id: UUID = UUID()) async -> LoadedMedia? {
         if isVideoItem(item) {
-            guard let transfer = try? await item.loadTransferable(type: VideoFileTransferable.self),
-                  let frame = await firstFrame(from: transfer.url) else { return nil }
+            guard let transfer = try? await item.loadTransferable(type: VideoFileTransferable.self) else { return nil }
+            let asset = AVURLAsset(url: transfer.url)
+            async let frame = firstFrame(from: transfer.url)
+            async let coordinates = MetaDataExtractor.shared.extractCoordinates(from: asset)
+            async let capturedAt = MetaDataExtractor.shared.extractOriginalDateString(from: asset)
+            guard let frameImage = await frame else { return nil }
             return LoadedMedia(
                 id: id,
-                content: .video(url: transfer.url, firstFrame: frame),
+                content: .video(url: transfer.url, firstFrame: frameImage),
                 contentType: Self.pickerMIMEType(for: item, fallback: "video/quicktime"),
-                photosPickerItem: item
+                photosPickerItem: item,
+                coordinates: await coordinates,
+                capturedAt: await capturedAt
             )
         } else {
             guard let data = try? await item.loadTransferable(type: Data.self),
                   let image = UIImage(data: data) else { return nil }
+            let coordinates = MetaDataExtractor.shared.extractCoordinates(from: data)
+            let capturedAt = MetaDataExtractor.shared.extractOriginalDateString(from: data)
             return LoadedMedia(
                 id: id,
                 content: .image(image),
                 imageFileData: data,
                 contentType: Self.pickerMIMEType(for: item, fallback: "image/jpeg"),
-                photosPickerItem: item
+                photosPickerItem: item,
+                coordinates: coordinates,
+                capturedAt: capturedAt
             )
         }
     }

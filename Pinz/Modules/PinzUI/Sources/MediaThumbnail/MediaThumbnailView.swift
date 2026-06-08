@@ -51,14 +51,31 @@ public struct MediaThumbnailView: View {
             case .empty:
                 loaderView
             case let .ready(image):
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(square ? 1 : nil, contentMode: contentMode)
+                if square {
+                    squareImage(image)
+                } else {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: contentMode)
+                }
             case .failure:
                 failureView
             }
         }
         .cornerRadius(cornerRadius)
+    }
+
+    @ViewBuilder
+    private func squareImage(_ image: UIImage) -> some View {
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                Image(uiImage: image)
+                    .resizable()
+                    .modifier(ScaledImageContentMode(contentMode: contentMode))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .clipped()
     }
 
     private var loaderView: some View {
@@ -79,5 +96,20 @@ public struct MediaThumbnailView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.white)
             }
+    }
+}
+
+private struct ScaledImageContentMode: ViewModifier {
+    let contentMode: ContentMode
+
+    func body(content: Content) -> some View {
+        switch contentMode {
+        case .fill:
+            content.scaledToFill()
+        case .fit:
+            content.scaledToFit()
+        @unknown default:
+            content.scaledToFit()
+        }
     }
 }

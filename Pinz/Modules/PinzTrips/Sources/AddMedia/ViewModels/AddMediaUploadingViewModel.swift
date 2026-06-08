@@ -109,6 +109,7 @@ final class AddMediaUploadingViewModel {
                     let mediaType = media.mediaType.rawValue
                     let latitude = media.coordinates?.latitude
                     let longitude = media.coordinates?.longitude
+                    let capturedAt = media.capturedAt
                     group.addTask { [weak self] in
                         guard let self else { return }
                         _ = try await networkService.addMediaCommitUpload(
@@ -116,7 +117,7 @@ final class AddMediaUploadingViewModel {
                             sessionId: sessionId,
                             s3Key: s3Key,
                             mediaType: mediaType,
-                            capturedAt: nil,
+                            capturedAt: capturedAt,
                             latitude: latitude,
                             longitude: longitude
                         )
