@@ -372,41 +372,9 @@ private struct BattleMediaFullScreenView: View {
                 Group {
                     switch media.kind {
                     case .image:
-                        LoadableImageThumbnail(url: media.url, cacheVariant: .full) { state in
-                            switch state {
-                            case .empty:
-                                ProgressView()
-                                    .tint(.white)
-                            case .ready(let image):
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFit()
-                            case .failure:
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 40))
-                                    .foregroundStyle(.white.opacity(0.8))
-                            }
-                        }
+                        LoadableImageThumbnail(url: media.url, cacheVariant: .full, content: imageContent)
                     case .video:
-                        if let playerController {
-                            VideoPlayerView(player: playerController.player)
-                                .overlay {
-                                    if !playerController.isPlaying {
-                                        Image(systemName: "play.fill")
-                                            .font(.system(size: 52))
-                                            .foregroundStyle(.white.opacity(0.9))
-                                            .shadow(radius: 8)
-                                    }
-                                }
-                                .onTapGesture {
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        playerController.togglePlayback()
-                                    }
-                                }
-                        } else {
-                            ProgressView()
-                                .tint(.white)
-                        }
+                        videoContent
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -420,6 +388,48 @@ private struct BattleMediaFullScreenView: View {
         .onDisappear {
             playerController?.stop()
             playerController = nil
+        }
+    }
+
+    @ViewBuilder
+    private var videoContent: some View {
+        if let playerController {
+            VideoPlayerView(player: playerController.player)
+                .overlay {
+                    Group {
+                        if !playerController.isPlaying {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 52))
+                                .foregroundStyle(.white.opacity(0.9))
+                                .shadow(radius: 8)
+                        }
+                    }
+                }
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        playerController.togglePlayback()
+                    }
+                }
+        } else {
+            ProgressView()
+                .tint(.white)
+        }
+    }
+
+    @ViewBuilder
+    private func imageContent(for state: LoadableMediaState) -> some View {
+        switch state {
+        case .empty:
+            ProgressView()
+                .tint(.white)
+        case .ready(let image):
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+        case .failure:
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(.white.opacity(0.8))
         }
     }
 
