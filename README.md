@@ -9,6 +9,14 @@
 
 ---
 
+## Скриншоты
+
+<img width="485" height="1023" alt="Без заголовка" src="https://github.com/user-attachments/assets/3a40ebdd-f852-4b53-9abc-ad34a1d36097" />
+
+<img width="473" height="1023" alt="1" src="https://github.com/user-attachments/assets/baf4e512-b77f-43fa-8521-e368aa693816" />
+
+
+
 ## Структура репозитория
 
 ```
