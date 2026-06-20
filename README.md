@@ -19,14 +19,6 @@
   <img src="https://github.com/user-attachments/assets/d3f47b85-2743-46e4-a812-25975a97ea2b" width="200">
   <img src="https://github.com/user-attachments/assets/e39dcb59-fe4f-4258-8ca9-e0bef06fcb26" width="200">
 </div>
-<img width="482" height="1038" alt="3" src="https://github.com/user-attachments/assets/a802826a-d732-4b7a-b612-8af48dcd1cb8" />
-<img width="482" height="1035" alt="2" src="https://github.com/user-attachments/assets/31320d1e-7f53-420a-938c-c6d1fd9841c3" />
-
-<img width="482" height="1035" alt="5" src="https://github.com/user-attachments/assets/d3f47b85-2743-46e4-a812-25975a97ea2b" />
-<img width="473" height="1014" alt="4" src="https://github.com/user-attachments/assets/e39dcb59-fe4f-4258-8ca9-e0bef06fcb26" />
-
-
-
 
 ## Структура репозитория
 
