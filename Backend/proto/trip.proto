@@ -466,6 +466,7 @@ message FeedPin {
  double latitude = 2;
  double longitude = 3;
  repeated FeedMedia media = 4; // up to 10, sorted by battle_rating
+ string name = 5;
 }
 
 // a single feed card with trip, pins and media.
@@ -637,6 +638,7 @@ message AddMediaGetReviewResponse {
  optional string current_initiator_user_id = 6;
  optional int64 takeover_available_at_unix = 7;
  bool can_edit = 8; // рассчитано сервером для удобства клиента
+ repeated MediaSimilarGroup similar = 9; // ML-группы похожих медиа в рамках трипа
 }
 
 // подтверждение финального ревью — закрывает сессию, трип → READY.

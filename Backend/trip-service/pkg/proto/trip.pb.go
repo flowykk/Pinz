@@ -3602,6 +3602,7 @@ type FeedPin struct {
 	Latitude      float64                `protobuf:"fixed64,2,opt,name=latitude,proto3" json:"latitude,omitempty"`
 	Longitude     float64                `protobuf:"fixed64,3,opt,name=longitude,proto3" json:"longitude,omitempty"`
 	Media         []*FeedMedia           `protobuf:"bytes,4,rep,name=media,proto3" json:"media,omitempty"` // up to 10, sorted by battle_rating
+	Name          string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3662,6 +3663,13 @@ func (x *FeedPin) GetMedia() []*FeedMedia {
 		return x.Media
 	}
 	return nil
+}
+
+func (x *FeedPin) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 // a single feed card with trip, pins and media.
@@ -5261,6 +5269,7 @@ type AddMediaGetReviewResponse struct {
 	CurrentInitiatorUserId  *string                `protobuf:"bytes,6,opt,name=current_initiator_user_id,json=currentInitiatorUserId,proto3,oneof" json:"current_initiator_user_id,omitempty"`
 	TakeoverAvailableAtUnix *int64                 `protobuf:"varint,7,opt,name=takeover_available_at_unix,json=takeoverAvailableAtUnix,proto3,oneof" json:"takeover_available_at_unix,omitempty"`
 	CanEdit                 bool                   `protobuf:"varint,8,opt,name=can_edit,json=canEdit,proto3" json:"can_edit,omitempty"` // рассчитано сервером для удобства клиента
+	Similar                 []*MediaSimilarGroup   `protobuf:"bytes,9,rep,name=similar,proto3" json:"similar,omitempty"`                 // ML-группы похожих медиа в рамках трипа
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -5349,6 +5358,13 @@ func (x *AddMediaGetReviewResponse) GetCanEdit() bool {
 		return x.CanEdit
 	}
 	return false
+}
+
+func (x *AddMediaGetReviewResponse) GetSimilar() []*MediaSimilarGroup {
+	if x != nil {
+		return x.Similar
+	}
+	return nil
 }
 
 // подтверждение финального ревью — закрывает сессию, трип → READY.
@@ -9295,12 +9311,13 @@ const file_trip_proto_rawDesc = "" +
 	"\bmedia_id\x18\x01 \x01(\tR\amediaId\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1d\n" +
 	"\n" +
-	"media_type\x18\x03 \x01(\tR\tmediaType\"z\n" +
+	"media_type\x18\x03 \x01(\tR\tmediaType\"\x8e\x01\n" +
 	"\aFeedPin\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x1c\n" +
 	"\tlongitude\x18\x03 \x01(\x01R\tlongitude\x12%\n" +
-	"\x05media\x18\x04 \x03(\v2\x0f.trip.FeedMediaR\x05media\"\xcb\x01\n" +
+	"\x05media\x18\x04 \x03(\v2\x0f.trip.FeedMediaR\x05media\x12\x12\n" +
+	"\x04name\x18\x05 \x01(\tR\x04name\"\xcb\x01\n" +
 	"\bFeedItem\x12\x1e\n" +
 	"\x04trip\x18\x01 \x01(\v2\n" +
 	".trip.TripR\x04trip\x12!\n" +
@@ -9422,7 +9439,7 @@ const file_trip_proto_rawDesc = "" +
 	"\x18AddMediaGetReviewRequest\x12\x17\n" +
 	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x02 \x01(\tR\tsessionId\"\xa0\x03\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\"\xd3\x03\n" +
 	"\x19AddMediaGetReviewResponse\x12\x17\n" +
 	"\atrip_id\x18\x01 \x01(\tR\x06tripId\x12\x1d\n" +
 	"\n" +
@@ -9432,7 +9449,8 @@ const file_trip_proto_rawDesc = "" +
 	"\x13protected_media_ids\x18\x05 \x03(\tR\x11protectedMediaIds\x12>\n" +
 	"\x19current_initiator_user_id\x18\x06 \x01(\tH\x00R\x16currentInitiatorUserId\x88\x01\x01\x12@\n" +
 	"\x1atakeover_available_at_unix\x18\a \x01(\x03H\x01R\x17takeoverAvailableAtUnix\x88\x01\x01\x12\x19\n" +
-	"\bcan_edit\x18\b \x01(\bR\acanEditB\x1c\n" +
+	"\bcan_edit\x18\b \x01(\bR\acanEdit\x121\n" +
+	"\asimilar\x18\t \x03(\v2\x17.trip.MediaSimilarGroupR\asimilarB\x1c\n" +
 	"\x1a_current_initiator_user_idB\x1d\n" +
 	"\x1b_takeover_available_at_unix\"\xaa\x01\n" +
 	"\x16AddMediaConfirmRequest\x12\x17\n" +
@@ -9998,159 +10016,160 @@ var file_trip_proto_depIdxs = []int32{
 	29,  // 33: trip.AddMediaGetGroupingResponse.draft_pins:type_name -> trip.DraftPin
 	32,  // 34: trip.AddMediaApplyGroupsAndProcessRequest.draft_pins:type_name -> trip.DraftPinInput
 	6,   // 35: trip.AddMediaGetReviewResponse.pins:type_name -> trip.TripPin
-	40,  // 36: trip.AddMediaConfirmRequest.pin_updates:type_name -> trip.PinUpdate
-	92,  // 37: trip.ListUserTripSummariesResponse.trips:type_name -> trip.TripSummary
-	96,  // 38: trip.StartBattleResponse.media:type_name -> trip.BattleMedia
-	101, // 39: trip.GetBestMemoriesResponse.media:type_name -> trip.BestMemory
-	148, // 40: trip.GetNotificationSettingsResponse.notifications_enabled:type_name -> trip.GetNotificationSettingsResponse.NotificationsEnabledEntry
-	105, // 41: trip.ListAnniversaryTripsResponse.trips:type_name -> trip.NotificationTrip
-	105, // 42: trip.ListEndedMonthAgoTripsResponse.trips:type_name -> trip.NotificationTrip
-	6,   // 43: trip.SearchPinsResponse.pins:type_name -> trip.TripPin
-	6,   // 44: trip.GetPinResponse.pin:type_name -> trip.TripPin
-	6,   // 45: trip.UpdatePinResponse.pin:type_name -> trip.TripPin
-	6,   // 46: trip.RemoveMediaFromPinResponse.pin:type_name -> trip.TripPin
-	2,   // 47: trip.PinUploadStartRequest.files_to_upload:type_name -> trip.FileToUpload
-	4,   // 48: trip.PinUploadStartResponse.upload_urls:type_name -> trip.UploadUrl
-	2,   // 49: trip.RequestPinUploadUrlsRequest.files_to_upload:type_name -> trip.FileToUpload
-	4,   // 50: trip.RequestPinUploadUrlsResponse.upload_urls:type_name -> trip.UploadUrl
-	135, // 51: trip.PinUploadDraft.suggested:type_name -> trip.PinSuggestedFields
-	38,  // 52: trip.PinUploadDraft.media:type_name -> trip.ReviewPinMedia
-	134, // 53: trip.GetPinUploadReviewResponse.draft:type_name -> trip.PinUploadDraft
-	36,  // 54: trip.GetPinUploadReviewResponse.similar:type_name -> trip.MediaSimilarGroup
-	6,   // 55: trip.FinalizePinUploadResponse.pin:type_name -> trip.TripPin
-	55,  // 56: trip.RecommendedPin.media:type_name -> trip.FeedMedia
-	143, // 57: trip.RecommendedMap.pins:type_name -> trip.RecommendedPin
-	0,   // 58: trip.RecommendedMap.trip:type_name -> trip.Trip
-	55,  // 59: trip.RecommendedMap.media:type_name -> trip.FeedMedia
-	144, // 60: trip.GetRecommendationsResponse.map:type_name -> trip.RecommendedMap
-	0,   // 61: trip.SaveRecommendationResponse.trip:type_name -> trip.Trip
-	1,   // 62: trip.TripService.CreateTrip:input_type -> trip.CreateTripRequest
-	5,   // 63: trip.TripService.GetTrip:input_type -> trip.GetTripRequest
-	12,  // 64: trip.TripService.ListUserTrips:input_type -> trip.ListUserTripsRequest
-	14,  // 65: trip.TripService.UpdateTrip:input_type -> trip.UpdateTripRequest
-	16,  // 66: trip.TripService.DeleteTrip:input_type -> trip.DeleteTripRequest
-	114, // 67: trip.TripService.UpsertTripPrivacy:input_type -> trip.UpsertTripPrivacyRequest
-	115, // 68: trip.TripService.UpsertPinPrivacy:input_type -> trip.UpsertPinPrivacyRequest
-	116, // 69: trip.TripService.UpsertMediaPrivacy:input_type -> trip.UpsertMediaPrivacyRequest
-	18,  // 70: trip.TripService.RequestTripCoverUpload:input_type -> trip.RequestTripCoverUploadRequest
-	20,  // 71: trip.TripService.ConfirmTripCoverUpload:input_type -> trip.ConfirmTripCoverUploadRequest
-	22,  // 72: trip.TripService.DeleteTripCover:input_type -> trip.DeleteTripCoverRequest
-	42,  // 73: trip.TripService.GenerateInviteLink:input_type -> trip.GenerateInviteLinkRequest
-	44,  // 74: trip.TripService.JoinTripByToken:input_type -> trip.JoinTripByTokenRequest
-	46,  // 75: trip.TripService.RemoveParticipant:input_type -> trip.RemoveParticipantRequest
-	48,  // 76: trip.TripService.LeaveTrip:input_type -> trip.LeaveTripRequest
-	50,  // 77: trip.TripService.TransferAdmin:input_type -> trip.TransferAdminRequest
-	26,  // 78: trip.TripService.ProcessMediaGrouping:input_type -> trip.ProcessMediaGroupingRequest
-	31,  // 79: trip.TripService.ApplyGroupsAndProcess:input_type -> trip.ApplyGroupsAndProcessRequest
-	34,  // 80: trip.TripService.GetTripReview:input_type -> trip.GetTripReviewRequest
-	39,  // 81: trip.TripService.FinalizeTrip:input_type -> trip.FinalizeTripRequest
-	24,  // 82: trip.TripService.PublishTrip:input_type -> trip.PublishTripRequest
-	52,  // 83: trip.TripService.UpdateTripSettings:input_type -> trip.UpdateTripSettingsRequest
-	54,  // 84: trip.TripService.ListFeed:input_type -> trip.ListFeedRequest
-	59,  // 85: trip.TripService.LikeTrip:input_type -> trip.LikeTripRequest
-	61,  // 86: trip.TripService.DislikeTrip:input_type -> trip.DislikeTripRequest
-	63,  // 87: trip.TripService.AddToFavourites:input_type -> trip.AddToFavouritesRequest
-	65,  // 88: trip.TripService.RemoveFromFavourites:input_type -> trip.RemoveFromFavouritesRequest
-	67,  // 89: trip.TripService.ListFavourites:input_type -> trip.ListFavouritesRequest
-	69,  // 90: trip.TripService.AddMediaStart:input_type -> trip.AddMediaStartRequest
-	71,  // 91: trip.TripService.AddMediaRequestUploadUrls:input_type -> trip.AddMediaRequestUploadUrlsRequest
-	73,  // 92: trip.TripService.AddMediaCommitUpload:input_type -> trip.AddMediaCommitUploadRequest
-	75,  // 93: trip.TripService.AddMediaGetSessionMedia:input_type -> trip.AddMediaGetSessionMediaRequest
-	78,  // 94: trip.TripService.AddMediaProcessGrouping:input_type -> trip.AddMediaProcessGroupingRequest
-	80,  // 95: trip.TripService.AddMediaGetGrouping:input_type -> trip.AddMediaGetGroupingRequest
-	82,  // 96: trip.TripService.AddMediaApplyGroupsAndProcess:input_type -> trip.AddMediaApplyGroupsAndProcessRequest
-	84,  // 97: trip.TripService.AddMediaGetReview:input_type -> trip.AddMediaGetReviewRequest
-	86,  // 98: trip.TripService.AddMediaConfirm:input_type -> trip.AddMediaConfirmRequest
-	88,  // 99: trip.TripService.AddMediaCancel:input_type -> trip.AddMediaCancelRequest
-	90,  // 100: trip.TripService.AddMediaTakeover:input_type -> trip.AddMediaTakeoverRequest
-	93,  // 101: trip.TripService.ListUserTripSummaries:input_type -> trip.ListUserTripSummariesRequest
-	95,  // 102: trip.TripService.StartBattle:input_type -> trip.StartBattleRequest
-	98,  // 103: trip.TripService.SubmitBattleResult:input_type -> trip.SubmitBattleResultRequest
-	100, // 104: trip.TripService.GetBestMemories:input_type -> trip.GetBestMemoriesRequest
-	103, // 105: trip.TripService.GetNotificationSettings:input_type -> trip.GetNotificationSettingsRequest
-	106, // 106: trip.TripService.ListAnniversaryTrips:input_type -> trip.ListAnniversaryTripsRequest
-	108, // 107: trip.TripService.ListEndedMonthAgoTrips:input_type -> trip.ListEndedMonthAgoTripsRequest
-	110, // 108: trip.TripService.ListTripParticipants:input_type -> trip.ListTripParticipantsRequest
-	112, // 109: trip.TripService.SearchPins:input_type -> trip.SearchPinsRequest
-	118, // 110: trip.TripService.GetPin:input_type -> trip.GetPinRequest
-	120, // 111: trip.TripService.UpdatePin:input_type -> trip.UpdatePinRequest
-	122, // 112: trip.TripService.DeletePin:input_type -> trip.DeletePinRequest
-	124, // 113: trip.TripService.RemoveMediaFromPin:input_type -> trip.RemoveMediaFromPinRequest
-	126, // 114: trip.TripService.PinUploadStart:input_type -> trip.PinUploadStartRequest
-	128, // 115: trip.TripService.RequestPinUploadUrls:input_type -> trip.RequestPinUploadUrlsRequest
-	130, // 116: trip.TripService.CommitPinUpload:input_type -> trip.CommitPinUploadRequest
-	132, // 117: trip.TripService.ProcessPinUpload:input_type -> trip.ProcessPinUploadRequest
-	136, // 118: trip.TripService.GetPinUploadReview:input_type -> trip.GetPinUploadReviewRequest
-	138, // 119: trip.TripService.FinalizePinUpload:input_type -> trip.FinalizePinUploadRequest
-	140, // 120: trip.TripService.CancelPinUpload:input_type -> trip.CancelPinUploadRequest
-	142, // 121: trip.TripService.GetRecommendations:input_type -> trip.GetRecommendationsRequest
-	146, // 122: trip.TripService.SaveRecommendation:input_type -> trip.SaveRecommendationRequest
-	3,   // 123: trip.TripService.CreateTrip:output_type -> trip.CreateTripResponse
-	8,   // 124: trip.TripService.GetTrip:output_type -> trip.GetTripResponse
-	13,  // 125: trip.TripService.ListUserTrips:output_type -> trip.ListUserTripsResponse
-	15,  // 126: trip.TripService.UpdateTrip:output_type -> trip.UpdateTripResponse
-	17,  // 127: trip.TripService.DeleteTrip:output_type -> trip.DeleteTripResponse
-	117, // 128: trip.TripService.UpsertTripPrivacy:output_type -> trip.UpsertPrivacyResponse
-	117, // 129: trip.TripService.UpsertPinPrivacy:output_type -> trip.UpsertPrivacyResponse
-	117, // 130: trip.TripService.UpsertMediaPrivacy:output_type -> trip.UpsertPrivacyResponse
-	19,  // 131: trip.TripService.RequestTripCoverUpload:output_type -> trip.RequestTripCoverUploadResponse
-	21,  // 132: trip.TripService.ConfirmTripCoverUpload:output_type -> trip.ConfirmTripCoverUploadResponse
-	23,  // 133: trip.TripService.DeleteTripCover:output_type -> trip.DeleteTripCoverResponse
-	43,  // 134: trip.TripService.GenerateInviteLink:output_type -> trip.GenerateInviteLinkResponse
-	45,  // 135: trip.TripService.JoinTripByToken:output_type -> trip.JoinTripByTokenResponse
-	47,  // 136: trip.TripService.RemoveParticipant:output_type -> trip.RemoveParticipantResponse
-	49,  // 137: trip.TripService.LeaveTrip:output_type -> trip.LeaveTripResponse
-	51,  // 138: trip.TripService.TransferAdmin:output_type -> trip.TransferAdminResponse
-	28,  // 139: trip.TripService.ProcessMediaGrouping:output_type -> trip.ProcessMediaGroupingResponse
-	33,  // 140: trip.TripService.ApplyGroupsAndProcess:output_type -> trip.ApplyGroupsAndProcessResponse
-	35,  // 141: trip.TripService.GetTripReview:output_type -> trip.GetTripReviewResponse
-	41,  // 142: trip.TripService.FinalizeTrip:output_type -> trip.FinalizeTripResponse
-	25,  // 143: trip.TripService.PublishTrip:output_type -> trip.PublishTripResponse
-	53,  // 144: trip.TripService.UpdateTripSettings:output_type -> trip.UpdateTripSettingsResponse
-	58,  // 145: trip.TripService.ListFeed:output_type -> trip.ListFeedResponse
-	60,  // 146: trip.TripService.LikeTrip:output_type -> trip.LikeTripResponse
-	62,  // 147: trip.TripService.DislikeTrip:output_type -> trip.DislikeTripResponse
-	64,  // 148: trip.TripService.AddToFavourites:output_type -> trip.AddToFavouritesResponse
-	66,  // 149: trip.TripService.RemoveFromFavourites:output_type -> trip.RemoveFromFavouritesResponse
-	68,  // 150: trip.TripService.ListFavourites:output_type -> trip.ListFavouritesResponse
-	70,  // 151: trip.TripService.AddMediaStart:output_type -> trip.AddMediaStartResponse
-	72,  // 152: trip.TripService.AddMediaRequestUploadUrls:output_type -> trip.AddMediaRequestUploadUrlsResponse
-	74,  // 153: trip.TripService.AddMediaCommitUpload:output_type -> trip.AddMediaCommitUploadResponse
-	76,  // 154: trip.TripService.AddMediaGetSessionMedia:output_type -> trip.AddMediaGetSessionMediaResponse
-	79,  // 155: trip.TripService.AddMediaProcessGrouping:output_type -> trip.AddMediaProcessGroupingResponse
-	81,  // 156: trip.TripService.AddMediaGetGrouping:output_type -> trip.AddMediaGetGroupingResponse
-	83,  // 157: trip.TripService.AddMediaApplyGroupsAndProcess:output_type -> trip.AddMediaApplyGroupsAndProcessResponse
-	85,  // 158: trip.TripService.AddMediaGetReview:output_type -> trip.AddMediaGetReviewResponse
-	87,  // 159: trip.TripService.AddMediaConfirm:output_type -> trip.AddMediaConfirmResponse
-	89,  // 160: trip.TripService.AddMediaCancel:output_type -> trip.AddMediaCancelResponse
-	91,  // 161: trip.TripService.AddMediaTakeover:output_type -> trip.AddMediaTakeoverResponse
-	94,  // 162: trip.TripService.ListUserTripSummaries:output_type -> trip.ListUserTripSummariesResponse
-	97,  // 163: trip.TripService.StartBattle:output_type -> trip.StartBattleResponse
-	99,  // 164: trip.TripService.SubmitBattleResult:output_type -> trip.SubmitBattleResultResponse
-	102, // 165: trip.TripService.GetBestMemories:output_type -> trip.GetBestMemoriesResponse
-	104, // 166: trip.TripService.GetNotificationSettings:output_type -> trip.GetNotificationSettingsResponse
-	107, // 167: trip.TripService.ListAnniversaryTrips:output_type -> trip.ListAnniversaryTripsResponse
-	109, // 168: trip.TripService.ListEndedMonthAgoTrips:output_type -> trip.ListEndedMonthAgoTripsResponse
-	111, // 169: trip.TripService.ListTripParticipants:output_type -> trip.ListTripParticipantsResponse
-	113, // 170: trip.TripService.SearchPins:output_type -> trip.SearchPinsResponse
-	119, // 171: trip.TripService.GetPin:output_type -> trip.GetPinResponse
-	121, // 172: trip.TripService.UpdatePin:output_type -> trip.UpdatePinResponse
-	123, // 173: trip.TripService.DeletePin:output_type -> trip.DeletePinResponse
-	125, // 174: trip.TripService.RemoveMediaFromPin:output_type -> trip.RemoveMediaFromPinResponse
-	127, // 175: trip.TripService.PinUploadStart:output_type -> trip.PinUploadStartResponse
-	129, // 176: trip.TripService.RequestPinUploadUrls:output_type -> trip.RequestPinUploadUrlsResponse
-	131, // 177: trip.TripService.CommitPinUpload:output_type -> trip.CommitPinUploadResponse
-	133, // 178: trip.TripService.ProcessPinUpload:output_type -> trip.ProcessPinUploadResponse
-	137, // 179: trip.TripService.GetPinUploadReview:output_type -> trip.GetPinUploadReviewResponse
-	139, // 180: trip.TripService.FinalizePinUpload:output_type -> trip.FinalizePinUploadResponse
-	141, // 181: trip.TripService.CancelPinUpload:output_type -> trip.CancelPinUploadResponse
-	145, // 182: trip.TripService.GetRecommendations:output_type -> trip.GetRecommendationsResponse
-	147, // 183: trip.TripService.SaveRecommendation:output_type -> trip.SaveRecommendationResponse
-	123, // [123:184] is the sub-list for method output_type
-	62,  // [62:123] is the sub-list for method input_type
-	62,  // [62:62] is the sub-list for extension type_name
-	62,  // [62:62] is the sub-list for extension extendee
-	0,   // [0:62] is the sub-list for field type_name
+	36,  // 36: trip.AddMediaGetReviewResponse.similar:type_name -> trip.MediaSimilarGroup
+	40,  // 37: trip.AddMediaConfirmRequest.pin_updates:type_name -> trip.PinUpdate
+	92,  // 38: trip.ListUserTripSummariesResponse.trips:type_name -> trip.TripSummary
+	96,  // 39: trip.StartBattleResponse.media:type_name -> trip.BattleMedia
+	101, // 40: trip.GetBestMemoriesResponse.media:type_name -> trip.BestMemory
+	148, // 41: trip.GetNotificationSettingsResponse.notifications_enabled:type_name -> trip.GetNotificationSettingsResponse.NotificationsEnabledEntry
+	105, // 42: trip.ListAnniversaryTripsResponse.trips:type_name -> trip.NotificationTrip
+	105, // 43: trip.ListEndedMonthAgoTripsResponse.trips:type_name -> trip.NotificationTrip
+	6,   // 44: trip.SearchPinsResponse.pins:type_name -> trip.TripPin
+	6,   // 45: trip.GetPinResponse.pin:type_name -> trip.TripPin
+	6,   // 46: trip.UpdatePinResponse.pin:type_name -> trip.TripPin
+	6,   // 47: trip.RemoveMediaFromPinResponse.pin:type_name -> trip.TripPin
+	2,   // 48: trip.PinUploadStartRequest.files_to_upload:type_name -> trip.FileToUpload
+	4,   // 49: trip.PinUploadStartResponse.upload_urls:type_name -> trip.UploadUrl
+	2,   // 50: trip.RequestPinUploadUrlsRequest.files_to_upload:type_name -> trip.FileToUpload
+	4,   // 51: trip.RequestPinUploadUrlsResponse.upload_urls:type_name -> trip.UploadUrl
+	135, // 52: trip.PinUploadDraft.suggested:type_name -> trip.PinSuggestedFields
+	38,  // 53: trip.PinUploadDraft.media:type_name -> trip.ReviewPinMedia
+	134, // 54: trip.GetPinUploadReviewResponse.draft:type_name -> trip.PinUploadDraft
+	36,  // 55: trip.GetPinUploadReviewResponse.similar:type_name -> trip.MediaSimilarGroup
+	6,   // 56: trip.FinalizePinUploadResponse.pin:type_name -> trip.TripPin
+	55,  // 57: trip.RecommendedPin.media:type_name -> trip.FeedMedia
+	143, // 58: trip.RecommendedMap.pins:type_name -> trip.RecommendedPin
+	0,   // 59: trip.RecommendedMap.trip:type_name -> trip.Trip
+	55,  // 60: trip.RecommendedMap.media:type_name -> trip.FeedMedia
+	144, // 61: trip.GetRecommendationsResponse.map:type_name -> trip.RecommendedMap
+	0,   // 62: trip.SaveRecommendationResponse.trip:type_name -> trip.Trip
+	1,   // 63: trip.TripService.CreateTrip:input_type -> trip.CreateTripRequest
+	5,   // 64: trip.TripService.GetTrip:input_type -> trip.GetTripRequest
+	12,  // 65: trip.TripService.ListUserTrips:input_type -> trip.ListUserTripsRequest
+	14,  // 66: trip.TripService.UpdateTrip:input_type -> trip.UpdateTripRequest
+	16,  // 67: trip.TripService.DeleteTrip:input_type -> trip.DeleteTripRequest
+	114, // 68: trip.TripService.UpsertTripPrivacy:input_type -> trip.UpsertTripPrivacyRequest
+	115, // 69: trip.TripService.UpsertPinPrivacy:input_type -> trip.UpsertPinPrivacyRequest
+	116, // 70: trip.TripService.UpsertMediaPrivacy:input_type -> trip.UpsertMediaPrivacyRequest
+	18,  // 71: trip.TripService.RequestTripCoverUpload:input_type -> trip.RequestTripCoverUploadRequest
+	20,  // 72: trip.TripService.ConfirmTripCoverUpload:input_type -> trip.ConfirmTripCoverUploadRequest
+	22,  // 73: trip.TripService.DeleteTripCover:input_type -> trip.DeleteTripCoverRequest
+	42,  // 74: trip.TripService.GenerateInviteLink:input_type -> trip.GenerateInviteLinkRequest
+	44,  // 75: trip.TripService.JoinTripByToken:input_type -> trip.JoinTripByTokenRequest
+	46,  // 76: trip.TripService.RemoveParticipant:input_type -> trip.RemoveParticipantRequest
+	48,  // 77: trip.TripService.LeaveTrip:input_type -> trip.LeaveTripRequest
+	50,  // 78: trip.TripService.TransferAdmin:input_type -> trip.TransferAdminRequest
+	26,  // 79: trip.TripService.ProcessMediaGrouping:input_type -> trip.ProcessMediaGroupingRequest
+	31,  // 80: trip.TripService.ApplyGroupsAndProcess:input_type -> trip.ApplyGroupsAndProcessRequest
+	34,  // 81: trip.TripService.GetTripReview:input_type -> trip.GetTripReviewRequest
+	39,  // 82: trip.TripService.FinalizeTrip:input_type -> trip.FinalizeTripRequest
+	24,  // 83: trip.TripService.PublishTrip:input_type -> trip.PublishTripRequest
+	52,  // 84: trip.TripService.UpdateTripSettings:input_type -> trip.UpdateTripSettingsRequest
+	54,  // 85: trip.TripService.ListFeed:input_type -> trip.ListFeedRequest
+	59,  // 86: trip.TripService.LikeTrip:input_type -> trip.LikeTripRequest
+	61,  // 87: trip.TripService.DislikeTrip:input_type -> trip.DislikeTripRequest
+	63,  // 88: trip.TripService.AddToFavourites:input_type -> trip.AddToFavouritesRequest
+	65,  // 89: trip.TripService.RemoveFromFavourites:input_type -> trip.RemoveFromFavouritesRequest
+	67,  // 90: trip.TripService.ListFavourites:input_type -> trip.ListFavouritesRequest
+	69,  // 91: trip.TripService.AddMediaStart:input_type -> trip.AddMediaStartRequest
+	71,  // 92: trip.TripService.AddMediaRequestUploadUrls:input_type -> trip.AddMediaRequestUploadUrlsRequest
+	73,  // 93: trip.TripService.AddMediaCommitUpload:input_type -> trip.AddMediaCommitUploadRequest
+	75,  // 94: trip.TripService.AddMediaGetSessionMedia:input_type -> trip.AddMediaGetSessionMediaRequest
+	78,  // 95: trip.TripService.AddMediaProcessGrouping:input_type -> trip.AddMediaProcessGroupingRequest
+	80,  // 96: trip.TripService.AddMediaGetGrouping:input_type -> trip.AddMediaGetGroupingRequest
+	82,  // 97: trip.TripService.AddMediaApplyGroupsAndProcess:input_type -> trip.AddMediaApplyGroupsAndProcessRequest
+	84,  // 98: trip.TripService.AddMediaGetReview:input_type -> trip.AddMediaGetReviewRequest
+	86,  // 99: trip.TripService.AddMediaConfirm:input_type -> trip.AddMediaConfirmRequest
+	88,  // 100: trip.TripService.AddMediaCancel:input_type -> trip.AddMediaCancelRequest
+	90,  // 101: trip.TripService.AddMediaTakeover:input_type -> trip.AddMediaTakeoverRequest
+	93,  // 102: trip.TripService.ListUserTripSummaries:input_type -> trip.ListUserTripSummariesRequest
+	95,  // 103: trip.TripService.StartBattle:input_type -> trip.StartBattleRequest
+	98,  // 104: trip.TripService.SubmitBattleResult:input_type -> trip.SubmitBattleResultRequest
+	100, // 105: trip.TripService.GetBestMemories:input_type -> trip.GetBestMemoriesRequest
+	103, // 106: trip.TripService.GetNotificationSettings:input_type -> trip.GetNotificationSettingsRequest
+	106, // 107: trip.TripService.ListAnniversaryTrips:input_type -> trip.ListAnniversaryTripsRequest
+	108, // 108: trip.TripService.ListEndedMonthAgoTrips:input_type -> trip.ListEndedMonthAgoTripsRequest
+	110, // 109: trip.TripService.ListTripParticipants:input_type -> trip.ListTripParticipantsRequest
+	112, // 110: trip.TripService.SearchPins:input_type -> trip.SearchPinsRequest
+	118, // 111: trip.TripService.GetPin:input_type -> trip.GetPinRequest
+	120, // 112: trip.TripService.UpdatePin:input_type -> trip.UpdatePinRequest
+	122, // 113: trip.TripService.DeletePin:input_type -> trip.DeletePinRequest
+	124, // 114: trip.TripService.RemoveMediaFromPin:input_type -> trip.RemoveMediaFromPinRequest
+	126, // 115: trip.TripService.PinUploadStart:input_type -> trip.PinUploadStartRequest
+	128, // 116: trip.TripService.RequestPinUploadUrls:input_type -> trip.RequestPinUploadUrlsRequest
+	130, // 117: trip.TripService.CommitPinUpload:input_type -> trip.CommitPinUploadRequest
+	132, // 118: trip.TripService.ProcessPinUpload:input_type -> trip.ProcessPinUploadRequest
+	136, // 119: trip.TripService.GetPinUploadReview:input_type -> trip.GetPinUploadReviewRequest
+	138, // 120: trip.TripService.FinalizePinUpload:input_type -> trip.FinalizePinUploadRequest
+	140, // 121: trip.TripService.CancelPinUpload:input_type -> trip.CancelPinUploadRequest
+	142, // 122: trip.TripService.GetRecommendations:input_type -> trip.GetRecommendationsRequest
+	146, // 123: trip.TripService.SaveRecommendation:input_type -> trip.SaveRecommendationRequest
+	3,   // 124: trip.TripService.CreateTrip:output_type -> trip.CreateTripResponse
+	8,   // 125: trip.TripService.GetTrip:output_type -> trip.GetTripResponse
+	13,  // 126: trip.TripService.ListUserTrips:output_type -> trip.ListUserTripsResponse
+	15,  // 127: trip.TripService.UpdateTrip:output_type -> trip.UpdateTripResponse
+	17,  // 128: trip.TripService.DeleteTrip:output_type -> trip.DeleteTripResponse
+	117, // 129: trip.TripService.UpsertTripPrivacy:output_type -> trip.UpsertPrivacyResponse
+	117, // 130: trip.TripService.UpsertPinPrivacy:output_type -> trip.UpsertPrivacyResponse
+	117, // 131: trip.TripService.UpsertMediaPrivacy:output_type -> trip.UpsertPrivacyResponse
+	19,  // 132: trip.TripService.RequestTripCoverUpload:output_type -> trip.RequestTripCoverUploadResponse
+	21,  // 133: trip.TripService.ConfirmTripCoverUpload:output_type -> trip.ConfirmTripCoverUploadResponse
+	23,  // 134: trip.TripService.DeleteTripCover:output_type -> trip.DeleteTripCoverResponse
+	43,  // 135: trip.TripService.GenerateInviteLink:output_type -> trip.GenerateInviteLinkResponse
+	45,  // 136: trip.TripService.JoinTripByToken:output_type -> trip.JoinTripByTokenResponse
+	47,  // 137: trip.TripService.RemoveParticipant:output_type -> trip.RemoveParticipantResponse
+	49,  // 138: trip.TripService.LeaveTrip:output_type -> trip.LeaveTripResponse
+	51,  // 139: trip.TripService.TransferAdmin:output_type -> trip.TransferAdminResponse
+	28,  // 140: trip.TripService.ProcessMediaGrouping:output_type -> trip.ProcessMediaGroupingResponse
+	33,  // 141: trip.TripService.ApplyGroupsAndProcess:output_type -> trip.ApplyGroupsAndProcessResponse
+	35,  // 142: trip.TripService.GetTripReview:output_type -> trip.GetTripReviewResponse
+	41,  // 143: trip.TripService.FinalizeTrip:output_type -> trip.FinalizeTripResponse
+	25,  // 144: trip.TripService.PublishTrip:output_type -> trip.PublishTripResponse
+	53,  // 145: trip.TripService.UpdateTripSettings:output_type -> trip.UpdateTripSettingsResponse
+	58,  // 146: trip.TripService.ListFeed:output_type -> trip.ListFeedResponse
+	60,  // 147: trip.TripService.LikeTrip:output_type -> trip.LikeTripResponse
+	62,  // 148: trip.TripService.DislikeTrip:output_type -> trip.DislikeTripResponse
+	64,  // 149: trip.TripService.AddToFavourites:output_type -> trip.AddToFavouritesResponse
+	66,  // 150: trip.TripService.RemoveFromFavourites:output_type -> trip.RemoveFromFavouritesResponse
+	68,  // 151: trip.TripService.ListFavourites:output_type -> trip.ListFavouritesResponse
+	70,  // 152: trip.TripService.AddMediaStart:output_type -> trip.AddMediaStartResponse
+	72,  // 153: trip.TripService.AddMediaRequestUploadUrls:output_type -> trip.AddMediaRequestUploadUrlsResponse
+	74,  // 154: trip.TripService.AddMediaCommitUpload:output_type -> trip.AddMediaCommitUploadResponse
+	76,  // 155: trip.TripService.AddMediaGetSessionMedia:output_type -> trip.AddMediaGetSessionMediaResponse
+	79,  // 156: trip.TripService.AddMediaProcessGrouping:output_type -> trip.AddMediaProcessGroupingResponse
+	81,  // 157: trip.TripService.AddMediaGetGrouping:output_type -> trip.AddMediaGetGroupingResponse
+	83,  // 158: trip.TripService.AddMediaApplyGroupsAndProcess:output_type -> trip.AddMediaApplyGroupsAndProcessResponse
+	85,  // 159: trip.TripService.AddMediaGetReview:output_type -> trip.AddMediaGetReviewResponse
+	87,  // 160: trip.TripService.AddMediaConfirm:output_type -> trip.AddMediaConfirmResponse
+	89,  // 161: trip.TripService.AddMediaCancel:output_type -> trip.AddMediaCancelResponse
+	91,  // 162: trip.TripService.AddMediaTakeover:output_type -> trip.AddMediaTakeoverResponse
+	94,  // 163: trip.TripService.ListUserTripSummaries:output_type -> trip.ListUserTripSummariesResponse
+	97,  // 164: trip.TripService.StartBattle:output_type -> trip.StartBattleResponse
+	99,  // 165: trip.TripService.SubmitBattleResult:output_type -> trip.SubmitBattleResultResponse
+	102, // 166: trip.TripService.GetBestMemories:output_type -> trip.GetBestMemoriesResponse
+	104, // 167: trip.TripService.GetNotificationSettings:output_type -> trip.GetNotificationSettingsResponse
+	107, // 168: trip.TripService.ListAnniversaryTrips:output_type -> trip.ListAnniversaryTripsResponse
+	109, // 169: trip.TripService.ListEndedMonthAgoTrips:output_type -> trip.ListEndedMonthAgoTripsResponse
+	111, // 170: trip.TripService.ListTripParticipants:output_type -> trip.ListTripParticipantsResponse
+	113, // 171: trip.TripService.SearchPins:output_type -> trip.SearchPinsResponse
+	119, // 172: trip.TripService.GetPin:output_type -> trip.GetPinResponse
+	121, // 173: trip.TripService.UpdatePin:output_type -> trip.UpdatePinResponse
+	123, // 174: trip.TripService.DeletePin:output_type -> trip.DeletePinResponse
+	125, // 175: trip.TripService.RemoveMediaFromPin:output_type -> trip.RemoveMediaFromPinResponse
+	127, // 176: trip.TripService.PinUploadStart:output_type -> trip.PinUploadStartResponse
+	129, // 177: trip.TripService.RequestPinUploadUrls:output_type -> trip.RequestPinUploadUrlsResponse
+	131, // 178: trip.TripService.CommitPinUpload:output_type -> trip.CommitPinUploadResponse
+	133, // 179: trip.TripService.ProcessPinUpload:output_type -> trip.ProcessPinUploadResponse
+	137, // 180: trip.TripService.GetPinUploadReview:output_type -> trip.GetPinUploadReviewResponse
+	139, // 181: trip.TripService.FinalizePinUpload:output_type -> trip.FinalizePinUploadResponse
+	141, // 182: trip.TripService.CancelPinUpload:output_type -> trip.CancelPinUploadResponse
+	145, // 183: trip.TripService.GetRecommendations:output_type -> trip.GetRecommendationsResponse
+	147, // 184: trip.TripService.SaveRecommendation:output_type -> trip.SaveRecommendationResponse
+	124, // [124:185] is the sub-list for method output_type
+	63,  // [63:124] is the sub-list for method input_type
+	63,  // [63:63] is the sub-list for extension type_name
+	63,  // [63:63] is the sub-list for extension extendee
+	0,   // [0:63] is the sub-list for field type_name
 }
 
 func init() { file_trip_proto_init() }

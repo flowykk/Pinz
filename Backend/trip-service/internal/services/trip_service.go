@@ -30,28 +30,28 @@ const initiatorTakeoverTimeout = time.Hour
 
 type TripService struct {
 	pb.UnimplementedTripServiceServer
-	tripRepo repositories.TripRepositoryInterface
-	participantRepo repositories.TripParticipantRepositoryInterface
-	inviteRepo repositories.InvitationLinkRepositoryInterface
-	settingsRepo repositories.TripSettingsRepositoryInterface
-	eventRepo repositories.TripEventPublisher
-	mediaRepo repositories.MediaRepositoryInterface
-	mediaURLs MediaURLResolver
-	pinRepo repositories.PinRepositoryInterface
-	tagRepo repositories.TagRepositoryInterface
-	socialRepo repositories.SocialRepositoryInterface
-	favouriteRepo repositories.FavouriteRepositoryInterface
-	geoRepo repositories.GeoRegistryRepositoryInterface
-	addMediaSessionRepo repositories.AddMediaSessionRepositoryInterface
-	battleRepo repositories.MediaBattleRepositoryInterface
-	tripPrivacyRepo repositories.TripPrivacyRepositoryInterface
-	pinPrivacyRepo repositories.PinPrivacyRepositoryInterface
-	mediaPrivacyRepo repositories.MediaPrivacyRepositoryInterface
-	pinHiddenRepo repositories.PinHiddenRepositoryInterface
+	tripRepo             repositories.TripRepositoryInterface
+	participantRepo      repositories.TripParticipantRepositoryInterface
+	inviteRepo           repositories.InvitationLinkRepositoryInterface
+	settingsRepo         repositories.TripSettingsRepositoryInterface
+	eventRepo            repositories.TripEventPublisher
+	mediaRepo            repositories.MediaRepositoryInterface
+	mediaURLs            MediaURLResolver
+	pinRepo              repositories.PinRepositoryInterface
+	tagRepo              repositories.TagRepositoryInterface
+	socialRepo           repositories.SocialRepositoryInterface
+	favouriteRepo        repositories.FavouriteRepositoryInterface
+	geoRepo              repositories.GeoRegistryRepositoryInterface
+	addMediaSessionRepo  repositories.AddMediaSessionRepositoryInterface
+	battleRepo           repositories.MediaBattleRepositoryInterface
+	tripPrivacyRepo      repositories.TripPrivacyRepositoryInterface
+	pinPrivacyRepo       repositories.PinPrivacyRepositoryInterface
+	mediaPrivacyRepo     repositories.MediaPrivacyRepositoryInterface
+	pinHiddenRepo        repositories.PinHiddenRepositoryInterface
 	pinUploadSessionRepo repositories.PinUploadSessionRepositoryInterface
-	recSnapshotRepo repositories.RecommendationSnapshotRepositoryInterface
-	mlBroker repositories.MLBroker
-	processing processingStrategy
+	recSnapshotRepo      repositories.RecommendationSnapshotRepositoryInterface
+	mlBroker             repositories.MLBroker
+	processing           processingStrategy
 }
 
 // Без брокера сервис работает в stub-режиме без публикации ML.
@@ -60,10 +60,10 @@ func (s *TripService) SetMLBroker(broker repositories.MLBroker) {
 }
 
 type procParams struct {
-	mlFlow string
+	mlFlow      string
 	finalStatus string
-	newPinIDs []string
-	pending []string
+	newPinIDs   []string
+	pending     []string
 }
 
 type processingStrategy interface {
@@ -113,26 +113,26 @@ func NewTripService(
 	recSnapshotRepo repositories.RecommendationSnapshotRepositoryInterface,
 ) *TripService {
 	s := &TripService{
-		tripRepo: tripRepo,
-		participantRepo: participantRepo,
-		inviteRepo: inviteRepo,
-		settingsRepo: settingsRepo,
-		eventRepo: eventRepo,
-		mediaRepo: mediaRepo,
-		mediaURLs: mediaURLs,
-		pinRepo: pinRepo,
-		tagRepo: tagRepo,
-		socialRepo: socialRepo,
-		favouriteRepo: favouriteRepo,
-		geoRepo: geoRepo,
-		addMediaSessionRepo: addMediaSessionRepo,
-		battleRepo: battleRepo,
-		tripPrivacyRepo: tripPrivacyRepo,
-		pinPrivacyRepo: pinPrivacyRepo,
-		mediaPrivacyRepo: mediaPrivacyRepo,
-		pinHiddenRepo: pinHiddenRepo,
+		tripRepo:             tripRepo,
+		participantRepo:      participantRepo,
+		inviteRepo:           inviteRepo,
+		settingsRepo:         settingsRepo,
+		eventRepo:            eventRepo,
+		mediaRepo:            mediaRepo,
+		mediaURLs:            mediaURLs,
+		pinRepo:              pinRepo,
+		tagRepo:              tagRepo,
+		socialRepo:           socialRepo,
+		favouriteRepo:        favouriteRepo,
+		geoRepo:              geoRepo,
+		addMediaSessionRepo:  addMediaSessionRepo,
+		battleRepo:           battleRepo,
+		tripPrivacyRepo:      tripPrivacyRepo,
+		pinPrivacyRepo:       pinPrivacyRepo,
+		mediaPrivacyRepo:     mediaPrivacyRepo,
+		pinHiddenRepo:        pinHiddenRepo,
 		pinUploadSessionRepo: pinUploadSessionRepo,
-		recSnapshotRepo: recSnapshotRepo,
+		recSnapshotRepo:      recSnapshotRepo,
 	}
 	s.processing = syncProcessing{s}
 	return s
@@ -175,17 +175,17 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	// privacy_level — DEFAULT 'private' в БД; ставим явно для надёжности.
 	// Per-user уровень хранится в trip_privacy и меняется через UpsertTripPrivacy.
 	trip := &models.Trip{
-		OwnerUserID: userID,
-		Name: name,
-		Description: req.GetDescription(),
-		Category: category,
-		Season: season,
-		Status: tripStatus,
-		PrivacyLevel: "private",
-		LikesCount: 0,
+		OwnerUserID:   userID,
+		Name:          name,
+		Description:   req.GetDescription(),
+		Category:      category,
+		Season:        season,
+		Status:        tripStatus,
+		PrivacyLevel:  "private",
+		LikesCount:    0,
 		DislikesCount: 0,
-		IsPublished: false,
-		IsGenerated: false,
+		IsPublished:   false,
+		IsGenerated:   false,
 	}
 	if err := s.tripRepo.Create(trip); err != nil {
 		return nil, status.Error(codes.Internal, "failed to create trip")
@@ -217,16 +217,16 @@ func (s *TripService) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 		}
 		uploadUrls = append(uploadUrls, &pb.UploadUrl{
 			ClientId: f.GetClientId(),
-			S3Key: s3Key,
-			Url: url,
+			S3Key:    s3Key,
+			Url:      url,
 		})
 	}
 	tripName := trip.Name
 	tripDesc := trip.Description
 	PublishTripTextModeration(ctx, s.mlBroker, trip.ID, &tripName, &tripDesc)
 	return &pb.CreateTripResponse{
-		TripId: trip.ID,
-		Status: trip.Status,
+		TripId:     trip.ID,
+		Status:     trip.Status,
 		UploadUrls: uploadUrls,
 	}, nil
 }
@@ -351,11 +351,11 @@ func (s *TripService) getTripResponseWithPins(ctx context.Context, trip *models.
 	}
 	participants, settings := s.buildParticipantsAndSettings(ctx, trip.ID, callerUserID)
 	return &pb.GetTripResponse{
-		Trip: s.tripToProto(ctx, trip),
-		Pins: outPins,
+		Trip:                  s.tripToProto(ctx, trip),
+		Pins:                  outPins,
 		ActiveAddMediaSession: activeProto,
-		Participants: participants,
-		CurrentUserSettings: settings,
+		Participants:          participants,
+		CurrentUserSettings:   settings,
 	}, nil
 }
 
@@ -397,9 +397,9 @@ func (s *TripService) buildParticipantsAndSettings(ctx context.Context, tripID, 
 			role = "admin"
 		}
 		out = append(out, &pb.TripParticipant{
-			UserId: p.UserID,
+			UserId:       p.UserID,
 			PrivacyLevel: level,
-			Role: role,
+			Role:         role,
 		})
 	}
 
@@ -447,7 +447,7 @@ func (s *TripService) buildActiveSessionProto(ctx context.Context, tripID string
 		mediaInSession = 0
 	}
 	out := &pb.ActiveAddMediaSession{
-		SessionId: active.SessionID,
+		SessionId:           active.SessionID,
 		MediaCountInSession: mediaInSession,
 	}
 	if active.CurrentInitiatorUserID != nil {
@@ -489,9 +489,9 @@ func (s *TripService) publishTripStatusChanged(ctx context.Context, tripID, newS
 		return
 	}
 	_ = s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventTripStatusChanged, map[string]interface{}{
-		"trip_id": tripID,
+		"trip_id":    tripID,
 		"new_status": newStatus,
-		"reason": reason,
+		"reason":     reason,
 	})
 }
 
@@ -539,9 +539,9 @@ func (s *TripService) executeTakeover(ctx context.Context, tripID, sessionID, pr
 	if s.eventRepo != nil {
 		takeoverAt := now.Add(initiatorTakeoverTimeout).Unix()
 		_ = s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventAddMediaInitiatorChanged, map[string]interface{}{
-			"session_id": sessionID,
+			"session_id":                 sessionID,
 			"previous_initiator_user_id": previousUserID,
-			"current_initiator_user_id": newUserID,
+			"current_initiator_user_id":  newUserID,
 			"takeover_available_at_unix": takeoverAt,
 		})
 	}
@@ -550,14 +550,14 @@ func (s *TripService) executeTakeover(ctx context.Context, tripID, sessionID, pr
 
 func (s *TripService) pinWithMediaToProto(ctx context.Context, pin *models.Pin, mediaList []*models.Media, tags []string) *pb.TripPin {
 	out := &pb.TripPin{
-		Id: pin.ID,
-		TripId: pin.TripID,
-		Name: pin.Name,
-		Description: pin.Description,
-		Category: pin.Category,
-		PrivacyLevel: pin.PrivacyLevel,
-		Tags: tags,
-		NameCensored: pin.NameCensored,
+		Id:                  pin.ID,
+		TripId:              pin.TripID,
+		Name:                pin.Name,
+		Description:         pin.Description,
+		Category:            pin.Category,
+		PrivacyLevel:        pin.PrivacyLevel,
+		Tags:                tags,
+		NameCensored:        pin.NameCensored,
 		DescriptionCensored: pin.DescriptionCensored,
 	}
 	if pin.Latitude != nil {
@@ -574,9 +574,9 @@ func (s *TripService) pinWithMediaToProto(ctx context.Context, pin *models.Pin, 
 	}
 	for _, m := range mediaList {
 		pm := &pb.TripPinMedia{
-			MediaId: m.ID,
-			Url: s.presignedReadURL(ctx, m.S3Key),
-			MediaType: m.MediaType,
+			MediaId:      m.ID,
+			Url:          s.presignedReadURL(ctx, m.S3Key),
+			MediaType:    m.MediaType,
 			PrivacyLevel: m.PrivacyLevel,
 		}
 		if m.CapturedAt != nil {
@@ -629,8 +629,8 @@ func (s *TripService) ListUserTripSummaries(ctx context.Context, req *pb.ListUse
 	out := make([]*pb.TripSummary, 0, len(summaries))
 	for _, s := range summaries {
 		out = append(out, &pb.TripSummary{
-			TripId: s.TripID,
-			PinsCount: s.PinsCount,
+			TripId:     s.TripID,
+			PinsCount:  s.PinsCount,
 			MediaCount: s.MediaCount,
 		})
 	}
@@ -1016,18 +1016,18 @@ func (s *TripService) GenerateInviteLink(ctx context.Context, req *pb.GenerateIn
 	expiresAt := time.Now().Add(time.Duration(expiresIn) * time.Second)
 	token := uuid.New().String()
 	link := &models.InvitationLink{
-		ID: uuid.New().String(),
-		TripID: tripID,
-		Token: token,
+		ID:        uuid.New().String(),
+		TripID:    tripID,
+		Token:     token,
 		ExpiresAt: expiresAt,
 	}
 	if err := s.inviteRepo.Create(link); err != nil {
 		return nil, status.Error(codes.Internal, "failed to create invite link")
 	}
 	return &pb.GenerateInviteLinkResponse{
-		InviteLinkId: link.ID,
-		Token: token,
-		InviteUrl: "", // клиент/gateway собирает URL по token
+		InviteLinkId:  link.ID,
+		Token:         token,
+		InviteUrl:     "", // клиент/gateway собирает URL по token
 		ExpiresAtUnix: expiresAt.Unix(),
 	}, nil
 }
@@ -1269,9 +1269,9 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 	batch := make([]*models.Media, 0, len(req.GetMedia()))
 	for _, meta := range req.GetMedia() {
 		media := &models.Media{
-			TripID: tripID,
-			S3Key: meta.GetS3Key(),
-			MediaType: meta.GetMediaType(),
+			TripID:       tripID,
+			S3Key:        meta.GetS3Key(),
+			MediaType:    meta.GetMediaType(),
 			BattleRating: 0,
 			PrivacyLevel: trip.PrivacyLevel,
 		}
@@ -1317,15 +1317,15 @@ func (s *TripService) ProcessMediaGrouping(ctx context.Context, req *pb.ProcessM
 			}
 			dp.Media = append(dp.Media, &pb.DraftPinMedia{
 				MediaId: m.ID,
-				Url: s.presignedReadURL(ctx, m.S3Key),
-				Type: m.MediaType,
+				Url:     s.presignedReadURL(ctx, m.S3Key),
+				Type:    m.MediaType,
 			})
 		}
 		respPins = append(respPins, dp)
 	}
 	return &pb.ProcessMediaGroupingResponse{
-		TripId: tripID,
-		Status: "DRAFT_GROUPING_REVIEW",
+		TripId:    tripID,
+		Status:    "DRAFT_GROUPING_REVIEW",
 		DraftPins: respPins,
 	}, nil
 }
@@ -1374,12 +1374,12 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 			continue
 		}
 		pin := &models.Pin{
-			TripID: tripID,
-			Name: "Pin",
-			Description: "",
-			Category: trip.Category,
+			TripID:       tripID,
+			Name:         "Pin",
+			Description:  "",
+			Category:     trip.Category,
 			PrivacyLevel: trip.PrivacyLevel,
-			MediaCount: int32(len(dp.GetMediaIds())),
+			MediaCount:   int32(len(dp.GetMediaIds())),
 		}
 		if err := s.pinRepo.Create(pin); err != nil {
 			return nil, status.Error(codes.Internal, "failed to create pin")
@@ -1397,7 +1397,7 @@ func (s *TripService) ApplyGroupsAndProcess(ctx context.Context, req *pb.ApplyGr
 	s.processing.run(ctx, tripID, procParams{mlFlow: MLFlowCreation, finalStatus: models.TripStatusDraftFinalReview})
 	return &pb.ApplyGroupsAndProcessResponse{
 		Message: "Processing started",
-		Status: models.TripStatusProcessing,
+		Status:  models.TripStatusProcessing,
 	}, nil
 }
 
@@ -1625,8 +1625,8 @@ func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRe
 		reviewMedia := make([]*pb.ReviewPinMedia, 0, len(pinMedia))
 		for _, m := range pinMedia {
 			reviewMedia = append(reviewMedia, &pb.ReviewPinMedia{
-				MediaId: m.ID,
-				Url: s.presignedReadURL(ctx, m.S3Key),
+				MediaId:      m.ID,
+				Url:          s.presignedReadURL(ctx, m.S3Key),
 				PrivacyLevel: m.PrivacyLevel,
 			})
 		}
@@ -1638,16 +1638,16 @@ func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRe
 			endUnix = pin.EndTime.Unix()
 		}
 		rp := &pb.ReviewPin{
-			PinId: pin.ID,
-			Name: pin.Name,
-			Category: pin.Category,
-			LocationName: pin.LocationName,
+			PinId:         pin.ID,
+			Name:          pin.Name,
+			Category:      pin.Category,
+			LocationName:  pin.LocationName,
 			StartTimeUnix: startUnix,
-			EndTimeUnix: endUnix,
-			Issues: issues,
-			Tags: tags,
-			Media: reviewMedia,
-			NameCensored: pin.NameCensored,
+			EndTimeUnix:   endUnix,
+			Issues:        issues,
+			Tags:          tags,
+			Media:         reviewMedia,
+			NameCensored:  pin.NameCensored,
 		}
 		if pin.Latitude != nil {
 			rp.Latitude = pin.Latitude
@@ -1658,10 +1658,10 @@ func (s *TripService) GetTripReview(ctx context.Context, req *pb.GetTripReviewRe
 		respPins = append(respPins, rp)
 	}
 	return &pb.GetTripReviewResponse{
-		TripId: tripID,
-		Status: trip.Status,
+		TripId:  tripID,
+		Status:  trip.Status,
 		Similar: similar,
-		Pins: respPins,
+		Pins:    respPins,
 	}, nil
 }
 
@@ -1824,10 +1824,10 @@ func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRe
 	// если сессия уже активна — мягкое присоединение (B1).
 	if active, err := s.addMediaSessionRepo.GetActive(ctx, tripID); err == nil {
 		return &pb.AddMediaStartResponse{
-			SessionId: active.SessionID,
-			Status: trip.Status,
+			SessionId:  active.SessionID,
+			Status:     trip.Status,
 			UploadUrls: nil,
-			Joined: true,
+			Joined:     true,
 		}, nil
 	} else if !errors.Is(err, repositories.ErrNoActiveSession) {
 		return nil, status.Error(codes.Internal, "failed to check active session")
@@ -1875,10 +1875,10 @@ func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRe
 				return nil, status.Error(codes.Internal, "failed to load race-created session")
 			}
 			return &pb.AddMediaStartResponse{
-				SessionId: active.SessionID,
-				Status: models.TripStatusAddMediaUploading,
+				SessionId:  active.SessionID,
+				Status:     models.TripStatusAddMediaUploading,
 				UploadUrls: nil,
-				Joined: true,
+				Joined:     true,
 			}, nil
 		}
 		return nil, status.Error(codes.Internal, "failed to create add-media session")
@@ -1898,8 +1898,8 @@ func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRe
 		}
 		uploadUrls = append(uploadUrls, &pb.UploadUrl{
 			ClientId: f.GetClientId(),
-			S3Key: s3Key,
-			Url: url,
+			S3Key:    s3Key,
+			Url:      url,
 		})
 	}
 	if err := s.tripRepo.SetStatus(tripID, models.TripStatusAddMediaUploading); err != nil {
@@ -1908,10 +1908,10 @@ func (s *TripService) AddMediaStart(ctx context.Context, req *pb.AddMediaStartRe
 	metrics.TripStatusChanged(ctx, models.TripStatusAddMediaUploading)
 	s.publishTripStatusChanged(ctx, tripID, models.TripStatusAddMediaUploading, "add_media_started")
 	return &pb.AddMediaStartResponse{
-		SessionId: sessionID,
-		Status: models.TripStatusAddMediaUploading,
+		SessionId:  sessionID,
+		Status:     models.TripStatusAddMediaUploading,
 		UploadUrls: uploadUrls,
-		Joined: false,
+		Joined:     false,
 	}, nil
 }
 
@@ -1975,8 +1975,8 @@ func (s *TripService) AddMediaRequestUploadUrls(ctx context.Context, req *pb.Add
 		}
 		uploadUrls = append(uploadUrls, &pb.UploadUrl{
 			ClientId: f.GetClientId(),
-			S3Key: s3Key,
-			Url: url,
+			S3Key:    s3Key,
+			Url:      url,
 		})
 	}
 	return &pb.AddMediaRequestUploadUrlsResponse{UploadUrls: uploadUrls}, nil
@@ -2011,11 +2011,11 @@ func (s *TripService) AddMediaCommitUpload(ctx context.Context, req *pb.AddMedia
 		return nil, status.Error(codes.InvalidArgument, "s3_key and media_type are required")
 	}
 	m := &models.Media{
-		TripID: tripID,
-		S3Key: s3Key,
-		MediaType: mediaType,
+		TripID:       tripID,
+		S3Key:        s3Key,
+		MediaType:    mediaType,
 		PrivacyLevel: trip.PrivacyLevel,
-		UploadedBy: &userID,
+		UploadedBy:   &userID,
 	}
 	if req.CapturedAtUnix != nil {
 		t := time.Unix(req.GetCapturedAtUnix(), 0)
@@ -2048,21 +2048,21 @@ func (s *TripService) AddMediaCommitUpload(ctx context.Context, req *pb.AddMedia
 	if s.eventRepo != nil {
 		url := s.presignedReadURL(ctx, s3Key)
 		_ = s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventAddMediaProgress, map[string]interface{}{
-			"action": "uploaded",
+			"action":        "uploaded",
 			"actor_user_id": userID,
-			"media_count": mediaCount,
-			"session_id": sessionID,
+			"media_count":   mediaCount,
+			"session_id":    sessionID,
 			"media": map[string]interface{}{
-				"media_id": m.ID,
+				"media_id":   m.ID,
 				"media_type": m.MediaType,
-				"url": url,
+				"url":        url,
 			},
 		})
 	}
 	return &pb.AddMediaCommitUploadResponse{
-		MediaId: m.ID,
+		MediaId:             m.ID,
 		MediaCountInSession: mediaCount - int32(len(existingIDsFromSession(ctx, s.addMediaSessionRepo, sessionID))),
-		RemainingSlots: remaining,
+		RemainingSlots:      remaining,
 	}, nil
 }
 
@@ -2112,16 +2112,16 @@ func (s *TripService) AddMediaGetSessionMedia(ctx context.Context, req *pb.AddMe
 			actor = *m.UploadedBy
 		}
 		out = append(out, &pb.SessionMedia{
-			MediaId: m.ID,
-			Url: url,
-			Type: m.MediaType,
-			ActorUserId: actor,
+			MediaId:        m.ID,
+			Url:            url,
+			Type:           m.MediaType,
+			ActorUserId:    actor,
 			UploadedAtUnix: m.CreatedAt.Unix(),
 		})
 	}
 	return &pb.AddMediaGetSessionMediaResponse{
-		SessionId: sessionID,
-		Media: out,
+		SessionId:           sessionID,
+		Media:               out,
 		MediaCountInSession: int32(len(out)),
 	}, nil
 }
@@ -2164,18 +2164,18 @@ func (s *TripService) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMe
 		}
 		if s.eventRepo != nil {
 			_ = s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventAddMediaProgress, map[string]interface{}{
-				"action": "rollback",
+				"action":        "rollback",
 				"actor_user_id": userID,
-				"session_id": sessionID,
+				"session_id":    sessionID,
 			})
 		}
 		s.publishTripStatusChanged(ctx, tripID, models.TripStatusAddMediaUploading, "add_media_rollback")
 		existingIDs, _, _ := s.addMediaSessionRepo.GetExistingMediaIDs(ctx, sessionID)
 		return &pb.AddMediaProcessGroupingResponse{
-			TripId: tripID,
-			SessionId: sessionID,
-			Status: models.TripStatusAddMediaUploading,
-			DraftPins: nil,
+			TripId:           tripID,
+			SessionId:        sessionID,
+			Status:           models.TripStatusAddMediaUploading,
+			DraftPins:        nil,
 			ExistingMediaIds: existingIDs,
 		}, nil
 	}
@@ -2195,10 +2195,10 @@ func (s *TripService) AddMediaProcessGrouping(ctx context.Context, req *pb.AddMe
 	}
 	s.publishTripStatusChanged(ctx, tripID, models.TripStatusAddMediaGroupingReview, "add_media_grouping")
 	return &pb.AddMediaProcessGroupingResponse{
-		TripId: tripID,
-		SessionId: sessionID,
-		Status: models.TripStatusAddMediaGroupingReview,
-		DraftPins: respPins,
+		TripId:           tripID,
+		SessionId:        sessionID,
+		Status:           models.TripStatusAddMediaGroupingReview,
+		DraftPins:        respPins,
 		ExistingMediaIds: existingIDs,
 	}, nil
 }
@@ -2231,9 +2231,9 @@ func (s *TripService) AddMediaGetGrouping(ctx context.Context, req *pb.AddMediaG
 		return nil, err
 	}
 	return &pb.AddMediaGetGroupingResponse{
-		TripId: tripID,
-		SessionId: sessionID,
-		DraftPins: respPins,
+		TripId:           tripID,
+		SessionId:        sessionID,
+		DraftPins:        respPins,
 		ExistingMediaIds: existingIDs,
 	}, nil
 }
@@ -2257,8 +2257,8 @@ func (s *TripService) buildDraftPinsForSession(ctx context.Context, tripID, sess
 			}
 			dp.Media = append(dp.Media, &pb.DraftPinMedia{
 				MediaId: m.ID,
-				Url: s.presignedReadURL(ctx, m.S3Key),
-				Type: m.MediaType,
+				Url:     s.presignedReadURL(ctx, m.S3Key),
+				Type:    m.MediaType,
 			})
 		}
 		respPins = append(respPins, dp)
@@ -2384,12 +2384,12 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 			}
 			sid := sessionID
 			pin := &models.Pin{
-				TripID: tripID,
-				Name: "Pin",
-				Description: "",
-				Category: trip.Category,
-				PrivacyLevel: trip.PrivacyLevel,
-				MediaCount: int32(len(newOnly)),
+				TripID:            tripID,
+				Name:              "Pin",
+				Description:       "",
+				Category:          trip.Category,
+				PrivacyLevel:      trip.PrivacyLevel,
+				MediaCount:        int32(len(newOnly)),
 				AddMediaSessionID: &sid,
 			}
 			if err := s.pinRepo.Create(pin); err != nil {
@@ -2427,14 +2427,14 @@ func (s *TripService) AddMediaApplyGroupsAndProcess(ctx context.Context, req *pb
 		_ = s.eventRepo.PublishTripEvent(ctx, "PIN_ADDED", tripID, userID)
 	}
 	s.processing.run(ctx, tripID, procParams{
-		mlFlow: MLFlowAddMedia,
+		mlFlow:      MLFlowAddMedia,
 		finalStatus: models.TripStatusAddMediaDraftFinalReview,
-		newPinIDs: newPinIDs,
-		pending: pendingExistingAttachments,
+		newPinIDs:   newPinIDs,
+		pending:     pendingExistingAttachments,
 	})
 	return &pb.AddMediaApplyGroupsAndProcessResponse{
 		Message: "Processing started",
-		Status: models.TripStatusAddMediaProcessing,
+		Status:  models.TripStatusAddMediaProcessing,
 	}, nil
 }
 
@@ -2481,6 +2481,7 @@ func (s *TripService) AddMediaGetReview(ctx context.Context, req *pb.AddMediaGet
 	}
 	outPins := make([]*pb.TripPin, 0, len(pins))
 	newPinIDs := make([]string, 0)
+	groupIDToIDs := make(map[string][]string)
 	for _, pin := range pins {
 		mediaList, err := s.mediaRepo.ListByPinID(pin.ID)
 		if err != nil {
@@ -2496,11 +2497,19 @@ func (s *TripService) AddMediaGetReview(ctx context.Context, req *pb.AddMediaGet
 		for _, m := range mediaList {
 			if _, wasBefore := existingSet[m.ID]; wasBefore {
 				isNew = false
-				break
+			}
+			if m.SimilarGroupID != nil && *m.SimilarGroupID != "" {
+				groupIDToIDs[*m.SimilarGroupID] = append(groupIDToIDs[*m.SimilarGroupID], m.ID)
 			}
 		}
 		if isNew {
 			newPinIDs = append(newPinIDs, pin.ID)
+		}
+	}
+	var similar []*pb.MediaSimilarGroup
+	for _, ids := range groupIDToIDs {
+		if len(ids) >= 2 {
+			similar = append(similar, &pb.MediaSimilarGroup{MediaIds: ids})
 		}
 	}
 	canEdit := false
@@ -2522,14 +2531,15 @@ func (s *TripService) AddMediaGetReview(ctx context.Context, req *pb.AddMediaGet
 		}
 	}
 	return &pb.AddMediaGetReviewResponse{
-		TripId: tripID,
-		SessionId: sessionID,
-		Pins: outPins,
-		NewPinIds: newPinIDs,
-		ProtectedMediaIds: active.ExistingMediaIDs,
-		CurrentInitiatorUserId: currentInitiator,
+		TripId:                  tripID,
+		SessionId:               sessionID,
+		Pins:                    outPins,
+		NewPinIds:               newPinIDs,
+		ProtectedMediaIds:       active.ExistingMediaIDs,
+		CurrentInitiatorUserId:  currentInitiator,
 		TakeoverAvailableAtUnix: takeoverAtUnix,
-		CanEdit: canEdit,
+		CanEdit:                 canEdit,
+		Similar:                 similar,
 	}, nil
 }
 
@@ -2555,7 +2565,7 @@ func (s *TripService) AddMediaConfirm(ctx context.Context, req *pb.AddMediaConfi
 		trip, terr := s.tripRepo.GetByID(tripID)
 		if terr == nil && trip.Status == models.TripStatusReady {
 			return &pb.AddMediaConfirmResponse{
-				Status: models.TripStatusReady,
+				Status:           models.TripStatusReady,
 				AlreadyConfirmed: true,
 			}, nil
 		}
@@ -2594,14 +2604,14 @@ func (s *TripService) AddMediaConfirm(ctx context.Context, req *pb.AddMediaConfi
 	if s.eventRepo != nil {
 		_ = s.eventRepo.PublishTripEvent(ctx, repositories.EventAddMediaSessionCompleted, tripID, userID)
 		_ = s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventTripStatusChanged, map[string]interface{}{
-			"trip_id": tripID,
+			"trip_id":    tripID,
 			"new_status": models.TripStatusReady,
 			"session_id": sessionID,
-			"reason": "add_media_confirmed",
+			"reason":     "add_media_confirmed",
 		})
 	}
 	return &pb.AddMediaConfirmResponse{
-		Status: models.TripStatusReady,
+		Status:           models.TripStatusReady,
 		AlreadyConfirmed: false,
 	}, nil
 }
@@ -2677,10 +2687,10 @@ func (s *TripService) AddMediaCancel(ctx context.Context, req *pb.AddMediaCancel
 	metrics.TripStatusChanged(ctx, models.TripStatusReady)
 	if s.eventRepo != nil {
 		_ = s.eventRepo.PublishTripEventWS(ctx, tripID, repositories.EventTripStatusChanged, map[string]interface{}{
-			"trip_id": tripID,
-			"new_status": models.TripStatusReady,
-			"session_id": sessionID,
-			"reason": "add_media_cancelled",
+			"trip_id":       tripID,
+			"new_status":    models.TripStatusReady,
+			"session_id":    sessionID,
+			"reason":        "add_media_cancelled",
 			"actor_user_id": userID,
 		})
 	}
@@ -3121,16 +3131,17 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 			protoPinMedia := make([]*pb.FeedMedia, len(pinMedia))
 			for k, fm := range pinMedia {
 				protoPinMedia[k] = &pb.FeedMedia{
-					MediaId: fm.ID,
-					Url: s.presignedReadURL(ctx, fm.S3Key),
+					MediaId:   fm.ID,
+					Url:       s.presignedReadURL(ctx, fm.S3Key),
 					MediaType: fm.MediaType,
 				}
 			}
 			protoPins[j] = &pb.FeedPin{
-				Id: fp.ID,
-				Latitude: fp.Latitude,
+				Id:        fp.ID,
+				Name:      fp.Name,
+				Latitude:  fp.Latitude,
 				Longitude: fp.Longitude,
-				Media: protoPinMedia,
+				Media:     protoPinMedia,
 			}
 		}
 
@@ -3138,8 +3149,8 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 		protoMedia := make([]*pb.FeedMedia, len(feedMedia))
 		for j, fm := range feedMedia {
 			protoMedia[j] = &pb.FeedMedia{
-				MediaId: fm.ID,
-				Url: s.presignedReadURL(ctx, fm.S3Key),
+				MediaId:   fm.ID,
+				Url:       s.presignedReadURL(ctx, fm.S3Key),
 				MediaType: fm.MediaType,
 			}
 		}
@@ -3147,12 +3158,12 @@ func (s *TripService) ListFeed(ctx context.Context, req *pb.ListFeedRequest) (*p
 		reaction := reactionsByTrip[t.ID]
 		_, saved := favouritesByTrip[t.ID]
 		items[i] = &pb.FeedItem{
-			Trip: s.tripToProto(ctx, t),
-			Pins: protoPins,
-			Media: protoMedia,
-			IsLiked: reaction == "like",
+			Trip:       s.tripToProto(ctx, t),
+			Pins:       protoPins,
+			Media:      protoMedia,
+			IsLiked:    reaction == "like",
 			IsDisliked: reaction == "dislike",
-			IsSaved: saved,
+			IsSaved:    saved,
 		}
 	}
 	return &pb.ListFeedResponse{Items: items}, nil
@@ -3172,7 +3183,7 @@ func (s *TripService) resolveFeedLocationIDs(ctx context.Context, city, country 
 		return nil, true, nil
 	}
 	var (
-		id int
+		id  int
 		err error
 	)
 	if city != "" {
@@ -3365,25 +3376,25 @@ func (s *TripService) tripToProto(ctx context.Context, t *models.Trip) *pb.Trip 
 		cover = s.presignedReadURL(ctx, t.CoverURL)
 	}
 	out := &pb.Trip{
-		Id: t.ID,
-		OwnerUserId: t.OwnerUserID,
-		Name: t.Name,
-		Description: t.Description,
-		Category: t.Category,
-		Season: t.Season,
-		Status: t.Status,
-		PrivacyLevel: t.PrivacyLevel,
-		LikesCount: t.LikesCount,
-		DislikesCount: t.DislikesCount,
-		CoverUrl: cover,
-		IsPublished: t.IsPublished,
-		IsGenerated: t.IsGenerated,
-		CreatedAtUnix: t.CreatedAt.Unix(),
-		UpdatedAtUnix: t.UpdatedAt.Unix(),
-		MediaCount: t.MediaCount,
-		ParticipantsCount: t.ParticipantsCount,
-		PinsCount: t.PinsCount,
-		NameCensored: t.NameCensored,
+		Id:                  t.ID,
+		OwnerUserId:         t.OwnerUserID,
+		Name:                t.Name,
+		Description:         t.Description,
+		Category:            t.Category,
+		Season:              t.Season,
+		Status:              t.Status,
+		PrivacyLevel:        t.PrivacyLevel,
+		LikesCount:          t.LikesCount,
+		DislikesCount:       t.DislikesCount,
+		CoverUrl:            cover,
+		IsPublished:         t.IsPublished,
+		IsGenerated:         t.IsGenerated,
+		CreatedAtUnix:       t.CreatedAt.Unix(),
+		UpdatedAtUnix:       t.UpdatedAt.Unix(),
+		MediaCount:          t.MediaCount,
+		ParticipantsCount:   t.ParticipantsCount,
+		PinsCount:           t.PinsCount,
+		NameCensored:        t.NameCensored,
 		DescriptionCensored: t.DescriptionCensored,
 	}
 	if t.StartDate != nil {
@@ -3456,12 +3467,12 @@ func toNotificationTrips(candidates []*repositories.NotificationTripCandidate) [
 	out := make([]*pb.NotificationTrip, 0, len(candidates))
 	for _, c := range candidates {
 		out = append(out, &pb.NotificationTrip{
-			TripId: c.TripID,
-			Name: c.Name,
+			TripId:             c.TripID,
+			Name:               c.Name,
 			ParticipantUserIds: c.Participants,
-			StartDateUnix: c.StartDateUnix,
-			EndDateUnix: c.EndDateUnix,
-			YearsElapsed: c.YearsElapsed,
+			StartDateUnix:      c.StartDateUnix,
+			EndDateUnix:        c.EndDateUnix,
+			YearsElapsed:       c.YearsElapsed,
 		})
 	}
 	return out

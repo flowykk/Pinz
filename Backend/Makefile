@@ -153,24 +153,34 @@ coverage-check:
 	@cd api-gateway-service && go test -short ./internal/handlers/... -coverprofile=coverage.out
 	@cd api-gateway-service && go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$$3); print "api-gateway-service internal/handlers:",$$3"%"; if ($$3+0 < $(MIN_COVER)+0) exit 1}'
 
+# Whole-service coverage; .coverignore (grep -E patterns) drops generated code and wiring from the profile.
+define filter-coverignore
+	cd $(1) && grep -vE -f .coverignore coverage.out > coverage.out.tmp && mv coverage.out.tmp coverage.out
+endef
+
 coverage-auth:
-	cd auth-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	cd auth-service && go test -short -coverpkg=./... -coverprofile=coverage.out ./...
+	$(call filter-coverignore,auth-service)
 	cd auth-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
 
 coverage-trip:
-	cd trip-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	cd trip-service && go test -short -coverpkg=./... -coverprofile=coverage.out ./...
+	$(call filter-coverignore,trip-service)
 	cd trip-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
 
 coverage-gateway:
-	cd api-gateway-service && go test -short ./internal/handlers/... -coverprofile=coverage.out
+	cd api-gateway-service && go test -short -coverpkg=./... -coverprofile=coverage.out ./...
+	$(call filter-coverignore,api-gateway-service)
 	cd api-gateway-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
 
 coverage-stats:
-	cd statistics-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	cd statistics-service && go test -short -coverpkg=./... -coverprofile=coverage.out ./...
+	$(call filter-coverignore,statistics-service)
 	cd statistics-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
 
 coverage-notif:
-	cd notification-service && go test -short ./internal/services/... -coverprofile=coverage.out
+	cd notification-service && go test -short -coverpkg=./... -coverprofile=coverage.out ./...
+	$(call filter-coverignore,notification-service)
 	cd notification-service && go tool cover -func=coverage.out | awk '/^total:/ {print $$0}'
 
 .PHONY: infra-up infra-down

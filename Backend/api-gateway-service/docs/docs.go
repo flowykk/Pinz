@@ -5480,6 +5480,15 @@ const docTemplate = `{
                 "session_id": {
                     "type": "string"
                 },
+                "similar": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
                 "takeover_available_at": {
                     "type": "string",
                     "example": "2026-04-25T13:00:00Z"
@@ -5899,6 +5908,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia"
                     }
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

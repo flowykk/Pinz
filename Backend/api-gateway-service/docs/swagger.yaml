@@ -518,6 +518,12 @@ definitions:
         type: array
       session_id:
         type: string
+      similar:
+        items:
+          items:
+            type: string
+          type: array
+        type: array
       takeover_available_at:
         example: "2026-04-25T13:00:00Z"
         type: string
@@ -795,6 +801,8 @@ definitions:
         items:
           $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'
         type: array
+      name:
+        type: string
     type: object
   pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse:
     properties:
