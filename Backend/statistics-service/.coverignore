@@ -1,0 +1,6 @@
+/cmd/
+/pkg/proto/
+/internal/mocks/
+/internal/db/
+/internal/di/
+/internal/server/

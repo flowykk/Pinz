@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: pinz-gateway
+  namespace: default
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "pinz.website"
+        - "pinz.example.com"
+        - "grafana.pinz.website"
+        - "kiali.pinz.website"
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: pinz-tls
+      hosts:
+        - "pinz.website"
+        - "grafana.pinz.website"
+        - "kiali.pinz.website"
+        - "nats.pinz.website"

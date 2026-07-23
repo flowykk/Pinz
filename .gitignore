@@ -1,0 +1,6 @@
+# macOS
+.DS_Store
+
+# Local env with secrets (Backend api-gateway-service, auth-service)
+.env
+**/.env

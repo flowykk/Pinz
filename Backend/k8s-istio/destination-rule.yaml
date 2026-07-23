@@ -1,0 +1,108 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: default
+  namespace: default
+spec:
+  host: "*.default.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: db-external
+  namespace: default
+spec:
+  host: db.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+# Trip Service DB (external Postgres on host:5433) — plain TCP, no mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: db-trips-external
+  namespace: default
+spec:
+  host: db-trips.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+# Statistics Service DB (external Postgres on host:5434) — plain TCP, no mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: db-stats-external
+  namespace: default
+spec:
+  host: db-stats.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+# Notification Service DB (external Postgres on host:5435) — plain TCP, no mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: db-notifications-external
+  namespace: default
+spec:
+  host: db-notifications.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: redis-external
+  namespace: default
+spec:
+  host: redis.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+# NATS-pod без sidecar — отправители должны идти plaintext, иначе mTLS не примет.
+# DO_NOT_UPGRADE — иначе Istio переключает на h2 и ломает WebSocket upgrade.
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nats-plain
+  namespace: default
+spec:
+  host: nats.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+    connectionPool:
+      http:
+        h2UpgradePolicy: DO_NOT_UPGRADE
+---
+# otel-collector has no Istio sidecar; apps must use plain TCP for OTLP
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: otel-collector-plain
+  namespace: default
+spec:
+  host: otel-collector.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+# Grafana has no Istio sidecar; ingress must use plain HTTP to avoid WRONG_VERSION_NUMBER
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: grafana-plain
+  namespace: default
+spec:
+  host: grafana.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE

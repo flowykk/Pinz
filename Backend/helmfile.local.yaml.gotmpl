@@ -1,0 +1,155 @@
+repositories: []
+
+releases:
+  - name: nats
+    namespace: default
+    chart: ./helm/nats
+    values:
+      - storage:
+          size: "1Gi"
+
+  - name: auth-service
+    namespace: default
+    chart: ./helm/auth-service
+    values:
+      - image:
+          repository: backend-auth-service
+          tag: latest
+          pullPolicy: Never
+      - env:
+          dbHost: db
+          dbPort: "5432"
+          dbUser: pinz_user
+          dbName: pinz_db
+          redisAddr: redis:6379
+          grpcPort: ":50051"
+          otelExporterEndpoint: "otel-collector:4317"
+          otelServiceName: "auth-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+      - env:
+          s3Endpoint: "{{ env "S3_ENDPOINT" | default "https://storage.yandexcloud.net" }}"
+          s3Region: "{{ env "S3_REGION" | default "ru-central1" }}"
+          s3Bucket: "{{ env "S3_BUCKET" | default "" }}"
+          s3PresignTTL: "{{ env "S3_PRESIGN_TTL" | default "15m" }}"
+      - secret:
+          dbPassword: "pinz_password"
+          jwtSecretKey: "change-me-in-production"
+          s3AccessKey: "{{ env "S3_ACCESS_KEY" | default "" }}"
+          s3SecretKey: "{{ env "S3_SECRET_KEY" | default "" }}"
+
+  - name: trip-service
+    namespace: default
+    chart: ./helm/trip-service
+    values:
+      - image:
+          repository: backend-trip-service
+          tag: latest
+          pullPolicy: Never
+      - env:
+          dbHost: db-trips
+          dbPort: "5433"
+          dbUser: pinz_user
+          dbName: pinz_trips
+          redisAddr: redis:6379
+          grpcPort: ":50052"
+          otelExporterEndpoint: "otel-collector:4317"
+          otelServiceName: "trip-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+          s3Endpoint: "{{ env "S3_ENDPOINT" | default "https://storage.yandexcloud.net" }}"
+          s3Region: "{{ env "S3_REGION" | default "ru-central1" }}"
+          s3Bucket: "{{ env "S3_BUCKET" | default "" }}"
+          s3PresignTTL: "{{ env "S3_PRESIGN_TTL" | default "15m" }}"
+          natsUrl: "nats://nats:4222"
+          mlEnabled: "false"
+      - secret:
+          dbPassword: "pinz_password"
+          s3AccessKey: "{{ env "S3_ACCESS_KEY" | default "" }}"
+          s3SecretKey: "{{ env "S3_SECRET_KEY" | default "" }}"
+          natsToken: "local-dev-token"
+
+  - name: statistics-service
+    namespace: default
+    chart: ./helm/statistics-service
+    values:
+      - image:
+          repository: backend-statistics-service
+          tag: latest
+          pullPolicy: Never
+      - env:
+          dbHost: db-stats
+          dbPort: "5434"
+          dbUser: pinz_user
+          dbName: pinz_stats
+          redisAddr: redis:6379
+          grpcPort: ":50053"
+          otelExporterEndpoint: "otel-collector:4317"
+          otelServiceName: "statistics-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+          geocodingBaseUrl: "https://api.bigdatacloud.net/data/reverse-geocode-client"
+      - secret:
+          dbPassword: "pinz_password"
+          geocodingApiKey: ""
+
+  - name: notification-service
+    namespace: default
+    chart: ./helm/notification-service
+    values:
+      - image:
+          repository: backend-notification-service
+          tag: latest
+          pullPolicy: Never
+      - env:
+          dbHost: db-notifications
+          dbPort: "5435"
+          dbUser: pinz_user
+          dbName: pinz_notifications
+          redisAddr: redis:6379
+          grpcPort: ":50054"
+          otelExporterEndpoint: "otel-collector:4317"
+          otelServiceName: "notification-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"
+          tripServiceGrpcAddress: "trip-service.default.svc.cluster.local:50052"
+          apnsKeyId: "{{ env "APNS_KEY_ID" | default "" }}"
+          apnsTeamId: "{{ env "APNS_TEAM_ID" | default "" }}"
+          apnsBundleId: "{{ env "APNS_BUNDLE_ID" | default "" }}"
+          apnsProduction: "{{ env "APNS_PRODUCTION" | default "false" }}"
+          smtpHost: "{{ env "SMTP_HOST" | default "" }}"
+          smtpPort: "{{ env "SMTP_PORT" | default "587" }}"
+          smtpFrom: "{{ env "SMTP_FROM" | default "" }}"
+      - secret:
+          dbPassword: "pinz_password"
+          apnsKeyBase64: "{{ env "APNS_KEY_BASE64" | default "" }}"
+          smtpUsername: "{{ env "SMTP_USERNAME" | default "" }}"
+          smtpPassword: "{{ env "SMTP_PASSWORD" | default "" }}"
+
+  - name: api-gateway
+    namespace: default
+    chart: ./helm/api-gateway
+    needs:
+      - default/auth-service
+      - default/trip-service
+      - default/statistics-service
+      - default/notification-service
+    values:
+      - image:
+          repository: backend-api-gateway-service
+          tag: latest
+          pullPolicy: Never
+      - env:
+          apiGatewayPort: "8080"
+          authServiceGrpcAddress: auth-service.default.svc.cluster.local:50051
+          tripServiceGrpcAddress: trip-service.default.svc.cluster.local:50052
+          statisticsServiceGrpcAddress: statistics-service.default.svc.cluster.local:50053
+          notificationServiceGrpcAddress: notification-service.default.svc.cluster.local:50054
+          redisAddr: redis:6379
+          swaggerHost: "localhost:8080"
+          tripShareLinkBase: '{{ env "TRIP_SHARE_LINK_BASE" | default "https://pinz.website/trips" }}'
+          appleAppId: '{{ env "APPLE_APP_ID" | default "" }}'
+          otelExporterEndpoint: "otel-collector:4317"
+          otelServiceName: "api-gateway-service"
+          otelTracesSampler: "parentbased_always_on"
+          otelTracesSamplerArg: "1.0"

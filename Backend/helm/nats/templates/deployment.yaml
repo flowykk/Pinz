@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nats
+  labels:
+    app: nats
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nats
+  template:
+    metadata:
+      labels:
+        app: nats
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: nats-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nats
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "-c"
+            - "/etc/nats/nats-server.conf"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: {{ .Values.service.clientPort }}
+              name: client
+            - containerPort: {{ .Values.service.monitorPort }}
+              name: monitor
+            - containerPort: {{ .Values.service.websocketPort }}
+              name: websocket
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nats/nats-server.conf
+              subPath: nats-server.conf
+              readOnly: true
+            - name: auth
+              mountPath: /etc/nats/auth.conf
+              subPath: auth.conf
+              readOnly: true
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: monitor
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: monitor
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: nats-config
+        - name: auth
+          secret:
+            secretName: nats-secret
+            items:
+              - key: auth.conf
+                path: auth.conf
+        - name: data
+          persistentVolumeClaim:
+            claimName: nats-data

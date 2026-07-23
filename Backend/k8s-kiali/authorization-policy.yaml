@@ -1,0 +1,14 @@
+# OR'd with per-service ALLOW policies — opens 15090/15020 to istio-system without weakening app ports.
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-istio-system-metrics
+  namespace: default
+spec:
+  rules:
+    - from:
+        - source:
+            namespaces: ["istio-system"]
+      to:
+        - operation:
+            ports: ["15090", "15020"]

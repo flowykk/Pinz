@@ -1,0 +1,92 @@
+# Пробрасывает host-side PostgreSQL и Redis в pod-сеть k3s по DNS-именам
+# db / db-trips / db-stats / db-notifications / redis. 10.42.0.1 — gateway flannel.
+---
+apiVersion: v1
+kind: Service
+metadata: {name: db, namespace: pinz-loadtest}
+spec:
+  ports: [{name: pg, port: 5432, targetPort: 5432, protocol: TCP}]
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: db-host
+  namespace: pinz-loadtest
+  labels: {kubernetes.io/service-name: db}
+addressType: IPv4
+ports: [{name: pg, port: 5432, protocol: TCP}]
+endpoints:
+  - addresses: [10.42.0.1]
+    conditions: {ready: true}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: db-trips, namespace: pinz-loadtest}
+spec:
+  ports: [{name: pg, port: 5433, targetPort: 5433, protocol: TCP}]
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: db-trips-host
+  namespace: pinz-loadtest
+  labels: {kubernetes.io/service-name: db-trips}
+addressType: IPv4
+ports: [{name: pg, port: 5433, protocol: TCP}]
+endpoints:
+  - addresses: [10.42.0.1]
+    conditions: {ready: true}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: db-stats, namespace: pinz-loadtest}
+spec:
+  ports: [{name: pg, port: 5434, targetPort: 5434, protocol: TCP}]
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: db-stats-host
+  namespace: pinz-loadtest
+  labels: {kubernetes.io/service-name: db-stats}
+addressType: IPv4
+ports: [{name: pg, port: 5434, protocol: TCP}]
+endpoints:
+  - addresses: [10.42.0.1]
+    conditions: {ready: true}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: db-notifications, namespace: pinz-loadtest}
+spec:
+  ports: [{name: pg, port: 5435, targetPort: 5435, protocol: TCP}]
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: db-notifications-host
+  namespace: pinz-loadtest
+  labels: {kubernetes.io/service-name: db-notifications}
+addressType: IPv4
+ports: [{name: pg, port: 5435, protocol: TCP}]
+endpoints:
+  - addresses: [10.42.0.1]
+    conditions: {ready: true}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: redis, namespace: pinz-loadtest}
+spec:
+  ports: [{name: redis, port: 6379, targetPort: 6379, protocol: TCP}]
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: redis-host
+  namespace: pinz-loadtest
+  labels: {kubernetes.io/service-name: redis}
+addressType: IPv4
+ports: [{name: redis, port: 6379, protocol: TCP}]
+endpoints:
+  - addresses: [10.42.0.1]
+    conditions: {ready: true}

@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  labels:
+    app: api-gateway
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: api-gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      serviceAccountName: api-gateway-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: api-gateway
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: api-gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+          env:
+            - name: USER
+              value: "app"
+            - name: API_GATEWAY_PORT
+              value: {{ .Values.env.apiGatewayPort | quote }}
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: jwt-secret-key
+            - name: AUTH_SERVICE_GRPC_ADDRESS
+              value: {{ .Values.env.authServiceGrpcAddress | quote }}
+            - name: TRIP_SERVICE_GRPC_ADDRESS
+              value: {{ .Values.env.tripServiceGrpcAddress | quote }}
+            - name: STATISTICS_SERVICE_GRPC_ADDRESS
+              value: {{ .Values.env.statisticsServiceGrpcAddress | quote }}
+            - name: NOTIFICATION_SERVICE_GRPC_ADDRESS
+              value: {{ .Values.env.notificationServiceGrpcAddress | quote }}
+            - name: REDIS_ADDR
+              value: {{ .Values.env.redisAddr | quote }}
+            - name: SWAGGER_HOST
+              value: {{ .Values.env.swaggerHost | default "" | quote }}
+            - name: TRIP_SHARE_LINK_BASE
+              value: {{ .Values.env.tripShareLinkBase | default "" | quote }}
+            - name: APPLE_APP_ID
+              value: {{ .Values.env.appleAppId | default "" | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.env.otelExporterEndpoint | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.env.otelServiceName | quote }}
+            - name: OTEL_TRACES_SAMPLER
+              value: {{ .Values.env.otelTracesSampler | quote }}
+            - name: OTEL_TRACES_SAMPLER_ARG
+              value: {{ .Values.env.otelTracesSamplerArg | quote }}
+            - name: DEV_LOGIN_PROXY_ENABLED
+              value: {{ .Values.env.devLoginProxyEnabled | quote }}
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3

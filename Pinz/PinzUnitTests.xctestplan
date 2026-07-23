@@ -1,0 +1,46 @@
+{
+  "configurations" : [
+    {
+      "id" : "AAF47DAB-CC71-46AB-892D-6C6C0627ABE0",
+      "name" : "Unit Tests",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : true,
+    "codeCoverageTargets" : [
+      {
+        "containerPath" : "container:Modules\/PinzAuthentication\/PinzAuthentication.xcodeproj",
+        "name" : "PinzAuthentication"
+      },
+      {
+        "containerPath" : "container:Modules\/PinzProfile\/PinzProfile.xcodeproj",
+        "name" : "PinzProfile"
+      },
+      {
+        "containerPath" : "container:Modules\/PinzTrips\/PinzTrips.xcodeproj",
+        "name" : "PinzTrips"
+      },
+      {
+        "containerPath" : "container:Modules\/PinzPins\/PinzPins.xcodeproj",
+        "name" : "PinzPins"
+      },
+      {
+        "containerPath" : "container:Modules\/PinzFeed\/PinzFeed.xcodeproj",
+        "name" : "PinzFeed"
+      }
+    ]
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Pinz.xcodeproj",
+        "identifier" : "0F47C8C7A504478C69F68E8B",
+        "name" : "PinzTests"
+      }
+    }
+  ],
+  "version" : 1
+}

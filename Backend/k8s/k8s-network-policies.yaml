@@ -1,0 +1,241 @@
+# NetworkPolicy manifests for the default namespace.
+#
+# Strategy: default-deny ingress with explicit allow paths.
+# Egress is NOT restricted at this phase to avoid breaking Istio sidecar xDS
+# connectivity (Istiod on port 15012) and other internal cluster traffic.
+# A default-deny-egress pass can be added in a future phase once all required
+# egress paths are fully audited.
+#
+# NOTE: Verify your CNI (kube-router / flannel on k3s) enforces NetworkPolicy
+#       before applying this file to the cluster.
+#       Test with: kubectl apply --dry-run=server -f k8s-network-policies.yaml
+# NOTE: Apply in a maintenance window and verify with the Phase 8 checklist.
+---
+# Block all unrequested ingress to every pod in the default namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Allow the Istio ingress gateway (running in istio-system) to reach api-gateway.
+# Together with the Istio AuthorizationPolicy principal check this provides
+# dual-layer (L4 + L7) access control for external traffic.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-gateway-to-api-gateway
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# Allow the Istio ingress gateway to reach Grafana (grafana.pinz.website).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-gateway-to-grafana
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+# Allow api-gateway pods to call auth-service on its gRPC port.
+# Source is matched at the pod level; Istio AuthorizationPolicy adds
+# SPIFFE principal verification on top of this.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-to-auth-service
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: auth-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 50051
+---
+# Allow api-gateway pods to call trip-service on its gRPC port.
+# Source is matched at the pod level; Istio AuthorizationPolicy adds
+# SPIFFE principal verification on top of this.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-to-trip-service
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: trip-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 50052
+---
+# Allow api-gateway pods to call statistics-service on its gRPC port.
+# Source is matched at the pod level; Istio AuthorizationPolicy adds
+# SPIFFE principal verification on top of this.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-to-statistics-service
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: statistics-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 50053
+---
+# Allow api-gateway pods to call notification-service on its gRPC port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-to-notification-service
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: notification-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 50054
+---
+# Allow notification-service to call trip-service (scheduler + trip events worker).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-notification-service-to-trip-service
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: trip-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: notification-service
+      ports:
+        - protocol: TCP
+          port: 50052
+---
+# Allow app pods to push telemetry to otel-collector.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-apps-to-otel-collector
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: otel-collector
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+        - podSelector:
+            matchLabels:
+              app: auth-service
+        - podSelector:
+            matchLabels:
+              app: trip-service
+        - podSelector:
+            matchLabels:
+              app: statistics-service
+        - podSelector:
+            matchLabels:
+              app: notification-service
+      ports:
+        - protocol: TCP
+          port: 4317   # OTLP gRPC
+        - protocol: TCP
+          port: 4318   # OTLP HTTP
+---
+# Allow trip-service to publish/subscribe to NATS JetStream.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-trip-service-to-nats
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: nats
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: trip-service
+      ports:
+        - protocol: TCP
+          port: 4222
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 8080

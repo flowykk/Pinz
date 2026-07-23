@@ -1,0 +1,90 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: api-gateway
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account
+      to:
+        - operation:
+            ports: ["8080"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: auth-service
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: auth-service
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/default/sa/api-gateway-sa
+      to:
+        - operation:
+            ports: ["50051"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: trip-service
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: trip-service
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/default/sa/api-gateway-sa
+              - cluster.local/ns/default/sa/notification-service-sa
+      to:
+        - operation:
+            ports: ["50052"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: statistics-service
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: statistics-service
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/default/sa/api-gateway-sa
+      to:
+        - operation:
+            ports: ["50053"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: notification-service
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: notification-service
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/default/sa/api-gateway-sa
+      to:
+        - operation:
+            ports: ["50054"]

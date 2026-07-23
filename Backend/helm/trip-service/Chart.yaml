@@ -1,0 +1,5 @@
+apiVersion: v2
+name: trip-service
+description: Trip service for Pinz backend
+version: 0.1.0
+appVersion: "1.0"

@@ -1,0 +1,43 @@
+import SwiftUI
+import PinzBase
+import PinzDomain
+
+struct AddTagView: View {
+
+    @State private var tag: String = ""
+    @FocusState private var focused: Bool
+    let onTagAdd: ((MediaTag) -> Void)?
+
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Spacer()
+
+            SettingsGroup(
+                settings: [
+                    .textField(Setting.TextFieldSetting(
+                        id: "newTagTextField",
+                        text: $tag,
+                        placeholder: PinzBaseStrings.Tags.Placeholder.tag,
+                        focused: $focused,
+                    )),
+                ]
+            )
+
+            PinzButton(
+                type: .slot(style: .primary, title: PinzBaseStrings.Common.Button.done),
+                action: .plain {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        onTagAdd?(MediaTag(tag: tag))
+                    }
+                    dismiss()
+                }
+            )
+
+            Spacer(minLength: 8)
+        }
+        .onAppear { focused = true }
+        .padding(.horizontal, 12)
+    }
+}

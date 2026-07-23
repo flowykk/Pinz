@@ -1,0 +1,23 @@
+// Package mocks — gomock для интерфейсов репозиториев trip-service.
+//
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=trip_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories TripRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=trip_participant_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories TripParticipantRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=invitation_link_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories InvitationLinkRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=trip_settings_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories TripSettingsRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=trip_event_publisher_mock.go -package=mocks pinz/backend/trip-service/internal/repositories TripEventPublisher
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=media_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories MediaRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=media_battle_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories MediaBattleRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=pin_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories PinRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=tag_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories TagRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=social_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories SocialRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=favourite_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories FavouriteRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=media_url_resolver_mock.go -package=mocks pinz/backend/trip-service/internal/services MediaURLResolver
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=add_media_session_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories AddMediaSessionRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=trip_privacy_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories TripPrivacyRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=pin_privacy_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories PinPrivacyRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=media_privacy_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories MediaPrivacyRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=pin_hidden_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories PinHiddenRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=pin_upload_session_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories PinUploadSessionRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=geo_registry_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories GeoRegistryRepositoryInterface
+//go:generate go run go.uber.org/mock/mockgen@latest -destination=recommendation_snapshot_repository_mock.go -package=mocks pinz/backend/trip-service/internal/repositories RecommendationSnapshotRepositoryInterface
+package mocks

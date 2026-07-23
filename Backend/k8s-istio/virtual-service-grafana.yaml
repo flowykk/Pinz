@@ -1,0 +1,29 @@
+# VirtualService for Grafana at grafana.pinz.website (VPS).
+# HTTP → HTTPS redirect, then route to grafana:3000.
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: grafana
+  namespace: default
+spec:
+  hosts:
+    - "grafana.pinz.website"
+  gateways:
+    - pinz-gateway
+  http:
+    - match:
+        - port: 80
+          uri:
+            prefix: /
+      redirect:
+        scheme: https
+        redirectCode: 301
+    - match:
+        - port: 443
+          uri:
+            prefix: /
+      route:
+        - destination:
+            host: grafana.default.svc.cluster.local
+            port:
+              number: 3000

@@ -1,0 +1,4449 @@
+basePath: /
+definitions:
+  pinz_backend_api-gateway-service_internal_requests.AddMediaApplyGroupsAndProcessRequest:
+    properties:
+      deleted_media_ids:
+        items:
+          type: string
+        type: array
+      draft_pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.DraftPinInput'
+        type: array
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaCancelRequest:
+    properties:
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaCommitUploadRequest:
+    properties:
+      captured_at:
+        description: RFC3339
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      media_type:
+        type: string
+      s3_key:
+        type: string
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaConfirmRequest:
+    properties:
+      media_to_delete:
+        items:
+          type: string
+        type: array
+      pin_updates:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PinUpdateInput'
+        type: array
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest:
+    properties:
+      add_more:
+        type: boolean
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaRequestUploadUrlsRequest:
+    properties:
+      files_to_upload:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
+        type: array
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaStartRequest:
+    properties:
+      files_to_upload:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.AddMediaTakeoverRequest:
+    properties:
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest:
+    properties:
+      deleted_media_ids:
+        items:
+          type: string
+        type: array
+      draft_pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.DraftPinInput'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.ChangeEmailRequest:
+    properties:
+      new_email:
+        example: new@example.com
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.CommitPinUploadRequest:
+    properties:
+      captured_at_unix:
+        type: integer
+      latitude:
+        type: number
+      longitude:
+        type: number
+      media_type:
+        description: image | video
+        type: string
+      s3_key:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.ConfirmAvatarUploadRequest:
+    properties:
+      s3_key:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.ConfirmEmailChangeRequest:
+    properties:
+      verification_code:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.ConfirmTripCoverUploadRequest:
+    properties:
+      s3_key:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.CreateDesiredPlaceRequest:
+    properties:
+      description:
+        example: Want to visit
+        type: string
+      name:
+        example: Eiffel Tower
+        type: string
+      s3_key:
+        example: desired-places/{user_id}/{uuid}.jpg
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.CreateTripRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      files_to_upload:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
+        type: array
+      name:
+        type: string
+      season:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.DevLoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.DraftPinInput:
+    properties:
+      draft_pin_id:
+        type: string
+      media_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry:
+    properties:
+      client_id:
+        type: string
+      content_type:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.FinalizePinUploadRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      end_time_unix:
+        type: integer
+      latitude:
+        type: number
+      longitude:
+        type: number
+      media_to_delete:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      start_time_unix:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      tags_set:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.FinalizeTripRequest:
+    properties:
+      media_to_delete:
+        items:
+          type: string
+        type: array
+      pin_updates:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PinUpdateInput'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.GenerateInviteLinkRequest:
+    properties:
+      expires_in_seconds:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.JoinTripByTokenRequest:
+    properties:
+      token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry:
+    properties:
+      captured_at:
+        description: ISO8601
+        type: string
+      content_hash:
+        description: e.g. SHA-256 for duplicate detection
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      media_type:
+        type: string
+      s3_key:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PasskeyLoginBeginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PasskeyLoginFinishRequest:
+    properties:
+      credential_json:
+        description: CredentialJSON is the PublicKeyCredential (assertion) object
+          serialised to JSON by the client.
+        format: base64
+        type: string
+      email:
+        example: user@example.com
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterBeginRequest:
+    properties:
+      registration_id:
+        type: string
+      username:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterFinishRequest:
+    properties:
+      credential_json:
+        description: CredentialJSON is the PublicKeyCredential (attestation) object
+          serialised to JSON by the client.
+        format: base64
+        type: string
+      registration_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PinUpdateInput:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+      pin_id:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PinUploadStartRequest:
+    properties:
+      files_to_upload:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
+        type: array
+      target_pin_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest:
+    properties:
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.MediaMetaEntry'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.PublishTripRequest:
+    properties:
+      pin_ids:
+        items:
+          type: string
+        type: array
+      publish_whole:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.RequestAvatarUploadRequest:
+    properties:
+      content_type:
+        example: image/jpeg
+        type: string
+      filename:
+        example: avatar.jpg
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.RequestDesiredPlaceImageUploadRequest:
+    properties:
+      content_type:
+        example: image/jpeg
+        type: string
+      filename:
+        example: photo.jpg
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.RequestPinUploadUrlsRequest:
+    properties:
+      files_to_upload:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FileToUploadEntry'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.RequestTripCoverUploadRequest:
+    properties:
+      content_type:
+        example: image/jpeg
+        type: string
+      filename:
+        example: cover.jpg
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.SubmitBattleResultRequest:
+    properties:
+      winner_media_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.SubmitEmailRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.TripSettingsRequest:
+    properties:
+      notifications_enabled:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.UpdateDesiredPlaceRequest:
+    properties:
+      description:
+        example: Want to visit
+        type: string
+      image_s3_key:
+        type: string
+      name:
+        example: Eiffel Tower
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.UpdatePinRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      end_time_unix:
+        type: integer
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+      start_time_unix:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      tags_set:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.UpdateProfileRequest:
+    properties:
+      username:
+        example: johndoe
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      end_date_unix:
+        type: integer
+      name:
+        type: string
+      season:
+        type: string
+      start_date_unix:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.UpsertPrivacyRequest:
+    properties:
+      privacy_level:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_requests.VerifyEmailCodeRequest:
+    properties:
+      registration_id:
+        type: string
+      verification_code:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ActiveAddMediaSession:
+    properties:
+      current_initiator:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile'
+      initiator_assigned_at:
+        example: "2026-04-25T12:00:00Z"
+        type: string
+      media_count_in_session:
+        type: integer
+      session_id:
+        type: string
+      takeover_available_at:
+        example: "2026-04-25T13:00:00Z"
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaApplyGroupsAndProcessResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaCancelResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaCommitUploadResponse:
+    properties:
+      media_count_in_session:
+        type: integer
+      media_id:
+        type: string
+      remaining_slots:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaConfirmResponse:
+    properties:
+      already_confirmed:
+        type: boolean
+      status:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaGetGroupingResponse:
+    properties:
+      draft_pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DraftPin'
+        type: array
+      existing_media_ids:
+        items:
+          type: string
+        type: array
+      session_id:
+        type: string
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaGetReviewResponse:
+    properties:
+      can_edit:
+        type: boolean
+      current_initiator:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile'
+      new_pin_ids:
+        items:
+          type: string
+        type: array
+      pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
+        type: array
+      protected_media_ids:
+        items:
+          type: string
+        type: array
+      session_id:
+        type: string
+      similar:
+        items:
+          items:
+            type: string
+          type: array
+        type: array
+      takeover_available_at:
+        example: "2026-04-25T13:00:00Z"
+        type: string
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaGetSessionMediaResponse:
+    properties:
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SessionMediaEntry'
+        type: array
+      media_count_in_session:
+        type: integer
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaProcessGroupingResponse:
+    properties:
+      draft_pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DraftPin'
+        type: array
+      existing_media_ids:
+        items:
+          type: string
+        type: array
+      session_id:
+        type: string
+      status:
+        type: string
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaRequestUploadUrlsResponse:
+    properties:
+      upload_urls:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaStartResponse:
+    properties:
+      joined:
+        type: boolean
+      session_id:
+        type: string
+      status:
+        type: string
+      upload_urls:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AddMediaTakeoverResponse:
+    properties:
+      current_initiator:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfile'
+      is_initiator:
+        type: boolean
+      takeover_available_at:
+        example: "2026-04-25T13:00:00Z"
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.AvatarUploadResponse:
+    properties:
+      s3_key:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.BattleMedia:
+    properties:
+      media_id:
+        type: string
+      media_type:
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.BestMemory:
+    properties:
+      battle_rating:
+        type: integer
+      captured_at_unix:
+        type: integer
+      media_id:
+        type: string
+      media_type:
+        type: string
+      pin_name:
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.CancelPinUploadResponse:
+    properties:
+      status:
+        example: cancelled
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ChangeEmailResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.CommitPinUploadResponse:
+    properties:
+      media_count_in_session:
+        type: integer
+      media_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.CreateTripResponse:
+    properties:
+      status:
+        type: string
+      trip_id:
+        type: string
+      upload_urls:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DeleteAccountResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DeleteDesiredPlaceResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DeletePinResponse:
+    properties:
+      deletion_mode:
+        example: full
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DesiredPlaceImageUploadResponse:
+    properties:
+      s3_key:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse:
+    properties:
+      created_at:
+        type: integer
+      description:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DesiredPlacesListResponse:
+    properties:
+      places:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DevLoginResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DeviceTokenRegisterRequest:
+    properties:
+      apns_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DeviceTokenResponse:
+    properties:
+      token_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DeviceTokenUnregisterRequest:
+    properties:
+      apns_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DeviceTokenUnregisterResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DraftPin:
+    properties:
+      draft_pin_id:
+        type: string
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DraftPinMedia'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.DraftPinMedia:
+    properties:
+      media_id:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ErrorResponse:
+    properties:
+      details:
+        additionalProperties:
+          type: string
+        description: |-
+          Details — дополнительные structured-поля для конкретного reason. Пример:
+          {"remaining_slots": 2, "limit": 500, "kind": "media"} для LIMIT_EXCEEDED.
+        type: object
+      error:
+        type: string
+      reason:
+        description: |-
+          Reason — машинный код ошибки (например, "SESSION_STALE", "NOT_INITIATOR",
+          "WRONG_STATUS", "LIMIT_EXCEEDED"). Клиент может различать сценарии и
+          реагировать по-разному, не парся текст Error.
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.FeedItem:
+    properties:
+      is_disliked:
+        type: boolean
+      is_liked:
+        type: boolean
+      is_saved:
+        type: boolean
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'
+        type: array
+      pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedPin'
+        type: array
+      trip:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.FeedMedia:
+    properties:
+      media_id:
+        type: string
+      media_type:
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.FeedPin:
+    properties:
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'
+        type: array
+      name:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.GenerateInviteLinkResponse:
+    properties:
+      expires_at_unix:
+        type: integer
+      invite_link_id:
+        type: string
+      invite_url:
+        type: string
+      token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.GetBestMemoriesResponse:
+    properties:
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.BestMemory'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.GetPinUploadReviewResponse:
+    properties:
+      draft:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinUploadDraft'
+      processing_status:
+        example: READY_FOR_REVIEW
+        type: string
+      session_id:
+        type: string
+      similar:
+        items:
+          items:
+            type: string
+          type: array
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.GetRecommendationsResponse:
+    properties:
+      map:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.RecommendedMap'
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.GetTripResponse:
+    properties:
+      active_add_media_session:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ActiveAddMediaSession'
+      current_user_settings:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripSettings'
+      participants:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripParticipant'
+        type: array
+      pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
+        type: array
+      trip:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.GetTripReviewResponse:
+    properties:
+      pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ReviewPin'
+        type: array
+      similar:
+        description: groups of similar media IDs
+        items:
+          items:
+            type: string
+          type: array
+        type: array
+      status:
+        type: string
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.JoinTripByTokenResponse:
+    properties:
+      already_joined:
+        type: boolean
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.LeaveTripResponse:
+    properties:
+      success:
+        type: boolean
+      trip_deleted:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.LogoutResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PasskeyLoginBeginResponse:
+    properties:
+      options_json:
+        format: base64
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PasskeyLoginFinishResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterBeginResponse:
+    properties:
+      options_json:
+        format: base64
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterFinishResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PinResponse:
+    properties:
+      pin:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PinSuggestedFields:
+    properties:
+      category:
+        type: string
+      end_time_unix:
+        type: integer
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+      start_time_unix:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PinUploadDraft:
+    properties:
+      deduped_media_ids:
+        items:
+          type: string
+        type: array
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ReviewPinMedia'
+        type: array
+      nsfw_media_ids:
+        items:
+          type: string
+        type: array
+      pin_issues:
+        items:
+          type: string
+        type: array
+      suggested:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinSuggestedFields'
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PinUploadStartResponse:
+    properties:
+      session_id:
+        type: string
+      upload_urls:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PrivacyResponse:
+    properties:
+      privacy_level:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse:
+    properties:
+      draft_pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DraftPin'
+        type: array
+      status:
+        type: string
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ProcessPinUploadResponse:
+    properties:
+      processing_status:
+        example: PROCESSING
+        type: string
+      session_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ProfileResponse:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: integer
+      email:
+        type: string
+      id:
+        type: string
+      username:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PublicUserProfile:
+    properties:
+      avatar_url:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.PublicUserProfileResponse:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: integer
+      desired_places:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        type: array
+      id:
+        type: string
+      username:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.RecommendedMap:
+    properties:
+      media:
+        description: Топ-8 медиа всей карты (карусель в карточке ленты).
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'
+        type: array
+      pins:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.RecommendedPin'
+        type: array
+      region_name:
+        type: string
+      region_type:
+        type: string
+      snapshot_token:
+        type: string
+      trip:
+        allOf:
+        - $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+        description: |-
+          Виртуальный трип-обёртка с name/description/dates/cover/счётчиками.
+          trip.id пуст до вызова SaveRecommendation.
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.RecommendedPin:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      location_name:
+        type: string
+      longitude:
+        type: number
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedMedia'
+        type: array
+      media_count:
+        type: integer
+      name:
+        type: string
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.RequestPinUploadUrlsResponse:
+    properties:
+      upload_urls:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UploadURL'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ReviewPin:
+    properties:
+      category:
+        type: string
+      end_time_unix:
+        type: integer
+      issues:
+        items:
+          type: string
+        type: array
+      latitude:
+        type: number
+      location_name:
+        type: string
+      longitude:
+        type: number
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ReviewPinMedia'
+        type: array
+      name:
+        type: string
+      name_censored:
+        type: boolean
+      pin_id:
+        type: string
+      start_time_unix:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.ReviewPinMedia:
+    properties:
+      media_id:
+        type: string
+      privacy_level:
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SaveRecommendationRequest:
+    properties:
+      category:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      pin_ids:
+        items:
+          type: string
+        type: array
+      season:
+        type: string
+      snapshot_token:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SaveRecommendationResponse:
+    properties:
+      trip:
+        $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SessionMediaEntry:
+    properties:
+      actor_user_id:
+        type: string
+      media_id:
+        type: string
+      type:
+        type: string
+      uploaded_at:
+        example: "2026-04-25T12:00:00Z"
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.StartBattleResponse:
+    properties:
+      battle_id:
+        type: string
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.BattleMedia'
+        type: array
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SubmitBattleResultResponse:
+    properties:
+      new_battle_rating:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SubmitEmailResponse:
+    properties:
+      is_registered:
+        type: boolean
+      registration_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.SuccessResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.Trip:
+    properties:
+      category:
+        type: string
+      cover_url:
+        type: string
+      created_at_unix:
+        type: integer
+      description:
+        type: string
+      description_censored:
+        type: boolean
+      dislikes_count:
+        type: integer
+      end_date_unix:
+        type: integer
+      id:
+        type: string
+      is_generated:
+        type: boolean
+      is_published:
+        type: boolean
+      likes_count:
+        type: integer
+      media_count:
+        type: integer
+      name:
+        type: string
+      name_censored:
+        type: boolean
+      owner_user_id:
+        type: string
+      participants_count:
+        type: integer
+      privacy_level:
+        type: string
+      season:
+        type: string
+      share_url:
+        description: |-
+          ShareURL — universal-link на просмотр трипа: копирование и
+          отправка во внешние мессенджеры. Формируется gateway по env
+          TRIP_SHARE_LINK_BASE; пустой, если переменная не задана.
+        type: string
+      start_date_unix:
+        type: integer
+      status:
+        type: string
+      updated_at_unix:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TripCoverUploadResponse:
+    properties:
+      s3_key:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TripParticipant:
+    properties:
+      avatar_url:
+        type: string
+      privacy_level:
+        type: string
+      role:
+        example: admin
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TripPin:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      description_censored:
+        type: boolean
+      end_time_unix:
+        type: integer
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      media:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPinMedia'
+        type: array
+      name:
+        type: string
+      name_censored:
+        type: boolean
+      privacy_level:
+        type: string
+      start_time_unix:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      trip_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TripPinMedia:
+    properties:
+      captured_at_unix:
+        type: integer
+      media_id:
+        type: string
+      media_type:
+        type: string
+      privacy_level:
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TripSettings:
+    properties:
+      notifications_enabled:
+        type: boolean
+      privacy_level:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.TripSettingsResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.UploadURL:
+    properties:
+      client_id:
+        type: string
+      s3_key:
+        type: string
+      url:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.UserStatsResponse:
+    properties:
+      battles_finished:
+        type: integer
+      total_dislikes:
+        type: integer
+      total_likes:
+        type: integer
+      total_media:
+        type: integer
+      total_pins:
+        type: integer
+      total_trips:
+        type: integer
+      user_id:
+        type: string
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.VerifyEmailCodeResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.VisitedLocationResponse:
+    properties:
+      last_visit_at_unix:
+        type: integer
+      location_id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
+      type:
+        type: string
+      visit_count:
+        type: integer
+    type: object
+  pinz_backend_api-gateway-service_internal_responses.VisitedLocationsResponse:
+    properties:
+      locations:
+        items:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.VisitedLocationResponse'
+        type: array
+    type: object
+host: pinz.website
+info:
+  contact: {}
+  description: API Gateway for Pinz mobile client
+  title: Pinz API Gateway
+  version: "1.0"
+paths:
+  /api/v1/auth/dev-login:
+    post:
+      consumes:
+      - application/json
+      description: For development use only. Returns access and refresh tokens for
+        any existing user without passkey verification.
+      parameters:
+      - description: User email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.DevLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DevLoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Dev login — bypass passkey, get tokens by email only
+      tags:
+      - auth
+  /api/v1/auth/email:
+    post:
+      consumes:
+      - application/json
+      description: 'User sends email. Response indicates if user is registered (next
+        step: passkey login) or not (next step: email verification). registration_id
+        is set only when is_registered is false.'
+      parameters:
+      - description: Email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.SubmitEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SubmitEmailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Submit email (login or registration flow)
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.LogoutResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - auth
+  /api/v1/auth/passkey/login/begin:
+    post:
+      consumes:
+      - application/json
+      description: Returns PublicKeyCredentialRequestOptions (options_json) to pass
+        to navigator.credentials.get. Call after /auth/email confirms is_registered=true.
+      parameters:
+      - description: User email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyLoginBeginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyLoginBeginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Begin passkey login (step 1 of 2)
+      tags:
+      - auth
+  /api/v1/auth/passkey/login/finish:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the assertion from the authenticator. Returns access and
+        refresh tokens.
+      parameters:
+      - description: User email and assertion credential JSON
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyLoginFinishRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyLoginFinishResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Finish passkey login (step 2 of 2)
+      tags:
+      - auth
+  /api/v1/auth/passkey/register/begin:
+    post:
+      consumes:
+      - application/json
+      description: Returns PublicKeyCredentialCreationOptions (options_json) to pass
+        to navigator.credentials.create. Call after email verification.
+      parameters:
+      - description: Registration ID and username
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterBeginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterBeginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Begin passkey registration (step 1 of 2)
+      tags:
+      - auth
+  /api/v1/auth/passkey/register/finish:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the attestation from the authenticator and creates the
+        user account. Returns access and refresh tokens.
+      parameters:
+      - description: Registration ID and attestation credential JSON
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PasskeyRegisterFinishRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PasskeyRegisterFinishResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Finish passkey registration (step 2 of 2)
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /api/v1/auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration ID and code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.VerifyEmailCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.VerifyEmailCodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      summary: Verify email code
+      tags:
+      - auth
+  /api/v1/feed:
+    get:
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      - description: category
+        in: query
+        name: category
+        type: string
+      - description: season
+        in: query
+        name: season
+        type: string
+      - description: city name in lower-case (mutually exclusive with country, city
+          wins)
+        in: query
+        name: city
+        type: string
+      - description: country name in lower-case (mutually exclusive with city)
+        in: query
+        name: country
+        type: string
+      - description: date|rating
+        in: query
+        name: sort_by
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FeedItem'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List feed
+      tags:
+      - feed
+  /api/v1/pins/search:
+    get:
+      description: Text search over pin name, description and tags within trips where
+        the user participates. Requires JWT.
+      parameters:
+      - description: search query (1..128 chars)
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: limit (1..100, default 20)
+        in: query
+        name: limit
+        type: integer
+      - description: offset (>=0, default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripPin'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Search pins by query
+      tags:
+      - pins
+  /api/v1/profile:
+    delete:
+      description: Permanently deletes the user account. Pins and media in trips are
+        preserved.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DeleteAccountResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete account
+      tags:
+      - profile
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - profile
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: New username
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update profile (change username)
+      tags:
+      - profile
+  /api/v1/profile/{id}:
+    get:
+      description: Возвращает публичные поля профиля (username, avatar, created_at)
+        и список желаемых мест пользователя. Email и другие приватные поля не отдаются.
+        Используется при переходе на чужой профиль из участников трипа или карточки
+        фида.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PublicUserProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get public profile of another user
+      tags:
+      - profile
+  /api/v1/profile/avatar:
+    delete:
+      description: Removes the user's avatar. Deletes the file from S3 and clears
+        avatar_url.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete avatar
+      tags:
+      - profile
+  /api/v1/profile/avatar/confirm:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: S3 key
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ConfirmAvatarUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm avatar upload after uploading to S3
+      tags:
+      - profile
+  /api/v1/profile/avatar/upload:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Filename and content type
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestAvatarUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AvatarUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request presigned URL for avatar upload
+      tags:
+      - profile
+  /api/v1/profile/change-email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: New email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ChangeEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ChangeEmailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Initiate email change (sends verification code to new email)
+      tags:
+      - profile
+  /api/v1/profile/confirm-email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verification code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ConfirmEmailChangeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm email change with verification code
+      tags:
+      - profile
+  /api/v1/profile/desired-places:
+    get:
+      description: Возвращает список желаемых мест текущего пользователя в порядке
+        от новых к старым. image_url — presigned GET URL, пустой если картинка не
+        загружена.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlacesListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List desired places of current user
+      tags:
+      - desired-places
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новое желаемое место. s3_key опционален — передаётся, если
+        клиент уже загрузил картинку через /profile/desired-places/upload-url.
+      parameters:
+      - description: Place payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.CreateDesiredPlaceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create desired place
+      tags:
+      - desired-places
+  /api/v1/profile/desired-places/{place_id}:
+    delete:
+      description: Удаляет желаемое место и связанный S3-объект (если есть).
+      parameters:
+      - description: Place ID
+        in: path
+        name: place_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DeleteDesiredPlaceResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete desired place
+      tags:
+      - desired-places
+    patch:
+      consumes:
+      - application/json
+      description: 'Изменение name/description, опционально картинки. image_s3_key
+        (опц): не передан — картинка не меняется; пустая строка — картинка сбрасывается;
+        иначе — заменяется.'
+      parameters:
+      - description: Place ID
+        in: path
+        name: place_id
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpdateDesiredPlaceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update desired place
+      tags:
+      - desired-places
+  /api/v1/profile/desired-places/{place_id}/image:
+    delete:
+      description: Сбрасывает картинку у желаемого места и удаляет S3-объект.
+      parameters:
+      - description: Place ID
+        in: path
+        name: place_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete desired place image
+      tags:
+      - desired-places
+  /api/v1/profile/desired-places/upload-url:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает presigned PUT URL и s3_key. После загрузки клиент передаёт
+        s3_key в Create или Update.
+      parameters:
+      - description: Filename and content type
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestDesiredPlaceImageUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DesiredPlaceImageUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request presigned URL for desired place image upload
+      tags:
+      - desired-places
+  /api/v1/profile/device-tokens:
+    delete:
+      consumes:
+      - application/json
+      description: Removes an APNS device token for the authenticated user.
+      parameters:
+      - description: APNS token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DeviceTokenUnregisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DeviceTokenUnregisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unregister APNS device token
+      tags:
+      - notifications
+    post:
+      consumes:
+      - application/json
+      description: 'Registers an APNS device token for the authenticated user. Idempotent:
+        повторная регистрация того же токена допустима (обновится owner).'
+      parameters:
+      - description: APNS token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DeviceTokenRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DeviceTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Register APNS device token
+      tags:
+      - notifications
+  /api/v1/profile/stats:
+    get:
+      description: Returns counters (trips, pins, media, likes, dislikes, battles)
+        for authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.UserStatsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user's stats
+      tags:
+      - statistics
+  /api/v1/profile/visited-locations:
+    get:
+      description: Returns countries/cities where the user had trips. Optional ?type=Country|City.
+      parameters:
+      - description: 'Filter by type: Country | City'
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.VisitedLocationsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user's visited locations
+      tags:
+      - statistics
+  /api/v1/recommendations:
+    get:
+      parameters:
+      - description: city name in lower-case (mutually exclusive with country)
+        in: query
+        name: city
+        type: string
+      - description: country name in lower-case (mutually exclusive with city)
+        in: query
+        name: country
+        type: string
+      - description: 'trip category filter '
+        in: query
+        name: category
+        type: string
+      - description: 'trip season filter '
+        in: query
+        name: season
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetRecommendationsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get recommendations
+      tags:
+      - recommendations
+  /api/v1/recommendations/save:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: snapshot_token (fast-path) или pin_ids+city/country (fallback)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SaveRecommendationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SaveRecommendationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Save recommendation as trip
+      tags:
+      - recommendations
+  /api/v1/trips:
+    get:
+      consumes:
+      - application/json
+      description: Returns list of trips for the authenticated user. Requires JWT.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List current user's trips
+      tags:
+      - trips
+  /api/v1/trips/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a trip. Requires JWT. Only owner can delete.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete trip
+      tags:
+      - trips
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Returns a single trip by ID with pins and media in each pin. Requires JWT.
+        Доступ: участник трипа или владелец трипа в избранных получает полный ответ с participants/current_user_settings.
+        Любой залогиненный пользователь может открыть опубликованный трип по share-ссылке; в этом случае возвращаются только публичные пины (выбранные при публикации) с публичными медиа, без participants/settings.
+        Если трип не опубликован, а пользователь не участник и не имеет трип в избранных — 403.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetTripResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get trip by ID
+      tags:
+      - trips
+    patch:
+      consumes:
+      - application/json
+      description: Updates trip metadata (name, description, category, season, dates).
+        Requires JWT. Any trip participant can update. Обложка — через /cover/upload
+        + /cover/confirm. Приватность — через PUT /trips/{id}/privacy (per-user).
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpdateTripRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update trip
+      tags:
+      - trips
+  /api/v1/trips/{id}/battles:
+    post:
+      description: Picks 8 random media from the trip and starts a battle session.
+        Returns 412 if the trip has fewer than 8 available media.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.StartBattleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Start photo battle
+      tags:
+      - trip-battles
+  /api/v1/trips/{id}/battles/{battle_id}/result:
+    post:
+      consumes:
+      - application/json
+      description: Records the final winner of a photo battle; increments media battle_rating
+        by 1. Can be called once per battle.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Battle ID
+        in: path
+        name: battle_id
+        required: true
+        type: string
+      - description: Winner media id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.SubmitBattleResultRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SubmitBattleResultResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit battle winner
+      tags:
+      - trip-battles
+  /api/v1/trips/{id}/best-memories:
+    get:
+      description: Returns media of the trip with battle_rating > 0, sorted by rating
+        DESC. Empty array when the trip has no winners yet.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetBestMemoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get best memories (story-mode)
+      tags:
+      - trip-battles
+  /api/v1/trips/{id}/cover:
+    delete:
+      description: 'Removes the trip cover: deletes the file from S3 and clears cover_url.
+        Requires JWT. Any trip participant can perform this action.'
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete trip cover
+      tags:
+      - trips
+  /api/v1/trips/{id}/cover/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Step 2 of the cover upload flow. Requires JWT. Any trip participant
+        can perform this action.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: S3 key
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ConfirmTripCoverUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm trip cover upload after uploading to S3
+      tags:
+      - trips
+  /api/v1/trips/{id}/cover/upload:
+    post:
+      consumes:
+      - application/json
+      description: Step 1 of the cover upload flow (mirrors user avatar). Requires
+        JWT. Any trip participant can perform this action.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Filename and content type
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestTripCoverUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripCoverUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request presigned URL for trip cover upload
+      tags:
+      - trips
+  /api/v1/trips/{id}/dislike:
+    post:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SuccessResponse'
+      security:
+      - BearerAuth: []
+      summary: Dislike trip
+      tags:
+      - trips
+  /api/v1/trips/{id}/favourite:
+    delete:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Remove trip from favourites
+      tags:
+      - trips
+    post:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SuccessResponse'
+      security:
+      - BearerAuth: []
+      summary: Add trip to favourites
+      tags:
+      - trips
+  /api/v1/trips/{id}/invite:
+    post:
+      consumes:
+      - application/json
+      description: Creates an invite link for the trip. Only participants can generate.
+        Requires JWT.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Optional expires_in_seconds
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.GenerateInviteLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GenerateInviteLinkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate invite link
+      tags:
+      - trips
+  /api/v1/trips/{id}/leave:
+    post:
+      consumes:
+      - application/json
+      description: Current user leaves the trip. If sole admin, trip may be deleted
+        or new admin assigned. Requires JWT.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.LeaveTripResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Leave trip
+      tags:
+      - trips
+  /api/v1/trips/{id}/like:
+    post:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.SuccessResponse'
+      security:
+      - BearerAuth: []
+      summary: Like trip
+      tags:
+      - trips
+  /api/v1/trips/{id}/media/{media_id}/privacy:
+    put:
+      consumes:
+      - application/json
+      description: Текущий пользователь выставляет свой уровень приватности на медиа.
+        Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается
+        в ответе. Только участник трипа.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Media ID
+        in: path
+        name: media_id
+        required: true
+        type: string
+      - description: privacy_level (Public|Private)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpsertPrivacyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PrivacyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set per-user media privacy
+      tags:
+      - trips
+  /api/v1/trips/{id}/media/add/apply-groups-and-process:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Draft pins, deleted media, session id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaApplyGroupsAndProcessRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaApplyGroupsAndProcessResponse'
+      security:
+      - BearerAuth: []
+      summary: '[3] Apply groups for add-media'
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/cancel:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaCancelRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaCancelResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel add-media session
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/commit-upload:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Uploaded file metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaCommitUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaCommitUploadResponse'
+      security:
+      - BearerAuth: []
+      summary: Commit uploaded file to add-media session
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/confirm:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaConfirmResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm add-media session
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/grouping:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Add-media session id
+        in: query
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaGetGroupingResponse'
+      security:
+      - BearerAuth: []
+      summary: Add-media grouping snapshot
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/process-grouping:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session id and media metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaProcessGroupingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaProcessGroupingResponse'
+      security:
+      - BearerAuth: []
+      summary: '[2] Process grouping for add-media'
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/request-upload-urls:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session id and files to upload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaRequestUploadUrlsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaRequestUploadUrlsResponse'
+      security:
+      - BearerAuth: []
+      summary: Request upload URLs for active add-media session
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/review:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Add-media session id
+        in: query
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaGetReviewResponse'
+      security:
+      - BearerAuth: []
+      summary: Add-media final review
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/session-media:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Add-media session id
+        in: query
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaGetSessionMediaResponse'
+      security:
+      - BearerAuth: []
+      summary: Session media snapshot
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/start:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Files to upload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaStartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaStartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: '[1] Start add-media session'
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/media/add/takeover:
+    post:
+      consumes:
+      - application/json
+      description: 'Идемпотентен: если caller уже ведущий, вернёт 200 без изменений.
+        Если час не прошёл — 403 NOT_INITIATOR.'
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.AddMediaTakeoverRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.AddMediaTakeoverResponse'
+      security:
+      - BearerAuth: []
+      summary: Take over add-media session leadership
+      tags:
+      - trip-add-media
+  /api/v1/trips/{id}/participants/{user_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a participant from the trip. Only admin can remove. Requires
+        JWT.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID to remove
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove participant
+      tags:
+      - trips
+  /api/v1/trips/{id}/pin-uploads/{sid}/cancel:
+    post:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CancelPinUploadResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel pin upload
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/commit-upload:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      - description: Commit payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.CommitPinUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CommitPinUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Commit pin upload
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/finalize:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      - description: Finalize payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizePinUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Finalize pin upload
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/process:
+    post:
+      description: 202 + processing_status="PROCESSING". По завершении воркер шлёт
+        WS PIN_UPLOAD_PROCESSING_COMPLETED.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessPinUploadResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Process pin upload (async)
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/review:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetPinUploadReviewResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get pin upload review
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/{sid}/upload-urls:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sid
+        required: true
+        type: string
+      - description: Files to upload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.RequestPinUploadUrlsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.RequestPinUploadUrlsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request more presigned URLs (pin upload)
+      tags:
+      - pins
+  /api/v1/trips/{id}/pin-uploads/start:
+    post:
+      consumes:
+      - application/json
+      description: 'Унифицированная сессия загрузки медиа. target_pin_id null → создание
+        нового пина (UNIQUE per trip), заполнен → добавление медиа в существующий
+        пин (UNIQUE per pin). Дальше: PUT в S3 → /commit-upload → /process → ws +
+        /review → /finalize или /cancel.'
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Files + optional target_pin_id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PinUploadStartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinUploadStartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Start pin upload session
+      tags:
+      - pins
+  /api/v1/trips/{id}/pins/{pin_id}:
+    delete:
+      description: 'Удаление пина. Если трип в избранном у других пользователей —
+        soft-delete-for-self через pin_hidden_by_user; иначе full delete с каскадом
+        media и S3 cleanup. Любой participant. Защита: запрет при активной pin_media_addition_session.'
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.DeletePinResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete pin
+      tags:
+      - pins
+    get:
+      description: Получить пин со всеми полями. Доступ — participant трипа или favourite-юзер.
+        Если пин скрыт для caller'а через pin_hidden_by_user (soft-delete-for-self)
+        — 404.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get pin
+      tags:
+      - pins
+    patch:
+      consumes:
+      - application/json
+      description: 'Изменение полей пина на READY-трипе: name/description/category/координаты/start-end/tags.
+        Privacy — отдельной ручкой PUT /pins/{id}/privacy. Любой participant.'
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpdatePinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update pin
+      tags:
+      - pins
+  /api/v1/trips/{id}/pins/{pin_id}/media/{media_id}:
+    delete:
+      description: 'Sessionless удаление одного медиа из пина с пересчётом агрегатов
+        и S3 cleanup. Защита: пин не может остаться пустым.'
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: string
+      - description: Media ID
+        in: path
+        name: media_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PinResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove media from pin
+      tags:
+      - pins
+  /api/v1/trips/{id}/pins/{pin_id}/privacy:
+    put:
+      consumes:
+      - application/json
+      description: Текущий пользователь выставляет свой уровень приватности на пине.
+        Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается
+        в ответе. Только участник трипа.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: string
+      - description: privacy_level (Public|Private)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpsertPrivacyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PrivacyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set per-user pin privacy
+      tags:
+      - trips
+  /api/v1/trips/{id}/privacy:
+    put:
+      consumes:
+      - application/json
+      description: Текущий пользователь выставляет свой уровень приватности на путешествии.
+        Эффективный privacy_level пересчитывается по AggregatePrivacyLevel и возвращается
+        в ответе. Только участник трипа.
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: privacy_level (Public|Private)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.UpsertPrivacyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.PrivacyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "412":
+          description: Precondition Failed
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set per-user trip privacy
+      tags:
+      - trips
+  /api/v1/trips/{id}/publish:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Publish payload (publish_whole or pin_ids)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.PublishTripRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+      security:
+      - BearerAuth: []
+      summary: Publish trip to feed
+      tags:
+      - trips
+  /api/v1/trips/{id}/settings:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: notifications_enabled
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.TripSettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.TripSettingsResponse'
+      security:
+      - BearerAuth: []
+      summary: Update trip notification settings
+      tags:
+      - trips
+  /api/v1/trips/creation/{id}/apply-groups-and-process:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Draft pins and deleted media
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ApplyGroupsAndProcessRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ApplyGroupsAndProcessResponse'
+      security:
+      - BearerAuth: []
+      summary: '[3] Apply groups and process'
+      tags:
+      - trip-creation
+  /api/v1/trips/creation/{id}/finalize:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pin updates and media to delete
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.FinalizeTripRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.FinalizeTripResponse'
+      security:
+      - BearerAuth: []
+      summary: '[5] Finalize trip'
+      tags:
+      - trip-creation
+  /api/v1/trips/creation/{id}/media/process-grouping:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Media metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.ProcessMediaGroupingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ProcessMediaGroupingResponse'
+      security:
+      - BearerAuth: []
+      summary: '[2] Process media grouping'
+      tags:
+      - trip-creation
+  /api/v1/trips/creation/{id}/review:
+    get:
+      parameters:
+      - description: Trip ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.GetTripReviewResponse'
+      security:
+      - BearerAuth: []
+      summary: '[4] Get trip review'
+      tags:
+      - trip-creation
+  /api/v1/trips/creation/start:
+    post:
+      consumes:
+      - application/json
+      description: 'Creates a new trip (creation flow stage 1: init + S3 upload URLs).
+        Requires JWT. user_id is taken from JWT.'
+      parameters:
+      - description: Trip creation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.CreateTripRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.CreateTripResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: '[1] Create a new trip'
+      tags:
+      - trip-creation
+  /api/v1/trips/favourites:
+    get:
+      description: Returns trips the user has added to favourites. Supports limit
+        and offset query params.
+      parameters:
+      - description: Limit (default 20, max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.Trip'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List favourite trips
+      tags:
+      - trips
+  /api/v1/trips/join:
+    post:
+      consumes:
+      - application/json
+      description: Joins the current user to a trip using an invite token. Requires
+        JWT.
+      parameters:
+      - description: Token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pinz_backend_api-gateway-service_internal_requests.JoinTripByTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.JoinTripByTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pinz_backend_api-gateway-service_internal_responses.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Join trip by token
+      tags:
+      - trips
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and the JWT access token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

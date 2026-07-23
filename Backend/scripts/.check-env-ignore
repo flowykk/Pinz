@@ -1,0 +1,15 @@
+# Исключения для check-env.sh
+# Формат: SERVICE_NAME  VAR_NAME
+# Используй * вместо SERVICE_NAME для глобального исключения.
+#
+# REDIS_URL — fallback для REDIS_ADDR, в Helm прописан только REDIS_ADDR.
+*               REDIS_URL
+# SWAGGER_HOST — опциональный override для Swagger UI, не деплоится через Helm.
+api-gateway     SWAGGER_HOST
+api-gateway     swaggerHost
+# WEBAUTHN_* — конфигурация passkey, пока не вынесена в Helm (задаётся через .env).
+auth-service    WEBAUTHN_RP_ID
+auth-service    WEBAUTHN_RP_DISPLAY_NAME
+auth-service    WEBAUTHN_RP_ORIGIN
+# REDIS_ADDR для api-gateway — используется для WebSocket Pub/Sub, пока не в Helm.
+api-gateway     REDIS_ADDR

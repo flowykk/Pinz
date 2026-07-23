@@ -1,0 +1,96 @@
+version: "3.9"
+
+# Инстансы PostgreSQL (Database-per-Service):
+# db               — Auth Service (pinz_db)
+# db-trips         — Trip Service (pinz_trips, PostGIS)
+# db-stats         — Statistics Service (pinz_stats)
+# db-notifications — Notification Service (pinz_notifications)
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: pinz-db
+    environment:
+      POSTGRES_USER: pinz_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pinz_password}
+      POSTGRES_DB: pinz_db
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pinz_user -d pinz_db"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  db-trips:
+    image: postgis/postgis:15-3.4-alpine
+    container_name: pinz-db-trips
+    environment:
+      POSTGRES_USER: pinz_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pinz_password}
+      POSTGRES_DB: pinz_trips
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pinz_user -d pinz_trips"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - db_trips_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  db-stats:
+    image: postgres:15-alpine
+    container_name: pinz-db-stats
+    environment:
+      POSTGRES_USER: pinz_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pinz_password}
+      POSTGRES_DB: pinz_stats
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pinz_user -d pinz_stats"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - db_stats_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  db-notifications:
+    image: postgres:15-alpine
+    container_name: pinz-db-notifications
+    environment:
+      POSTGRES_USER: pinz_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pinz_password}
+      POSTGRES_DB: pinz_notifications
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pinz_user -d pinz_notifications"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - db_notifications_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: pinz-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  db_trips_data:
+  db_stats_data:
+  db_notifications_data:
+  redis_data:

@@ -1,0 +1,11 @@
+# Kiali pod has no sidecar — disable mTLS to avoid WRONG_VERSION_NUMBER from ingress gateway.
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: kiali-plain
+  namespace: default
+spec:
+  host: kiali.istio-system.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE

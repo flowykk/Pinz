@@ -1,0 +1,155 @@
+import SwiftUI
+import PinzAuthentication
+import PinzProfile
+import PinzTrips
+import PinzPins
+import PinzFeed
+import PinzMedias
+import PinzDomain
+
+public struct RootView<Content: View>: View {
+    @Bindable var router: AppRouter
+    let rootContent: Content
+
+    public init(router: AppRouter, @ViewBuilder rootContent: () -> Content) {
+        self.router = router
+        self.rootContent = rootContent()
+    }
+
+    public var body: some View {
+        NavigationStack(path: $router.path) {
+            rootContent
+                .toolbar(.hidden)
+                .navigationDestination(for: Route.self) { route in
+                    destinationView(for: route).toolbar(.hidden)
+                }
+        }
+        .environment(\.appRouter, router)
+    }
+
+    @ViewBuilder
+    private func destinationView(for route: Route) -> some View {
+        switch route {
+        case .main:
+            TripView(trips: Trip.stubs())
+                .navigationBarBackButtonHidden(true)
+        case let .trip(tripRoute):
+            switch tripRoute {
+            case let .info(trip):
+                TripInfoView(trip: trip, onTripUpdated: consumeTripInfoUpdateHandler())
+            case let .profile(user):
+                ProfileView(user: user)
+            case let .pinInfo(pin, updateAction, deleteAction):
+                PinInfoView(pin: pin, updateAction: updateAction, deleteAction: deleteAction)
+            case .pinCreation:
+                PinCreationView()
+            case let .members(tripId, participants, currentUserId):
+                TripMembersView(tripId: tripId, participants: participants, currentUserId: currentUserId)
+            case .publicProfile(let userId):
+                PublicProfileView(userId: userId)
+            case .publicWishlist(let places):
+                WishlistView(places: places, isReadOnly: true)
+            case .feed:
+                FeedView()
+            }
+        case let .tripInfo(tripInfoRoute):
+            switch tripInfoRoute {
+            case let .pinsList(trip):
+                TripPinsListView(trip: trip)
+            case let .selectablePinsList(trip):
+                SelectablePinsListView(trip: trip)
+            case let .postPreview(trip, selectedPins):
+                PostPreviewView(trip: trip, selectedPins: selectedPins)
+            case let .postInfo(post):
+                PostInfoView(post: post)
+            case let .savedTrip(trip):
+                SavedTripView(trip: trip)
+            }
+        case let .tripCreation(tripCreationRoute):
+            switch tripCreationRoute {
+            case .initial:
+                InitialTripSetupView()
+            case .preprocessed(let tripId, let pins):
+                PreprocessedRawPinsView(tripId: tripId, pins: pins)
+            case .final(let tripId, let pins):
+                ReviewTripCreationView(tripId: tripId, pins: pins)
+            case .problems(let tripId, let pins):
+                TripCreationProblemsView(tripId: tripId, pins: pins)
+            }
+        case let .profile(profileRoute):
+            switch profileRoute {
+            case let .emailChange(email, userId, action):
+                EmailChangeView(email: email, userId: userId, onChangeSuccess: action.action)
+            case .statistics:
+                StatisticsView()
+            case .trips:
+                TripsListView()
+            case .wishlist:
+                WishlistView()
+            case .saved:
+                SavedMapsView()
+            case .storageSettings:
+                StorageSettingsView()
+            case .notifications:
+                NotificationsView()
+            case .appearance:
+                AppearanceView()
+            }
+        case let .pinInfo(pinInfoRoute):
+            switch pinInfoRoute {
+            case let .placeChange(pin, action):
+                PinPlaceChangeView(pin: pin, onSave: action.action)
+            }
+        case let .media(mediaRoute):
+            switch mediaRoute {
+            case let .info(media, updateAction, pinIdForServerMediaDelete, pinResponseAction, allowsMediaPrivacyChange):
+                MediaInfoView(
+                    media: media,
+                    updateAction: updateAction,
+                    pinIdForServerMediaDelete: pinIdForServerMediaDelete,
+                    pinResponseAction: pinResponseAction,
+                    allowsMediaPrivacyChange: allowsMediaPrivacyChange
+                )
+            case let .localInfo(media):
+                MediaInfoView(localMedia: media)
+            }
+        case let .wishlist(wishlistRoute):
+            switch wishlistRoute {
+            case let .element(element):
+                WishlistElementView(element: element)
+            case let .creation(action):
+                WishlistElementCreationView(onCreated: action.action)
+            }
+        case let .tripAddMedia(addMediaRoute):
+            switch addMediaRoute {
+            case .start(let tripId):
+                AddMediaStartView(tripId: tripId)
+            case .uploading(let tripId, let sessionId):
+                AddMediaUploadingView(tripId: tripId, sessionId: sessionId)
+            case .grouping(let tripId, let sessionId):
+                AddMediaGroupingView(tripId: tripId, sessionId: sessionId)
+            case .processing(let tripId, let sessionId):
+                AddMediaProcessingView(tripId: tripId, sessionId: sessionId)
+            case .review(let tripId, let sessionId):
+                AddMediaReviewView(tripId: tripId, sessionId: sessionId)
+            case .problems(let tripId, let sessionId):
+                AddMediaProblemsView(tripId: tripId, sessionId: sessionId)
+            }
+        case let .pinUpload(pinUploadRoute):
+            switch pinUploadRoute {
+            case let .start(tripId, targetPinId):
+                PinUploadStartView(tripId: tripId, targetPinId: targetPinId)
+            case let .processing(tripId, sessionId, targetPinId):
+                PinUploadProcessingView(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
+            case let .review(tripId, sessionId, targetPinId):
+                PinUploadReviewView(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
+            case let .problems(tripId, sessionId, targetPinId):
+                PinUploadProblemsView(tripId: tripId, sessionId: sessionId, targetPinId: targetPinId)
+            }
+        }
+    }
+
+    private func consumeTripInfoUpdateHandler() -> (() -> Void)? {
+        router.consumeTripInfoUpdateHandler()
+    }
+}

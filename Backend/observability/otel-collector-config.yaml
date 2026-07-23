@@ -1,0 +1,52 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: "local"
+        action: upsert
+
+exporters:
+  # Traces → Tempo OTLP gRPC receiver (port 4317)
+  otlp/tempo:
+    endpoint: "tempo:4317"
+    tls:
+      insecure: true
+  # Metrics → Prometheus scrapes this endpoint
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: pinz
+  # Logs → Loki OTLP HTTP endpoint
+  otlphttp/loki:
+    endpoint: "http://loki:3100/otlp"
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki]
+

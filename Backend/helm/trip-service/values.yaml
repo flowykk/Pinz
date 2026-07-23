@@ -1,0 +1,55 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/dmitry-pr/pinz-trip-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: grpc
+  port: 50052
+
+env:
+  dbHost: db-trips
+  dbPort: "5433"
+  dbUser: pinz_user
+  dbName: pinz_trips
+  redisAddr: redis:6379
+  grpcPort: ":50052"
+  otelExporterEndpoint: "otel-collector.default.svc.cluster.local:4317"
+  otelServiceName: "trip-service"
+  otelTracesSampler: "parentbased_always_on"
+  otelTracesSamplerArg: "1.0"
+  s3Endpoint: "https://storage.yandexcloud.net"
+  s3Region: "ru-central1"
+  s3Bucket: ""
+  s3PresignTTL: "15m"
+  # On loadtest stand: "loadtest/".
+  s3KeyPrefix: ""
+  natsUrl: "nats://nats:4222"
+  natsCredsPath: ""
+  mlEnabled: "true"
+
+secret:
+  dbPassword: "REPLACE_IN_PRODUCTION"
+  s3AccessKey: ""
+  s3SecretKey: ""
+  natsToken: "local-dev-token"
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "48Mi"
+  limits:
+    cpu: "200m"
+    memory: "96Mi"
+
+pdb:
+  enabled: false
+  minAvailable: 1
+
+dockerConfig:
+  auths:
+    ghcr.io:
+      username: "{{ .Values.github.actor }}"
+      password: "{{ .Values.github.token }}"

@@ -1,0 +1,454 @@
+// MARK: - Common
+"common.button.ok" = "OK";
+"common.button.delete" = "Delete";
+"common.button.reset" = "Reset";
+"common.button.details" = "Details";
+"common.label.info" = "Info";
+"common.label.gallery" = "Gallery";
+"common.label.media" = "media";
+"common.label.pinNumber" = "Pin %d";
+"common.button.cancel" = "Cancel";
+"common.button.done" = "Done";
+"common.button.next" = "Next";
+"common.button.save" = "Save";
+"common.button.close" = "Close";
+"common.button.retry" = "Try Again";
+"common.button.expand" = "Show More";
+"common.button.collapse" = "Show Less";
+"common.button.selectFromGallery" = "Select from Gallery";
+"common.button.deletePhoto" = "Delete Photo";
+"common.button.editPhoto" = "Edit Photo";
+"common.button.addDescription" = "Add Description";
+"common.label.notSelected" = "Not selected";
+"common.label.description" = "Description";
+"common.label.startDate" = "Start Date";
+"common.label.endDate" = "End Date";
+"common.alert.title.selectAction" = "Select Action";
+"common.button.apply" = "Apply";
+"common.button.confirm" = "Confirm";
+
+// MARK: - Auth
+"auth.label.email" = "Email:";
+"auth.placeholder.email" = "your@email.com";
+"auth.label.verificationCode" = "Verification Code:";
+"auth.label.nickname" = "Nickname:";
+"auth.placeholder.nickname" = "cool guy";
+"auth.message.passkeyPrompt" = "Confirm with Face ID";
+
+// MARK: - Media upload
+"mediaUpload.toast.imageTooLarge" = "Photo upload failed: file exceeds 10 MB and could not be compressed";
+"mediaUpload.toast.videoTooLarge" = "Video upload failed: file exceeds 50 MB and could not be compressed";
+
+// MARK: - Profile
+"profile.title.editProfile" = "Edit Profile";
+"profile.button.deleteAccount" = "Delete Account";
+"profile.button.logout" = "Log Out";
+"profile.label.statistics" = "Statistics";
+"profile.label.trips" = "Trips";
+"profile.label.wishlist" = "Wishlist";
+"profile.label.savedMaps" = "Saved Maps";
+"profile.label.notifications" = "Notifications";
+"profile.label.appearance" = "Appearance";
+"profile.label.storage" = "Storage";
+"profile.label.clearCache" = "Clear Data";
+"profile.hint.saveImagesLocally" = "When enabled, images are cached locally for faster loading.";
+"profile.label.changeEmail" = "Change Email";
+"profile.placeholder.name" = "Name";
+"profile.hint.nicknameRules" = "Username must contain only letters, digits, dots and underscores";
+
+// MARK: - Profile Toasts
+"profile.toast.nicknameEmpty" = "Username cannot be empty";
+"profile.toast.nicknameLengthInvalid" = "Username must be 4 to 20 characters";
+"profile.toast.nicknameInvalidChars" = "Username can only contain letters, digits, _ and -";
+"profile.toast.loadFailed" = "Failed to load profile";
+"profile.toast.saveFailed" = "Failed to save changes";
+"profile.toast.avatarUploadFailed" = "Failed to upload profile photo";
+"profile.toast.avatarDeleteFailed" = "Failed to delete photo";
+"profile.toast.accountDeleteFailed" = "Failed to delete account";
+"profile.toast.profileSaved" = "Profile saved";
+
+// MARK: - Appearance
+"appearance.title.main" = "Appearance";
+"appearance.header.appIcon" = "App Icon";
+"appearance.header.mapStyle" = "Map Style";
+
+// MARK: - Notifications
+"notifications.title.main" = "Notifications";
+
+// MARK: - Statistics
+"statistics.title.main" = "Statistics";
+"statistics.group.countries" = "Your countries";
+"statistics.group.cities" = "Your cities";
+"statistics.visited.lastVisited" = "Last visited: %@";
+"statistics.visited.visitsCount" = "Visits: %@";
+"statistics.label.trips" = "Trips";
+"statistics.label.pins" = "Pins";
+"statistics.label.media" = "Media";
+"statistics.label.likes" = "Likes";
+"statistics.label.dislikes" = "Dislikes";
+"statistics.label.battles" = "Battles";
+
+// MARK: - Email Change
+"emailChange.title.main" = "Change Email";
+"emailChange.description.instructions" = "Here you can change your email. All your account data will be saved. First, enter the code sent to your linked email";
+"emailChange.label.newEmail" = "Enter New Email";
+"emailChange.placeholder.email" = "example@example.com";
+"emailChange.description.verificationCode" = "Now enter the code sent to the new email";
+"emailChange.button.receiveCode" = "Receive Code";
+
+// MARK: - Email Change Toasts
+"emailChange.toast.invalidEmail" = "Enter a valid email";
+"emailChange.toast.codeSendFailed" = "Failed to send verification code";
+"emailChange.toast.confirmFailed" = "Invalid code or it has expired";
+"emailChange.toast.emailChanged" = "Email updated";
+
+// MARK: - Saved Maps
+"savedMaps.title.main" = "Saved Maps";
+
+// MARK: - Wishlist
+"wishlist.title.main" = "Wishlist";
+"wishlist.placeholder.placeName" = "Place Name";
+"wishlist.hint.placeNameRules" = "Use only Latin or Cyrillic letters, numbers, and spaces";
+"wishlist.placeholder.placeDescription" = "Place Description";
+"wishlist.label.uploadPhoto" = "Upload Place Photo";
+"wishlist.button.addNewPlace" = "Add new place to wishlist";
+"wishlist.hint.changePhoto" = "Tap the photo to change it";
+"wishlistElement.label.title" = "Place Name";
+"wishlistElement.hint.titleRules" = "Use only Latin or Cyrillic letters, numbers, and spaces";
+"wishlistElement.label.description" = "Description";
+"wishlistElement.placeholder.description" = "Place Description";
+"wishlistElement.hint.changePhoto" = "Tap the photo to change it";
+"wishlistElement.button.delete" = "Delete Place";
+
+// MARK: - Wishlist Toasts
+"wishlist.toast.loadFailed" = "Couldn't load wishlist";
+"wishlist.toast.placeCreated" = "Place added to wishlist";
+"wishlist.toast.createFailed" = "Couldn't add place. Try again.";
+"wishlist.toast.imageUploadFailed" = "Couldn't upload photo";
+"wishlist.toast.imagePrepareFailed" = "Couldn't process photo";
+"wishlist.toast.photoLoadFailed" = "Couldn't load the selected photo";
+"wishlist.toast.nameInvalidChars" = "Use only Latin or Cyrillic letters, numbers, and spaces";
+
+// MARK: - Wishlist Element Toasts
+"wishlistElement.toast.placeUpdated" = "Place updated";
+"wishlistElement.toast.placeDeleted" = "Place removed from wishlist";
+"wishlistElement.toast.updateFailed" = "Couldn't save changes";
+"wishlistElement.toast.deleteFailed" = "Couldn't delete place";
+"wishlistElement.toast.imageUploadFailed" = "Couldn't upload photo";
+"wishlistElement.toast.imagePrepareFailed" = "Couldn't process photo";
+"wishlistElement.toast.photoLoadFailed" = "Couldn't load the selected photo";
+"wishlistElement.toast.nameEmpty" = "Place name can't be empty";
+"wishlistElement.toast.nameInvalidChars" = "Use only Latin or Cyrillic letters, numbers, and spaces";
+"wishlistElement.toast.nameTooLong" = "Place name must not exceed %d characters";
+"wishlistElement.toast.descriptionTooLong" = "Description must not exceed %d characters";
+
+// MARK: - Feed
+"feed.title.main" = "Feed";
+"feed.filter.clearLocation" = "Clear";
+"feed.filter.title" = "Filters";
+"feed.filter.group.location" = "Location";
+"feed.filter.group.category" = "Category";
+"feed.filter.group.season" = "Season";
+"feed.filter.group.sort" = "Sort";
+"feed.filter.label.city" = "City";
+"feed.filter.label.country" = "Country";
+"feed.filter.sort.default" = "Default";
+"feed.filter.sort.date" = "By date";
+"feed.filter.sort.rating" = "By rating";
+"feed.list.endReached" = "No more posts";
+"feed.button.getRecommendation" = "Get a recommendation";
+"feed.recommendation.badge.forYou" = "Picked for you";
+"feed.recommendation.toast.locationRequired" = "Choose a city or country for recommendations.";
+"feed.recommendation.toast.loadFailed" = "Couldn't load recommendation.";
+"feed.recommendation.toast.saveFailed" = "Couldn't save recommendation.";
+"feed.recommendation.toast.empty" = "No recommendations for this region yet.";
+"feed.recommendation.toast.regionNotFound" = "Region not found.";
+"feed.recommendation.toast.snapshotExpired" = "Map data expired, refreshing…";
+"feed.recommendation.toast.snapshotStale" = "Refresh the map.";
+
+// MARK: - Trips
+"trips.title.list" = "Trips";
+"trips.empty.noSelection" = "You haven't selected a trip yet";
+"trips.empty.noSelectionHint" = "Tap [chevron.down] to select from existing or create a new one";
+"trips.button.viewDetails" = "View Details";
+"trips.header.membersAndPrivacy" = "Privacy";
+"trips.hint.privateMode" = "Trip won't appear in the general feed";
+"trips.hint.publicMode" = "Trip will appear in the general feed";
+
+// MARK: - Trip Creation
+"tripCreation.title.main" = "Create Trip";
+"tripCreation.loading.uploadingMedia" = "Uploading media files";
+"tripCreation.loading.formingPins" = "Generating pins";
+"tripCreation.placeholder.name" = "Trip Name";
+"tripCreation.placeholder.description" = "Trip Description";
+"tripCreation.hint.tripNameRules" = "Trip name must contain only letters, digits, dots and underscores";
+"tripCreation.button.generatePins" = "Generate Pins";
+
+// MARK: - Trip Creation Toasts
+"tripCreation.toast.nameEmpty" = "Enter the trip name";
+"tripCreation.toast.nameTooLong" = "Trip name must not exceed %d characters";
+"tripCreation.toast.nameInvalidChars" = "Trip name can only contain letters, digits, dots and underscores";
+"tripCreation.toast.descriptionTooLong" = "Description must not exceed %d characters";
+"tripCreation.toast.categoryNotSelected" = "Pick a trip category";
+"tripCreation.toast.seasonNotSelected" = "Pick a season";
+"tripCreation.toast.mediasEmpty" = "Add at least one media file";
+"tripCreation.toast.mediaLoadingInProgress" = "Wait for media to finish loading";
+"tripCreation.toast.mediaLoadFailed" = "Couldn't process the selected media";
+"tripCreation.toast.createTripFailed" = "Couldn't create trip. Try again";
+"tripCreation.toast.uploadMediaFailed" = "Couldn't upload media. Check your connection";
+"tripCreation.toast.groupingFailed" = "Couldn't generate pins. Try again";
+"tripCreation.toast.noPinsGenerated" = "Couldn't form any pins from the uploaded media";
+
+// MARK: - Trip Info
+"tripInfo.header.general" = "General Information";
+"tripInfo.label.season" = "Season";
+"tripInfo.label.category" = "Category";
+"tripInfo.label.dates" = "Dates";
+"tripInfo.header.public" = "Public Information";
+"tripInfo.label.publishTrip" = "Publish Trip";
+"tripInfo.message.photoBattleNeedMedia" = "Photo battle requires at least %d media";
+"tripInfo.message.photoBattleNeedMediaWithContext" = "Photo battle requires at least %d media in this trip";
+"tripInfo.message.photoBattleStartFailed" = "Failed to start photo battle: server returned less media than required";
+"tripInfo.message.photoBattleStartFailedGeneric" = "Failed to start photo battle. Please try again later";
+"tripInfo.section.specialModes" = "Special modes";
+"tripInfo.button.stories" = "Stories";
+"tripInfo.button.photoBattle" = "Photo battle";
+"tripInfo.placeholder.name" = "Trip Name";
+"tripInfo.hint.tripNameRules" = "Trip name must contain only letters, digits, dots and underscores";
+"tripInfo.hint.descriptionLimit" = "Max 5000 characters";
+"tripInfo.placeholder.description" = "Trip Description";
+"tripInfo.button.delete" = "Delete Trip";
+"tripInfo.button.leave" = "Leave trip";
+"tripInfo.label.pins" = "Trip Pins";
+"tripInfo.label.notifications" = "Notifications";
+"tripInfo.alert.leaveTrip.title" = "Leave trip?";
+"tripInfo.alert.leaveTrip.message" = "This action will remove you from the trip.";
+"tripInfo.alert.leaveTrip.confirm" = "Leave";
+"tripInfo.alert.deleteTrip.title" = "Delete Trip?";
+"tripInfo.alert.deleteTrip.message" = "This action will permanently delete this trip and all its related data.";
+"tripInfo.alert.deleteTrip.confirm" = "Delete";
+
+// MARK: - Trip Info Toasts
+"tripInfo.toast.tripSaved" = "Trip saved";
+"tripInfo.toast.saveFailed" = "Failed to save trip";
+"tripInfo.toast.coverUploadFailed" = "Failed to upload cover photo";
+"tripInfo.toast.descriptionTooLong" = "Description must not exceed 5000 characters";
+"tripInfo.toast.startDateAfterEndDate" = "Start date cannot be after end date";
+"tripInfo.toast.tripLeft" = "You left the trip";
+"tripInfo.toast.leaveFailed" = "Failed to leave trip";
+"tripInfo.toast.tripDeleted" = "Trip deleted";
+"tripInfo.toast.deleteFailed" = "Failed to delete trip";
+"tripInfo.toast.notificationsUpdated" = "Notifications updated";
+"tripInfo.toast.notificationsFailed" = "Failed to update notifications";
+"tripInfo.toast.privacyFailed" = "Failed to update privacy";
+
+// MARK: - Review Trip Creation
+"reviewTripCreation.title.main" = "Review Pins";
+
+// MARK: - Review Trip Creation Toasts
+"reviewTripCreation.toast.fixIssuesFirst" = "Fix pin issues before continuing";
+"reviewTripCreation.toast.tripCreated" = "Trip created";
+"reviewTripCreation.toast.finalizeFailed" = "Couldn't finalize trip creation";
+"tripCreationProblems.title.main" = "Pin Problems";
+"tripCreationProblems.message.noProblems" = "No issues found";
+"tripCreationProblems.issue.missingCoordinates" = "No coordinates";
+"tripCreationProblems.issue.missingDates" = "No dates";
+
+// MARK: - Preprocessed Pins
+"preprocessedPins.button.mergePins" = "Merge Pins";
+
+// MARK: - Preprocessed Pins Toasts
+"preprocessedPins.toast.noPins" = "Add at least one pin";
+"preprocessedPins.toast.emptyPin" = "Pin %d is empty. Remove it or add media";
+"preprocessedPins.toast.applyFailed" = "Couldn't save grouping. Try again";
+"preprocessedPins.toast.processingTimeout" = "Server is taking too long to process. Try again later";
+"preprocessedPins.toast.reviewFetchFailed" = "Couldn't load processed pins";
+"preprocessedPins.toast.unexpectedStatus" = "Server returned an unexpected processing status";
+
+// MARK: - Trip Pins
+"tripPins.title" = "Trip Pins";
+"tripPins.button.addMedia" = "Add Media";
+"tripPins.button.addPin" = "Add Pin";
+"tripPins.empty.noPins" = "There are no pins in this trip yet";
+"tripPins.status.uploading" = "Another participant is uploading media";
+"tripPins.status.groupingReview" = "Another participant is grouping media";
+"tripPins.status.processing" = "Media is being processed";
+"tripPins.status.draftFinalReview" = "Another participant is reviewing media";
+"tripPins.status.creatingPin" = "Creating pin…";
+
+// MARK: - Pin upload resume
+"pinUpload.creation.resume.conflictSession" = "Pin creation is in progress on another device. Starting over.";
+"pinUpload.creation.resume.restoreFailed" = "Could not restore pin creation session";
+"pinUpload.addition.resume.conflictSession" = "Adding media to this pin is in progress on another device. Starting over.";
+"pinUpload.addition.resume.restoreFailed" = "Could not restore the media upload session for this pin";
+"pinUpload.header.createPin" = "Create pin";
+"pinUpload.header.addMedia" = "Add media";
+"pinUpload.loading.uploading" = "Uploading media...";
+"pinUpload.loading.committing" = "Saving...";
+"pinUpload.loading.starting" = "Starting processing...";
+"pinUpload.processing.status" = "Processing media...";
+"pinUpload.review.header.newPin" = "New pin";
+"pinUpload.cancel.creation.title" = "Cancel pin creation?";
+"pinUpload.cancel.creation.confirm" = "Cancel pin creation";
+"pinUpload.cancel.addition.title" = "Cancel adding media?";
+"pinUpload.cancel.addition.confirm" = "Cancel adding media";
+"pinUpload.dialog.continue" = "Continue";
+"pinUpload.review.toast.maxTags" = "Maximum %d tags";
+"pinUpload.review.toast.tagTooLongBytes" = "Tag is too long (max %d bytes)";
+"pinUpload.review.toast.tagTooLongBytesNamed" = "Tag '%@' is too long (max %d bytes)";
+"pinUpload.review.toast.nameTooLongBytes" = "Name is too long (max %d bytes)";
+"pinUpload.review.toast.descriptionTooLongBytes" = "Description is too long (max %d bytes)";
+"pinUpload.review.toast.emptyPinNoMedia" = "All media removed — can't save an empty pin";
+"pinUpload.review.toast.sessionInactive" = "Session is no longer active";
+"pinUpload.review.toast.badRequest" = "Check the fields: limits or coordinates may be invalid";
+"pinUpload.review.toast.limitExceeded" = "Limit exceeded — try again later";
+"pinUpload.review.toast.sessionWrongState" = "Session is in the wrong state";
+"pinUpload.review.toast.sessionNotFound" = "Session not found";
+
+// MARK: - Add Media
+"addMedia.start.title" = "Add Media";
+"addMedia.uploading.title" = "Uploading media";
+"addMedia.grouping.title" = "Grouping media";
+"addMedia.review.title" = "Final review";
+"addMedia.cancel.title" = "Cancel upload?";
+"addMedia.cancel.confirm" = "Cancel upload";
+"addMedia.button.addMore" = "Add more";
+"addMedia.button.start" = "Start";
+"addMedia.button.merge" = "Merge";
+"addMedia.button.takeover" = "Take over";
+"addMedia.review.takeover.message" = "%@ is finishing the review";
+"addMedia.review.takeover.messageWithCountdown" = "%@ is finishing the review. Time until takeover: %@";
+
+// MARK: - Trips List Popup
+"tripsListPopup.title.myTrips" = "My Trips";
+"tripsListPopup.button.createTrip" = "Create Trip";
+
+// MARK: - Trip Members
+"tripMembers.title.main" = "Trip Members";
+"tripMembers.title.invite" = "Invite to trip";
+"tripMembers.placeholder.search" = "Search Members";
+"tripMembers.button.shareLink" = "Share link";
+"tripMembers.button.copyLink" = "Copy link";
+"tripMembers.invite.error" = "Couldn’t create invite. Try again.";
+"tripMembers.invite.deepLinkJoinFailed" = "Couldn't open invite. Try again.";
+
+// MARK: - Pin Creation
+"pinCreation.title.main" = "Create Pin";
+"pinCreation.header.general" = "General Information";
+"pinCreation.placeholder.name" = "Pin Name";
+"pinCreation.hint.pinNameRules" = "Pin name must contain only letters, digits, dots and underscores";
+"pinCreation.header.tags" = "Tags";
+"pinCreation.placeholder.description" = "Pin Description";
+
+// MARK: - Pin Info
+"pinInfo.button.delete" = "Delete Pin";
+"pinInfo.alert.deletePin.title" = "Delete Pin?";
+"pinInfo.alert.deletePin.message" = "This action will permanently delete this pin and all its media.";
+"pinInfo.alert.deletePin.confirm" = "Delete";
+"pinInfo.label.location" = "Location";
+"pinInfo.label.category" = "Category";
+"pinInfo.label.dates" = "Dates";
+"pinInfo.button.addLocation" = "Add location";
+"pinInfo.hint.changeLocation" = "Tap to change pin location";
+
+// MARK: - Pin Info Toasts
+"pinInfo.toast.pinSaved" = "Pin saved";
+"pinInfo.toast.saveFailed" = "Failed to save pin";
+"pinInfo.toast.pinDeleted" = "Pin deleted";
+"pinInfo.toast.deleteFailed" = "Failed to delete pin";
+"pinInfo.toast.privacyFailed" = "Failed to update privacy";
+"pinInfo.toast.locationUpdated" = "Location updated";
+"pinInfo.toast.locationFailed" = "Failed to update location";
+"pinInfo.toast.startDateAfterEndDate" = "Start date cannot be after end date";
+"pinInfo.toast.descriptionTooLong" = "Description must not exceed 5000 characters";
+"pinInfo.toast.nameEmpty" = "Pin name cannot be empty";
+"pinInfo.toast.nameTooLong" = "Pin name must not exceed 50 characters";
+"pinInfo.toast.tagEmpty" = "Tag cannot be empty";
+"pinInfo.toast.tagTooLong" = "Tag must not exceed %d characters";
+"pinInfo.toast.tagAlreadyExists" = "This tag is already added";
+"pinInfo.toast.tagLimitReached" = "Tag limit reached (max %d)";
+"pinInfo.toast.mediaDeleted" = "Media removed";
+"pinInfo.toast.mediaDeleteFailed" = "Failed to remove media";
+"pinInfo.toast.mediaDeletePinMustHaveMedia" = "A pin must keep at least one photo or video";
+
+// MARK: - Raw Pin
+"rawPin.button.move" = "Move";
+
+// MARK: - Pin Place Change
+"pinPlaceChange.label.instructions" = "Move the map to\nchange pin location";
+
+// MARK: - Pin Story
+"pinStory.button.pinDetails" = "Pin Details";
+"pinStory.button.mediaDetails" = "Media Details";
+
+// MARK: - Media Info
+"mediaInfo.button.delete" = "Delete Media";
+"mediaInfo.alert.deleteMedia.title" = "Delete media?";
+"mediaInfo.alert.deleteMedia.message" = "This photo or video will be removed from the pin.";
+"mediaInfo.alert.deleteMedia.confirm" = "Delete";
+"mediaInfo.toast.mediaDeleted" = "Media removed";
+"mediaInfo.toast.mediaDeleteFailed" = "Failed to remove media";
+"mediaInfo.toast.mediaDeletePinMustHaveMedia" = "A pin must keep at least one photo or video";
+
+// MARK: - Items Picker
+"itemsPicker.placeholder.customValue" = "Enter a custom value";
+
+// MARK: - Map Style
+"mapStyle.label.standard" = "Standard";
+"mapStyle.label.satellite" = "Satellite";
+"mapStyle.label.hybrid" = "Hybrid";
+
+// MARK: - Selectable Pins
+"selectablePins.title.main" = "Select Pins to Publish";
+"selectablePins.button.deselectAll" = "Deselect All";
+"selectablePins.button.selectAll" = "Select All";
+
+// MARK: - Post Preview
+"postPreview.title.main" = "Post Preview";
+"postPreview.button.publish" = "Publish Trip";
+"postPreview.error.publishFailed" = "Failed to publish trip. Please try again.";
+"savedTrip.error.load" = "Couldn’t load trip. Please try again.";
+
+// MARK: - Move Media
+"moveMedia.label.instructions" = "Choose a pin to\nmove the media to";
+"moveMedia.button.moveToPinNumber" = "Move to Pin %d";
+
+// MARK: - Merge Pins
+"mergePins.label.instructions" = "Choose pins to merge";
+"mergePins.button.merge" = "Merge Pins %d and %d";
+
+// MARK: - Tags
+"tags.placeholder.tag" = "Tag";
+
+// MARK: - Photo Battle
+"photoBattle.title" = "Photo battle";
+"photoBattle.header" = "Photo battle";
+"photoBattle.button.chooseMedia" = "Choose this";
+"photoBattle.loadingMedias" = "Loading media…";
+"photoBattle.loadingSaving" = "Saving winner";
+"photoBattle.progress.round" = "Round %1$d of %2$d • Step %3$d of %4$d";
+"photoBattle.progress.comparisons" = "Comparisons: %1$d of %2$d";
+"photoBattle.winner.title" = "Winner";
+"photoBattle.winner.rating" = "New rating: %1$d";
+"photoBattle.winner.loadingRating" = "New rating is unavailable";
+"photoBattle.error.submitResultFailed" = "Failed to submit battle result, please try again";
+"photoBattle.footer.close" = "Close";
+
+// MARK: - Alerts
+"alert.clearCache.title" = "Clear Data";
+"alert.clearCache.message" = "Are you sure? This will delete all saved images.";
+"alert.clearCache.confirm" = "Clear";
+
+"alert.deleteAccount.title" = "Delete account?";
+"alert.deleteAccount.message" = "This action is irreversible. Your account will be permanently deleted.";
+"alert.deleteAccount.confirm" = "Delete";
+
+"alert.logout.title" = "Log out?";
+"alert.logout.message" = "You will need to sign in again to use your account.";
+"alert.logout.confirm" = "Log Out";
+
+"profile.label.saveImagesLocally" = "Save images locally";
+
+// MARK: - Censorship
+"censorship.banner.name" = "This title won't pass moderation — other users will see a placeholder. Edit to fix.";
+"censorship.banner.description" = "This description won't pass moderation — other users will see a placeholder. Edit to fix.";

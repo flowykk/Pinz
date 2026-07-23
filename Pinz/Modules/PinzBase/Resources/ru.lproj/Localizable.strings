@@ -1,0 +1,454 @@
+// MARK: - Common
+"common.button.ok" = "ОК";
+"common.button.delete" = "Удалить";
+"common.button.reset" = "Сбросить";
+"common.button.details" = "Детали";
+"common.label.info" = "Информация";
+"common.label.gallery" = "Галерея";
+"common.label.media" = "медиа";
+"common.label.pinNumber" = "Пин %d";
+"common.button.cancel" = "Отмена";
+"common.button.done" = "Готово";
+"common.button.next" = "Далее";
+"common.button.save" = "Сохранить";
+"common.button.close" = "Закрыть";
+"common.button.retry" = "Повторить";
+"common.button.expand" = "Раскрыть";
+"common.button.collapse" = "Скрыть";
+"common.button.selectFromGallery" = "Выбрать из галереи";
+"common.button.deletePhoto" = "Удалить фотографию";
+"common.button.editPhoto" = "Изменить фотографию";
+"common.button.addDescription" = "Добавить описание";
+"common.label.notSelected" = "Не выбрано";
+"common.label.description" = "Описание";
+"common.label.startDate" = "Дата начала";
+"common.label.endDate" = "Дата конца";
+"common.alert.title.selectAction" = "Выберите действие";
+"common.button.apply" = "Применить";
+"common.button.confirm" = "Подтвердить";
+
+// MARK: - Auth
+"auth.label.email" = "email:";
+"auth.placeholder.email" = "your@email.com";
+"auth.label.verificationCode" = "verification code:";
+"auth.label.nickname" = "nickname:";
+"auth.placeholder.nickname" = "cool guy";
+"auth.message.passkeyPrompt" = "Подтверди при помощи Face ID";
+
+// MARK: - Media upload
+"mediaUpload.toast.imageTooLarge" = "Фото не загружено: > 10 МБ и не удалось сжать";
+"mediaUpload.toast.videoTooLarge" = "Видео не загружено: > 50 МБ и не удалось сжать";
+
+// MARK: - Profile
+"profile.title.editProfile" = "Редактирование профиля";
+"profile.button.deleteAccount" = "Удалить аккаунт";
+"profile.button.logout" = "Выйти";
+"profile.label.statistics" = "Статистика";
+"profile.label.trips" = "Путешествия";
+"profile.label.wishlist" = "Желанные места";
+"profile.label.savedMaps" = "Сохранённые карты";
+"profile.label.notifications" = "Уведомления";
+"profile.label.appearance" = "Оформление";
+"profile.label.storage" = "Хранилище";
+"profile.label.clearCache" = "Очистить данные";
+"profile.hint.saveImagesLocally" = "При включении изображения кэшируются локально для более быстрого открытия.";
+"profile.label.changeEmail" = "Сменить почту";
+"profile.placeholder.name" = "Имя";
+"profile.hint.nicknameRules" = "Имя пользователя должно состоять из букв, цифр, точки и подчёркивания";
+
+// MARK: - Profile Toasts
+"profile.toast.nicknameEmpty" = "Имя пользователя не может быть пустым";
+"profile.toast.nicknameLengthInvalid" = "Имя пользователя должно быть от 4 до 20 символов";
+"profile.toast.nicknameInvalidChars" = "Имя пользователя может содержать только буквы, цифры, _ и -";
+"profile.toast.loadFailed" = "Не удалось загрузить профиль";
+"profile.toast.saveFailed" = "Не удалось сохранить изменения";
+"profile.toast.avatarUploadFailed" = "Не удалось загрузить фото профиля";
+"profile.toast.avatarDeleteFailed" = "Не удалось удалить фото";
+"profile.toast.accountDeleteFailed" = "Не удалось удалить аккаунт";
+"profile.toast.profileSaved" = "Профиль сохранён";
+
+// MARK: - Appearance
+"appearance.title.main" = "Оформление";
+"appearance.header.appIcon" = "Иконка приложения";
+"appearance.header.mapStyle" = "Вид карты";
+
+// MARK: - Notifications
+"notifications.title.main" = "Уведомления";
+
+// MARK: - Statistics
+"statistics.title.main" = "Статистика";
+"statistics.group.countries" = "Твои страны";
+"statistics.group.cities" = "Твои города";
+"statistics.visited.lastVisited" = "Последнее посещение: %@";
+"statistics.visited.visitsCount" = "Посещений: %@";
+"statistics.label.trips" = "Твои путешествия";
+"statistics.label.pins" = "Твои пины";
+"statistics.label.media" = "Твоё медиа";
+"statistics.label.likes" = "Твои лайки";
+"statistics.label.dislikes" = "Твои дизлайки";
+"statistics.label.battles" = "Твои битвы";
+
+// MARK: - Email Change
+"emailChange.title.main" = "Смена почты";
+"emailChange.description.instructions" = "Здесь ты можешь сменить почту. Все данные твоего аккаунта будут сохранены. Для начала введи код, который пришёл на привязанный email";
+"emailChange.label.newEmail" = "Введи новый email";
+"emailChange.placeholder.email" = "example@example.com";
+"emailChange.description.verificationCode" = "Теперь введи код, который пришёл на новый email";
+"emailChange.button.receiveCode" = "Получить код";
+
+// MARK: - Email Change Toasts
+"emailChange.toast.invalidEmail" = "Введите корректный email";
+"emailChange.toast.codeSendFailed" = "Не удалось отправить код подтверждения";
+"emailChange.toast.confirmFailed" = "Неверный код или срок его действия истёк";
+"emailChange.toast.emailChanged" = "Email обновлён";
+
+// MARK: - Saved Maps
+"savedMaps.title.main" = "Сохранённые карты";
+
+// MARK: - Wishlist
+"wishlist.title.main" = "Желанные места";
+"wishlist.placeholder.placeName" = "Название места";
+"wishlist.hint.placeNameRules" = "Только буквы латиницы или кириллицы, цифры и пробелы";
+"wishlist.placeholder.placeDescription" = "Описание места";
+"wishlist.label.uploadPhoto" = "Загрузи фотографию места";
+"wishlist.button.addNewPlace" = "Добавить новое место в список желаний";
+"wishlist.hint.changePhoto" = "Нажми на фото, чтобы поменять его";
+"wishlistElement.label.title" = "Название места";
+"wishlistElement.hint.titleRules" = "Только буквы латиницы или кириллицы, цифры и пробелы";
+"wishlistElement.label.description" = "Описание";
+"wishlistElement.placeholder.description" = "Описание места";
+"wishlistElement.hint.changePhoto" = "Нажми на фото, чтобы поменять его";
+"wishlistElement.button.delete" = "Удалить место";
+
+// MARK: - Wishlist Toasts
+"wishlist.toast.loadFailed" = "Не удалось загрузить список желанных мест";
+"wishlist.toast.placeCreated" = "Место добавлено в список";
+"wishlist.toast.createFailed" = "Не удалось добавить место. Попробуй ещё раз.";
+"wishlist.toast.imageUploadFailed" = "Не удалось загрузить фото";
+"wishlist.toast.imagePrepareFailed" = "Не удалось обработать фото";
+"wishlist.toast.photoLoadFailed" = "Не удалось загрузить выбранное фото";
+"wishlist.toast.nameInvalidChars" = "Допустимы только буквы латиницы или кириллицы, цифры и пробелы";
+
+// MARK: - Wishlist Element Toasts
+"wishlistElement.toast.placeUpdated" = "Место обновлено";
+"wishlistElement.toast.placeDeleted" = "Место удалено из списка";
+"wishlistElement.toast.updateFailed" = "Не удалось сохранить изменения";
+"wishlistElement.toast.deleteFailed" = "Не удалось удалить место";
+"wishlistElement.toast.imageUploadFailed" = "Не удалось загрузить фото";
+"wishlistElement.toast.imagePrepareFailed" = "Не удалось обработать фото";
+"wishlistElement.toast.photoLoadFailed" = "Не удалось загрузить выбранное фото";
+"wishlistElement.toast.nameEmpty" = "Название места не может быть пустым";
+"wishlistElement.toast.nameInvalidChars" = "Допустимы только буквы латиницы или кириллицы, цифры и пробелы";
+"wishlistElement.toast.nameTooLong" = "Название места не должно превышать %d символов";
+"wishlistElement.toast.descriptionTooLong" = "Описание не должно превышать %d символов";
+
+// MARK: - Feed
+"feed.title.main" = "Лента";
+"feed.filter.clearLocation" = "Сбросить";
+"feed.filter.title" = "Фильтры";
+"feed.filter.group.location" = "Локация";
+"feed.filter.group.category" = "Категория";
+"feed.filter.group.season" = "Сезон";
+"feed.filter.group.sort" = "Сортировка";
+"feed.filter.label.city" = "Город";
+"feed.filter.label.country" = "Страна";
+"feed.filter.sort.default" = "По умолчанию";
+"feed.filter.sort.date" = "По дате";
+"feed.filter.sort.rating" = "По рейтингу";
+"feed.list.endReached" = "Больше постов нет";
+"feed.button.getRecommendation" = "Получить рекомендацию";
+"feed.recommendation.badge.forYou" = "Рекомендация для тебя";
+"feed.recommendation.toast.locationRequired" = "Выберите город или страну для рекомендаций.";
+"feed.recommendation.toast.loadFailed" = "Не удалось загрузить рекомендацию.";
+"feed.recommendation.toast.saveFailed" = "Не удалось сохранить рекомендацию.";
+"feed.recommendation.toast.empty" = "По этому региону пока нет рекомендаций.";
+"feed.recommendation.toast.regionNotFound" = "Регион не найден.";
+"feed.recommendation.toast.snapshotExpired" = "Карта устарела, обновляем...";
+"feed.recommendation.toast.snapshotStale" = "Обновите карту.";
+
+// MARK: - Trips
+"trips.title.list" = "Путешествия";
+"trips.empty.noSelection" = "Ты ещё не выбрал путешествие";
+"trips.empty.noSelectionHint" = "Нажми на [chevron.down], чтобы выбрать из существующих или создать новое";
+"trips.button.viewDetails" = "Посмотреть детали";
+"trips.header.membersAndPrivacy" = "Приватность";
+"trips.hint.privateMode" = "Путешествие не будет отображаться в общей ленте";
+"trips.hint.publicMode" = "Путешествие будет отображаться в общей ленте";
+
+// MARK: - Trip Creation
+"tripCreation.title.main" = "Создание путешествия";
+"tripCreation.loading.uploadingMedia" = "Загрузка медиафайлов в хранилище";
+"tripCreation.loading.formingPins" = "Формирование пинов";
+"tripCreation.placeholder.name" = "Название путешествия";
+"tripCreation.placeholder.description" = "Описание путешествия";
+"tripCreation.hint.tripNameRules" = "Название путешествия должно состоять из букв, цифр, точки и подчёркивания";
+"tripCreation.button.generatePins" = "Сформировать пины";
+
+// MARK: - Trip Creation Toasts
+"tripCreation.toast.nameEmpty" = "Введи название путешествия";
+"tripCreation.toast.nameTooLong" = "Название не должно превышать %d символов";
+"tripCreation.toast.nameInvalidChars" = "Название может содержать только буквы, цифры, точки и подчёркивания";
+"tripCreation.toast.descriptionTooLong" = "Описание не должно превышать %d символов";
+"tripCreation.toast.categoryNotSelected" = "Выбери категорию путешествия";
+"tripCreation.toast.seasonNotSelected" = "Выбери сезон";
+"tripCreation.toast.mediasEmpty" = "Добавь хотя бы одно медиа";
+"tripCreation.toast.mediaLoadingInProgress" = "Дождись окончания загрузки медиа";
+"tripCreation.toast.mediaLoadFailed" = "Не удалось обработать выбранное медиа";
+"tripCreation.toast.createTripFailed" = "Не удалось создать путешествие. Попробуй ещё раз";
+"tripCreation.toast.uploadMediaFailed" = "Не удалось загрузить медиа. Проверь соединение";
+"tripCreation.toast.groupingFailed" = "Не удалось сформировать пины. Попробуй ещё раз";
+"tripCreation.toast.noPinsGenerated" = "Не получилось сформировать пины из загруженных медиа";
+
+// MARK: - Trip Info
+"tripInfo.header.general" = "Общая информация";
+"tripInfo.label.season" = "Сезон";
+"tripInfo.label.category" = "Категория";
+"tripInfo.label.dates" = "Даты";
+"tripInfo.header.public" = "Публичная информация";
+"tripInfo.label.publishTrip" = "Опубликовать путешествие";
+"tripInfo.message.photoBattleNeedMedia" = "Для фото-баттла нужно минимум %d медиа";
+"tripInfo.message.photoBattleNeedMediaWithContext" = "Для фото-баттла нужно минимум %d медиа в путешествии";
+"tripInfo.message.photoBattleStartFailed" = "Не удалось запустить баттл: сервер вернул меньше медиа, чем нужно";
+"tripInfo.message.photoBattleStartFailedGeneric" = "Не удалось запустить фото-баттл. Попробуйте позже";
+"tripInfo.section.specialModes" = "Особые режимы";
+"tripInfo.button.stories" = "Сторис";
+"tripInfo.button.photoBattle" = "Фото-баттл";
+"tripInfo.placeholder.name" = "Название путешествия";
+"tripInfo.hint.tripNameRules" = "Название путешествия должно состоять из букв, цифр, точки и подчёркивания";
+"tripInfo.hint.descriptionLimit" = "Максимум 5000 символов";
+"tripInfo.placeholder.description" = "Описание путешествия";
+"tripInfo.button.delete" = "Удалить путешествие";
+"tripInfo.button.leave" = "Выйти";
+"tripInfo.label.pins" = "Пины путешествия";
+"tripInfo.label.notifications" = "Уведомления";
+"tripInfo.alert.leaveTrip.title" = "Выйти из путешествия?";
+"tripInfo.alert.leaveTrip.message" = "Это действие удалит тебя из этого путешествия.";
+"tripInfo.alert.leaveTrip.confirm" = "Выйти";
+"tripInfo.alert.deleteTrip.title" = "Удалить путешествие?";
+"tripInfo.alert.deleteTrip.message" = "Это действие необратимо. Путешествие и все его пины будут удалены.";
+"tripInfo.alert.deleteTrip.confirm" = "Удалить";
+
+// MARK: - Trip Info Toasts
+"tripInfo.toast.tripSaved" = "Путешествие сохранено";
+"tripInfo.toast.saveFailed" = "Не удалось сохранить путешествие";
+"tripInfo.toast.coverUploadFailed" = "Не удалось загрузить фото обложки";
+"tripInfo.toast.descriptionTooLong" = "Описание не должно превышать 5000 символов";
+"tripInfo.toast.startDateAfterEndDate" = "Дата начала не может быть позже даты конца";
+"tripInfo.toast.tripLeft" = "Вы вышли из путешествия";
+"tripInfo.toast.leaveFailed" = "Не удалось выйти из путешествия";
+"tripInfo.toast.tripDeleted" = "Путешествие удалено";
+"tripInfo.toast.deleteFailed" = "Не удалось удалить путешествие";
+"tripInfo.toast.notificationsUpdated" = "Уведомления обновлены";
+"tripInfo.toast.notificationsFailed" = "Не удалось обновить уведомления";
+"tripInfo.toast.privacyFailed" = "Не удалось обновить настройки приватности";
+
+// MARK: - Review Trip Creation
+"reviewTripCreation.title.main" = "Проверка пинов";
+
+// MARK: - Review Trip Creation Toasts
+"reviewTripCreation.toast.fixIssuesFirst" = "Исправь проблемы у пинов перед публикацией";
+"reviewTripCreation.toast.tripCreated" = "Путешествие создано";
+"reviewTripCreation.toast.finalizeFailed" = "Не удалось завершить создание путешествия";
+"tripCreationProblems.title.main" = "Проблемы с пинами";
+"tripCreationProblems.message.noProblems" = "Проблем не найдено";
+"tripCreationProblems.issue.missingCoordinates" = "Нет координат";
+"tripCreationProblems.issue.missingDates" = "Нет дат";
+
+// MARK: - Preprocessed Pins
+"preprocessedPins.button.mergePins" = "Объединить пины";
+
+// MARK: - Preprocessed Pins Toasts
+"preprocessedPins.toast.noPins" = "Добавь хотя бы один пин";
+"preprocessedPins.toast.emptyPin" = "Пин %d пуст. Удали его или добавь медиа";
+"preprocessedPins.toast.applyFailed" = "Не удалось сохранить группировку. Попробуй ещё раз";
+"preprocessedPins.toast.processingTimeout" = "Сервер слишком долго обрабатывает данные. Попробуй позже";
+"preprocessedPins.toast.reviewFetchFailed" = "Не удалось получить готовые пины";
+"preprocessedPins.toast.unexpectedStatus" = "Сервер вернул неожиданный статус обработки";
+
+// MARK: - Trip Pins
+"tripPins.title" = "Пины путешествия";
+"tripPins.button.addMedia" = "Добавить медиа";
+"tripPins.button.addPin" = "Добавить пин";
+"tripPins.empty.noPins" = "В этом путешествии пока нет пинов";
+"tripPins.status.uploading" = "Другой участник загружает медиа";
+"tripPins.status.groupingReview" = "Другой участник группирует медиа";
+"tripPins.status.processing" = "Медиа обрабатывается";
+"tripPins.status.draftFinalReview" = "Другой участник проверяет медиа";
+"tripPins.status.creatingPin" = "Создание пина...";
+
+// MARK: - Pin upload resume
+"pinUpload.creation.resume.conflictSession" = "Сессия создания пина занята на другом устройстве. Начинаем заново.";
+"pinUpload.creation.resume.restoreFailed" = "Не удалось восстановить сессию создания пина";
+"pinUpload.addition.resume.conflictSession" = "Сессия добавления медиа в этот пин занята на другом устройстве. Начинаем заново.";
+"pinUpload.addition.resume.restoreFailed" = "Не удалось восстановить сессию добавления медиа в пин";
+"pinUpload.header.createPin" = "Создание пина";
+"pinUpload.header.addMedia" = "Добавление медиа";
+"pinUpload.loading.uploading" = "Загружаем медиа...";
+"pinUpload.loading.committing" = "Сохраняем...";
+"pinUpload.loading.starting" = "Запускаем обработку...";
+"pinUpload.processing.status" = "Обрабатываем медиа...";
+"pinUpload.review.header.newPin" = "Новый пин";
+"pinUpload.cancel.creation.title" = "Отменить создание пина?";
+"pinUpload.cancel.creation.confirm" = "Отменить создание пина";
+"pinUpload.cancel.addition.title" = "Отменить добавление медиа?";
+"pinUpload.cancel.addition.confirm" = "Отменить добавление медиа";
+"pinUpload.dialog.continue" = "Продолжить";
+"pinUpload.review.toast.maxTags" = "Максимум %d тегов";
+"pinUpload.review.toast.tagTooLongBytes" = "Тег слишком длинный (макс %d байт)";
+"pinUpload.review.toast.tagTooLongBytesNamed" = "Тег '%@' слишком длинный (макс %d байт)";
+"pinUpload.review.toast.nameTooLongBytes" = "Название слишком длинное (макс %d байт)";
+"pinUpload.review.toast.descriptionTooLongBytes" = "Описание слишком длинное (макс %d байт)";
+"pinUpload.review.toast.emptyPinNoMedia" = "Удалены все медиа — нельзя сохранить пустой пин";
+"pinUpload.review.toast.sessionInactive" = "Сессия больше не активна";
+"pinUpload.review.toast.badRequest" = "Проверь поля: возможно превышены лимиты или неверные координаты";
+"pinUpload.review.toast.limitExceeded" = "Превышен лимит — попробуй позже";
+"pinUpload.review.toast.sessionWrongState" = "Сессия в неподходящем состоянии";
+"pinUpload.review.toast.sessionNotFound" = "Сессия не найдена";
+
+// MARK: - Add Media
+"addMedia.start.title" = "Добавить медиа";
+"addMedia.uploading.title" = "Загрузка медиа";
+"addMedia.grouping.title" = "Группировка медиа";
+"addMedia.review.title" = "Финальный просмотр";
+"addMedia.cancel.title" = "Отменить загрузку?";
+"addMedia.cancel.confirm" = "Отменить загрузку";
+"addMedia.button.addMore" = "Добавить ещё";
+"addMedia.button.start" = "Начать";
+"addMedia.button.merge" = "Объединить";
+"addMedia.button.takeover" = "Перехватить";
+"addMedia.review.takeover.message" = "%@ завершает ревью";
+"addMedia.review.takeover.messageWithCountdown" = "%@ завершает ревью. До перехвата: %@";
+
+// MARK: - Trips List Popup
+"tripsListPopup.title.myTrips" = "Твои путешествия";
+"tripsListPopup.button.createTrip" = "Создать путешествие";
+
+// MARK: - Trip Members
+"tripMembers.title.main" = "Участники путешествия";
+"tripMembers.title.invite" = "Приглашение в поездку";
+"tripMembers.placeholder.search" = "Поиск по участникам";
+"tripMembers.button.shareLink" = "Поделиться ссылкой";
+"tripMembers.button.copyLink" = "Скопировать ссылку";
+"tripMembers.invite.error" = "Не удалось создать ссылку. Попробуйте снова.";
+"tripMembers.invite.deepLinkJoinFailed" = "Не удалось открыть приглашение. Попробуйте снова.";
+
+// MARK: - Pin Creation
+"pinCreation.title.main" = "Создание пина";
+"pinCreation.header.general" = "Общая информация";
+"pinCreation.placeholder.name" = "Название пина";
+"pinCreation.hint.pinNameRules" = "Название пина должно состоять из букв, цифр, точки и подчёркивания";
+"pinCreation.header.tags" = "Теги";
+"pinCreation.placeholder.description" = "Описание пина";
+
+// MARK: - Pin Info
+"pinInfo.button.delete" = "Удалить пин";
+"pinInfo.alert.deletePin.title" = "Удалить пин?";
+"pinInfo.alert.deletePin.message" = "Это действие необратимо. Пин и все его медиафайлы будут удалены.";
+"pinInfo.alert.deletePin.confirm" = "Удалить";
+"pinInfo.label.location" = "Местоположение";
+"pinInfo.label.category" = "Категория";
+"pinInfo.label.dates" = "Даты";
+"pinInfo.button.addLocation" = "Добавить местоположение";
+"pinInfo.hint.changeLocation" = "Нажми, чтобы изменить местоположение пина";
+
+// MARK: - Pin Info Toasts
+"pinInfo.toast.pinSaved" = "Пин сохранён";
+"pinInfo.toast.saveFailed" = "Не удалось сохранить пин";
+"pinInfo.toast.pinDeleted" = "Пин удалён";
+"pinInfo.toast.deleteFailed" = "Не удалось удалить пин";
+"pinInfo.toast.privacyFailed" = "Не удалось обновить настройки приватности";
+"pinInfo.toast.locationUpdated" = "Местоположение обновлено";
+"pinInfo.toast.locationFailed" = "Не удалось обновить местоположение";
+"pinInfo.toast.startDateAfterEndDate" = "Дата начала не может быть позже даты конца";
+"pinInfo.toast.descriptionTooLong" = "Описание не должно превышать 5000 символов";
+"pinInfo.toast.nameEmpty" = "Название пина не может быть пустым";
+"pinInfo.toast.nameTooLong" = "Название пина не должно превышать 50 символов";
+"pinInfo.toast.tagEmpty" = "Тег не может быть пустым";
+"pinInfo.toast.tagTooLong" = "Тег не должен превышать %d символов";
+"pinInfo.toast.tagAlreadyExists" = "Такой тег уже добавлен";
+"pinInfo.toast.tagLimitReached" = "Достигнут лимит тегов (макс. %d)";
+"pinInfo.toast.mediaDeleted" = "Медиа удалено";
+"pinInfo.toast.mediaDeleteFailed" = "Не удалось удалить медиа";
+"pinInfo.toast.mediaDeletePinMustHaveMedia" = "У пина должно остаться хотя бы одно фото или видео";
+
+// MARK: - Raw Pin
+"rawPin.button.move" = "Переместить";
+
+// MARK: - Pin Place Change
+"pinPlaceChange.label.instructions" = "Перемещай карту, чтобы\nизменить местоположение пина";
+
+// MARK: - Pin Story
+"pinStory.button.pinDetails" = "Детали пина";
+"pinStory.button.mediaDetails" = "Детали медиа";
+
+// MARK: - Media Info
+"mediaInfo.button.delete" = "Удалить медиа";
+"mediaInfo.alert.deleteMedia.title" = "Удалить медиа?";
+"mediaInfo.alert.deleteMedia.message" = "Это фото или видео будет удалено из пина.";
+"mediaInfo.alert.deleteMedia.confirm" = "Удалить";
+"mediaInfo.toast.mediaDeleted" = "Медиа удалено";
+"mediaInfo.toast.mediaDeleteFailed" = "Не удалось удалить медиа";
+"mediaInfo.toast.mediaDeletePinMustHaveMedia" = "У пина должно остаться хотя бы одно фото или видео";
+
+// MARK: - Items Picker
+"itemsPicker.placeholder.customValue" = "Введи нужное значение";
+
+// MARK: - Map Style
+"mapStyle.label.standard" = "Схема";
+"mapStyle.label.satellite" = "Спутник";
+"mapStyle.label.hybrid" = "Гибрид";
+
+// MARK: - Selectable Pins
+"selectablePins.title.main" = "Выберите пины для публикации";
+"selectablePins.button.deselectAll" = "Сбросить всё";
+"selectablePins.button.selectAll" = "Выбрать всё";
+
+// MARK: - Post Preview
+"postPreview.title.main" = "Так будет выглядеть пост";
+"postPreview.button.publish" = "Опубликовать путешествие";
+"postPreview.error.publishFailed" = "Не удалось опубликовать путешествие. Попробуйте ещё раз.";
+"savedTrip.error.load" = "Не удалось загрузить путешествие. Попробуйте ещё раз.";
+
+// MARK: - Move Media
+"moveMedia.label.instructions" = "Выбери пин, в который\nхочешь переместить медиа";
+"moveMedia.button.moveToPinNumber" = "Переместить в Пин %d";
+
+// MARK: - Merge Pins
+"mergePins.label.instructions" = "Выбери пины, которые хочешь объединить";
+"mergePins.button.merge" = "Объединить пины %d и %d";
+
+// MARK: - Tags
+"tags.placeholder.tag" = "Тег";
+
+// MARK: - Photo Battle
+"photoBattle.title" = "Фото-баттл";
+"photoBattle.header" = "Фото-баттл";
+"photoBattle.button.chooseMedia" = "Выбираю это";
+"photoBattle.loadingMedias" = "Подгружаем медиа…";
+"photoBattle.loadingSaving" = "Сохраняем победителя";
+"photoBattle.progress.round" = "Раунд %1$d из %2$d • Шаг %3$d из %4$d";
+"photoBattle.progress.comparisons" = "Сравнения: %1$d из %2$d";
+"photoBattle.winner.title" = "Победитель";
+"photoBattle.winner.rating" = "Новый рейтинг: %1$d";
+"photoBattle.winner.loadingRating" = "Нет данных о новом рейтинге";
+"photoBattle.error.submitResultFailed" = "Не удалось отправить результат баттла, попробуйте ещё раз";
+"photoBattle.footer.close" = "Закрыть";
+
+// MARK: - Alerts
+"alert.clearCache.title" = "Очистить данные";
+"alert.clearCache.message" = "Ты уверен? Это удалит все сохранённые изображения.";
+"alert.clearCache.confirm" = "Очистить";
+
+"alert.deleteAccount.title" = "Удалить аккаунт?";
+"alert.deleteAccount.message" = "Это действие необратимо. Аккаунт будет удалён без возможности восстановления.";
+"alert.deleteAccount.confirm" = "Удалить";
+
+"alert.logout.title" = "Выйти?";
+"alert.logout.message" = "Чтобы снова пользоваться аккаунтом, нужно будет войти заново.";
+"alert.logout.confirm" = "Выйти";
+
+"profile.label.saveImagesLocally" = "Сохранять изображения локально";
+
+// MARK: - Censorship
+"censorship.banner.name" = "Это название не пройдёт модерацию — другие пользователи увидят заглушку. Отредактируйте, чтобы исправить.";
+"censorship.banner.description" = "Это описание не пройдёт модерацию — другие пользователи увидят заглушку. Отредактируйте, чтобы исправить.";

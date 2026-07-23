@@ -1,0 +1,257 @@
+import Foundation
+import PinzBase
+import PinzDomain
+
+final class MockRouter: AppRouting {
+    var navigatedToMain = false
+    var navigatedToAuthenticationRoot = false
+    var navigatedTripInfo: Trip?
+    var navigatedProfile: User?
+    var navigatedPinInfo: Pin?
+    var navigatedPinUpdateAction: PinUpdateAction?
+    var navigatedToPinCreation = false
+    var navigatedToTripMembers = false
+    var navigatedToTripMembersTripId: String?
+    var navigatedToTripMembersParticipants: [TripParticipantDTO] = []
+    var navigatedToTripMembersCurrentUserId: String?
+    var navigatedToPublicProfileUserId: String?
+    var navigatedToFeed = false
+    var navigatedPinsList: Trip?
+    var navigatedSelectablePinsList: Trip?
+    var navigatedPostPreview: (trip: Trip, pins: [Pin])?
+    var navigatedPostInfo: Post?
+    var navigatedSavedTrip: Trip?
+    var navigatedMediaInfo: MediaItem?
+    var navigatedMediaInfoPinIdForDelete: String?
+    var navigatedMediaInfoPinResponseAction: PinResponseAction?
+    var navigatedMediaInfoAllowsPrivacyChange: Bool?
+    var navigatedLocalMediaInfo: LoadedMedia?
+    var navigatedEmailChange: (email: String, userId: String?, action: EmailChangeAction)?
+    var navigatedToStatistics = false
+    var navigatedToTrips = false
+    var navigatedToPlacesWishlist = false
+    var navigatedToSavedMaps = false
+    var navigatedToNotifications = false
+    var navigatedToAppearance = false
+    var navigatedToStorageSettings = false
+    var navigatedPinPlaceChange: (pin: Pin, action: PlaceSaveAction)?
+    var navigatedWishlistElement: DesiredPlace?
+    var navigatedWishlistElementCreation: WishlistCreationAction?
+    var navigatedPublicWishlistPlaces: [DesiredPlace]?
+
+    // Add media
+    var navigatedToAddMediaStartTripId: String?
+    var navigatedToAddMediaUploading: (tripId: String, sessionId: String)?
+    var navigatedToAddMediaGrouping: (tripId: String, sessionId: String)?
+    var navigatedToAddMediaProcessing: (tripId: String, sessionId: String)?
+    var navigatedToAddMediaReview: (tripId: String, sessionId: String)?
+    var navigatedToAddMediaProblems: (tripId: String, sessionId: String)?
+    private var addMediaReviewDraftPinsStorage: [String: [Pin]] = [:]
+
+    // Pin upload
+    var navigatedToPinUploadStart: (tripId: String, targetPinId: String?)?
+    var navigatedToPinUploadProcessing: (tripId: String, sessionId: String, targetPinId: String?)?
+    var navigatedToPinUploadReview: (tripId: String, sessionId: String, targetPinId: String?)?
+    var navigatedToPinUploadProblems: (tripId: String, sessionId: String, targetPinId: String?)?
+    private var pinUploadReviewDraftPinStorage: [String: Pin] = [:]
+
+    // Trip creation
+    var navigatedToTripCreationInitial = false
+    var navigatedTripCreationPreprocessedPins: (tripId: String, pins: RawPins)?
+    var navigatedTripCreationReview: (tripId: String, pins: [Pin])?
+    var navigatedTripCreationProblems: (tripId: String, pins: [Pin])?
+    private var draftPinsStorage: [String: [Pin]] = [:]
+
+    var popCallCount = 0
+    var lastPopByCount = 0
+    var didCallPopToRoot = false
+    var tripInfoUpdateHandler: (() -> Void)?
+    var currentProfileUpdateUser: User?
+    var currentProfileUpdateCallCount: Int = 0
+    private var currentProfileUpdateAction: ((User) -> Void)?
+
+    var tripPinsReloadCallCount: Int = 0
+    var tripPinsReloadLastTripId: String?
+    private var tripPinsReloadAction: ((String) -> Void)?
+
+    var popAllPinUploadRoutesCallCount = 0
+    var pinUploadAdditionSuccessHandler: ((Pin) -> Void)?
+    var notifiedPinUploadAdditionPin: Pin?
+
+    func navigateToMain() { navigatedToMain = true }
+    func navigateToAuthenticationRoot() { navigatedToAuthenticationRoot = true }
+    func navigateToTripInfo(trip: Trip, onTripUpdated: (() -> Void)?) {
+        navigatedTripInfo = trip
+        tripInfoUpdateHandler = onTripUpdated
+    }
+    func navigateToProfile(user: User) { navigatedProfile = user }
+    func subscribeToCurrentProfileUpdates(_ action: @escaping (User) -> Void) {
+        currentProfileUpdateAction = action
+    }
+    func notifyCurrentProfileUpdated(_ user: User) {
+        currentProfileUpdateUser = user
+        currentProfileUpdateCallCount += 1
+        currentProfileUpdateAction?(user)
+        currentProfileUpdateAction = nil
+    }
+    func clearCurrentProfileUpdates() {
+        currentProfileUpdateAction = nil
+        currentProfileUpdateUser = nil
+    }
+    func subscribeToTripPinsReload(_ action: @escaping (String) -> Void) {
+        tripPinsReloadAction = action
+    }
+    func notifyTripPinsReload(tripId: String) {
+        tripPinsReloadCallCount += 1
+        tripPinsReloadLastTripId = tripId
+        tripPinsReloadAction?(tripId)
+    }
+    func clearTripPinsReloadSubscription() {
+        tripPinsReloadAction = nil
+    }
+    func navigateToPinInfo(pin: Pin, updateAction: PinUpdateAction?, deleteAction: PinDeleteAction?) {
+        navigatedPinInfo = pin
+        navigatedPinUpdateAction = updateAction
+    }
+    func navigateToPinCreation() { navigatedToPinCreation = true }
+    func navigateToTripMembers(tripId: String, participants: [TripParticipantDTO], currentUserId: String?) {
+        navigatedToTripMembers = true
+        navigatedToTripMembersTripId = tripId
+        navigatedToTripMembersParticipants = participants
+        navigatedToTripMembersCurrentUserId = currentUserId
+    }
+    func navigateToPublicProfile(userId: String) { navigatedToPublicProfileUserId = userId }
+    func navigateToFeed() { navigatedToFeed = true }
+    func navigateToPinsList(trip: Trip) { navigatedPinsList = trip }
+    func navigateToSelectablePinsList(trip: Trip) { navigatedSelectablePinsList = trip }
+    func navigateToPostPreview(trip: Trip, selectedPins: [Pin]) { navigatedPostPreview = (trip, selectedPins) }
+    func navigateToPostInfo(post: Post) { navigatedPostInfo = post }
+    func navigateToSavedTripDetail(trip: Trip) { navigatedSavedTrip = trip }
+    func navigateToMediaInfo(
+        media: MediaItem,
+        updateAction: MediaUpdateAction?,
+        pinIdForServerMediaDelete: String?,
+        pinResponseAction: PinResponseAction?,
+        allowsMediaPrivacyChange: Bool
+    ) {
+        navigatedMediaInfo = media
+        navigatedMediaInfoPinIdForDelete = pinIdForServerMediaDelete
+        navigatedMediaInfoPinResponseAction = pinResponseAction
+        navigatedMediaInfoAllowsPrivacyChange = allowsMediaPrivacyChange
+    }
+    func navigateToLocalMediaInfo(media: LoadedMedia) { navigatedLocalMediaInfo = media }
+    func navigateToEmailChange(email: String, userId: String?, action: EmailChangeAction) {
+        navigatedEmailChange = (email, userId, action)
+    }
+    func navigateToStatistics() { navigatedToStatistics = true }
+    func navigateToTrips() { navigatedToTrips = true }
+    func navigateToPlacesWishlist() { navigatedToPlacesWishlist = true }
+    func navigateToSavedMaps() { navigatedToSavedMaps = true }
+    func navigateToStorageSettings() { navigatedToStorageSettings = true }
+    func navigateToNotifications() { navigatedToNotifications = true }
+    func navigateToAppearance() { navigatedToAppearance = true }
+    func navigateToPinPlaceChange(pin: Pin, action: PlaceSaveAction) { navigatedPinPlaceChange = (pin, action) }
+    func navigateToWishlistElement(element: DesiredPlace) { navigatedWishlistElement = element }
+    func navigateToWishlistElementCreation(action: WishlistCreationAction) { navigatedWishlistElementCreation = action }
+    func navigateToPublicWishlist(places: [DesiredPlace]) { navigatedPublicWishlistPlaces = places }
+
+    // Add media
+    func navigateToAddMediaStart(tripId: String) { navigatedToAddMediaStartTripId = tripId }
+    func navigateToAddMediaUploading(tripId: String, sessionId: String) { navigatedToAddMediaUploading = (tripId, sessionId) }
+    func navigateToAddMediaGrouping(tripId: String, sessionId: String) { navigatedToAddMediaGrouping = (tripId, sessionId) }
+    func navigateToAddMediaProcessing(tripId: String, sessionId: String) { navigatedToAddMediaProcessing = (tripId, sessionId) }
+    func navigateToAddMediaReview(tripId: String, sessionId: String) { navigatedToAddMediaReview = (tripId, sessionId) }
+
+    func navigateToAddMediaProblems(tripId: String, sessionId: String) {
+        navigatedToAddMediaProblems = (tripId, sessionId)
+    }
+
+    func setAddMediaReviewDraftPins(_ pins: [Pin], forSessionId sessionId: String) {
+        addMediaReviewDraftPinsStorage[sessionId] = pins
+    }
+
+    func addMediaReviewDraftPins(forSessionId sessionId: String) -> [Pin]? {
+        addMediaReviewDraftPinsStorage[sessionId]
+    }
+
+    func clearAddMediaReviewDraftPins(forSessionId sessionId: String) {
+        addMediaReviewDraftPinsStorage.removeValue(forKey: sessionId)
+    }
+
+    // Pin upload
+    func navigateToPinUploadStart(tripId: String, targetPinId: String?) {
+        navigatedToPinUploadStart = (tripId, targetPinId)
+    }
+
+    func navigateToPinUploadProcessing(tripId: String, sessionId: String, targetPinId: String?) {
+        navigatedToPinUploadProcessing = (tripId, sessionId, targetPinId)
+    }
+
+    func navigateToPinUploadReview(tripId: String, sessionId: String, targetPinId: String?) {
+        navigatedToPinUploadReview = (tripId, sessionId, targetPinId)
+    }
+
+    func navigateToPinUploadProblems(tripId: String, sessionId: String, targetPinId: String?) {
+        navigatedToPinUploadProblems = (tripId, sessionId, targetPinId)
+    }
+
+    func setPinUploadReviewDraftPin(_ pin: Pin, forSessionId sessionId: String) {
+        pinUploadReviewDraftPinStorage[sessionId] = pin
+    }
+
+    func pinUploadReviewDraftPin(forSessionId sessionId: String) -> Pin? {
+        pinUploadReviewDraftPinStorage[sessionId]
+    }
+
+    func clearPinUploadReviewDraftPin(forSessionId sessionId: String) {
+        pinUploadReviewDraftPinStorage.removeValue(forKey: sessionId)
+    }
+
+    // Trip creation
+    func navigateToTripCreationInitial() { navigatedToTripCreationInitial = true }
+    func navigateToTripCreationPreprocessedPins(tripId: String, pins: RawPins) {
+        navigatedTripCreationPreprocessedPins = (tripId, pins)
+    }
+    func navigateToTripCreationReview(tripId: String, pins: [Pin]) {
+        navigatedTripCreationReview = (tripId, pins)
+    }
+    func navigateToTripCreationProblems(tripId: String, pins: [Pin]) {
+        navigatedTripCreationProblems = (tripId, pins)
+    }
+    func setTripCreationDraftPins(_ pins: [Pin], for tripId: String) {
+        draftPinsStorage[tripId] = pins
+    }
+    func tripCreationDraftPins(for tripId: String) -> [Pin]? {
+        draftPinsStorage[tripId]
+    }
+    func clearTripCreationDraftPins(for tripId: String) {
+        draftPinsStorage.removeValue(forKey: tripId)
+    }
+
+    func pop() {
+        popCallCount += 1
+        lastPopByCount = 1
+    }
+
+    func pop(by count: Int) {
+        popCallCount += 1
+        lastPopByCount = count
+    }
+
+    func popToRoot() {
+        didCallPopToRoot = true
+    }
+
+    func popAllPinUploadRoutes() {
+        popAllPinUploadRoutesCallCount += 1
+    }
+
+    func setPinUploadAdditionSuccessHandler(_ handler: ((Pin) -> Void)?) {
+        pinUploadAdditionSuccessHandler = handler
+    }
+
+    func notifyPinUploadAdditionSuccess(_ pin: Pin) {
+        notifiedPinUploadAdditionPin = pin
+        pinUploadAdditionSuccessHandler?(pin)
+    }
+}

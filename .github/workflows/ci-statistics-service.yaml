@@ -1,0 +1,26 @@
+name: CI statistics-service
+
+on:
+  push:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'Backend/statistics-service/**'
+      - 'Backend/pkg/**'
+      - 'Backend/proto/**'
+      - '.github/workflows/ci-statistics-service.yaml'
+      - '.github/workflows/ci-reusable.yaml'
+  pull_request:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'Backend/statistics-service/**'
+      - 'Backend/pkg/**'
+      - 'Backend/proto/**'
+      - '.github/workflows/ci-statistics-service.yaml'
+      - '.github/workflows/ci-reusable.yaml'
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yaml
+    with:
+      service: statistics-service
+    secrets: inherit

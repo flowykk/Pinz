@@ -1,0 +1,11 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: nats-permissive
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: nats
+  mtls:
+    mode: PERMISSIVE

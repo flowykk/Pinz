@@ -1,0 +1,317 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "pinz/backend/auth-service/pkg/proto";
+
+service AuthService {
+ rpc SubmitEmail(SubmitEmailRequest) returns (SubmitEmailResponse) {}
+ rpc VerifyEmailCode(VerifyEmailCodeRequest) returns (VerifyEmailCodeResponse) {}
+ rpc PasskeyRegisterBegin(PasskeyRegisterBeginRequest) returns (PasskeyRegisterBeginResponse) {}
+ rpc PasskeyRegisterFinish(PasskeyRegisterFinishRequest) returns (PasskeyRegisterFinishResponse) {}
+ rpc PasskeyLoginBegin(PasskeyLoginBeginRequest) returns (PasskeyLoginBeginResponse) {}
+ rpc PasskeyLoginFinish(PasskeyLoginFinishRequest) returns (PasskeyLoginFinishResponse) {}
+ rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
+ rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+ rpc DevLogin(DevLoginRequest) returns (DevLoginResponse) {}
+
+ rpc GetProfile(GetProfileRequest) returns (GetProfileResponse) {}
+ rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse) {}
+ rpc ChangeEmail(ChangeEmailRequest) returns (ChangeEmailResponse) {}
+ rpc ConfirmEmailChange(ConfirmEmailChangeRequest) returns (ConfirmEmailChangeResponse) {}
+ rpc RequestAvatarUpload(RequestAvatarUploadRequest) returns (RequestAvatarUploadResponse) {}
+ rpc ConfirmAvatarUpload(ConfirmAvatarUploadRequest) returns (ConfirmAvatarUploadResponse) {}
+ rpc DeleteAvatar(DeleteAvatarRequest) returns (DeleteAvatarResponse) {}
+ rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
+
+ // Batched публичные профили по списку user_id. Используется api-gateway для
+ // обогащения ответов списками участников (current_initiator, authors и т.п.).
+ rpc GetUsersProfiles(GetUsersProfilesRequest) returns (GetUsersProfilesResponse) {}
+
+ // Желаемые места (ТЗ 1.13, 1.12.5). CRUD от лица текущего юзера.
+ rpc ListDesiredPlaces(ListDesiredPlacesRequest) returns (ListDesiredPlacesResponse) {}
+ rpc CreateDesiredPlace(CreateDesiredPlaceRequest) returns (CreateDesiredPlaceResponse) {}
+ rpc UpdateDesiredPlace(UpdateDesiredPlaceRequest) returns (UpdateDesiredPlaceResponse) {}
+ rpc DeleteDesiredPlace(DeleteDesiredPlaceRequest) returns (DeleteDesiredPlaceResponse) {}
+ rpc RequestDesiredPlaceImageUpload(RequestDesiredPlaceImageUploadRequest) returns (RequestDesiredPlaceImageUploadResponse) {}
+ rpc DeleteDesiredPlaceImage(DeleteDesiredPlaceImageRequest) returns (DeleteDesiredPlaceImageResponse) {}
+
+ // Публичный профиль другого пользователя + его список желаемых мест (ТЗ 1.7.2).
+ rpc GetPublicUserProfile(GetPublicUserProfileRequest) returns (GetPublicUserProfileResponse) {}
+}
+
+// Публичный профиль пользователя — подмножество User без приватных полей (email).
+// avatar_url — presigned URL, пустой если аватар не загружен.
+message PublicUserProfile {
+ string user_id = 1;
+ string username = 2;
+ string avatar_url = 3;
+ int64 created_at_unix = 4;
+}
+
+message GetUsersProfilesRequest {
+ repeated string user_ids = 1;
+}
+
+message GetUsersProfilesResponse {
+ // Профили в том же порядке, что и запрошенные user_ids. Несуществующие id
+ // возвращаются пустыми (user_id заполнен, остальные поля пусты) —
+ // вызывающая сторона фильтрует по username == "".
+ repeated PublicUserProfile profiles = 1;
+}
+
+message User {
+ string id = 1;
+ string username = 2;
+ string email = 3;
+ string avatar_url = 4;
+ int64 created_at_unix = 5;
+}
+
+message SubmitEmailRequest {
+ string email = 1;
+}
+
+message SubmitEmailResponse {
+ bool is_registered = 1;
+ string registration_key = 2;
+ string verification_code = 3;
+}
+
+message VerifyEmailCodeRequest {
+ string registration_id = 1;
+ string verification_code = 2;
+}
+
+message VerifyEmailCodeResponse {
+ bool success = 1;
+}
+
+message PasskeyRegisterBeginRequest {
+ string registration_id = 1;
+ string username = 2;
+}
+
+message PasskeyRegisterBeginResponse {
+ bytes options_json = 1;
+}
+
+message PasskeyRegisterFinishRequest {
+ string registration_id = 1;
+ bytes credential_json = 2;
+}
+
+message PasskeyRegisterFinishResponse {
+ string access_token = 1;
+ string refresh_token = 2;
+}
+
+message PasskeyLoginBeginRequest {
+ string email = 1;
+}
+
+message PasskeyLoginBeginResponse {
+ bytes options_json = 1;
+}
+
+message PasskeyLoginFinishRequest {
+ string email = 1;
+ bytes credential_json = 2;
+}
+
+message PasskeyLoginFinishResponse {
+ string access_token = 1;
+ string refresh_token = 2;
+}
+
+message RefreshTokenRequest {
+ string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+ string access_token = 1;
+}
+
+message LogoutRequest {
+ string refresh_token = 1;
+}
+
+message LogoutResponse {
+ bool success = 1;
+}
+
+message DevLoginRequest {
+ string email = 1;
+}
+
+message DevLoginResponse {
+ string access_token = 1;
+ string refresh_token = 2;
+}
+
+message GetProfileRequest {
+ string user_id = 1;
+}
+
+message GetProfileResponse {
+ User user = 1;
+}
+
+message UpdateProfileRequest {
+ string user_id = 1;
+ string username = 2;
+}
+
+message UpdateProfileResponse {
+ User user = 1;
+}
+
+message ChangeEmailRequest {
+ string user_id = 1;
+ string new_email = 2;
+}
+
+message ChangeEmailResponse {
+ bool success = 1;
+}
+
+message ConfirmEmailChangeRequest {
+ string user_id = 1;
+ string verification_code = 2;
+}
+
+message ConfirmEmailChangeResponse {
+ User user = 1;
+}
+
+message RequestAvatarUploadRequest {
+ string user_id = 1;
+ string filename = 2;
+ string content_type = 3;
+}
+
+message RequestAvatarUploadResponse {
+ string upload_url = 1;
+ string s3_key = 2;
+}
+
+message ConfirmAvatarUploadRequest {
+ string user_id = 1;
+ string s3_key = 2;
+}
+
+message ConfirmAvatarUploadResponse {
+ User user = 1;
+}
+
+message DeleteAvatarRequest {
+ string user_id = 1;
+}
+
+message DeleteAvatarResponse {
+ User user = 1;
+}
+
+message DeleteAccountRequest {
+ string user_id = 1;
+}
+
+message DeleteAccountResponse {
+ bool success = 1;
+}
+
+// =============================================================================
+// Желаемые места (ТЗ 1.13)
+// =============================================================================
+
+// image_url — presigned GET URL, пустой если картинка не загружена.
+message DesiredPlace {
+ string id = 1;
+ string user_id = 2;
+ string name = 3;
+ string description = 4;
+ string image_url = 5;
+ int64 created_at_unix = 6;
+}
+
+message ListDesiredPlacesRequest {
+ string user_id = 1;
+}
+
+message ListDesiredPlacesResponse {
+ repeated DesiredPlace places = 1;
+}
+
+// s3_key опционален: если непустой — на момент Create картинка уже загружена через
+// RequestDesiredPlaceImageUpload и записывается в image_url. Если пустой — место
+// создаётся без картинки.
+message CreateDesiredPlaceRequest {
+ string user_id = 1;
+ string name = 2;
+ string description = 3;
+ string s3_key = 4;
+}
+
+message CreateDesiredPlaceResponse {
+ DesiredPlace place = 1;
+}
+
+// s3_key семантика на Update:
+//  - не задан в запросе (set_image_key=false) → image_url не меняется;
+//  - set_image_key=true, s3_key пустой → image сбрасывается, старый объект удаляется;
+//  - set_image_key=true, s3_key непустой → image заменяется, старый объект удаляется.
+// (set_image_key — explicit signal, чтобы отличить «не менять» от «убрать»).
+message UpdateDesiredPlaceRequest {
+ string user_id = 1;
+ string place_id = 2;
+ string name = 3;
+ string description = 4;
+ bool set_image_key = 5;
+ string s3_key = 6;
+}
+
+message UpdateDesiredPlaceResponse {
+ DesiredPlace place = 1;
+}
+
+message DeleteDesiredPlaceRequest {
+ string user_id = 1;
+ string place_id = 2;
+}
+
+message DeleteDesiredPlaceResponse {
+ bool success = 1;
+}
+
+message RequestDesiredPlaceImageUploadRequest {
+ string user_id = 1;
+ string filename = 2;
+ string content_type = 3;
+}
+
+message RequestDesiredPlaceImageUploadResponse {
+ string upload_url = 1;
+ string s3_key = 2;
+}
+
+message DeleteDesiredPlaceImageRequest {
+ string user_id = 1;
+ string place_id = 2;
+}
+
+message DeleteDesiredPlaceImageResponse {
+ DesiredPlace place = 1;
+}
+
+// =============================================================================
+// Публичный профиль (ТЗ 1.7.2)
+// =============================================================================
+
+message GetPublicUserProfileRequest {
+ string user_id = 1;
+}
+
+message GetPublicUserProfileResponse {
+ PublicUserProfile profile = 1;
+ repeated DesiredPlace desired_places = 2;
+}

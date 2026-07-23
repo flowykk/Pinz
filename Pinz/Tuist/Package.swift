@@ -15,8 +15,8 @@ import PackageDescription
 let package = Package(
     name: "Pinz",
     dependencies: [
-        // Add your own dependencies here:
-        // .package(url: "https://github.com/Alamofire/Alamofire", from: "5.0.0"),
-        // You can read more about dependencies here: https://docs.tuist.io/documentation/tuist/dependencies
+        .package(url: "https://github.com/Moya/Moya", .upToNextMajor(from: "15.0.0")),
+        .package(url: "https://github.com/realm/SwiftLint", .upToNextMajor(from: "0.59.1")),
+        .package(url: "https://github.com/vapor/vapor.git", .upToNextMajor(from: "4.114.0")),
     ]
 )

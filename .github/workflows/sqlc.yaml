@@ -1,0 +1,57 @@
+name: SQLC Check
+
+on:
+  pull_request:
+    paths:
+      - 'Backend/auth-service/internal/db/migrations/**'
+      - 'Backend/auth-service/queries/**'
+      - 'Backend/auth-service/sqlc.yaml'
+      - 'Backend/trip-service/internal/db/migrations/**'
+      - 'Backend/trip-service/queries/**'
+      - 'Backend/trip-service/sqlc.yaml'
+      - 'Backend/statistics-service/internal/db/migrations/**'
+      - 'Backend/statistics-service/queries/**'
+      - 'Backend/statistics-service/sqlc.yaml'
+      - 'Backend/notification-service/internal/db/migrations/**'
+      - 'Backend/notification-service/queries/**'
+      - 'Backend/notification-service/sqlc.yaml'
+      - 'Backend/Makefile'
+      - '.github/workflows/sqlc.yaml'
+  push:
+    branches: [main, develop, 'PINZ-*']
+    paths:
+      - 'Backend/auth-service/internal/db/migrations/**'
+      - 'Backend/auth-service/queries/**'
+      - 'Backend/auth-service/sqlc.yaml'
+      - 'Backend/trip-service/internal/db/migrations/**'
+      - 'Backend/trip-service/queries/**'
+      - 'Backend/trip-service/sqlc.yaml'
+      - 'Backend/statistics-service/internal/db/migrations/**'
+      - 'Backend/statistics-service/queries/**'
+      - 'Backend/statistics-service/sqlc.yaml'
+      - 'Backend/notification-service/internal/db/migrations/**'
+      - 'Backend/notification-service/queries/**'
+      - 'Backend/notification-service/sqlc.yaml'
+      - 'Backend/Makefile'
+      - '.github/workflows/sqlc.yaml'
+
+jobs:
+  sqlc-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Install sqlc
+        run: |
+          SQLC_VERSION=1.28.0
+          curl -sSL "https://github.com/sqlc-dev/sqlc/releases/download/v${SQLC_VERSION}/sqlc_${SQLC_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin sqlc
+
+      - name: Regenerate sqlc and check drift
+        run: make sqlc-check
+        working-directory: Backend

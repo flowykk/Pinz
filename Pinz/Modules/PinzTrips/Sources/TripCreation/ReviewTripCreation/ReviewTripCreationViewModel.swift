@@ -1,0 +1,137 @@
+import SwiftUI
+import PinzBase
+import PinzDomain
+import PinzNetworking
+
+@Observable
+final class ReviewTripCreationViewModel {
+
+    enum Route {
+        case back
+        case problems
+    }
+
+    enum Intent {
+        case navigate(Route)
+    }
+
+    enum AsyncIntent {
+        case finalize
+    }
+
+    let tripId: String
+    var pins: [Pin]
+
+    private var router: AppRouting?
+    private let networkService: NetworkServiceProtocol
+    private var showToast: ((String) -> Void)?
+
+    var pinsHaveIssues: Bool {
+        return pins.contains(where: { !$0.issueKinds.isEmpty })
+    }
+
+    init(tripId: String, pins: [Pin], networkService: NetworkServiceProtocol = NetworkService.shared) {
+        self.tripId = tripId
+        self.pins = pins
+        self.networkService = networkService
+    }
+
+    func dispatch(_ intent: Intent) {
+        switch intent {
+        case let .navigate(route):
+            switch route {
+            case .back:
+                router?.pop()
+            case .problems:
+                syncDraftPins()
+                router?.navigateToTripCreationProblems(tripId: tripId, pins: pins)
+            }
+        }
+    }
+
+    func navigateToPinInfo(at index: Int, router: AppRouting?) {
+        let pin = pins[index]
+        router?.navigateToPinInfo(
+            pin: pin,
+            updateAction: PinUpdateAction { [weak self] updatedPin in
+                var fixedPin = updatedPin
+                fixedPin.issues = self?.normalizeIssues(for: updatedPin) ?? []
+                self?.pins[index] = fixedPin
+                self?.syncDraftPins()
+            },
+            deleteAction: nil
+        )
+    }
+
+    func setRouter(_ router: AppRouting?) {
+        self.router = router
+        guard let router else { return }
+
+        if let draftPins = router.tripCreationDraftPins(for: tripId) {
+            pins = draftPins
+        } else {
+            router.setTripCreationDraftPins(pins, for: tripId)
+        }
+    }
+
+    func setToast(_ showToast: ((String) -> Void)?) {
+        self.showToast = showToast
+    }
+
+    func asyncDispatch(_ intent: AsyncIntent) async throws {
+        switch intent {
+        case .finalize:
+            let pinsForFinalize = router?.tripCreationDraftPins(for: tripId) ?? pins
+            if pinsForFinalize.contains(where: { !$0.issueKinds.isEmpty }) {
+                showToast?(PinzBaseStrings.ReviewTripCreation.Toast.fixIssuesFirst)
+                return
+            }
+            let pinUpdates = pinsForFinalize.map { pin -> PinUpdateInputDTO in
+                let pinId = pin.serverId ?? pin.id
+
+                return PinUpdateInputDTO(
+                    pinId: pinId,
+                    name: pin.name,
+                    description: pin.description,
+                    category: pin.category.apiValue,
+                    privacyLevel: pin.isPrivate ? "private" : "public",
+                    latitude: pin.coordinates?.latitude,
+                    longitude: pin.coordinates?.longitude,
+                    tags: pin.tags.map(\.tag),
+                    startTimeUnix: pin.startDate.map { Int($0.timeIntervalSince1970) },
+                    endTimeUnix: pin.endDate.map { Int($0.timeIntervalSince1970) }
+                )
+            }
+
+            do {
+                _ = try await networkService.finalizeTrip(
+                    tripId: tripId,
+                    pinUpdates: pinUpdates,
+                    mediaToDelete: []
+                )
+                showToast?(PinzBaseStrings.ReviewTripCreation.Toast.tripCreated)
+                router?.clearTripCreationDraftPins(for: tripId)
+                router?.pop(by: 3)
+            } catch {
+                showToast?(PinzBaseStrings.ReviewTripCreation.Toast.finalizeFailed)
+                throw error
+            }
+        }
+    }
+
+    private func normalizeIssues(for pin: Pin) -> [String] {
+        var result: [String] = []
+        if pin.coordinates == nil {
+            result.append(Pin.Issue.missingCoordinates.rawValue)
+        }
+        if pin.startDate == nil || pin.endDate == nil {
+            result.append(Pin.Issue.missingDates.rawValue)
+        }
+        return result
+    }
+
+    private func syncDraftPins() {
+        guard let router else { return }
+        router.setTripCreationDraftPins(pins, for: tripId)
+    }
+}

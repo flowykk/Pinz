@@ -1,0 +1,188 @@
+#!/bin/bash
+# Automated cert-manager + Istio TLS setup for Pinz.
+#
+# This script installs cert-manager, creates an Istio-compatible IngressClass,
+# provisions a Let's Encrypt ClusterIssuer, and requests a TLS certificate for
+# the Istio ingress gateway secret.
+#
+# Usage:
+#   DOMAIN=pinz.website EMAIL=admin@pinz.website ./setup-cert-manager.sh
+#
+# Optional env vars:
+#   TLS_SECRET_NAME=pinz-tls        (default: pinz-tls)
+#   ISTIO_NAMESPACE=istio-system    (default: istio-system)
+#   CERT_MANAGER_NAMESPACE=cert-manager (default: cert-manager)
+#   STAGING=true                    use Let's Encrypt staging
+#   EXTRA_DOMAINS=grafana.pinz.website   comma-separated extra SANs for the certificate
+
+set -euo pipefail
+
+DOMAIN="${DOMAIN:-}"
+EMAIL="${EMAIL:-}"
+TLS_SECRET_NAME="${TLS_SECRET_NAME:-pinz-tls}"
+ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
+CERT_MANAGER_NAMESPACE="${CERT_MANAGER_NAMESPACE:-cert-manager}"
+STAGING="${STAGING:-false}"
+EXTRA_DOMAINS="${EXTRA_DOMAINS:-}"
+
+ISSUER_NAME="letsencrypt-prod"
+ACME_SERVER="https://acme-v02.api.letsencrypt.org/directory"
+ACCOUNT_SECRET_NAME="letsencrypt-prod-account-key"
+if [[ "$STAGING" == "true" ]]; then
+  ISSUER_NAME="letsencrypt-staging"
+  ACME_SERVER="https://acme-staging-v02.api.letsencrypt.org/directory"
+  ACCOUNT_SECRET_NAME="letsencrypt-staging-account-key"
+fi
+
+if [[ -z "$DOMAIN" ]] || [[ -z "$EMAIL" ]]; then
+  echo "Usage: DOMAIN=api.example.com EMAIL=admin@example.com ./setup-cert-manager.sh"
+  echo "Optional: TLS_SECRET_NAME=pinz-tls  ISTIO_NAMESPACE=istio-system  EXTRA_DOMAINS=grafana.pinz.website  STAGING=true"
+  exit 1
+fi
+
+for cmd in kubectl helm; do
+  command -v "$cmd" >/dev/null 2>&1 || { echo "[ERROR] Required command not found: $cmd"; exit 1; }
+done
+
+kubectl get ns "$ISTIO_NAMESPACE" >/dev/null 2>&1 \
+  || { echo "[ERROR] Kubernetes namespace not found: $ISTIO_NAMESPACE"; exit 1; }
+
+install_cert_manager() {
+  echo "[INFO] Installing/upgrading cert-manager..."
+  helm repo add jetstack https://charts.jetstack.io >/dev/null 2>&1 || true
+  helm repo update >/dev/null
+  helm upgrade --install cert-manager jetstack/cert-manager \
+    --namespace "$CERT_MANAGER_NAMESPACE" \
+    --create-namespace \
+    --set crds.enabled=true
+
+  echo "[INFO] Waiting for cert-manager components..."
+  kubectl rollout status deployment/cert-manager -n "$CERT_MANAGER_NAMESPACE" --timeout=300s
+  kubectl rollout status deployment/cert-manager-cainjector -n "$CERT_MANAGER_NAMESPACE" --timeout=300s
+  kubectl rollout status deployment/cert-manager-webhook -n "$CERT_MANAGER_NAMESPACE" --timeout=300s
+}
+
+apply_ingress_class() {
+  echo "[INFO] Applying IngressClass for Istio..."
+  kubectl apply -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: istio
+spec:
+  controller: istio.io/ingress-controller
+EOF
+}
+
+apply_cluster_issuer() {
+  echo "[INFO] Applying ClusterIssuer ${ISSUER_NAME}..."
+  kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ${ISSUER_NAME}
+spec:
+  acme:
+    email: ${EMAIL}
+    server: ${ACME_SERVER}
+    privateKeySecretRef:
+      name: ${ACCOUNT_SECRET_NAME}
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: istio
+EOF
+}
+
+apply_certificate() {
+  echo "[INFO] Requesting certificate for ${DOMAIN}..."
+  # Build dnsNames: DOMAIN first, then EXTRA_DOMAINS (comma-separated). One - "    - name" per line.
+  local extra_dns
+  extra_dns=""
+  if [[ -n "${EXTRA_DOMAINS:-}" ]]; then
+    extra_dns=$(echo "${EXTRA_DOMAINS}" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | sed 's/^/    - /')
+  fi
+  kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ${TLS_SECRET_NAME}
+  namespace: ${ISTIO_NAMESPACE}
+spec:
+  secretName: ${TLS_SECRET_NAME}
+  issuerRef:
+    name: ${ISSUER_NAME}
+    kind: ClusterIssuer
+  commonName: ${DOMAIN}
+  dnsNames:
+    - ${DOMAIN}
+${extra_dns}
+EOF
+}
+
+cleanup_legacy_resources() {
+  echo "[INFO] Removing legacy certbot/ACME resources..."
+  kubectl delete deployment,service acme-challenge -n default --ignore-not-found >/dev/null
+  kubectl delete deployment,service acme-challenge -n istio-system --ignore-not-found >/dev/null
+  kubectl delete destinationrule acme-challenge -n default --ignore-not-found >/dev/null
+  kubectl delete destinationrule acme-challenge -n istio-system --ignore-not-found >/dev/null
+  kubectl delete peerauthentication acme-challenge -n default --ignore-not-found >/dev/null
+  kubectl delete peerauthentication acme-challenge -n istio-system --ignore-not-found >/dev/null
+  sudo rm -f \
+    /etc/letsencrypt/renewal-hooks/pre/pinz-remove-redirect.sh \
+    /etc/letsencrypt/renewal-hooks/post/pinz-restore-redirect.sh \
+    /etc/letsencrypt/renewal-hooks/deploy/pinz-sync-istio-secret.sh 2>/dev/null || true
+}
+
+show_cert_manager_diagnostics() {
+  echo "[INFO] Certificate status:"
+  kubectl describe certificate "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" || true
+
+  echo "[INFO] CertificateRequests:"
+  kubectl get certificaterequests -A || true
+
+  echo "[INFO] Orders:"
+  kubectl get orders -A || true
+
+  echo "[INFO] Challenges:"
+  kubectl get challenges -A || true
+
+  echo "[INFO] Solver ingresses:"
+  kubectl get ingress -A || true
+}
+
+wait_for_certificate() {
+  echo "[INFO] Checking certificate ${ISTIO_NAMESPACE}/${TLS_SECRET_NAME}..."
+  if kubectl get "certificate/${TLS_SECRET_NAME}" -n "$ISTIO_NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q True; then
+    echo "[INFO] Certificate is already Ready, skipping wait."
+    kubectl get secret "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" >/dev/null
+    return 0
+  fi
+
+  echo "[INFO] Waiting for certificate (up to 10 min). If stuck, in another terminal run:"
+  echo "       kubectl describe certificate $TLS_SECRET_NAME -n $ISTIO_NAMESPACE"
+  echo "       kubectl get challenges -A"
+  if ! kubectl wait --for=condition=Ready "certificate/${TLS_SECRET_NAME}" -n "$ISTIO_NAMESPACE" --timeout=600s; then
+    echo "[ERROR] Certificate did not become Ready within 10 minutes."
+    show_cert_manager_diagnostics
+    return 1
+  fi
+  kubectl get secret "$TLS_SECRET_NAME" -n "$ISTIO_NAMESPACE" >/dev/null
+}
+
+main() {
+  install_cert_manager
+  apply_ingress_class
+  apply_cluster_issuer
+  apply_certificate
+  cleanup_legacy_resources
+  wait_for_certificate
+
+  echo ""
+  echo "[OK] cert-manager setup complete."
+  echo "    Domain : ${DOMAIN}"
+  echo "    Issuer : ${ISSUER_NAME}"
+  echo "    Secret : ${ISTIO_NAMESPACE}/${TLS_SECRET_NAME}"
+}
+
+main "$@"

@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: nats
+  tag: "2.10-alpine"
+  pullPolicy: IfNotPresent
+
+service:
+  clientPort: 4222
+  monitorPort: 8222
+  websocketPort: 8080
+
+storage:
+  size: 5Gi
+
+jetstream:
+  maxMemoryStore: "256MB"
+  maxFileStore: "4GB"
+
+auth:
+  token: "local-dev-token"
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
