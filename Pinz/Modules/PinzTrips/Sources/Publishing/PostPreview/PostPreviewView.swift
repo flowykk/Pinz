@@ -82,12 +82,12 @@ public struct PostPreviewView: View {
     }
 
     public var desription: some View {
-        DescriptionView(description: viewModel.trip.description)
+        DescriptionView(description: viewModel.trip.displayDescription(in: .public))
     }
 
     public var pinsList: some View {
         DefaultPinsListView(
-            pins: viewModel.selectedPins,
+            pins: viewModel.selectedPins.map { $0.censored(in: .public) },
             hideMediaBadges: true,
             pinTapped: { pin in
                 viewModel.dispatch(.navigate(.pinInfo(pin)))

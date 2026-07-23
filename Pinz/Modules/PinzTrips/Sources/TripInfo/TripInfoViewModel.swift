@@ -257,6 +257,11 @@ final class TripInfoViewModel {
             tripCoverUploadTask = nil
         }
 
+        let nameChanged = editingSnapshot?.name != trip.name
+        let descriptionChanged = editingSnapshot?.description != trip.description
+        if nameChanged { trip.isNameCensored = false }
+        if descriptionChanged { trip.isDescriptionCensored = false }
+
         do {
             let updatedTrip = try await networkService.updateTrip(
                 id: trip.id,

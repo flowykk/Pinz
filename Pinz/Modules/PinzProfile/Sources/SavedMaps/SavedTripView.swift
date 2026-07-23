@@ -22,7 +22,7 @@ public struct SavedTripView: View {
                         action: .plain { viewModel.dispatch(.navigate(.back)) }
                     )
                 }, centerView: {
-                    HeaderTitle(viewModel.trip.name)
+                    HeaderTitle(viewModel.trip.displayName(in: .public))
                 }, rightView: {
                     Button {
                         Task { await viewModel.toggleSaved() }
@@ -38,12 +38,12 @@ public struct SavedTripView: View {
                 VStack(spacing: 16) {
                     Group {
                         tripMap
-                        DescriptionView(description: viewModel.trip.description)
+                        DescriptionView(description: viewModel.trip.displayDescription(in: .public))
                     }
                     .padding(.horizontal, 12)
 
                     DefaultPinsListView(
-                        pins: viewModel.pins,
+                        pins: viewModel.pins.map { $0.censored(in: .public) },
                         hideMediaBadges: true,
                         pinTapped: { _ in }
                     )

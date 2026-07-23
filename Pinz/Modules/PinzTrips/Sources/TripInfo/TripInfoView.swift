@@ -238,6 +238,13 @@ public struct TripInfoView: View {
                         .roundedFont(size: 16, foregroundColor: PinzUIAsset.textSecondary.swiftUIColor)
                 }
             }
+
+            if viewModel.trip.isNameCensored {
+                Text(PinzBaseStrings.Censorship.Banner.name)
+                    .roundedFont(size: 13, foregroundColor: PinzUIAsset.accentRed.swiftUIColor)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+            }
         }
     }
 
@@ -299,6 +306,8 @@ public struct TripInfoView: View {
     private var description: some View {
         DescriptionView(
             description: viewModel.trip.description,
+            subtitle: viewModel.trip.isDescriptionCensored ? PinzBaseStrings.Censorship.Banner.description : nil,
+            subtitleStyle: viewModel.trip.isDescriptionCensored ? .destructive : .default,
             contentAccessibilityIdentifier: PinzElement.trip(.row(.description)).accessibilityID,
             onAddAction: {
                 viewModel.dispatch(.changeState)
@@ -486,7 +495,10 @@ public struct TripInfoView: View {
     private var descriptionEditing: some View {
         DescriptionEditingView(
             title: PinzBaseStrings.Common.Label.description,
-            subtitle: PinzBaseStrings.TripInfo.Hint.descriptionLimit,
+            subtitle: viewModel.trip.isDescriptionCensored
+                ? PinzBaseStrings.Censorship.Banner.description
+                : PinzBaseStrings.TripInfo.Hint.descriptionLimit,
+            subtitleStyle: viewModel.trip.isDescriptionCensored ? .destructive : .default,
             text: Binding(get: {
                 viewModel.trip.description ?? ""
             }, set: { value in
