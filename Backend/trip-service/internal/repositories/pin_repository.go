@@ -358,8 +358,9 @@ func (r *PinRepository) SearchByUserID(userID, query string, limit, offset int32
 }
 
 type FeedPin struct {
-	ID string
-	Latitude float64
+	ID        string
+	Name      string
+	Latitude  float64
 	Longitude float64
 }
 
@@ -373,7 +374,7 @@ func (r *PinRepository) ListPublishedPinsByTripIDs(tripIDs []string) (map[string
 		placeholders[i] = fmt.Sprintf("$%d", i+1)
 		args[i] = id
 	}
-	sqlStr := `SELECT id, trip_id, ST_Y(location)::float as lat, ST_X(location)::float as lon
+	sqlStr := `SELECT id, trip_id, name, ST_Y(location)::float as lat, ST_X(location)::float as lon
 		FROM pins WHERE trip_id IN (` + strings.Join(placeholders, ",") + `) AND is_published_in_feed = true AND location IS NOT NULL`
 	rows, err := r.db.Query(sqlStr, args...)
 	if err != nil {
@@ -382,12 +383,12 @@ func (r *PinRepository) ListPublishedPinsByTripIDs(tripIDs []string) (map[string
 	defer rows.Close()
 	out := make(map[string][]*FeedPin)
 	for rows.Next() {
-		var id, tripID string
+		var id, tripID, name string
 		var lat, lon float64
-		if err := rows.Scan(&id, &tripID, &lat, &lon); err != nil {
+		if err := rows.Scan(&id, &tripID, &name, &lat, &lon); err != nil {
 			return nil, err
 		}
-		out[tripID] = append(out[tripID], &FeedPin{ID: id, Latitude: lat, Longitude: lon})
+		out[tripID] = append(out[tripID], &FeedPin{ID: id, Name: name, Latitude: lat, Longitude: lon})
 	}
 	return out, rows.Err()
 }
@@ -537,17 +538,17 @@ func (r *PinRepository) IncMediaCount(pinID string, delta int) error {
 // проставляется на случай NULL (DBSCAN-edge-cases при minpoints=1 не должен давать
 // NULL, но защищаемся sql.NullInt64).
 type RecommendationPinCandidate struct {
-	ID string
-	TripID string
-	Name string
-	Description string
-	Category string
+	ID           string
+	TripID       string
+	Name         string
+	Description  string
+	Category     string
 	LocationName string
-	MediaCount int32
-	Latitude float64
-	Longitude float64
-	ClusterID int32
-	TripScore int32
+	MediaCount   int32
+	Latitude     float64
+	Longitude    float64
+	ClusterID    int32
+	TripScore    int32
 }
 
 // ListRecommendationCandidates: топ-50 опубликованных трипов региона за 2 года

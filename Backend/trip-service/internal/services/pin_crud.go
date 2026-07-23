@@ -113,7 +113,7 @@ func (s *TripService) UpdatePin(ctx context.Context, req *pb.UpdatePinRequest) (
 	if trip.IsGenerated {
 		return nil, errGeneratedReadOnly
 	}
-	if trip.Status != models.TripStatusReady {
+	if trip.Status != models.TripStatusReady && trip.Status != models.TripStatusDraftFinalReview {
 		return nil, errWrongStatus(models.TripStatusReady, trip.Status)
 	}
 	pin, err := s.pinRepo.GetByID(pinID)
@@ -408,4 +408,3 @@ func (s *TripService) assertParticipantAndPinReady(ctx context.Context, tripID, 
 	_ = ctx
 	return nil
 }
-

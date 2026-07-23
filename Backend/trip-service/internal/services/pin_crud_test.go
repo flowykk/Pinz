@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -218,6 +219,55 @@ func TestUpdatePin_TripNotReady_FailedPrecondition(t *testing.T) {
 	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_, err := svc.UpdatePin(ctxWithUser(userID), &pb.UpdatePinRequest{TripId: tripID, PinId: pinID})
 	require.Equal(t, codes.FailedPrecondition, status.Code(err))
+}
+
+// Fix 1: правка пина (место/даты) разрешена и на стадии финального ревью.
+func TestUpdatePin_DraftFinalReview_AllowsLocationEdit(t *testing.T) {
+	const tripID = "trip-1"
+	const pinID = "pin-1"
+	const userID = "user-1"
+	ctrl := gomock.NewController(t)
+
+	participantRepo := mocks.NewMockTripParticipantRepositoryInterface(ctrl)
+	tripRepo := mocks.NewMockTripRepositoryInterface(ctrl)
+	pinRepo := mocks.NewMockPinRepositoryInterface(ctrl)
+	tagRepo := mocks.NewMockTagRepositoryInterface(ctrl)
+	mediaRepo := mocks.NewMockMediaRepositoryInterface(ctrl)
+
+	participantRepo.EXPECT().IsParticipant(tripID, userID).Return(true, nil)
+	tripRepo.EXPECT().GetByID(tripID).Return(&models.Trip{ID: tripID, Status: models.TripStatusDraftFinalReview}, nil)
+	pinRepo.EXPECT().GetByID(pinID).Return(&models.Pin{ID: pinID, TripID: tripID}, nil)
+	pinRepo.EXPECT().Update(gomock.Any()).Return(nil)
+	mediaRepo.EXPECT().ListByPinID(pinID).Return(nil, nil)
+	tagRepo.EXPECT().GetByPinID(pinID).Return(nil, nil)
+
+	lat, lon := 25.2165, 105.597
+	start, end := int64(1700000000), int64(1700003600)
+	svc := NewTripService(tripRepo, participantRepo, nil, nil, nil, mediaRepo, nil, pinRepo, tagRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	resp, err := svc.UpdatePin(ctxWithUser(userID), &pb.UpdatePinRequest{
+		TripId: tripID, PinId: pinID, Latitude: &lat, Longitude: &lon, StartTimeUnix: &start, EndTimeUnix: &end,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.GetPin())
+}
+
+// Fix 2: пересчёт из медиа не трогает уже выставленные (ненулевые) поля пина.
+func TestApplyPinTimesAndLocationFromMedia_PreservesNonNull(t *testing.T) {
+	existingLat, existingLon := 10.0, 20.0
+	existingStart := time.Unix(1000, 0)
+	pin := &models.Pin{Latitude: &existingLat, Longitude: &existingLon, StartTime: &existingStart}
+
+	mLat, mLon := 55.0, 37.0
+	mTime := time.Unix(2000, 0)
+	media := []*models.Media{{Latitude: &mLat, Longitude: &mLon, CapturedAt: &mTime}}
+
+	applyPinTimesAndLocationFromMedia(pin, media)
+
+	require.Equal(t, existingLat, *pin.Latitude) // ненулевое — сохранено
+	require.Equal(t, existingLon, *pin.Longitude)
+	require.Equal(t, existingStart, *pin.StartTime) // ненулевое — сохранено
+	require.NotNil(t, pin.EndTime)                  // было nil — заполнено из медиа
+	require.Equal(t, mTime, *pin.EndTime)
 }
 
 func TestUpdatePin_HappyPath_TagsReplace(t *testing.T) {

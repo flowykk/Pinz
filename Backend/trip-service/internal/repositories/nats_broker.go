@@ -43,9 +43,9 @@ func DefaultNATSBrokerConfig() NATSBrokerConfig {
 }
 
 type NATSBroker struct {
-	cfg  NATSBrokerConfig
-	nc   *nats.Conn
-	js   jetstream.JetStream
+	cfg NATSBrokerConfig
+	nc  *nats.Conn
+	js  jetstream.JetStream
 }
 
 func NewNATSBroker(cfg NATSBrokerConfig) (*NATSBroker, error) {
@@ -100,9 +100,11 @@ func (b *NATSBroker) ensureStreams(ctx context.Context) error {
 			Duplicates: 2 * time.Minute,
 		},
 		{
+			// Limits (не WorkQueue): результаты читает несколько потребителей
+			// (trip-service + e2e/debug), workqueue допускает лишь одного.
 			Name:       MLStreamResults,
 			Subjects:   []string{"ml.results.>"},
-			Retention:  jetstream.WorkQueuePolicy,
+			Retention:  jetstream.LimitsPolicy,
 			Storage:    jetstream.FileStorage,
 			MaxAge:     24 * time.Hour,
 			Discard:    jetstream.DiscardOld,

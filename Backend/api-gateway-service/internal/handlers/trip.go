@@ -20,8 +20,8 @@ import (
 var _ = responses.ErrorResponse{}
 
 type TripHandler struct {
-	tripClient        TripClient
-	authEnricher      AuthProfileEnricher
+	tripClient   TripClient
+	authEnricher AuthProfileEnricher
 	// tripShareLinkBase — базовый URL для формирования share-ссылки:
 	// в ответ Trip пишется "{base}/{id}". Берётся из env TRIP_SHARE_LINK_BASE,
 	// дефолт задаётся в DI. Пустое значение → share_url остаётся пустым.
@@ -121,7 +121,7 @@ func (h *TripHandler) ListTrips(w http.ResponseWriter, r *http.Request) {
 	// Optional: parse limit/offset from query
 	resp, err := h.tripClient.ListUserTrips(ctx, &proto.ListUserTripsRequest{
 		UserId: userID,
-		Limit: limit,
+		Limit:  limit,
 		Offset: offset,
 	})
 	if err != nil {
@@ -165,11 +165,11 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		protoFiles = append(protoFiles, &proto.FileToUpload{ClientId: f.ClientID, ContentType: f.ContentType})
 	}
 	resp, err := h.tripClient.CreateTrip(ctx, &proto.CreateTripRequest{
-		OwnerUserId: userID,
-		Name: req.Name,
-		Description: req.Description,
-		Category: req.Category,
-		Season: req.Season,
+		OwnerUserId:   userID,
+		Name:          req.Name,
+		Description:   req.Description,
+		Category:      req.Category,
+		Season:        req.Season,
 		FilesToUpload: protoFiles,
 	})
 	if err != nil {
@@ -181,8 +181,8 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		urls[i] = responses.UploadURL{ClientID: u.GetClientId(), S3Key: u.GetS3Key(), URL: u.GetUrl()}
 	}
 	respondJSON(w, http.StatusCreated, responses.CreateTripResponse{
-		TripID: resp.GetTripId(),
-		Status: resp.GetStatus(),
+		TripID:     resp.GetTripId(),
+		Status:     resp.GetStatus(),
 		UploadURLs: urls,
 	})
 }
@@ -318,9 +318,9 @@ func (h *TripHandler) RequestTripCoverUpload(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	resp, err := h.tripClient.RequestTripCoverUpload(ctx, &proto.RequestTripCoverUploadRequest{
-		TripId: tripID,
-		UserId: userID,
-		Filename: req.Filename,
+		TripId:      tripID,
+		UserId:      userID,
+		Filename:    req.Filename,
 		ContentType: req.ContentType,
 	})
 	if err != nil {
@@ -329,7 +329,7 @@ func (h *TripHandler) RequestTripCoverUpload(w http.ResponseWriter, r *http.Requ
 	}
 	respondJSON(w, http.StatusOK, responses.TripCoverUploadResponse{
 		UploadURL: resp.GetUploadUrl(),
-		S3Key: resp.GetS3Key(),
+		S3Key:     resp.GetS3Key(),
 	})
 }
 
@@ -369,7 +369,7 @@ func (h *TripHandler) ConfirmTripCoverUpload(w http.ResponseWriter, r *http.Requ
 	resp, err := h.tripClient.ConfirmTripCoverUpload(ctx, &proto.ConfirmTripCoverUploadRequest{
 		TripId: tripID,
 		UserId: userID,
-		S3Key: req.S3Key,
+		S3Key:  req.S3Key,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "ConfirmTripCoverUpload")
@@ -488,9 +488,9 @@ func (h *TripHandler) GenerateInviteLink(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	respondJSON(w, http.StatusCreated, responses.GenerateInviteLinkResponse{
-		InviteLinkID: resp.GetInviteLinkId(),
-		Token: resp.GetToken(),
-		InviteURL: resp.GetInviteUrl(),
+		InviteLinkID:  resp.GetInviteLinkId(),
+		Token:         resp.GetToken(),
+		InviteURL:     resp.GetInviteUrl(),
 		ExpiresAtUnix: resp.GetExpiresAtUnix(),
 	})
 }
@@ -527,7 +527,7 @@ func (h *TripHandler) JoinTripByToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.JoinTripByTokenResponse{
-		TripID: resp.GetTripId(),
+		TripID:        resp.GetTripId(),
 		AlreadyJoined: resp.GetAlreadyJoined(),
 	})
 }
@@ -601,7 +601,7 @@ func (h *TripHandler) LeaveTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.LeaveTripResponse{
-		Success: resp.GetSuccess(),
+		Success:     resp.GetSuccess(),
 		TripDeleted: resp.GetTripDeleted(),
 	})
 }
@@ -663,8 +663,8 @@ func (h *TripHandler) ProcessMediaGrouping(w http.ResponseWriter, r *http.Reques
 		draftPins = append(draftPins, responses.DraftPin{DraftPinID: dp.GetDraftPinId(), Media: mediaList})
 	}
 	respondJSON(w, http.StatusOK, responses.ProcessMediaGroupingResponse{
-		TripID: resp.GetTripId(),
-		Status: resp.GetStatus(),
+		TripID:    resp.GetTripId(),
+		Status:    resp.GetStatus(),
 		DraftPins: draftPins,
 	})
 }
@@ -701,8 +701,8 @@ func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Reque
 		draftPins = append(draftPins, &proto.DraftPinInput{DraftPinId: dp.DraftPinID, MediaIds: dp.MediaIDs})
 	}
 	resp, err := h.tripClient.ApplyGroupsAndProcess(ctx, &proto.ApplyGroupsAndProcessRequest{
-		TripId: tripID,
-		DraftPins: draftPins,
+		TripId:          tripID,
+		DraftPins:       draftPins,
 		DeletedMediaIds: req.DeletedMediaIDs,
 	})
 	if err != nil {
@@ -711,7 +711,7 @@ func (h *TripHandler) ApplyGroupsAndProcess(w http.ResponseWriter, r *http.Reque
 	}
 	respondJSON(w, http.StatusAccepted, responses.ApplyGroupsAndProcessResponse{
 		Message: resp.GetMessage(),
-		Status: resp.GetStatus(),
+		Status:  resp.GetStatus(),
 	})
 }
 
@@ -843,9 +843,9 @@ func (h *TripHandler) PublishTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	protoReq := &proto.PublishTripRequest{
-		TripId: tripID,
+		TripId:       tripID,
 		PublishWhole: req.PublishWhole,
-		PinIds: req.PinIDs,
+		PinIds:       req.PinIDs,
 	}
 	resp, err := h.tripClient.PublishTrip(ctx, protoReq)
 	if err != nil {
@@ -890,7 +890,7 @@ func (h *TripHandler) UpdateTripPrivacy(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	resp, err := h.tripClient.UpsertTripPrivacy(ctx, &proto.UpsertTripPrivacyRequest{
-		TripId: tripID,
+		TripId:       tripID,
 		PrivacyLevel: req.PrivacyLevel,
 	})
 	if err != nil {
@@ -937,8 +937,8 @@ func (h *TripHandler) UpdatePinPrivacy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp, err := h.tripClient.UpsertPinPrivacy(ctx, &proto.UpsertPinPrivacyRequest{
-		TripId: tripID,
-		PinId: pinID,
+		TripId:       tripID,
+		PinId:        pinID,
 		PrivacyLevel: req.PrivacyLevel,
 	})
 	if err != nil {
@@ -985,8 +985,8 @@ func (h *TripHandler) UpdateMediaPrivacy(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	resp, err := h.tripClient.UpsertMediaPrivacy(ctx, &proto.UpsertMediaPrivacyRequest{
-		TripId: tripID,
-		MediaId: mediaID,
+		TripId:       tripID,
+		MediaId:      mediaID,
 		PrivacyLevel: req.PrivacyLevel,
 	})
 	if err != nil {
@@ -1024,7 +1024,7 @@ func (h *TripHandler) UpdateTripSettings(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	_, err := h.tripClient.UpdateTripSettings(ctx, &proto.UpdateTripSettingsRequest{
-		TripId: tripID,
+		TripId:               tripID,
 		NotificationsEnabled: req.NotificationsEnabled,
 	})
 	if err != nil {
@@ -1076,13 +1076,13 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	city := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("city")))
 	country := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("country")))
 	resp, err := h.tripClient.ListFeed(ctx, &proto.ListFeedRequest{
-		Limit: limit,
-		Offset: offset,
+		Limit:    limit,
+		Offset:   offset,
 		Category: category,
-		Season: season,
-		City: city,
-		Country: country,
-		SortBy: sortBy,
+		Season:   season,
+		City:     city,
+		Country:  country,
+		SortBy:   sortBy,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "ListFeed")
@@ -1096,33 +1096,34 @@ func (h *TripHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 			pinMedia := make([]responses.FeedMedia, len(p.GetMedia()))
 			for k, m := range p.GetMedia() {
 				pinMedia[k] = responses.FeedMedia{
-					MediaID: m.GetMediaId(),
-					URL: m.GetUrl(),
+					MediaID:   m.GetMediaId(),
+					URL:       m.GetUrl(),
 					MediaType: m.GetMediaType(),
 				}
 			}
 			pins[j] = responses.FeedPin{
-				ID: p.GetId(),
-				Latitude: p.GetLatitude(),
+				ID:        p.GetId(),
+				Name:      p.GetName(),
+				Latitude:  p.GetLatitude(),
 				Longitude: p.GetLongitude(),
-				Media: pinMedia,
+				Media:     pinMedia,
 			}
 		}
 		media := make([]responses.FeedMedia, len(item.GetMedia()))
 		for j, m := range item.GetMedia() {
 			media[j] = responses.FeedMedia{
-				MediaID: m.GetMediaId(),
-				URL: m.GetUrl(),
+				MediaID:   m.GetMediaId(),
+				URL:       m.GetUrl(),
 				MediaType: m.GetMediaType(),
 			}
 		}
 		out[i] = responses.FeedItem{
-			Trip: h.tripProtoToResponse(item.GetTrip()),
-			Pins: pins,
-			Media: media,
-			IsLiked: item.GetIsLiked(),
+			Trip:       h.tripProtoToResponse(item.GetTrip()),
+			Pins:       pins,
+			Media:      media,
+			IsLiked:    item.GetIsLiked(),
 			IsDisliked: item.GetIsDisliked(),
-			IsSaved: item.GetIsSaved(),
+			IsSaved:    item.GetIsSaved(),
 		}
 	}
 	respondJSON(w, http.StatusOK, out)
@@ -1317,8 +1318,8 @@ func (h *TripHandler) SearchPins(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	resp, err := h.tripClient.SearchPins(ctx, &proto.SearchPinsRequest{
-		Query: query,
-		Limit: limit,
+		Query:  query,
+		Limit:  limit,
 		Offset: offset,
 	})
 	if err != nil {
@@ -1340,27 +1341,27 @@ func (h *TripHandler) tripProtoToResponse(t *proto.Trip) responses.Trip {
 		return responses.Trip{}
 	}
 	out := responses.Trip{
-		ID: t.GetId(),
-		OwnerUserID: t.GetOwnerUserId(),
-		Name: t.GetName(),
-		Description: t.GetDescription(),
-		Category: t.GetCategory(),
-		Season: t.GetSeason(),
-		Status: t.GetStatus(),
-		PrivacyLevel: t.GetPrivacyLevel(),
-		StartDateUnix: t.GetStartDateUnix(),
-		EndDateUnix: t.GetEndDateUnix(),
-		LikesCount: t.GetLikesCount(),
-		DislikesCount: t.GetDislikesCount(),
-		MediaCount: t.GetMediaCount(),
-		ParticipantsCount: t.GetParticipantsCount(),
-		CoverURL: t.GetCoverUrl(),
-		IsPublished: t.GetIsPublished(),
-		IsGenerated: t.GetIsGenerated(),
-		NameCensored: t.GetNameCensored(),
+		ID:                  t.GetId(),
+		OwnerUserID:         t.GetOwnerUserId(),
+		Name:                t.GetName(),
+		Description:         t.GetDescription(),
+		Category:            t.GetCategory(),
+		Season:              t.GetSeason(),
+		Status:              t.GetStatus(),
+		PrivacyLevel:        t.GetPrivacyLevel(),
+		StartDateUnix:       t.GetStartDateUnix(),
+		EndDateUnix:         t.GetEndDateUnix(),
+		LikesCount:          t.GetLikesCount(),
+		DislikesCount:       t.GetDislikesCount(),
+		MediaCount:          t.GetMediaCount(),
+		ParticipantsCount:   t.GetParticipantsCount(),
+		CoverURL:            t.GetCoverUrl(),
+		IsPublished:         t.GetIsPublished(),
+		IsGenerated:         t.GetIsGenerated(),
+		NameCensored:        t.GetNameCensored(),
 		DescriptionCensored: t.GetDescriptionCensored(),
-		CreatedAtUnix: t.GetCreatedAtUnix(),
-		UpdatedAtUnix: t.GetUpdatedAtUnix(),
+		CreatedAtUnix:       t.GetCreatedAtUnix(),
+		UpdatedAtUnix:       t.GetUpdatedAtUnix(),
 	}
 	if h.tripShareLinkBase != "" && t.GetId() != "" {
 		out.ShareURL = h.tripShareLinkBase + "/" + t.GetId()
@@ -1370,8 +1371,8 @@ func (h *TripHandler) tripProtoToResponse(t *proto.Trip) responses.Trip {
 
 func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.GetTripResponse) responses.GetTripResponse {
 	out := responses.GetTripResponse{
-		Trip: h.tripProtoToResponse(resp.GetTrip()),
-		Pins: make([]responses.TripPin, 0, len(resp.GetPins())),
+		Trip:         h.tripProtoToResponse(resp.GetTrip()),
+		Pins:         make([]responses.TripPin, 0, len(resp.GetPins())),
 		Participants: make([]responses.TripParticipant, 0, len(resp.GetParticipants())),
 	}
 	for _, p := range resp.GetPins() {
@@ -1400,9 +1401,9 @@ func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.Get
 			continue
 		}
 		part := responses.TripParticipant{
-			UserID: p.GetUserId(),
+			UserID:       p.GetUserId(),
 			PrivacyLevel: p.GetPrivacyLevel(),
-			Role: p.GetRole(),
+			Role:         p.GetRole(),
 		}
 		if profile, ok := profiles[p.GetUserId()]; ok {
 			part.Username = profile.Username
@@ -1413,7 +1414,7 @@ func (h *TripHandler) getTripResponseToREST(ctx context.Context, resp *proto.Get
 	if cs := resp.GetCurrentUserSettings(); cs != nil {
 		out.CurrentUserSettings = responses.TripSettings{
 			NotificationsEnabled: cs.GetNotificationsEnabled(),
-			PrivacyLevel: cs.GetPrivacyLevel(),
+			PrivacyLevel:         cs.GetPrivacyLevel(),
 		}
 	}
 	if active := resp.GetActiveAddMediaSession(); active != nil {
@@ -1479,19 +1480,19 @@ func (h *TripHandler) enrichProfiles(ctx context.Context, userIDs []string) map[
 
 func tripPinProtoToResponse(p *proto.TripPin) responses.TripPin {
 	pin := responses.TripPin{
-		ID: p.GetId(),
-		TripID: p.GetTripId(),
-		Name: p.GetName(),
-		Description: p.GetDescription(),
-		Category: p.GetCategory(),
-		Latitude: p.Latitude,
-		Longitude: p.Longitude,
-		StartTimeUnix: p.GetStartTimeUnix(),
-		EndTimeUnix: p.GetEndTimeUnix(),
-		PrivacyLevel: p.GetPrivacyLevel(),
-		Tags: p.GetTags(),
-		Media: make([]responses.TripPinMedia, 0, len(p.GetMedia())),
-		NameCensored: p.GetNameCensored(),
+		ID:                  p.GetId(),
+		TripID:              p.GetTripId(),
+		Name:                p.GetName(),
+		Description:         p.GetDescription(),
+		Category:            p.GetCategory(),
+		Latitude:            p.Latitude,
+		Longitude:           p.Longitude,
+		StartTimeUnix:       p.GetStartTimeUnix(),
+		EndTimeUnix:         p.GetEndTimeUnix(),
+		PrivacyLevel:        p.GetPrivacyLevel(),
+		Tags:                p.GetTags(),
+		Media:               make([]responses.TripPinMedia, 0, len(p.GetMedia())),
+		NameCensored:        p.GetNameCensored(),
 		DescriptionCensored: p.GetDescriptionCensored(),
 	}
 	for _, m := range p.GetMedia() {
@@ -1499,11 +1500,11 @@ func tripPinProtoToResponse(p *proto.TripPin) responses.TripPin {
 			continue
 		}
 		pin.Media = append(pin.Media, responses.TripPinMedia{
-			MediaID: m.GetMediaId(),
-			URL: m.GetUrl(),
-			MediaType: m.GetMediaType(),
+			MediaID:        m.GetMediaId(),
+			URL:            m.GetUrl(),
+			MediaType:      m.GetMediaType(),
 			CapturedAtUnix: m.GetCapturedAtUnix(),
-			PrivacyLevel: m.GetPrivacyLevel(),
+			PrivacyLevel:   m.GetPrivacyLevel(),
 		})
 	}
 	return pin
@@ -1545,7 +1546,7 @@ func (h *TripHandler) AddMediaStart(w http.ResponseWriter, r *http.Request) {
 		protoFiles = append(protoFiles, &proto.FileToUpload{ClientId: f.ClientID, ContentType: f.ContentType})
 	}
 	resp, err := h.tripClient.AddMediaStart(ctx, &proto.AddMediaStartRequest{
-		TripId: tripID,
+		TripId:        tripID,
 		FilesToUpload: protoFiles,
 	})
 	if err != nil {
@@ -1557,10 +1558,10 @@ func (h *TripHandler) AddMediaStart(w http.ResponseWriter, r *http.Request) {
 		urls[i] = responses.UploadURL{ClientID: u.GetClientId(), S3Key: u.GetS3Key(), URL: u.GetUrl()}
 	}
 	respondJSON(w, http.StatusOK, responses.AddMediaStartResponse{
-		SessionID: resp.GetSessionId(),
-		Status: resp.GetStatus(),
+		SessionID:  resp.GetSessionId(),
+		Status:     resp.GetStatus(),
 		UploadURLs: urls,
-		Joined: resp.GetJoined(),
+		Joined:     resp.GetJoined(),
 	})
 }
 
@@ -1594,9 +1595,9 @@ func (h *TripHandler) AddMediaProcessGrouping(w http.ResponseWriter, r *http.Req
 	// media[] больше не передаётся — сервер берёт из БД (commit-upload).
 	// Флаг add_more=true откатывает GROUPING_REVIEW → UPLOADING.
 	resp, err := h.tripClient.AddMediaProcessGrouping(ctx, &proto.AddMediaProcessGroupingRequest{
-		TripId: tripID,
+		TripId:    tripID,
 		SessionId: req.SessionID,
-		AddMore: req.AddMore,
+		AddMore:   req.AddMore,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "AddMediaProcessGrouping")
@@ -1611,10 +1612,10 @@ func (h *TripHandler) AddMediaProcessGrouping(w http.ResponseWriter, r *http.Req
 		draftPins = append(draftPins, responses.DraftPin{DraftPinID: dp.GetDraftPinId(), Media: mediaList})
 	}
 	respondJSON(w, http.StatusOK, responses.AddMediaProcessGroupingResponse{
-		TripID: resp.GetTripId(),
-		SessionID: resp.GetSessionId(),
-		Status: resp.GetStatus(),
-		DraftPins: draftPins,
+		TripID:           resp.GetTripId(),
+		SessionID:        resp.GetSessionId(),
+		Status:           resp.GetStatus(),
+		DraftPins:        draftPins,
 		ExistingMediaIDs: resp.GetExistingMediaIds(),
 	})
 }
@@ -1651,9 +1652,9 @@ func (h *TripHandler) AddMediaApplyGroupsAndProcess(w http.ResponseWriter, r *ht
 		draftPins = append(draftPins, &proto.DraftPinInput{DraftPinId: dp.DraftPinID, MediaIds: dp.MediaIDs})
 	}
 	resp, err := h.tripClient.AddMediaApplyGroupsAndProcess(ctx, &proto.AddMediaApplyGroupsAndProcessRequest{
-		TripId: tripID,
-		SessionId: req.SessionID,
-		DraftPins: draftPins,
+		TripId:          tripID,
+		SessionId:       req.SessionID,
+		DraftPins:       draftPins,
 		DeletedMediaIds: req.DeletedMediaIDs,
 	})
 	if err != nil {
@@ -1662,7 +1663,7 @@ func (h *TripHandler) AddMediaApplyGroupsAndProcess(w http.ResponseWriter, r *ht
 	}
 	respondJSON(w, http.StatusAccepted, responses.AddMediaApplyGroupsAndProcessResponse{
 		Message: resp.GetMessage(),
-		Status: resp.GetStatus(),
+		Status:  resp.GetStatus(),
 	})
 }
 
@@ -1698,8 +1699,8 @@ func (h *TripHandler) AddMediaRequestUploadUrls(w http.ResponseWriter, r *http.R
 		files = append(files, &proto.FileToUpload{ClientId: f.ClientID, ContentType: f.ContentType})
 	}
 	resp, err := h.tripClient.AddMediaRequestUploadUrls(ctx, &proto.AddMediaRequestUploadUrlsRequest{
-		TripId: tripID,
-		SessionId: req.SessionID,
+		TripId:        tripID,
+		SessionId:     req.SessionID,
 		FilesToUpload: files,
 	})
 	if err != nil {
@@ -1743,9 +1744,9 @@ func (h *TripHandler) AddMediaCommitUpload(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	protoReq := &proto.AddMediaCommitUploadRequest{
-		TripId: tripID,
+		TripId:    tripID,
 		SessionId: req.SessionID,
-		S3Key: req.S3Key,
+		S3Key:     req.S3Key,
 		MediaType: req.MediaType,
 	}
 	if req.CapturedAt != "" {
@@ -1766,9 +1767,9 @@ func (h *TripHandler) AddMediaCommitUpload(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.AddMediaCommitUploadResponse{
-		MediaID: resp.GetMediaId(),
+		MediaID:             resp.GetMediaId(),
 		MediaCountInSession: resp.GetMediaCountInSession(),
-		RemainingSlots: resp.GetRemainingSlots(),
+		RemainingSlots:      resp.GetRemainingSlots(),
 	})
 }
 
@@ -1795,7 +1796,7 @@ func (h *TripHandler) AddMediaGetSessionMedia(w http.ResponseWriter, r *http.Req
 		return
 	}
 	resp, err := h.tripClient.AddMediaGetSessionMedia(ctx, &proto.AddMediaGetSessionMediaRequest{
-		TripId: tripID,
+		TripId:    tripID,
 		SessionId: sessionID,
 	})
 	if err != nil {
@@ -1805,16 +1806,16 @@ func (h *TripHandler) AddMediaGetSessionMedia(w http.ResponseWriter, r *http.Req
 	media := make([]responses.SessionMediaEntry, 0, len(resp.GetMedia()))
 	for _, m := range resp.GetMedia() {
 		media = append(media, responses.SessionMediaEntry{
-			MediaID: m.GetMediaId(),
-			URL: m.GetUrl(),
-			Type: m.GetType(),
+			MediaID:     m.GetMediaId(),
+			URL:         m.GetUrl(),
+			Type:        m.GetType(),
 			ActorUserID: m.GetActorUserId(),
-			UploadedAt: unixToRFC3339(m.GetUploadedAtUnix()),
+			UploadedAt:  unixToRFC3339(m.GetUploadedAtUnix()),
 		})
 	}
 	respondJSON(w, http.StatusOK, responses.AddMediaGetSessionMediaResponse{
-		SessionID: resp.GetSessionId(),
-		Media: media,
+		SessionID:           resp.GetSessionId(),
+		Media:               media,
 		MediaCountInSession: resp.GetMediaCountInSession(),
 	})
 }
@@ -1842,7 +1843,7 @@ func (h *TripHandler) AddMediaGetGrouping(w http.ResponseWriter, r *http.Request
 		return
 	}
 	resp, err := h.tripClient.AddMediaGetGrouping(ctx, &proto.AddMediaGetGroupingRequest{
-		TripId: tripID,
+		TripId:    tripID,
 		SessionId: sessionID,
 	})
 	if err != nil {
@@ -1858,9 +1859,9 @@ func (h *TripHandler) AddMediaGetGrouping(w http.ResponseWriter, r *http.Request
 		draftPins = append(draftPins, responses.DraftPin{DraftPinID: dp.GetDraftPinId(), Media: mediaList})
 	}
 	respondJSON(w, http.StatusOK, responses.AddMediaGetGroupingResponse{
-		TripID: resp.GetTripId(),
-		SessionID: resp.GetSessionId(),
-		DraftPins: draftPins,
+		TripID:           resp.GetTripId(),
+		SessionID:        resp.GetSessionId(),
+		DraftPins:        draftPins,
 		ExistingMediaIDs: resp.GetExistingMediaIds(),
 	})
 }
@@ -1888,7 +1889,7 @@ func (h *TripHandler) AddMediaGetReview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	resp, err := h.tripClient.AddMediaGetReview(ctx, &proto.AddMediaGetReviewRequest{
-		TripId: tripID,
+		TripId:    tripID,
 		SessionId: sessionID,
 	})
 	if err != nil {
@@ -1910,6 +1911,7 @@ func (h *TripHandler) AddMediaGetReview(w http.ResponseWriter, r *http.Request) 
 		ProtectedMediaIDs:   resp.GetProtectedMediaIds(),
 		TakeoverAvailableAt: unixToRFC3339(resp.GetTakeoverAvailableAtUnix()),
 		CanEdit:             resp.GetCanEdit(),
+		Similar:             similarGroupsProtoToResponse(resp.GetSimilar()),
 	}
 	// N2: обогащение ведущего публичным профилем, чтобы клиент мог сразу
 	// показать «Алиса завершает ревью», а не резолвить user_id отдельным запросом.
@@ -1968,7 +1970,7 @@ func (h *TripHandler) AddMediaConfirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, responses.AddMediaConfirmResponse{
-		Status: resp.GetStatus(),
+		Status:           resp.GetStatus(),
 		AlreadyConfirmed: resp.GetAlreadyConfirmed(),
 	})
 }
@@ -2001,7 +2003,7 @@ func (h *TripHandler) AddMediaCancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp, err := h.tripClient.AddMediaCancel(ctx, &proto.AddMediaCancelRequest{
-		TripId: tripID,
+		TripId:    tripID,
 		SessionId: req.SessionID,
 	})
 	if err != nil {
@@ -2095,14 +2097,14 @@ func (h *TripHandler) StartBattle(w http.ResponseWriter, r *http.Request) {
 	media := make([]responses.BattleMedia, 0, len(resp.GetMedia()))
 	for _, m := range resp.GetMedia() {
 		media = append(media, responses.BattleMedia{
-			MediaID: m.GetMediaId(),
-			URL: m.GetUrl(),
+			MediaID:   m.GetMediaId(),
+			URL:       m.GetUrl(),
 			MediaType: m.GetMediaType(),
 		})
 	}
 	respondJSON(w, http.StatusOK, responses.StartBattleResponse{
 		BattleID: resp.GetBattleId(),
-		Media: media,
+		Media:    media,
 	})
 }
 
@@ -2145,7 +2147,7 @@ func (h *TripHandler) SubmitBattleResult(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	resp, err := h.tripClient.SubmitBattleResult(ctx, &proto.SubmitBattleResultRequest{
-		BattleId: battleID,
+		BattleId:      battleID,
 		WinnerMediaId: req.WinnerMediaID,
 	})
 	if err != nil {
@@ -2189,12 +2191,12 @@ func (h *TripHandler) GetBestMemories(w http.ResponseWriter, r *http.Request) {
 	media := make([]responses.BestMemory, 0, len(resp.GetMedia()))
 	for _, m := range resp.GetMedia() {
 		media = append(media, responses.BestMemory{
-			MediaID: m.GetMediaId(),
-			URL: m.GetUrl(),
-			MediaType: m.GetMediaType(),
-			BattleRating: m.GetBattleRating(),
+			MediaID:        m.GetMediaId(),
+			URL:            m.GetUrl(),
+			MediaType:      m.GetMediaType(),
+			BattleRating:   m.GetBattleRating(),
 			CapturedAtUnix: m.GetCapturedAtUnix(),
-			PinName: m.GetPinName(),
+			PinName:        m.GetPinName(),
 		})
 	}
 	respondJSON(w, http.StatusOK, responses.GetBestMemoriesResponse{Media: media})
@@ -2227,10 +2229,10 @@ func (h *TripHandler) GetRecommendations(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	resp, err := h.tripClient.GetRecommendations(ctx, &proto.GetRecommendationsRequest{
-		City: city,
-		Country: country,
+		City:     city,
+		Country:  country,
 		Category: r.URL.Query().Get("category"),
-		Season: r.URL.Query().Get("season"),
+		Season:   r.URL.Query().Get("season"),
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "GetRecommendations")
@@ -2276,11 +2278,11 @@ func (h *TripHandler) SaveRecommendation(w http.ResponseWriter, r *http.Request)
 	}
 	resp, err := h.tripClient.SaveRecommendation(ctx, &proto.SaveRecommendationRequest{
 		SnapshotToken: body.SnapshotToken,
-		PinIds: body.PinIDs,
-		City: body.City,
-		Country: body.Country,
-		Category: body.Category,
-		Season: body.Season,
+		PinIds:        body.PinIDs,
+		City:          body.City,
+		Country:       body.Country,
+		Category:      body.Category,
+		Season:        body.Season,
 	})
 	if err != nil {
 		handleServiceError(w, r, err, "SaveRecommendation")
@@ -2298,38 +2300,38 @@ func (h *TripHandler) recommendedMapProtoToResponse(m *proto.RecommendedMap) res
 		media := make([]responses.FeedMedia, len(p.GetMedia()))
 		for j, fm := range p.GetMedia() {
 			media[j] = responses.FeedMedia{
-				MediaID: fm.GetMediaId(),
-				URL: fm.GetUrl(),
+				MediaID:   fm.GetMediaId(),
+				URL:       fm.GetUrl(),
 				MediaType: fm.GetMediaType(),
 			}
 		}
 		pins[i] = responses.RecommendedPin{
-			ID: p.GetId(),
-			TripID: p.GetTripId(),
-			Latitude: p.GetLatitude(),
-			Longitude: p.GetLongitude(),
-			Name: p.GetName(),
-			Description: p.GetDescription(),
-			Category: p.GetCategory(),
+			ID:           p.GetId(),
+			TripID:       p.GetTripId(),
+			Latitude:     p.GetLatitude(),
+			Longitude:    p.GetLongitude(),
+			Name:         p.GetName(),
+			Description:  p.GetDescription(),
+			Category:     p.GetCategory(),
 			LocationName: p.GetLocationName(),
-			MediaCount: p.GetMediaCount(),
-			Media: media,
+			MediaCount:   p.GetMediaCount(),
+			Media:        media,
 		}
 	}
 	media := make([]responses.FeedMedia, len(m.GetMedia()))
 	for i, fm := range m.GetMedia() {
 		media[i] = responses.FeedMedia{
-			MediaID: fm.GetMediaId(),
-			URL: fm.GetUrl(),
+			MediaID:   fm.GetMediaId(),
+			URL:       fm.GetUrl(),
 			MediaType: fm.GetMediaType(),
 		}
 	}
 	return responses.RecommendedMap{
-		RegionName: m.GetRegionName(),
-		RegionType: m.GetRegionType(),
-		Pins: pins,
-		Trip: h.tripProtoToResponse(m.GetTrip()),
-		Media: media,
+		RegionName:    m.GetRegionName(),
+		RegionType:    m.GetRegionType(),
+		Pins:          pins,
+		Trip:          h.tripProtoToResponse(m.GetTrip()),
+		Media:         media,
 		SnapshotToken: m.GetSnapshotToken(),
 	}
 }
